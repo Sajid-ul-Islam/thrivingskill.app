@@ -4,20 +4,31 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { Header } from '../components/Header';
 import { LiveWorkshopCard } from '../components/LiveWorkshopCard';
-import { WORKSHOPS } from '../data/mockData';
-import { CategoryId } from '../types';
+import { SummitCard } from '../components/SummitCard';
+import { WORKSHOPS, SKILLS_SUMMITS } from '../data/mockData';
 
-export const WorkshopsScreen: React.FC = () => {
+interface WorkshopsScreenProps {
+  onOpenSubscription?: () => void;
+  onOpenNotifications?: () => void;
+}
+
+type TabType = 'all' | 'summits' | 'live-classes';
+
+export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
+  onOpenSubscription,
+  onOpenNotifications,
+}) => {
   const { colors } = useTheme();
-  const [selectedCategory, setSelectedCategory] = useState<CategoryId>('all');
-
-  const filteredWorkshops = WORKSHOPS.filter(
-    (w) => selectedCategory === 'all' || w.category === selectedCategory
-  );
+  const [activeTab, setActiveTab] = useState<TabType>('all');
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header title="Live Masterclasses" subtitle="Interactive Live Bootcamps & Clinics" />
+      <Header
+        title="Live Masterclasses & Summits"
+        subtitle="সাপ্তাহিক লাইভ ট্রেনিং ও ন্যাশনাল স্কিল সামিট"
+        onOpenSubscription={onOpenSubscription}
+        onOpenNotifications={onOpenNotifications}
+      />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Banner */}
@@ -31,23 +42,21 @@ export const WorkshopsScreen: React.FC = () => {
             <Ionicons name="videocam" size={24} color={colors.primary} />
           </View>
           <View style={styles.bannerCol}>
-            <Text style={[styles.bannerTitle, { color: colors.text }]}>Real-Time Learning</Text>
+            <Text style={[styles.bannerTitle, { color: colors.text }]}>Real-Time Executive Learning</Text>
             <Text style={[styles.bannerSub, { color: colors.textMuted }]}>
-              Join live instructor-led cohort sessions with real-time Q&A, hands-on labs, and
-              breakout discussions.
+              সাপ্তাহিক লাইভ সেশন, রিয়েল-টাইম প্রবলেম সলভিং এবং বাংলাদেশ স্কিল সামিটে সরাসরি অংশ নিন।
             </Text>
           </View>
         </View>
 
-        {/* Filter Pills */}
+        {/* Tab Pills */}
         <View style={styles.filterRow}>
           {[
-            { id: 'all', label: 'All Sessions' },
-            { id: 'ai-tech', label: 'AI & Automation' },
-            { id: 'finance', label: 'Finance & Valuation' },
-            { id: 'hr', label: 'People Analytics' },
+            { id: 'all', label: `All Events (${WORKSHOPS.length + SKILLS_SUMMITS.length})` },
+            { id: 'live-classes', label: `Live Classes (${WORKSHOPS.length})` },
+            { id: 'summits', label: `Skills Summits (${SKILLS_SUMMITS.length})` },
           ].map((tab) => {
-            const isActive = selectedCategory === tab.id;
+            const isActive = activeTab === tab.id;
             return (
               <TouchableOpacity
                 key={tab.id}
@@ -58,7 +67,7 @@ export const WorkshopsScreen: React.FC = () => {
                     borderColor: isActive ? colors.primary : colors.border,
                   },
                 ]}
-                onPress={() => setSelectedCategory(tab.id as CategoryId)}
+                onPress={() => setActiveTab(tab.id as TabType)}
               >
                 <Text
                   style={[
@@ -76,16 +85,33 @@ export const WorkshopsScreen: React.FC = () => {
           })}
         </View>
 
-        {/* Workshop Cards */}
-        <View style={styles.listContainer}>
-          {filteredWorkshops.map((workshop) => (
-            <LiveWorkshopCard
-              key={workshop.id}
-              workshop={workshop}
-              onPress={() => {}}
-            />
-          ))}
-        </View>
+        {/* Live Cohort Classes */}
+        {(activeTab === 'all' || activeTab === 'live-classes') && (
+          <View style={styles.listContainer}>
+            <Text style={[styles.sectionHeaderTitle, { color: colors.text }]}>
+              সাপ্তাহিক লাইভ মাস্টারক্লাস
+            </Text>
+            {WORKSHOPS.map((workshop) => (
+              <LiveWorkshopCard
+                key={workshop.id}
+                workshop={workshop}
+                onPress={() => {}}
+              />
+            ))}
+          </View>
+        )}
+
+        {/* National Skills Summits */}
+        {(activeTab === 'all' || activeTab === 'summits') && (
+          <View style={styles.listContainer}>
+            <Text style={[styles.sectionHeaderTitle, { color: colors.text }]}>
+              National Skills Summits & 4IR Conferences
+            </Text>
+            {SKILLS_SUMMITS.map((summit) => (
+              <SummitCard key={summit.id} summit={summit} />
+            ))}
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -118,8 +144,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bannerTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '800',
     marginBottom: 4,
   },
   bannerSub: {
@@ -144,5 +170,11 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingHorizontal: 16,
+    marginBottom: 14,
+  },
+  sectionHeaderTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    marginBottom: 12,
   },
 });

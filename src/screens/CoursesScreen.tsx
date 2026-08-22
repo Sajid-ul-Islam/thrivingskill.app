@@ -6,6 +6,7 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -13,15 +14,23 @@ import { useLearning } from '../context/LearningContext';
 import { Header } from '../components/Header';
 import { CategoryPills } from '../components/CategoryPills';
 import { CourseCard } from '../components/CourseCard';
+import { SpecialBundleCard } from '../components/SpecialBundleCard';
+import { SPECIAL_BUNDLES } from '../data/mockData';
 
 interface CoursesScreenProps {
   onNavigateToCourse: (courseId: string) => void;
+  onOpenSubscription?: () => void;
+  onOpenNotifications?: () => void;
 }
 
 type LevelFilter = 'All' | 'Beginner' | 'Intermediate' | 'Advanced';
 type SortOption = 'popular' | 'rating' | 'price-low' | 'price-high';
 
-export const CoursesScreen: React.FC<CoursesScreenProps> = ({ onNavigateToCourse }) => {
+export const CoursesScreen: React.FC<CoursesScreenProps> = ({
+  onNavigateToCourse,
+  onOpenSubscription,
+  onOpenNotifications,
+}) => {
   const { colors } = useTheme();
   const { courses, selectedCategory, setSelectedCategory, searchQuery, setSearchQuery } =
     useLearning();
@@ -31,6 +40,8 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({ onNavigateToCourse
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // Filtering & Sorting
+  const isBundleView = selectedCategory === 'career-track';
+
   let filtered = courses.filter((course) => {
     const matchesCategory =
       selectedCategory === 'all' || course.category === selectedCategory;
@@ -54,9 +65,25 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({ onNavigateToCourse
     return b.enrolledCount - a.enrolledCount; // popular
   });
 
+  const handleBundlePress = (bundleTitle: string, priceBdt: number) => {
+    Alert.alert(
+      `${bundleTitle} 🎁`,
+      `Special Bundle Price: ৳${priceBdt.toLocaleString()} BDT\n\nIncludes complete curriculum, practice files, and verified digital certificates. Enroll now?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Enroll in Bundle', onPress: onOpenSubscription },
+      ]
+    );
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header title="Browse Courses" subtitle="Skill Up with Leading Instructors" />
+      <Header
+        title="Thriving Skills Catalog"
+        subtitle="৩০০+ প্রিমিয়াম কোর্স ও স্পেশাল বান্ডেল"
+        onOpenSubscription={onOpenSubscription}
+        onOpenNotifications={onOpenNotifications}
+      />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Search Header */}
@@ -70,7 +97,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({ onNavigateToCourse
             <Ionicons name="search" size={18} color={colors.textMuted} />
             <TextInput
               style={[styles.searchInput, { color: colors.text }]}
-              placeholder="Search by skill, topic, or instructor..."
+              placeholder="Search courses, Generative AI, Excel formulas..."
               placeholderTextColor={colors.textLight}
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -87,96 +114,111 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({ onNavigateToCourse
         <CategoryPills selectedId={selectedCategory} onSelect={setSelectedCategory} />
 
         {/* Filters and View Mode Controls */}
-        <View style={styles.filterRow}>
-          {/* Level selector */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.levelsScroll}>
-            {(['All', 'Beginner', 'Intermediate', 'Advanced'] as LevelFilter[]).map((lvl) => (
-              <TouchableOpacity
-                key={lvl}
-                style={[
-                  styles.levelPill,
-                  {
-                    backgroundColor:
-                      selectedLevel === lvl ? colors.secondary : colors.surfaceSubtle,
-                    borderColor: selectedLevel === lvl ? colors.secondary : colors.border,
-                  },
-                ]}
-                onPress={() => setSelectedLevel(lvl)}
-              >
-                <Text
+        {!isBundleView && (
+          <View style={styles.filterRow}>
+            {/* Level selector */}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.levelsScroll}>
+              {(['All', 'Beginner', 'Intermediate', 'Advanced'] as LevelFilter[]).map((lvl) => (
+                <TouchableOpacity
+                  key={lvl}
                   style={[
-                    styles.levelText,
-                    { color: selectedLevel === lvl ? '#FFFFFF' : colors.textMuted },
+                    styles.levelPill,
+                    {
+                      backgroundColor:
+                        selectedLevel === lvl ? colors.secondary : colors.surfaceSubtle,
+                      borderColor: selectedLevel === lvl ? colors.secondary : colors.border,
+                    },
                   ]}
+                  onPress={() => setSelectedLevel(lvl)}
                 >
-                  {lvl}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+                  <Text
+                    style={[
+                      styles.levelText,
+                      { color: selectedLevel === lvl ? '#FFFFFF' : colors.textMuted },
+                    ]}
+                  >
+                    {lvl}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
 
-          {/* View toggle */}
-          <View style={styles.viewToggleGroup}>
-            <TouchableOpacity
-              style={[
-                styles.viewToggleBtn,
-                viewMode === 'grid' && { backgroundColor: colors.surfaceSubtle },
-              ]}
-              onPress={() => setViewMode('grid')}
-            >
-              <Ionicons
-                name="grid-outline"
-                size={16}
-                color={viewMode === 'grid' ? colors.primary : colors.textLight}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[
-                styles.viewToggleBtn,
-                viewMode === 'list' && { backgroundColor: colors.surfaceSubtle },
-              ]}
-              onPress={() => setViewMode('list')}
-            >
-              <Ionicons
-                name="list-outline"
-                size={18}
-                color={viewMode === 'list' ? colors.primary : colors.textLight}
-              />
-            </TouchableOpacity>
+            {/* View toggle */}
+            <View style={styles.viewToggleGroup}>
+              <TouchableOpacity
+                style={[
+                  styles.viewToggleBtn,
+                  viewMode === 'grid' && { backgroundColor: colors.surfaceSubtle },
+                ]}
+                onPress={() => setViewMode('grid')}
+              >
+                <Ionicons
+                  name="grid-outline"
+                  size={16}
+                  color={viewMode === 'grid' ? colors.primary : colors.textLight}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.viewToggleBtn,
+                  viewMode === 'list' && { backgroundColor: colors.surfaceSubtle },
+                ]}
+                onPress={() => setViewMode('list')}
+              >
+                <Ionicons
+                  name="list-outline"
+                  size={18}
+                  color={viewMode === 'list' ? colors.primary : colors.textLight}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Result Header */}
         <View style={styles.resultMetaRow}>
           <Text style={[styles.resultCount, { color: colors.textMuted }]}>
-            Showing <Text style={{ color: colors.text, fontWeight: '700' }}>{filtered.length}</Text> courses
+            {isBundleView ? (
+              <>Showing <Text style={{ color: colors.text, fontWeight: '700' }}>{SPECIAL_BUNDLES.length}</Text> Special Bundles</>
+            ) : (
+              <>Showing <Text style={{ color: colors.text, fontWeight: '700' }}>{filtered.length}</Text> courses</>
+            )}
           </Text>
 
-          {/* Sort Menu Button */}
-          <TouchableOpacity
-            style={[styles.sortBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
-            onPress={() => {
-              const order: SortOption[] = ['popular', 'rating', 'price-low', 'price-high'];
-              const nextIdx = (order.indexOf(selectedSort) + 1) % order.length;
-              setSelectedSort(order[nextIdx]);
-            }}
-          >
-            <Ionicons name="swap-vertical" size={13} color={colors.primary} />
-            <Text style={[styles.sortBtnText, { color: colors.text }]}>
-              {selectedSort === 'popular'
-                ? 'Most Popular'
-                : selectedSort === 'rating'
-                ? 'Top Rated'
-                : selectedSort === 'price-low'
-                ? 'Price: Low'
-                : 'Price: High'}
-            </Text>
-          </TouchableOpacity>
+          {!isBundleView && (
+            <TouchableOpacity
+              style={[styles.sortBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+              onPress={() => {
+                const order: SortOption[] = ['popular', 'rating', 'price-low', 'price-high'];
+                const nextIdx = (order.indexOf(selectedSort) + 1) % order.length;
+                setSelectedSort(order[nextIdx]);
+              }}
+            >
+              <Ionicons name="swap-vertical" size={13} color={colors.primary} />
+              <Text style={[styles.sortBtnText, { color: colors.text }]}>
+                {selectedSort === 'popular'
+                  ? 'Most Popular'
+                  : selectedSort === 'rating'
+                  ? 'Top Rated'
+                  : selectedSort === 'price-low'
+                  ? 'Price: Low'
+                  : 'Price: High'}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
 
-        {/* Courses List */}
+        {/* Content Rendering: Bundles or Courses */}
         <View style={styles.coursesContainer}>
-          {filtered.length === 0 ? (
+          {isBundleView ? (
+            SPECIAL_BUNDLES.map((bundle) => (
+              <SpecialBundleCard
+                key={bundle.id}
+                bundle={bundle}
+                onPress={() => handleBundlePress(bundle.title, bundle.priceBdt)}
+              />
+            ))
+          ) : filtered.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Ionicons name="search-outline" size={48} color={colors.textLight} />
               <Text style={[styles.emptyTitle, { color: colors.text }]}>No courses found</Text>

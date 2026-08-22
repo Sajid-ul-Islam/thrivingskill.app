@@ -7,22 +7,33 @@ import {
   TouchableOpacity,
   Image,
   TextInput,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useLearning } from '../context/LearningContext';
+import { useSaaS } from '../context/SaaSContext';
 import { Header } from '../components/Header';
 import { CategoryPills } from '../components/CategoryPills';
 import { CourseCard } from '../components/CourseCard';
-import { LiveWorkshopCard } from '../components/LiveWorkshopCard';
-import { CORPORATE_CLIENTS, WORKSHOPS } from '../data/mockData';
-import { Course, RootTab } from '../types';
+import { SpecialBundleCard } from '../components/SpecialBundleCard';
+import { SummitCard } from '../components/SummitCard';
+import {
+  CORPORATE_CLIENTS,
+  SPECIAL_BUNDLES,
+  SKILLS_SUMMITS,
+  REVIEWS_WALL,
+} from '../data/mockData';
+import { RootTab } from '../types';
 
 interface HomeScreenProps {
   onNavigateToCourse: (courseId: string) => void;
   onNavigateToLesson: (courseId: string, lessonId: string) => void;
   onNavigateTab: (tab: RootTab) => void;
   onOpenCorporateModal: () => void;
+  onOpenSubscription: () => void;
+  onOpenNotifications: () => void;
+  onOpenAssessment: () => void;
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
@@ -30,6 +41,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onNavigateToLesson,
   onNavigateTab,
   onOpenCorporateModal,
+  onOpenSubscription,
+  onOpenNotifications,
+  onOpenAssessment,
 }) => {
   const { colors, isDark } = useTheme();
   const {
@@ -41,6 +55,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     userProgress,
     getCourseProgressPercentage,
   } = useLearning();
+  const { activeWorkspace, subscriptionTier, assessmentResult } = useSaaS();
 
   // Find enrolled active course to show "Continue Learning"
   const enrolledCourseIds = Object.keys(userProgress);
@@ -60,15 +75,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     return matchesCategory && matchesSearch;
   });
 
-  const featuredCourses = courses.slice(0, 3);
-  const trendingCourses = courses.filter((c) => c.badge === 'Trending' || c.badge === 'Bestseller');
-
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header />
+      <Header
+        onOpenSubscription={onOpenSubscription}
+        onOpenNotifications={onOpenNotifications}
+      />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {/* Hero Section */}
+        {/* Authentic Thriving Skills Hero Banner */}
         <View
           style={[
             styles.heroCard,
@@ -78,15 +93,30 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             },
           ]}
         >
-          <View style={styles.heroBadge}>
-            <Ionicons name="sparkles" size={12} color="#FBBF24" />
-            <Text style={styles.heroBadgeText}>INDUSTRY-READY WORKFORCE</Text>
+          <View style={styles.heroTopRow}>
+            <View style={styles.heroBadge}>
+              <Ionicons name="school" size={12} color="#FBBF24" />
+              <Text style={styles.heroBadgeText}>
+                THRIVING SKILLS • SKILLED NATION
+              </Text>
+            </View>
+
+            <TouchableOpacity style={styles.membershipPill} onPress={onOpenSubscription}>
+              <Text style={styles.membershipPillText}>
+                {subscriptionTier.toUpperCase()} PLAN →
+              </Text>
+            </TouchableOpacity>
           </View>
 
-          <Text style={styles.heroTitle}>Master In-Demand Skills for Tomorrow</Text>
+          <Text style={styles.heroBanglaTagline}>
+            শিখুন এবং গড়ুন নিজের ক্যারিয়ার
+          </Text>
+          <Text style={styles.heroTitle}>
+            Empowering People, Building a Skilled Nation
+          </Text>
           <Text style={styles.heroSubtitle}>
-            Practical executive courses in Generative AI, Financial Modeling, Leadership & Analytics
-            taught by industry leaders.
+            ৩০০+ প্রিমিয়াম কোর্স, সাপ্তাহিক লাইভ সেশন এবং ফলপ্রসূ ক্যারিয়ার বান্ডেল।
+            Bridge Academic Learning to Industry Excellence.
           </Text>
 
           {/* Quick Search Bar */}
@@ -94,7 +124,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <Ionicons name="search" size={18} color={colors.textMuted} />
             <TextInput
               style={[styles.searchInput, { color: isDark ? colors.text : '#0F172A' }]}
-              placeholder="Search skills, AI, finance, leadership..."
+              placeholder="Search Generative AI, MS Excel, Financial Modeling..."
               placeholderTextColor={colors.textLight}
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -105,6 +135,71 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               </TouchableOpacity>
             )}
           </View>
+        </View>
+
+        {/* SaaS Quick Actions 4-Grid */}
+        <View style={styles.quickActionGrid}>
+          {/* AI Copilot */}
+          <TouchableOpacity
+            style={[styles.actionCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
+            onPress={() => onNavigateTab('Copilot')}
+            activeOpacity={0.85}
+          >
+            <View style={[styles.actionIconBg, { backgroundColor: '#EEF2FF' }]}>
+              <Ionicons name="sparkles" size={20} color="#6366F1" />
+            </View>
+            <Text style={[styles.actionTitle, { color: colors.text }]}>AI Skill Copilot</Text>
+            <Text style={[styles.actionSub, { color: colors.textMuted }]}>
+              Audit models & prompts
+            </Text>
+          </TouchableOpacity>
+
+          {/* Diagnostic Assessment */}
+          <TouchableOpacity
+            style={[styles.actionCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
+            onPress={onOpenAssessment}
+            activeOpacity={0.85}
+          >
+            <View style={[styles.actionIconBg, { backgroundColor: '#D1FAE5' }]}>
+              <Ionicons name="analytics" size={20} color="#059669" />
+            </View>
+            <Text style={[styles.actionTitle, { color: colors.text }]}>Skill Diagnostic</Text>
+            <Text style={[styles.actionSub, { color: colors.textMuted }]}>
+              {assessmentResult ? `${assessmentResult.overallScore}% Score` : 'Take 3-min quiz'}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Enterprise Hub / Team */}
+          <TouchableOpacity
+            style={[styles.actionCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
+            onPress={() => onNavigateTab(activeWorkspace.type === 'enterprise' ? 'TeamHub' : 'MyLearning')}
+            activeOpacity={0.85}
+          >
+            <View style={[styles.actionIconBg, { backgroundColor: '#FEF3C7' }]}>
+              <Ionicons name="business" size={20} color="#D97706" />
+            </View>
+            <Text style={[styles.actionTitle, { color: colors.text }]}>
+              {activeWorkspace.type === 'enterprise' ? 'Team Portal' : 'My Learning Hub'}
+            </Text>
+            <Text style={[styles.actionSub, { color: colors.textMuted }]}>
+              {activeWorkspace.type === 'enterprise' ? '18/25 Active Seats' : 'Track your progress'}
+            </Text>
+          </TouchableOpacity>
+
+          {/* SaaS Membership */}
+          <TouchableOpacity
+            style={[styles.actionCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
+            onPress={onOpenSubscription}
+            activeOpacity={0.85}
+          >
+            <View style={[styles.actionIconBg, { backgroundColor: '#F3E8FF' }]}>
+              <Ionicons name="diamond" size={20} color="#8B5CF6" />
+            </View>
+            <Text style={[styles.actionTitle, { color: colors.text }]}>Subscription</Text>
+            <Text style={[styles.actionSub, { color: colors.textMuted }]}>
+              {subscriptionTier === 'enterprise' ? 'Enterprise License' : 'স্মার্ট লার্নিং অফার'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Continue Learning Resume Card (if enrolled) */}
@@ -179,10 +274,38 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           />
         </View>
 
-        {/* Featured Masterclasses */}
+        {/* Special Career Bundles Section (স্পেশাল বান্ডেল কোর্স) */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Featured Masterclasses</Text>
+            <View>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>স্পেশাল বান্ডেল কোর্স</Text>
+              <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
+                সাশ্রয়ী প্যাকেজে ক্যারিয়ার উপযোগী কমপ্লিট স্কিল
+              </Text>
+            </View>
+            <TouchableOpacity onPress={() => onNavigateTab('Courses')}>
+              <Text style={[styles.seeAllText, { color: colors.primary }]}>View All ({SPECIAL_BUNDLES.length})</Text>
+            </TouchableOpacity>
+          </View>
+
+          {SPECIAL_BUNDLES.slice(0, 2).map((bundle) => (
+            <SpecialBundleCard
+              key={bundle.id}
+              bundle={bundle}
+              onPress={() => onNavigateTab('Courses')}
+            />
+          ))}
+        </View>
+
+        {/* Popular Executive Masterclasses */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>জনপ্রিয় কোর্সসমূহ</Text>
+              <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
+                Executive Masterclasses in Generative AI, Excel & Finance
+              </Text>
+            </View>
             <TouchableOpacity onPress={() => onNavigateTab('Courses')}>
               <Text style={[styles.seeAllText, { color: colors.primary }]}>View All ({courses.length})</Text>
             </TouchableOpacity>
@@ -197,7 +320,26 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           ))}
         </View>
 
-        {/* Corporate Training B2B Spotlight */}
+        {/* National & Regional Skills Summits */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>National Skills Summits</Text>
+              <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
+                Flagship Conferences on 4IR, AI, & Employability
+              </Text>
+            </View>
+            <TouchableOpacity onPress={() => onNavigateTab('Workshops')}>
+              <Text style={[styles.seeAllText, { color: colors.primary }]}>All Events →</Text>
+            </TouchableOpacity>
+          </View>
+
+          {SKILLS_SUMMITS.slice(0, 2).map((summit) => (
+            <SummitCard key={summit.id} summit={summit} />
+          ))}
+        </View>
+
+        {/* Corporate Solutions & SME Consultancy Spotlight */}
         <View
           style={[
             styles.corporateBanner,
@@ -209,45 +351,95 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         >
           <View style={styles.corporateBadge}>
             <Ionicons name="business" size={14} color="#818CF8" />
-            <Text style={styles.corporateBadgeText}>FOR ORGANIZATIONS</Text>
+            <Text style={styles.corporateBadgeText}>FOR CORPORATE & SME TEAMS</Text>
           </View>
-          <Text style={styles.corporateTitle}>Empower Your Team with Custom Upskilling</Text>
-          <Text style={styles.corporateSubtitle}>
-            Tailored learning paths, skills gap analytics, and certified trainers for enterprise teams.
+          <Text style={styles.corporateTitle}>
+            কাস্টমাইজড Corporate Training & Strategic Advisory
           </Text>
+          <Text style={styles.corporateSubtitle}>
+            আপনার টিমের পেশাদার দক্ষতা বৃদ্ধি, কার্যকর এবং ফলাফলমুখী করতে আমরা প্রদান করি ডিজিটাল লার্নিং সলিউশন, LMS সেটআপ এবং বিজনেস কনসালটেন্সি।
+          </Text>
+
+          <View style={styles.corpServicesGrid}>
+            {[
+              { title: 'Corporate Training', icon: 'school' },
+              { title: 'Digital LMS Platform', icon: 'laptop' },
+              { title: 'SME Consultancy', icon: 'briefcase' },
+              { title: 'ICT Policy Consulting', icon: 'shield-checkmark' },
+            ].map((serv, idx) => (
+              <View key={idx} style={styles.corpServItem}>
+                <Ionicons name={serv.icon as any} size={14} color="#818CF8" />
+                <Text style={styles.corpServText}>{serv.title}</Text>
+              </View>
+            ))}
+          </View>
 
           <TouchableOpacity
             style={[styles.corporateBtn, { backgroundColor: colors.secondary }]}
             onPress={onOpenCorporateModal}
             activeOpacity={0.85}
           >
-            <Text style={styles.corporateBtnText}>Request Corporate Proposal</Text>
+            <Text style={styles.corporateBtnText}>Request Enterprise Proposal</Text>
             <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
 
-        {/* Live Upcoming Workshops */}
+        {/* Verified Learners' Wall of Love (Real Reviews) */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Live Masterclasses</Text>
-            <TouchableOpacity onPress={() => onNavigateTab('Workshops')}>
-              <Text style={[styles.seeAllText, { color: colors.primary }]}>Schedule →</Text>
-            </TouchableOpacity>
+            <View>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Learner Experiences</Text>
+              <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
+                What corporate professionals say about Thriving Skills
+              </Text>
+            </View>
           </View>
 
-          {WORKSHOPS.slice(0, 2).map((workshop) => (
-            <LiveWorkshopCard
-              key={workshop.id}
-              workshop={workshop}
-              onPress={() => onNavigateTab('Workshops')}
-            />
-          ))}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.reviewsScroll}>
+            {REVIEWS_WALL.map((rev) => (
+              <View
+                key={rev.id}
+                style={[
+                  styles.reviewCard,
+                  {
+                    backgroundColor: colors.surfaceCard,
+                    borderColor: colors.border,
+                    shadowColor: colors.cardShadow,
+                  },
+                ]}
+              >
+                <View style={styles.reviewHeader}>
+                  <Image source={{ uri: rev.userAvatar }} style={styles.revAvatar} />
+                  <View style={styles.revUserCol}>
+                    <Text style={[styles.revName, { color: colors.text }]}>{rev.userName}</Text>
+                    <Text style={[styles.revRole, { color: colors.textMuted }]}>{rev.userRole}</Text>
+                  </View>
+                  <View style={styles.starsRow}>
+                    <Ionicons name="star" size={12} color="#F59E0B" />
+                    <Ionicons name="star" size={12} color="#F59E0B" />
+                    <Ionicons name="star" size={12} color="#F59E0B" />
+                    <Ionicons name="star" size={12} color="#F59E0B" />
+                    <Ionicons name="star" size={12} color="#F59E0B" />
+                  </View>
+                </View>
+                <Text style={[styles.revComment, { color: colors.text }]} numberOfLines={4}>
+                  "{rev.comment}"
+                </Text>
+                <View style={styles.verifiedTag}>
+                  <Ionicons name="checkmark-circle" size={12} color={colors.primary} />
+                  <Text style={[styles.verifiedTagText, { color: colors.primary }]}>
+                    {rev.company || 'Verified Professional'}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </ScrollView>
         </View>
 
-        {/* Trusted Corporate Alumni Logos */}
+        {/* Trusted Corporate Clients */}
         <View style={styles.trustSection}>
           <Text style={[styles.trustHeading, { color: colors.textMuted }]}>
-            TRUSTED BY PROFESSIONALS FROM LEADING ENTERPRISES
+            TRUSTED BY PROFESSIONALS ACROSS LEADING INSTITUTIONS
           </Text>
           <View style={styles.clientLogosRow}>
             {CORPORATE_CLIENTS.map((client, index) => (
@@ -279,38 +471,59 @@ const styles = StyleSheet.create({
   heroCard: {
     margin: 16,
     borderRadius: 20,
-    padding: 20,
+    padding: 18,
     borderWidth: 1,
+  },
+  heroTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
   heroBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(251, 191, 36, 0.2)',
-    alignSelf: 'flex-start',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 20,
     gap: 6,
-    marginBottom: 12,
   },
   heroBadgeText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '800',
     color: '#FBBF24',
     letterSpacing: 0.5,
   },
-  heroTitle: {
-    fontSize: 22,
-    fontWeight: '800',
+  membershipPill: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  membershipPillText: {
     color: '#FFFFFF',
-    lineHeight: 28,
-    marginBottom: 8,
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  heroBanglaTagline: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#34D399',
+    marginBottom: 2,
+  },
+  heroTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    lineHeight: 26,
+    marginBottom: 6,
   },
   heroSubtitle: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#E2E8F0',
-    lineHeight: 18,
-    marginBottom: 16,
+    lineHeight: 17,
+    marginBottom: 14,
   },
   searchBar: {
     flexDirection: 'row',
@@ -322,24 +535,57 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 13,
+  },
+  quickActionGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    paddingHorizontal: 16,
+    gap: 10,
+    marginBottom: 10,
+  },
+  actionCard: {
+    width: '48.5%',
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  actionIconBg: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  actionTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  actionSub: {
+    fontSize: 11,
   },
   section: {
     paddingHorizontal: 16,
-    marginTop: 10,
+    marginTop: 14,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 14,
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '800',
   },
+  sectionSubtitle: {
+    fontSize: 11,
+    marginTop: 1,
+  },
   seeAllText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
   },
   resumeCard: {
@@ -401,7 +647,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   categorySection: {
-    marginBottom: 8,
+    marginBottom: 6,
   },
   corporateBanner: {
     margin: 16,
@@ -422,17 +668,37 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   corporateTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '800',
     color: '#FFFFFF',
-    lineHeight: 24,
-    marginBottom: 8,
+    lineHeight: 23,
+    marginBottom: 6,
   },
   corporateSubtitle: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#CBD5E1',
-    lineHeight: 18,
+    lineHeight: 17,
+    marginBottom: 14,
+  },
+  corpServicesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
     marginBottom: 16,
+  },
+  corpServItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    gap: 6,
+  },
+  corpServText: {
+    color: '#E2E8F0',
+    fontSize: 11,
+    fontWeight: '600',
   },
   corporateBtn: {
     flexDirection: 'row',
@@ -447,13 +713,68 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
   },
+  reviewsScroll: {
+    paddingRight: 16,
+    gap: 12,
+    paddingBottom: 6,
+  },
+  reviewCard: {
+    width: 280,
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 14,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  reviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  revAvatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    marginRight: 10,
+  },
+  revUserCol: {
+    flex: 1,
+  },
+  revName: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  revRole: {
+    fontSize: 10,
+  },
+  starsRow: {
+    flexDirection: 'row',
+    gap: 1,
+  },
+  revComment: {
+    fontSize: 12,
+    lineHeight: 16,
+    fontStyle: 'italic',
+    marginBottom: 10,
+  },
+  verifiedTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  verifiedTagText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
   trustSection: {
-    marginTop: 20,
+    marginTop: 16,
     paddingHorizontal: 16,
     alignItems: 'center',
   },
   trustHeading: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
     letterSpacing: 0.8,
     marginBottom: 12,

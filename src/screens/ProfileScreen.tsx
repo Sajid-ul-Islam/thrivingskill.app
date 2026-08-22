@@ -12,26 +12,48 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useLearning } from '../context/LearningContext';
+import { useSaaS } from '../context/SaaSContext';
 import { Header } from '../components/Header';
 
 interface ProfileScreenProps {
   onOpenCorporateModal: () => void;
+  onOpenSubscription: () => void;
+  onOpenNotifications: () => void;
   onNavigateTab: (tab: any) => void;
 }
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   onOpenCorporateModal,
+  onOpenSubscription,
+  onOpenNotifications,
   onNavigateTab,
 }) => {
   const { colors, isDark, toggleTheme } = useTheme();
   const { userProgress, certificates } = useLearning();
+  const {
+    subscriptionTier,
+    billingInterval,
+    activeWorkspace,
+  } = useSaaS();
 
   const enrolledCount = Object.keys(userProgress).length;
   const completedCount = Object.values(userProgress).filter((p) => p.isCompleted).length;
 
+  const handleDownloadInvoice = () => {
+    Alert.alert(
+      'Invoice Downloaded 📥',
+      `Invoice #INV-2026-TS884 (৳${billingInterval === 'annual' ? '2,900.00' : '290.00'} BDT) has been downloaded to your device storage.`
+    );
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header title="My Profile" subtitle="Executive Member" />
+      <Header
+        title="Executive Account"
+        subtitle="SaaS Profile & Preferences"
+        onOpenSubscription={onOpenSubscription}
+        onOpenNotifications={onOpenNotifications}
+      />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Profile Card */}
@@ -51,18 +73,76 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             <View style={styles.nameRow}>
               <Text style={[styles.name, { color: colors.text }]}>Alex Rahman</Text>
               <View style={[styles.verifiedBadge, { backgroundColor: colors.primaryLight }]}>
-                <Ionicons name="checkmark-circle" size={12} color={colors.primary} />
-                <Text style={[styles.verifiedText, { color: colors.primary }]}>Verified Pro</Text>
+                <Ionicons name="shield-checkmark" size={12} color={colors.primary} />
+                <Text style={[styles.verifiedText, { color: colors.primary }]}>
+                  {subscriptionTier.toUpperCase()}
+                </Text>
               </View>
             </View>
             <Text style={[styles.email, { color: colors.textMuted }]}>alex.rahman@enterprise.com</Text>
             <Text style={[styles.role, { color: colors.secondary }]}>
-              Senior Business Strategist • Apex Corp
+              Senior Business Strategist • {activeWorkspace.name}
             </Text>
           </View>
         </View>
 
-        {/* Stats Row */}
+        {/* SaaS Subscription & Membership Card */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>স্মার্ট লার্নিং সাবস্ক্রিপশন ও বিলিং</Text>
+          <View
+            style={[
+              styles.subscriptionCard,
+              { backgroundColor: colors.surfaceCard, borderColor: colors.primary },
+            ]}
+          >
+            <View style={styles.planBadgeRow}>
+              <View style={[styles.tierTag, { backgroundColor: colors.primaryLight }]}>
+                <Ionicons name="sparkles" size={12} color={colors.primary} />
+                <Text style={[styles.tierTagText, { color: colors.primary }]}>
+                  {subscriptionTier === 'enterprise'
+                    ? 'ENTERPRISE SCALE'
+                    : subscriptionTier === 'pro'
+                    ? 'PRO EXECUTIVE ANNUAL'
+                    : 'STARTER FREE'}
+                </Text>
+              </View>
+              <Text style={[styles.billingCycleText, { color: colors.textMuted }]}>
+                {billingInterval === 'annual' ? 'Billed Annually (-20%)' : 'Billed Monthly'}
+              </Text>
+            </View>
+
+            <Text style={[styles.planTitle, { color: colors.text }]}>
+              {subscriptionTier === 'enterprise'
+                ? 'Apex Corp Team License (25 Seats Active)'
+                : subscriptionTier === 'pro'
+                ? '৩০০+ কোর্স, AI Copilot ও সার্টিফিকেট আনলকড'
+                : 'Free Limited Access Plan'}
+            </Text>
+            <Text style={[styles.planExpiry, { color: colors.textMuted }]}>
+              Next billing date: September 15, 2026 • Auto-renew active
+            </Text>
+
+            <View style={styles.subActionRow}>
+              <TouchableOpacity
+                style={[styles.managePlanBtn, { backgroundColor: colors.primary }]}
+                onPress={onOpenSubscription}
+              >
+                <Ionicons name="card-outline" size={16} color="#FFFFFF" />
+                <Text style={styles.managePlanText}>Change / Upgrade Plan</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.invoiceBtn, { borderColor: colors.border, backgroundColor: colors.surfaceSubtle }]}
+                onPress={handleDownloadInvoice}
+              >
+                <Ionicons name="receipt-outline" size={16} color={colors.text} />
+                <Text style={[styles.invoiceBtnText, { color: colors.text }]}>Invoice</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        {/* Learning Stats Row */}
         <View style={styles.statsRow}>
           <TouchableOpacity
             style={[
@@ -98,9 +178,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </TouchableOpacity>
         </View>
 
-        {/* Settings Group */}
+        {/* Preferences & Settings */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>PREFERENCES</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>APP PREFERENCES</Text>
           <View
             style={[
               styles.cardGroup,
@@ -140,11 +220,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             {/* Push notifications */}
             <TouchableOpacity
               style={styles.settingRow}
-              onPress={() => Alert.alert('Notifications', 'Weekly study reminders are enabled.')}
+              onPress={onOpenNotifications}
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="notifications-outline" size={20} color={colors.text} />
-                <Text style={[styles.settingLabel, { color: colors.text }]}>Study Reminders</Text>
+                <Text style={[styles.settingLabel, { color: colors.text }]}>Notification Center</Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </TouchableOpacity>
@@ -153,7 +233,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
         {/* Enterprise & Corporate Upskilling */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>ORGANIZATIONS</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>ENTERPRISE & B2B SOLUTIONS</Text>
           <TouchableOpacity
             style={[
               styles.corporateCard,
@@ -167,10 +247,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </View>
             <View style={styles.corpInfo}>
               <Text style={[styles.corpTitle, { color: colors.text }]}>
-                Corporate & Team Upskilling
+                Corporate Training & SME Advisory
               </Text>
               <Text style={[styles.corpSubtitle, { color: colors.textMuted }]}>
-                Request custom enterprise training programs for your company.
+                কাস্টমাইজড Corporate Training, LMS Integration এবং বিজনেস কনসালটেন্সি প্রপোজাল।
               </Text>
             </View>
             <Ionicons name="arrow-forward" size={18} color={colors.secondary} />
@@ -179,7 +259,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
         {/* Support & About */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>ABOUT & SUPPORT</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>CONTACT & SUPPORT</Text>
           <View
             style={[
               styles.cardGroup,
@@ -188,24 +268,35 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           >
             <TouchableOpacity
               style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => Alert.alert('Thriving Skills', 'Version 1.0.0 (Expo SDK 51)\nBridge Academic to Industry Skills.')}
+              onPress={() => Alert.alert('Official Hotline', 'Calling Thriving Skills Enterprise Support: +880 1312-100288')}
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="call-outline" size={20} color={colors.primary} />
+                <Text style={[styles.settingLabel, { color: colors.text }]}>Hotline Support</Text>
+              </View>
+              <Text style={[styles.versionText, { color: colors.primary, fontWeight: '700' }]}>01312100288</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
+              onPress={() => Alert.alert('Email Support', 'support@thrivingskill.com')}
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="mail-outline" size={20} color={colors.text} />
+                <Text style={[styles.settingLabel, { color: colors.text }]}>Email Support</Text>
+              </View>
+              <Text style={[styles.versionText, { color: colors.textMuted }]}>support@thrivingskill.com</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.settingRow}
+              onPress={() => Alert.alert('Thriving Skills Platform', 'Thriving Skills — Empowering People, Building a Skilled Nation.\nVersion 2.0.0 (Industry-Grade Edition)')}
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="information-circle-outline" size={20} color={colors.text} />
                 <Text style={[styles.settingLabel, { color: colors.text }]}>About Thriving Skills</Text>
               </View>
-              <Text style={[styles.versionText, { color: colors.textMuted }]}>v1.0.0</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.settingRow}
-              onPress={() => Alert.alert('Help & Support', 'Reach out to support@thrivingskill.com')}
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="headset-outline" size={20} color={colors.text} />
-                <Text style={[styles.settingLabel, { color: colors.text }]}>Help & Live Support</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+              <Text style={[styles.versionText, { color: colors.textMuted }]}>v2.0.0 SaaS</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -257,8 +348,9 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   verifiedText: {
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 0.5,
   },
   email: {
     fontSize: 12,
@@ -267,6 +359,75 @@ const styles = StyleSheet.create({
   role: {
     fontSize: 11,
     fontWeight: '600',
+  },
+  subscriptionCard: {
+    borderRadius: 16,
+    borderWidth: 1.5,
+    padding: 16,
+    gap: 6,
+  },
+  planBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  tierTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    gap: 4,
+  },
+  tierTagText: {
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  billingCycleText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  planTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  planExpiry: {
+    fontSize: 11,
+    marginBottom: 8,
+  },
+  subActionRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 6,
+  },
+  managePlanBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 10,
+    gap: 6,
+  },
+  managePlanText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  invoiceBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    gap: 4,
+  },
+  invoiceBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   statsRow: {
     flexDirection: 'row',

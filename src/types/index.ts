@@ -1,16 +1,19 @@
 export type CategoryId =
   | 'all'
-  | 'ai-tech'
+  | 'generative-ai'
+  | 'excel-data'
   | 'finance'
   | 'leadership'
   | 'hr'
   | 'marketing'
   | 'supply-chain'
-  | 'productivity';
+  | 'research'
+  | 'career-track';
 
 export interface Category {
   id: CategoryId;
   name: string;
+  banglaName?: string;
   icon: string;
   count: number;
   color: string;
@@ -61,6 +64,7 @@ export interface Review {
   date: string;
   comment: string;
   userRole: string;
+  company?: string;
 }
 
 export interface Course {
@@ -73,11 +77,13 @@ export interface Course {
   rating: number;
   reviewsCount: number;
   enrolledCount: number;
-  price: number;
+  price: number; // in USD
+  priceBdt?: number; // in BDT (e.g. 1500)
   originalPrice: number;
+  originalPriceBdt?: number;
   thumbnail: string;
   previewVideoUrl?: string;
-  badge?: 'Bestseller' | 'Trending' | 'New' | 'Top Rated' | 'Corporate Pick';
+  badge?: 'Bestseller' | 'Trending' | 'New' | 'Top Rated' | 'Corporate Pick' | 'Special Bundle';
   durationHours: number;
   lecturesCount: number;
   certificateIncluded: boolean;
@@ -89,6 +95,40 @@ export interface Course {
   prerequisites: string[];
   modules: CourseModule[];
   reviews: Review[];
+  isProExclusive?: boolean;
+  skillTrack?: string;
+  isCareerBundle?: boolean;
+}
+
+export interface SpecialBundle {
+  id: string;
+  title: string;
+  banglaTitle: string;
+  subtitle: string;
+  category: CategoryId;
+  coursesIncludedCount: number;
+  durationHours: number;
+  priceBdt: number;
+  originalPriceBdt: number;
+  priceUsd: number;
+  originalPriceUsd: number;
+  thumbnail: string;
+  features: string[];
+  rating: number;
+  enrolledCount: number;
+}
+
+export interface SkillsSummit {
+  id: string;
+  title: string;
+  theme: string;
+  date: string;
+  status: 'Upcoming' | 'Live' | 'Concluded';
+  attendeesCount: string;
+  keynoteSpeakers: string[];
+  bannerImage: string;
+  description: string;
+  registrationUrl?: string;
 }
 
 export interface Workshop {
@@ -105,6 +145,8 @@ export interface Workshop {
   category: CategoryId;
   thumbnail: string;
   price: number;
+  priceBdt?: number;
+  isProFree?: boolean;
 }
 
 export interface Certificate {
@@ -116,6 +158,7 @@ export interface Certificate {
   credentialId: string;
   instructorName: string;
   verificationUrl: string;
+  skillsEarned?: string[];
 }
 
 export interface Note {
@@ -135,13 +178,91 @@ export interface UserProgress {
   isCompleted: boolean;
   completedDate?: string;
   certificateId?: string;
+  assignedByManager?: boolean;
+  dueDate?: string;
 }
 
-export type RootTab = 'Home' | 'Courses' | 'MyLearning' | 'Workshops' | 'Profile';
+// -------------------------------------------------------------
+// SaaS Specific Types
+// -------------------------------------------------------------
+
+export type SubscriptionTier = 'starter' | 'pro' | 'enterprise';
+export type BillingInterval = 'monthly' | 'annual';
+
+export interface PlanFeature {
+  id: string;
+  title: string;
+  starter: boolean | string;
+  pro: boolean | string;
+  enterprise: boolean | string;
+}
+
+export interface Workspace {
+  id: string;
+  name: string;
+  type: 'personal' | 'enterprise';
+  role: 'learner' | 'manager' | 'admin';
+  companyName?: string;
+  logo?: string;
+  activeSeats?: number;
+  totalSeats?: number;
+}
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+  department: string;
+  role: string;
+  avatar: string;
+  assignedCourseIds: string[];
+  completedCoursesCount: number;
+  progressPercent: number;
+  lastActive: string;
+  skillsMastered: string[];
+}
+
+export interface SaaSNotification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'assignment' | 'workshop' | 'certificate' | 'system' | 'ai';
+  timestamp: string;
+  isRead: boolean;
+  actionRoute?: { tab: RootTab; courseId?: string };
+}
+
+export interface CopilotMessage {
+  id: string;
+  sender: 'user' | 'assistant';
+  text: string;
+  timestamp: string;
+  suggestedActions?: string[];
+  codeSnippet?: string;
+}
+
+export interface SkillAssessmentQuestion {
+  id: string;
+  domain: string;
+  question: string;
+  options: { text: string; points: number }[];
+}
+
+export interface SkillAssessmentResult {
+  completedAt: string;
+  overallScore: number;
+  domainScores: { domain: string; score: number; maxScore: number }[];
+  levelName: string;
+  recommendedCourseIds: string[];
+  keyInsight: string;
+}
+
+export type RootTab = 'Home' | 'Courses' | 'Copilot' | 'MyLearning' | 'TeamHub' | 'Workshops' | 'Profile';
 
 export type ActiveScreen =
   | { name: 'MainTabs'; tab: RootTab }
   | { name: 'CourseDetail'; courseId: string }
   | { name: 'LessonPlayer'; courseId: string; lessonId: string }
   | { name: 'CorporateSolutions' }
-  | { name: 'CertificateView'; certificateId: string };
+  | { name: 'CertificateView'; certificateId: string }
+  | { name: 'SkillAssessment' };

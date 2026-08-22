@@ -12,12 +12,15 @@ interface CourseCardProps {
 }
 
 export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizontal = false }) => {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { isBookmarked, toggleBookmark, getCourseProgressPercentage, userProgress } = useLearning();
 
   const bookmarked = isBookmarked(course.id);
   const isEnrolled = !!userProgress[course.id];
   const progressPercent = getCourseProgressPercentage(course.id);
+
+  const displayPrice = course.priceBdt ? `৳${course.priceBdt.toLocaleString()}` : `$${course.price.toFixed(2)}`;
+  const displayOrigPrice = course.originalPriceBdt ? `৳${course.originalPriceBdt.toLocaleString()}` : `$${course.originalPrice.toFixed(2)}`;
 
   if (horizontal) {
     return (
@@ -78,10 +81,10 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
           ) : (
             <View style={styles.priceRow}>
               <Text style={[styles.currentPrice, { color: colors.primary }]}>
-                ${course.price.toFixed(2)}
+                {displayPrice}
               </Text>
               <Text style={[styles.originalPrice, { color: colors.textMuted }]}>
-                ${course.originalPrice.toFixed(2)}
+                {displayOrigPrice}
               </Text>
             </View>
           )}
@@ -181,10 +184,10 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
           <View style={styles.cardFooter}>
             <View style={styles.priceRow}>
               <Text style={[styles.currentPrice, { color: colors.primary }]}>
-                ${course.price.toFixed(2)}
+                {displayPrice}
               </Text>
               <Text style={[styles.originalPrice, { color: colors.textMuted }]}>
-                ${course.originalPrice.toFixed(2)}
+                {displayOrigPrice}
               </Text>
             </View>
             <View style={[styles.certBadge, { backgroundColor: colors.surfaceSubtle }]}>
@@ -298,11 +301,11 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   currentPrice: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 17,
+    fontWeight: '900',
   },
   originalPrice: {
-    fontSize: 13,
+    fontSize: 12,
     textDecorationLine: 'line-through',
   },
   certBadge: {

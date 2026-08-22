@@ -18,14 +18,18 @@ interface MyLearningScreenProps {
   onNavigateToCourse: (courseId: string) => void;
   onNavigateToLesson: (courseId: string, lessonId: string) => void;
   onBrowseCourses: () => void;
+  onOpenSubscription?: () => void;
+  onOpenNotifications?: () => void;
 }
 
-type TabMode = 'in-progress' | 'completed' | 'saved' | 'certificates';
+type TabMode = 'in-progress' | 'completed' | 'certificates' | 'saved';
 
 export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
   onNavigateToCourse,
   onNavigateToLesson,
   onBrowseCourses,
+  onOpenSubscription,
+  onOpenNotifications,
 }) => {
   const { colors } = useTheme();
   const {
@@ -54,7 +58,12 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header title="My Learning" subtitle="Your Skill Development Hub" />
+      <Header
+        title="My Learning Hub"
+        subtitle="Skill Progression & Portfolio"
+        onOpenSubscription={onOpenSubscription}
+        onOpenNotifications={onOpenNotifications}
+      />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {/* Stats Dashboard Card */}
@@ -584,7 +593,6 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontWeight: '700',
-    marginTop: 10,
   },
   emptySubtitle: {
     fontSize: 13,

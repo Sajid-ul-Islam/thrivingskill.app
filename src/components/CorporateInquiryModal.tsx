@@ -26,8 +26,9 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
   const [companyName, setCompanyName] = useState('');
   const [contactName, setContactName] = useState('');
   const [workEmail, setWorkEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [selectedService, setSelectedService] = useState('Corporate Training');
   const [teamSize, setTeamSize] = useState('10-50');
-  const [focusArea, setFocusArea] = useState('Generative AI & Tech Automation');
   const [submitted, setSubmitted] = useState(false);
 
   const handleSubmit = () => {
@@ -40,6 +41,7 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
     setCompanyName('');
     setContactName('');
     setWorkEmail('');
+    setPhone('');
     onClose();
   };
 
@@ -59,7 +61,14 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
             <View style={styles.headerLeft}>
               <Ionicons name="business" size={20} color={colors.primary} />
-              <Text style={[styles.headerTitle, { color: colors.text }]}>Corporate Training</Text>
+              <View>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>
+                  Thriving Skills Enterprise Solutions
+                </Text>
+                <Text style={[styles.headerSub, { color: colors.textMuted }]}>
+                  Corporate Training & Business Consultancy
+                </Text>
+              </View>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
               <Ionicons name="close" size={22} color={colors.textMuted} />
@@ -72,33 +81,84 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
                 <View style={[styles.successIconBg, { backgroundColor: colors.primaryLight }]}>
                   <Ionicons name="checkmark-circle" size={48} color={colors.primary} />
                 </View>
-                <Text style={[styles.successTitle, { color: colors.text }]}>Inquiry Received!</Text>
+                <Text style={[styles.successTitle, { color: colors.text }]}>Proposal Request Received!</Text>
                 <Text style={[styles.successSubtitle, { color: colors.textMuted }]}>
-                  Our Enterprise Learning Consultant will contact {contactName} at {workEmail}{' '}
-                  within 24 hours with a custom proposal and skills assessment deck.
+                  Our Enterprise Strategic Advisor will contact {contactName} at {workEmail}{' '}
+                  within 24 hours with a custom {selectedService} proposal and competency diagnostic framework.
                 </Text>
+
+                <View style={[styles.contactBox, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+                  <Text style={[styles.contactBoxTitle, { color: colors.text }]}>Direct Enterprise Hotline</Text>
+                  <Text style={[styles.contactPhone, { color: colors.primary }]}>📞 +880 1312-100288</Text>
+                  <Text style={[styles.contactEmail, { color: colors.textMuted }]}>✉️ support@thrivingskill.com</Text>
+                </View>
+
                 <TouchableOpacity
                   style={[styles.doneBtn, { backgroundColor: colors.primary }]}
                   onPress={handleResetAndClose}
                 >
-                  <Text style={styles.doneText}>Close</Text>
+                  <Text style={styles.doneText}>Done</Text>
                 </TouchableOpacity>
               </View>
             ) : (
               <>
                 <Text style={[styles.introText, { color: colors.textMuted }]}>
-                  Customized learning paths, enterprise LMS integration, and certified trainers for
-                  your team.
+                  আপনার টিমের পেশাদার দক্ষতা বৃদ্ধি, কার্যকর এবং ফলাফলমুখী করতে কাস্টমাইজড ট্রেনিং ও স্ট্র্যাটেজিক কনসালটেন্সি প্রপোজাল গ্রহণ করুন।
                 </Text>
 
+                {/* Service Selection */}
                 <View style={styles.formGroup}>
-                  <Text style={[styles.label, { color: colors.text }]}>Company Name *</Text>
+                  <Text style={[styles.label, { color: colors.text }]}>Select Enterprise Solution *</Text>
+                  <View style={styles.servicesGrid}>
+                    {[
+                      { id: 'Corporate Training', label: 'Corporate Training', icon: 'school' },
+                      { id: 'Digital LMS Platform', label: 'Digital Learning (LMS)', icon: 'laptop' },
+                      { id: 'SME Consultancy', label: 'SME Consultancy', icon: 'briefcase' },
+                      { id: 'ICT & Policy Consulting', label: 'ICT & Policy Consulting', icon: 'shield-checkmark' },
+                      { id: 'Buy For Team', label: 'Buy For Team (Licenses)', icon: 'people' },
+                    ].map((serv) => (
+                      <TouchableOpacity
+                        key={serv.id}
+                        style={[
+                          styles.serviceChip,
+                          {
+                            backgroundColor:
+                              selectedService === serv.id ? colors.primaryLight : colors.surfaceSubtle,
+                            borderColor:
+                              selectedService === serv.id ? colors.primary : colors.border,
+                          },
+                        ]}
+                        onPress={() => setSelectedService(serv.id)}
+                      >
+                        <Ionicons
+                          name={serv.icon as any}
+                          size={14}
+                          color={selectedService === serv.id ? colors.primary : colors.textMuted}
+                        />
+                        <Text
+                          style={[
+                            styles.serviceChipText,
+                            {
+                              color: selectedService === serv.id ? colors.primary : colors.text,
+                              fontWeight: selectedService === serv.id ? '700' : '500',
+                            },
+                          ]}
+                        >
+                          {serv.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={[styles.label, { color: colors.text }]}>Company / Organization Name *</Text>
                   <TextInput
                     style={[
                       styles.input,
                       { backgroundColor: colors.surfaceSubtle, borderColor: colors.border, color: colors.text },
                     ]}
-                    placeholder="e.g. Acme Corp"
+                    placeholder="e.g. Apex Holdings / BRAC"
                     placeholderTextColor={colors.textLight}
                     value={companyName}
                     onChangeText={setCompanyName}
@@ -112,7 +172,7 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
                       styles.input,
                       { backgroundColor: colors.surfaceSubtle, borderColor: colors.border, color: colors.text },
                     ]}
-                    placeholder="e.g. Jane Doe, Head of L&D"
+                    placeholder="e.g. Tanvir Ahmed, Head of HR / MD"
                     placeholderTextColor={colors.textLight}
                     value={contactName}
                     onChangeText={setContactName}
@@ -120,13 +180,13 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
                 </View>
 
                 <View style={styles.formGroup}>
-                  <Text style={[styles.label, { color: colors.text }]}>Work Email *</Text>
+                  <Text style={[styles.label, { color: colors.text }]}>Corporate Work Email *</Text>
                   <TextInput
                     style={[
                       styles.input,
                       { backgroundColor: colors.surfaceSubtle, borderColor: colors.border, color: colors.text },
                     ]}
-                    placeholder="jane@acme.com"
+                    placeholder="name@company.com"
                     placeholderTextColor={colors.textLight}
                     keyboardType="email-address"
                     autoCapitalize="none"
@@ -136,7 +196,22 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
                 </View>
 
                 <View style={styles.formGroup}>
-                  <Text style={[styles.label, { color: colors.text }]}>Team Size to Train</Text>
+                  <Text style={[styles.label, { color: colors.text }]}>Contact Phone / WhatsApp</Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      { backgroundColor: colors.surfaceSubtle, borderColor: colors.border, color: colors.text },
+                    ]}
+                    placeholder="+880 17XXXXXXXX"
+                    placeholderTextColor={colors.textLight}
+                    keyboardType="phone-pad"
+                    value={phone}
+                    onChangeText={setPhone}
+                  />
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={[styles.label, { color: colors.text }]}>Team Size to Upskill</Text>
                   <View style={styles.pillRow}>
                     {['5-20', '20-50', '50-200', '200+'].map((size) => (
                       <TouchableOpacity
@@ -159,39 +234,6 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
                         >
                           {size}
                         </Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-
-                <View style={styles.formGroup}>
-                  <Text style={[styles.label, { color: colors.text }]}>Target Focus Area</Text>
-                  <View style={styles.focusOptions}>
-                    {[
-                      'Generative AI & Tech Automation',
-                      'Financial Modeling & Valuations',
-                      'Executive Leadership & Communication',
-                      'Data Analytics (PowerBI / SQL)',
-                      'Strategic HR & People Analytics',
-                    ].map((area) => (
-                      <TouchableOpacity
-                        key={area}
-                        style={[
-                          styles.focusOption,
-                          {
-                            backgroundColor:
-                              focusArea === area ? colors.surfaceElevated : colors.surfaceSubtle,
-                            borderColor: focusArea === area ? colors.secondary : colors.border,
-                          },
-                        ]}
-                        onPress={() => setFocusArea(area)}
-                      >
-                        <Ionicons
-                          name={focusArea === area ? 'radio-button-on' : 'radio-button-off'}
-                          size={16}
-                          color={focusArea === area ? colors.secondary : colors.textMuted}
-                        />
-                        <Text style={[styles.focusOptionText, { color: colors.text }]}>{area}</Text>
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -250,11 +292,15 @@ const styles = StyleSheet.create({
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
+    flex: 1,
   },
   headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  headerSub: {
+    fontSize: 11,
   },
   closeBtn: {
     padding: 4,
@@ -263,24 +309,41 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   introText: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 17,
     marginBottom: 16,
   },
   formGroup: {
-    marginBottom: 16,
+    marginBottom: 14,
   },
   label: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
     marginBottom: 6,
   },
   input: {
-    height: 46,
+    height: 44,
     borderRadius: 10,
     borderWidth: 1,
     paddingHorizontal: 12,
-    fontSize: 14,
+    fontSize: 13,
+  },
+  servicesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  serviceChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 6,
+  },
+  serviceChipText: {
+    fontSize: 11,
   },
   pillRow: {
     flexDirection: 'row',
@@ -293,23 +356,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   sizePillText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
-  },
-  focusOptions: {
-    gap: 8,
-  },
-  focusOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    gap: 10,
-  },
-  focusOptionText: {
-    fontSize: 13,
-    fontWeight: '500',
   },
   submitBtn: {
     paddingVertical: 14,
@@ -323,36 +371,57 @@ const styles = StyleSheet.create({
   },
   successContainer: {
     alignItems: 'center',
-    paddingVertical: 30,
+    paddingVertical: 24,
   },
   successIconBg: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   successTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '800',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   successSubtitle: {
-    fontSize: 14,
+    fontSize: 13,
     textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 24,
-    paddingHorizontal: 16,
+    lineHeight: 18,
+    marginBottom: 16,
+    paddingHorizontal: 12,
+  },
+  contactBox: {
+    width: '100%',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    marginBottom: 20,
+    gap: 4,
+  },
+  contactBoxTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  contactPhone: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  contactEmail: {
+    fontSize: 12,
   },
   doneBtn: {
-    paddingVertical: 14,
+    paddingVertical: 12,
     paddingHorizontal: 40,
     borderRadius: 12,
   },
   doneText: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
   },
 });
