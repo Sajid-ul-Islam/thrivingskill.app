@@ -1,25 +1,41 @@
 {
   "expo": {
     "name": "thrivingskill.app",
-    "slug": "thrivingskill.app",
+    "slug": "thrivingskillapp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
+      "bundleIdentifier": "com.thrivingskill.app",
       "supportsTablet": true
     },
     "android": {
+      "package": "com.thrivingskill.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "splash": {
+        "image": "./assets/splash-icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#E6F4FE"
+      },
+      "statusBar": {
+        "barStyle": "dark-content",
+        "backgroundColor": "#E6F4FE"
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "0b66cee6-c1a5-4c67-b12a-08f8f4356787"
+      }
+    },
+    "owner": "sajid.islam"
   }
 }
