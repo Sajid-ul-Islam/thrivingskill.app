@@ -15,6 +15,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useLearning } from '../context/LearningContext';
 import { useSaaS } from '../context/SaaSContext';
+import { useLanguage } from '../context/LanguageContext';
+import { useGamification } from '../context/GamificationContext';
 import { Header } from '../components/Header';
 import { CategoryPills } from '../components/CategoryPills';
 import { CourseCard } from '../components/CourseCard';
@@ -48,6 +50,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onOpenAssessment,
 }) => {
   const { colors, isDark } = useTheme();
+  const { t, isBangla } = useLanguage();
+  const { streakDays, dailyMinutesSpent, dailyGoalMinutes } = useGamification();
   const {
     courses,
     categories,
@@ -100,6 +104,29 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           />
         }
       >
+        {/* Daily Streak & Study Goal Widget */}
+        <View style={[styles.streakWidget, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View style={styles.streakLeft}>
+            <View style={styles.flameCircle}>
+              <Text style={styles.flameEmoji}>🔥</Text>
+            </View>
+            <View>
+              <Text style={[styles.streakNumber, { color: colors.text }]}>
+                {streakDays} {t('dayStreak')}
+              </Text>
+              <Text style={[styles.streakSub, { color: colors.textMuted }]}>
+                {t('streakMessage')}
+              </Text>
+            </View>
+          </View>
+          <View style={[styles.goalPill, { backgroundColor: colors.primaryLight }]}>
+            <Ionicons name="time" size={14} color={colors.primary} />
+            <Text style={[styles.goalText, { color: colors.primary }]}>
+              {dailyMinutesSpent}/{dailyGoalMinutes}m
+            </Text>
+          </View>
+        </View>
+
         {/* Authentic Thriving Skills Hero Banner */}
         <View
           style={[
@@ -126,10 +153,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </View>
 
           <Text style={styles.heroBanglaTagline}>
-            শিখুন এবং গড়ুন নিজের ক্যারিয়ার
+            {t('heroBanglaSlogan')}
           </Text>
           <Text style={styles.heroTitle}>
-            Empowering People, Building a Skilled Nation
+            {t('brandTagline')}
           </Text>
           <Text style={styles.heroSubtitle}>
             ৩০০+ প্রিমিয়াম কোর্স, সাপ্তাহিক লাইভ সেশন এবং ফলপ্রসূ ক্যারিয়ার বান্ডেল।
@@ -540,6 +567,55 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 40,
+  },
+  streakWidget: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  streakLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  flameCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FEF3C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  flameEmoji: {
+    fontSize: 20,
+  },
+  streakNumber: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  streakSub: {
+    fontSize: 11,
+    marginTop: 1,
+  },
+  goalPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    gap: 4,
+  },
+  goalText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   heroCard: {
     margin: 16,

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useSaaS } from '../context/SaaSContext';
+import { useLanguage } from '../context/LanguageContext';
 
 interface HeaderProps {
   title?: string;
@@ -26,6 +27,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenNotifications,
 }) => {
   const { colors, toggleTheme, isDark } = useTheme();
+  const { language, toggleLanguage } = useLanguage();
   const {
     subscriptionTier,
     activeWorkspace,
@@ -139,6 +141,17 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </TouchableOpacity>
         )}
+
+        {/* Language Switcher */}
+        <TouchableOpacity
+          style={[styles.langButton, { backgroundColor: colors.primaryLight }]}
+          onPress={toggleLanguage}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.langButtonText, { color: colors.primary }]}>
+            {language === 'en' ? 'বাংলা' : 'EN'}
+          </Text>
+        </TouchableOpacity>
 
         {/* Theme Toggle */}
         {showThemeToggle && (
@@ -300,6 +313,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+  },
+  langButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  langButtonText: {
+    fontSize: 11,
+    fontWeight: '800',
   },
   notifBadge: {
     position: 'absolute',

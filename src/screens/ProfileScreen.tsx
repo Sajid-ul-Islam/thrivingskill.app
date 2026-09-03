@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,8 @@ import { useTheme } from '../context/ThemeContext';
 import { useLearning } from '../context/LearningContext';
 import { useSaaS } from '../context/SaaSContext';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
+import { useGamification } from '../context/GamificationContext';
 import { Header } from '../components/Header';
 
 interface ProfileScreenProps {
@@ -30,6 +32,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   onNavigateTab,
 }) => {
   const { colors, isDark, toggleTheme } = useTheme();
+  const { language, toggleLanguage, isBangla, t } = useLanguage();
+  const { badges } = useGamification();
+  const [biometricEnabled, setBiometricEnabled] = useState(true);
   const { userProgress, certificates } = useLearning();
   const { user, isAuthenticated, logout, setAuthModalVisible } = useAuth();
   const {
@@ -202,29 +207,108 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </TouchableOpacity>
         </View>
 
+        {/* Earned Badges & Achievements */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+            {isBangla ? 'অর্জিত স্কিল ব্যাজসমূহ' : 'ACHIEVEMENT BADGES'}
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.badgesScroll}>
+            {badges.map((b) => (
+              <View
+                key={b.id}
+                style={[
+                  styles.badgeCard,
+                  {
+                    backgroundColor: b.isUnlocked ? colors.surfaceCard : colors.surfaceSubtle,
+                    borderColor: b.isUnlocked ? b.color : colors.border,
+                    opacity: b.isUnlocked ? 1 : 0.55,
+                  },
+                ]}
+              >
+                <View style={[styles.badgeIconBox, { backgroundColor: b.color + '20' }]}>
+                  <Ionicons name={b.icon as any} size={22} color={b.isUnlocked ? b.color : colors.textMuted} />
+                </View>
+                <Text style={[styles.badgeTitle, { color: colors.text }]} numberOfLines={1}>
+                  {isBangla ? b.banglaTitle : b.title}
+                </Text>
+                <Text style={[styles.badgeStatus, { color: b.isUnlocked ? b.color : colors.textMuted }]}>
+                  {b.isUnlocked ? (isBangla ? '✓ আনলকড' : '✓ Unlocked') : (isBangla ? '🔒 লকড' : '🔒 Locked')}
+                </Text>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+
         {/* Preferences & Settings */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>APP PREFERENCES</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+            {isBangla ? 'অ্যাপ সেটিংস' : 'APP PREFERENCES'}
+          </Text>
           <View
             style={[
               styles.cardGroup,
               { backgroundColor: colors.surfaceCard, borderColor: colors.border },
             ]}
           >
+            {/* Language Switcher */}
+            <TouchableOpacity
+              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
+              onPress={toggleLanguage}
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="language" size={20} color={colors.primary} />
+                <Text style={[styles.settingLabel, { color: colors.text }]}>
+                  {isBangla ? 'ভাষা (Language)' : 'Language'}
+                </Text>
+              </View>
+              <View style={[styles.langPill, { backgroundColor: colors.primaryLight }]}>
+                <Text style={[styles.langPillText, { color: colors.primary }]}>
+                  {language === 'en' ? 'English (EN)' : 'বাংলা (BN)'}
+                </Text>
+              </View>
+            </TouchableOpacity>
+
             {/* Dark mode switch */}
-            <View style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}>
+            <View style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
+            >
               <View style={styles.settingLeft}>
                 <Ionicons
                   name={isDark ? 'moon' : 'sunny'}
                   size={20}
                   color={isDark ? colors.accent : colors.primary}
                 />
-                <Text style={[styles.settingLabel, { color: colors.text }]}>Dark Mode</Text>
+                <Text style={[styles.settingLabel, { color: colors.text }]}>
+                  {isBangla ? 'ডার্ক মোড' : 'Dark Mode'}
+                </Text>
               </View>
               <Switch
                 value={isDark}
                 onValueChange={toggleTheme}
                 trackColor={{ false: '#CBD5E1', true: colors.primary }}
+                thumbColor="#FFFFFF"
+              />
+            </View>
+
+            {/* Biometric unlock toggle */}
+            <View style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}>
+              <View style={styles.settingLeft}>
+                <Ionicons name="finger-print" size={20} color={colors.secondary} />
+                <Text style={[styles.settingLabel, { color: colors.text }]}>
+                  {isBangla ? 'বায়োমেট্রিক আনলক (ফিঙ্গারপ্রিন্ট)' : 'Biometric Security'}
+                </Text>
+              </View>
+              <Switch
+                value={biometricEnabled}
+                onValueChange={(val) => {
+                  setBiometricEnabled(val);
+                  Alert.alert(
+                    'Biometric Security',
+                    val
+                      ? 'Fingerprint & Face ID enabled for instant login.'
+                      : 'Biometric unlock disabled.'
+                  );
+                }}
+                trackColor={{ false: '#CBD5E1', true: colors.secondary }}
                 thumbColor="#FFFFFF"
               />
             </View>
@@ -236,7 +320,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="cloud-download-outline" size={20} color={colors.text} />
-                <Text style={[styles.settingLabel, { color: colors.text }]}>Downloaded Lectures</Text>
+                <Text style={[styles.settingLabel, { color: colors.text }]}>
+                  {isBangla ? 'ডাউনলোডকৃত লেসন' : 'Downloaded Lectures'}
+                </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </TouchableOpacity>
@@ -248,7 +334,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="notifications-outline" size={20} color={colors.text} />
-                <Text style={[styles.settingLabel, { color: colors.text }]}>Notification Center</Text>
+                <Text style={[styles.settingLabel, { color: colors.text }]}>
+                  {isBangla ? 'নোটিফিকেশন সেন্টার' : 'Notification Center'}
+                </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </TouchableOpacity>
@@ -517,8 +605,46 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     marginBottom: 8,
   },
+  badgesScroll: {
+    paddingRight: 16,
+    gap: 12,
+  },
+  badgeCard: {
+    width: 120,
+    padding: 12,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    gap: 6,
+  },
+  badgeIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  badgeTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  badgeStatus: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  langPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  langPillText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
   cardGroup: {
-    borderRadius: 14,
+    borderRadius: 16,
     borderWidth: 1,
     overflow: 'hidden',
   },

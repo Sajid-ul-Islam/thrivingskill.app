@@ -8,6 +8,8 @@ import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { LearningProvider, useLearning } from './src/context/LearningContext';
 import { SaaSProvider, useSaaS } from './src/context/SaaSContext';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
+import { LanguageProvider, useLanguage } from './src/context/LanguageContext';
+import { GamificationProvider } from './src/context/GamificationContext';
 import { RootTab, ActiveScreen } from './src/types';
 
 import { HomeScreen } from './src/screens/HomeScreen';
@@ -28,6 +30,7 @@ import { AuthModal } from './src/components/AuthModal';
 
 const MainAppContent: React.FC = () => {
   const { colors, isDark } = useTheme();
+  const { t } = useLanguage();
   const { userProgress } = useLearning();
   const { activeWorkspace, unreadNotificationsCount } = useSaaS();
   const { isAuthModalVisible, setAuthModalVisible } = useAuth();
@@ -73,20 +76,20 @@ const MainAppContent: React.FC = () => {
     iconOutline: string;
     badgeCount?: number;
   }[] = [
-    { id: 'Home', label: 'Home', icon: 'home', iconOutline: 'home-outline' },
-    { id: 'Courses', label: 'Explore', icon: 'compass', iconOutline: 'compass-outline' },
-    { id: 'Copilot', label: 'AI Copilot', icon: 'sparkles', iconOutline: 'sparkles-outline' },
+    { id: 'Home', label: t('tabHome'), icon: 'home', iconOutline: 'home-outline' },
+    { id: 'Courses', label: t('tabExplore'), icon: 'compass', iconOutline: 'compass-outline' },
+    { id: 'Copilot', label: t('tabCopilot'), icon: 'sparkles', iconOutline: 'sparkles-outline' },
     isEnterpriseWorkspace
-      ? { id: 'TeamHub', label: 'Team Hub', icon: 'business', iconOutline: 'business-outline' }
+      ? { id: 'TeamHub', label: t('tabTeamHub'), icon: 'business', iconOutline: 'business-outline' }
       : {
           id: 'MyLearning',
-          label: 'My Hub',
+          label: t('tabMyHub'),
           icon: 'book',
           iconOutline: 'book-outline',
           badgeCount: inProgressCount,
         },
-    { id: 'Workshops', label: 'Live', icon: 'videocam', iconOutline: 'videocam-outline' },
-    { id: 'Profile', label: 'Profile', icon: 'person', iconOutline: 'person-outline' },
+    { id: 'Workshops', label: t('tabLive'), icon: 'videocam', iconOutline: 'videocam-outline' },
+    { id: 'Profile', label: t('tabProfile'), icon: 'person', iconOutline: 'person-outline' },
   ];
 
   return (
@@ -258,13 +261,17 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <AuthProvider>
-          <SaaSProvider>
-            <LearningProvider>
-              <MainAppContent />
-            </LearningProvider>
-          </SaaSProvider>
-        </AuthProvider>
+        <LanguageProvider>
+          <GamificationProvider>
+            <AuthProvider>
+              <SaaSProvider>
+                <LearningProvider>
+                  <MainAppContent />
+                </LearningProvider>
+              </SaaSProvider>
+            </AuthProvider>
+          </GamificationProvider>
+        </LanguageProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

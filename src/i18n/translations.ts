@@ -1,0 +1,216 @@
+export type Language = 'en' | 'bn';
+
+export const translations = {
+  en: {
+    // Navigation & Tabs
+    tabHome: 'Home',
+    tabExplore: 'Explore',
+    tabCopilot: 'AI Copilot',
+    tabMyHub: 'My Hub',
+    tabLive: 'Live',
+    tabProfile: 'Profile',
+    tabTeamHub: 'Team Hub',
+
+    // Header & Brand
+    brandTagline: 'Empowering People, Building a Skilled Nation',
+    heroBanglaSlogan: 'Learn and Build Your Career',
+    headerSearchPlaceholder: 'Search 370+ courses, Generative AI, Excel...',
+    switchLanguage: 'বাংলা',
+
+    // Home & Catalog
+    continueLearning: 'Continue Learning',
+    resumeCourse: 'Resume Lesson',
+    featuredCourses: 'Featured & Trending Courses',
+    allCourses: 'All Courses',
+    viewAll: 'View All',
+    careerBundles: 'Special Career Bundles',
+    careerBundlesSubtitle: 'Complete upskilling packages at discounted bundle rates',
+    careerInsights: 'Career Insights & Articles',
+    careerInsightsSubtitle: 'Live publications from Thriving Skills Editorial',
+    readOnWeb: 'Read Article →',
+    nationalSummits: 'National Skills Summits',
+    learnerReviews: 'Learner Experiences',
+
+    // Gamification & Streaks
+    dayStreak: 'Day Streak',
+    streakMessage: 'Keep learning today to protect your streak!',
+    dailyGoal: 'Daily Goal',
+    minutesOf: 'mins of',
+    minsTarget: 'mins target',
+    goalComplete: 'Goal Achieved! 🎉',
+
+    // Course Detail & Curriculum
+    curriculum: 'Curriculum',
+    instructor: 'Instructor',
+    reviews: 'Reviews',
+    totalCourseFee: 'Total Course Fee',
+    enrollNow: 'Enroll Now',
+    startLearning: 'Start Learning',
+    freePreview: 'Free Preview',
+    modules: 'Modules',
+    lessons: 'Lessons',
+    duration: 'Duration',
+    enrolledStudents: 'Enrolled',
+
+    // Payment & Checkout
+    checkoutTitle: 'Secure Checkout',
+    checkoutSubtitle: 'Select your preferred local payment method in Bangladesh',
+    selectPaymentMethod: 'Payment Method',
+    couponCode: 'Promo / Coupon Code',
+    applyCoupon: 'Apply',
+    couponSuccess: 'Discount Applied!',
+    subtotal: 'Course Price',
+    discount: 'Discount',
+    totalPayable: 'Total Payable',
+    payWithBkash: 'Pay with bKash',
+    payWithNagad: 'Pay with Nagad',
+    payWithRocket: 'Pay with Rocket',
+    payWithCard: 'Pay with Card / NetBanking',
+    walletNumber: 'Mobile Wallet Number',
+    enterWalletNumber: 'e.g. 01712345678',
+    confirmPayment: 'Complete Payment',
+    paymentSuccessTitle: 'Payment Successful! 🎉',
+    paymentSuccessMsg: 'Your course has been activated. Start learning now!',
+
+    // Video & Lesson Player
+    playbackSpeed: 'Speed',
+    saveOffline: 'Save Offline',
+    savedOffline: 'Saved Offline',
+    takeQuiz: 'Take Chapter Quiz',
+    markComplete: 'Mark Lesson Complete',
+    lessonCompleted: 'Completed',
+    notes: 'Notes',
+    addNotePlaceholder: 'Write your learning reflection...',
+    saveNote: 'Save Note',
+
+    // Quiz
+    quizTitle: 'Chapter Assessment',
+    question: 'Question',
+    of: 'of',
+    submitAnswer: 'Submit Quiz',
+    timeRemaining: 'Time Left',
+    score: 'Your Score',
+    passed: 'Congratulations! You Passed 🎉',
+    failed: 'Keep Practicing! Review materials and try again.',
+    reviewExplanations: 'Answer Explanations',
+    claimCertificate: 'Claim Certificate',
+
+    // Profile & Settings
+    accountSettings: 'Account Settings',
+    membershipStatus: 'Membership Status',
+    language: 'Language',
+    biometricUnlock: 'Biometric Unlock (Fingerprint / Face ID)',
+    offlineDownloads: 'Offline Downloads',
+    achievements: 'Earned Badges',
+    signInWordPress: 'Sign In with Thriving Skills Account',
+    signOut: 'Sign Out from WordPress',
+    supportHotline: 'Support Hotline',
+  },
+  bn: {
+    // Navigation & Tabs
+    tabHome: 'হোম',
+    tabExplore: 'এক্সপ্লোর',
+    tabCopilot: 'এআই কোপাইলট',
+    tabMyHub: 'আমার কোর্স',
+    tabLive: 'লাইভ ট্রেনিং',
+    tabProfile: 'প্রোফাইল',
+    tabTeamHub: 'টিম হাব',
+
+    // Header & Brand
+    brandTagline: 'দক্ষ মানবসম্পদ গঠনে অগ্রণী প্ল্যাটফর্ম',
+    heroBanglaSlogan: 'শিখুন এবং গড়ুন নিজের ক্যারিয়ার',
+    headerSearchPlaceholder: '৩৭০+ কোর্স, AI, এক্সেল বা স্কিল সার্চ করুন...',
+    switchLanguage: 'English',
+
+    // Home & Catalog
+    continueLearning: 'শেখা চালিয়ে যান',
+    resumeCourse: 'লেসনে ফিরে যান',
+    featuredCourses: 'জনপ্রিয় ও ট্রেন্ডিং কোর্সসমূহ',
+    allCourses: 'সব কোর্স',
+    viewAll: 'সব দেখুন',
+    careerBundles: 'স্পেশাল ক্যারিয়ার বান্ডেল',
+    careerBundlesSubtitle: 'সাশ্রয়ী প্যাকেজে ক্যারিয়ার উপযোগী কমপ্লিট স্কিল',
+    careerInsights: 'ক্যারিয়ার পরামর্শ ও ব্লগ',
+    careerInsightsSubtitle: 'থ্রাইভিং স্কিলস এর নিয়মিত গবেষণা ও দিকনির্দেশনা',
+    readOnWeb: 'সম্পূর্ণ পড়ুন →',
+    nationalSummits: 'জাতীয় স্কিলস সামিট',
+    learnerReviews: 'শিক্ষার্থীদের অভিজ্ঞতা',
+
+    // Gamification & Streaks
+    dayStreak: 'দিনের স্ট্রিক',
+    streakMessage: 'স্ট্রিক ধরে রাখতে আজই লেসন শেষ করুন!',
+    dailyGoal: 'দৈনিক লক্ষ্য',
+    minutesOf: 'মিনিট /',
+    minsTarget: 'মিনিট টার্গেট',
+    goalComplete: 'লক্ষ্য পূরণ হয়েছে! 🎉',
+
+    // Course Detail & Curriculum
+    curriculum: 'কোর্স সিলেবাস',
+    instructor: 'ইন্সট্রাক্টর',
+    reviews: 'রিভিউসমূহ',
+    totalCourseFee: 'কোর্স ফি',
+    enrollNow: 'এখনই ভর্তি হন',
+    startLearning: 'শেখা শুরু করুন',
+    freePreview: 'ফ্রি প্রিভিউ',
+    modules: 'মডিউল',
+    lessons: 'লেসন',
+    duration: 'সময়কাল',
+    enrolledStudents: 'এনরোল্ড শিক্ষার্থী',
+
+    // Payment & Checkout
+    checkoutTitle: 'নিরাপদ পেমেন্ট গেটওয়ে',
+    checkoutSubtitle: 'আপনার সুবিধাজনক বিকাশ, নগদ বা কার্ড দিয়ে পেমেন্ট সম্পন্ন করুন',
+    selectPaymentMethod: 'পেমেন্ট মাধ্যম বেছে নিন',
+    couponCode: 'প্রোমো / কুপন কোড',
+    applyCoupon: 'প্রয়োগ করুন',
+    couponSuccess: 'ডিসকাউন্ট যুক্ত হয়েছে!',
+    subtotal: 'কোর্সের মূল্য',
+    discount: 'ডিসকাউন্ট',
+    totalPayable: 'মোট প্রদেয় টাকা',
+    payWithBkash: 'বিকাশে পেমেন্ট',
+    payWithNagad: 'নগদে পেমেন্ট',
+    payWithRocket: 'রকেটে পেমেন্ট',
+    payWithCard: 'কার্ড / নেট ব্যাংকিং',
+    walletNumber: 'মোবাইল ওয়ালেট নম্বর',
+    enterWalletNumber: 'যেমনঃ ০১৭১২৩৪৫৬৭৮',
+    confirmPayment: 'পেমেন্ট নিশ্চিত করুন',
+    paymentSuccessTitle: 'পেমেন্ট সফল হয়েছে! 🎉',
+    paymentSuccessMsg: 'আপনার কোর্সটি সক্রিয় হয়েছে। এখনই শেখা শুরু করুন!',
+
+    // Video & Lesson Player
+    playbackSpeed: 'স্পিড',
+    saveOffline: 'অফলাইন সেভ',
+    savedOffline: 'অফলাইনে সেভড',
+    takeQuiz: 'অধ্যায়ের কুইজ দিন',
+    markComplete: 'লেসন সম্পন্ন চিহ্নিত করুন',
+    lessonCompleted: 'সম্পন্ন',
+    notes: 'নোটস',
+    addNotePlaceholder: 'আপনার ব্যক্তিগত নোট লিখুন...',
+    saveNote: 'নোট সংরক্ষণ করুন',
+
+    // Quiz
+    quizTitle: 'অধ্যায়ভিত্তিক মূল্যায়ন পরীক্ষা',
+    question: 'প্রশ্ন',
+    of: 'এর মধ্যে',
+    submitAnswer: 'কুইজ জমা দিন',
+    timeRemaining: 'বাকি সময়',
+    score: 'প্রাপ্ত নম্বর',
+    passed: 'অভিনন্দন! আপনি উত্তীর্ণ হয়েছেন 🎉',
+    failed: 'পুনরায় চেষ্টা করুন। লেসনটি আরেকবার দেখে কুইজ দিন।',
+    reviewExplanations: 'প্রশ্নের সঠিক ব্যাখ্যা',
+    claimCertificate: 'সার্টিফিকেট গ্রহণ করুন',
+
+    // Profile & Settings
+    accountSettings: 'অ্যাকাউন্ট সেটিংস',
+    membershipStatus: 'মেম্বারশিপ স্ট্যাটাস',
+    language: 'ভাষা (Language)',
+    biometricUnlock: 'বায়োমেট্রিক আনলক (ফিঙ্গারপ্রিন্ট / ফেস আইডি)',
+    offlineDownloads: 'ডাউনলোডকৃত লেসন',
+    achievements: 'অর্জিত ব্যাজসমূহ',
+    signInWordPress: 'থ্রাইভিং স্কিলস অ্যাকাউন্টে সাইন ইন',
+    signOut: 'ওয়ার্ডপ্রেস থেকে সাইন আউট',
+    supportHotline: 'হেল্পলাইন সাপোর্ট',
+  },
+};
+
+export type TranslationKey = keyof typeof translations.en;

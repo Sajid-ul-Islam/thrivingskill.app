@@ -14,6 +14,8 @@ import { useTheme } from '../context/ThemeContext';
 import { useLearning } from '../context/LearningContext';
 import { Header } from '../components/Header';
 import { CurriculumAccordion } from '../components/CurriculumAccordion';
+import { PaymentModal } from '../components/PaymentModal';
+import { useLanguage } from '../context/LanguageContext';
 import { Lesson } from '../types';
 
 interface CourseDetailScreenProps {
@@ -28,6 +30,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
   onNavigateToLesson,
 }) => {
   const { colors, isDark } = useTheme();
+  const { t, isBangla } = useLanguage();
   const {
     getCourseById,
     loadCourseDetail,
@@ -40,6 +43,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
 
   const [activeTab, setActiveTab] = useState<'curriculum' | 'instructor' | 'reviews'>('curriculum');
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [paymentModalVisible, setPaymentModalVisible] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -74,13 +78,17 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
 
   const handleEnrollOrResume = () => {
     if (!isEnrolled) {
+      if ((course.priceBdt && course.priceBdt > 0) || (course.price && course.price > 0)) {
+        setPaymentModalVisible(true);
+        return;
+      }
       enrollInCourse(course.id);
       Alert.alert(
         'Enrolled Successfully! 🎉',
         `You have been enrolled in "${course.title}". Let's start the first lesson!`,
         [
           {
-            text: 'Start Learning',
+            text: isBangla ? 'শেখা শুরু করুন' : 'Start Learning',
             onPress: () => {
               const firstLessonId = course.modules[0]?.lessons[0]?.id;
               if (firstLessonId) onNavigateToLesson(course.id, firstLessonId);
@@ -383,10 +391,22 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
             color="#FFFFFF"
           />
           <Text style={styles.enrollCTAText}>
-            {isEnrolled ? 'Resume Course' : 'Enroll Now'}
+            {isEnrolled ? (isBangla ? 'লেসনে যান' : 'Resume Course') : (isBangla ? 'এখনই ভর্তি হন' : 'Enroll Now')}
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* Local Payment Gateway Modal */}
+      <PaymentModal
+        visible={paymentModalVisible}
+        course={course}
+        onClose={() => setPaymentModalVisible(false)}
+        onSuccess={(cId) => {
+          enrollInCourse(cId);
+          const firstLessonId = course.modules[0]?.lessons[0]?.id;
+          if (firstLessonId) onNavigateToLesson(course.id, firstLessonId);
+        }}
+      />
     </View>
   );
 };

@@ -13,8 +13,12 @@ import { useTheme } from '../context/ThemeContext';
 import { useLearning } from '../context/LearningContext';
 import { Header } from '../components/Header';
 import { QuizModal } from '../components/QuizModal';
+import { QuizPlayerModal } from '../components/QuizPlayerModal';
 import { NotesModal } from '../components/NotesModal';
 import { CertificateModal } from '../components/CertificateModal';
+import { useLanguage } from '../context/LanguageContext';
+import { useGamification } from '../context/GamificationContext';
+import { OfflineManager } from '../services/offline/offlineManager';
 import { Lesson } from '../types';
 
 interface LessonPlayerScreenProps {
@@ -33,6 +37,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   onSelectLesson,
 }) => {
   const { colors, isDark } = useTheme();
+  const { t } = useLanguage();
+  const { recordStudyTime, unlockBadge } = useGamification();
   const {
     getCourseById,
     userProgress,
@@ -45,8 +51,10 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const [playbackSpeed, setPlaybackSpeed] = useState<string>('1.0x');
   const [activeTab, setActiveTab] = useState<PlayerTab>('curriculum');
   const [quizModalVisible, setQuizModalVisible] = useState<boolean>(false);
+  const [quizPlayerVisible, setQuizPlayerVisible] = useState<boolean>(false);
   const [notesModalVisible, setNotesModalVisible] = useState<boolean>(false);
   const [certModalVisible, setCertModalVisible] = useState<boolean>(false);
+  const [isDownloaded, setIsDownloaded] = useState<boolean>(false);
 
   const course = getCourseById(courseId);
 
@@ -66,6 +74,25 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const isLessonCompleted = progress?.completedLessonIds.includes(currentLesson?.id || '') || false;
   const lessonNotes = currentLesson ? getNotesForLesson(courseId, currentLesson.id) : [];
 
+  useEffect(() => {
+    if (currentLesson?.id) {
+      OfflineManager.isLessonDownloaded(currentLesson.id).then(setIsDownloaded);
+    }
+  }, [currentLesson?.id]);
+
+  const handleToggleOffline = async () => {
+    if (!currentLesson || !course) return;
+    if (isDownloaded) {
+      await OfflineManager.removeDownloadedLesson(currentLesson.id);
+      setIsDownloaded(false);
+      Alert.alert('Offline Storage', 'Lesson removed from offline downloads.');
+    } else {
+      await OfflineManager.saveLessonOffline(course.id, currentLesson);
+      setIsDownloaded(true);
+      Alert.alert('Downloaded! 💾', 'Lesson summary & resources saved for offline studying.');
+    }
+  };
+
   const handleNextLesson = () => {
     if (currentLessonIndex < allLessons.length - 1) {
       const nextL = allLessons[currentLessonIndex + 1].lesson;
@@ -83,6 +110,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const handleMarkComplete = () => {
     if (!currentLesson || !course) return;
     markLessonCompleted(course.id, currentLesson.id);
+    recordStudyTime(10);
+    unlockBadge('streak_champ');
 
     const totalLessons = allLessons.length;
     const completedCount = (progress?.completedLessonIds.length || 0) + (isLessonCompleted ? 0 : 1);
@@ -105,7 +134,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   };
 
   const cycleSpeed = () => {
-    const speeds = ['1.0x', '1.25x', '1.5x', '2.0x'];
+    const speeds = ['0.75x', '1.0x', '1.25x', '1.5x', '2.0x'];
     const nextIdx = (speeds.indexOf(playbackSpeed) + 1) % speeds.length;
     setPlaybackSpeed(speeds[nextIdx]);
   };
@@ -140,11 +169,18 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
             {/* Center Play/Pause & Skip buttons */}
             <View style={styles.playerControlsRow}>
               <TouchableOpacity
+                onPress={() => Alert.alert('Rewind', 'Rewound 10 seconds.')}
+                style={styles.skipBtn}
+              >
+                <Ionicons name="play-back" size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
                 onPress={handlePrevLesson}
                 disabled={currentLessonIndex === 0}
                 style={[styles.skipBtn, currentLessonIndex === 0 && { opacity: 0.4 }]}
               >
-                <Ionicons name="play-skip-back" size={24} color="#FFFFFF" />
+                <Ionicons name="play-skip-back" size={22} color="#FFFFFF" />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -162,7 +198,14 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                   currentLessonIndex === allLessons.length - 1 && { opacity: 0.4 },
                 ]}
               >
-                <Ionicons name="play-skip-forward" size={24} color="#FFFFFF" />
+                <Ionicons name="play-skip-forward" size={22} color="#FFFFFF" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => Alert.alert('Forward', 'Skipped forward 10 seconds.')}
+                style={styles.skipBtn}
+              >
+                <Ionicons name="play-forward" size={20} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
 
@@ -206,30 +249,46 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
             </Text>
           </View>
 
-          <TouchableOpacity
-            style={[
-              styles.completeBtn,
-              {
-                backgroundColor: isLessonCompleted ? colors.primaryLight : colors.primary,
-              },
-            ]}
-            onPress={handleMarkComplete}
-            activeOpacity={0.8}
-          >
-            <Ionicons
-              name={isLessonCompleted ? 'checkmark-circle' : 'checkmark'}
-              size={16}
-              color={isLessonCompleted ? colors.primary : '#FFFFFF'}
-            />
-            <Text
+          <View style={styles.actionRowRight}>
+            <TouchableOpacity
               style={[
-                styles.completeBtnText,
-                { color: isLessonCompleted ? colors.primary : '#FFFFFF' },
+                styles.offlineBtn,
+                { backgroundColor: isDownloaded ? colors.primary + '20' : colors.surfaceSubtle, borderColor: colors.border },
               ]}
+              onPress={handleToggleOffline}
             >
-              {isLessonCompleted ? 'Completed' : 'Mark Done'}
-            </Text>
-          </TouchableOpacity>
+              <Ionicons
+                name={isDownloaded ? 'cloud-done' : 'cloud-download-outline'}
+                size={16}
+                color={isDownloaded ? colors.primary : colors.textMuted}
+              />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.completeBtn,
+                {
+                  backgroundColor: isLessonCompleted ? colors.primaryLight : colors.primary,
+                },
+              ]}
+              onPress={handleMarkComplete}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name={isLessonCompleted ? 'checkmark-circle' : 'checkmark'}
+                size={16}
+                color={isLessonCompleted ? colors.primary : '#FFFFFF'}
+              />
+              <Text
+                style={[
+                  styles.completeBtnText,
+                  { color: isLessonCompleted ? colors.primary : '#FFFFFF' },
+                ]}
+              >
+                {isLessonCompleted ? t('lessonCompleted') : t('markComplete')}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Interactive Lesson Navigation & Tools Tab Strip */}
@@ -477,6 +536,17 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         />
       )}
 
+      {/* Interactive Assessment Quiz Player Modal */}
+      <QuizPlayerModal
+        visible={quizPlayerVisible}
+        courseTitle={course.title}
+        onClose={() => setQuizPlayerVisible(false)}
+        onPassed={() => {
+          markLessonCompleted(course.id, currentLesson.id);
+          Alert.alert('Quiz Passed! 🎓', 'Chapter completed and progress saved.');
+        }}
+      />
+
       {/* Notes Modal */}
       <NotesModal
         visible={notesModalVisible}
@@ -615,6 +685,19 @@ const styles = StyleSheet.create({
   },
   lessonInstructor: {
     fontSize: 12,
+  },
+  actionRowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  offlineBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   completeBtn: {
     flexDirection: 'row',
