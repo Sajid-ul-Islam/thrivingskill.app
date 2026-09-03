@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useLearning } from '../context/LearningContext';
 import { useSaaS } from '../context/SaaSContext';
+import { useAuth } from '../context/AuthContext';
 import { Header } from '../components/Header';
 
 interface ProfileScreenProps {
@@ -30,6 +31,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 }) => {
   const { colors, isDark, toggleTheme } = useTheme();
   const { userProgress, certificates } = useLearning();
+  const { user, isAuthenticated, logout, setAuthModalVisible } = useAuth();
   const {
     subscriptionTier,
     billingInterval,
@@ -65,23 +67,45 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         >
           <Image
             source={{
-              uri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
+              uri:
+                user?.avatar ||
+                'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
             }}
             style={styles.avatar}
           />
           <View style={styles.profileInfo}>
             <View style={styles.nameRow}>
-              <Text style={[styles.name, { color: colors.text }]}>Alex Rahman</Text>
-              <View style={[styles.verifiedBadge, { backgroundColor: colors.primaryLight }]}>
-                <Ionicons name="shield-checkmark" size={12} color={colors.primary} />
-                <Text style={[styles.verifiedText, { color: colors.primary }]}>
-                  {subscriptionTier.toUpperCase()}
+              <Text style={[styles.name, { color: colors.text }]}>
+                {user?.displayName || user?.username || 'Guest Learner'}
+              </Text>
+              <View
+                style={[
+                  styles.verifiedBadge,
+                  { backgroundColor: isAuthenticated ? colors.primaryLight : colors.surfaceSubtle },
+                ]}
+              >
+                <Ionicons
+                  name={isAuthenticated ? 'checkmark-circle' : 'person-outline'}
+                  size={12}
+                  color={isAuthenticated ? colors.primary : colors.textMuted}
+                />
+                <Text
+                  style={[
+                    styles.verifiedText,
+                    { color: isAuthenticated ? colors.primary : colors.textMuted },
+                  ]}
+                >
+                  {isAuthenticated ? 'WORDPRESS' : 'GUEST'}
                 </Text>
               </View>
             </View>
-            <Text style={[styles.email, { color: colors.textMuted }]}>alex.rahman@enterprise.com</Text>
+            <Text style={[styles.email, { color: colors.textMuted }]}>
+              {user?.email || 'Explore catalog & courses freely'}
+            </Text>
             <Text style={[styles.role, { color: colors.secondary }]}>
-              Senior Business Strategist • {activeWorkspace.name}
+              {isAuthenticated
+                ? `Connected to thrivingskill.com • ${activeWorkspace.name}`
+                : 'Thriving Skills Online Platform'}
             </Text>
           </View>
         </View>
@@ -290,14 +314,47 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
             <TouchableOpacity
               style={styles.settingRow}
-              onPress={() => Alert.alert('Thriving Skills Platform', 'Thriving Skills — Empowering People, Building a Skilled Nation.\nVersion 2.0.0 (Industry-Grade Edition)')}
+              onPress={() => Alert.alert('Thriving Skills Platform', 'Thriving Skills — Empowering People, Building a Skilled Nation.\nConnected to https://thrivingskill.com via WordPress & LearnPress REST API.')}
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="information-circle-outline" size={20} color={colors.text} />
                 <Text style={[styles.settingLabel, { color: colors.text }]}>About Thriving Skills</Text>
               </View>
-              <Text style={[styles.versionText, { color: colors.textMuted }]}>v2.0.0 SaaS</Text>
+              <Text style={[styles.versionText, { color: colors.textMuted }]}>v2.0 WordPress</Text>
             </TouchableOpacity>
+
+            {/* Auth Action Row */}
+            {isAuthenticated ? (
+              <TouchableOpacity
+                style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: colors.borderSubtle }]}
+                onPress={() => {
+                  Alert.alert('Sign Out', 'Are you sure you want to sign out from your WordPress account?', [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Sign Out', style: 'destructive', onPress: logout },
+                  ]);
+                }}
+              >
+                <View style={styles.settingLeft}>
+                  <Ionicons name="log-out-outline" size={20} color={colors.danger} />
+                  <Text style={[styles.settingLabel, { color: colors.danger, fontWeight: '700' }]}>
+                    Sign Out from WordPress
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: colors.borderSubtle }]}
+                onPress={() => setAuthModalVisible(true)}
+              >
+                <View style={styles.settingLeft}>
+                  <Ionicons name="log-in-outline" size={20} color={colors.primary} />
+                  <Text style={[styles.settingLabel, { color: colors.primary, fontWeight: '700' }]}>
+                    Sign In with Thriving Skills Account
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </ScrollView>

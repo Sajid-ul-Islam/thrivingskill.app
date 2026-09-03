@@ -2,16 +2,18 @@ import React from 'react';
 import { ScrollView, Text, TouchableOpacity, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CATEGORIES } from '../data/mockData';
-import { CategoryId } from '../types';
+import { Category, CategoryId } from '../types';
 import { useTheme } from '../context/ThemeContext';
 
 interface CategoryPillsProps {
   selectedId: CategoryId;
   onSelect: (id: CategoryId) => void;
+  categories?: Category[];
 }
 
-export const CategoryPills: React.FC<CategoryPillsProps> = ({ selectedId, onSelect }) => {
+export const CategoryPills: React.FC<CategoryPillsProps> = ({ selectedId, onSelect, categories }) => {
   const { colors } = useTheme();
+  const list: Category[] = categories && categories.length > 0 ? categories : CATEGORIES;
 
   return (
     <ScrollView
@@ -19,7 +21,7 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({ selectedId, onSele
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.container}
     >
-      {CATEGORIES.map((cat) => {
+      {list.map((cat) => {
         const isSelected = selectedId === cat.id;
         return (
           <TouchableOpacity

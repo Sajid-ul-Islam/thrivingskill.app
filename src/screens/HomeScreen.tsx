@@ -8,6 +8,8 @@ import {
   Image,
   TextInput,
   Alert,
+  RefreshControl,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -48,6 +50,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const { colors, isDark } = useTheme();
   const {
     courses,
+    categories,
+    blogPosts,
+    isLoadingCourses,
+    refreshCourses,
     selectedCategory,
     setSelectedCategory,
     searchQuery,
@@ -82,7 +88,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         onOpenNotifications={onOpenNotifications}
       />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoadingCourses}
+            onRefresh={refreshCourses}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
+      >
         {/* Authentic Thriving Skills Hero Banner */}
         <View
           style={[
@@ -265,6 +282,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         <View style={styles.categorySection}>
           <CategoryPills
             selectedId={selectedCategory}
+            categories={categories}
             onSelect={(id) => {
               setSelectedCategory(id);
               if (id !== 'all') {
@@ -435,6 +453,61 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             ))}
           </ScrollView>
         </View>
+
+        {/* Career Insights & Articles (Live from WordPress) */}
+        {blogPosts && blogPosts.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>Career Insights & Articles</Text>
+                <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
+                  Live publications from Thriving Skills Editorial
+                </Text>
+              </View>
+            </View>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.articlesScroll}>
+              {blogPosts.map((post) => (
+                <TouchableOpacity
+                  key={post.id}
+                  style={[
+                    styles.articleCard,
+                    {
+                      backgroundColor: colors.surfaceCard,
+                      borderColor: colors.border,
+                      shadowColor: colors.cardShadow,
+                    },
+                  ]}
+                  onPress={() => post.link && Linking.openURL(post.link).catch(() => {})}
+                  activeOpacity={0.88}
+                >
+                  {post.featuredImageUrl ? (
+                    <Image source={{ uri: post.featuredImageUrl }} style={styles.articleThumb} />
+                  ) : (
+                    <View style={[styles.articleThumbPlaceholder, { backgroundColor: colors.primary + '15' }]}>
+                      <Ionicons name="newspaper-outline" size={32} color={colors.primary} />
+                    </View>
+                  )}
+                  <View style={styles.articleBody}>
+                    <View style={styles.articleMeta}>
+                      <Text style={[styles.articleDate, { color: colors.primary }]}>{post.date}</Text>
+                      <Text style={[styles.articleAuthor, { color: colors.textMuted }]}>• {post.authorName}</Text>
+                    </View>
+                    <Text style={[styles.articleTitle, { color: colors.text }]} numberOfLines={2}>
+                      {post.title}
+                    </Text>
+                    <Text style={[styles.articleExcerpt, { color: colors.textMuted }]} numberOfLines={2}>
+                      {post.excerpt}
+                    </Text>
+                    <View style={styles.articleFooter}>
+                      <Text style={[styles.articleReadMore, { color: colors.primary }]}>Read on Web →</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
 
         {/* Trusted Corporate Clients */}
         <View style={styles.trustSection}>
@@ -798,5 +871,66 @@ const styles = StyleSheet.create({
   clientName: {
     fontSize: 12,
     fontWeight: '600',
+  },
+  articlesScroll: {
+    paddingHorizontal: 16,
+    gap: 14,
+    paddingBottom: 4,
+  },
+  articleCard: {
+    width: 270,
+    borderRadius: 16,
+    borderWidth: 1,
+    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  articleThumb: {
+    width: '100%',
+    height: 120,
+    backgroundColor: '#1E293B',
+  },
+  articleThumbPlaceholder: {
+    width: '100%',
+    height: 120,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  articleBody: {
+    padding: 12,
+  },
+  articleMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    gap: 4,
+  },
+  articleDate: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  articleAuthor: {
+    fontSize: 10,
+  },
+  articleTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 18,
+    marginBottom: 6,
+  },
+  articleExcerpt: {
+    fontSize: 11,
+    lineHeight: 15,
+    marginBottom: 8,
+  },
+  articleFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  articleReadMore: {
+    fontSize: 11,
+    fontWeight: '700',
   },
 });

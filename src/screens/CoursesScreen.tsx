@@ -7,6 +7,7 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -32,8 +33,16 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   onOpenNotifications,
 }) => {
   const { colors } = useTheme();
-  const { courses, selectedCategory, setSelectedCategory, searchQuery, setSearchQuery } =
-    useLearning();
+  const {
+    courses,
+    categories,
+    isLoadingCourses,
+    refreshCourses,
+    selectedCategory,
+    setSelectedCategory,
+    searchQuery,
+    setSearchQuery,
+  } = useLearning();
 
   const [selectedLevel, setSelectedLevel] = useState<LevelFilter>('All');
   const [selectedSort, setSelectedSort] = useState<SortOption>('popular');
@@ -85,7 +94,18 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
         onOpenNotifications={onOpenNotifications}
       />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoadingCourses}
+            onRefresh={refreshCourses}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
+      >
         {/* Search Header */}
         <View style={styles.searchSection}>
           <View
@@ -111,7 +131,11 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
         </View>
 
         {/* Categories Pills */}
-        <CategoryPills selectedId={selectedCategory} onSelect={setSelectedCategory} />
+        <CategoryPills
+          selectedId={selectedCategory}
+          categories={categories}
+          onSelect={setSelectedCategory}
+        />
 
         {/* Filters and View Mode Controls */}
         {!isBundleView && (

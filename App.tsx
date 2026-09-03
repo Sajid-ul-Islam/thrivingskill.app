@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { LearningProvider, useLearning } from './src/context/LearningContext';
 import { SaaSProvider, useSaaS } from './src/context/SaaSContext';
+import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { RootTab, ActiveScreen } from './src/types';
 
 import { HomeScreen } from './src/screens/HomeScreen';
@@ -23,11 +24,13 @@ import { SubscriptionModal } from './src/components/SubscriptionModal';
 import { NotificationModal } from './src/components/NotificationModal';
 import { SkillAssessmentModal } from './src/components/SkillAssessmentModal';
 import { CorporateInquiryModal } from './src/components/CorporateInquiryModal';
+import { AuthModal } from './src/components/AuthModal';
 
 const MainAppContent: React.FC = () => {
   const { colors, isDark } = useTheme();
   const { userProgress } = useLearning();
   const { activeWorkspace, unreadNotificationsCount } = useSaaS();
+  const { isAuthModalVisible, setAuthModalVisible } = useAuth();
 
   const [activeTab, setActiveTab] = useState<RootTab>('Home');
   const [activeScreen, setActiveScreen] = useState<ActiveScreen>({
@@ -241,6 +244,12 @@ const MainAppContent: React.FC = () => {
         visible={corporateModalVisible}
         onClose={() => setCorporateModalVisible(false)}
       />
+
+      {/* WordPress LearnPress Auth Modal */}
+      <AuthModal
+        visible={isAuthModalVisible}
+        onClose={() => setAuthModalVisible(false)}
+      />
     </SafeAreaView>
   );
 };
@@ -249,11 +258,13 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
-        <SaaSProvider>
-          <LearningProvider>
-            <MainAppContent />
-          </LearningProvider>
-        </SaaSProvider>
+        <AuthProvider>
+          <SaaSProvider>
+            <LearningProvider>
+              <MainAppContent />
+            </LearningProvider>
+          </SaaSProvider>
+        </AuthProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

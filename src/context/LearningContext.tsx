@@ -1,7 +1,13 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Course, UserProgress, Certificate, Note, CategoryId, Workshop } from '../types';
-import { COURSES, INITIAL_CERTIFICATES, WORKSHOPS } from '../data/mockData';
+import { Course, UserProgress, Certificate, Note, CategoryId, Workshop, Category, WpPost } from '../types';
+import { COURSES as INITIAL_COURSES, INITIAL_CERTIFICATES, WORKSHOPS, CATEGORIES as INITIAL_CATEGORIES } from '../data/mockData';
+import {
+  fetchWpCourses,
+  fetchWpCategories,
+  fetchWpPosts,
+  fetchWpCourseDetail,
+} from '../services/wordpressApi';
 
 const PROGRESS_STORAGE_KEY = '@thriving_skill_progress';
 const BOOKMARKS_STORAGE_KEY = '@thriving_skill_bookmarks';
@@ -10,6 +16,9 @@ const WORKSHOPS_STORAGE_KEY = '@thriving_skill_rsvps';
 
 interface LearningContextType {
   courses: Course[];
+  categories: Category[];
+  blogPosts: WpPost[];
+  isLoadingCourses: boolean;
   userProgress: Record<string, UserProgress>;
   bookmarks: string[];
   certificates: Certificate[];
@@ -19,6 +28,8 @@ interface LearningContextType {
   searchQuery: string;
   setSelectedCategory: (cat: CategoryId) => void;
   setSearchQuery: (query: string) => void;
+  refreshCourses: () => Promise<void>;
+  loadCourseDetail: (courseId: string) => Promise<Course>;
   enrollInCourse: (courseId: string) => void;
   markLessonCompleted: (courseId: string, lessonId: string) => void;
   toggleBookmark: (courseId: string) => void;
@@ -36,12 +47,22 @@ interface LearningContextType {
 const LearningContext = createContext<LearningContextType>({} as LearningContextType);
 
 export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [courses] = useState<Course[]>(COURSES);
+  const [courses, setCourses] = useState<Course[]>(INITIAL_COURSES);
+  const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
+  const [blogPosts, setBlogPosts] = useState<WpPost[]>([]);
+  const [isLoadingCourses, setIsLoadingCourses] = useState<boolean>(false);
   const [selectedCategory, setSelectedCategory] = useState<CategoryId>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  
-  // Initial default enrollment in course-1 for rich instant interactive demo
+
+  // Initial user progress for rich instant interactive demo
   const [userProgress, setUserProgress] = useState<Record<string, UserProgress>>({
+    '86355': {
+      courseId: '86355',
+      enrolledDate: '2026-08-15',
+      completedLessonIds: ['86356'],
+      lastAccessedLessonId: '86357',
+      isCompleted: false,
+    },
     'course-1': {
       courseId: 'course-1',
       enrolledDate: '2026-08-10',
@@ -51,21 +72,47 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     },
   });
 
-  const [bookmarks, setBookmarks] = useState<string[]>(['course-2']);
+  const [bookmarks, setBookmarks] = useState<string[]>(['86335', '85330']);
   const [certificates, setCertificates] = useState<Certificate[]>(INITIAL_CERTIFICATES);
   const [notes, setNotes] = useState<Note[]>([
     {
       id: 'note-1',
-      courseId: 'course-1',
-      lessonId: 'l2',
-      timestamp: '08:45',
-      text: 'RTCC Prompt Model: Role + Task + Context + Constraints ensures reliable structured output for financial reports.',
-      createdAt: '2026-08-12',
+      courseId: '86355',
+      lessonId: '86356',
+      timestamp: '01:15',
+      text: 'Emotional Intelligence consists of Self-Awareness, Self-Regulation, Motivation, Empathy, and Social Skills.',
+      createdAt: '2026-08-16',
     },
   ]);
   const [rsvpWorkshops, setRsvpWorkshops] = useState<string[]>(['ws-1']);
 
-  // Load from local storage
+  // Fetch live courses, categories, and blog posts from WordPress
+  const loadWordPressData = useCallback(async () => {
+    setIsLoadingCourses(true);
+    try {
+      const [wpCourses, wpCategories, wpPosts] = await Promise.allSettled([
+        fetchWpCourses({ perPage: 40 }),
+        fetchWpCategories(),
+        fetchWpPosts({ perPage: 6 }),
+      ]);
+
+      if (wpCourses.status === 'fulfilled' && wpCourses.value.length > 0) {
+        setCourses(wpCourses.value);
+      }
+      if (wpCategories.status === 'fulfilled' && wpCategories.value.length > 0) {
+        setCategories(wpCategories.value);
+      }
+      if (wpPosts.status === 'fulfilled' && wpPosts.value.length > 0) {
+        setBlogPosts(wpPosts.value);
+      }
+    } catch (err) {
+      console.warn('Error fetching WordPress backend data:', err);
+    } finally {
+      setIsLoadingCourses(false);
+    }
+  }, []);
+
+  // On mount: load local storage + fetch live WP data
   useEffect(() => {
     (async () => {
       try {
@@ -83,8 +130,36 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       } catch {
         // Safe fallback
       }
+
+      // Fetch live data from WordPress backend
+      loadWordPressData();
     })();
-  }, []);
+  }, [loadWordPressData]);
+
+  const refreshCourses = async () => {
+    await loadWordPressData();
+  };
+
+  const loadCourseDetail = async (courseId: string): Promise<Course> => {
+    try {
+      const detail = await fetchWpCourseDetail(courseId);
+      // Update in our courses list if it has richer sections
+      setCourses((prev) => {
+        const idx = prev.findIndex((c) => c.id === courseId);
+        if (idx >= 0) {
+          const next = [...prev];
+          next[idx] = detail;
+          return next;
+        }
+        return [detail, ...prev];
+      });
+      return detail;
+    } catch {
+      const existing = courses.find((c) => c.id === courseId);
+      if (existing) return existing;
+      throw new Error('Course not found');
+    }
+  };
 
   const saveState = async (key: string, data: any) => {
     try {
@@ -94,7 +169,8 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const enrollInCourse = (courseId: string) => {
     if (userProgress[courseId]) return;
-    const firstLessonId = courses.find((c) => c.id === courseId)?.modules[0]?.lessons[0]?.id;
+    const course = courses.find((c) => c.id === courseId);
+    const firstLessonId = course?.modules[0]?.lessons[0]?.id || `les-${courseId}-1`;
     const updated = {
       ...userProgress,
       [courseId]: {
@@ -126,7 +202,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       : [...current.completedLessonIds, lessonId];
 
     const totalLessons = course.modules.reduce((acc, m) => acc + m.lessons.length, 0);
-    const isCompleted = newCompleted.length >= totalLessons;
+    const isCompleted = totalLessons > 0 && newCompleted.length >= totalLessons;
 
     let certId = current.certificateId;
     if (isCompleted && !certId) {
@@ -135,11 +211,11 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         id: `cert-${Date.now()}`,
         courseId: course.id,
         courseTitle: course.title,
-        studentName: 'Alex Rahman',
+        studentName: 'Sajid Islam',
         issueDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
         credentialId: certId,
         instructorName: course.instructor.name,
-        verificationUrl: `https://thrivingskill.app/verify/${certId}`,
+        verificationUrl: `https://thrivingskill.com/verify/${certId}`,
       };
       setCertificates((prev) => [newCert, ...prev]);
     }
@@ -222,6 +298,9 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     <LearningContext.Provider
       value={{
         courses,
+        categories,
+        blogPosts,
+        isLoadingCourses,
         userProgress,
         bookmarks,
         certificates,
@@ -231,6 +310,8 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         searchQuery,
         setSelectedCategory,
         setSearchQuery,
+        refreshCourses,
+        loadCourseDetail,
         enrollInCourse,
         markLessonCompleted,
         toggleBookmark,

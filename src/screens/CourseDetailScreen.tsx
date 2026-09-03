@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -29,6 +30,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
   const { colors, isDark } = useTheme();
   const {
     getCourseById,
+    loadCourseDetail,
     userProgress,
     enrollInCourse,
     isBookmarked,
@@ -37,6 +39,22 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
   } = useLearning();
 
   const [activeTab, setActiveTab] = useState<'curriculum' | 'instructor' | 'reviews'>('curriculum');
+  const [loadingDetail, setLoadingDetail] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    if (courseId) {
+      setLoadingDetail(true);
+      loadCourseDetail(courseId)
+        .catch(() => {})
+        .finally(() => {
+          if (isMounted) setLoadingDetail(false);
+        });
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [courseId]);
 
   const course = getCourseById(courseId);
   if (!course) {
@@ -329,14 +347,18 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
       >
         {!isEnrolled ? (
           <View style={styles.bottomPriceCol}>
-            <Text style={[styles.bottomPriceLabel, { color: colors.textMuted }]}>Total Price</Text>
+            <Text style={[styles.bottomPriceLabel, { color: colors.textMuted }]}>Total Course Fee</Text>
             <View style={styles.priceRow}>
               <Text style={[styles.bottomPrice, { color: colors.primary }]}>
-                ${course.price.toFixed(2)}
+                {course.priceBdt ? `৳${course.priceBdt.toLocaleString()}` : `$${course.price.toFixed(2)}`}
               </Text>
-              <Text style={[styles.bottomOriginalPrice, { color: colors.textMuted }]}>
-                ${course.originalPrice.toFixed(2)}
-              </Text>
+              {(course.originalPriceBdt || course.originalPrice) && (
+                <Text style={[styles.bottomOriginalPrice, { color: colors.textMuted }]}>
+                  {course.originalPriceBdt
+                    ? `৳${course.originalPriceBdt.toLocaleString()}`
+                    : `$${course.originalPrice.toFixed(2)}`}
+                </Text>
+              )}
             </View>
           </View>
         ) : (

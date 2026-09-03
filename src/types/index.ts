@@ -8,7 +8,8 @@ export type CategoryId =
   | 'marketing'
   | 'supply-chain'
   | 'research'
-  | 'career-track';
+  | 'career-track'
+  | (string & {});
 
 export interface Category {
   id: CategoryId;
@@ -17,6 +18,29 @@ export interface Category {
   icon: string;
   count: number;
   color: string;
+  slug?: string;
+}
+
+export interface WpUser {
+  id: number | string;
+  username: string;
+  email: string;
+  displayName: string;
+  avatar?: string;
+  token?: string;
+  roles?: string[];
+}
+
+export interface WpPost {
+  id: number;
+  title: string;
+  excerpt: string;
+  content: string;
+  date: string;
+  link: string;
+  authorName: string;
+  featuredImageUrl?: string;
+  categories: string[];
 }
 
 export interface Instructor {
