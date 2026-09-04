@@ -94,7 +94,7 @@ const MainAppContent: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top', 'left', 'right']}>
-      <StatusBar style={isDark ? 'light' : 'dark'} backgroundColor={colors.surface} />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
 
       <View style={styles.screenContainer}>
         {activeScreen.name === 'CourseDetail' ? (

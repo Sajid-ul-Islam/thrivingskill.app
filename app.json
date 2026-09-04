@@ -21,16 +21,11 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      },
-      "splash": {
-        "image": "./assets/splash-icon.png",
-        "resizeMode": "contain",
-        "backgroundColor": "#E6F4FE"
-      },
-      "statusBar": {
-        "barStyle": "dark-content",
-        "backgroundColor": "#E6F4FE"
       }
+    },
+    "androidStatusBar": {
+      "barStyle": "dark-content",
+      "backgroundColor": "#E6F4FE"
     },
     "web": {
       "favicon": "./assets/favicon.png"

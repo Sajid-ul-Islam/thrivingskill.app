@@ -589,7 +589,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   playerOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'space-between',
     padding: 14,
