@@ -9,7 +9,10 @@ import {
   Linking,
   ScrollView,
   RefreshControl,
+  Platform,
+  StatusBar as RNStatusBar,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useYouTube } from '../context/YouTubeContext';
@@ -30,6 +33,11 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const { videos, savedVideos, isLoading, refreshVideos, playVideo } = useYouTube();
+  const insets = useSafeAreaInsets();
+  const topInset = Math.max(
+    insets.top,
+    Platform.OS === 'android' ? (RNStatusBar.currentHeight || 24) : 0
+  );
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<VideoCategory>('all');
@@ -114,7 +122,16 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Top Header */}
-      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: colors.surface,
+            borderBottomColor: colors.border,
+            paddingTop: topInset + 6,
+          },
+        ]}
+      >
         <TouchableOpacity
           style={[styles.backBtn, { backgroundColor: isDark ? '#2C2C2E' : '#F3F4F6' }]}
           onPress={onBack}
