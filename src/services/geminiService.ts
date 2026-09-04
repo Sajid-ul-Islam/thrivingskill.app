@@ -159,7 +159,8 @@ export class GeminiService {
   public static async generateContent(
     userPrompt: string,
     activeSources: NotebookSource[] = [],
-    history: { role: 'user' | 'assistant'; text: string }[] = []
+    history: { role: 'user' | 'assistant'; text: string }[] = [],
+    modeInstruction?: string
   ): Promise<GeminiResponse> {
     const apiKey = await this.getApiKey();
 
@@ -176,6 +177,10 @@ export class GeminiService {
     let systemText =
       'You are the official executive AI Assistant for ThrivingSkills (thrivingskill.app), Bangladesh\'s premier 21st-century skill development and executive learning platform.\n' +
       'Your tone is professional, insightful, actionable, and encouraging. You support both English and Bangla queries fluently.\n';
+
+    if (modeInstruction && modeInstruction.trim().length > 0) {
+      systemText += `\n--- ACTIVE SPECIALIZED ROLE ---\n${modeInstruction.trim()}\n`;
+    }
 
     if (activeSources.length > 0) {
       systemText +=

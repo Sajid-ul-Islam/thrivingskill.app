@@ -11,6 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../context/ThemeContext';
 import { useSaaS } from '../context/SaaSContext';
 import { Header } from '../components/Header';
@@ -40,6 +41,124 @@ interface SkillCopilotScreenProps {
   onOpenDrawer?: () => void;
 }
 
+export type AssistantRole =
+  | 'all_tutor'
+  | 'agentic_ai'
+  | 'excel_bi'
+  | 'financial_model'
+  | 'corporate_comm'
+  | 'bangla_expert';
+
+interface RoleConfig {
+  id: AssistantRole;
+  title: string;
+  badge: string;
+  icon: string;
+  iconColor: string;
+  placeholder: string;
+  systemInstruction: string;
+  quickPrompts: string[];
+}
+
+const ASSISTANT_ROLES: RoleConfig[] = [
+  {
+    id: 'all_tutor',
+    title: 'Executive Tutor',
+    badge: '🎓 ALL-ROUND',
+    icon: 'school',
+    iconColor: '#6366F1',
+    placeholder: 'Ask any question across study notes & curriculum...',
+    systemInstruction:
+      'Role: Master Executive Coach & Learning Facilitator. Provide structured, executive-grade answers using BLUF (Bottom Line Up Front), bullet points, and actionable takeaways.',
+    quickPrompts: [
+      'Explain the Minto Pyramid BLUF method',
+      'Generate a 1-page executive summary template',
+      'How to conduct a McKinsey-style 80/20 analysis',
+      'Quiz me on my active study materials',
+    ],
+  },
+  {
+    id: 'agentic_ai',
+    title: 'Agentic AI & Tech',
+    badge: '🤖 2026 AI ARCHITECT',
+    icon: 'hardware-chip',
+    iconColor: '#8B5CF6',
+    placeholder: 'Ask about Agentic AI, LangGraph, CrewAI, Python...',
+    systemInstruction:
+      'Role: Lead AI Solutions Architect & LLM Engineer. Specialize in multi-agent orchestration (LangGraph, CrewAI), Agentic RAG architectures, prompt chaining, tool calling, and enterprise AI governance.',
+    quickPrompts: [
+      'Design a LangGraph multi-agent supervisor pattern',
+      'Compare LangGraph vs CrewAI for enterprise workflows',
+      'Write a self-correcting prompt template with schemas',
+      'How to evaluate hallucination rates in Agentic RAG',
+    ],
+  },
+  {
+    id: 'excel_bi',
+    title: 'MS Excel & Power BI',
+    badge: '📊 DATA & DAX',
+    icon: 'grid',
+    iconColor: '#059669',
+    placeholder: 'Ask for formulas, DAX measures, Power Query...',
+    systemInstruction:
+      'Role: Lead Microsoft MVP & Business Intelligence Specialist. Provide clean, copy-pasteable Excel formulas (XLOOKUP, LAMBDA, LET), DAX measures for Power BI, and Power Query M-code snippets with step-by-step walkthroughs.',
+    quickPrompts: [
+      'Write an advanced XLOOKUP with dynamic array spill',
+      'Create a Power BI DAX measure for YoY % growth',
+      'Explain how to optimize slow Power Query merges',
+      'Build a dynamic KPI card formula for dashboards',
+    ],
+  },
+  {
+    id: 'financial_model',
+    title: 'Financial Modeling',
+    badge: '📈 DCF & VALUATION',
+    icon: 'stats-chart',
+    iconColor: '#0EA5E9',
+    placeholder: 'Ask about DCF, WACC, EBITDA, balance sheets...',
+    systemInstruction:
+      'Role: Senior Investment Banking & Financial Modeling Analyst. Specialize in DCF terminal value audits, sensitivity tables, working capital schedules, and three-statement financial modeling.',
+    quickPrompts: [
+      'Audit terminal value exit multiple vs Gordon growth',
+      'Explain working capital adjustments in free cash flow',
+      'How to structure a dynamic 3-statement forecast',
+      'Walk through a SaaS revenue waterfall model',
+    ],
+  },
+  {
+    id: 'corporate_comm',
+    title: 'Leadership & Pitch',
+    badge: '💼 C-SUITE READY',
+    icon: 'briefcase',
+    iconColor: '#F59E0B',
+    placeholder: 'Ask for pitch decks, board emails, negotiation...',
+    systemInstruction:
+      'Role: Senior Corporate Leadership Strategist. Help craft high-stakes board presentations, persuasive elevator pitches, strategic client emails, and executive compensation negotiation frameworks.',
+    quickPrompts: [
+      'Draft a concise email to the Board pitching a new AI initiative',
+      'Framework for answering "Tell me about yourself" in CXO interview',
+      'How to negotiate a corporate package with performance equity',
+      'Structure a high-stakes 5-minute sales pitch',
+    ],
+  },
+  {
+    id: 'bangla_expert',
+    title: 'বাংলা এক্সপার্ট',
+    badge: '🇧🇩 বাংলা লার্নিং',
+    icon: 'chatbubbles',
+    iconColor: '#10B981',
+    placeholder: 'বাংলায় যেকোনো প্রশ্ন বা স্টাডি নোট সম্পর্কে জিজ্ঞাসা করুন...',
+    systemInstruction:
+      'ভূমিকা: থ্রাইভিং স্কিলসের সিনিয়র লার্নিং মেন্টর। সম্পূর্ণ পরিষ্কার ও সাবলীল বাংলায় উত্তর দিন। পেশাদার ও উৎসাহব্যঞ্জক টোনে কনসেপ্ট ব্যাখ্যা করুন।',
+    quickPrompts: [
+      'আজকের পাঠ্য বিষয়ের একটি সহজ বাংলা সারসংক্ষেপ দিন',
+      'ক্যারিয়ার উন্নয়নে এআই কীভাবে কাজে লাগাব?',
+      'একটি ব্যবসায়িক প্রস্তাবনার ৫টি প্রধান অংশ কী কী?',
+      'চাকরির ইন্টারভিউতে কীভাবে ভালো প্রস্তুতি নেব?',
+    ],
+  },
+];
+
 export const SkillCopilotScreen: React.FC<SkillCopilotScreenProps> = ({
   onOpenSubscription,
   onOpenNotifications,
@@ -48,6 +167,13 @@ export const SkillCopilotScreen: React.FC<SkillCopilotScreenProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const { clearCopilotHistory } = useSaaS();
+
+  // Active Role State
+  const [selectedRole, setSelectedRole] = useState<AssistantRole>('all_tutor');
+  const currentRoleConfig = ASSISTANT_ROLES.find((r) => r.id === selectedRole) || ASSISTANT_ROLES[0];
+
+  // Feedback states
+  const [feedbackMap, setFeedbackMap] = useState<{ [id: string]: 'up' | 'down' | undefined }>({});
 
   // Google Gemini API state
   const [isApiKeyModalVisible, setIsApiKeyModalVisible] = useState(false);
@@ -64,7 +190,7 @@ export const SkillCopilotScreen: React.FC<SkillCopilotScreenProps> = ({
       sender: 'assistant',
       text: `Welcome to **ThrivingSkills AI Assistant** 🤖⚡
 
-Powered by **Google Gemini** and source-grounded in your **verified course syllabi, YouTube masterclass transcripts, and uploaded study notes**.
+Powered by **Google Gemini 2.5** and source-grounded in your **verified course syllabi, YouTube masterclass transcripts, and uploaded study notes**.
 
 Every answer can be generated using your personal **Google Gemini API Key** or grounded locally with verified citations.
 
@@ -81,6 +207,10 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
 
   const [messageCitations, setMessageCitations] = useState<{
     [msgId: string]: NotebookCitation[];
+  }>({});
+
+  const [messageModels, setMessageModels] = useState<{
+    [msgId: string]: string;
   }>({});
 
   const [sources, setSources] = useState<NotebookSource[]>([]);
@@ -225,7 +355,12 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
           text: m.text,
         }));
 
-        const geminiRes = await GeminiService.generateContent(text, activeSources, historyTurns);
+        const geminiRes = await GeminiService.generateContent(
+          text,
+          activeSources,
+          historyTurns,
+          currentRoleConfig.systemInstruction
+        );
 
         if (geminiRes.isRealApi && geminiRes.text) {
           const assistantMsgId = `ai-${Date.now()}`;
@@ -241,6 +376,11 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
               'Summarize Key Takeaways',
             ],
           };
+
+          setMessageModels((prev) => ({
+            ...prev,
+            [assistantMsgId]: geminiRes.model || 'gemini-2.5-flash',
+          }));
 
           setMessages((prev) => [...prev, assistantMsg]);
           setIsTyping(false);
@@ -268,6 +408,11 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
         suggestedActions: finalActions,
       };
 
+      setMessageModels((prev) => ({
+        ...prev,
+        [assistantMsgId]: 'NotebookLM Grounded',
+      }));
+
       if (citations && citations.length > 0) {
         setMessageCitations((prev) => ({
           ...prev,
@@ -288,13 +433,28 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
 
   const handlePinToNotes = async (msg: CopilotMessage) => {
     const title = msg.text.slice(0, 40).replace(/[^a-zA-Z0-9 ]/g, '') + '...';
-    await NotebookLMService.saveNote(`📌 ${title}`, msg.text, ['Pinned Insight', 'NotebookLM']);
+    await NotebookLMService.saveNote(`📌 ${title}`, msg.text, ['Pinned Insight', currentRoleConfig.title]);
     await reloadNotes();
     Alert.alert('Pinned to Notes 📌', 'Insight saved to your personal notebook notes.');
   };
 
   const handleCopyText = (msgText: string) => {
     Alert.alert('Copied 📋', 'Copied text to clipboard. Ready to paste into your notes or deck.');
+  };
+
+  const handleToggleFeedback = (msgId: string, type: 'up' | 'down') => {
+    setFeedbackMap((prev) => ({
+      ...prev,
+      [msgId]: prev[msgId] === type ? undefined : type,
+    }));
+  };
+
+  const handleReadAloud = (text: string) => {
+    const preview = text.slice(0, 120) + '...';
+    Alert.alert(
+      'Audio Readout 🔊',
+      `Speaking key takeaways:\n\n"${preview}"\n\n(Tip: Tap 'Deep Dive' in the Studio Shelf to listen to full 2-host audio podcast!)`
+    );
   };
 
   const handleClearHistory = () => {
@@ -309,7 +469,7 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
             {
               id: `init-${Date.now()}`,
               sender: 'assistant',
-              text: 'Session reset. Notebook sources are still active. How can I assist your study session?',
+              text: `Session reset. Active Persona: **${currentRoleConfig.title}**.\n\nNotebook sources and Google Gemini are ready. How can I assist your learning?`,
               timestamp: 'Just now',
             },
           ]);
@@ -318,11 +478,88 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
     ]);
   };
 
+  /**
+   * Helper to parse and render code blocks with dedicated syntax styling and Copy button
+   */
+  const renderFormattedMessage = (rawText: string, isUser: boolean) => {
+    if (isUser) {
+      return <Text style={styles.userMessageText}>{rawText}</Text>;
+    }
+
+    // Split text by markdown code fences: ```lang ... ```
+    const codeBlockRegex = /```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g;
+    const parts: { type: 'text' | 'code'; content: string; lang?: string }[] = [];
+    let lastIndex = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = codeBlockRegex.exec(rawText)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push({ type: 'text', content: rawText.slice(lastIndex, match.index) });
+      }
+      parts.push({
+        type: 'code',
+        lang: match[1] || 'CODE / FORMULA',
+        content: match[2].trim(),
+      });
+      lastIndex = match.index + match[0].length;
+    }
+
+    if (lastIndex < rawText.length) {
+      parts.push({ type: 'text', content: rawText.slice(lastIndex) });
+    }
+
+    if (parts.length === 0) {
+      return <Text style={[styles.messageText, { color: colors.text }]}>{rawText}</Text>;
+    }
+
+    return (
+      <View style={{ gap: 8 }}>
+        {parts.map((part, pIdx) => {
+          if (part.type === 'code') {
+            return (
+              <View
+                key={pIdx}
+                style={[
+                  styles.codeCard,
+                  {
+                    backgroundColor: isDark ? '#0A0F1D' : '#1E293B',
+                    borderColor: isDark ? '#1E293B' : '#334155',
+                  },
+                ]}
+              >
+                <View style={styles.codeCardHeader}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                    <Ionicons name="terminal-outline" size={12} color="#60A5FA" />
+                    <Text style={styles.codeLangText}>{part.lang?.toUpperCase()}</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.copyCodeBtn}
+                    onPress={() => handleCopyText(part.content)}
+                    hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                  >
+                    <Ionicons name="copy-outline" size={12} color="#94A3B8" />
+                    <Text style={styles.copyCodeBtnText}>Copy</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.codeContentText}>{part.content}</Text>
+              </View>
+            );
+          }
+          return (
+            <Text key={pIdx} style={[styles.messageText, { color: colors.text }]}>
+              {part.content}
+            </Text>
+          );
+        })}
+      </View>
+    );
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
         title="AI Assistant"
-        subtitle="Powered by Google Gemini • Grounded Learning"
+        subtitle="Powered by Google Gemini 2.5 • Grounded Learning"
         onOpenSubscription={onOpenSubscription}
         onOpenNotifications={onOpenNotifications}
         onOpenDrawer={onOpenDrawer}
@@ -343,6 +580,12 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
               onPress={() => setIsApiKeyModalVisible(true)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
+              <View
+                style={[
+                  styles.apiStatusDot,
+                  { backgroundColor: hasGoogleKey ? '#10B981' : '#F59E0B' },
+                ]}
+              />
               <Ionicons
                 name="sparkles"
                 size={13}
@@ -354,7 +597,7 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
                   { color: hasGoogleKey ? (isDark ? '#34D399' : '#059669') : colors.text },
                 ]}
               >
-                {hasGoogleKey ? 'Gemini 1.5' : 'Add Key'}
+                {hasGoogleKey ? 'Gemini 2.5 Active' : 'Connect Key'}
               </Text>
             </TouchableOpacity>
 
@@ -373,6 +616,51 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
+        {/* Specialized AI Roles Selector Row */}
+        <View style={[styles.rolesBar, { backgroundColor: colors.surfaceCard, borderBottomColor: colors.border }]}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.rolesScroll}
+          >
+            {ASSISTANT_ROLES.map((role) => {
+              const isSelected = selectedRole === role.id;
+              return (
+                <TouchableOpacity
+                  key={role.id}
+                  style={[
+                    styles.roleChip,
+                    {
+                      backgroundColor: isSelected
+                        ? role.iconColor
+                        : isDark
+                        ? '#1E293B'
+                        : '#F1F5F9',
+                      borderColor: isSelected ? role.iconColor : colors.border,
+                    },
+                  ]}
+                  onPress={() => setSelectedRole(role.id)}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons
+                    name={role.icon as any}
+                    size={13}
+                    color={isSelected ? '#FFFFFF' : role.iconColor}
+                  />
+                  <Text
+                    style={[
+                      styles.roleChipText,
+                      { color: isSelected ? '#FFFFFF' : colors.text },
+                    ]}
+                  >
+                    {role.title}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+
         {/* Source Grounding Status Bar */}
         <View style={[styles.groundingBar, { backgroundColor: colors.surfaceCard, borderBottomColor: colors.border }]}>
           <TouchableOpacity
@@ -382,7 +670,7 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
           >
             <View style={styles.sourcesIndicatorDot} />
             <Text style={[styles.sourcesToggleText, { color: colors.text }]}>
-              {activeSourcesCount} Active Sources
+              {activeSourcesCount} Active Grounding Sources
             </Text>
             <Ionicons name="chevron-forward" size={13} color={colors.textMuted} />
           </TouchableOpacity>
@@ -459,6 +747,8 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
           {messages.map((msg: CopilotMessage) => {
             const isUser = msg.sender === 'user';
             const citations = messageCitations[msg.id];
+            const modelName = messageModels[msg.id];
+            const feedback = feedbackMap[msg.id];
 
             return (
               <View
@@ -469,7 +759,7 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
                 ]}
               >
                 {!isUser && (
-                  <View style={[styles.assistantAvatar, { backgroundColor: colors.primary }]}>
+                  <View style={[styles.assistantAvatar, { backgroundColor: currentRoleConfig.iconColor }]}>
                     <Ionicons name="sparkles" size={13} color="#FFFFFF" />
                   </View>
                 )}
@@ -485,20 +775,29 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
                         ],
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.messageText,
-                      { color: isUser ? '#FFFFFF' : colors.text },
-                    ]}
-                  >
-                    {msg.text}
-                  </Text>
+                  {/* Model Name & Grounding Badge */}
+                  {!isUser && modelName && (
+                    <View style={styles.modelHeaderRow}>
+                      <View style={[styles.modelBadgePill, { backgroundColor: isDark ? '#1E293B' : '#EEF2FF' }]}>
+                        <Ionicons name="hardware-chip-outline" size={11} color={colors.primary} />
+                        <Text style={[styles.modelBadgeText, { color: colors.primary }]}>
+                          {modelName}
+                        </Text>
+                      </View>
+                      <Text style={[styles.roleTagText, { color: colors.textMuted }]}>
+                        • {currentRoleConfig.title}
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* Formatted Content */}
+                  {renderFormattedMessage(msg.text, isUser)}
 
                   {/* Grounded Citations Bar (NotebookLM Signature Feature) */}
                   {!isUser && citations && citations.length > 0 && (
                     <View style={styles.citationsContainer}>
                       <Text style={[styles.citationsLabel, { color: colors.textMuted }]}>
-                        Verified Sources:
+                        Verified Grounding Sources:
                       </Text>
                       <View style={styles.citationsRow}>
                         {citations.map((c) => (
@@ -522,7 +821,7 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
                     </View>
                   )}
 
-                  {/* Message Footer & Pin/Copy Actions */}
+                  {/* Message Footer & Interactive Controls */}
                   <View style={styles.bubbleFooter}>
                     <Text
                       style={[
@@ -535,17 +834,56 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
 
                     {!isUser && (
                       <View style={styles.msgActionsGroup}>
+                        {/* Audio Readout */}
+                        <TouchableOpacity
+                          onPress={() => handleReadAloud(msg.text)}
+                          style={styles.actionIconBtn}
+                          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                        >
+                          <Ionicons name="volume-medium-outline" size={14} color={colors.textMuted} />
+                        </TouchableOpacity>
+
+                        {/* Thumbs Up */}
+                        <TouchableOpacity
+                          onPress={() => handleToggleFeedback(msg.id, 'up')}
+                          style={styles.actionIconBtn}
+                          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                        >
+                          <Ionicons
+                            name={feedback === 'up' ? 'thumbs-up' : 'thumbs-up-outline'}
+                            size={13}
+                            color={feedback === 'up' ? '#10B981' : colors.textMuted}
+                          />
+                        </TouchableOpacity>
+
+                        {/* Thumbs Down */}
+                        <TouchableOpacity
+                          onPress={() => handleToggleFeedback(msg.id, 'down')}
+                          style={styles.actionIconBtn}
+                          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                        >
+                          <Ionicons
+                            name={feedback === 'down' ? 'thumbs-down' : 'thumbs-down-outline'}
+                            size={13}
+                            color={feedback === 'down' ? '#EF4444' : colors.textMuted}
+                          />
+                        </TouchableOpacity>
+
+                        {/* Pin Note */}
                         <TouchableOpacity
                           onPress={() => handlePinToNotes(msg)}
                           style={styles.actionIconBtn}
+                          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                         >
                           <Ionicons name="bookmark-outline" size={13} color={colors.primary} />
                           <Text style={[styles.actionIconText, { color: colors.primary }]}>Pin</Text>
                         </TouchableOpacity>
 
+                        {/* Copy Text */}
                         <TouchableOpacity
                           onPress={() => handleCopyText(msg.text)}
                           style={styles.actionIconBtn}
+                          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                         >
                           <Ionicons name="copy-outline" size={13} color={colors.textMuted} />
                         </TouchableOpacity>
@@ -585,11 +923,42 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
             <View style={[styles.typingIndicator, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
               <Ionicons name="sparkles" size={14} color="#8B5CF6" />
               <Text style={[styles.typingText, { color: colors.textMuted }]}>
-                NotebookLM is retrieving verified course passages...
+                {hasGoogleKey
+                  ? 'Google Gemini 2.5 is synthesizing grounded answer...'
+                  : 'NotebookLM is retrieving verified course passages...'}
               </Text>
             </View>
           )}
         </ScrollView>
+
+        {/* Quick Prompts Inspiration Bar (Role-Specific) */}
+        <View style={[styles.quickPromptsBar, { backgroundColor: colors.surfaceCard, borderTopColor: colors.border }]}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.quickPromptsScroll}
+          >
+            {currentRoleConfig.quickPrompts.map((prompt, idx) => (
+              <TouchableOpacity
+                key={idx}
+                style={[
+                  styles.quickPromptChip,
+                  {
+                    backgroundColor: isDark ? '#1E293B' : '#F1F5F9',
+                    borderColor: colors.border,
+                  },
+                ]}
+                onPress={() => handleSend(prompt)}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="sparkles-outline" size={12} color={currentRoleConfig.iconColor} />
+                <Text style={[styles.quickPromptText, { color: colors.text }]} numberOfLines={1}>
+                  {prompt}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
 
         {/* Input Bar */}
         <View
@@ -598,23 +967,69 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
             { backgroundColor: colors.surfaceCard, borderTopColor: colors.border },
           ]}
         >
-          <TextInput
-            style={[
-              styles.inputField,
-              {
-                backgroundColor: colors.surfaceSubtle,
-                borderColor: colors.border,
-                color: colors.text,
-              },
-            ]}
-            placeholder="Ask grounded questions across active sources..."
-            placeholderTextColor={colors.textMuted}
-            value={inputText}
-            onChangeText={setInputText}
-            multiline
-            maxLength={1000}
-          />
+          {/* Attachment / Sources Button */}
+          <TouchableOpacity
+            style={[styles.attachBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+            onPress={() => setIsSourcesModalVisible(true)}
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          >
+            <Ionicons name="attach" size={18} color={colors.primary} />
+          </TouchableOpacity>
 
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={[
+                styles.inputField,
+                {
+                  backgroundColor: colors.surfaceSubtle,
+                  borderColor: colors.border,
+                  color: colors.text,
+                },
+              ]}
+              placeholder={currentRoleConfig.placeholder}
+              placeholderTextColor={colors.textMuted}
+              value={inputText}
+              onChangeText={setInputText}
+              multiline
+              maxLength={1000}
+            />
+
+            {inputText.length > 0 && (
+              <TouchableOpacity
+                style={styles.clearInputBtn}
+                onPress={() => setInputText('')}
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              >
+                <Ionicons name="close-circle" size={16} color={colors.textMuted} />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Voice Prompt Simulator */}
+          <TouchableOpacity
+            style={[styles.micBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+            onPress={() => {
+              Alert.alert(
+                'Voice Prompt 🎙️',
+                'Dictate your learning query:',
+                [
+                  {
+                    text: 'Ask: "Explain Agentic AI"',
+                    onPress: () => handleSend('Explain what is Agentic AI and how autonomous multi-agents work'),
+                  },
+                  {
+                    text: 'Ask: "Audit DCF Formula"',
+                    onPress: () => handleSend('How to audit a DCF valuation model in Excel?'),
+                  },
+                  { text: 'Cancel', style: 'cancel' },
+                ]
+              );
+            }}
+          >
+            <Ionicons name="mic-outline" size={17} color={colors.textMuted} />
+          </TouchableOpacity>
+
+          {/* Send Button */}
           <TouchableOpacity
             style={[
               styles.sendButton,
@@ -679,11 +1094,16 @@ const styles = StyleSheet.create({
   apiKeyBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
+    gap: 5,
+    paddingHorizontal: 9,
     paddingVertical: 5,
     borderRadius: 14,
     borderWidth: 1,
+  },
+  apiStatusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   apiKeyBtnText: {
     fontSize: 11,
@@ -696,13 +1116,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  rolesBar: {
+    paddingVertical: 7,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  rolesScroll: {
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  roleChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  roleChipText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
   groundingBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderBottomWidth: 1,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   sourcesToggleBtn: {
     flexDirection: 'row',
@@ -743,7 +1184,7 @@ const styles = StyleSheet.create({
   },
   studioShelfArea: {
     paddingVertical: 8,
-    borderBottomWidth: 1,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   studioShelfScroll: {
     paddingHorizontal: 16,
@@ -781,12 +1222,12 @@ const styles = StyleSheet.create({
   messagesContainer: {
     padding: 16,
     paddingBottom: 24,
-    gap: 14,
+    gap: 16,
   },
   messageWrapper: {
     flexDirection: 'row',
+    gap: 10,
     alignItems: 'flex-start',
-    gap: 8,
   },
   userMessageWrapper: {
     justifyContent: 'flex-end',
@@ -795,9 +1236,9 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   assistantAvatar: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 2,
@@ -814,9 +1255,79 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 4,
     borderWidth: 1,
   },
-  messageText: {
-    fontSize: 13.5,
+  modelHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+  },
+  modelBadgePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  modelBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  roleTagText: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  userMessageText: {
+    color: '#FFFFFF',
+    fontSize: 14,
     lineHeight: 20,
+    fontWeight: '500',
+  },
+  messageText: {
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  codeCard: {
+    borderRadius: 10,
+    borderWidth: 1,
+    overflow: 'hidden',
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  codeCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  codeLangText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#94A3B8',
+    letterSpacing: 0.5,
+  },
+  copyCodeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  copyCodeBtnText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#94A3B8',
+  },
+  codeContentText: {
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontSize: 12,
+    lineHeight: 18,
+    color: '#38BDF8',
+    padding: 10,
   },
   citationsContainer: {
     marginTop: 10,
@@ -827,8 +1338,8 @@ const styles = StyleSheet.create({
   citationsLabel: {
     fontSize: 10.5,
     fontWeight: '700',
+    marginBottom: 6,
     textTransform: 'uppercase',
-    marginBottom: 4,
     letterSpacing: 0.5,
   },
   citationsRow: {
@@ -839,16 +1350,16 @@ const styles = StyleSheet.create({
   citationPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 7,
+    paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
-    gap: 5,
-    maxWidth: 220,
+    gap: 6,
+    maxWidth: '100%',
   },
   citeNumberBadge: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -860,6 +1371,7 @@ const styles = StyleSheet.create({
   citationPillText: {
     fontSize: 11,
     fontWeight: '600',
+    maxWidth: 160,
   },
   bubbleFooter: {
     flexDirection: 'row',
@@ -873,7 +1385,7 @@ const styles = StyleSheet.create({
   msgActionsGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
   },
   actionIconBtn: {
     flexDirection: 'row',
@@ -920,29 +1432,76 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontStyle: 'italic',
   },
+  quickPromptsBar: {
+    paddingVertical: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  quickPromptsScroll: {
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  quickPromptChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  quickPromptText: {
+    fontSize: 11.5,
+    fontWeight: '600',
+  },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     padding: 10,
     borderTopWidth: 1,
-    gap: 8,
+    gap: 6,
+  },
+  attachBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inputWrapper: {
+    flex: 1,
+    position: 'relative',
+    justifyContent: 'center',
   },
   inputField: {
-    flex: 1,
-    minHeight: 40,
+    minHeight: 38,
     maxHeight: 100,
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 1,
     paddingHorizontal: 14,
-    paddingTop: 10,
-    paddingBottom: 10,
+    paddingRight: 32,
+    paddingTop: 9,
+    paddingBottom: 9,
     fontSize: 13.5,
     lineHeight: 18,
   },
+  clearInputBtn: {
+    position: 'absolute',
+    right: 8,
+    top: 11,
+  },
+  micBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
   },
