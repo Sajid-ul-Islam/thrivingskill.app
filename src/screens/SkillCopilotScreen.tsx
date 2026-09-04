@@ -29,6 +29,8 @@ import {
   CitationModal,
   NotesModal,
 } from '../components/notebookLM';
+import { GoogleApiKeyModal } from '../components/GoogleApiKeyModal';
+import { GeminiService } from '../services/geminiService';
 import { useAutoScroll } from '../hooks/useAutoScroll';
 
 interface SkillCopilotScreenProps {
@@ -47,14 +49,24 @@ export const SkillCopilotScreen: React.FC<SkillCopilotScreenProps> = ({
   const { colors, isDark } = useTheme();
   const { clearCopilotHistory } = useSaaS();
 
+  // Google Gemini API state
+  const [isApiKeyModalVisible, setIsApiKeyModalVisible] = useState(false);
+  const [hasGoogleKey, setHasGoogleKey] = useState(false);
+
+  useEffect(() => {
+    GeminiService.getApiKey().then((k) => setHasGoogleKey(!!k));
+  }, []);
+
   // Local message state supporting citations
   const [messages, setMessages] = useState<CopilotMessage[]>([
     {
       id: 'msg-init-notebook',
       sender: 'assistant',
-      text: `Welcome to **Thriving NotebookLM Studio** 📓⚡
+      text: `Welcome to **ThrivingSkills AI Assistant** 🤖⚡
 
-I am grounded in your **verified course syllabi, YouTube masterclass transcripts, and uploaded study notes**. Every answer cites exact source passages with zero hallucinations.
+Powered by **Google Gemini** and source-grounded in your **verified course syllabi, YouTube masterclass transcripts, and uploaded study notes**.
+
+Every answer can be generated using your personal **Google Gemini API Key** or grounded locally with verified citations.
 
 Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podcast**, **Study Guide**, or **Active Recall Flashcards**!`,
       timestamp: 'Just now',
@@ -62,7 +74,7 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
         'Audit DCF model terminal value',
         'Generate RTCC prompt blueprint',
         'Explain Minto Pyramid BLUF',
-        'Recommend 30-day skill roadmap',
+        'Connect Google API Key',
       ],
     },
   ]);
@@ -182,6 +194,15 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
     const text = textToSend || inputText;
     if (!text.trim()) return;
 
+    if (text === 'Connect Google API Key') {
+      setIsApiKeyModalVisible(true);
+      return;
+    }
+    if (text === 'Open Sources Drawer') {
+      setIsSourcesModalVisible(true);
+      return;
+    }
+
     const userMsg: CopilotMessage = {
       id: `user-${Date.now()}`,
       sender: 'user',
@@ -193,17 +214,58 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
     setInputText('');
     setIsTyping(true);
 
-    // Query Grounded Knowledge Engine with NotebookLM
-    setTimeout(async () => {
+    try {
+      const apiKey = await GeminiService.getApiKey();
+      const activeSources = await NotebookLMService.getActiveSources();
+
+      // If user provided a Google Gemini API Key, execute live Gemini call
+      if (apiKey) {
+        const historyTurns = messages.map((m) => ({
+          role: m.sender as 'user' | 'assistant',
+          text: m.text,
+        }));
+
+        const geminiRes = await GeminiService.generateContent(text, activeSources, historyTurns);
+
+        if (geminiRes.isRealApi && geminiRes.text) {
+          const assistantMsgId = `ai-${Date.now()}`;
+          const assistantMsg: CopilotMessage = {
+            id: assistantMsgId,
+            sender: 'assistant',
+            text: geminiRes.text,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            suggestedActions: [
+              'Save to Notes',
+              'Explain in deeper detail',
+              'Generate Quiz Question',
+              'Summarize Key Takeaways',
+            ],
+          };
+
+          setMessages((prev) => [...prev, assistantMsg]);
+          setIsTyping(false);
+
+          setTimeout(() => {
+            scrollViewRef.current?.scrollToEnd({ animated: true });
+          }, 100);
+          return;
+        }
+      }
+
+      // Offline / Grounded fallback with NotebookLM citations
       const { reply, citations, suggestedActions } = await NotebookLMService.queryGrounded(text);
       const assistantMsgId = `ai-${Date.now()}`;
+
+      const finalActions = !hasGoogleKey
+        ? ['Connect Google API Key', ...suggestedActions.slice(0, 2)]
+        : suggestedActions;
 
       const assistantMsg: CopilotMessage = {
         id: assistantMsgId,
         sender: 'assistant',
         text: reply,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        suggestedActions,
+        suggestedActions: finalActions,
       };
 
       if (citations && citations.length > 0) {
@@ -219,7 +281,9 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
       setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 100);
-    }, 600);
+    } catch {
+      setIsTyping(false);
+    }
   };
 
   const handlePinToNotes = async (msg: CopilotMessage) => {
@@ -257,18 +321,50 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
-        title="NotebookLM Studio"
-        subtitle="Source-Grounded AI Copilot"
+        title="AI Assistant"
+        subtitle="Powered by Google Gemini • Grounded Learning"
         onOpenSubscription={onOpenSubscription}
         onOpenNotifications={onOpenNotifications}
         onOpenDrawer={onOpenDrawer}
         rightAction={
-          <TouchableOpacity
-            style={[styles.clearBtn, { backgroundColor: colors.surfaceSubtle }]}
-            onPress={handleClearHistory}
-          >
-            <Ionicons name="trash-outline" size={16} color={colors.textMuted} />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <TouchableOpacity
+              style={[
+                styles.apiKeyBtn,
+                {
+                  backgroundColor: hasGoogleKey
+                    ? isDark
+                      ? '#064E3B'
+                      : '#ECFDF5'
+                    : colors.surfaceSubtle,
+                  borderColor: hasGoogleKey ? '#10B981' : colors.border,
+                },
+              ]}
+              onPress={() => setIsApiKeyModalVisible(true)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons
+                name="sparkles"
+                size={13}
+                color={hasGoogleKey ? '#10B981' : colors.primary}
+              />
+              <Text
+                style={[
+                  styles.apiKeyBtnText,
+                  { color: hasGoogleKey ? (isDark ? '#34D399' : '#059669') : colors.text },
+                ]}
+              >
+                {hasGoogleKey ? 'Gemini 1.5' : 'Add Key'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.clearBtn, { backgroundColor: colors.surfaceSubtle }]}
+              onPress={handleClearHistory}
+            >
+              <Ionicons name="trash-outline" size={16} color={colors.textMuted} />
+            </TouchableOpacity>
+          </View>
         }
       />
 
@@ -566,6 +662,12 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
         notes={notes}
         onNotesUpdated={reloadNotes}
       />
+
+      <GoogleApiKeyModal
+        visible={isApiKeyModalVisible}
+        onClose={() => setIsApiKeyModalVisible(false)}
+        onKeyUpdated={(hasKey) => setHasGoogleKey(hasKey)}
+      />
     </View>
   );
 };
@@ -573,6 +675,19 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  apiKeyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  apiKeyBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
   clearBtn: {
     width: 32,

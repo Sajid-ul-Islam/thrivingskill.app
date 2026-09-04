@@ -34,7 +34,7 @@ export const QuickActionDock: React.FC<QuickActionDockProps> = ({
   }[] = [
     {
       id: 'copilot',
-      label: 'AI Copilot',
+      label: 'AI Assistant',
       sublabel: 'Smart Prompt',
       icon: 'sparkles',
       badgeText: 'AI',

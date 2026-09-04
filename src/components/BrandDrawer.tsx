@@ -207,7 +207,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               <View style={[styles.navIconBg, { backgroundColor: '#F0FDF4' }]}>
                 <Ionicons name="hardware-chip-outline" size={18} color="#10B981" />
               </View>
-              <Text style={[styles.navLabel, { color: colors.text }]}>AI Skill Copilot</Text>
+              <Text style={[styles.navLabel, { color: colors.text }]}>AI Assistant</Text>
               <View style={[styles.badgeNew, { backgroundColor: colors.primary }]}>
                 <Text style={styles.badgeNewText}>AI</Text>
               </View>

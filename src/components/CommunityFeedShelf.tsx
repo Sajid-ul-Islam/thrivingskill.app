@@ -13,7 +13,6 @@ import { SocialPost, SocialPlatform } from '../types';
 import { SocialFeedService } from '../services/socialFeedService';
 import { SocialPostCard } from './SocialPostCard';
 import { SOCIAL_PROFILES } from '../data/socialPosts';
-import { useAutoScroll } from '../hooks/useAutoScroll';
 
 interface CommunityFeedShelfProps {
   onViewAll: () => void;
@@ -32,13 +31,6 @@ export const CommunityFeedShelf: React.FC<CommunityFeedShelfProps> = ({
   const filteredPosts = posts.filter((p) => {
     if (selectedFilter === 'all') return true;
     return p.platform === selectedFilter;
-  });
-
-  const { scrollViewRef, scrollProps, pauseTemporarily } = useAutoScroll({
-    enabled: !loading && filteredPosts.length > 1,
-    speed: 0.45,
-    pauseAtEdgeMs: 2000,
-    resumeDelayMs: 3000,
   });
 
   useEffect(() => {
@@ -97,10 +89,7 @@ export const CommunityFeedShelf: React.FC<CommunityFeedShelfProps> = ({
               ? { backgroundColor: colors.primary, borderColor: colors.primary }
               : { backgroundColor: isDark ? colors.surfaceCard : '#F1F5F9', borderColor: colors.border },
           ]}
-          onPress={() => {
-            pauseTemporarily(2500);
-            setSelectedFilter('all');
-          }}
+          onPress={() => setSelectedFilter('all')}
         >
           <Text
             style={[
@@ -119,10 +108,7 @@ export const CommunityFeedShelf: React.FC<CommunityFeedShelfProps> = ({
               ? { backgroundColor: '#1877F2', borderColor: '#1877F2' }
               : { backgroundColor: isDark ? colors.surfaceCard : '#F1F5F9', borderColor: colors.border },
           ]}
-          onPress={() => {
-            pauseTemporarily(2500);
-            setSelectedFilter('facebook');
-          }}
+          onPress={() => setSelectedFilter('facebook')}
         >
           <Ionicons
             name="logo-facebook"
@@ -146,10 +132,7 @@ export const CommunityFeedShelf: React.FC<CommunityFeedShelfProps> = ({
               ? { backgroundColor: '#0A66C2', borderColor: '#0A66C2' }
               : { backgroundColor: isDark ? colors.surfaceCard : '#F1F5F9', borderColor: colors.border },
           ]}
-          onPress={() => {
-            pauseTemporarily(2500);
-            setSelectedFilter('linkedin');
-          }}
+          onPress={() => setSelectedFilter('linkedin')}
         >
           <Ionicons
             name="logo-linkedin"
@@ -174,11 +157,9 @@ export const CommunityFeedShelf: React.FC<CommunityFeedShelfProps> = ({
         </View>
       ) : (
         <ScrollView
-          ref={scrollViewRef}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
-          {...scrollProps}
         >
           {filteredPosts.map((post) => (
             <SocialPostCard
@@ -186,7 +167,6 @@ export const CommunityFeedShelf: React.FC<CommunityFeedShelfProps> = ({
               post={post}
               width={290}
               onPress={(p) => {
-                pauseTemporarily(3500);
                 if (onSelectPost) {
                   onSelectPost(p);
                 } else {

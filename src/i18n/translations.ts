@@ -5,7 +5,7 @@ export const translations = {
     // Navigation & Tabs
     tabHome: 'Home',
     tabExplore: 'Explore',
-    tabCopilot: 'AI Copilot',
+    tabCopilot: 'AI Assistant',
     tabMyHub: 'My Hub',
     tabLive: 'Live',
     tabProfile: 'Profile',
@@ -110,7 +110,7 @@ export const translations = {
     // Navigation & Tabs
     tabHome: 'হোম',
     tabExplore: 'এক্সপ্লোর',
-    tabCopilot: 'এআই কোপাইলট',
+    tabCopilot: 'এআই অ্যাসিস্ট্যান্ট',
     tabMyHub: 'আমার কোর্স',
     tabLive: 'লাইভ ট্রেনিং',
     tabProfile: 'প্রোফাইল',

@@ -90,21 +90,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const { activeWorkspace, subscriptionTier, assessmentResult } = useSaaS();
   const { lastWatchedVideo, playVideo } = useYouTube();
 
-  // Dynamic slow auto-scroll hooks for shelves
+  // Dynamic slow auto-scroll hook for YouTube videos shelf
   const ytAutoScroll = useAutoScroll({
     speed: 0.45,
-    pauseAtEdgeMs: 1800,
-    resumeDelayMs: 2800,
-  });
-
-  const reviewsAutoScroll = useAutoScroll({
-    speed: 0.40,
-    pauseAtEdgeMs: 2000,
-    resumeDelayMs: 3000,
-  });
-
-  const articlesAutoScroll = useAutoScroll({
-    speed: 0.42,
     pauseAtEdgeMs: 1800,
     resumeDelayMs: 2800,
   });
@@ -555,11 +543,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </View>
 
           <ScrollView
-            ref={reviewsAutoScroll.scrollViewRef}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.reviewsScroll}
-            {...reviewsAutoScroll.scrollProps}
           >
             {REVIEWS_WALL.map((rev) => (
               <View
@@ -614,11 +600,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </View>
 
             <ScrollView
-              ref={articlesAutoScroll.scrollViewRef}
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.articlesScroll}
-              {...articlesAutoScroll.scrollProps}
             >
               {blogPosts.map((post) => (
                 <TouchableOpacity
@@ -632,7 +616,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     },
                   ]}
                   onPress={() => {
-                    articlesAutoScroll.pauseTemporarily(4000);
                     post.link && Linking.openURL(post.link).catch(() => {});
                   }}
                   activeOpacity={0.88}
