@@ -16,6 +16,7 @@ import { Header } from '../components/Header';
 import { CategoryPills } from '../components/CategoryPills';
 import { CourseCard } from '../components/CourseCard';
 import { SpecialBundleCard } from '../components/SpecialBundleCard';
+import { CourseCardSkeleton } from '../components/SkeletonLoader';
 import { SPECIAL_BUNDLES } from '../data/mockData';
 import { useAutoScroll } from '../hooks/useAutoScroll';
 
@@ -23,6 +24,7 @@ interface CoursesScreenProps {
   onNavigateToCourse: (courseId: string) => void;
   onOpenSubscription?: () => void;
   onOpenNotifications?: () => void;
+  onOpenDrawer?: () => void;
 }
 
 type LevelFilter = 'All' | 'Beginner' | 'Intermediate' | 'Advanced';
@@ -32,6 +34,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   onNavigateToCourse,
   onOpenSubscription,
   onOpenNotifications,
+  onOpenDrawer,
 }) => {
   const { colors } = useTheme();
   const {
@@ -99,6 +102,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
         subtitle="৩০০+ প্রিমিয়াম কোর্স ও স্পেশাল বান্ডেল"
         onOpenSubscription={onOpenSubscription}
         onOpenNotifications={onOpenNotifications}
+        onOpenDrawer={onOpenDrawer}
       />
 
       <ScrollView
@@ -263,7 +267,13 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
 
         {/* Content Rendering: Bundles or Courses */}
         <View style={styles.coursesContainer}>
-          {isBundleView ? (
+          {isLoadingCourses && courses.length === 0 ? (
+            <>
+              <CourseCardSkeleton horizontal={viewMode === 'list'} />
+              <CourseCardSkeleton horizontal={viewMode === 'list'} />
+              <CourseCardSkeleton horizontal={viewMode === 'list'} />
+            </>
+          ) : isBundleView ? (
             SPECIAL_BUNDLES.map((bundle) => (
               <SpecialBundleCard
                 key={bundle.id}

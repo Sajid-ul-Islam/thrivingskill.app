@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Platform, StatusBar } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
@@ -31,10 +31,13 @@ import { AuthModal } from './src/components/AuthModal';
 import { YouTubeMiniPlayer } from './src/components/YouTubeMiniPlayer';
 import { YouTubePlayerModal } from './src/components/YouTubePlayerModal';
 import { UniversalSearchModal } from './src/components/UniversalSearchModal';
+import { BrandDrawer } from './src/components/BrandDrawer';
+import { AppUpdateModal } from './src/components/AppUpdateModal';
 
 const MainAppContent: React.FC = () => {
   const { colors, isDark } = useTheme();
   const { t } = useLanguage();
+  const insets = useSafeAreaInsets();
   const { userProgress } = useLearning();
   const { activeWorkspace, unreadNotificationsCount } = useSaaS();
   const { isAuthModalVisible, setAuthModalVisible } = useAuth();
@@ -52,6 +55,8 @@ const MainAppContent: React.FC = () => {
   const [assessmentModalVisible, setAssessmentModalVisible] = useState(false);
   const [corporateModalVisible, setCorporateModalVisible] = useState(false);
   const [searchModalVisible, setSearchModalVisible] = useState(false);
+  const [brandDrawerVisible, setBrandDrawerVisible] = useState(false);
+  const [updateModalVisible, setUpdateModalVisible] = useState(false);
 
   const inProgressCount = Object.values(userProgress).filter((p) => !p.isCompleted).length;
 
@@ -138,6 +143,7 @@ const MainAppContent: React.FC = () => {
                 onOpenAssessment={() => setAssessmentModalVisible(true)}
                 onOpenYouTube={() => setActiveScreen({ name: 'YouTubeVideos' })}
                 onOpenSearch={() => setSearchModalVisible(true)}
+                onOpenDrawer={() => setBrandDrawerVisible(true)}
               />
             )}
             {activeTab === 'Courses' && (
@@ -145,6 +151,7 @@ const MainAppContent: React.FC = () => {
                 onNavigateToCourse={navigateToCourse}
                 onOpenSubscription={() => setSubscriptionModalVisible(true)}
                 onOpenNotifications={() => setNotificationModalVisible(true)}
+                onOpenDrawer={() => setBrandDrawerVisible(true)}
               />
             )}
             {activeTab === 'Copilot' && (
@@ -152,6 +159,7 @@ const MainAppContent: React.FC = () => {
                 onOpenSubscription={() => setSubscriptionModalVisible(true)}
                 onOpenNotifications={() => setNotificationModalVisible(true)}
                 onNavigateToCourse={navigateToCourse}
+                onOpenDrawer={() => setBrandDrawerVisible(true)}
               />
             )}
             {activeTab === 'MyLearning' && (
@@ -162,6 +170,7 @@ const MainAppContent: React.FC = () => {
                 onOpenSubscription={() => setSubscriptionModalVisible(true)}
                 onOpenNotifications={() => setNotificationModalVisible(true)}
                 onOpenYouTube={() => setActiveScreen({ name: 'YouTubeVideos' })}
+                onOpenDrawer={() => setBrandDrawerVisible(true)}
               />
             )}
             {activeTab === 'TeamHub' && (
@@ -169,12 +178,14 @@ const MainAppContent: React.FC = () => {
                 onOpenSubscription={() => setSubscriptionModalVisible(true)}
                 onOpenNotifications={() => setNotificationModalVisible(true)}
                 onNavigateToCourse={navigateToCourse}
+                onOpenDrawer={() => setBrandDrawerVisible(true)}
               />
             )}
             {activeTab === 'Workshops' && (
               <WorkshopsScreen
                 onOpenSubscription={() => setSubscriptionModalVisible(true)}
                 onOpenNotifications={() => setNotificationModalVisible(true)}
+                onOpenDrawer={() => setBrandDrawerVisible(true)}
               />
             )}
             {activeTab === 'Profile' && (
@@ -183,6 +194,7 @@ const MainAppContent: React.FC = () => {
                 onOpenSubscription={() => setSubscriptionModalVisible(true)}
                 onOpenNotifications={() => setNotificationModalVisible(true)}
                 onNavigateTab={navigateToTab}
+                onOpenDrawer={() => setBrandDrawerVisible(true)}
               />
             )}
           </>
@@ -201,6 +213,7 @@ const MainAppContent: React.FC = () => {
               backgroundColor: colors.tabBarBg,
               borderTopColor: colors.tabBarBorder,
               shadowColor: colors.cardShadow,
+              paddingBottom: Math.max(insets.bottom, Platform.OS === 'ios' ? 12 : 8),
             },
           ]}
         >
@@ -209,7 +222,13 @@ const MainAppContent: React.FC = () => {
             return (
               <TouchableOpacity
                 key={tab.id}
-                style={styles.tabButton}
+                style={[
+                  styles.tabButton,
+                  isActive && {
+                    backgroundColor: colors.primaryLight,
+                    borderRadius: 14,
+                  },
+                ]}
                 onPress={() => navigateToTab(tab.id)}
                 activeOpacity={0.7}
               >
@@ -217,7 +236,7 @@ const MainAppContent: React.FC = () => {
                   <Ionicons
                     name={(isActive ? tab.icon : tab.iconOutline) as any}
                     size={21}
-                    color={isActive ? colors.tabActive : colors.tabInactive}
+                    color={isActive ? colors.primary : colors.tabInactive}
                   />
                   {tab.badgeCount && tab.badgeCount > 0 ? (
                     <View style={[styles.tabBadge, { backgroundColor: colors.primary }]}>
@@ -229,7 +248,7 @@ const MainAppContent: React.FC = () => {
                   style={[
                     styles.tabButtonLabel,
                     {
-                      color: isActive ? colors.tabActive : colors.tabInactive,
+                      color: isActive ? colors.primary : colors.tabInactive,
                       fontWeight: isActive ? '800' : '500',
                     },
                   ]}
@@ -242,6 +261,23 @@ const MainAppContent: React.FC = () => {
           })}
         </View>
       )}
+
+      {/* Brand Drawer */}
+      <BrandDrawer
+        visible={brandDrawerVisible}
+        onClose={() => setBrandDrawerVisible(false)}
+        onNavigateTab={navigateToTab}
+        onOpenYouTube={() => setActiveScreen({ name: 'YouTubeVideos' })}
+        onOpenAssessment={() => setAssessmentModalVisible(true)}
+        onOpenSubscription={() => setSubscriptionModalVisible(true)}
+        onOpenUpdate={() => setUpdateModalVisible(true)}
+      />
+
+      {/* Global In-App Update Modal */}
+      <AppUpdateModal
+        visible={updateModalVisible}
+        onClose={() => setUpdateModalVisible(false)}
+      />
 
       {/* Global SaaS Modals */}
       <SubscriptionModal

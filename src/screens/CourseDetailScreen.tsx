@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -47,6 +48,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
   const [activeTab, setActiveTab] = useState<'curriculum' | 'qna' | 'instructor' | 'reviews'>('curriculum');
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
+  const [certPreviewVisible, setCertPreviewVisible] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -268,6 +270,75 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
             </View>
           </View>
 
+          {/* Institutional Trust & Partners Strip */}
+          <View style={[styles.trustStripCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+              <Ionicons name="shield-checkmark" size={15} color={colors.primary} />
+              <Text style={[styles.trustStripTitle, { color: colors.primary }]}>
+                TRUSTED BY TOP ACADEMIC & ENTERPRISE PARTNERS
+              </Text>
+            </View>
+
+            <View style={styles.partnerLogosRow}>
+              <View style={[styles.partnerTag, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+                <Ionicons name="school-outline" size={13} color={colors.text} />
+                <Text style={[styles.partnerTagText, { color: colors.text }]}>Dhaka University (DU)</Text>
+              </View>
+              <View style={[styles.partnerTag, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+                <Ionicons name="people-outline" size={13} color={colors.text} />
+                <Text style={[styles.partnerTagText, { color: colors.text }]}>DUCSU</Text>
+              </View>
+              <View style={[styles.partnerTag, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+                <Ionicons name="library-outline" size={13} color={colors.text} />
+                <Text style={[styles.partnerTagText, { color: colors.text }]}>North South Univ (NSU)</Text>
+              </View>
+            </View>
+
+            <View style={styles.trustFeaturesRow}>
+              <View style={styles.trustFeatureItem}>
+                <Ionicons name="infinite-outline" size={13} color={colors.secondary} />
+                <Text style={[styles.trustFeatureText, { color: colors.textMuted }]}>Lifetime Access</Text>
+              </View>
+              <View style={styles.trustFeatureItem}>
+                <Ionicons name="phone-portrait-outline" size={13} color={colors.primary} />
+                <Text style={[styles.trustFeatureText, { color: colors.textMuted }]}>Mobile & Web</Text>
+              </View>
+              <View style={styles.trustFeatureItem}>
+                <Ionicons name="ribbon-outline" size={13} color="#10B981" />
+                <Text style={[styles.trustFeatureText, { color: colors.textMuted }]}>Verified Credential</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Official Certificate Card & Preview Trigger */}
+          <View style={[styles.certPromoCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+            <View style={styles.certPromoLeft}>
+              <View style={[styles.certIconBg, { backgroundColor: '#FEF3C7' }]}>
+                <Ionicons name="ribbon" size={20} color="#D97706" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.certPromoTitle, { color: colors.text }]}>
+                  Official Certificate Included
+                </Text>
+                <Text style={[styles.certPromoSub, { color: colors.textMuted }]}>
+                  Verified digital credential directly shareable to LinkedIn.
+                </Text>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.certPreviewBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+              onPress={() => setCertPreviewVisible(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Preview official certificate"
+            >
+              <Ionicons name="eye-outline" size={14} color={colors.primary} />
+              <Text style={[styles.certPreviewBtnText, { color: colors.primary }]}>
+                Preview
+              </Text>
+            </TouchableOpacity>
+          </View>
+
           {/* Navigation Tabs (Curriculum / Q&A / Instructor / Reviews) */}
           <View style={[styles.tabsBar, { borderBottomColor: colors.border }]}>
             {[
@@ -482,6 +553,132 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
           if (firstLessonId) onNavigateToLesson(course.id, firstLessonId);
         }}
       />
+
+      {/* Interactive Official Certificate Preview Modal */}
+      <Modal
+        visible={certPreviewVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setCertPreviewVisible(false)}
+      >
+        <View style={styles.certModalOverlay}>
+          <View style={[styles.certModalCard, { backgroundColor: isDark ? '#1C1D22' : '#FFFDF9' }]}>
+            {/* Modal Header */}
+            <View style={styles.certModalHeader}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Ionicons name="shield-checkmark" size={18} color="#D97706" />
+                <Text style={[styles.certModalTitle, { color: colors.text }]}>Official Certificate Preview</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setCertPreviewVisible(false)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="close" size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {/* The Certificate Canvas */}
+              <View style={[styles.certCanvas, { borderColor: '#D4AF37', backgroundColor: isDark ? '#121316' : '#FFFFFF' }]}>
+                {/* Gold Inner Border */}
+                <View style={[styles.certInnerBorder, { borderColor: '#D4AF37' }]}>
+                  {/* Top Seal & Organization Header */}
+                  <View style={styles.certCanvasHeader}>
+                    <Image
+                      source={require('../../assets/icon.png')}
+                      style={{ width: 34, height: 34, borderRadius: 8, marginBottom: 4 }}
+                      resizeMode="contain"
+                    />
+                    <Text style={[styles.certOrgName, { color: colors.text }]}>
+                      THRIVING SKILLS LIMITED
+                    </Text>
+                    <Text style={[styles.certOrgLoc, { color: colors.textMuted }]}>
+                      DHAKA, BANGLADESH • SDG-4 QUALITY EDUCATION
+                    </Text>
+                  </View>
+
+                  <View style={styles.certRibbonRow}>
+                    <View style={styles.certLine} />
+                    <Text style={styles.certMainHeading}>CERTIFICATE OF ACHIEVEMENT</Text>
+                    <View style={styles.certLine} />
+                  </View>
+
+                  <Text style={[styles.certPresentedTo, { color: colors.textMuted }]}>
+                    THIS IS PROUDLY PRESENTED TO
+                  </Text>
+
+                  <Text style={[styles.certLearnerName, { color: colors.text }]}>
+                    Sajid-ul-Islam
+                  </Text>
+                  <View style={[styles.nameUnderline, { backgroundColor: '#D4AF37' }]} />
+
+                  <Text style={[styles.certBodyText, { color: colors.textMuted }]}>
+                    for successfully mastering all curriculum modules and professional competencies in
+                  </Text>
+
+                  <Text style={[styles.certCourseName, { color: colors.primary }]}>
+                    {course.title}
+                  </Text>
+
+                  {/* Verification Seal & Credential ID */}
+                  <View style={styles.certMetaRow}>
+                    <View style={styles.certQrBox}>
+                      <Ionicons name="qr-code-outline" size={34} color={colors.text} />
+                      <Text style={[styles.certVerifyText, { color: colors.textMuted }]}>Scan to Verify</Text>
+                    </View>
+
+                    <View style={styles.certGoldSeal}>
+                      <Ionicons name="medal" size={20} color="#D97706" />
+                      <Text style={styles.certSealText}>VERIFIED</Text>
+                      <Text style={styles.certSealSub}>CREDENTIAL</Text>
+                    </View>
+
+                    <View style={styles.certSigCol}>
+                      <Text style={styles.sigCursive}>Abdullah Al Mahmud</Text>
+                      <View style={[styles.sigLine, { backgroundColor: colors.border }]} />
+                      <Text style={[styles.sigTitle, { color: colors.textMuted }]}>
+                        Md. Abdullah Al Mahmud
+                      </Text>
+                      <Text style={[styles.sigSub, { color: colors.textMuted }]}>
+                        CEO, Thriving Skills Ltd.
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.certIdRow}>
+                    <Text style={[styles.certIdText, { color: colors.textMuted }]}>
+                      Credential ID: TSL-CERT-{course.id}-2026 • thrivingskill.com/verify
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Action Buttons */}
+              <View style={styles.certModalActions}>
+                <TouchableOpacity
+                  style={[styles.certShareBtn, { backgroundColor: '#0A66C2' }]}
+                  onPress={() => {
+                    Alert.alert(
+                      'LinkedIn Credential 🔗',
+                      `Verified credential for "${course.title}" is ready to be added to your LinkedIn Licenses & Certifications profile!`
+                    );
+                  }}
+                >
+                  <Ionicons name="logo-linkedin" size={16} color="#FFFFFF" />
+                  <Text style={styles.certShareBtnText}>Add to LinkedIn Profile</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.certCloseBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                  onPress={() => setCertPreviewVisible(false)}
+                >
+                  <Text style={[styles.certCloseBtnText, { color: colors.text }]}>Close Preview</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -846,5 +1043,297 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '700',
+  },
+  // Trust Strip
+  trustStripCard: {
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 12,
+    marginTop: 12,
+  },
+  trustStripTitle: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+  },
+  partnerLogosRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 10,
+  },
+  partnerTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  partnerTagText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  trustFeaturesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(150, 150, 150, 0.2)',
+    paddingTop: 8,
+  },
+  trustFeatureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  trustFeatureText: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  // Certificate Card Promo
+  certPromoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 12,
+    marginTop: 12,
+    gap: 10,
+  },
+  certPromoLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  certIconBg: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  certPromoTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  certPromoSub: {
+    fontSize: 10.5,
+    marginTop: 2,
+    lineHeight: 14,
+  },
+  certPreviewBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  certPreviewBtnText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+  },
+  // Certificate Modal & Canvas
+  certModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    justifyContent: 'center',
+    padding: 14,
+  },
+  certModalCard: {
+    borderRadius: 20,
+    padding: 16,
+    maxHeight: '92%',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  certModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    paddingBottom: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(150, 150, 150, 0.2)',
+  },
+  certModalTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  certCanvas: {
+    borderRadius: 12,
+    borderWidth: 3,
+    padding: 6,
+    marginVertical: 4,
+  },
+  certInnerBorder: {
+    borderWidth: 1.5,
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+  },
+  certCanvasHeader: {
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  certOrgName: {
+    fontSize: 13,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  certOrgLoc: {
+    fontSize: 8.5,
+    fontWeight: '600',
+    marginTop: 1,
+    letterSpacing: 0.5,
+  },
+  certRibbonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginVertical: 8,
+    width: '100%',
+  },
+  certLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#D4AF37',
+  },
+  certMainHeading: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: '#D4AF37',
+    letterSpacing: 1.2,
+  },
+  certPresentedTo: {
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 1,
+    marginTop: 4,
+  },
+  certLearnerName: {
+    fontSize: 20,
+    fontWeight: '800',
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  nameUnderline: {
+    width: 140,
+    height: 1.5,
+    marginVertical: 4,
+  },
+  certBodyText: {
+    fontSize: 10,
+    textAlign: 'center',
+    marginTop: 4,
+    lineHeight: 14,
+    paddingHorizontal: 8,
+  },
+  certCourseName: {
+    fontSize: 14,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginVertical: 6,
+  },
+  certMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(212, 175, 55, 0.4)',
+  },
+  certQrBox: {
+    alignItems: 'center',
+  },
+  certVerifyText: {
+    fontSize: 7.5,
+    marginTop: 2,
+    fontWeight: '600',
+  },
+  certGoldSeal: {
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#D4AF37',
+    borderRadius: 24,
+    width: 48,
+    height: 48,
+    justifyContent: 'center',
+    backgroundColor: 'rgba(212, 175, 55, 0.1)',
+  },
+  certSealText: {
+    fontSize: 6.5,
+    fontWeight: '900',
+    color: '#D97706',
+  },
+  certSealSub: {
+    fontSize: 5.5,
+    fontWeight: '800',
+    color: '#D97706',
+  },
+  certSigCol: {
+    alignItems: 'center',
+  },
+  sigCursive: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    fontWeight: '700',
+    color: '#3B82F6',
+  },
+  sigLine: {
+    width: 90,
+    height: 1,
+    marginVertical: 2,
+  },
+  sigTitle: {
+    fontSize: 8.5,
+    fontWeight: '700',
+  },
+  sigSub: {
+    fontSize: 7.5,
+  },
+  certIdRow: {
+    marginTop: 10,
+  },
+  certIdText: {
+    fontSize: 8,
+    fontWeight: '500',
+  },
+  certModalActions: {
+    marginTop: 14,
+    gap: 8,
+  },
+  certShareBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  certShareBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  certCloseBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  certCloseBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

@@ -10,6 +10,7 @@ import { WORKSHOPS, SKILLS_SUMMITS } from '../data/mockData';
 interface WorkshopsScreenProps {
   onOpenSubscription?: () => void;
   onOpenNotifications?: () => void;
+  onOpenDrawer?: () => void;
 }
 
 type TabType = 'all' | 'summits' | 'live-classes';
@@ -17,6 +18,7 @@ type TabType = 'all' | 'summits' | 'live-classes';
 export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
   onOpenSubscription,
   onOpenNotifications,
+  onOpenDrawer,
 }) => {
   const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState<TabType>('all');
@@ -28,6 +30,7 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
         subtitle="সাপ্তাহিক লাইভ ট্রেনিং ও ন্যাশনাল স্কিল সামিট"
         onOpenSubscription={onOpenSubscription}
         onOpenNotifications={onOpenNotifications}
+        onOpenDrawer={onOpenDrawer}
       />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>

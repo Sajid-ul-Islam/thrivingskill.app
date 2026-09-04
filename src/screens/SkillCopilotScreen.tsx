@@ -35,12 +35,14 @@ interface SkillCopilotScreenProps {
   onOpenSubscription: () => void;
   onOpenNotifications: () => void;
   onNavigateToCourse?: (courseId: string) => void;
+  onOpenDrawer?: () => void;
 }
 
 export const SkillCopilotScreen: React.FC<SkillCopilotScreenProps> = ({
   onOpenSubscription,
   onOpenNotifications,
   onNavigateToCourse,
+  onOpenDrawer,
 }) => {
   const { colors, isDark } = useTheme();
   const { clearCopilotHistory } = useSaaS();
@@ -259,6 +261,7 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
         subtitle="Source-Grounded AI Copilot"
         onOpenSubscription={onOpenSubscription}
         onOpenNotifications={onOpenNotifications}
+        onOpenDrawer={onOpenDrawer}
         rightAction={
           <TouchableOpacity
             style={[styles.clearBtn, { backgroundColor: colors.surfaceSubtle }]}

@@ -28,6 +28,7 @@ import { CommunityFeedModal } from '../components/CommunityFeedModal';
 import { HeroCarousel, CarouselSlide } from '../components/HeroCarousel';
 import { QuickActionDock } from '../components/QuickActionDock';
 import { SearchSpotlightBar } from '../components/SearchSpotlightBar';
+import { CourseCardSkeleton } from '../components/SkeletonLoader';
 import { CountdownWidget } from '../components/CountdownWidget';
 import { SkillBiteWidget } from '../components/SkillBiteWidget';
 import { useYouTube } from '../context/YouTubeContext';
@@ -52,6 +53,7 @@ interface HomeScreenProps {
   onOpenYouTube?: () => void;
   onOpenSearch?: () => void;
   onOpenCommunityFeed?: () => void;
+  onOpenDrawer?: () => void;
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
@@ -65,6 +67,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onOpenYouTube,
   onOpenSearch,
   onOpenCommunityFeed,
+  onOpenDrawer,
 }) => {
   const { colors, isDark } = useTheme();
   const [communityModalVisible, setCommunityModalVisible] = useState(false);
@@ -153,6 +156,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         onOpenNotifications={onOpenNotifications}
         onOpenYouTube={onOpenYouTube}
         onOpenSearch={onOpenSearch}
+        onOpenDrawer={onOpenDrawer}
       />
 
       <ScrollView
@@ -213,41 +217,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           }}
         />
 
-        {/* 3. High-Impact Swipeable Hero Carousel */}
-        <HeroCarousel
-          onSelectSlide={handleSelectSlide}
-          onOpenSubscription={onOpenSubscription}
-        />
-
-        {/* 4. Streamlined 4-Action Dock */}
-        <QuickActionDock
-          onOpenCopilot={() => onNavigateTab('Copilot')}
-          onOpenAssessment={onOpenAssessment}
-          onOpenWorkshops={() => onNavigateTab('Workshops')}
-          onOpenTeamOrMyLearning={() =>
-            onNavigateTab(activeWorkspace.type === 'enterprise' ? 'TeamHub' : 'MyLearning')
-          }
-        />
-
-        {/* 5. Live Summit Flash Sale Countdown Timer */}
-        <CountdownWidget
-          onClaimDiscount={() => onNavigateTab('Workshops')}
-        />
-
-        {/* 6. Daily Skill Bite Micro-Challenge Widget */}
-        <SkillBiteWidget />
-
-        {/* Continue Learning & Watching Resume Card */}
+        {/* Continue Learning Quick-Resume Hero Widget (Placed prominently at top for active learners) */}
         {(activeCourse || lastWatchedVideo) && (
-          <View style={styles.section}>
+          <View style={[styles.section, { marginTop: 6, marginBottom: 4 }]}>
             <View style={styles.sectionHeader}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Ionicons name="play-circle" size={18} color={colors.primary} />
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Continue Learning & Watching</Text>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                  {isBangla ? 'চালিয়ে যান' : 'Continue Learning'}
+                </Text>
               </View>
               {activeCourse && (
                 <TouchableOpacity onPress={() => onNavigateTab('MyLearning')}>
-                  <Text style={[styles.seeAllText, { color: colors.primary }]}>My Hub →</Text>
+                  <Text style={[styles.seeAllText, { color: colors.primary }]}>
+                    {isBangla ? 'মাই হাব →' : 'My Hub →'}
+                  </Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -277,7 +261,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 <View style={styles.resumeInfo}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
                     <View style={[styles.miniPill, { backgroundColor: colors.primaryLight }]}>
-                      <Text style={[styles.miniPillText, { color: colors.primary }]}>COURSE</Text>
+                      <Text style={[styles.miniPillText, { color: colors.primary }]}>IN PROGRESS</Text>
                     </View>
                     <Text style={[styles.resumeInstructor, { color: colors.textMuted }]} numberOfLines={1}>
                       • {activeCourse.instructor.name}
@@ -292,7 +276,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                       <View
                         style={[
                           styles.resumeFill,
-                          { backgroundColor: colors.primary, width: `${activeProgressPercent}%` },
+                          { backgroundColor: colors.primary, width: `${Math.max(activeProgressPercent, 8)}%` },
                         ]}
                       />
                     </View>
@@ -353,6 +337,30 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </View>
         )}
 
+        {/* 3. High-Impact Swipeable Hero Carousel */}
+        <HeroCarousel
+          onSelectSlide={handleSelectSlide}
+          onOpenSubscription={onOpenSubscription}
+        />
+
+        {/* 4. Streamlined 4-Action Dock */}
+        <QuickActionDock
+          onOpenCopilot={() => onNavigateTab('Copilot')}
+          onOpenAssessment={onOpenAssessment}
+          onOpenWorkshops={() => onNavigateTab('Workshops')}
+          onOpenTeamOrMyLearning={() =>
+            onNavigateTab(activeWorkspace.type === 'enterprise' ? 'TeamHub' : 'MyLearning')
+          }
+        />
+
+        {/* 5. Live Summit Flash Sale Countdown Timer */}
+        <CountdownWidget
+          onClaimDiscount={() => onNavigateTab('Workshops')}
+        />
+
+        {/* 6. Daily Skill Bite Micro-Challenge Widget */}
+        <SkillBiteWidget />
+
         {/* Category Filter Pills */}
         <View style={styles.categorySection}>
           <CategoryPills
@@ -404,13 +412,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </TouchableOpacity>
           </View>
 
-          {filteredCourses.slice(0, 3).map((course) => (
-            <CourseCard
-              key={course.id}
-              course={course}
-              onPress={() => onNavigateToCourse(course.id)}
-            />
-          ))}
+          {isLoadingCourses && courses.length === 0 ? (
+            <>
+              <CourseCardSkeleton />
+              <CourseCardSkeleton />
+            </>
+          ) : (
+            filteredCourses.slice(0, 3).map((course) => (
+              <CourseCard
+                key={course.id}
+                course={course}
+                onPress={() => onNavigateToCourse(course.id)}
+              />
+            ))
+          )}
         </View>
 
         {/* Thriving Skills YouTube Masterclasses */}

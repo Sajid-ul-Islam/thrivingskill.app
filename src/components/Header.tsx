@@ -25,6 +25,7 @@ interface HeaderProps {
   onOpenYouTube?: () => void;
   onOpenSearch?: () => void;
   onOpenUpdate?: () => void;
+  onOpenDrawer?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -35,6 +36,7 @@ export const Header: React.FC<HeaderProps> = ({
   rightAction,
   onOpenNotifications,
   onOpenSearch,
+  onOpenDrawer,
 }) => {
   const { colors } = useTheme();
   const { unreadNotificationsCount } = useSaaS();
@@ -83,7 +85,14 @@ export const Header: React.FC<HeaderProps> = ({
             </View>
           </View>
         ) : (
-          <View style={styles.brandRow}>
+          <TouchableOpacity
+            style={styles.brandRow}
+            onPress={onOpenDrawer}
+            disabled={!onOpenDrawer}
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Open brand drawer"
+          >
             {/* App Brand Icon in Top Left Corner */}
             <Image
               source={require('../../assets/icon.png')}
@@ -97,7 +106,11 @@ export const Header: React.FC<HeaderProps> = ({
                 Thriving<Text style={{ color: colors.primary }}>Skills</Text>
               </Text>
             </View>
-          </View>
+
+            {onOpenDrawer && (
+              <Ionicons name="menu-outline" size={17} color={colors.textMuted} style={{ marginLeft: 2 }} />
+            )}
+          </TouchableOpacity>
         )}
       </View>
 

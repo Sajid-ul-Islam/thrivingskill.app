@@ -20,12 +20,14 @@ interface EnterpriseTeamScreenProps {
   onOpenSubscription: () => void;
   onOpenNotifications: () => void;
   onNavigateToCourse: (courseId: string) => void;
+  onOpenDrawer?: () => void;
 }
 
 export const EnterpriseTeamScreen: React.FC<EnterpriseTeamScreenProps> = ({
   onOpenSubscription,
   onOpenNotifications,
   onNavigateToCourse,
+  onOpenDrawer,
 }) => {
   const { colors, isDark } = useTheme();
   const {
@@ -81,6 +83,7 @@ export const EnterpriseTeamScreen: React.FC<EnterpriseTeamScreenProps> = ({
         subtitle="Workforce Skill Transformation"
         onOpenSubscription={onOpenSubscription}
         onOpenNotifications={onOpenNotifications}
+        onOpenDrawer={onOpenDrawer}
       />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>

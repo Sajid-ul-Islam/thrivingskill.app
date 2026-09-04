@@ -120,8 +120,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
 
     if (completedCount >= totalLessons) {
       Alert.alert(
-        '🏆 Congratulations!',
-        `You have completed all lessons for "${course.title}". Your verified certificate is ready!`,
+        '🏆 Course Completed!',
+        `Congratulations! You have completed all lessons for "${course.title}". Your official verified certificate is ready!`,
         [
           {
             text: 'View Certificate',
@@ -129,6 +129,21 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
           },
           {
             text: 'Awesome',
+          },
+        ]
+      );
+    } else {
+      Alert.alert(
+        'Lesson Completed! 🎉',
+        `Great job mastering "${currentLesson.title}"! Would you like to take a quick knowledge check to test your retention?`,
+        [
+          {
+            text: 'Take Quick Quiz 🧠',
+            onPress: () => setQuizPlayerVisible(true),
+          },
+          {
+            text: 'Next Lesson →',
+            onPress: handleNextLesson,
           },
         ]
       );
@@ -643,32 +658,32 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                   'In this lecture, you will explore core operational frameworks and practical workflows designed for maximum business productivity.'}
               </Text>
 
-              {currentLesson.quiz && (
-                <View
-                  style={[
-                    styles.quizCallout,
-                    { backgroundColor: colors.surfaceCard, borderColor: colors.secondary },
-                  ]}
-                >
-                  <View style={styles.quizCalloutLeft}>
-                    <Ionicons name="school" size={24} color={colors.secondary} />
-                    <View>
-                      <Text style={[styles.quizCalloutTitle, { color: colors.text }]}>
-                        Knowledge Check Available
-                      </Text>
-                      <Text style={[styles.quizCalloutSub, { color: colors.textMuted }]}>
-                        Test your retention with {currentLesson.quiz.length} practical questions.
-                      </Text>
-                    </View>
+              <View
+                style={[
+                  styles.quizCallout,
+                  { backgroundColor: colors.surfaceCard, borderColor: colors.secondary },
+                ]}
+              >
+                <View style={styles.quizCalloutLeft}>
+                  <Ionicons name="school" size={24} color={colors.secondary} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.quizCalloutTitle, { color: colors.text }]}>
+                      Knowledge Check
+                    </Text>
+                    <Text style={[styles.quizCalloutSub, { color: colors.textMuted }]} numberOfLines={1}>
+                      Test your retention on this lecture to earn +25 XP.
+                    </Text>
                   </View>
-                  <TouchableOpacity
-                    style={[styles.startQuizBtn, { backgroundColor: colors.secondary }]}
-                    onPress={() => setQuizModalVisible(true)}
-                  >
-                    <Text style={styles.startQuizText}>Take Quiz</Text>
-                  </TouchableOpacity>
                 </View>
-              )}
+                <TouchableOpacity
+                  style={[styles.startQuizBtn, { backgroundColor: colors.secondary }]}
+                  onPress={() => setQuizPlayerVisible(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Take knowledge check quiz"
+                >
+                  <Text style={styles.startQuizText}>Take Quiz</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           )}
 

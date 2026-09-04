@@ -24,6 +24,7 @@ interface MyLearningScreenProps {
   onOpenSubscription?: () => void;
   onOpenNotifications?: () => void;
   onOpenYouTube?: () => void;
+  onOpenDrawer?: () => void;
 }
 
 type TabMode = 'in-progress' | 'completed' | 'certificates' | 'saved';
@@ -35,6 +36,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
   onOpenSubscription,
   onOpenNotifications,
   onOpenYouTube,
+  onOpenDrawer,
 }) => {
   const { colors } = useTheme();
   const { savedVideos, playVideo } = useYouTube();
@@ -70,6 +72,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
         onOpenSubscription={onOpenSubscription}
         onOpenNotifications={onOpenNotifications}
         onOpenYouTube={onOpenYouTube}
+        onOpenDrawer={onOpenDrawer}
       />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>

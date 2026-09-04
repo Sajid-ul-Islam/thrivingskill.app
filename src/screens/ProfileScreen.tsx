@@ -24,6 +24,7 @@ interface ProfileScreenProps {
   onOpenSubscription: () => void;
   onOpenNotifications: () => void;
   onNavigateTab: (tab: any) => void;
+  onOpenDrawer?: () => void;
 }
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({
@@ -31,6 +32,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   onOpenSubscription,
   onOpenNotifications,
   onNavigateTab,
+  onOpenDrawer,
 }) => {
   const { colors, isDark, toggleTheme } = useTheme();
   const { language, toggleLanguage, isBangla, t } = useLanguage();
@@ -62,6 +64,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         subtitle="SaaS Profile & Preferences"
         onOpenSubscription={onOpenSubscription}
         onOpenNotifications={onOpenNotifications}
+        onOpenDrawer={onOpenDrawer}
       />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
