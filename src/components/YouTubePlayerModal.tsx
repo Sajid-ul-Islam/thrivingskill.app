@@ -43,13 +43,38 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
   const { courses } = useLearning();
   const { videos, isSaved, toggleSaveVideo, minimizePlayer } = useYouTube();
   const [currentVideo, setCurrentVideo] = useState<YouTubeVideo | null>(video);
+  const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
+  const webViewRef = React.useRef<any>(null);
 
   // Sync state if prop changes
   React.useEffect(() => {
     if (video) {
       setCurrentVideo(video);
+      setPlaybackSpeed(1);
     }
   }, [video]);
+
+  const handleSetSpeed = (speed: number) => {
+    setPlaybackSpeed(speed);
+    const jsCode = `
+      (function() {
+        try {
+          var iframe = document.querySelector('iframe');
+          if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.postMessage(JSON.stringify({
+              event: 'command',
+              func: 'setPlaybackRate',
+              args: [${speed}]
+            }), '*');
+          }
+        } catch(e) {}
+      })();
+      true;
+    `;
+    if (webViewRef.current) {
+      webViewRef.current.injectJavaScript(jsCode);
+    }
+  };
 
   if (!currentVideo) {
     return null;
@@ -102,7 +127,7 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
   };
 
   // Embedded player URL with parameters for clean mobile playback
-  const embedUrl = `https://www.youtube-nocookie.com/embed/${currentVideo.id}?autoplay=1&playsinline=1&rel=0&modestbranding=1&controls=1`;
+  const embedUrl = `https://www.youtube-nocookie.com/embed/${currentVideo.id}?autoplay=1&playsinline=1&rel=0&modestbranding=1&controls=1&enablejsapi=1`;
 
   // HTML embed string for WebView
   const embedHtml = `
@@ -169,6 +194,7 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
             />
           ) : (
             <WebView
+              ref={webViewRef}
               key={currentVideo.id}
               source={{ html: embedHtml, baseUrl: 'https://www.youtube.com' }}
               style={styles.webView}
@@ -252,6 +278,45 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
                 <Ionicons name="logo-youtube" size={16} color="#FFFFFF" />
                 <Text style={styles.openYouTubeText}>YouTube</Text>
               </TouchableOpacity>
+            </View>
+
+            {/* Playback Speed Controls */}
+            <View style={[styles.speedRow, { borderTopColor: colors.border }]}>
+              <View style={styles.speedLabelWrapper}>
+                <Ionicons name="speedometer-outline" size={14} color={colors.textMuted} />
+                <Text style={[styles.speedLabel, { color: colors.textMuted }]}>Speed</Text>
+              </View>
+              <View style={styles.speedPills}>
+                {[0.75, 1, 1.25, 1.5, 2].map((spd) => {
+                  const isActive = playbackSpeed === spd;
+                  return (
+                    <TouchableOpacity
+                      key={spd}
+                      style={[
+                        styles.speedPill,
+                        {
+                          backgroundColor: isActive ? colors.primary : isDark ? '#2C2C2E' : '#F3F4F6',
+                          borderColor: isActive ? colors.primary : colors.border,
+                        },
+                      ]}
+                      onPress={() => handleSetSpeed(spd)}
+                      accessibilityLabel={`Set playback speed to ${spd}x`}
+                    >
+                      <Text
+                        style={[
+                          styles.speedPillText,
+                          {
+                            color: isActive ? '#FFFFFF' : colors.text,
+                            fontWeight: isActive ? '800' : '600',
+                          },
+                        ]}
+                      >
+                        {spd === 1 ? '1.0x' : `${spd}x`}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
             </View>
           </View>
 
@@ -477,6 +542,40 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
+  },
+  // Speed Row
+  speedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+  },
+  speedLabelWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  speedLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  speedPills: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  speedPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    minWidth: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  speedPillText: {
+    fontSize: 11,
   },
   // Course Cross-Linking Card
   coursePromoCard: {

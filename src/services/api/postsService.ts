@@ -2,7 +2,7 @@ import { HttpClient } from './httpClient';
 import { Endpoints } from './endpoints';
 import { CacheManager } from '../cache/cacheManager';
 import { WpPost } from '../../types';
-import { cleanHtml } from '../wordpressApi';
+import { cleanHtml } from './transformers';
 
 export interface PostQueryParams {
   page?: number;

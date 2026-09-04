@@ -15,6 +15,7 @@ interface HeaderProps {
   onOpenSubscription?: () => void;
   onOpenNotifications?: () => void;
   onOpenYouTube?: () => void;
+  onOpenSearch?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -27,6 +28,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSubscription,
   onOpenNotifications,
   onOpenYouTube,
+  onOpenSearch,
 }) => {
   const { colors, toggleTheme, isDark } = useTheme();
   const { language, toggleLanguage } = useLanguage();
@@ -127,6 +129,18 @@ export const Header: React.FC<HeaderProps> = ({
 
       <View style={styles.rightRow}>
         {rightAction}
+
+        {/* Universal Search Button */}
+        {onOpenSearch && (
+          <TouchableOpacity
+            style={[styles.iconButton, { backgroundColor: colors.surfaceSubtle }]}
+            onPress={onOpenSearch}
+            activeOpacity={0.7}
+            accessibilityLabel="Universal Search"
+          >
+            <Ionicons name="search" size={18} color={colors.text} />
+          </TouchableOpacity>
+        )}
 
         {/* YouTube Channel Button */}
         {onOpenYouTube && (

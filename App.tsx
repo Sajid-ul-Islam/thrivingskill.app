@@ -31,6 +31,7 @@ import { CorporateInquiryModal } from './src/components/CorporateInquiryModal';
 import { AuthModal } from './src/components/AuthModal';
 import { YouTubeMiniPlayer } from './src/components/YouTubeMiniPlayer';
 import { YouTubePlayerModal } from './src/components/YouTubePlayerModal';
+import { UniversalSearchModal } from './src/components/UniversalSearchModal';
 
 const MainAppContent: React.FC = () => {
   const { colors, isDark } = useTheme();
@@ -51,6 +52,7 @@ const MainAppContent: React.FC = () => {
   const [notificationModalVisible, setNotificationModalVisible] = useState(false);
   const [assessmentModalVisible, setAssessmentModalVisible] = useState(false);
   const [corporateModalVisible, setCorporateModalVisible] = useState(false);
+  const [searchModalVisible, setSearchModalVisible] = useState(false);
 
   const inProgressCount = Object.values(userProgress).filter((p) => !p.isCompleted).length;
 
@@ -132,6 +134,7 @@ const MainAppContent: React.FC = () => {
                 onOpenNotifications={() => setNotificationModalVisible(true)}
                 onOpenAssessment={() => setAssessmentModalVisible(true)}
                 onOpenYouTube={() => setActiveScreen({ name: 'YouTubeVideos' })}
+                onOpenSearch={() => setSearchModalVisible(true)}
               />
             )}
             {activeTab === 'Courses' && (
@@ -277,6 +280,24 @@ const MainAppContent: React.FC = () => {
         onMinimize={minimizePlayer}
         onNavigateToCourse={navigateToCourse}
         onSelectVideo={(v) => playVideo(v, 'modal')}
+      />
+
+      {/* Universal Search & Spotlight Modal */}
+      <UniversalSearchModal
+        visible={searchModalVisible}
+        onClose={() => setSearchModalVisible(false)}
+        onSelectCourse={(courseId) => {
+          setSearchModalVisible(false);
+          navigateToCourse(courseId);
+        }}
+        onSelectYouTubeVideo={(video) => {
+          setSearchModalVisible(false);
+          playVideo(video, 'modal');
+        }}
+        onSelectWorkshop={() => {
+          setSearchModalVisible(false);
+          navigateToTab('Workshops');
+        }}
       />
     </SafeAreaView>
   );

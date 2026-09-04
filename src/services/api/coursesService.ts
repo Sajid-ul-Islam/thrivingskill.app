@@ -3,7 +3,7 @@ import { Endpoints } from './endpoints';
 import { CacheManager } from '../cache/cacheManager';
 import { Course, Category, CategoryId } from '../../types';
 import { COURSES as FALLBACK_COURSES, CATEGORIES as INITIAL_CATEGORIES } from '../../data/mockData';
-import { transformWpCourse, cleanHtml } from '../wordpressApi';
+import { transformWpCourse, cleanHtml } from './transformers';
 
 export interface CourseQueryParams {
   page?: number;

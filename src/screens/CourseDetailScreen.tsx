@@ -16,6 +16,8 @@ import { Header } from '../components/Header';
 import { CurriculumAccordion } from '../components/CurriculumAccordion';
 import { PaymentModal } from '../components/PaymentModal';
 import { useLanguage } from '../context/LanguageContext';
+import { useYouTube } from '../context/YouTubeContext';
+import { findRelatedVideoForCourse } from '../services/youtubeService';
 import { Lesson } from '../types';
 
 interface CourseDetailScreenProps {
@@ -75,6 +77,8 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
   const isEnrolled = !!userProgress[course.id];
   const progressPercent = getCourseProgressPercentage(course.id);
   const bookmarked = isBookmarked(course.id);
+  const { videos, playVideo } = useYouTube();
+  const trailerVideo = findRelatedVideoForCourse(course, videos);
 
   const handleEnrollOrResume = () => {
     if (!isEnrolled) {
@@ -142,6 +146,10 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
           <TouchableOpacity
             style={[styles.previewPlayBtn, { backgroundColor: 'rgba(0,0,0,0.7)' }]}
             onPress={() => {
+              if (trailerVideo) {
+                playVideo(trailerVideo, 'modal');
+                return;
+              }
               const previewLesson = course.modules[0]?.lessons.find((l) => l.isFreePreview);
               if (previewLesson) {
                 onNavigateToLesson(course.id, previewLesson.id);
@@ -152,9 +160,52 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
             activeOpacity={0.8}
           >
             <Ionicons name="play" size={28} color="#FFFFFF" />
-            <Text style={styles.previewBtnText}>Watch Free Preview</Text>
+            <Text style={styles.previewBtnText}>
+              {trailerVideo ? 'Watch Video Trailer' : 'Watch Free Preview'}
+            </Text>
           </TouchableOpacity>
         </View>
+
+        {/* Course Video Trailer Banner */}
+        {trailerVideo && (
+          <TouchableOpacity
+            style={[
+              styles.trailerCard,
+              {
+                backgroundColor: isDark ? '#1F2937' : '#EFF6FF',
+                borderColor: isDark ? '#374151' : '#BFDBFE',
+              },
+            ]}
+            onPress={() => playVideo(trailerVideo, 'modal')}
+            activeOpacity={0.88}
+          >
+            <View style={styles.trailerThumbWrapper}>
+              <Image source={{ uri: trailerVideo.thumbnail }} style={styles.trailerThumb} />
+              <View style={styles.trailerPlayOverlay}>
+                <Ionicons name="play" size={14} color="#FFFFFF" />
+              </View>
+            </View>
+            <View style={styles.trailerInfo}>
+              <View style={styles.trailerBadgeRow}>
+                <View style={styles.trailerBadge}>
+                  <Ionicons name="logo-youtube" size={12} color="#FF0000" />
+                  <Text style={styles.trailerBadgeText}>FREE COURSE TRAILER</Text>
+                </View>
+                {trailerVideo.duration ? (
+                  <Text style={[styles.trailerDuration, { color: colors.textMuted }]}>
+                    {trailerVideo.duration}
+                  </Text>
+                ) : null}
+              </View>
+              <Text style={[styles.trailerTitle, { color: colors.text }]} numberOfLines={1}>
+                {trailerVideo.title}
+              </Text>
+              <Text style={[styles.trailerPrompt, { color: colors.primary }]}>
+                Watch free mentor overview →
+              </Text>
+            </View>
+          </TouchableOpacity>
+        )}
 
         {/* Content Header */}
         <View style={styles.mainInfo}>
@@ -466,6 +517,69 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '700',
+  },
+  trailerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginTop: 12,
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 12,
+  },
+  trailerThumbWrapper: {
+    width: 68,
+    height: 48,
+    borderRadius: 8,
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: '#000',
+  },
+  trailerThumb: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  trailerPlayOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  trailerInfo: {
+    flex: 1,
+  },
+  trailerBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 2,
+  },
+  trailerBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  trailerBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#FF0000',
+    letterSpacing: 0.5,
+  },
+  trailerDuration: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  trailerTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 17,
+  },
+  trailerPrompt: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
   },
   mainInfo: {
     padding: 16,

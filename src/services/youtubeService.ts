@@ -246,3 +246,65 @@ export function findRelatedCourse(video: YouTubeVideo, courses: Course[]): Cours
 
   return null;
 }
+
+const STORAGE_KEY_LAST_WATCHED = '@ts_last_watched_video';
+
+export async function getLastWatchedVideo(): Promise<YouTubeVideo | null> {
+  try {
+    const raw = await AsyncStorage.getItem(STORAGE_KEY_LAST_WATCHED);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+export async function saveLastWatchedVideo(video: YouTubeVideo): Promise<void> {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEY_LAST_WATCHED, JSON.stringify(video));
+  } catch {
+    // Ignored
+  }
+}
+
+/**
+ * Reverse matching: finds a relevant YouTube masterclass/trailer for a course
+ */
+export function findRelatedVideoForCourse(course: Course, videos: YouTubeVideo[]): YouTubeVideo | null {
+  if (!course || !videos || videos.length === 0) return null;
+
+  const courseTitle = course.title.toLowerCase();
+  const category = (course.category || '').toLowerCase();
+
+  const courseKeywords = courseTitle
+    .replace(/[^\w\s]/g, '')
+    .split(/\s+/)
+    .filter((w) => w.length > 3 && !['with', 'from', 'course', 'master', 'mastery'].includes(w));
+
+  let bestVideo: YouTubeVideo | null = null;
+  let highestScore = 0;
+
+  for (const v of videos) {
+    const vTitle = v.title.toLowerCase();
+    let score = 0;
+
+    for (const kw of courseKeywords) {
+      if (vTitle.includes(kw)) score += 3;
+    }
+
+    if (category && vTitle.includes(category)) score += 2;
+    if (category.includes('ai') && (vTitle.includes('ai') || vTitle.includes('chatgpt'))) score += 3;
+    if (category.includes('excel') && vTitle.includes('excel')) score += 3;
+    if (category.includes('supply') && (vTitle.includes('procurement') || vTitle.includes('supply') || vTitle.includes('cotton'))) score += 3;
+    if (category.includes('finance') && (vTitle.includes('finance') || vTitle.includes('financial') || vTitle.includes('valuation'))) score += 3;
+    if (category.includes('leadership') && (vTitle.includes('leadership') || vTitle.includes('negotiation'))) score += 3;
+
+    if (score > highestScore) {
+      highestScore = score;
+      bestVideo = v;
+    }
+  }
+
+  return highestScore >= 3 ? bestVideo : (videos[0] || null);
+}
+

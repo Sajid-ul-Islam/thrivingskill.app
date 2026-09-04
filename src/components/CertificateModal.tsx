@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Alert, Share } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Alert, Share, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Certificate } from '../types';
 import { useTheme } from '../context/ThemeContext';
@@ -34,6 +34,30 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
   const handleCopyLink = () => {
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
+  };
+
+  const handleAddToLinkedIn = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth() + 1;
+
+    const certName = encodeURIComponent(certificate.courseTitle);
+    const orgName = encodeURIComponent('Thriving Skills');
+    const certUrl = encodeURIComponent(certificate.verificationUrl);
+    const certId = encodeURIComponent(certificate.credentialId);
+
+    const linkedinUrl = `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${certName}&organizationName=${orgName}&issueYear=${year}&issueMonth=${month}&certUrl=${certUrl}&certId=${certId}`;
+
+    Linking.openURL(linkedinUrl).catch(() => {
+      Alert.alert('Unable to open LinkedIn', 'Please verify your network connection or copy your credential link.');
+    });
+  };
+
+  const handleShareToLinkedInFeed = () => {
+    const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(certificate.verificationUrl)}`;
+    Linking.openURL(shareUrl).catch(() => {
+      handleShare();
+    });
   };
 
   return (
@@ -111,14 +135,36 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
 
             {/* Actions */}
             <View style={styles.actionsContainer}>
+              {/* Primary: 1-Tap Add to LinkedIn Profile */}
               <TouchableOpacity
-                style={[styles.primaryActionBtn, { backgroundColor: colors.primary }]}
-                onPress={handleShare}
+                style={[styles.linkedinActionBtn, { backgroundColor: '#0A66C2' }]}
+                onPress={handleAddToLinkedIn}
+                activeOpacity={0.88}
               >
-                <Ionicons name="share-social" size={18} color="#FFFFFF" />
-                <Text style={styles.primaryActionText}>Share Credential</Text>
+                <Ionicons name="logo-linkedin" size={18} color="#FFFFFF" />
+                <Text style={styles.linkedinActionText}>Add to LinkedIn Profile</Text>
               </TouchableOpacity>
 
+              {/* Share Row: Native Share + Post on LinkedIn */}
+              <View style={styles.actionRowHalf}>
+                <TouchableOpacity
+                  style={[styles.halfActionBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                  onPress={handleShare}
+                >
+                  <Ionicons name="share-social-outline" size={16} color={colors.text} />
+                  <Text style={[styles.halfActionText, { color: colors.text }]}>Share</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.halfActionBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                  onPress={handleShareToLinkedInFeed}
+                >
+                  <Ionicons name="logo-linkedin" size={16} color="#0A66C2" />
+                  <Text style={[styles.halfActionText, { color: colors.text }]}>Post to Feed</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Copy Verification Link */}
               <TouchableOpacity
                 style={[
                   styles.secondaryActionBtn,
@@ -128,13 +174,13 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
               >
                 <Ionicons
                   name={copied ? 'checkmark-circle' : 'copy-outline'}
-                  size={18}
-                  color={copied ? colors.primary : colors.text}
+                  size={16}
+                  color={copied ? '#059669' : colors.textMuted}
                 />
                 <Text
                   style={[
                     styles.secondaryActionText,
-                    { color: copied ? colors.primary : colors.text },
+                    { color: copied ? '#059669' : colors.text },
                   ]}
                 >
                   {copied ? 'Verification Link Copied!' : 'Copy Verification URL'}
@@ -316,18 +362,37 @@ const styles = StyleSheet.create({
     marginTop: 16,
     gap: 10,
   },
-  primaryActionBtn: {
+  linkedinActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
+    paddingVertical: 13,
     borderRadius: 12,
     gap: 8,
   },
-  primaryActionText: {
+  linkedinActionText: {
     fontSize: 14,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  actionRowHalf: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  halfActionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    gap: 6,
+  },
+  halfActionText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   secondaryActionBtn: {
     flexDirection: 'row',

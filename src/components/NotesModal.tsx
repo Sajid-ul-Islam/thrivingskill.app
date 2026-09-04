@@ -9,6 +9,8 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Share,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -23,15 +25,50 @@ interface NotesModalProps {
 
 export const NotesModal: React.FC<NotesModalProps> = ({ visible, courseId, lessonId, onClose }) => {
   const { colors } = useTheme();
-  const { getNotesForLesson, addNote, deleteNote } = useLearning();
+  const { getNotesForLesson, addNote, deleteNote, courses } = useLearning();
   const [newNoteText, setNewNoteText] = useState('');
 
   const lessonNotes = getNotesForLesson(courseId, lessonId);
+  const currentCourse = courses.find((c) => c.id === courseId);
+  const currentLesson = currentCourse?.modules.flatMap((m) => m.lessons).find((l) => l.id === lessonId);
 
   const handleSaveNote = () => {
     if (!newNoteText.trim()) return;
     addNote(courseId, lessonId, newNoteText.trim());
     setNewNoteText('');
+  };
+
+  const handleExportNotes = async () => {
+    if (lessonNotes.length === 0) {
+      Alert.alert('No Notes', 'Add some study notes first before exporting.');
+      return;
+    }
+
+    const courseTitle = currentCourse?.title || 'Thriving Skills Course';
+    const lessonTitle = currentLesson?.title || 'Lesson Notes';
+    const dateStr = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+
+    let markdown = `# 📝 Study Notes: ${lessonTitle}\n`;
+    markdown += `**Course:** ${courseTitle}\n`;
+    markdown += `**Date:** ${dateStr}\n`;
+    markdown += `**Platform:** Thriving Skills (Executive Learning)\n\n`;
+    markdown += `---\n\n`;
+
+    lessonNotes.forEach((note, idx) => {
+      const time = new Date(note.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      markdown += `### Note ${idx + 1} (${time})\n${note.text}\n\n`;
+    });
+
+    markdown += `---\n*Exported via Thriving Skills App*`;
+
+    try {
+      await Share.share({
+        title: `Study Notes - ${lessonTitle}`,
+        message: markdown,
+      });
+    } catch {
+      // Ignored
+    }
   };
 
   return (
@@ -52,9 +89,21 @@ export const NotesModal: React.FC<NotesModalProps> = ({ visible, courseId, lesso
               <Ionicons name="document-text" size={20} color={colors.primary} />
               <Text style={[styles.headerTitle, { color: colors.text }]}>Study Notes</Text>
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <Ionicons name="close" size={22} color={colors.textMuted} />
-            </TouchableOpacity>
+            <View style={styles.headerRight}>
+              {lessonNotes.length > 0 && (
+                <TouchableOpacity
+                  onPress={handleExportNotes}
+                  style={[styles.exportBtn, { backgroundColor: colors.surfaceSubtle }]}
+                  accessibilityLabel="Export study notes"
+                >
+                  <Ionicons name="share-outline" size={16} color={colors.primary} />
+                  <Text style={[styles.exportBtnText, { color: colors.primary }]}>Export</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+                <Ionicons name="close" size={22} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
           </View>
 
           <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -165,6 +214,23 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 17,
+    fontWeight: '700',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  exportBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  exportBtnText: {
+    fontSize: 12,
     fontWeight: '700',
   },
   closeBtn: {

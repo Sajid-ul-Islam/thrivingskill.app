@@ -1,7 +1,7 @@
 import { HttpClient } from './httpClient';
 import { Endpoints } from './endpoints';
 import { CacheManager } from '../cache/cacheManager';
-import { cleanHtml } from '../wordpressApi';
+import { cleanHtml } from './transformers';
 
 export interface LessonDetail {
   id: number | string;

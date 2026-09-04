@@ -23,7 +23,7 @@ import { CourseCard } from '../components/CourseCard';
 import { SpecialBundleCard } from '../components/SpecialBundleCard';
 import { SummitCard } from '../components/SummitCard';
 import { YouTubeCard } from '../components/YouTubeCard';
-import { YouTubePlayerModal } from '../components/YouTubePlayerModal';
+import { useYouTube } from '../context/YouTubeContext';
 import { YOUTUBE_VIDEOS, YOUTUBE_CHANNEL, YouTubeVideo } from '../data/youtubeVideos';
 import {
   CORPORATE_CLIENTS,
@@ -42,6 +42,7 @@ interface HomeScreenProps {
   onOpenNotifications: () => void;
   onOpenAssessment: () => void;
   onOpenYouTube?: () => void;
+  onOpenSearch?: () => void;
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
@@ -53,6 +54,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onOpenNotifications,
   onOpenAssessment,
   onOpenYouTube,
+  onOpenSearch,
 }) => {
   const { colors, isDark } = useTheme();
   const { t, isBangla } = useLanguage();
@@ -71,6 +73,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     getCourseProgressPercentage,
   } = useLearning();
   const { activeWorkspace, subscriptionTier, assessmentResult } = useSaaS();
+  const { lastWatchedVideo, playVideo } = useYouTube();
 
   // Find enrolled active course to show "Continue Learning"
   const enrolledCourseIds = Object.keys(userProgress);
@@ -90,14 +93,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     return matchesCategory && matchesSearch;
   });
 
-  const [activeYouTubeVideo, setActiveYouTubeVideo] = React.useState<YouTubeVideo | null>(null);
-
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
         onOpenSubscription={onOpenSubscription}
         onOpenNotifications={onOpenNotifications}
         onOpenYouTube={onOpenYouTube}
+        onOpenSearch={onOpenSearch}
       />
 
       <ScrollView
@@ -254,62 +256,119 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </TouchableOpacity>
         </View>
 
-        {/* Continue Learning Resume Card (if enrolled) */}
-        {activeCourse && (
+        {/* Continue Learning & Watching Resume Card */}
+        {(activeCourse || lastWatchedVideo) && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Continue Learning</Text>
-              <TouchableOpacity onPress={() => onNavigateTab('MyLearning')}>
-                <Text style={[styles.seeAllText, { color: colors.primary }]}>My Hub →</Text>
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Ionicons name="play-circle" size={18} color={colors.primary} />
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>Continue Learning & Watching</Text>
+              </View>
+              {activeCourse && (
+                <TouchableOpacity onPress={() => onNavigateTab('MyLearning')}>
+                  <Text style={[styles.seeAllText, { color: colors.primary }]}>My Hub →</Text>
+                </TouchableOpacity>
+              )}
             </View>
 
-            <TouchableOpacity
-              style={[
-                styles.resumeCard,
-                {
-                  backgroundColor: colors.surfaceCard,
-                  borderColor: colors.border,
-                  shadowColor: colors.cardShadow,
-                },
-              ]}
-              onPress={() => {
-                const targetLessonId =
-                  activeProgress?.lastAccessedLessonId ||
-                  activeCourse.modules[0]?.lessons[0]?.id ||
-                  '';
-                onNavigateToLesson(activeCourse.id, targetLessonId);
-              }}
-              activeOpacity={0.88}
-            >
-              <Image source={{ uri: activeCourse.thumbnail }} style={styles.resumeThumb} />
-              <View style={styles.resumeInfo}>
-                <Text style={[styles.resumeCourseTitle, { color: colors.text }]} numberOfLines={1}>
-                  {activeCourse.title}
-                </Text>
-                <Text style={[styles.resumeInstructor, { color: colors.textMuted }]}>
-                  {activeCourse.instructor.name}
-                </Text>
-
-                <View style={styles.resumeProgressRow}>
-                  <View style={[styles.resumeTrack, { backgroundColor: colors.surfaceSubtle }]}>
-                    <View
-                      style={[
-                        styles.resumeFill,
-                        { backgroundColor: colors.primary, width: `${activeProgressPercent}%` },
-                      ]}
-                    />
+            {/* In-Progress Course Card */}
+            {activeCourse && (
+              <TouchableOpacity
+                style={[
+                  styles.resumeCard,
+                  {
+                    backgroundColor: colors.surfaceCard,
+                    borderColor: colors.border,
+                    shadowColor: colors.cardShadow,
+                    marginBottom: lastWatchedVideo ? 10 : 0,
+                  },
+                ]}
+                onPress={() => {
+                  const targetLessonId =
+                    activeProgress?.lastAccessedLessonId ||
+                    activeCourse.modules[0]?.lessons[0]?.id ||
+                    '';
+                  onNavigateToLesson(activeCourse.id, targetLessonId);
+                }}
+                activeOpacity={0.88}
+              >
+                <Image source={{ uri: activeCourse.thumbnail }} style={styles.resumeThumb} />
+                <View style={styles.resumeInfo}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+                    <View style={[styles.miniPill, { backgroundColor: colors.primaryLight }]}>
+                      <Text style={[styles.miniPillText, { color: colors.primary }]}>COURSE</Text>
+                    </View>
+                    <Text style={[styles.resumeInstructor, { color: colors.textMuted }]} numberOfLines={1}>
+                      • {activeCourse.instructor.name}
+                    </Text>
                   </View>
-                  <Text style={[styles.resumePercentText, { color: colors.primary }]}>
-                    {activeProgressPercent}%
+                  <Text style={[styles.resumeCourseTitle, { color: colors.text }]} numberOfLines={1}>
+                    {activeCourse.title}
+                  </Text>
+
+                  <View style={styles.resumeProgressRow}>
+                    <View style={[styles.resumeTrack, { backgroundColor: colors.surfaceSubtle }]}>
+                      <View
+                        style={[
+                          styles.resumeFill,
+                          { backgroundColor: colors.primary, width: `${activeProgressPercent}%` },
+                        ]}
+                      />
+                    </View>
+                    <Text style={[styles.resumePercentText, { color: colors.primary }]}>
+                      {activeProgressPercent}%
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={[styles.playBtnBg, { backgroundColor: colors.primary }]}>
+                  <Ionicons name="play" size={16} color="#FFFFFF" />
+                </View>
+              </TouchableOpacity>
+            )}
+
+            {/* Last-Watched YouTube Masterclass */}
+            {lastWatchedVideo && (
+              <TouchableOpacity
+                style={[
+                  styles.resumeCard,
+                  {
+                    backgroundColor: colors.surfaceCard,
+                    borderColor: colors.border,
+                    shadowColor: colors.cardShadow,
+                  },
+                ]}
+                onPress={() => playVideo(lastWatchedVideo, 'modal')}
+                activeOpacity={0.88}
+              >
+                <View style={{ position: 'relative' }}>
+                  <Image source={{ uri: lastWatchedVideo.thumbnail }} style={styles.resumeThumb} />
+                  <View style={styles.resumeYtBadge}>
+                    <Ionicons name="logo-youtube" size={10} color="#FFFFFF" />
+                  </View>
+                </View>
+                <View style={styles.resumeInfo}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+                    <View style={[styles.miniPill, { backgroundColor: 'rgba(255, 0, 0, 0.1)' }]}>
+                      <Text style={[styles.miniPillText, { color: '#FF0000' }]}>MASTERCLASS</Text>
+                    </View>
+                    <Text style={[styles.resumeInstructor, { color: colors.textMuted }]}>
+                      • @ThrivingSkills
+                    </Text>
+                  </View>
+                  <Text style={[styles.resumeCourseTitle, { color: colors.text }]} numberOfLines={1}>
+                    {lastWatchedVideo.title}
+                  </Text>
+                  <Text style={[styles.resumeSubText, { color: colors.textMuted }]}>
+                    Tap to resume masterclass video
                   </Text>
                 </View>
-              </View>
 
-              <View style={[styles.playBtnBg, { backgroundColor: colors.primary }]}>
-                <Ionicons name="play" size={16} color="#FFFFFF" />
-              </View>
-            </TouchableOpacity>
+                <View style={[styles.playBtnBg, { backgroundColor: '#FF0000' }]}>
+                  <Ionicons name="play" size={16} color="#FFFFFF" />
+                </View>
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
@@ -402,7 +461,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 key={ytVideo.id}
                 video={ytVideo}
                 width={260}
-                onPress={(v) => setActiveYouTubeVideo(v)}
+                onPress={(v) => playVideo(v, 'modal')}
               />
             ))}
           </ScrollView>
@@ -600,14 +659,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </View>
         </View>
       </ScrollView>
-
-      {/* Embedded In-App YouTube Player */}
-      <YouTubePlayerModal
-        visible={activeYouTubeVideo !== null}
-        video={activeYouTubeVideo}
-        onClose={() => setActiveYouTubeVideo(null)}
-        onSelectVideo={(v) => setActiveYouTubeVideo(v)}
-      />
     </View>
   );
 };
@@ -805,6 +856,30 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 10,
     resizeMode: 'cover',
+  },
+  resumeYtBadge: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    backgroundColor: '#FF0000',
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  miniPill: {
+    paddingHorizontal: 5,
+    paddingVertical: 1.5,
+    borderRadius: 4,
+  },
+  miniPillText: {
+    fontSize: 9,
+    fontWeight: '800',
+  },
+  resumeSubText: {
+    fontSize: 11,
+    marginTop: 2,
   },
   resumeInfo: {
     flex: 1,

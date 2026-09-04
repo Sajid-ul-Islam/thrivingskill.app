@@ -4,6 +4,8 @@ import {
   syncLatestYouTubeVideos,
   getSavedVideoIds,
   saveVideoIds,
+  getLastWatchedVideo,
+  saveLastWatchedVideo,
 } from '../services/youtubeService';
 
 export type PlayerMode = 'modal' | 'mini' | 'closed';
@@ -11,6 +13,7 @@ export type PlayerMode = 'modal' | 'mini' | 'closed';
 interface YouTubeContextType {
   videos: YouTubeVideo[];
   activeVideo: YouTubeVideo | null;
+  lastWatchedVideo: YouTubeVideo | null;
   playerMode: PlayerMode;
   savedVideoIds: string[];
   savedVideos: YouTubeVideo[];
@@ -29,14 +32,19 @@ const YouTubeContext = createContext<YouTubeContextType | undefined>(undefined);
 export const YouTubeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [videos, setVideos] = useState<YouTubeVideo[]>(YOUTUBE_VIDEOS);
   const [activeVideo, setActiveVideo] = useState<YouTubeVideo | null>(null);
+  const [lastWatchedVideo, setLastWatchedVideo] = useState<YouTubeVideo | null>(null);
   const [playerMode, setPlayerMode] = useState<PlayerMode>('closed');
   const [savedVideoIds, setSavedVideoIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Initialize saved videos & background RSS sync
+  // Initialize saved videos, last watched video & background RSS sync
   useEffect(() => {
     getSavedVideoIds().then((ids) => {
       setSavedVideoIds(ids);
+    });
+
+    getLastWatchedVideo().then((last) => {
+      if (last) setLastWatchedVideo(last);
     });
 
     // Initial background sync
@@ -61,6 +69,8 @@ export const YouTubeProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const playVideo = useCallback((video: YouTubeVideo, mode: 'modal' | 'mini' = 'modal') => {
     setActiveVideo(video);
+    setLastWatchedVideo(video);
+    saveLastWatchedVideo(video);
     setPlayerMode(mode);
   }, []);
 
@@ -107,6 +117,7 @@ export const YouTubeProvider: React.FC<{ children: React.ReactNode }> = ({ child
       value={{
         videos,
         activeVideo,
+        lastWatchedVideo,
         playerMode,
         savedVideoIds,
         savedVideos,
