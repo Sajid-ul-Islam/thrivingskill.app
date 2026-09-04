@@ -15,6 +15,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useYouTube } from '../context/YouTubeContext';
 import { YouTubeCard } from '../components/YouTubeCard';
 import { YouTubeVideo, YOUTUBE_CHANNEL } from '../data/youtubeVideos';
+import { useAutoScroll } from '../hooks/useAutoScroll';
 
 interface YouTubeVideosScreenProps {
   onBack: () => void;
@@ -33,6 +34,12 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<VideoCategory>('all');
   const [viewMode, setViewMode] = useState<'card' | 'horizontal'>('card');
+
+  const topicPillsAutoScroll = useAutoScroll({
+    speed: 0.45,
+    pauseAtEdgeMs: 1500,
+    resumeDelayMs: 2500,
+  });
 
   const categories: { id: VideoCategory; label: string; icon: string; count?: number }[] = [
     { id: 'all', label: `All (${videos.length})`, icon: 'apps-outline' },
@@ -163,7 +170,13 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
 
       {/* Category Pills */}
       <View style={styles.pillsContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pillsScroll}>
+        <ScrollView
+          ref={topicPillsAutoScroll.scrollViewRef}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.pillsScroll}
+          {...topicPillsAutoScroll.scrollProps}
+        >
           {categories.map((cat) => {
             const isSelected = selectedCategory === cat.id;
             return (
@@ -176,7 +189,10 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
                     borderColor: isSelected ? '#102E52' : colors.border,
                   },
                 ]}
-                onPress={() => setSelectedCategory(cat.id)}
+                onPress={() => {
+                  topicPillsAutoScroll.pauseTemporarily(3000);
+                  setSelectedCategory(cat.id);
+                }}
               >
                 <Ionicons
                   name={cat.icon as any}

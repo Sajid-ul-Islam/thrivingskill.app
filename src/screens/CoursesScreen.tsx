@@ -17,6 +17,7 @@ import { CategoryPills } from '../components/CategoryPills';
 import { CourseCard } from '../components/CourseCard';
 import { SpecialBundleCard } from '../components/SpecialBundleCard';
 import { SPECIAL_BUNDLES } from '../data/mockData';
+import { useAutoScroll } from '../hooks/useAutoScroll';
 
 interface CoursesScreenProps {
   onNavigateToCourse: (courseId: string) => void;
@@ -47,6 +48,12 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   const [selectedLevel, setSelectedLevel] = useState<LevelFilter>('All');
   const [selectedSort, setSelectedSort] = useState<SortOption>('popular');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  const levelsAutoScroll = useAutoScroll({
+    speed: 0.40,
+    pauseAtEdgeMs: 1500,
+    resumeDelayMs: 2500,
+  });
 
   // Filtering & Sorting
   const isBundleView = selectedCategory === 'career-track';
@@ -141,7 +148,13 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
         {!isBundleView && (
           <View style={styles.filterRow}>
             {/* Level selector */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.levelsScroll}>
+            <ScrollView
+              ref={levelsAutoScroll.scrollViewRef}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.levelsScroll}
+              {...levelsAutoScroll.scrollProps}
+            >
               {(['All', 'Beginner', 'Intermediate', 'Advanced'] as LevelFilter[]).map((lvl) => (
                 <TouchableOpacity
                   key={lvl}
@@ -153,7 +166,10 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                       borderColor: selectedLevel === lvl ? colors.secondary : colors.border,
                     },
                   ]}
-                  onPress={() => setSelectedLevel(lvl)}
+                  onPress={() => {
+                    levelsAutoScroll.pauseTemporarily(3000);
+                    setSelectedLevel(lvl);
+                  }}
                 >
                   <Text
                     style={[

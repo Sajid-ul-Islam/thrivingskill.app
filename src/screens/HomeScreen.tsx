@@ -31,6 +31,7 @@ import { SearchSpotlightBar } from '../components/SearchSpotlightBar';
 import { CountdownWidget } from '../components/CountdownWidget';
 import { SkillBiteWidget } from '../components/SkillBiteWidget';
 import { useYouTube } from '../context/YouTubeContext';
+import { useAutoScroll } from '../hooks/useAutoScroll';
 import { YOUTUBE_VIDEOS, YOUTUBE_CHANNEL, YouTubeVideo } from '../data/youtubeVideos';
 import {
   CORPORATE_CLIENTS,
@@ -85,6 +86,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   } = useLearning();
   const { activeWorkspace, subscriptionTier, assessmentResult } = useSaaS();
   const { lastWatchedVideo, playVideo } = useYouTube();
+
+  // Dynamic slow auto-scroll hooks for shelves
+  const ytAutoScroll = useAutoScroll({
+    speed: 0.45,
+    pauseAtEdgeMs: 1800,
+    resumeDelayMs: 2800,
+  });
+
+  const reviewsAutoScroll = useAutoScroll({
+    speed: 0.40,
+    pauseAtEdgeMs: 2000,
+    resumeDelayMs: 3000,
+  });
+
+  const articlesAutoScroll = useAutoScroll({
+    speed: 0.42,
+    pauseAtEdgeMs: 1800,
+    resumeDelayMs: 2800,
+  });
 
   // Find enrolled active course to show "Continue Learning"
   const enrolledCourseIds = Object.keys(userProgress);
@@ -413,16 +433,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </View>
 
           <ScrollView
+            ref={ytAutoScroll.scrollViewRef}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ gap: 14, paddingRight: 16 }}
+            {...ytAutoScroll.scrollProps}
           >
             {YOUTUBE_VIDEOS.slice(0, 8).map((ytVideo) => (
               <YouTubeCard
                 key={ytVideo.id}
                 video={ytVideo}
                 width={260}
-                onPress={(v) => playVideo(v, 'modal')}
+                onPress={(v) => {
+                  ytAutoScroll.pauseTemporarily(4000);
+                  playVideo(v, 'modal');
+                }}
               />
             ))}
           </ScrollView>
@@ -514,7 +539,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </View>
           </View>
 
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.reviewsScroll}>
+          <ScrollView
+            ref={reviewsAutoScroll.scrollViewRef}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.reviewsScroll}
+            {...reviewsAutoScroll.scrollProps}
+          >
             {REVIEWS_WALL.map((rev) => (
               <View
                 key={rev.id}
@@ -567,7 +598,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               </View>
             </View>
 
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.articlesScroll}>
+            <ScrollView
+              ref={articlesAutoScroll.scrollViewRef}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.articlesScroll}
+              {...articlesAutoScroll.scrollProps}
+            >
               {blogPosts.map((post) => (
                 <TouchableOpacity
                   key={post.id}
@@ -579,7 +616,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                       shadowColor: colors.cardShadow,
                     },
                   ]}
-                  onPress={() => post.link && Linking.openURL(post.link).catch(() => {})}
+                  onPress={() => {
+                    articlesAutoScroll.pauseTemporarily(4000);
+                    post.link && Linking.openURL(post.link).catch(() => {});
+                  }}
                   activeOpacity={0.88}
                 >
                   {post.featuredImageUrl ? (
