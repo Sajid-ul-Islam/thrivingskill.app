@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { CATEGORIES } from '../data/mockData';
 import { Category, CategoryId } from '../types';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 
 interface CategoryPillsProps {
   selectedId: CategoryId;
@@ -12,7 +13,8 @@ interface CategoryPillsProps {
 }
 
 export const CategoryPills: React.FC<CategoryPillsProps> = ({ selectedId, onSelect, categories }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  const { isBangla } = useLanguage();
   const list: Category[] = categories && categories.length > 0 ? categories : CATEGORIES;
 
   return (
@@ -23,23 +25,30 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({ selectedId, onSele
     >
       {list.map((cat) => {
         const isSelected = selectedId === cat.id;
+        const displayName = isBangla && cat.banglaName ? cat.banglaName : cat.name;
+
         return (
           <TouchableOpacity
             key={cat.id}
             style={[
               styles.pill,
               {
-                backgroundColor: isSelected ? colors.primary : colors.surfaceCard,
+                backgroundColor: isSelected
+                  ? colors.primary
+                  : isDark
+                  ? colors.surfaceCard
+                  : '#FFFFFF',
                 borderColor: isSelected ? colors.primary : colors.border,
               },
+              isSelected && styles.selectedPillShadow,
             ]}
             onPress={() => onSelect(cat.id)}
-            activeOpacity={0.7}
+            activeOpacity={0.75}
           >
             <Ionicons
               name={cat.icon as any}
               size={15}
-              color={isSelected ? '#FFFFFF' : colors.textMuted}
+              color={isSelected ? '#FFFFFF' : colors.primary}
               style={styles.icon}
             />
             <Text
@@ -47,18 +56,18 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({ selectedId, onSele
                 styles.pillText,
                 {
                   color: isSelected ? '#FFFFFF' : colors.text,
-                  fontWeight: isSelected ? '700' : '500',
+                  fontWeight: isSelected ? '700' : '600',
                 },
               ]}
             >
-              {cat.name}
+              {displayName}
             </Text>
             {cat.id !== 'all' && (
               <View
                 style={[
                   styles.countBadge,
                   {
-                    backgroundColor: isSelected ? 'rgba(255,255,255,0.25)' : colors.surfaceSubtle,
+                    backgroundColor: isSelected ? 'rgba(255,255,255,0.22)' : colors.surfaceSubtle,
                   },
                 ]}
               >
@@ -93,6 +102,13 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
   },
+  selectedPillShadow: {
+    shadowColor: '#059669',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
   icon: {
     marginRight: 6,
   },
@@ -107,6 +123,6 @@ const styles = StyleSheet.create({
   },
   countText: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

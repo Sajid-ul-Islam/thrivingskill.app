@@ -25,6 +25,9 @@ import { SummitCard } from '../components/SummitCard';
 import { YouTubeCard } from '../components/YouTubeCard';
 import { CommunityFeedShelf } from '../components/CommunityFeedShelf';
 import { CommunityFeedModal } from '../components/CommunityFeedModal';
+import { HeroCarousel, CarouselSlide } from '../components/HeroCarousel';
+import { QuickActionDock } from '../components/QuickActionDock';
+import { SearchSpotlightBar } from '../components/SearchSpotlightBar';
 import { useYouTube } from '../context/YouTubeContext';
 import { YOUTUBE_VIDEOS, YOUTUBE_CHANNEL, YouTubeVideo } from '../data/youtubeVideos';
 import {
@@ -99,6 +102,28 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     return matchesCategory && matchesSearch;
   });
 
+  const handleSelectSlide = (slide: CarouselSlide) => {
+    if (slide.actionType === 'summit') {
+      onNavigateTab('Workshops');
+    } else if (slide.actionType === 'trailer') {
+      const aiCourse = courses.find((c) => c.id === 'course-ai-productivity');
+      if (aiCourse) {
+        onNavigateToCourse(aiCourse.id);
+      } else {
+        onNavigateTab('Courses');
+      }
+    } else if (slide.actionType === 'course') {
+      const excelCourse = courses.find((c) => c.id === 'course-excel-dashboards');
+      if (excelCourse) {
+        onNavigateToCourse(excelCourse.id);
+      } else {
+        onNavigateTab('Courses');
+      }
+    } else if (slide.actionType === 'subscription') {
+      onOpenSubscription();
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
@@ -120,147 +145,67 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           />
         }
       >
-        {/* Daily Streak & Study Goal Widget */}
-        <View style={[styles.streakWidget, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <View style={styles.streakLeft}>
-            <View style={styles.flameCircle}>
+        {/* 1. Personalized Greeting Bar & Momentum Capsule */}
+        <View style={styles.greetingHeader}>
+          <View style={styles.greetingTextCol}>
+            <Text style={[styles.greetingTitle, { color: colors.text }]}>
+              {isBangla ? 'স্বাগতম, লার্নার 👋' : 'Welcome back, Learner 👋'}
+            </Text>
+            <Text style={[styles.greetingSubtitle, { color: colors.textMuted }]}>
+              {isBangla ? 'আজকে আপনি কোন স্কিল শিখবেন?' : 'What skill will you master today?'}
+            </Text>
+          </View>
+
+          {/* Compact Momentum Capsule */}
+          <View
+            style={[
+              styles.momentumCapsule,
+              {
+                backgroundColor: isDark ? colors.surfaceCard : '#FFFFFF',
+                borderColor: colors.border,
+              },
+            ]}
+          >
+            <View style={styles.momentumItem}>
               <Text style={styles.flameEmoji}>🔥</Text>
-            </View>
-            <View>
-              <Text style={[styles.streakNumber, { color: colors.text }]}>
-                {streakDays} {t('dayStreak')}
-              </Text>
-              <Text style={[styles.streakSub, { color: colors.textMuted }]}>
-                {t('streakMessage')}
+              <Text style={[styles.momentumValue, { color: colors.text }]}>
+                {streakDays}d
               </Text>
             </View>
-          </View>
-          <View style={[styles.goalPill, { backgroundColor: colors.primaryLight }]}>
-            <Ionicons name="time" size={14} color={colors.primary} />
-            <Text style={[styles.goalText, { color: colors.primary }]}>
-              {dailyMinutesSpent}/{dailyGoalMinutes}m
-            </Text>
+            <View style={[styles.momentumDivider, { backgroundColor: colors.border }]} />
+            <View style={styles.momentumItem}>
+              <Ionicons name="time" size={13} color={colors.primary} />
+              <Text style={[styles.momentumValue, { color: colors.primary }]}>
+                {dailyMinutesSpent}m
+              </Text>
+            </View>
           </View>
         </View>
 
-        {/* Authentic Thriving Skills Hero Banner */}
-        <View
-          style={[
-            styles.heroCard,
-            {
-              backgroundColor: isDark ? colors.surfaceCard : '#064E3B',
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          <View style={styles.heroTopRow}>
-            <View style={styles.heroBadge}>
-              <Ionicons name="school" size={12} color="#FBBF24" />
-              <Text style={styles.heroBadgeText}>
-                THRIVING SKILLS • SKILLED NATION
-              </Text>
-            </View>
+        {/* 2. Unified Search Spotlight Launcher Bar */}
+        <SearchSpotlightBar
+          onPress={() => onOpenSearch && onOpenSearch()}
+          onSelectTag={(query) => {
+            setSearchQuery(query);
+            if (onOpenSearch) onOpenSearch();
+          }}
+        />
 
-            <TouchableOpacity style={styles.membershipPill} onPress={onOpenSubscription}>
-              <Text style={styles.membershipPillText}>
-                {subscriptionTier.toUpperCase()} PLAN →
-              </Text>
-            </TouchableOpacity>
-          </View>
+        {/* 3. High-Impact Swipeable Hero Carousel */}
+        <HeroCarousel
+          onSelectSlide={handleSelectSlide}
+          onOpenSubscription={onOpenSubscription}
+        />
 
-          <Text style={styles.heroBanglaTagline}>
-            {t('heroBanglaSlogan')}
-          </Text>
-          <Text style={styles.heroTitle}>
-            {t('brandTagline')}
-          </Text>
-          <Text style={styles.heroSubtitle}>
-            ৩০০+ প্রিমিয়াম কোর্স, সাপ্তাহিক লাইভ সেশন এবং ফলপ্রসূ ক্যারিয়ার বান্ডেল।
-            Bridge Academic Learning to Industry Excellence.
-          </Text>
-
-          {/* Quick Search Bar */}
-          <View style={[styles.searchBar, { backgroundColor: isDark ? colors.surfaceSubtle : '#FFFFFF' }]}>
-            <Ionicons name="search" size={18} color={colors.textMuted} />
-            <TextInput
-              style={[styles.searchInput, { color: isDark ? colors.text : '#0F172A' }]}
-              placeholder="Search Generative AI, MS Excel, Financial Modeling..."
-              placeholderTextColor={colors.textLight}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <Ionicons name="close-circle" size={18} color={colors.textMuted} />
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-
-        {/* SaaS Quick Actions 4-Grid */}
-        <View style={styles.quickActionGrid}>
-          {/* AI Copilot */}
-          <TouchableOpacity
-            style={[styles.actionCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
-            onPress={() => onNavigateTab('Copilot')}
-            activeOpacity={0.85}
-          >
-            <View style={[styles.actionIconBg, { backgroundColor: '#EEF2FF' }]}>
-              <Ionicons name="sparkles" size={20} color="#6366F1" />
-            </View>
-            <Text style={[styles.actionTitle, { color: colors.text }]}>AI Skill Copilot</Text>
-            <Text style={[styles.actionSub, { color: colors.textMuted }]}>
-              Audit models & prompts
-            </Text>
-          </TouchableOpacity>
-
-          {/* Diagnostic Assessment */}
-          <TouchableOpacity
-            style={[styles.actionCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
-            onPress={onOpenAssessment}
-            activeOpacity={0.85}
-          >
-            <View style={[styles.actionIconBg, { backgroundColor: '#D1FAE5' }]}>
-              <Ionicons name="analytics" size={20} color="#059669" />
-            </View>
-            <Text style={[styles.actionTitle, { color: colors.text }]}>Skill Diagnostic</Text>
-            <Text style={[styles.actionSub, { color: colors.textMuted }]}>
-              {assessmentResult ? `${assessmentResult.overallScore}% Score` : 'Take 3-min quiz'}
-            </Text>
-          </TouchableOpacity>
-
-          {/* Enterprise Hub / Team */}
-          <TouchableOpacity
-            style={[styles.actionCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
-            onPress={() => onNavigateTab(activeWorkspace.type === 'enterprise' ? 'TeamHub' : 'MyLearning')}
-            activeOpacity={0.85}
-          >
-            <View style={[styles.actionIconBg, { backgroundColor: '#FEF3C7' }]}>
-              <Ionicons name="business" size={20} color="#D97706" />
-            </View>
-            <Text style={[styles.actionTitle, { color: colors.text }]}>
-              {activeWorkspace.type === 'enterprise' ? 'Team Portal' : 'My Learning Hub'}
-            </Text>
-            <Text style={[styles.actionSub, { color: colors.textMuted }]}>
-              {activeWorkspace.type === 'enterprise' ? '18/25 Active Seats' : 'Track your progress'}
-            </Text>
-          </TouchableOpacity>
-
-          {/* SaaS Membership */}
-          <TouchableOpacity
-            style={[styles.actionCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
-            onPress={onOpenSubscription}
-            activeOpacity={0.85}
-          >
-            <View style={[styles.actionIconBg, { backgroundColor: '#F3E8FF' }]}>
-              <Ionicons name="diamond" size={20} color="#8B5CF6" />
-            </View>
-            <Text style={[styles.actionTitle, { color: colors.text }]}>Subscription</Text>
-            <Text style={[styles.actionSub, { color: colors.textMuted }]}>
-              {subscriptionTier === 'enterprise' ? 'Enterprise License' : 'স্মার্ট লার্নিং অফার'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {/* 4. Streamlined 4-Action Dock */}
+        <QuickActionDock
+          onOpenCopilot={() => onNavigateTab('Copilot')}
+          onOpenAssessment={onOpenAssessment}
+          onOpenWorkshops={() => onNavigateTab('Workshops')}
+          onOpenTeamOrMyLearning={() =>
+            onNavigateTab(activeWorkspace.type === 'enterprise' ? 'TeamHub' : 'MyLearning')
+          }
+        />
 
         {/* Continue Learning & Watching Resume Card */}
         {(activeCourse || lastWatchedVideo) && (
@@ -692,152 +637,56 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 40,
   },
-  streakWidget: {
+  greetingHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginHorizontal: 16,
-    marginTop: 12,
-    marginBottom: 4,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 16,
-    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 4,
   },
-  streakLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+  greetingTextCol: {
     flex: 1,
+    paddingRight: 10,
   },
-  flameCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#FEF3C7',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  flameEmoji: {
+  greetingTitle: {
     fontSize: 20,
-  },
-  streakNumber: {
-    fontSize: 14,
     fontWeight: '800',
+    letterSpacing: -0.4,
   },
-  streakSub: {
-    fontSize: 11,
-    marginTop: 1,
+  greetingSubtitle: {
+    fontSize: 12,
+    marginTop: 2,
   },
-  goalPill: {
+  momentumCapsule: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  momentumItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 4,
   },
-  goalText: {
+  flameEmoji: {
+    fontSize: 13,
+  },
+  momentumValue: {
     fontSize: 12,
-    fontWeight: '700',
-  },
-  heroCard: {
-    margin: 16,
-    borderRadius: 20,
-    padding: 18,
-    borderWidth: 1,
-  },
-  heroTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  heroBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(251, 191, 36, 0.2)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-    gap: 6,
-  },
-  heroBadgeText: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: '#FBBF24',
-    letterSpacing: 0.5,
-  },
-  membershipPill: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  membershipPillText: {
-    color: '#FFFFFF',
-    fontSize: 10,
     fontWeight: '800',
   },
-  heroBanglaTagline: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#34D399',
-    marginBottom: 2,
-  },
-  heroTitle: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    lineHeight: 26,
-    marginBottom: 6,
-  },
-  heroSubtitle: {
-    fontSize: 12,
-    color: '#E2E8F0',
-    lineHeight: 17,
-    marginBottom: 14,
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    gap: 10,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 13,
-  },
-  quickActionGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 16,
-    gap: 10,
-    marginBottom: 10,
-  },
-  actionCard: {
-    width: '48.5%',
-    padding: 12,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  actionIconBg: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  actionTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  actionSub: {
-    fontSize: 11,
+  momentumDivider: {
+    width: 1,
+    height: 12,
+    marginHorizontal: 8,
   },
   section: {
     paddingHorizontal: 16,
