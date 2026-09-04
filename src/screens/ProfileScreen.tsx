@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -18,6 +19,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useGamification } from '../context/GamificationContext';
 import { Header } from '../components/Header';
 import { AppUpdateModal } from '../components/AppUpdateModal';
+import { AboutTSLModal } from '../components/AboutTSLModal';
 
 interface ProfileScreenProps {
   onOpenCorporateModal: () => void;
@@ -39,6 +41,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const { badges } = useGamification();
   const [biometricEnabled, setBiometricEnabled] = useState(true);
   const [updateModalVisible, setUpdateModalVisible] = useState(false);
+  const [aboutModalVisible, setAboutModalVisible] = useState(false);
   const { userProgress, certificates } = useLearning();
   const { user, isAuthenticated, logout, setAuthModalVisible } = useAuth();
   const {
@@ -408,7 +411,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           >
             <TouchableOpacity
               style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => Alert.alert('Official Hotline', 'Calling Thriving Skills Enterprise Support: +880 1312-100288')}
+              onPress={() => Linking.openURL('tel:01312100288').catch(() => {})}
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="call-outline" size={20} color={colors.primary} />
@@ -419,24 +422,24 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
             <TouchableOpacity
               style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => Alert.alert('Email Support', 'support@thrivingskill.com')}
+              onPress={() => Linking.openURL('mailto:info@thrivingskill.com').catch(() => {})}
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="mail-outline" size={20} color={colors.text} />
                 <Text style={[styles.settingLabel, { color: colors.text }]}>Email Support</Text>
               </View>
-              <Text style={[styles.versionText, { color: colors.textMuted }]}>support@thrivingskill.com</Text>
+              <Text style={[styles.versionText, { color: colors.textMuted }]}>info@thrivingskill.com</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.settingRow}
-              onPress={() => Alert.alert('Thriving Skills Platform', 'Thriving Skills — Empowering People, Building a Skilled Nation.\nConnected to https://thrivingskill.com via WordPress & LearnPress REST API.')}
+              onPress={() => setAboutModalVisible(true)}
             >
               <View style={styles.settingLeft}>
-                <Ionicons name="information-circle-outline" size={20} color={colors.text} />
-                <Text style={[styles.settingLabel, { color: colors.text }]}>About Thriving Skills</Text>
+                <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
+                <Text style={[styles.settingLabel, { color: colors.text }]}>About Thriving Skills (TSL)</Text>
               </View>
-              <Text style={[styles.versionText, { color: colors.textMuted }]}>v2.0 WordPress</Text>
+              <Text style={[styles.versionText, { color: colors.primary, fontWeight: '600' }]}>Pillars & Team →</Text>
             </TouchableOpacity>
 
             {/* Auth Action Row */}
@@ -474,6 +477,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </View>
         </View>
       </ScrollView>
+
+      {/* About TSL Modal */}
+      <AboutTSLModal
+        visible={aboutModalVisible}
+        onClose={() => setAboutModalVisible(false)}
+        onNavigateTab={onNavigateTab}
+      />
 
       {/* In-App OTA Update Modal */}
       <AppUpdateModal

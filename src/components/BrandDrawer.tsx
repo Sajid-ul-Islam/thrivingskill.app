@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useSaaS } from '../context/SaaSContext';
 import { useLanguage } from '../context/LanguageContext';
+import { AboutTSLModal } from './AboutTSLModal';
 import { RootTab } from '../types';
 
 interface BrandDrawerProps {
@@ -45,6 +46,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
   const { activeWorkspace, switchWorkspace, workspaces, subscriptionTier } = useSaaS();
   const { language, setLanguage, isBangla } = useLanguage();
   const insets = useSafeAreaInsets();
+  const [aboutModalVisible, setAboutModalVisible] = useState(false);
 
   const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
 
@@ -321,6 +323,19 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
             {/* Section 3: Official Links & Contact */}
             <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>ABOUT & SUPPORT</Text>
 
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={() => setAboutModalVisible(true)}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
+                <Text style={[styles.actionLabel, { color: colors.text }]}>About Thriving Skills (TSL)</Text>
+              </View>
+              <View style={[styles.pillState, { backgroundColor: colors.surfaceSubtle }]}>
+                <Text style={[styles.pillStateText, { color: colors.primary }]}>Pillars & Team</Text>
+              </View>
+            </TouchableOpacity>
+
             <TouchableOpacity style={styles.actionRow} onPress={handleCallHelpline}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <Ionicons name="call-outline" size={18} color={colors.primary} />
@@ -349,6 +364,15 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
           </View>
         </Animated.View>
       </View>
+
+      <AboutTSLModal
+        visible={aboutModalVisible}
+        onClose={() => setAboutModalVisible(false)}
+        onNavigateTab={(tab) => {
+          setAboutModalVisible(false);
+          handleNav(() => onNavigateTab(tab));
+        }}
+      />
     </Modal>
   );
 };
