@@ -8,28 +8,35 @@ import {
   TextInput,
   Linking,
   ScrollView,
+  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
+import { useYouTube } from '../context/YouTubeContext';
 import { YouTubeCard } from '../components/YouTubeCard';
-import { YouTubePlayerModal } from '../components/YouTubePlayerModal';
-import { YouTubeVideo, YOUTUBE_CHANNEL, YOUTUBE_VIDEOS } from '../data/youtubeVideos';
+import { YouTubeVideo, YOUTUBE_CHANNEL } from '../data/youtubeVideos';
 
 interface YouTubeVideosScreenProps {
   onBack: () => void;
+  onNavigateToCourse?: (courseId: string) => void;
 }
 
-type VideoCategory = 'all' | 'ai-tech' | 'business' | 'finance' | 'career';
+type VideoCategory = 'all' | 'saved' | 'ai-tech' | 'business' | 'finance' | 'career';
 
-export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({ onBack }) => {
+export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
+  onBack,
+  onNavigateToCourse,
+}) => {
   const { colors, isDark } = useTheme();
+  const { videos, savedVideos, isLoading, refreshVideos, playVideo } = useYouTube();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<VideoCategory>('all');
-  const [activeVideo, setActiveVideo] = useState<YouTubeVideo | null>(null);
   const [viewMode, setViewMode] = useState<'card' | 'horizontal'>('card');
 
-  const categories: { id: VideoCategory; label: string; icon: string }[] = [
-    { id: 'all', label: `All (${YOUTUBE_VIDEOS.length})`, icon: 'apps-outline' },
+  const categories: { id: VideoCategory; label: string; icon: string; count?: number }[] = [
+    { id: 'all', label: `All (${videos.length})`, icon: 'apps-outline' },
+    { id: 'saved', label: `Saved (${savedVideos.length})`, icon: 'bookmark-outline' },
     { id: 'ai-tech', label: 'AI & Analytics', icon: 'hardware-chip-outline' },
     { id: 'business', label: 'Business & Supply', icon: 'briefcase-outline' },
     { id: 'finance', label: 'Finance & Excel', icon: 'stats-chart-outline' },
@@ -38,7 +45,9 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({ onBack
 
   // Filter videos based on category and search query
   const filteredVideos = useMemo(() => {
-    return YOUTUBE_VIDEOS.filter((video) => {
+    const sourceList = selectedCategory === 'saved' ? savedVideos : videos;
+
+    return sourceList.filter((video) => {
       const titleLower = video.title.toLowerCase();
 
       // Search matching
@@ -62,7 +71,8 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({ onBack
           titleLower.includes('business') ||
           titleLower.includes('management') ||
           titleLower.includes('negotiation') ||
-          titleLower.includes('contract');
+          titleLower.includes('contract') ||
+          titleLower.includes('cotton');
       } else if (selectedCategory === 'finance') {
         matchesCat =
           titleLower.includes('financial') ||
@@ -84,10 +94,14 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({ onBack
 
       return matchesSearch && matchesCat;
     });
-  }, [searchQuery, selectedCategory]);
+  }, [videos, savedVideos, searchQuery, selectedCategory]);
 
   const handleOpenChannel = () => {
     Linking.openURL(YOUTUBE_CHANNEL.url);
+  };
+
+  const handlePlay = (vid: YouTubeVideo) => {
+    playVideo(vid, 'modal');
   };
 
   return (
@@ -97,6 +111,7 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({ onBack
         <TouchableOpacity
           style={[styles.backBtn, { backgroundColor: isDark ? '#2C2C2E' : '#F3F4F6' }]}
           onPress={onBack}
+          accessibilityLabel="Back"
         >
           <Ionicons name="arrow-back" size={20} color={colors.text} />
         </TouchableOpacity>
@@ -114,13 +129,13 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({ onBack
         </TouchableOpacity>
       </View>
 
-      {/* Search Bar & View Mode */}
+      {/* Search Bar & View Mode Toggle */}
       <View style={styles.searchSection}>
         <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Ionicons name="search-outline" size={18} color={colors.textMuted} />
           <TextInput
             style={[styles.searchInput, { color: colors.text }]}
-            placeholder="Search all 30+ masterclass videos..."
+            placeholder="Search masterclasses by topic or tool..."
             placeholderTextColor={colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -136,6 +151,7 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({ onBack
         <TouchableOpacity
           style={[styles.viewToggleBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
           onPress={() => setViewMode(viewMode === 'card' ? 'horizontal' : 'card')}
+          accessibilityLabel="Toggle list/grid view"
         >
           <Ionicons
             name={viewMode === 'card' ? 'list-outline' : 'grid-outline'}
@@ -165,7 +181,7 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({ onBack
                 <Ionicons
                   name={cat.icon as any}
                   size={14}
-                  color={isSelected ? '#FFFFFF' : colors.textMuted}
+                  color={isSelected ? '#FFFFFF' : cat.id === 'saved' && savedVideos.length > 0 ? '#102E52' : colors.textMuted}
                 />
                 <Text
                   style={[
@@ -181,20 +197,31 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({ onBack
         </ScrollView>
       </View>
 
-      {/* Video List */}
+      {/* Video List with Pull-to-Refresh (Live RSS Sync) */}
       <FlatList
         data={filteredVideos}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={refreshVideos}
+            tintColor={colors.primary}
+            colors={['#FF0000', colors.primary]}
+          />
+        }
         ListHeaderComponent={
           <View style={styles.resultsInfoRow}>
-            <Text style={[styles.resultsCount, { color: colors.textMuted }]}>
-              {filteredVideos.length} {filteredVideos.length === 1 ? 'Video' : 'Videos'} available
-            </Text>
+            <View style={styles.syncStatusRow}>
+              <View style={styles.liveDot} />
+              <Text style={[styles.resultsCount, { color: colors.textMuted }]}>
+                {filteredVideos.length} {filteredVideos.length === 1 ? 'Video' : 'Videos'} • Pull down to sync RSS
+              </Text>
+            </View>
             <TouchableOpacity style={styles.ytChannelLink} onPress={handleOpenChannel}>
               <Ionicons name="open-outline" size={14} color="#FF0000" />
-              <Text style={styles.ytChannelLinkText}>Open YouTube Channel</Text>
+              <Text style={styles.ytChannelLinkText}>YouTube Channel</Text>
             </TouchableOpacity>
           </View>
         }
@@ -202,27 +229,28 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({ onBack
           <YouTubeCard
             video={item}
             layout={viewMode}
-            onPress={(vid) => setActiveVideo(vid)}
+            onPress={handlePlay}
           />
         )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="videocam-off-outline" size={48} color={colors.textMuted} />
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>No videos found</Text>
+            <Ionicons
+              name={selectedCategory === 'saved' ? 'bookmark-outline' : 'videocam-off-outline'}
+              size={48}
+              color={colors.textMuted}
+            />
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>
+              {selectedCategory === 'saved' ? 'No saved videos yet' : 'No videos found'}
+            </Text>
             <Text style={[styles.emptySub, { color: colors.textMuted }]}>
-              Try searching with a different term or select another category.
+              {selectedCategory === 'saved'
+                ? 'Bookmark masterclasses to save them to your watch later list.'
+                : 'Try searching with a different term or select another category.'}
             </Text>
           </View>
         }
       />
 
-      {/* Embedded In-App Player Modal */}
-      <YouTubePlayerModal
-        visible={activeVideo !== null}
-        video={activeVideo}
-        onClose={() => setActiveVideo(null)}
-        onSelectVideo={(v) => setActiveVideo(v)}
-      />
     </View>
   );
 };
@@ -332,9 +360,20 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     marginBottom: 8,
   },
+  syncStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#10B981',
+  },
   resultsCount: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '500',
   },
   ytChannelLink: {
     flexDirection: 'row',

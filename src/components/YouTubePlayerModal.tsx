@@ -15,13 +15,18 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
 import { useTheme } from '../context/ThemeContext';
-import { YouTubeVideo, YOUTUBE_CHANNEL, YOUTUBE_VIDEOS } from '../data/youtubeVideos';
+import { useLearning } from '../context/LearningContext';
+import { useYouTube } from '../context/YouTubeContext';
+import { YouTubeVideo, YOUTUBE_CHANNEL } from '../data/youtubeVideos';
+import { findRelatedCourse } from '../services/youtubeService';
 
 interface YouTubePlayerModalProps {
   visible: boolean;
   video: YouTubeVideo | null;
   onClose: () => void;
   onSelectVideo?: (video: YouTubeVideo) => void;
+  onNavigateToCourse?: (courseId: string) => void;
+  onMinimize?: () => void;
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -31,8 +36,12 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
   video,
   onClose,
   onSelectVideo,
+  onNavigateToCourse,
+  onMinimize,
 }) => {
   const { colors, isDark } = useTheme();
+  const { courses } = useLearning();
+  const { videos, isSaved, toggleSaveVideo, minimizePlayer } = useYouTube();
   const [currentVideo, setCurrentVideo] = useState<YouTubeVideo | null>(video);
 
   // Sync state if prop changes
@@ -45,6 +54,10 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
   if (!currentVideo) {
     return null;
   }
+
+  const saved = isSaved(currentVideo.id);
+  const relatedCourse = findRelatedCourse(currentVideo, courses);
+  const relatedVideos = videos.filter((v) => v.id !== currentVideo.id);
 
   const handleShare = async () => {
     try {
@@ -73,7 +86,20 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
     }
   };
 
-  const relatedVideos = YOUTUBE_VIDEOS.filter((v) => v.id !== currentVideo.id);
+  const handleMinimize = () => {
+    if (onMinimize) {
+      onMinimize();
+    } else {
+      minimizePlayer();
+    }
+  };
+
+  const handleCoursePress = () => {
+    if (relatedCourse && onNavigateToCourse) {
+      onClose();
+      onNavigateToCourse(relatedCourse.id);
+    }
+  };
 
   // Embedded player URL with parameters for clean mobile playback
   const embedUrl = `https://www.youtube-nocookie.com/embed/${currentVideo.id}?autoplay=1&playsinline=1&rel=0&modestbranding=1&controls=1`;
@@ -108,16 +134,25 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Header Bar */}
         <View style={[styles.header, { borderBottomColor: colors.border, backgroundColor: colors.surface }]}>
-          <View style={styles.headerLeft}>
-            <View style={styles.ytBadge}>
-              <Ionicons name="logo-youtube" size={18} color="#FF0000" />
-              <Text style={styles.ytBadgeText}>YouTube Player</Text>
-            </View>
-          </View>
+          {/* Minimize / Down Arrow */}
           <TouchableOpacity
-            style={[styles.closeBtn, { backgroundColor: isDark ? '#333' : '#E5E7EB' }]}
+            style={[styles.headerBtn, { backgroundColor: isDark ? '#333' : '#E5E7EB' }]}
+            onPress={handleMinimize}
+            accessibilityLabel="Minimize player"
+          >
+            <Ionicons name="chevron-down" size={20} color={colors.text} />
+          </TouchableOpacity>
+
+          <View style={styles.ytBadge}>
+            <Ionicons name="logo-youtube" size={18} color="#FF0000" />
+            <Text style={styles.ytBadgeText}>YouTube Player</Text>
+          </View>
+
+          {/* Close Button */}
+          <TouchableOpacity
+            style={[styles.headerBtn, { backgroundColor: isDark ? '#333' : '#E5E7EB' }]}
             onPress={onClose}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            accessibilityLabel="Close player"
           >
             <Ionicons name="close" size={20} color={colors.text} />
           </TouchableOpacity>
@@ -126,7 +161,6 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
         {/* Player Section (16:9 aspect ratio) */}
         <View style={styles.playerContainer}>
           {Platform.OS === 'web' ? (
-            // On web render native iframe
             <iframe
               src={embedUrl}
               style={{ width: '100%', height: '100%', border: 'none' }}
@@ -134,7 +168,6 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
               allowFullScreen
             />
           ) : (
-            // On iOS/Android render WebView
             <WebView
               key={currentVideo.id}
               source={{ html: embedHtml, baseUrl: 'https://www.youtube.com' }}
@@ -151,7 +184,7 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-          {/* Video Metadata */}
+          {/* Video Metadata Card */}
           <View style={[styles.metaCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <Text style={[styles.videoTitle, { color: colors.text }]}>{currentVideo.title}</Text>
 
@@ -180,11 +213,32 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
 
             {/* Action Buttons Row */}
             <View style={styles.actionRow}>
-              <TouchableOpacity style={styles.openYouTubeBtn} onPress={handleOpenYouTube}>
-                <Ionicons name="logo-youtube" size={16} color="#FFFFFF" />
-                <Text style={styles.openYouTubeText}>Open in YouTube</Text>
+              {/* Save to Watch Later Toggle */}
+              <TouchableOpacity
+                style={[
+                  styles.saveBtn,
+                  saved
+                    ? { backgroundColor: '#102E52', borderColor: '#102E52' }
+                    : { backgroundColor: colors.background, borderColor: colors.border },
+                ]}
+                onPress={() => toggleSaveVideo(currentVideo.id)}
+              >
+                <Ionicons
+                  name={saved ? 'bookmark' : 'bookmark-outline'}
+                  size={16}
+                  color={saved ? '#FFFFFF' : colors.text}
+                />
+                <Text
+                  style={[
+                    styles.saveBtnText,
+                    { color: saved ? '#FFFFFF' : colors.text, fontWeight: saved ? '700' : '600' },
+                  ]}
+                >
+                  {saved ? 'Saved' : 'Watch Later'}
+                </Text>
               </TouchableOpacity>
 
+              {/* Share */}
               <TouchableOpacity
                 style={[styles.shareBtn, { borderColor: colors.border, backgroundColor: colors.background }]}
                 onPress={handleShare}
@@ -192,8 +246,56 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
                 <Ionicons name="share-social-outline" size={16} color={colors.text} />
                 <Text style={[styles.shareBtnText, { color: colors.text }]}>Share</Text>
               </TouchableOpacity>
+
+              {/* Open in YouTube */}
+              <TouchableOpacity style={styles.openYouTubeBtn} onPress={handleOpenYouTube}>
+                <Ionicons name="logo-youtube" size={16} color="#FFFFFF" />
+                <Text style={styles.openYouTubeText}>YouTube</Text>
+              </TouchableOpacity>
             </View>
           </View>
+
+          {/* Course Cross-Linking Card (Free-to-Paid Conversion) */}
+          {relatedCourse && onNavigateToCourse && (
+            <View style={[styles.coursePromoCard, { backgroundColor: isDark ? '#16283C' : '#EEF6FF', borderColor: colors.primary }]}>
+              <View style={styles.promoHeaderRow}>
+                <View style={styles.badgePill}>
+                  <Ionicons name="school" size={13} color="#059669" />
+                  <Text style={styles.badgePillText}>FULL ACCREDITED COURSE</Text>
+                </View>
+                <Text style={styles.certificateTag}>Includes Certificate</Text>
+              </View>
+
+              <Text style={[styles.coursePromoTitle, { color: colors.text }]}>
+                {relatedCourse.title}
+              </Text>
+              <Text style={[styles.coursePromoSub, { color: colors.textMuted }]} numberOfLines={2}>
+                {relatedCourse.subtitle}
+              </Text>
+
+              <View style={styles.courseMetaRow}>
+                <View style={styles.courseMetaItem}>
+                  <Ionicons name="star" size={13} color="#F59E0B" />
+                  <Text style={[styles.courseMetaText, { color: colors.text }]}>{relatedCourse.rating}</Text>
+                </View>
+                <Text style={styles.courseMetaDot}>•</Text>
+                <View style={styles.courseMetaItem}>
+                  <Ionicons name="time-outline" size={13} color={colors.textMuted} />
+                  <Text style={[styles.courseMetaText, { color: colors.textMuted }]}>{relatedCourse.durationHours} hrs</Text>
+                </View>
+                <Text style={styles.courseMetaDot}>•</Text>
+                <View style={styles.courseMetaItem}>
+                  <Ionicons name="people-outline" size={13} color={colors.textMuted} />
+                  <Text style={[styles.courseMetaText, { color: colors.textMuted }]}>{relatedCourse.enrolledCount} enrolled</Text>
+                </View>
+              </View>
+
+              <TouchableOpacity style={styles.viewCourseBtn} onPress={handleCoursePress}>
+                <Text style={styles.viewCourseBtnText}>Enroll in Full Course & Syllabus</Text>
+                <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* Channel Banner */}
           <TouchableOpacity
@@ -215,7 +317,7 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
           {/* More Videos from Channel */}
           <View style={styles.relatedSection}>
             <View style={styles.sectionHeaderRow}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>More From @ThrivingSkills</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>More Masterclasses</Text>
               <Text style={[styles.sectionCount, { color: colors.textMuted }]}>
                 {relatedVideos.length} videos
               </Text>
@@ -273,9 +375,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
   },
-  headerLeft: {
-    flexDirection: 'row',
+  headerBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   ytBadge: {
     flexDirection: 'row',
@@ -286,13 +391,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: '#FF0000',
-  },
-  closeBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   playerContainer: {
     width: SCREEN_WIDTH,
@@ -336,29 +434,27 @@ const styles = StyleSheet.create({
   },
   actionRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
   },
-  openYouTubeBtn: {
+  saveBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#FF0000',
+    gap: 6,
     paddingVertical: 10,
     borderRadius: 10,
+    borderWidth: 1,
   },
-  openYouTubeText: {
-    color: '#FFFFFF',
+  saveBtnText: {
     fontSize: 13,
-    fontWeight: '700',
   },
   shareBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 10,
     borderWidth: 1,
@@ -367,6 +463,97 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
+  openYouTubeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#FF0000',
+  },
+  openYouTubeText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  // Course Cross-Linking Card
+  coursePromoCard: {
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    gap: 8,
+  },
+  promoHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 2,
+  },
+  badgePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(5, 150, 105, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  badgePillText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#059669',
+  },
+  certificateTag: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#059669',
+  },
+  coursePromoTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    lineHeight: 20,
+  },
+  coursePromoSub: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  courseMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 2,
+  },
+  courseMetaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  courseMetaText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  courseMetaDot: {
+    fontSize: 12,
+    color: '#9CA3AF',
+  },
+  viewCourseBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#102E52',
+    paddingVertical: 10,
+    borderRadius: 10,
+    marginTop: 6,
+  },
+  viewCourseBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  // Channel Card
   channelCard: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -10,6 +10,7 @@ import { SaaSProvider, useSaaS } from './src/context/SaaSContext';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { LanguageProvider, useLanguage } from './src/context/LanguageContext';
 import { GamificationProvider } from './src/context/GamificationContext';
+import { YouTubeProvider, useYouTube } from './src/context/YouTubeContext';
 import { RootTab, ActiveScreen } from './src/types';
 
 import { HomeScreen } from './src/screens/HomeScreen';
@@ -28,6 +29,8 @@ import { NotificationModal } from './src/components/NotificationModal';
 import { SkillAssessmentModal } from './src/components/SkillAssessmentModal';
 import { CorporateInquiryModal } from './src/components/CorporateInquiryModal';
 import { AuthModal } from './src/components/AuthModal';
+import { YouTubeMiniPlayer } from './src/components/YouTubeMiniPlayer';
+import { YouTubePlayerModal } from './src/components/YouTubePlayerModal';
 
 const MainAppContent: React.FC = () => {
   const { colors, isDark } = useTheme();
@@ -35,6 +38,7 @@ const MainAppContent: React.FC = () => {
   const { userProgress } = useLearning();
   const { activeWorkspace, unreadNotificationsCount } = useSaaS();
   const { isAuthModalVisible, setAuthModalVisible } = useAuth();
+  const { activeVideo, playerMode, closePlayer, minimizePlayer, playVideo } = useYouTube();
 
   const [activeTab, setActiveTab] = useState<RootTab>('Home');
   const [activeScreen, setActiveScreen] = useState<ActiveScreen>({
@@ -112,7 +116,10 @@ const MainAppContent: React.FC = () => {
             onSelectLesson={navigateToLesson}
           />
         ) : activeScreen.name === 'YouTubeVideos' ? (
-          <YouTubeVideosScreen onBack={navigateBackToTabs} />
+          <YouTubeVideosScreen
+            onBack={navigateBackToTabs}
+            onNavigateToCourse={navigateToCourse}
+          />
         ) : (
           <>
             {activeTab === 'Home' && (
@@ -148,6 +155,7 @@ const MainAppContent: React.FC = () => {
                 onBrowseCourses={() => navigateToTab('Courses')}
                 onOpenSubscription={() => setSubscriptionModalVisible(true)}
                 onOpenNotifications={() => setNotificationModalVisible(true)}
+                onOpenYouTube={() => setActiveScreen({ name: 'YouTubeVideos' })}
               />
             )}
             {activeTab === 'TeamHub' && (
@@ -174,6 +182,9 @@ const MainAppContent: React.FC = () => {
           </>
         )}
       </View>
+
+      {/* Floating Mini Player (visible when player is minimized) */}
+      <YouTubeMiniPlayer bottomOffset={activeScreen.name === 'MainTabs' ? 64 : 16} />
 
       {/* Bottom Tab Bar (shown only when on MainTabs) */}
       {activeScreen.name === 'MainTabs' && (
@@ -257,6 +268,16 @@ const MainAppContent: React.FC = () => {
         visible={isAuthModalVisible}
         onClose={() => setAuthModalVisible(false)}
       />
+
+      {/* Global In-App YouTube Player Modal */}
+      <YouTubePlayerModal
+        visible={playerMode === 'modal' && activeVideo !== null}
+        video={activeVideo}
+        onClose={closePlayer}
+        onMinimize={minimizePlayer}
+        onNavigateToCourse={navigateToCourse}
+        onSelectVideo={(v) => playVideo(v, 'modal')}
+      />
     </SafeAreaView>
   );
 };
@@ -270,7 +291,9 @@ export default function App() {
             <AuthProvider>
               <SaaSProvider>
                 <LearningProvider>
-                  <MainAppContent />
+                  <YouTubeProvider>
+                    <MainAppContent />
+                  </YouTubeProvider>
                 </LearningProvider>
               </SaaSProvider>
             </AuthProvider>

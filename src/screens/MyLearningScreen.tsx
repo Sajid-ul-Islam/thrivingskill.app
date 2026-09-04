@@ -12,7 +12,10 @@ import { useTheme } from '../context/ThemeContext';
 import { useLearning } from '../context/LearningContext';
 import { Header } from '../components/Header';
 import { CertificateModal } from '../components/CertificateModal';
+import { YouTubeCard } from '../components/YouTubeCard';
+import { useYouTube } from '../context/YouTubeContext';
 import { Certificate } from '../types';
+import { YouTubeVideo } from '../data/youtubeVideos';
 
 interface MyLearningScreenProps {
   onNavigateToCourse: (courseId: string) => void;
@@ -20,6 +23,7 @@ interface MyLearningScreenProps {
   onBrowseCourses: () => void;
   onOpenSubscription?: () => void;
   onOpenNotifications?: () => void;
+  onOpenYouTube?: () => void;
 }
 
 type TabMode = 'in-progress' | 'completed' | 'certificates' | 'saved';
@@ -30,8 +34,10 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
   onBrowseCourses,
   onOpenSubscription,
   onOpenNotifications,
+  onOpenYouTube,
 }) => {
   const { colors } = useTheme();
+  const { savedVideos, playVideo } = useYouTube();
   const {
     courses,
     userProgress,
@@ -63,6 +69,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
         subtitle="Skill Progression & Portfolio"
         onOpenSubscription={onOpenSubscription}
         onOpenNotifications={onOpenNotifications}
+        onOpenYouTube={onOpenYouTube}
       />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
@@ -110,7 +117,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
             { id: 'in-progress', label: `In Progress (${inProgressList.length})` },
             { id: 'completed', label: `Completed (${completedList.length})` },
             { id: 'certificates', label: `Certificates (${certificates.length})` },
-            { id: 'saved', label: `Saved (${savedList.length})` },
+            { id: 'saved', label: `Saved (${savedList.length + savedVideos.length})` },
           ].map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -324,37 +331,90 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
 
           {activeTab === 'saved' && (
             <>
-              {savedList.length === 0 ? (
+              {savedList.length === 0 && savedVideos.length === 0 ? (
                 <View style={styles.emptyContainer}>
                   <Ionicons name="bookmark-outline" size={48} color={colors.textLight} />
-                  <Text style={[styles.emptyTitle, { color: colors.text }]}>No saved courses</Text>
+                  <Text style={[styles.emptyTitle, { color: colors.text }]}>No saved items yet</Text>
                   <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
-                    Bookmark courses from the catalog to review them later.
+                    Bookmark courses from the catalog or masterclasses from our YouTube channel to watch later.
                   </Text>
+                  {onOpenYouTube && (
+                    <TouchableOpacity
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 6,
+                        backgroundColor: '#FF0000',
+                        paddingHorizontal: 16,
+                        paddingVertical: 10,
+                        borderRadius: 10,
+                        marginTop: 14,
+                      }}
+                      onPress={onOpenYouTube}
+                    >
+                      <Ionicons name="logo-youtube" size={16} color="#FFFFFF" />
+                      <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 13 }}>
+                        Browse YouTube Masterclasses
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               ) : (
-                savedList.map((course) => (
-                  <TouchableOpacity
-                    key={course.id}
-                    style={[
-                      styles.savedCard,
-                      { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-                    ]}
-                    onPress={() => onNavigateToCourse(course.id)}
-                    activeOpacity={0.85}
-                  >
-                    <Image source={{ uri: course.thumbnail }} style={styles.savedThumb} />
-                    <View style={styles.savedInfo}>
-                      <Text style={[styles.savedTitle, { color: colors.text }]} numberOfLines={2}>
-                        {course.title}
-                      </Text>
-                      <Text style={[styles.savedPrice, { color: colors.primary }]}>
-                        ${course.price.toFixed(2)}
-                      </Text>
+                <>
+                  {/* Saved YouTube Videos Section */}
+                  {savedVideos.length > 0 && (
+                    <View style={{ marginBottom: 20 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+                        <Ionicons name="logo-youtube" size={18} color="#FF0000" />
+                        <Text style={[styles.sectionHeading, { color: colors.text }]}>
+                          Saved YouTube Masterclasses ({savedVideos.length})
+                        </Text>
+                      </View>
+                      {savedVideos.map((vid) => (
+                        <YouTubeCard
+                          key={vid.id}
+                          video={vid}
+                          layout="horizontal"
+                          onPress={(v) => playVideo(v, 'modal')}
+                        />
+                      ))}
                     </View>
-                    <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-                  </TouchableOpacity>
-                ))
+                  )}
+
+                  {/* Saved Accredited Courses Section */}
+                  {savedList.length > 0 && (
+                    <View>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+                        <Ionicons name="school-outline" size={18} color={colors.primary} />
+                        <Text style={[styles.sectionHeading, { color: colors.text }]}>
+                          Saved Accredited Courses ({savedList.length})
+                        </Text>
+                      </View>
+                      {savedList.map((course) => (
+                        <TouchableOpacity
+                          key={course.id}
+                          style={[
+                            styles.savedCard,
+                            { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                          ]}
+                          onPress={() => onNavigateToCourse(course.id)}
+                          activeOpacity={0.85}
+                        >
+                          <Image source={{ uri: course.thumbnail }} style={styles.savedThumb} />
+                          <View style={styles.savedInfo}>
+                            <Text style={[styles.savedTitle, { color: colors.text }]} numberOfLines={2}>
+                              {course.title}
+                            </Text>
+                            <Text style={[styles.savedPrice, { color: colors.primary }]}>
+                              ${course.price.toFixed(2)}
+                            </Text>
+                          </View>
+                          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </>
               )}
             </>
           )}
@@ -367,6 +427,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
         certificate={selectedCert}
         onClose={() => setSelectedCert(null)}
       />
+
     </View>
   );
 };
@@ -377,6 +438,10 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 40,
+  },
+  sectionHeading: {
+    fontSize: 14,
+    fontWeight: '700',
   },
   statsCard: {
     margin: 16,
