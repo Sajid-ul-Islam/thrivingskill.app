@@ -2,6 +2,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NotebookSource } from '../types/notebookLM';
 
 const STORAGE_KEY = '@thriving_google_gemini_api_key';
+const MODEL_STORAGE_KEY = '@thriving_google_gemini_active_model';
+
+// Candidate models in preference order (2026 active Google Gemini models)
+const CANDIDATE_MODELS = [
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+  'gemini-3.6-flash',
+  'gemini-1.5-flash',
+];
 
 export interface GeminiResponse {
   text: string;
@@ -12,6 +21,24 @@ export interface GeminiResponse {
 
 export class GeminiService {
   private static cachedKey: string | null = null;
+  private static activeModel: string = CANDIDATE_MODELS[0];
+
+  /**
+   * Format Google API error into human-readable, helpful message
+   */
+  private static formatGoogleError(errMsg: string): string {
+    const lower = errMsg.toLowerCase();
+    if (lower.includes('leaked') || lower.includes('reported as leaked')) {
+      return 'Google has disabled this API key because it was reported as publicly leaked. For your security, Google automatically blocks exposed keys. Please go to https://aistudio.google.com/app/apikey and create a new key.';
+    }
+    if (lower.includes('api_key_invalid') || lower.includes('api key not valid')) {
+      return 'The API key provided is not valid. Please ensure you copied the complete key without trailing spaces.';
+    }
+    if (lower.includes('resource_exhausted') || lower.includes('quota')) {
+      return 'Google Gemini API quota exceeded for this key. Please verify your billing or rate limits at Google AI Studio.';
+    }
+    return errMsg;
+  }
 
   /**
    * Get the saved Google Gemini API Key
@@ -20,7 +47,13 @@ export class GeminiService {
     if (this.cachedKey) return this.cachedKey;
 
     try {
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      const [stored, storedModel] = await Promise.all([
+        AsyncStorage.getItem(STORAGE_KEY),
+        AsyncStorage.getItem(MODEL_STORAGE_KEY),
+      ]);
+      if (storedModel) {
+        this.activeModel = storedModel;
+      }
       if (stored && stored.trim().length > 0) {
         this.cachedKey = stored.trim();
         return this.cachedKey;
@@ -45,10 +78,14 @@ export class GeminiService {
   /**
    * Save a new Google Gemini API Key
    */
-  public static async setApiKey(key: string): Promise<void> {
+  public static async setApiKey(key: string, model: string = CANDIDATE_MODELS[0]): Promise<void> {
     const trimmed = key.trim();
     this.cachedKey = trimmed;
-    await AsyncStorage.setItem(STORAGE_KEY, trimmed);
+    this.activeModel = model;
+    await Promise.all([
+      AsyncStorage.setItem(STORAGE_KEY, trimmed),
+      AsyncStorage.setItem(MODEL_STORAGE_KEY, model),
+    ]);
   }
 
   /**
@@ -56,46 +93,64 @@ export class GeminiService {
    */
   public static async clearApiKey(): Promise<void> {
     this.cachedKey = null;
-    await AsyncStorage.removeItem(STORAGE_KEY);
+    await Promise.all([
+      AsyncStorage.removeItem(STORAGE_KEY),
+      AsyncStorage.removeItem(MODEL_STORAGE_KEY),
+    ]);
   }
 
   /**
-   * Test if the provided key is valid by running a lightweight ping
+   * Test if the provided key is valid by running a lightweight ping across candidate models
    */
-  public static async testApiKey(key: string): Promise<{ valid: boolean; error?: string }> {
+  public static async testApiKey(key: string): Promise<{ valid: boolean; model?: string; error?: string }> {
     const trimmed = key.trim();
     if (!trimmed) {
       return { valid: false, error: 'API Key cannot be empty.' };
     }
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${trimmed}`;
+    let lastError = 'Google API connection failed.';
 
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: 'Hello, respond with OK.' }] }],
-          generationConfig: { maxOutputTokens: 10 },
-        }),
-      });
+    for (const model of CANDIDATE_MODELS) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${trimmed}`;
 
-      const data = await response.json();
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: 'Respond with OK.' }] }],
+            generationConfig: { maxOutputTokens: 10 },
+          }),
+        });
 
-      if (response.ok && data.candidates && data.candidates.length > 0) {
-        return { valid: true };
+        const data = await response.json();
+
+        if (response.ok && data.candidates && data.candidates.length > 0) {
+          this.activeModel = model;
+          return { valid: true, model };
+        }
+
+        const rawMsg = data.error?.message || `Status ${response.status}: ${response.statusText}`;
+
+        // If it's a permanent auth error like "leaked" or "invalid key", don't loop through other models
+        if (
+          rawMsg.toLowerCase().includes('leaked') ||
+          rawMsg.toLowerCase().includes('api_key_invalid') ||
+          rawMsg.toLowerCase().includes('api key not valid')
+        ) {
+          return { valid: false, error: this.formatGoogleError(rawMsg) };
+        }
+
+        lastError = this.formatGoogleError(rawMsg);
+      } catch (err: any) {
+        lastError = err.message || 'Network request failed when connecting to Google Gemini.';
       }
-
-      const errMsg =
-        data.error?.message ||
-        `Google API returned status ${response.status}: ${response.statusText}`;
-      return { valid: false, error: errMsg };
-    } catch (err: any) {
-      return {
-        valid: false,
-        error: err.message || 'Network request failed when connecting to Google Gemini.',
-      };
     }
+
+    return {
+      valid: false,
+      error: lastError,
+    };
   }
 
   /**
@@ -164,64 +219,54 @@ export class GeminiService {
       },
     };
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // Try active model first, then fallback to candidate models
+    const modelsToTry = [this.activeModel, ...CANDIDATE_MODELS.filter((m) => m !== this.activeModel)];
 
-    try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bodyPayload),
-      });
+    for (const model of modelsToTry) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-      const data = await response.json();
-
-      if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
-        return {
-          text: data.candidates[0].content.parts[0].text,
-          isRealApi: true,
-          model: 'gemini-1.5-flash',
-        };
-      }
-
-      // If systemInstruction failed on older API versions, try without systemInstruction
-      if (!response.ok && data.error?.message?.includes('systemInstruction')) {
-        const fallbackPayload = {
-          contents: [
-            {
-              role: 'user',
-              parts: [{ text: `${systemText}\n\nUser Question: ${userPrompt}` }],
-            },
-          ],
-        };
-        const fallbackRes = await fetch(url, {
+      try {
+        const response = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(fallbackPayload),
+          body: JSON.stringify(bodyPayload),
         });
-        const fallbackData = await fallbackRes.json();
-        if (fallbackRes.ok && fallbackData.candidates?.[0]?.content?.parts?.[0]?.text) {
+
+        const data = await response.json();
+
+        if (response.ok && data.candidates?.[0]?.content?.parts?.[0]?.text) {
+          this.activeModel = model;
           return {
-            text: fallbackData.candidates[0].content.parts[0].text,
+            text: data.candidates[0].content.parts[0].text,
             isRealApi: true,
-            model: 'gemini-1.5-flash (compat)',
+            model,
           };
         }
-      }
 
-      const errMsg = data.error?.message || 'Google Gemini API request failed.';
-      return {
-        text: '',
-        isRealApi: false,
-        model: 'error',
-        error: errMsg,
-      };
-    } catch (err: any) {
-      return {
-        text: '',
-        isRealApi: false,
-        model: 'error',
-        error: err.message || 'Network error connecting to Google Gemini.',
-      };
+        // Check if error is fatal auth error
+        const errMsg = data.error?.message || '';
+        if (
+          errMsg.toLowerCase().includes('leaked') ||
+          errMsg.toLowerCase().includes('api_key_invalid') ||
+          errMsg.toLowerCase().includes('api key not valid')
+        ) {
+          return {
+            text: '',
+            isRealApi: false,
+            model: 'error',
+            error: this.formatGoogleError(errMsg),
+          };
+        }
+      } catch (err: any) {
+        // continue to next model candidate
+      }
     }
+
+    return {
+      text: '',
+      isRealApi: false,
+      model: 'error',
+      error: 'Unable to reach Google Gemini models. Please check your network or API Key.',
+    };
   }
 }

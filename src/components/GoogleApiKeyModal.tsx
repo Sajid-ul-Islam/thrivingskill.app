@@ -61,18 +61,26 @@ export const GoogleApiKeyModal: React.FC<GoogleApiKeyModalProps> = ({
     setIsTesting(false);
 
     if (testResult.valid) {
-      await GeminiService.setApiKey(apiKey.trim());
+      await GeminiService.setApiKey(apiKey.trim(), testResult.model);
       setHasSavedKey(true);
       onKeyUpdated?.(true);
       Alert.alert(
         'Connected Successfully! 🚀',
-        'Your Google Gemini API Key has been verified and saved securely on your device. The AI Assistant will now use your real Google Gemini model for live answers.'
+        `Your Google Gemini API Key has been verified (Model: ${testResult.model || 'gemini-2.5-flash'}) and saved securely on your device. The AI Assistant will now use your real Google Gemini model for live answers.`
       );
       onClose();
     } else {
+      const isLeaked = testResult.error?.toLowerCase().includes('leaked');
       Alert.alert(
-        'Verification Failed ❌',
-        `Google API returned an error:\n\n${testResult.error || 'Invalid API Key'}\n\nPlease check your key and try again.`
+        isLeaked ? 'Key Blocked by Google ⚠️' : 'Verification Failed ❌',
+        testResult.error || 'Invalid API Key. Please verify your key at Google AI Studio.',
+        [
+          {
+            text: 'Get Free Key at AI Studio',
+            onPress: () => Linking.openURL('https://aistudio.google.com/app/apikey'),
+          },
+          { text: 'OK', style: 'cancel' },
+        ]
       );
     }
   };
