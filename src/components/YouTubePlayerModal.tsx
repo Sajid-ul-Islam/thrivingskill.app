@@ -11,6 +11,7 @@ import {
   Share,
   Dimensions,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
@@ -44,6 +45,7 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
   const { videos, isSaved, toggleSaveVideo, minimizePlayer } = useYouTube();
   const [currentVideo, setCurrentVideo] = useState<YouTubeVideo | null>(video);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
+  const [playerLoading, setPlayerLoading] = useState<boolean>(true);
   const webViewRef = React.useRef<any>(null);
 
   // Sync state if prop changes
@@ -51,6 +53,7 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
     if (video) {
       setCurrentVideo(video);
       setPlaybackSpeed(1);
+      setPlayerLoading(true);
     }
   }, [video]);
 
@@ -59,6 +62,8 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
     const jsCode = `
       (function() {
         try {
+          var v = document.querySelector('video');
+          if (v) { v.playbackRate = ${speed}; }
           var iframe = document.querySelector('iframe');
           if (iframe && iframe.contentWindow) {
             iframe.contentWindow.postMessage(JSON.stringify({
@@ -106,6 +111,7 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
 
   const handleSelectRelated = (v: YouTubeVideo) => {
     setCurrentVideo(v);
+    setPlayerLoading(true);
     if (onSelectVideo) {
       onSelectVideo(v);
     }
@@ -126,33 +132,8 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
     }
   };
 
-  // Embedded player URL with parameters for clean mobile playback
-  const embedUrl = `https://www.youtube-nocookie.com/embed/${currentVideo.id}?autoplay=1&playsinline=1&rel=0&modestbranding=1&controls=1&enablejsapi=1`;
-
-  // HTML embed string for WebView
-  const embedHtml = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-        <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          html, body { width: 100%; height: 100%; background-color: #000; overflow: hidden; }
-          .video-container { position: relative; width: 100%; height: 100%; }
-          iframe { width: 100%; height: 100%; border: none; }
-        </style>
-      </head>
-      <body>
-        <div class="video-container">
-          <iframe
-            src="${embedUrl}"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowfullscreen>
-          </iframe>
-        </div>
-      </body>
-    </html>
-  `;
+  // Official direct embed URL with parameters for clean mobile playback
+  const embedUrl = `https://www.youtube.com/embed/${currentVideo.id}?autoplay=1&playsinline=1&enablejsapi=1&rel=0&modestbranding=1&fs=1`;
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
@@ -193,21 +174,52 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
               allowFullScreen
             />
           ) : (
-            <WebView
-              ref={webViewRef}
-              key={currentVideo.id}
-              source={{ html: embedHtml, baseUrl: 'https://www.youtube.com' }}
-              style={styles.webView}
-              javaScriptEnabled
-              domStorageEnabled
-              allowsFullscreenVideo
-              mediaPlaybackRequiresUserAction={false}
-              allowsInlineMediaPlayback
-              scalesPageToFit
-              originWhitelist={['*']}
-            />
+            <View style={{ flex: 1, position: 'relative' }}>
+              <WebView
+                ref={webViewRef}
+                key={currentVideo.id}
+                source={{
+                  uri: embedUrl,
+                  headers: {
+                    Referer: 'https://www.youtube.com',
+                  },
+                }}
+                style={styles.webView}
+                javaScriptEnabled
+                domStorageEnabled
+                allowsFullscreenVideo
+                mediaPlaybackRequiresUserAction={false}
+                allowsInlineMediaPlayback
+                mixedContentMode="always"
+                androidLayerType="hardware"
+                androidHardwareAccelerationDisabled={false}
+                userAgent="Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+                originWhitelist={['*']}
+                onLoadStart={() => setPlayerLoading(true)}
+                onLoadEnd={() => setPlayerLoading(false)}
+              />
+              {playerLoading && (
+                <View style={styles.playerLoadingOverlay}>
+                  <ActivityIndicator size="small" color="#FF0000" />
+                  <Text style={styles.playerLoadingText}>Loading video...</Text>
+                </View>
+              )}
+            </View>
           )}
         </View>
+
+        {/* Fast YouTube App Fallback Bar */}
+        <TouchableOpacity
+          style={[styles.quickYtFallback, { backgroundColor: isDark ? '#27272A' : '#FEF2F2' }]}
+          onPress={handleOpenYouTube}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="logo-youtube" size={15} color="#FF0000" />
+          <Text style={[styles.quickYtFallbackText, { color: isDark ? '#FCA5A5' : '#DC2626' }]}>
+            Having playback trouble? Tap to open in YouTube app
+          </Text>
+          <Ionicons name="open-outline" size={13} color="#FF0000" />
+        </TouchableOpacity>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
           {/* Video Metadata Card */}
@@ -465,6 +477,33 @@ const styles = StyleSheet.create({
   webView: {
     flex: 1,
     backgroundColor: '#000000',
+  },
+  playerLoadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#000000',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  playerLoadingText: {
+    color: '#9CA3AF',
+    fontSize: 12,
+  },
+  quickYtFallback: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  quickYtFallbackText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   scrollContent: {
     padding: 16,

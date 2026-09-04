@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Modal,
+  Switch,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useSaaS } from '../context/SaaSContext';
@@ -23,11 +30,9 @@ export const Header: React.FC<HeaderProps> = ({
   subtitle,
   showBack,
   onBack,
-  showThemeToggle = true,
   rightAction,
   onOpenSubscription,
   onOpenNotifications,
-  onOpenYouTube,
   onOpenSearch,
 }) => {
   const { colors, toggleTheme, isDark } = useTheme();
@@ -40,7 +45,7 @@ export const Header: React.FC<HeaderProps> = ({
     unreadNotificationsCount,
   } = useSaaS();
 
-  const [workspaceMenuVisible, setWorkspaceMenuVisible] = useState(false);
+  const [quickMenuVisible, setQuickMenuVisible] = useState(false);
 
   const getPlanBadgeConfig = () => {
     switch (subscriptionTier) {
@@ -57,59 +62,57 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+      {/* Left Area: Back Button or Brand Logo */}
       <View style={styles.leftRow}>
         {showBack ? (
           <TouchableOpacity
             style={[styles.iconButton, { backgroundColor: colors.surfaceSubtle }]}
             onPress={onBack}
             activeOpacity={0.7}
+            accessibilityLabel="Go back"
           >
             <Ionicons name="arrow-back" size={20} color={colors.text} />
           </TouchableOpacity>
         ) : (
           <View style={styles.brandRow}>
-            {/* Workspace Selector Dropdown Pill */}
+            {/* Logo Mark */}
+            <View style={[styles.brandLogoCircle, { backgroundColor: colors.primary }]}>
+              <Ionicons name="school" size={15} color="#FFFFFF" />
+            </View>
+
+            {/* Brand Typography */}
+            <View style={styles.brandTitleCol}>
+              <Text style={[styles.brandTitle, { color: colors.text }]}>
+                Thriving<Text style={{ color: colors.primary }}>Skills</Text>
+              </Text>
+            </View>
+
+            {/* Clean Combined Workspace/Tier Chip */}
             <TouchableOpacity
               style={[
-                styles.workspacePill,
+                styles.compactTierPill,
                 {
                   backgroundColor:
-                    activeWorkspace.type === 'enterprise' ? colors.secondaryLight : colors.surfaceSubtle,
-                  borderColor:
-                    activeWorkspace.type === 'enterprise' ? colors.secondary : colors.border,
+                    activeWorkspace.type === 'enterprise' ? colors.secondaryLight : colors.primaryLight,
                 },
               ]}
-              onPress={() => setWorkspaceMenuVisible(true)}
+              onPress={() => setQuickMenuVisible(true)}
               activeOpacity={0.75}
             >
-              <Ionicons
-                name={activeWorkspace.type === 'enterprise' ? 'business' : 'person-circle'}
-                size={16}
-                color={activeWorkspace.type === 'enterprise' ? colors.secondary : colors.primary}
-              />
               <Text
                 style={[
-                  styles.workspaceText,
-                  { color: activeWorkspace.type === 'enterprise' ? colors.secondary : colors.text },
+                  styles.compactTierText,
+                  { color: activeWorkspace.type === 'enterprise' ? colors.secondary : colors.primary },
                 ]}
-                numberOfLines={1}
               >
-                {activeWorkspace.type === 'enterprise' ? 'Apex Corp' : 'Personal'}
+                {activeWorkspace.type === 'enterprise' ? 'Enterprise' : planBadge.label}
               </Text>
-              <Ionicons name="chevron-down" size={12} color={colors.textMuted} />
+              <Ionicons
+                name="chevron-down"
+                size={10}
+                color={activeWorkspace.type === 'enterprise' ? colors.secondary : colors.primary}
+              />
             </TouchableOpacity>
-
-            {/* Plan Badge */}
-            {onOpenSubscription && (
-              <TouchableOpacity
-                style={[styles.planBadge, { backgroundColor: planBadge.bg }]}
-                onPress={onOpenSubscription}
-                activeOpacity={0.8}
-              >
-                <Ionicons name={planBadge.icon as any} size={10} color={planBadge.text} />
-                <Text style={[styles.planBadgeText, { color: planBadge.text }]}>{planBadge.label}</Text>
-              </TouchableOpacity>
-            )}
           </View>
         )}
 
@@ -127,10 +130,11 @@ export const Header: React.FC<HeaderProps> = ({
         )}
       </View>
 
+      {/* Right Area: Minimal, Uncluttered 2-3 Actions Only */}
       <View style={styles.rightRow}>
         {rightAction}
 
-        {/* Universal Search Button */}
+        {/* Universal Search */}
         {onOpenSearch && (
           <TouchableOpacity
             style={[styles.iconButton, { backgroundColor: colors.surfaceSubtle }]}
@@ -142,24 +146,13 @@ export const Header: React.FC<HeaderProps> = ({
           </TouchableOpacity>
         )}
 
-        {/* YouTube Channel Button */}
-        {onOpenYouTube && (
-          <TouchableOpacity
-            style={[styles.iconButton, { backgroundColor: 'rgba(255, 0, 0, 0.08)' }]}
-            onPress={onOpenYouTube}
-            activeOpacity={0.7}
-            accessibilityLabel="YouTube Channel Videos"
-          >
-            <Ionicons name="logo-youtube" size={18} color="#FF0000" />
-          </TouchableOpacity>
-        )}
-
-        {/* Notifications Bell with Unread Badge */}
+        {/* Notifications */}
         {onOpenNotifications && (
           <TouchableOpacity
             style={[styles.iconButton, { backgroundColor: colors.surfaceSubtle }]}
             onPress={onOpenNotifications}
             activeOpacity={0.7}
+            accessibilityLabel="Notifications"
           >
             <Ionicons name="notifications-outline" size={18} color={colors.text} />
             {unreadNotificationsCount > 0 && (
@@ -170,53 +163,90 @@ export const Header: React.FC<HeaderProps> = ({
           </TouchableOpacity>
         )}
 
-        {/* Language Switcher */}
+        {/* Quick Menu (Theme, Language, Workspace in one clean popup) */}
         <TouchableOpacity
-          style={[styles.langButton, { backgroundColor: colors.primaryLight }]}
-          onPress={toggleLanguage}
+          style={[styles.iconButton, { backgroundColor: colors.surfaceSubtle }]}
+          onPress={() => setQuickMenuVisible(true)}
           activeOpacity={0.7}
+          accessibilityLabel="Quick Menu & Preferences"
         >
-          <Text style={[styles.langButtonText, { color: colors.primary }]}>
-            {language === 'en' ? 'বাংলা' : 'EN'}
-          </Text>
+          <Ionicons name="ellipsis-vertical" size={17} color={colors.text} />
         </TouchableOpacity>
-
-        {/* Theme Toggle */}
-        {showThemeToggle && (
-          <TouchableOpacity
-            style={[styles.iconButton, { backgroundColor: colors.surfaceSubtle }]}
-            onPress={toggleTheme}
-            activeOpacity={0.7}
-          >
-            <Ionicons
-              name={isDark ? 'sunny' : 'moon'}
-              size={18}
-              color={isDark ? colors.accent : colors.text}
-            />
-          </TouchableOpacity>
-        )}
       </View>
 
-      {/* Workspace Switcher Modal Menu */}
+      {/* Clean Quick Sheet (Replaces noisy top bar buttons) */}
       <Modal
-        visible={workspaceMenuVisible}
+        visible={quickMenuVisible}
         transparent
         animationType="fade"
-        onRequestClose={() => setWorkspaceMenuVisible(false)}
+        onRequestClose={() => setQuickMenuVisible(false)}
       >
         <TouchableOpacity
-          style={styles.workspaceMenuOverlay}
+          style={styles.menuOverlay}
           activeOpacity={1}
-          onPress={() => setWorkspaceMenuVisible(false)}
+          onPress={() => setQuickMenuVisible(false)}
         >
           <View
             style={[
-              styles.workspaceMenuCard,
+              styles.menuCard,
               { backgroundColor: colors.surfaceCard, borderColor: colors.border },
             ]}
           >
-            <Text style={[styles.workspaceMenuHeading, { color: colors.textMuted }]}>
-              SWITCH WORKSPACE
+            <View style={styles.menuHeader}>
+              <Text style={[styles.menuHeading, { color: colors.textMuted }]}>
+                PREFERENCES & WORKSPACE
+              </Text>
+              <TouchableOpacity onPress={() => setQuickMenuVisible(false)}>
+                <Ionicons name="close" size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            {/* Language & Theme Controls Row */}
+            <View style={[styles.quickControlsBox, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+              {/* Language Switch */}
+              <TouchableOpacity
+                style={styles.quickControlItem}
+                onPress={() => {
+                  toggleLanguage();
+                }}
+              >
+                <Ionicons name="language-outline" size={18} color={colors.primary} />
+                <View style={{ flex: 1, marginLeft: 10 }}>
+                  <Text style={[styles.quickControlLabel, { color: colors.text }]}>Language</Text>
+                  <Text style={[styles.quickControlSub, { color: colors.textMuted }]}>
+                    {language === 'en' ? 'English (EN)' : 'বাংলা (BN)'}
+                  </Text>
+                </View>
+                <View style={[styles.pillTag, { backgroundColor: colors.primaryLight }]}>
+                  <Text style={[styles.pillTagText, { color: colors.primary }]}>
+                    Switch to {language === 'en' ? 'বাংলা' : 'EN'}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+              {/* Theme Toggle */}
+              <View style={styles.quickControlItem}>
+                <Ionicons name={isDark ? 'moon' : 'sunny'} size={18} color={colors.secondary} />
+                <View style={{ flex: 1, marginLeft: 10 }}>
+                  <Text style={[styles.quickControlLabel, { color: colors.text }]}>Dark Mode</Text>
+                  <Text style={[styles.quickControlSub, { color: colors.textMuted }]}>
+                    {isDark ? 'Dark theme active' : 'Light theme active'}
+                  </Text>
+                </View>
+                <Switch
+                  value={isDark}
+                  onValueChange={toggleTheme}
+                  trackColor={{ false: '#CBD5E1', true: colors.primary }}
+                  thumbColor="#FFFFFF"
+                />
+              </View>
+            </View>
+
+            {/* Workspaces Section */}
+            <Text style={[styles.sectionSubtitle, { color: colors.textMuted, marginTop: 14 }]}>
+              SELECT WORKSPACE
             </Text>
 
             {workspaces.map((ws) => {
@@ -230,7 +260,7 @@ export const Header: React.FC<HeaderProps> = ({
                   ]}
                   onPress={() => {
                     switchWorkspace(ws.id);
-                    setWorkspaceMenuVisible(false);
+                    setQuickMenuVisible(false);
                   }}
                 >
                   <View
@@ -264,6 +294,20 @@ export const Header: React.FC<HeaderProps> = ({
                 </TouchableOpacity>
               );
             })}
+
+            {/* Subscription CTA */}
+            {onOpenSubscription && (
+              <TouchableOpacity
+                style={[styles.subscriptionBtn, { backgroundColor: colors.primary }]}
+                onPress={() => {
+                  setQuickMenuVisible(false);
+                  onOpenSubscription();
+                }}
+              >
+                <Ionicons name="sparkles" size={16} color="#FFFFFF" />
+                <Text style={styles.subscriptionBtnText}>Manage Subscription & Plan</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </TouchableOpacity>
       </Modal>
@@ -290,31 +334,33 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  workspacePill: {
+  brandLogoCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  brandTitleCol: {
+    justifyContent: 'center',
+  },
+  brandTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  compactTierPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    gap: 6,
-  },
-  workspaceText: {
-    fontSize: 12,
-    fontWeight: '700',
-    maxWidth: 110,
-  },
-  planBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    gap: 3,
     paddingHorizontal: 7,
     paddingVertical: 3,
-    borderRadius: 6,
-    gap: 4,
+    borderRadius: 12,
+    marginLeft: 2,
   },
-  planBadgeText: {
-    fontSize: 9,
-    fontWeight: '900',
+  compactTierText: {
+    fontSize: 10,
+    fontWeight: '800',
     letterSpacing: 0.5,
   },
   titleContainer: {
@@ -322,7 +368,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
   },
   headerSubtitle: {
@@ -342,17 +388,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     position: 'relative',
   },
-  langButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  langButtonText: {
-    fontSize: 11,
-    fontWeight: '800',
-  },
   notifBadge: {
     position: 'absolute',
     top: 4,
@@ -366,48 +401,93 @@ const styles = StyleSheet.create({
   },
   notifBadgeText: {
     color: '#FFFFFF',
-    fontSize: 8,
-    fontWeight: '900',
+    fontSize: 9,
+    fontWeight: '800',
   },
-  workspaceMenuOverlay: {
+  // Modal Quick Menu
+  menuOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'flex-start',
-    paddingTop: 60,
+    paddingTop: 70,
     paddingHorizontal: 16,
   },
-  workspaceMenuCard: {
-    borderRadius: 16,
+  menuCard: {
+    borderRadius: 18,
     borderWidth: 1,
-    padding: 12,
+    padding: 16,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 10,
     elevation: 8,
   },
-  workspaceMenuHeading: {
+  menuHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  menuHeading: {
     fontSize: 10,
     fontWeight: '800',
-    letterSpacing: 0.5,
-    marginBottom: 8,
+    letterSpacing: 0.6,
+  },
+  quickControlsBox: {
+    borderRadius: 14,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  quickControlItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  quickControlLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  quickControlSub: {
+    fontSize: 11,
+    marginTop: 1,
+  },
+  pillTag: {
     paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  pillTagText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    marginHorizontal: 14,
+  },
+  sectionSubtitle: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+    marginBottom: 8,
   },
   workspaceItem: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
-    borderRadius: 10,
-    gap: 10,
+    borderRadius: 12,
+    marginBottom: 4,
   },
   wsIconCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   wsInfo: {
     flex: 1,
+    marginLeft: 10,
   },
   wsName: {
     fontSize: 13,
@@ -416,5 +496,19 @@ const styles = StyleSheet.create({
   wsSub: {
     fontSize: 11,
     marginTop: 1,
+  },
+  subscriptionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 11,
+    borderRadius: 12,
+    marginTop: 12,
+  },
+  subscriptionBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
   },
 });

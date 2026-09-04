@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -23,6 +23,8 @@ import { CourseCard } from '../components/CourseCard';
 import { SpecialBundleCard } from '../components/SpecialBundleCard';
 import { SummitCard } from '../components/SummitCard';
 import { YouTubeCard } from '../components/YouTubeCard';
+import { CommunityFeedShelf } from '../components/CommunityFeedShelf';
+import { CommunityFeedModal } from '../components/CommunityFeedModal';
 import { useYouTube } from '../context/YouTubeContext';
 import { YOUTUBE_VIDEOS, YOUTUBE_CHANNEL, YouTubeVideo } from '../data/youtubeVideos';
 import {
@@ -43,6 +45,7 @@ interface HomeScreenProps {
   onOpenAssessment: () => void;
   onOpenYouTube?: () => void;
   onOpenSearch?: () => void;
+  onOpenCommunityFeed?: () => void;
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
@@ -55,8 +58,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onOpenAssessment,
   onOpenYouTube,
   onOpenSearch,
+  onOpenCommunityFeed,
 }) => {
   const { colors, isDark } = useTheme();
+  const [communityModalVisible, setCommunityModalVisible] = useState(false);
+
   const { t, isBangla } = useLanguage();
   const { streakDays, dailyMinutesSpent, dailyGoalMinutes } = useGamification();
   const {
@@ -467,6 +473,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </ScrollView>
         </View>
 
+        {/* Community & Social Feed (Facebook & LinkedIn) */}
+        <CommunityFeedShelf
+          onViewAll={() => {
+            if (onOpenCommunityFeed) {
+              onOpenCommunityFeed();
+            } else {
+              setCommunityModalVisible(true);
+            }
+          }}
+        />
+
         {/* National & Regional Skills Summits */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -659,6 +676,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </View>
         </View>
       </ScrollView>
+
+      <CommunityFeedModal
+        visible={communityModalVisible}
+        onClose={() => setCommunityModalVisible(false)}
+      />
     </View>
   );
 };

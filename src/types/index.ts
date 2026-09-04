@@ -281,6 +281,26 @@ export interface SkillAssessmentResult {
   keyInsight: string;
 }
 
+export type SocialPlatform = 'facebook' | 'linkedin';
+
+export interface SocialPost {
+  id: string;
+  platform: SocialPlatform;
+  authorName: string;
+  authorHandle: string;
+  authorAvatar: string;
+  content: string;
+  mediaUrls: string[];
+  permalink: string;
+  publishedAt: string;
+  relativeTime?: string;
+  likesCount?: number;
+  commentsCount?: number;
+  sharesCount?: number;
+  tags?: string[];
+  badge?: string;
+}
+
 export type RootTab = 'Home' | 'Courses' | 'Copilot' | 'MyLearning' | 'TeamHub' | 'Workshops' | 'Profile';
 
 export type ActiveScreen =
@@ -290,4 +310,6 @@ export type ActiveScreen =
   | { name: 'CorporateSolutions' }
   | { name: 'CertificateView'; certificateId: string }
   | { name: 'SkillAssessment' }
-  | { name: 'YouTubeVideos' };
+  | { name: 'YouTubeVideos' }
+  | { name: 'SocialFeed' };
+
