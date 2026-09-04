@@ -69,6 +69,31 @@ export async function loginWpUser(username: string, password: string): Promise<W
 }
 
 /**
+ * Log in user with Google
+ */
+export async function loginWpGoogle(email?: string, name?: string): Promise<WpUser> {
+  return AuthService.loginWithGoogle(email, name);
+}
+
+/**
+ * Log in user with Facebook
+ */
+export async function loginWpFacebook(email?: string, name?: string): Promise<WpUser> {
+  return AuthService.loginWithFacebook(email, name);
+}
+
+/**
+ * Register student account
+ */
+export async function registerWpUser(userData: {
+  username: string;
+  email: string;
+  password: string;
+}): Promise<any> {
+  return AuthService.register(userData);
+}
+
+/**
  * Validate JWT token using AuthService
  */
 export async function validateWpToken(token: string): Promise<boolean> {

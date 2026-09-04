@@ -28,6 +28,8 @@ import { CommunityFeedModal } from '../components/CommunityFeedModal';
 import { HeroCarousel, CarouselSlide } from '../components/HeroCarousel';
 import { QuickActionDock } from '../components/QuickActionDock';
 import { SearchSpotlightBar } from '../components/SearchSpotlightBar';
+import { CountdownWidget } from '../components/CountdownWidget';
+import { SkillBiteWidget } from '../components/SkillBiteWidget';
 import { useYouTube } from '../context/YouTubeContext';
 import { YOUTUBE_VIDEOS, YOUTUBE_CHANNEL, YouTubeVideo } from '../data/youtubeVideos';
 import {
@@ -206,6 +208,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             onNavigateTab(activeWorkspace.type === 'enterprise' ? 'TeamHub' : 'MyLearning')
           }
         />
+
+        {/* 5. Live Summit Flash Sale Countdown Timer */}
+        <CountdownWidget
+          onClaimDiscount={() => onNavigateTab('Workshops')}
+        />
+
+        {/* 6. Daily Skill Bite Micro-Challenge Widget */}
+        <SkillBiteWidget />
 
         {/* Continue Learning & Watching Resume Card */}
         {(activeCourse || lastWatchedVideo) && (

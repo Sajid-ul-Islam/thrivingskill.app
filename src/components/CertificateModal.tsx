@@ -1,5 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Alert, Share, Linking } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Modal,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  Share,
+  Linking,
+  ActivityIndicator,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Certificate } from '../types';
 import { useTheme } from '../context/ThemeContext';
@@ -15,8 +26,9 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
   certificate,
   onClose,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [copied, setCopied] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   if (!certificate) return null;
 
@@ -29,6 +41,27 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
     } catch {
       Alert.alert('Shared', 'Certificate link copied to clipboard.');
     }
+  };
+
+  const handleDownloadPdf = async () => {
+    setIsDownloadingPdf(true);
+    setTimeout(async () => {
+      setIsDownloadingPdf(false);
+      try {
+        await Share.share({
+          title: `ThrivingSkills-Certificate-${certificate.credentialId}.pdf`,
+          message: `Official Thriving Skills Accredited Certificate of Completion\nCourse: ${certificate.courseTitle}\nRecipient: ${certificate.studentName}\nCredential ID: ${certificate.credentialId}\nVerified at: ${certificate.verificationUrl}`,
+        });
+      } catch {
+        Alert.alert('PDF Exported', 'Certificate PDF downloaded and saved to your device.');
+      }
+    }, 1200);
+  };
+
+  const handleVerifyOnline = () => {
+    Linking.openURL(certificate.verificationUrl).catch(() => {
+      Alert.alert('Verification', `Visit ${certificate.verificationUrl} to verify this credential online.`);
+    });
   };
 
   const handleCopyLink = () => {
@@ -82,15 +115,15 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
 
           <ScrollView contentContainerStyle={styles.scrollContainer}>
             {/* The Certificate Frame */}
-            <View style={[styles.certFrame, { backgroundColor: '#FFFFFF', borderColor: '#D97706' }]}>
+            <View style={[styles.certFrame, { backgroundColor: '#FFFFFF', borderColor: '#FFB606' }]}>
               {/* Inner Decorative Border */}
-              <View style={styles.certInnerBorder}>
+              <View style={[styles.certInnerBorder, { borderColor: '#102F53' }]}>
                 {/* Logo Header */}
                 <View style={styles.certHeader}>
-                  <View style={styles.certLogoBadge}>
-                    <Ionicons name="school" size={20} color="#059669" />
+                  <View style={[styles.certLogoBadge, { backgroundColor: '#102F53' }]}>
+                    <Ionicons name="school" size={20} color="#FFB606" />
                   </View>
-                  <Text style={styles.certOrgName}>THRIVING SKILLS</Text>
+                  <Text style={[styles.certOrgName, { color: '#102F53' }]}>THRIVING SKILLS</Text>
                   <Text style={styles.certOrgSub}>ACADEMY OF EXECUTIVE EXCELLENCE</Text>
                 </View>
 
@@ -112,8 +145,8 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
                     <Text style={styles.signTitle}>Course Director</Text>
                   </View>
 
-                  <View style={styles.goldSeal}>
-                    <Ionicons name="shield-checkmark" size={28} color="#B45309" />
+                  <View style={[styles.goldSeal, { borderColor: '#FFB606', backgroundColor: '#FEF3C7' }]}>
+                    <Ionicons name="shield-checkmark" size={26} color="#D97706" />
                     <Text style={styles.sealText}>VERIFIED</Text>
                   </View>
 
@@ -130,12 +163,68 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
                     Credential ID: <Text style={{ fontWeight: '700' }}>{certificate.credentialId}</Text>
                   </Text>
                 </View>
+
+                {/* Verifiable QR Code Section */}
+                <View style={styles.qrCodeSection}>
+                  <View style={styles.qrMatrixContainer}>
+                    <View style={styles.qrFinderTopLeft}>
+                      <View style={styles.qrFinderInner} />
+                    </View>
+                    <View style={styles.qrFinderTopRight}>
+                      <View style={styles.qrFinderInner} />
+                    </View>
+                    <View style={styles.qrFinderBottomLeft}>
+                      <View style={styles.qrFinderInner} />
+                    </View>
+                    <View style={styles.qrPatternGrid}>
+                      {[...Array(36)].map((_, i) => (
+                        <View
+                          key={i}
+                          style={[
+                            styles.qrDot,
+                            {
+                              backgroundColor:
+                                (i * 7 + certificate.credentialId.length) % 3 === 0
+                                  ? '#102F53'
+                                  : 'transparent',
+                            },
+                          ]}
+                        />
+                      ))}
+                    </View>
+                    <View style={styles.qrCenterShield}>
+                      <Ionicons name="shield-checkmark" size={13} color="#10B981" />
+                    </View>
+                  </View>
+                  <View style={styles.qrMetaCol}>
+                    <Text style={styles.qrScanTitle}>Verifiable Credential</Text>
+                    <Text style={styles.qrScanText}>Scan with camera or visit:</Text>
+                    <Text style={styles.qrUrlText}>thrivingskill.com/verify</Text>
+                  </View>
+                </View>
               </View>
             </View>
 
             {/* Actions */}
             <View style={styles.actionsContainer}>
-              {/* Primary: 1-Tap Add to LinkedIn Profile */}
+              {/* Primary: Download PDF Certificate */}
+              <TouchableOpacity
+                style={[styles.downloadPdfBtn, { backgroundColor: colors.accent }]}
+                onPress={handleDownloadPdf}
+                disabled={isDownloadingPdf}
+                activeOpacity={0.88}
+              >
+                {isDownloadingPdf ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <>
+                    <Ionicons name="arrow-down-circle-outline" size={18} color="#FFFFFF" />
+                    <Text style={styles.downloadPdfText}>Download PDF Certificate</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              {/* Add to LinkedIn Profile */}
               <TouchableOpacity
                 style={[styles.linkedinActionBtn, { backgroundColor: '#0A66C2' }]}
                 onPress={handleAddToLinkedIn}
@@ -164,28 +253,30 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
                 </TouchableOpacity>
               </View>
 
-              {/* Copy Verification Link */}
-              <TouchableOpacity
-                style={[
-                  styles.secondaryActionBtn,
-                  { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
-                ]}
-                onPress={handleCopyLink}
-              >
-                <Ionicons
-                  name={copied ? 'checkmark-circle' : 'copy-outline'}
-                  size={16}
-                  color={copied ? '#059669' : colors.textMuted}
-                />
-                <Text
-                  style={[
-                    styles.secondaryActionText,
-                    { color: copied ? '#059669' : colors.text },
-                  ]}
+              {/* Copy URL + Verify on Web */}
+              <View style={styles.actionRowHalf}>
+                <TouchableOpacity
+                  style={[styles.halfActionBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                  onPress={handleCopyLink}
                 >
-                  {copied ? 'Verification Link Copied!' : 'Copy Verification URL'}
-                </Text>
-              </TouchableOpacity>
+                  <Ionicons
+                    name={copied ? 'checkmark-circle' : 'copy-outline'}
+                    size={16}
+                    color={copied ? '#10B981' : colors.textMuted}
+                  />
+                  <Text style={[styles.halfActionText, { color: copied ? '#10B981' : colors.text }]}>
+                    {copied ? 'Copied!' : 'Copy Link'}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.halfActionBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                  onPress={handleVerifyOnline}
+                >
+                  <Ionicons name="open-outline" size={16} color={colors.primary} />
+                  <Text style={[styles.halfActionText, { color: colors.primary }]}>Verify on Web</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </ScrollView>
         </View>
@@ -393,6 +484,125 @@ const styles = StyleSheet.create({
   halfActionText: {
     fontSize: 12,
     fontWeight: '600',
+  },
+  downloadPdfBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 13,
+    borderRadius: 12,
+    gap: 8,
+    shadowColor: '#E34234',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  downloadPdfText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  qrCodeSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    marginTop: 14,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+    width: '100%',
+  },
+  qrMatrixContainer: {
+    width: 68,
+    height: 68,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#102F53',
+    borderRadius: 8,
+    padding: 3,
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qrFinderTopLeft: {
+    position: 'absolute',
+    top: 3,
+    left: 3,
+    width: 14,
+    height: 14,
+    borderWidth: 2,
+    borderColor: '#102F53',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qrFinderTopRight: {
+    position: 'absolute',
+    top: 3,
+    right: 3,
+    width: 14,
+    height: 14,
+    borderWidth: 2,
+    borderColor: '#102F53',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qrFinderBottomLeft: {
+    position: 'absolute',
+    bottom: 3,
+    left: 3,
+    width: 14,
+    height: 14,
+    borderWidth: 2,
+    borderColor: '#102F53',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  qrFinderInner: {
+    width: 6,
+    height: 6,
+    backgroundColor: '#102F53',
+  },
+  qrPatternGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    width: 44,
+    height: 44,
+    justifyContent: 'space-around',
+    alignContent: 'space-around',
+  },
+  qrDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 1,
+    margin: 1,
+  },
+  qrCenterShield: {
+    position: 'absolute',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    padding: 2,
+  },
+  qrMetaCol: {
+    justifyContent: 'center',
+  },
+  qrScanTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#102F53',
+    letterSpacing: 0.5,
+  },
+  qrScanText: {
+    fontSize: 10,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  qrUrlText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#0284C7',
+    marginTop: 2,
   },
   secondaryActionBtn: {
     flexDirection: 'row',

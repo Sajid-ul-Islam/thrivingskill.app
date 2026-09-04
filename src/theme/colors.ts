@@ -1,14 +1,17 @@
 export const lightColors = {
-  primary: '#059669', // Emerald 600
-  primaryDark: '#047857',
-  primaryLight: '#D1FAE5',
-  primaryGradientStart: '#059669',
-  primaryGradientEnd: '#0D9488',
-  secondary: '#4F46E5', // Indigo 600
-  secondaryLight: '#EEF2FF',
-  accent: '#F59E0B', // Amber 500
-  accentLight: '#FEF3C7',
-  danger: '#EF4444',
+  primary: '#102F53', // Thriving Skills Brand Navy
+  primaryDark: '#0A1C33',
+  primaryLight: '#E8EEF5',
+  primaryGradientStart: '#102F53',
+  primaryGradientEnd: '#E34234', // Signature Accent Gradient
+  secondary: '#1D4476', // Navy Light
+  secondaryLight: '#EFF6FF',
+  accent: '#E34234', // Brand Red / CTA
+  accentLight: '#FEE2E2',
+  brandNavy: '#102F53',
+  brandRed: '#E34234',
+  brandGold: '#FFB606', // Thriving Skills Golden Amber
+  danger: '#DC2626',
   dangerLight: '#FEE2E2',
   background: '#F8FAFC',
   surface: '#FFFFFF',
@@ -21,46 +24,49 @@ export const lightColors = {
   textMuted: '#64748B',
   textLight: '#94A3B8',
   textInverse: '#FFFFFF',
-  cardShadow: 'rgba(15, 23, 42, 0.08)',
-  badgeBackground: '#ECFDF5',
-  badgeText: '#065F46',
-  starColor: '#F59E0B',
+  cardShadow: 'rgba(16, 47, 83, 0.08)',
+  badgeBackground: '#E8EEF5',
+  badgeText: '#102F53',
+  starColor: '#FFB606',
   tabBarBg: '#FFFFFF',
   tabBarBorder: '#E2E8F0',
-  tabActive: '#059669',
+  tabActive: '#102F53',
   tabInactive: '#94A3B8',
 };
 
 export const darkColors = {
-  primary: '#10B981', // Emerald 500
-  primaryDark: '#059669',
-  primaryLight: '#064E3B',
-  primaryGradientStart: '#10B981',
-  primaryGradientEnd: '#14B8A6',
-  secondary: '#6366F1', // Indigo 500
-  secondaryLight: '#312E81',
-  accent: '#FBBF24', // Amber 400
-  accentLight: '#78350F',
+  primary: '#38BDF8', // Cyan/Sky highlight on deep navy
+  primaryDark: '#102F53',
+  primaryLight: '#0F223D',
+  primaryGradientStart: '#102F53',
+  primaryGradientEnd: '#E34234',
+  secondary: '#60A5FA', // Slate blue
+  secondaryLight: '#1E293B',
+  accent: '#FF5A4B', // Brand Red Light for dark mode
+  accentLight: '#450A0A',
+  brandNavy: '#102F53',
+  brandRed: '#E34234',
+  brandGold: '#FFB606',
   danger: '#F87171',
   dangerLight: '#7F1D1D',
-  background: '#0B0F19',
-  surface: '#111827',
-  surfaceCard: '#182234',
-  surfaceSubtle: '#1E293B',
-  surfaceElevated: '#243048',
-  border: '#2A374E',
-  borderSubtle: '#1E293B',
+  background: '#070D18', // Deep Navy Black
+  surface: '#0F192C', // Navy Surface
+  surfaceCard: '#14223B', // Navy Card
+  surfaceSubtle: '#1B2B4A',
+  surfaceElevated: '#203459',
+  border: '#22365A',
+  borderSubtle: '#182844',
   text: '#F8FAFC',
   textMuted: '#94A3B8',
   textLight: '#64748B',
   textInverse: '#0F172A',
-  cardShadow: 'rgba(0, 0, 0, 0.4)',
-  badgeBackground: '#064E3B',
-  badgeText: '#6EE7B7',
-  starColor: '#FBBF24',
-  tabBarBg: '#111827',
-  tabBarBorder: '#1E293B',
-  tabActive: '#10B981',
+  cardShadow: 'rgba(0, 0, 0, 0.5)',
+  badgeBackground: '#1B2E4E',
+  badgeText: '#93C5FD',
+  starColor: '#FFB606',
+  tabBarBg: '#0B1322',
+  tabBarBorder: '#1B2B4A',
+  tabActive: '#38BDF8',
   tabInactive: '#64748B',
 };
 

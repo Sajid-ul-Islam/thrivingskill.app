@@ -15,6 +15,7 @@ import { useLearning } from '../context/LearningContext';
 import { Header } from '../components/Header';
 import { CurriculumAccordion } from '../components/CurriculumAccordion';
 import { PaymentModal } from '../components/PaymentModal';
+import { CourseQnATab } from '../components/CourseQnATab';
 import { useLanguage } from '../context/LanguageContext';
 import { useYouTube } from '../context/YouTubeContext';
 import { findRelatedVideoForCourse } from '../services/youtubeService';
@@ -43,7 +44,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     getCourseProgressPercentage,
   } = useLearning();
 
-  const [activeTab, setActiveTab] = useState<'curriculum' | 'instructor' | 'reviews'>('curriculum');
+  const [activeTab, setActiveTab] = useState<'curriculum' | 'qna' | 'instructor' | 'reviews'>('curriculum');
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
 
@@ -258,10 +259,11 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
             </View>
           </View>
 
-          {/* Navigation Tabs (Curriculum / Instructor / Reviews) */}
+          {/* Navigation Tabs (Curriculum / Q&A / Instructor / Reviews) */}
           <View style={[styles.tabsBar, { borderBottomColor: colors.border }]}>
             {[
-              { id: 'curriculum', label: `Curriculum (${course.modules.length} Modules)` },
+              { id: 'curriculum', label: `Curriculum (${course.modules.length})` },
+              { id: 'qna', label: 'Q&A Forum' },
               { id: 'instructor', label: 'Instructor' },
               { id: 'reviews', label: `Reviews (${course.reviews.length})` },
             ].map((tab) => {
@@ -301,6 +303,10 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                 onSelectLesson={handleSelectLesson}
               />
             </View>
+          )}
+
+          {activeTab === 'qna' && (
+            <CourseQnATab courseId={course.id} />
           )}
 
           {activeTab === 'instructor' && (

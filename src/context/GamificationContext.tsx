@@ -81,12 +81,15 @@ interface GamificationState {
   dailyMinutesSpent: number;
   dailyGoalMinutes: number;
   badges: AchievementBadge[];
+  xp: number;
 }
 
 interface GamificationContextType extends GamificationState {
   recordStudyTime: (minutes: number) => void;
   unlockBadge: (badgeId: string) => void;
   setDailyGoal: (minutes: number) => void;
+  addXP: (amount: number) => void;
+  incrementStreak: () => void;
 }
 
 const GamificationContext = createContext<GamificationContextType>({} as GamificationContextType);
@@ -98,6 +101,7 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     dailyMinutesSpent: 11,
     dailyGoalMinutes: 15,
     badges: DEFAULT_BADGES,
+    xp: 350,
   });
 
   useEffect(() => {
@@ -117,6 +121,7 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           setState((prev) => ({
             ...prev,
             ...parsed,
+            xp: parsed.xp ?? 350,
             badges: prev.badges.map((b) => {
               const savedBadge = parsed.badges?.find((sb: any) => sb.id === b.id);
               return savedBadge ? { ...b, ...savedBadge } : b;
@@ -139,6 +144,24 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       ...state,
       dailyMinutesSpent: state.dailyMinutesSpent + minutes,
       lastActiveDate: new Date().toISOString().split('T')[0],
+      xp: state.xp + minutes * 5,
+    };
+    saveState(updated);
+  };
+
+  const addXP = (amount: number) => {
+    const updated = {
+      ...state,
+      xp: (state.xp || 0) + amount,
+    };
+    saveState(updated);
+  };
+
+  const incrementStreak = () => {
+    const updated = {
+      ...state,
+      streakDays: (state.streakDays || 0) + 1,
+      lastActiveDate: new Date().toISOString().split('T')[0],
     };
     saveState(updated);
   };
@@ -149,7 +172,7 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         ? { ...b, isUnlocked: true, unlockedAt: new Date().toISOString().split('T')[0] }
         : b
     );
-    saveState({ ...state, badges: updatedBadges });
+    saveState({ ...state, badges: updatedBadges, xp: (state.xp || 0) + 100 });
   };
 
   const setDailyGoal = (minutes: number) => {
@@ -163,6 +186,8 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         recordStudyTime,
         unlockBadge,
         setDailyGoal,
+        addXP,
+        incrementStreak,
       }}
     >
       {children}

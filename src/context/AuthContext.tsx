@@ -1,7 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WpUser } from '../types';
-import { loginWpUser, validateWpToken } from '../services/wordpressApi';
+import {
+  loginWpUser,
+  loginWpGoogle,
+  loginWpFacebook,
+  registerWpUser,
+  validateWpToken,
+} from '../services/wordpressApi';
 
 const AUTH_USER_STORAGE_KEY = '@thrivingskill_auth_user';
 const AUTH_TOKEN_STORAGE_KEY = '@thrivingskill_auth_token';
@@ -15,6 +21,9 @@ interface AuthContextType {
   isAuthModalVisible: boolean;
   setAuthModalVisible: (visible: boolean) => void;
   login: (username: string, password: string) => Promise<void>;
+  loginWithGoogle: (email?: string, name?: string) => Promise<void>;
+  loginWithFacebook: (email?: string, name?: string) => Promise<void>;
+  register: (username: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   continueAsGuest: () => void;
 }
@@ -60,21 +69,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     })();
   }, []);
 
+  const saveUserSession = async (loggedInUser: WpUser) => {
+    setUser(loggedInUser);
+    setToken(loggedInUser.token || null);
+    setIsGuest(false);
+    setAuthModalVisible(false);
+
+    await Promise.all([
+      AsyncStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(loggedInUser)),
+      loggedInUser.token
+        ? AsyncStorage.setItem(AUTH_TOKEN_STORAGE_KEY, loggedInUser.token)
+        : Promise.resolve(),
+    ]);
+  };
+
   const login = async (username: string, password: string) => {
     setIsLoading(true);
     try {
       const loggedInUser = await loginWpUser(username, password);
-      setUser(loggedInUser);
-      setToken(loggedInUser.token || null);
-      setIsGuest(false);
-      setAuthModalVisible(false);
+      await saveUserSession(loggedInUser);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      await Promise.all([
-        AsyncStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(loggedInUser)),
-        loggedInUser.token
-          ? AsyncStorage.setItem(AUTH_TOKEN_STORAGE_KEY, loggedInUser.token)
-          : Promise.resolve(),
-      ]);
+  const loginWithGoogle = async (email?: string, name?: string) => {
+    setIsLoading(true);
+    try {
+      const loggedInUser = await loginWpGoogle(email, name);
+      await saveUserSession(loggedInUser);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const loginWithFacebook = async (email?: string, name?: string) => {
+    setIsLoading(true);
+    try {
+      const loggedInUser = await loginWpFacebook(email, name);
+      await saveUserSession(loggedInUser);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const register = async (username: string, email: string, password: string) => {
+    setIsLoading(true);
+    try {
+      await registerWpUser({ username, email, password });
+      // Immediately log in new user
+      await login(username, password);
     } finally {
       setIsLoading(false);
     }
@@ -108,6 +152,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthModalVisible,
         setAuthModalVisible,
         login,
+        loginWithGoogle,
+        loginWithFacebook,
+        register,
         logout,
         continueAsGuest,
       }}

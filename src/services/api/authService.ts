@@ -74,6 +74,50 @@ export class AuthService {
   }
 
   /**
+   * Log in or register using Google OAuth
+   */
+  static async loginWithGoogle(mockEmail?: string, mockName?: string): Promise<WpUser> {
+    // In production, this can exchange the Google idToken with WordPress social login endpoint
+    const id = 'google-' + Math.random().toString(36).substring(2, 9);
+    const email = mockEmail || 'sajid.professional@gmail.com';
+    const name = mockName || 'Sajid Ul Islam';
+    const fakeToken = `tsl_jwt_google_${Date.now()}_${id}`;
+
+    HttpClient.setAuthToken(fakeToken);
+    return {
+      id,
+      username: email.split('@')[0],
+      email,
+      displayName: name,
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200',
+      token: fakeToken,
+      roles: ['subscriber'],
+    };
+  }
+
+  /**
+   * Log in or register using Facebook OAuth
+   */
+  static async loginWithFacebook(mockEmail?: string, mockName?: string): Promise<WpUser> {
+    // In production, this can exchange Facebook access token with WordPress social login endpoint
+    const id = 'fb-' + Math.random().toString(36).substring(2, 9);
+    const email = mockEmail || 'sajid.facebook@thrivingskill.com';
+    const name = mockName || 'Sajid Ul Islam (FB)';
+    const fakeToken = `tsl_jwt_fb_${Date.now()}_${id}`;
+
+    HttpClient.setAuthToken(fakeToken);
+    return {
+      id,
+      username: email.split('@')[0],
+      email,
+      displayName: name,
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200',
+      token: fakeToken,
+      roles: ['subscriber'],
+    };
+  }
+
+  /**
    * Request password reset
    */
   static async resetPassword(email: string): Promise<any> {

@@ -16,6 +16,7 @@ import { QuizModal } from '../components/QuizModal';
 import { QuizPlayerModal } from '../components/QuizPlayerModal';
 import { NotesModal } from '../components/NotesModal';
 import { CertificateModal } from '../components/CertificateModal';
+import { CourseQnATab } from '../components/CourseQnATab';
 import { useLanguage } from '../context/LanguageContext';
 import { useGamification } from '../context/GamificationContext';
 import { OfflineManager } from '../services/offline/offlineManager';
@@ -28,7 +29,7 @@ interface LessonPlayerScreenProps {
   onSelectLesson: (courseId: string, lessonId: string) => void;
 }
 
-type PlayerTab = 'curriculum' | 'overview' | 'notes' | 'resources';
+type PlayerTab = 'curriculum' | 'qna' | 'overview' | 'notes' | 'resources';
 
 export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   courseId,
@@ -50,6 +51,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [playbackSpeed, setPlaybackSpeed] = useState<string>('1.0x');
   const [activeTab, setActiveTab] = useState<PlayerTab>('curriculum');
+  const [isCommuteMode, setIsCommuteMode] = useState<boolean>(false);
   const [quizModalVisible, setQuizModalVisible] = useState<boolean>(false);
   const [quizPlayerVisible, setQuizPlayerVisible] = useState<boolean>(false);
   const [notesModalVisible, setNotesModalVisible] = useState<boolean>(false);
@@ -162,39 +164,132 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
       />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {/* Interactive Video Player Simulation */}
-        <View style={styles.playerContainer}>
-          <Image source={{ uri: course.thumbnail }} style={styles.playerVideoBg} />
-          <View style={styles.playerOverlay}>
-            {/* Center Play/Pause & Skip buttons */}
-            <View style={styles.playerControlsRow}>
+        {/* Mode Switcher: Video vs Commute Audio */}
+        <View style={styles.modeSwitchBar}>
+          <TouchableOpacity
+            style={[
+              styles.modeSwitchBtn,
+              !isCommuteMode
+                ? [styles.modeSwitchActive, { backgroundColor: colors.primary }]
+                : { backgroundColor: colors.surfaceSubtle },
+            ]}
+            onPress={() => setIsCommuteMode(false)}
+          >
+            <Ionicons
+              name="videocam"
+              size={15}
+              color={!isCommuteMode ? '#FFFFFF' : colors.textMuted}
+            />
+            <Text
+              style={[
+                styles.modeSwitchText,
+                { color: !isCommuteMode ? '#FFFFFF' : colors.textMuted },
+                !isCommuteMode && { fontWeight: '700' },
+              ]}
+            >
+              Video Player
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.modeSwitchBtn,
+              isCommuteMode
+                ? [styles.modeSwitchActive, { backgroundColor: '#102F53' }]
+                : { backgroundColor: colors.surfaceSubtle },
+            ]}
+            onPress={() => setIsCommuteMode(true)}
+          >
+            <Ionicons
+              name="headset"
+              size={15}
+              color={isCommuteMode ? '#FFB606' : colors.textMuted}
+            />
+            <Text
+              style={[
+                styles.modeSwitchText,
+                { color: isCommuteMode ? '#FFFFFF' : colors.textMuted },
+                isCommuteMode && { fontWeight: '700' },
+              ]}
+            >
+              Commute Audio
+            </Text>
+            <View style={styles.saveDataBadge}>
+              <Text style={styles.saveDataBadgeText}>-85% Data</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {isCommuteMode ? (
+          /* Interactive Commute Mode Player Simulation */
+          <View
+            style={[
+              styles.commutePlayerCard,
+              { backgroundColor: isDark ? '#0F192C' : '#102F53' },
+            ]}
+          >
+            <View style={styles.commuteHeaderBadge}>
+              <Ionicons name="leaf" size={13} color="#10B981" />
+              <Text style={styles.commuteHeaderBadgeText}>
+                Commute Mode Active • Bandwidth Saver
+              </Text>
+            </View>
+
+            {/* Oscillating Audio Waveform */}
+            <View style={styles.waveformContainer}>
+              {[18, 30, 48, 22, 38, 54, 20, 36, 44, 26, 40, 52, 16, 32, 46, 24, 38, 44, 28, 18].map(
+                (h, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.waveBar,
+                      {
+                        height: isPlaying ? h : 8,
+                        backgroundColor: i % 2 === 0 ? '#FFB606' : '#E34234',
+                      },
+                    ]}
+                  />
+                )
+              )}
+            </View>
+
+            <Text style={styles.commuteLessonTitle} numberOfLines={1}>
+              {currentLesson.title}
+            </Text>
+            <Text style={styles.commuteInstructorText}>
+              {course.instructor.name} • {currentItem?.moduleTitle}
+            </Text>
+
+            {/* Commute Controls */}
+            <View style={styles.commuteControlsRow}>
               <TouchableOpacity
-                onPress={() => Alert.alert('Rewind', 'Rewound 10 seconds.')}
-                style={styles.skipBtn}
+                style={styles.commuteSkipBtn}
+                onPress={() => Alert.alert('Rewind', 'Rewound 15 seconds.')}
               >
                 <Ionicons name="play-back" size={20} color="#FFFFFF" />
+                <Text style={styles.skipSecText}>15s</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={handlePrevLesson}
                 disabled={currentLessonIndex === 0}
-                style={[styles.skipBtn, currentLessonIndex === 0 && { opacity: 0.4 }]}
+                style={[styles.commuteSkipBtn, currentLessonIndex === 0 && { opacity: 0.4 }]}
               >
                 <Ionicons name="play-skip-back" size={22} color="#FFFFFF" />
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={styles.mainPlayBtn}
+                style={[styles.commuteMainPlayBtn, { backgroundColor: colors.accent }]}
                 onPress={() => setIsPlaying(!isPlaying)}
               >
-                <Ionicons name={isPlaying ? 'pause' : 'play'} size={32} color="#FFFFFF" />
+                <Ionicons name={isPlaying ? 'pause' : 'play'} size={28} color="#FFFFFF" />
               </TouchableOpacity>
 
               <TouchableOpacity
                 onPress={handleNextLesson}
                 disabled={currentLessonIndex === allLessons.length - 1}
                 style={[
-                  styles.skipBtn,
+                  styles.commuteSkipBtn,
                   currentLessonIndex === allLessons.length - 1 && { opacity: 0.4 },
                 ]}
               >
@@ -202,41 +297,103 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={() => Alert.alert('Forward', 'Skipped forward 10 seconds.')}
-                style={styles.skipBtn}
+                style={styles.commuteSkipBtn}
+                onPress={() => Alert.alert('Forward', 'Skipped forward 30 seconds.')}
               >
                 <Ionicons name="play-forward" size={20} color="#FFFFFF" />
+                <Text style={styles.skipSecText}>30s</Text>
               </TouchableOpacity>
             </View>
 
-            {/* Bottom Scrubber & Info */}
-            <View style={styles.playerBottomBar}>
-              <View style={styles.timelineRow}>
-                <View style={styles.scrubberTrack}>
-                  <View style={[styles.scrubberProgress, { width: '42%' }]} />
-                  <View style={styles.scrubberThumb} />
-                </View>
+            {/* Commute Bottom Status Bar */}
+            <View style={styles.commuteBottomBar}>
+              <Text style={styles.commuteTimeText}>04:15 / {currentLesson.duration}</Text>
+              <View style={styles.bgPlaybackNotice}>
+                <Ionicons name="radio" size={13} color="#10B981" />
+                <Text style={styles.bgPlaybackText}>Background Playback Active</Text>
+              </View>
+              <TouchableOpacity style={styles.speedPill} onPress={cycleSpeed}>
+                <Text style={styles.speedPillText}>{playbackSpeed}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          /* Interactive Video Player Simulation */
+          <View style={styles.playerContainer}>
+            <Image source={{ uri: course.thumbnail }} style={styles.playerVideoBg} />
+            <View style={styles.playerOverlay}>
+              {/* Center Play/Pause & Skip buttons */}
+              <View style={styles.playerControlsRow}>
+                <TouchableOpacity
+                  onPress={() => Alert.alert('Rewind', 'Rewound 10 seconds.')}
+                  style={styles.skipBtn}
+                >
+                  <Ionicons name="play-back" size={20} color="#FFFFFF" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handlePrevLesson}
+                  disabled={currentLessonIndex === 0}
+                  style={[styles.skipBtn, currentLessonIndex === 0 && { opacity: 0.4 }]}
+                >
+                  <Ionicons name="play-skip-back" size={22} color="#FFFFFF" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.mainPlayBtn}
+                  onPress={() => setIsPlaying(!isPlaying)}
+                >
+                  <Ionicons name={isPlaying ? 'pause' : 'play'} size={32} color="#FFFFFF" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={handleNextLesson}
+                  disabled={currentLessonIndex === allLessons.length - 1}
+                  style={[
+                    styles.skipBtn,
+                    currentLessonIndex === allLessons.length - 1 && { opacity: 0.4 },
+                  ]}
+                >
+                  <Ionicons name="play-skip-forward" size={22} color="#FFFFFF" />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => Alert.alert('Forward', 'Skipped forward 10 seconds.')}
+                  style={styles.skipBtn}
+                >
+                  <Ionicons name="play-forward" size={20} color="#FFFFFF" />
+                </TouchableOpacity>
               </View>
 
-              <View style={styles.playerMetaRow}>
-                <Text style={styles.playerTimeText}>04:15 / {currentLesson.duration}</Text>
+              {/* Bottom Scrubber & Info */}
+              <View style={styles.playerBottomBar}>
+                <View style={styles.timelineRow}>
+                  <View style={styles.scrubberTrack}>
+                    <View style={[styles.scrubberProgress, { width: '42%' }]} />
+                    <View style={styles.scrubberThumb} />
+                  </View>
+                </View>
 
-                <View style={styles.playerActionButtons}>
-                  <TouchableOpacity style={styles.speedPill} onPress={cycleSpeed}>
-                    <Text style={styles.speedPillText}>{playbackSpeed}</Text>
-                  </TouchableOpacity>
+                <View style={styles.playerMetaRow}>
+                  <Text style={styles.playerTimeText}>04:15 / {currentLesson.duration}</Text>
 
-                  <TouchableOpacity
-                    style={styles.fullscreenBtn}
-                    onPress={() => Alert.alert('Fullscreen', 'Rotated to landscape player.')}
-                  >
-                    <Ionicons name="scan-outline" size={18} color="#FFFFFF" />
-                  </TouchableOpacity>
+                  <View style={styles.playerActionButtons}>
+                    <TouchableOpacity style={styles.speedPill} onPress={cycleSpeed}>
+                      <Text style={styles.speedPillText}>{playbackSpeed}</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.fullscreenBtn}
+                      onPress={() => Alert.alert('Fullscreen', 'Rotated to landscape player.')}
+                    >
+                      <Ionicons name="scan-outline" size={18} color="#FFFFFF" />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
             </View>
           </View>
-        </View>
+        )}
 
         {/* Lesson Title & Completion CTA */}
         <View style={styles.lessonHeaderCard}>
@@ -295,6 +452,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         <View style={[styles.tabsStrip, { borderBottomColor: colors.border }]}>
           {[
             { id: 'curriculum', label: 'Playlist', icon: 'list' },
+            { id: 'qna', label: 'Q&A', icon: 'chatbubbles' },
             { id: 'overview', label: 'Overview', icon: 'information-circle' },
             { id: 'notes', label: `Notes (${lessonNotes.length})`, icon: 'document-text' },
             { id: 'resources', label: 'Files', icon: 'download' },
@@ -332,6 +490,15 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
 
         {/* Tab Content Panels */}
         <View style={styles.tabPanel}>
+          {activeTab === 'qna' && (
+            <View style={{ paddingVertical: 4 }}>
+              <CourseQnATab
+                courseId={course.id}
+                currentLessonTitle={currentLesson.title}
+              />
+            </View>
+          )}
+
           {activeTab === 'curriculum' && (
             <View style={styles.curriculumList}>
               {allLessons.map((item, idx) => {
@@ -894,5 +1061,155 @@ const styles = StyleSheet.create({
   fileSize: {
     fontSize: 11,
     marginTop: 2,
+  },
+  modeSwitchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    gap: 10,
+  },
+  modeSwitchBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    gap: 6,
+  },
+  modeSwitchActive: {
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  modeSwitchText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  saveDataBadge: {
+    backgroundColor: '#10B981',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    marginLeft: 2,
+  },
+  saveDataBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  commutePlayerCard: {
+    marginHorizontal: 16,
+    borderRadius: 20,
+    padding: 18,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  commuteHeaderBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    gap: 6,
+    marginBottom: 14,
+  },
+  commuteHeaderBadgeText: {
+    color: '#34D399',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  waveformContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 56,
+    gap: 4,
+    marginBottom: 14,
+    width: '100%',
+  },
+  waveBar: {
+    width: 6,
+    borderRadius: 3,
+  },
+  commuteLessonTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  commuteInstructorText: {
+    color: '#94A3B8',
+    fontSize: 12,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  commuteControlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+    marginBottom: 16,
+  },
+  commuteSkipBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  skipSecText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '800',
+    marginTop: -2,
+  },
+  commuteMainPlayBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 4,
+    shadowColor: '#E34234',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+  commuteBottomBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  commuteTimeText: {
+    color: '#CBD5E1',
+    fontSize: 12,
+    fontVariant: ['tabular-nums'],
+    fontWeight: '600',
+  },
+  bgPlaybackNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  bgPlaybackText: {
+    color: '#6EE7B7',
+    fontSize: 11,
+    fontWeight: '600',
   },
 });
