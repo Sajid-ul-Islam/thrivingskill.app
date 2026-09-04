@@ -11,7 +11,6 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../context/ThemeContext';
 import { useSaaS } from '../context/SaaSContext';
 import { Header } from '../components/Header';
@@ -170,7 +169,8 @@ export const SkillCopilotScreen: React.FC<SkillCopilotScreenProps> = ({
 
   // Active Role State
   const [selectedRole, setSelectedRole] = useState<AssistantRole>('all_tutor');
-  const currentRoleConfig = ASSISTANT_ROLES.find((r) => r.id === selectedRole) || ASSISTANT_ROLES[0];
+  const currentRoleConfig =
+    ASSISTANT_ROLES.find((r) => r.id === selectedRole) || ASSISTANT_ROLES[0];
 
   // Feedback states
   const [feedbackMap, setFeedbackMap] = useState<{ [id: string]: 'up' | 'down' | undefined }>({});
@@ -190,11 +190,11 @@ export const SkillCopilotScreen: React.FC<SkillCopilotScreenProps> = ({
       sender: 'assistant',
       text: `Welcome to **ThrivingSkills AI Assistant** 🤖⚡
 
-Powered by **Google Gemini 2.5** and source-grounded in your **verified course syllabi, YouTube masterclass transcripts, and uploaded study notes**.
+Powered by **Google Gemini 2.5** and source-grounded in your **verified course syllabi, YouTube masterclass transcripts, and study notes**.
 
 Every answer can be generated using your personal **Google Gemini API Key** or grounded locally with verified citations.
 
-Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podcast**, **Study Guide**, or **Active Recall Flashcards**!`,
+Select a specialized persona above, or tap any tool in the **Studio Shelf** to generate an **Audio Deep Dive podcast**, **Study Guide**, or **Active Recall Flashcards**!`,
       timestamp: 'Just now',
       suggestedActions: [
         'Audit DCF model terminal value',
@@ -479,7 +479,7 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
   };
 
   /**
-   * Helper to parse and render code blocks with dedicated syntax styling and Copy button
+   * Helper to parse and render code blocks with syntax styling and Copy button
    */
   const renderFormattedMessage = (rawText: string, isUser: boolean) => {
     if (isUser) {
@@ -557,17 +557,17 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* 1. Global Header: Minimal, completely uncluttered icon buttons on right (NO text overlap) */}
       <Header
-        title="AI Assistant"
-        subtitle="Powered by Google Gemini 2.5 • Grounded Learning"
         onOpenSubscription={onOpenSubscription}
         onOpenNotifications={onOpenNotifications}
         onOpenDrawer={onOpenDrawer}
         rightAction={
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <View style={styles.headerRightGroup}>
+            {/* Compact API Key Icon with live green status dot */}
             <TouchableOpacity
               style={[
-                styles.apiKeyBtn,
+                styles.headerActionBtn,
                 {
                   backgroundColor: hasGoogleKey
                     ? isDark
@@ -579,33 +579,27 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
               ]}
               onPress={() => setIsApiKeyModalVisible(true)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityLabel="Google Gemini API Key"
             >
-              <View
-                style={[
-                  styles.apiStatusDot,
-                  { backgroundColor: hasGoogleKey ? '#10B981' : '#F59E0B' },
-                ]}
-              />
               <Ionicons
                 name="sparkles"
-                size={13}
+                size={15}
                 color={hasGoogleKey ? '#10B981' : colors.primary}
               />
-              <Text
-                style={[
-                  styles.apiKeyBtnText,
-                  { color: hasGoogleKey ? (isDark ? '#34D399' : '#059669') : colors.text },
-                ]}
-              >
-                {hasGoogleKey ? 'Gemini 2.5 Active' : 'Connect Key'}
-              </Text>
+              {hasGoogleKey && <View style={styles.headerActiveBadgeDot} />}
             </TouchableOpacity>
 
+            {/* Clear Chat Button */}
             <TouchableOpacity
-              style={[styles.clearBtn, { backgroundColor: colors.surfaceSubtle }]}
+              style={[
+                styles.headerActionBtn,
+                { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+              ]}
               onPress={handleClearHistory}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityLabel="Clear chat session"
             >
-              <Ionicons name="trash-outline" size={16} color={colors.textMuted} />
+              <Ionicons name="trash-outline" size={15} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
         }
@@ -616,7 +610,7 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        {/* Specialized AI Roles Selector Row */}
+        {/* 2. Specialized AI Roles Selector Row */}
         <View style={[styles.rolesBar, { backgroundColor: colors.surfaceCard, borderBottomColor: colors.border }]}>
           <ScrollView
             horizontal
@@ -661,21 +655,60 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
           </ScrollView>
         </View>
 
-        {/* Source Grounding Status Bar */}
+        {/* 3. Dedicated Gemini Engine Status & Source Grounding Bar (Full Width, Zero Overlap) */}
         <View style={[styles.groundingBar, { backgroundColor: colors.surfaceCard, borderBottomColor: colors.border }]}>
+          {/* Engine Status Pill */}
           <TouchableOpacity
-            style={[styles.sourcesToggleBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
-            onPress={() => setIsSourcesModalVisible(true)}
+            style={[
+              styles.modelEnginePill,
+              {
+                backgroundColor: hasGoogleKey
+                  ? isDark
+                    ? '#064E3B'
+                    : '#ECFDF5'
+                  : colors.surfaceSubtle,
+                borderColor: hasGoogleKey ? '#10B981' : colors.border,
+              },
+            ]}
+            onPress={() => setIsApiKeyModalVisible(true)}
             activeOpacity={0.8}
           >
-            <View style={styles.sourcesIndicatorDot} />
-            <Text style={[styles.sourcesToggleText, { color: colors.text }]}>
-              {activeSourcesCount} Active Grounding Sources
+            <View
+              style={[
+                styles.sourcesIndicatorDot,
+                { backgroundColor: hasGoogleKey ? '#10B981' : '#F59E0B' },
+              ]}
+            />
+            <Text
+              style={[
+                styles.modelEngineText,
+                { color: hasGoogleKey ? (isDark ? '#34D399' : '#059669') : colors.text },
+              ]}
+            >
+              {hasGoogleKey ? 'Gemini 2.5 Active' : 'Offline Grounded'}
             </Text>
-            <Ionicons name="chevron-forward" size={13} color={colors.textMuted} />
+            <Ionicons
+              name="chevron-forward"
+              size={11}
+              color={hasGoogleKey ? '#10B981' : colors.textMuted}
+            />
           </TouchableOpacity>
 
+          {/* Sources and Notes Badges */}
           <View style={styles.topRightActions}>
+            <TouchableOpacity
+              style={[
+                styles.sourcesCountBadge,
+                { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+              ]}
+              onPress={() => setIsSourcesModalVisible(true)}
+            >
+              <Ionicons name="library-outline" size={12} color={colors.primary} />
+              <Text style={[styles.sourcesToggleText, { color: colors.text }]}>
+                {activeSourcesCount} Sources
+              </Text>
+            </TouchableOpacity>
+
             <TouchableOpacity
               style={[styles.miniActionBtn, { backgroundColor: '#8B5CF6' }]}
               onPress={() => setIsAudioOverviewVisible(true)}
@@ -690,13 +723,13 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
             >
               <Ionicons name="journal-outline" size={12} color={colors.primary} />
               <Text style={[styles.miniActionBtnText, { color: colors.text }]}>
-                Notes ({notes.length})
+                {notes.length} Notes
               </Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* NotebookLM Studio Action Shelf (Auto-Scrolling Carousels) */}
+        {/* 4. NotebookLM Studio Action Shelf (Auto-Scrolling Carousels) */}
         <View style={[styles.studioShelfArea, { backgroundColor: colors.surfaceCard, borderBottomColor: colors.border }]}>
           <ScrollView
             ref={studioShelfAutoScroll.scrollViewRef}
@@ -737,11 +770,12 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
           </ScrollView>
         </View>
 
-        {/* Grounded Chat Feed */}
+        {/* 5. Grounded Chat Feed */}
         <ScrollView
           ref={scrollViewRef}
           contentContainerStyle={styles.messagesContainer}
           showsVerticalScrollIndicator={false}
+          keyboardDismissMode="on-drag"
           onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
         >
           {messages.map((msg: CopilotMessage) => {
@@ -931,7 +965,7 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
           )}
         </ScrollView>
 
-        {/* Quick Prompts Inspiration Bar (Role-Specific) */}
+        {/* 6. Quick Prompts Inspiration Bar (Role-Specific) */}
         <View style={[styles.quickPromptsBar, { backgroundColor: colors.surfaceCard, borderTopColor: colors.border }]}>
           <ScrollView
             horizontal
@@ -960,7 +994,7 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
           </ScrollView>
         </View>
 
-        {/* Input Bar */}
+        {/* 7. Enhanced Input Dock */}
         <View
           style={[
             styles.inputContainer,
@@ -972,6 +1006,7 @@ Tap any tool in the **Studio Shelf** above to generate an **Audio Overview podca
             style={[styles.attachBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
             onPress={() => setIsSourcesModalVisible(true)}
             hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            accessibilityLabel="Manage grounding sources"
           >
             <Ionicons name="attach" size={18} color={colors.primary} />
           </TouchableOpacity>
@@ -1091,30 +1126,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  apiKeyBtn: {
+  headerRightGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderRadius: 14,
-    borderWidth: 1,
+    gap: 6,
   },
-  apiStatusDot: {
+  headerActionBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  headerActiveBadgeDot: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
     width: 6,
     height: 6,
     borderRadius: 3,
-  },
-  apiKeyBtnText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  clearBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#10B981',
   },
   rolesBar: {
     paddingVertical: 7,
@@ -1142,91 +1175,103 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 7,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  sourcesToggleBtn: {
+  modelEnginePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
+    paddingHorizontal: 9,
     paddingVertical: 5,
     borderRadius: 14,
     borderWidth: 1,
-    gap: 6,
+    gap: 5,
+  },
+  modelEngineText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
   sourcesIndicatorDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-    backgroundColor: '#10B981',
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  sourcesCountBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4.5,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 4,
   },
   sourcesToggleText: {
-    fontSize: 11.5,
+    fontSize: 11,
     fontWeight: '700',
   },
   topRightActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   miniActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 9,
-    paddingVertical: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 4.5,
     borderRadius: 12,
-    gap: 4,
+    gap: 3.5,
   },
   miniActionBtnText: {
     color: '#FFFFFF',
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: '700',
   },
   studioShelfArea: {
-    paddingVertical: 8,
+    paddingVertical: 7,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   studioShelfScroll: {
     paddingHorizontal: 16,
-    gap: 10,
+    gap: 8,
   },
   studioCard: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 14,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    borderRadius: 13,
     borderWidth: 1,
-    minWidth: 135,
-    gap: 4,
+    minWidth: 130,
+    gap: 3,
   },
   studioCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
   },
   studioIconWrap: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   studioBadgeText: {
-    fontSize: 9,
+    fontSize: 8.5,
     fontWeight: '800',
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
   },
   studioCardTitle: {
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: '700',
   },
   messagesContainer: {
     padding: 16,
     paddingBottom: 24,
-    gap: 16,
+    gap: 14,
   },
   messageWrapper: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 9,
     alignItems: 'flex-start',
   },
   userMessageWrapper: {
@@ -1246,7 +1291,7 @@ const styles = StyleSheet.create({
   messageBubble: {
     maxWidth: '85%',
     borderRadius: 16,
-    padding: 14,
+    padding: 13,
   },
   userBubble: {
     borderBottomRightRadius: 4,
@@ -1284,8 +1329,8 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   messageText: {
-    fontSize: 14,
-    lineHeight: 21,
+    fontSize: 13.5,
+    lineHeight: 20,
   },
   codeCard: {
     borderRadius: 10,
@@ -1299,13 +1344,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 5,
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   codeLangText: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: '800',
     color: '#94A3B8',
     letterSpacing: 0.5,
@@ -1336,7 +1381,7 @@ const styles = StyleSheet.create({
     borderTopColor: 'rgba(0,0,0,0.06)',
   },
   citationsLabel: {
-    fontSize: 10.5,
+    fontSize: 10,
     fontWeight: '700',
     marginBottom: 6,
     textTransform: 'uppercase',
@@ -1380,7 +1425,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   timestampText: {
-    fontSize: 10.5,
+    fontSize: 10,
   },
   msgActionsGroup: {
     flexDirection: 'row',
@@ -1394,7 +1439,7 @@ const styles = StyleSheet.create({
     padding: 2,
   },
   actionIconText: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: '700',
   },
   suggestedActionsRow: {
@@ -1422,48 +1467,49 @@ const styles = StyleSheet.create({
   typingIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    padding: 11,
     borderRadius: 12,
     borderWidth: 1,
     gap: 8,
     alignSelf: 'flex-start',
   },
   typingText: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontStyle: 'italic',
   },
   quickPromptsBar: {
-    paddingVertical: 8,
+    paddingVertical: 7,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   quickPromptsScroll: {
     paddingHorizontal: 16,
-    gap: 8,
+    gap: 7,
   },
   quickPromptChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 5.5,
     borderRadius: 14,
     borderWidth: 1,
   },
   quickPromptText: {
-    fontSize: 11.5,
+    fontSize: 11,
     fontWeight: '600',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    padding: 10,
+    padding: 8,
+    paddingHorizontal: 12,
     borderTopWidth: 1,
     gap: 6,
   },
   attachBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1474,34 +1520,34 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   inputField: {
-    minHeight: 38,
-    maxHeight: 100,
+    minHeight: 36,
+    maxHeight: 90,
     borderRadius: 18,
     borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingRight: 32,
-    paddingTop: 9,
-    paddingBottom: 9,
-    fontSize: 13.5,
+    paddingHorizontal: 12,
+    paddingRight: 28,
+    paddingTop: 8,
+    paddingBottom: 8,
+    fontSize: 13,
     lineHeight: 18,
   },
   clearInputBtn: {
     position: 'absolute',
-    right: 8,
-    top: 11,
+    right: 7,
+    top: 9,
   },
   micBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   sendButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
