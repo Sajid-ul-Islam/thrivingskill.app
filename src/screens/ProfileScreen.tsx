@@ -494,13 +494,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             <TouchableOpacity
               style={styles.settingRow}
               onPress={() => {
-                setLegalInitialTab('privacy_en');
+                setLegalInitialTab('privacy');
                 setLegalModalVisible(true);
               }}
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="shield-outline" size={20} color={colors.textMuted} />
-                <Text style={[styles.settingLabel, { color: colors.text }]}>Privacy Policy (EN / বাংলা)</Text>
+                <Text style={[styles.settingLabel, { color: colors.text }]}>Privacy Policy</Text>
               </View>
               <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
             </TouchableOpacity>

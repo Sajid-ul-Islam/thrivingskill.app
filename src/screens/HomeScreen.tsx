@@ -1074,21 +1074,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <TouchableOpacity
               style={[styles.legalPillBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
               onPress={() => {
-                setLegalInitialTab('privacy_en');
+                setLegalInitialTab('privacy');
                 setLegalModalVisible(true);
               }}
             >
               <Text style={[styles.legalPillText, { color: colors.text }]}>Privacy Policy</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.legalPillBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
-              onPress={() => {
-                setLegalInitialTab('privacy_bn');
-                setLegalModalVisible(true);
-              }}
-            >
-              <Text style={[styles.legalPillText, { color: colors.primary }]}>গোপনীয়তা নীতি (বাংলা)</Text>
             </TouchableOpacity>
 
             <TouchableOpacity

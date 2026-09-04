@@ -397,29 +397,15 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
             <TouchableOpacity
               style={styles.actionRow}
               onPress={() => {
-                setLegalInitialTab('privacy_en');
+                setLegalInitialTab('privacy');
                 setLegalModalVisible(true);
               }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <Ionicons name="shield-outline" size={18} color={colors.textMuted} />
-                <Text style={[styles.actionLabel, { color: colors.text }]}>Privacy Policy (English)</Text>
+                <Text style={[styles.actionLabel, { color: colors.text }]}>Privacy Policy</Text>
               </View>
               <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.actionRow}
-              onPress={() => {
-                setLegalInitialTab('privacy_bn');
-                setLegalModalVisible(true);
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <Ionicons name="language-outline" size={18} color={colors.primary} />
-                <Text style={[styles.actionLabel, { color: colors.primary }]}>গোপনীয়তা নীতি (বাংলা)</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={14} color={colors.primary} />
             </TouchableOpacity>
 
             <View style={[styles.divider, { backgroundColor: colors.border }]} />

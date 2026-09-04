@@ -865,23 +865,12 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                   <TouchableOpacity
                     style={[styles.legalBtn, { borderColor: colors.secondary }]}
                     onPress={() => {
-                      setLegalInitialTab('privacy_en');
+                      setLegalInitialTab('privacy');
                       setLegalModalVisible(true);
                     }}
                   >
                     <Ionicons name="lock-closed-outline" size={14} color={colors.secondary} />
                     <Text style={[styles.legalBtnText, { color: colors.secondary }]}>Privacy Policy</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[styles.legalBtn, { borderColor: '#8B5CF6' }]}
-                    onPress={() => {
-                      setLegalInitialTab('privacy_bn');
-                      setLegalModalVisible(true);
-                    }}
-                  >
-                    <Ionicons name="book-outline" size={14} color="#8B5CF6" />
-                    <Text style={[styles.legalBtnText, { color: '#8B5CF6' }]}>গোপনীয়তা (বাংলা)</Text>
                   </TouchableOpacity>
                 </View>
               </View>
