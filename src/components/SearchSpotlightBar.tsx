@@ -1,5 +1,4 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 
@@ -9,10 +8,12 @@ interface SearchSpotlightBarProps {
 }
 
 const TRENDING_TAGS = [
-  { label: 'Generative AI', query: 'ai' },
-  { label: 'Excel BI', query: 'excel' },
-  { label: 'Financial Modeling', query: 'finance' },
-  { label: 'Supply Chain', query: 'supply' },
+  { label: '🤖 Agentic AI', query: 'agentic' },
+  { label: '💼 AI for Business', query: 'ai' },
+  { label: '📊 Power BI Data', query: 'power bi' },
+  { label: '📈 Financial Modeling', query: 'finance' },
+  { label: '🌱 ESG Strategy', query: 'esg' },
+  { label: '🚀 Growth Marketing', query: 'marketing' },
 ];
 
 export const SearchSpotlightBar: React.FC<SearchSpotlightBarProps> = ({
@@ -50,22 +51,28 @@ export const SearchSpotlightBar: React.FC<SearchSpotlightBarProps> = ({
         <Text style={[styles.trendingLabel, { color: colors.textMuted }]}>
           TRENDING:
         </Text>
-        {TRENDING_TAGS.map((tag, idx) => (
-          <TouchableOpacity
-            key={idx}
-            style={[
-              styles.tagPill,
-              {
-                backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9',
-                borderColor: colors.border,
-              },
-            ]}
-            onPress={() => onSelectTag ? onSelectTag(tag.query) : onPress()}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.tagText, { color: colors.text }]}>{tag.label}</Text>
-          </TouchableOpacity>
-        ))}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.tagsScrollContent}
+        >
+          {TRENDING_TAGS.map((tag, idx) => (
+            <TouchableOpacity
+              key={idx}
+              style={[
+                styles.tagPill,
+                {
+                  backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9',
+                  borderColor: colors.border,
+                },
+              ]}
+              onPress={() => onSelectTag ? onSelectTag(tag.query) : onPress()}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.tagText, { color: colors.text }]}>{tag.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
     </View>
   );
@@ -79,16 +86,11 @@ const styles = StyleSheet.create({
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
+    borderRadius: 14,
+    borderWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 16,
-    borderWidth: 1,
     gap: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
   },
   placeholderText: {
     flex: 1,
@@ -109,9 +111,14 @@ const styles = StyleSheet.create({
   tagsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap',
     gap: 6,
     marginTop: 8,
+  },
+  tagsScrollContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingRight: 16,
   },
   trendingLabel: {
     fontSize: 10,
@@ -121,7 +128,7 @@ const styles = StyleSheet.create({
   },
   tagPill: {
     paddingHorizontal: 9,
-    paddingVertical: 3.5,
+    paddingVertical: 4,
     borderRadius: 12,
     borderWidth: 1,
   },

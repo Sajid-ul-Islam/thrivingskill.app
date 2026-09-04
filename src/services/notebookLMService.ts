@@ -187,6 +187,67 @@ Please re-enable **"Financial Modeling & Valuation Masterclass"** in your active
         actions = ['Enable Financial Modeling Source', 'Open Sources Drawer'];
       }
     }
+    // Agentic AI & Autonomous Multi-Agent Workflows
+    else if (
+      lower.includes('agentic') ||
+      lower.includes('crewai') ||
+      lower.includes('langgraph') ||
+      lower.includes('autogen') ||
+      lower.includes('multi-agent') ||
+      lower.includes('multi agent')
+    ) {
+      citations.push({
+        id: 'cite-agentic-1',
+        citationIndex: 1,
+        sourceId: 'src-agentic-ai',
+        sourceTitle: 'Agentic AI & Multi-Agent Autonomous Workflows',
+        sourceType: 'course',
+        section: 'Module 1 • Multi-Agent Orchestration & Stateful Cycles',
+        excerpt:
+          'Agentic AI shifts computing from prompt-response to perception-reasoning-action loops. Multi-agent networks split execution across specialized agents with stateful cyclical graphs.',
+      });
+
+      reply = `According to your active **Agentic AI & Multi-Agent Workflows Masterclass** [1]:
+
+### 🤖 What is Agentic AI?
+Unlike single-turn LLM chatbots, **Agentic AI** systems possess:
+1. **Autonomous Tool Calling**: Agents invoke REST APIs, query SQL/vector databases, calculate Excel formulas, and browse the web.
+2. **Stateful Planning & Iterative Reflection**: Using frameworks like **LangGraph** and **CrewAI**, agents plan multi-step execution paths, evaluate their own intermediate work, and iteratively self-correct before presenting final answers.
+3. **Multi-Agent Decomposition**: Complex problems are decomposed into a collaborative team of specialized personas (e.g. *Lead Strategist*, *Data Extractor*, *Code Verifier*, and *Compliance Auditor*), slashing hallucination rates to below 0.5%.
+
+### 🏢 Key Enterprise Applications in 2026
+- **Automated Financial Due Diligence**: Extract filings, compute ratios, and flag inconsistencies without manual copy-pasting.
+- **Autonomous Workflow Orchestration**: End-to-end customer support triage, automated code reviews, and enterprise report drafting.`;
+
+      actions = ['Explain LangGraph vs CrewAI', 'Design 3-Agent Pipeline', 'Save to Notes'];
+    }
+    // ESG & Sustainability Strategy
+    else if (
+      lower.includes('esg') ||
+      lower.includes('sustainability') ||
+      lower.includes('green') ||
+      lower.includes('governance')
+    ) {
+      citations.push({
+        id: 'cite-esg-1',
+        citationIndex: 1,
+        sourceId: 'src-esg-governance',
+        sourceTitle: 'ESG Strategy & Sustainable Corporate Governance',
+        sourceType: 'course',
+        section: 'Module 1 • IFRS S1/S2 & Scope 1-3 Carbon Footprints',
+        excerpt:
+          'Corporate ESG compliance requires auditable metrics across Scope 1 (direct emissions), Scope 2 (purchased electricity), and Scope 3 (value chain & suppliers).',
+      });
+
+      reply = `Grounded directly in **ESG Strategy & Sustainable Corporate Governance** [1]:
+
+### 🌱 The 2026 Corporate ESG Mandate
+For export-oriented enterprises, apparel manufacturers, and financial institutions in Bangladesh, ESG compliance has shifted from optional PR to mandatory business continuity:
+1. **Scope 1, 2 & 3 Carbon Audits**: Scope 3 (supply chain emissions) accounts for over 70% of total footprint in manufacturing ecosystems [1].
+2. **Global Disclosures**: Alignment with **IFRS S1/S2** and **GRI Standards** unlocks international green financing and satisfies European supply-chain due diligence directives.`;
+
+      actions = ['Calculate Scope 1 vs 3 Emissions', 'Review IFRS S1 Checklist', 'Pin to Notes'];
+    }
     // Prompting / AI / RTCC query
     else if (lower.includes('prompt') || lower.includes('rtcc') || lower.includes('ai') || lower.includes('agent')) {
       if (hasAiSrc) {

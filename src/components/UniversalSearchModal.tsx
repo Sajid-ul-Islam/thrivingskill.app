@@ -289,19 +289,51 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
           )}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Ionicons
-                name={query.trim() ? 'search-outline' : 'sparkles-outline'}
-                size={48}
-                color={colors.textLight}
-              />
+              <View style={[styles.emptyIconCircle, { backgroundColor: colors.primaryLight }]}>
+                <Ionicons
+                  name={query.trim() ? 'search-outline' : 'trending-up'}
+                  size={26}
+                  color={colors.primary}
+                />
+              </View>
               <Text style={[styles.emptyTitle, { color: colors.text }]}>
-                {query.trim() ? 'No results found' : 'Spotlight Search'}
+                {query.trim() ? 'No results found' : 'Trending Business & AI Skills'}
               </Text>
               <Text style={[styles.emptySub, { color: colors.textMuted }]}>
                 {query.trim()
-                  ? `No content matching "${query}". Try searching for AI, Excel, Procurement, or Finance.`
-                  : 'Search across accredited courses, free YouTube masterclasses, and national summits.'}
+                  ? `No content matching "${query}". Try searching for Agentic AI, Power BI, or Finance.`
+                  : 'Tap any high-demand skill below to discover accredited masterclasses:'}
               </Text>
+
+              {!query.trim() && (
+                <View style={styles.trendingPillsGrid}>
+                  {[
+                    { label: '🤖 Agentic AI & Workflows', q: 'agentic' },
+                    { label: '💼 AI for Business Leaders', q: 'ai' },
+                    { label: '📊 Power BI & Storytelling', q: 'power bi' },
+                    { label: '📈 Financial Modeling & DCF', q: 'financial' },
+                    { label: '🌱 ESG & Sustainable Strategy', q: 'esg' },
+                    { label: '🚀 Growth & Performance', q: 'marketing' },
+                  ].map((item, idx) => (
+                    <TouchableOpacity
+                      key={idx}
+                      style={[
+                        styles.trendingModalPill,
+                        {
+                          backgroundColor: colors.surfaceCard,
+                          borderColor: colors.border,
+                        },
+                      ]}
+                      onPress={() => setQuery(item.q)}
+                    >
+                      <Text style={[styles.trendingModalPillText, { color: colors.text }]}>
+                        {item.label}
+                      </Text>
+                      <Ionicons name="arrow-forward" size={13} color={colors.primary} />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
             </View>
           }
         />
@@ -453,5 +485,32 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textAlign: 'center',
     lineHeight: 18,
+    marginBottom: 8,
+  },
+  emptyIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  trendingPillsGrid: {
+    width: '100%',
+    gap: 8,
+    marginTop: 8,
+  },
+  trendingModalPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  trendingModalPillText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
 });
