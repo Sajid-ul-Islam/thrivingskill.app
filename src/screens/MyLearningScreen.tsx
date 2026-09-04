@@ -111,6 +111,34 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
           </View>
         </View>
 
+        {/* Daily Study Streak Banner */}
+        <View
+          style={[
+            styles.streakBanner,
+            {
+              backgroundColor: colors.surfaceCard,
+              borderColor: '#F59E0B',
+            },
+          ]}
+        >
+          <View style={styles.streakFlameWrap}>
+            <Text style={styles.streakFlameEmoji}>🔥</Text>
+          </View>
+          <View style={styles.streakContent}>
+            <View style={styles.streakHeaderRow}>
+              <Text style={[styles.streakTitle, { color: colors.text }]}>
+                5-Day Study Streak
+              </Text>
+              <View style={styles.streakRankBadge}>
+                <Text style={styles.streakRankText}>Top 5%</Text>
+              </View>
+            </View>
+            <Text style={[styles.streakSub, { color: colors.textMuted }]}>
+              {totalHoursLearned}h learned • Complete 1 lesson today to keep your streak alive!
+            </Text>
+          </View>
+        </View>
+
         {/* Tabs Bar */}
         <View style={[styles.tabsBar, { borderBottomColor: colors.border }]}>
           {[
@@ -308,12 +336,18 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                     ]}
                     onPress={() => setSelectedCert(cert)}
                     activeOpacity={0.85}
+                    accessibilityRole="button"
+                    accessibilityLabel={`View verified digital certificate for ${cert.courseTitle}`}
                   >
                     <View style={[styles.certIconBadge, { backgroundColor: '#FEF3C7' }]}>
                       <Ionicons name="ribbon" size={26} color="#D97706" />
                     </View>
 
                     <View style={styles.certCol}>
+                      <View style={styles.verifiedTag}>
+                        <Ionicons name="checkmark-circle" size={11} color="#10B981" />
+                        <Text style={styles.verifiedTagText}>VERIFIED CREDENTIAL</Text>
+                      </View>
                       <Text style={[styles.certItemTitle, { color: colors.text }]} numberOfLines={2}>
                         {cert.courseTitle}
                       </Text>
@@ -478,6 +512,55 @@ const styles = StyleSheet.create({
     width: 1,
     height: 40,
   },
+  streakBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    gap: 12,
+  },
+  streakFlameWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  streakFlameEmoji: {
+    fontSize: 22,
+  },
+  streakContent: {
+    flex: 1,
+  },
+  streakHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  streakTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  streakRankBadge: {
+    backgroundColor: '#F59E0B',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  streakRankText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  streakSub: {
+    fontSize: 11,
+    lineHeight: 15,
+  },
   tabsBar: {
     flexDirection: 'row',
     paddingHorizontal: 16,
@@ -615,6 +698,18 @@ const styles = StyleSheet.create({
   certCol: {
     flex: 1,
     marginRight: 8,
+  },
+  verifiedTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 4,
+  },
+  verifiedTagText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#10B981',
+    letterSpacing: 0.5,
   },
   certItemTitle: {
     fontSize: 14,

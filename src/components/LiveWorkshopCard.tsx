@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Workshop } from '../types';
 import { useTheme } from '../context/ThemeContext';
@@ -33,9 +33,20 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop, on
           <Text style={styles.liveText}>UPCOMING WORKSHOP</Text>
         </View>
 
-        <View style={styles.seatsBadge}>
-          <Ionicons name="people" size={12} color="#FFFFFF" />
-          <Text style={styles.seatsText}>{workshop.seatsLeft} seats left</Text>
+        <View
+          style={[
+            styles.seatsBadge,
+            workshop.seatsLeft <= 5 && { backgroundColor: '#DC2626' },
+          ]}
+        >
+          <Ionicons
+            name={workshop.seatsLeft <= 5 ? 'flame' : 'people'}
+            size={12}
+            color="#FFFFFF"
+          />
+          <Text style={styles.seatsText}>
+            {workshop.seatsLeft <= 5 ? `Only ${workshop.seatsLeft} seats left!` : `${workshop.seatsLeft} seats left`}
+          </Text>
         </View>
       </View>
 
@@ -85,9 +96,17 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop, on
                 backgroundColor: registered ? colors.primaryLight : colors.primary,
               },
             ]}
-            onPress={() => rsvpForWorkshop(workshop.id)}
+            onPress={() => {
+              rsvpForWorkshop(workshop.id);
+              Alert.alert(
+                'Seat Reserved! 🎟️',
+                `You are officially registered for "${workshop.title}" on ${workshop.date} at ${workshop.time}. Zoom credentials & calendar invite sent to your email.`
+              );
+            }}
             disabled={registered}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={registered ? `Seat already reserved for ${workshop.title}` : `Reserve seat for ${workshop.title}`}
           >
             <Ionicons
               name={registered ? 'checkmark-circle' : 'ticket-outline'}

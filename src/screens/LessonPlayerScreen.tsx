@@ -152,7 +152,21 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     );
   }
 
-  const userCert = certificates.find((c) => c.courseId === course.id);
+  const userCert = certificates.find((c) => c.courseId === course.id) || {
+    id: `cert-${course.id}`,
+    courseId: course.id,
+    courseTitle: course.title,
+    studentName: 'Sajid-ul Islam',
+    issueDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+    credentialId: `TS-2026-${course.id.slice(-4).toUpperCase()}`,
+    verificationUrl: `https://thrivingskill.com/verify/TS-2026-${course.id.slice(-4).toUpperCase()}`,
+    instructorName: course.instructor.name,
+  };
+
+  const isCourseCompleted =
+    progress?.isCompleted ||
+    (allLessons.length > 0 &&
+      allLessons.every((item) => progress?.completedLessonIds.includes(item.lesson.id)));
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -413,6 +427,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                 { backgroundColor: isDownloaded ? colors.primary + '20' : colors.surfaceSubtle, borderColor: colors.border },
               ]}
               onPress={handleToggleOffline}
+              accessibilityRole="button"
+              accessibilityLabel={isDownloaded ? "Remove downloaded lesson" : "Download lesson for offline studying"}
             >
               <Ionicons
                 name={isDownloaded ? 'cloud-done' : 'cloud-download-outline'}
@@ -430,6 +446,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               ]}
               onPress={handleMarkComplete}
               activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={isLessonCompleted ? "Lesson already completed" : "Mark lesson as complete"}
             >
               <Ionicons
                 name={isLessonCompleted ? 'checkmark-circle' : 'checkmark'}
@@ -447,6 +465,46 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Course Completion & Certificate Banner */}
+        {isCourseCompleted && (
+          <View
+            style={[
+              styles.completionBanner,
+              {
+                backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : '#ECFDF5',
+                borderColor: '#10B981',
+              },
+            ]}
+          >
+            <View style={styles.completionIconWrap}>
+              <Ionicons name="trophy" size={26} color="#F59E0B" />
+            </View>
+            <View style={styles.completionContent}>
+              <View style={styles.completionHeaderRow}>
+                <Text style={[styles.completionTitle, { color: isDark ? '#A7F3D0' : '#065F46' }]}>
+                  Course Completed! 🎉
+                </Text>
+                <View style={styles.completionXpBadge}>
+                  <Text style={styles.completionXpText}>+150 XP</Text>
+                </View>
+              </View>
+              <Text style={[styles.completionSub, { color: isDark ? '#D1FAE5' : '#047857' }]}>
+                Congratulations! You've mastered all lectures. Your verified certificate is ready.
+              </Text>
+              <TouchableOpacity
+                style={styles.claimCertCTA}
+                onPress={() => setCertModalVisible(true)}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel="View verified digital certificate"
+              >
+                <Ionicons name="ribbon" size={15} color="#FFFFFF" />
+                <Text style={styles.claimCertCTAText}>View Digital Certificate</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         {/* Interactive Lesson Navigation & Tools Tab Strip */}
         <View style={[styles.tabsStrip, { borderBottomColor: colors.border }]}>
@@ -875,6 +933,67 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   completeBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  completionBanner: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    gap: 12,
+  },
+  completionIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(245, 158, 11, 0.18)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  completionContent: {
+    flex: 1,
+  },
+  completionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  completionTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  completionXpBadge: {
+    backgroundColor: '#F59E0B',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  completionXpText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  completionSub: {
+    fontSize: 12,
+    lineHeight: 16,
+    marginBottom: 10,
+  },
+  claimCertCTA: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#059669',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 6,
+  },
+  claimCertCTAText: {
+    color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '700',
   },

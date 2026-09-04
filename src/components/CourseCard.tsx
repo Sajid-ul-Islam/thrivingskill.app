@@ -22,6 +22,13 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
   const displayPrice = course.priceBdt ? `৳${course.priceBdt.toLocaleString()}` : `$${course.price.toFixed(2)}`;
   const displayOrigPrice = course.originalPriceBdt ? `৳${course.originalPriceBdt.toLocaleString()}` : `$${course.originalPrice.toFixed(2)}`;
 
+  const discountPercent =
+    course.originalPriceBdt && course.priceBdt && course.originalPriceBdt > course.priceBdt
+      ? Math.round(((course.originalPriceBdt - course.priceBdt) / course.originalPriceBdt) * 100)
+      : course.originalPrice && course.price && course.originalPrice > course.price
+      ? Math.round(((course.originalPrice - course.price) / course.originalPrice) * 100)
+      : 0;
+
   if (horizontal) {
     return (
       <TouchableOpacity
@@ -35,6 +42,8 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
         ]}
         onPress={onPress}
         activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={`${course.title} by ${course.instructor.name}`}
       >
         <Image source={{ uri: course.thumbnail }} style={styles.horizontalThumb} />
         {course.badge && (
@@ -86,6 +95,11 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
               <Text style={[styles.originalPrice, { color: colors.textMuted }]}>
                 {displayOrigPrice}
               </Text>
+              {discountPercent > 0 && (
+                <View style={styles.discountBadge}>
+                  <Text style={styles.discountBadgeText}>{discountPercent}% OFF</Text>
+                </View>
+              )}
             </View>
           )}
         </View>
@@ -94,6 +108,9 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
           style={[styles.bookmarkBtn, { backgroundColor: colors.surfaceSubtle }]}
           onPress={() => toggleBookmark(course.id)}
           activeOpacity={0.7}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityRole="button"
+          accessibilityLabel={bookmarked ? "Remove bookmark" : "Save course bookmark"}
         >
           <Ionicons
             name={bookmarked ? 'bookmark' : 'bookmark-outline'}
@@ -117,6 +134,8 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
       ]}
       onPress={onPress}
       activeOpacity={0.88}
+      accessibilityRole="button"
+      accessibilityLabel={`${course.title} by ${course.instructor.name}`}
     >
       <View style={styles.thumbWrapper}>
         <Image source={{ uri: course.thumbnail }} style={styles.thumbnail} />
@@ -129,6 +148,9 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
           style={[styles.floatingBookmark, { backgroundColor: 'rgba(0,0,0,0.6)' }]}
           onPress={() => toggleBookmark(course.id)}
           activeOpacity={0.7}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityRole="button"
+          accessibilityLabel={bookmarked ? "Remove bookmark" : "Save course bookmark"}
         >
           <Ionicons
             name={bookmarked ? 'bookmark' : 'bookmark-outline'}
@@ -189,6 +211,11 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
               <Text style={[styles.originalPrice, { color: colors.textMuted }]}>
                 {displayOrigPrice}
               </Text>
+              {discountPercent > 0 && (
+                <View style={styles.discountBadge}>
+                  <Text style={styles.discountBadgeText}>{discountPercent}% OFF</Text>
+                </View>
+              )}
             </View>
             <View style={[styles.certBadge, { backgroundColor: colors.surfaceSubtle }]}>
               <Ionicons name="ribbon-outline" size={13} color={colors.primary} />
@@ -307,6 +334,19 @@ const styles = StyleSheet.create({
   originalPrice: {
     fontSize: 12,
     textDecorationLine: 'line-through',
+  },
+  discountBadge: {
+    backgroundColor: '#E34234',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    alignSelf: 'center',
+  },
+  discountBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
   certBadge: {
     flexDirection: 'row',

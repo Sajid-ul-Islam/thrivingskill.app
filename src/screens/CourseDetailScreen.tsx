@@ -81,6 +81,13 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
   const { videos, playVideo } = useYouTube();
   const trailerVideo = findRelatedVideoForCourse(course, videos);
 
+  const discountPercent =
+    course.originalPriceBdt && course.priceBdt && course.originalPriceBdt > course.priceBdt
+      ? Math.round(((course.originalPriceBdt - course.priceBdt) / course.originalPriceBdt) * 100)
+      : course.originalPrice && course.price && course.originalPrice > course.price
+      ? Math.round(((course.originalPrice - course.price) / course.originalPrice) * 100)
+      : 0;
+
   const handleEnrollOrResume = () => {
     if (!isEnrolled) {
       if ((course.priceBdt && course.priceBdt > 0) || (course.price && course.price > 0)) {
@@ -159,6 +166,8 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
               }
             }}
             activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={trailerVideo ? 'Watch Video Trailer' : 'Watch Free Preview'}
           >
             <Ionicons name="play" size={28} color="#FFFFFF" />
             <Text style={styles.previewBtnText}>
@@ -412,7 +421,6 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
       >
         {!isEnrolled ? (
           <View style={styles.bottomPriceCol}>
-            <Text style={[styles.bottomPriceLabel, { color: colors.textMuted }]}>Total Course Fee</Text>
             <View style={styles.priceRow}>
               <Text style={[styles.bottomPrice, { color: colors.primary }]}>
                 {course.priceBdt ? `৳${course.priceBdt.toLocaleString()}` : `$${course.price.toFixed(2)}`}
@@ -424,7 +432,15 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                     : `$${course.originalPrice.toFixed(2)}`}
                 </Text>
               )}
+              {discountPercent > 0 && (
+                <View style={styles.detailDiscountTag}>
+                  <Text style={styles.detailDiscountText}>{discountPercent}% OFF</Text>
+                </View>
+              )}
             </View>
+            <Text style={[styles.bottomPriceLabel, { color: colors.textMuted }]}>
+              Lifetime Access • Certificate Included
+            </Text>
           </View>
         ) : (
           <View style={styles.bottomPriceCol}>
@@ -432,7 +448,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
               Enrolled ({progressPercent}%)
             </Text>
             <Text style={[styles.enrolledStatus, { color: colors.textMuted }]}>
-              {userProgress[course.id]?.isCompleted ? 'Completed' : 'In Progress'}
+              {userProgress[course.id]?.isCompleted ? 'Completed 🎓' : 'In Progress ⏳'}
             </Text>
           </View>
         )}
@@ -441,6 +457,8 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
           style={[styles.enrollCTAButton, { backgroundColor: colors.primary }]}
           onPress={handleEnrollOrResume}
           activeOpacity={0.88}
+          accessibilityRole="button"
+          accessibilityLabel={isEnrolled ? (isBangla ? 'লেসনে যান' : 'Resume Course') : (isBangla ? 'এখনই ভর্তি হন' : 'Enroll Now')}
         >
           <Ionicons
             name={isEnrolled ? 'play' : 'flash'}
@@ -798,6 +816,19 @@ const styles = StyleSheet.create({
   bottomOriginalPrice: {
     fontSize: 13,
     textDecorationLine: 'line-through',
+  },
+  detailDiscountTag: {
+    backgroundColor: '#E34234',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginLeft: 2,
+  },
+  detailDiscountText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
   enrolledStatus: {
     fontSize: 13,

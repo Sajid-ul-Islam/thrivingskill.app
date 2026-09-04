@@ -130,7 +130,12 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               onChangeText={setSearchQuery}
             />
             {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <TouchableOpacity
+                onPress={() => setSearchQuery('')}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                accessibilityRole="button"
+                accessibilityLabel="Clear search input"
+              >
                 <Ionicons name="close-circle" size={18} color={colors.textMuted} />
               </TouchableOpacity>
             )}
@@ -170,6 +175,8 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                     levelsAutoScroll.pauseTemporarily(3000);
                     setSelectedLevel(lvl);
                   }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Filter by ${lvl} difficulty`}
                 >
                   <Text
                     style={[
@@ -191,6 +198,8 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                   viewMode === 'grid' && { backgroundColor: colors.surfaceSubtle },
                 ]}
                 onPress={() => setViewMode('grid')}
+                accessibilityRole="button"
+                accessibilityLabel="Switch to grid layout"
               >
                 <Ionicons
                   name="grid-outline"
@@ -204,6 +213,8 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                   viewMode === 'list' && { backgroundColor: colors.surfaceSubtle },
                 ]}
                 onPress={() => setViewMode('list')}
+                accessibilityRole="button"
+                accessibilityLabel="Switch to list layout"
               >
                 <Ionicons
                   name="list-outline"
@@ -233,6 +244,8 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                 const nextIdx = (order.indexOf(selectedSort) + 1) % order.length;
                 setSelectedSort(order[nextIdx]);
               }}
+              accessibilityRole="button"
+              accessibilityLabel={`Sort courses by ${selectedSort}`}
             >
               <Ionicons name="swap-vertical" size={13} color={colors.primary} />
               <Text style={[styles.sortBtnText, { color: colors.text }]}>
@@ -260,11 +273,31 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
             ))
           ) : filtered.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <Ionicons name="search-outline" size={48} color={colors.textLight} />
+              <View style={[styles.emptyIconCircle, { backgroundColor: colors.surfaceSubtle }]}>
+                <Ionicons name="search-outline" size={42} color={colors.primary} />
+              </View>
               <Text style={[styles.emptyTitle, { color: colors.text }]}>No courses found</Text>
               <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
-                Try adjusting your search terms or category filters.
+                We couldn't find any courses matching "{searchQuery || selectedCategory}". Try popular topics:
               </Text>
+
+              {/* Popular quick searches */}
+              <View style={styles.suggestionRow}>
+                {['AI & Automation', 'Financial Modeling', 'Corporate Leadership'].map((topic) => (
+                  <TouchableOpacity
+                    key={topic}
+                    style={[styles.suggestionChip, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                    onPress={() => {
+                      setSearchQuery(topic.split(' ')[0]);
+                      setSelectedCategory('all');
+                      setSelectedLevel('All');
+                    }}
+                  >
+                    <Text style={[styles.suggestionText, { color: colors.text }]}>{topic}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
               <TouchableOpacity
                 style={[styles.resetBtn, { backgroundColor: colors.primary }]}
                 onPress={() => {
@@ -273,6 +306,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                   setSelectedLevel('All');
                 }}
               >
+                <Ionicons name="refresh" size={15} color="#FFFFFF" />
                 <Text style={styles.resetBtnText}>Reset All Filters</Text>
               </TouchableOpacity>
             </View>
@@ -376,23 +410,53 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     alignItems: 'center',
-    paddingVertical: 50,
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+  },
+  emptyIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
   },
   emptyTitle: {
     fontSize: 18,
     fontWeight: '700',
-    marginTop: 12,
+    marginTop: 8,
   },
   emptySubtitle: {
     fontSize: 13,
-    marginTop: 4,
-    marginBottom: 20,
+    marginTop: 6,
+    marginBottom: 16,
     textAlign: 'center',
+    lineHeight: 18,
+  },
+  suggestionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 24,
+  },
+  suggestionChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  suggestionText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   resetBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 10,
+    paddingVertical: 12,
+    borderRadius: 12,
   },
   resetBtnText: {
     color: '#FFFFFF',

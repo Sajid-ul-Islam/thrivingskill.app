@@ -134,6 +134,36 @@ export const EnterpriseTeamScreen: React.FC<EnterpriseTeamScreenProps> = ({
               <Text style={styles.kpiLbl}>Certificates</Text>
             </View>
           </View>
+
+          {/* Visual Seat Gauge & Quick Invite */}
+          <View style={styles.seatGaugeContainer}>
+            <View style={styles.seatGaugeHeader}>
+              <Text style={styles.seatGaugeTitle}>Seat Licensing Capacity</Text>
+              <Text style={styles.seatGaugeSub}>
+                {(activeWorkspace.totalSeats || 25) - (activeWorkspace.activeSeats || 18)} seats available to assign
+              </Text>
+            </View>
+            <View style={styles.seatTrack}>
+              <View
+                style={[
+                  styles.seatFill,
+                  {
+                    width: `${Math.round(((activeWorkspace.activeSeats || 18) / (activeWorkspace.totalSeats || 25)) * 100)}%`,
+                  },
+                ]}
+              />
+            </View>
+            <TouchableOpacity
+              style={styles.inviteMemberBtn}
+              onPress={() => setInviteModalVisible(true)}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel="Invite colleague to enterprise workspace"
+            >
+              <Ionicons name="person-add" size={14} color="#FFFFFF" />
+              <Text style={styles.inviteMemberBtnText}>Invite Colleague / Allocate Seat</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Skill Gap Benchmark Radar Section */}
@@ -384,6 +414,54 @@ const styles = StyleSheet.create({
     width: 1,
     height: 24,
     backgroundColor: 'rgba(255,255,255,0.15)',
+  },
+  seatGaugeContainer: {
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.12)',
+  },
+  seatGaugeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  seatGaugeTitle: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  seatGaugeSub: {
+    color: '#38BDF8',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  seatTrack: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    overflow: 'hidden',
+    marginBottom: 10,
+  },
+  seatFill: {
+    height: '100%',
+    backgroundColor: '#38BDF8',
+    borderRadius: 3,
+  },
+  inviteMemberBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#4F46E5',
+    paddingVertical: 9,
+    borderRadius: 10,
+    gap: 6,
+  },
+  inviteMemberBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
   },
   section: {
     paddingHorizontal: 16,
