@@ -43,6 +43,11 @@ import {
   REVIEWS_WALL,
 } from '../data/mockData';
 import { RootTab } from '../types';
+import { AboutTSLModal, AboutTabKey } from '../components/AboutTSLModal';
+import { LegalPolicyModal, LegalTabKey } from '../components/LegalPolicyModal';
+
+const FOUNDER_MAHMUD = require('../../assets/team/abdullah_al_mahmud.jpeg');
+const FOUNDER_SYED = require('../../assets/team/syed_nuruddin_ahmed.jpeg');
 
 interface HomeScreenProps {
   onNavigateToCourse: (courseId: string) => void;
@@ -73,6 +78,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const [communityModalVisible, setCommunityModalVisible] = useState(false);
+  const [aboutModalVisible, setAboutModalVisible] = useState(false);
+  const [aboutInitialTab, setAboutInitialTab] = useState<AboutTabKey>('overview');
+  const [legalModalVisible, setLegalModalVisible] = useState(false);
+  const [legalInitialTab, setLegalInitialTab] = useState<LegalTabKey>('terms');
 
   const { t, isBangla } = useLanguage();
   const { streakDays, dailyMinutesSpent, dailyGoalMinutes } = useGamification();
@@ -825,10 +834,198 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </View>
         )}
 
+        {/* Founders & Leadership Spotlight */}
+        <View style={styles.leadershipSpotlightSection}>
+          <View style={[styles.leadershipCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+            <View style={styles.leadershipCardHeader}>
+              <View style={[styles.badgePill, { backgroundColor: 'rgba(245, 158, 11, 0.12)' }]}>
+                <Ionicons name="star" size={12} color="#F59E0B" />
+                <Text style={[styles.badgePillText, { color: '#F59E0B' }]}>
+                  {isBangla ? 'প্রতিষ্ঠাতা ও নেতৃত্ব' : 'LEADERSHIP & FOUNDERS'}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  setAboutInitialTab('leadership');
+                  setAboutModalVisible(true);
+                }}
+                style={styles.viewLeadershipBtn}
+              >
+                <Text style={[styles.viewLeadershipText, { color: colors.primary }]}>
+                  {isBangla ? 'টিম প্রোফাইল →' : 'View Bios →'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={[styles.leadershipTitle, { color: colors.text }]}>
+              {isBangla
+                ? 'বাংলাদেশের দক্ষ জনশক্তি ও ৪র্থ শিল্পবিপ্লবের পথপ্রদর্শক'
+                : 'Pioneering Future-Ready 4IR Capabilities in Bangladesh'}
+            </Text>
+
+            {/* Founder Avatars Row */}
+            <View style={styles.foundersRow}>
+              {/* Founder 1: Md. Abdullah Al Mahmud */}
+              <TouchableOpacity
+                style={[styles.founderMiniCard, { borderColor: colors.border, backgroundColor: isDark ? '#1E293B' : '#F8FAFC' }]}
+                onPress={() => {
+                  setAboutInitialTab('leadership');
+                  setAboutModalVisible(true);
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={styles.founderImgContainer}>
+                  <Image source={FOUNDER_MAHMUD} style={styles.founderAvatar} />
+                  <View style={styles.verifiedDot}>
+                    <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+                  </View>
+                </View>
+                <Text style={[styles.founderName, { color: colors.text }]} numberOfLines={1}>
+                  Md. Abdullah Al Mahmud
+                </Text>
+                <Text style={[styles.founderRole, { color: colors.primary }]} numberOfLines={1}>
+                  Founder & CEO
+                </Text>
+              </TouchableOpacity>
+
+              {/* Founder 2: Syed Nuruddin Ahmed */}
+              <TouchableOpacity
+                style={[styles.founderMiniCard, { borderColor: colors.border, backgroundColor: isDark ? '#1E293B' : '#F8FAFC' }]}
+                onPress={() => {
+                  setAboutInitialTab('leadership');
+                  setAboutModalVisible(true);
+                }}
+                activeOpacity={0.8}
+              >
+                <View style={styles.founderImgContainer}>
+                  <Image source={FOUNDER_SYED} style={styles.founderAvatar} />
+                  <View style={styles.verifiedDot}>
+                    <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+                  </View>
+                </View>
+                <Text style={[styles.founderName, { color: colors.text }]} numberOfLines={1}>
+                  Syed Nuruddin Ahmed
+                </Text>
+                <Text style={[styles.founderRole, { color: colors.secondary }]} numberOfLines={1}>
+                  Founder & Chairman
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+
+        {/* Trusted Institutional Partners & MoUs */}
+        <View style={styles.partnerSection}>
+          <View style={styles.partnerHeaderRow}>
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                <Ionicons name="shield-checkmark" size={16} color="#10B981" />
+                <Text style={[styles.partnerBadgeTag, { color: colors.textMuted }]}>
+                  {isBangla ? 'অফিসিয়াল পার্টনারশিপ ও সমঝোতা স্মারক' : 'ACCREDITED & RECOGNIZED'}
+                </Text>
+              </View>
+              <Text style={[styles.partnerSectionTitle, { color: colors.text }]}>
+                {isBangla ? 'বিশ্ববিদ্যালয় ও প্রাতিষ্ঠানিক পার্টনারসমূহ' : 'Trusted Institutional Partners & MoUs'}
+              </Text>
+              <Text style={[styles.partnerSectionSubtitle, { color: colors.textMuted }]}>
+                {isBangla
+                  ? 'শীর্ষ বিশ্ববিদ্যালয়, আইসিটি ডিভিশন (a2i) এবং প্রফেশনাল বডিসমূহের সাথে সমঝোতা চুক্তি'
+                  : 'Bilateral MoUs with renowned universities, ICT Division (a2i), and industry councils'}
+              </Text>
+            </View>
+          </View>
+
+          {/* Institutional Partner Cards */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.partnerCardsScroll}>
+            {[
+              {
+                org: 'Eastern University (EU)',
+                tag: 'Bilateral MoU',
+                tagColor: '#3B82F6',
+                icon: 'school-outline',
+                desc: 'Official MoU for AI curriculum integration and student capability development.',
+              },
+              {
+                org: 'Dhaka University (DUCSU)',
+                tag: 'National Summit',
+                tagColor: '#8B5CF6',
+                icon: 'business-outline',
+                desc: 'Co-organized Bangladesh Skills Summit at DU Senate Bhaban.',
+              },
+              {
+                org: 'North South University',
+                tag: '4IR Summit',
+                tagColor: '#10B981',
+                icon: 'hardware-chip-outline',
+                desc: 'Organized the 4IR Skills Summit bridging GenAI and youth skills.',
+              },
+              {
+                org: 'a2i (ICT Division)',
+                tag: 'Govt. Alliance',
+                tagColor: '#F59E0B',
+                icon: 'shield-outline',
+                desc: 'Collaboration for nationwide digital literacy and 4IR readiness.',
+              },
+              {
+                org: 'AUST School of Business',
+                tag: 'MoU Partner',
+                tagColor: '#EC4899',
+                icon: 'trophy-outline',
+                desc: 'Employability & Skills Summit partner for corporate recruitment.',
+              },
+              {
+                org: 'ICMAB & BASIS',
+                tag: 'Professional Body',
+                tagColor: '#059669',
+                icon: 'ribbon-outline',
+                desc: 'Chartered accounting & software industry executive skilling partner.',
+              },
+            ].map((partner, pIdx) => (
+              <TouchableOpacity
+                key={pIdx}
+                style={[styles.partnerCardItem, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
+                onPress={() => {
+                  setAboutInitialTab('partners');
+                  setAboutModalVisible(true);
+                }}
+                activeOpacity={0.75}
+              >
+                <View style={styles.partnerCardItemHeader}>
+                  <View style={[styles.partnerItemIconBg, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' }]}>
+                    <Ionicons name={partner.icon as any} size={18} color={partner.tagColor} />
+                  </View>
+                  <View style={[styles.partnerItemTag, { backgroundColor: partner.tagColor + '18' }]}>
+                    <Text style={[styles.partnerItemTagText, { color: partner.tagColor }]}>{partner.tag}</Text>
+                  </View>
+                </View>
+                <Text style={[styles.partnerOrgTitle, { color: colors.text }]} numberOfLines={1}>
+                  {partner.org}
+                </Text>
+                <Text style={[styles.partnerOrgDesc, { color: colors.textMuted }]} numberOfLines={2}>
+                  {partner.desc}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          <TouchableOpacity
+            style={[styles.seeAllPartnersBtn, { borderColor: colors.border, backgroundColor: colors.surfaceSubtle }]}
+            onPress={() => {
+              setAboutInitialTab('partners');
+              setAboutModalVisible(true);
+            }}
+          >
+            <Ionicons name="document-text-outline" size={15} color={colors.primary} />
+            <Text style={[styles.seeAllPartnersText, { color: colors.primary }]}>
+              {isBangla ? 'সকল পার্টনারশিপ, সামিট ও MoU দেখুন →' : 'View All Institutional Partnerships & MoUs →'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Trusted Corporate Clients */}
         <View style={styles.trustSection}>
           <Text style={[styles.trustHeading, { color: colors.textMuted }]}>
-            TRUSTED BY PROFESSIONALS ACROSS LEADING INSTITUTIONS
+            TRUSTED BY PROFESSIONALS ACROSS LEADING CORPORATIONS
           </Text>
           <View style={styles.clientLogosRow}>
             {CORPORATE_CLIENTS.map((client, index) => (
@@ -845,11 +1042,125 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             ))}
           </View>
         </View>
+
+        {/* Enterprise Brand & Legal Footer */}
+        <View style={[styles.enterpriseFooter, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+          <View style={styles.footerBrandRow}>
+            <Image
+              source={require('../../assets/icon.png')}
+              style={styles.footerLogo}
+              resizeMode="contain"
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.footerBrandName, { color: colors.text }]}>Thriving Skills Limited</Text>
+              <Text style={[styles.footerTagline, { color: colors.textMuted }]}>
+                Next-Gen AI & Career Excellence Platform
+              </Text>
+            </View>
+          </View>
+
+          {/* Quick Legal and Info Actions */}
+          <View style={styles.footerLegalLinksRow}>
+            <TouchableOpacity
+              style={[styles.legalPillBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+              onPress={() => {
+                setLegalInitialTab('terms');
+                setLegalModalVisible(true);
+              }}
+            >
+              <Text style={[styles.legalPillText, { color: colors.text }]}>Terms & Conditions</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.legalPillBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+              onPress={() => {
+                setLegalInitialTab('privacy_en');
+                setLegalModalVisible(true);
+              }}
+            >
+              <Text style={[styles.legalPillText, { color: colors.text }]}>Privacy Policy</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.legalPillBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+              onPress={() => {
+                setLegalInitialTab('privacy_bn');
+                setLegalModalVisible(true);
+              }}
+            >
+              <Text style={[styles.legalPillText, { color: colors.primary }]}>গোপনীয়তা নীতি (বাংলা)</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.legalPillBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+              onPress={() => {
+                setAboutInitialTab('overview');
+                setAboutModalVisible(true);
+              }}
+            >
+              <Text style={[styles.legalPillText, { color: colors.text }]}>About TSL</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Contact / Helpline row */}
+          <View style={[styles.footerContactRow, { borderTopColor: colors.borderSubtle, borderBottomColor: colors.borderSubtle }]}>
+            <TouchableOpacity
+              style={styles.footerContactItem}
+              onPress={() => Linking.openURL('tel:01312100288').catch(() => {})}
+            >
+              <Ionicons name="call-outline" size={14} color={colors.primary} />
+              <Text style={[styles.footerContactText, { color: colors.primary }]}>01312 100288</Text>
+            </TouchableOpacity>
+
+            <View style={[styles.footerDot, { backgroundColor: colors.border }]} />
+
+            <TouchableOpacity
+              style={styles.footerContactItem}
+              onPress={() => Linking.openURL('mailto:support@thrivingskill.com').catch(() => {})}
+            >
+              <Ionicons name="mail-outline" size={14} color={colors.textMuted} />
+              <Text style={[styles.footerContactText, { color: colors.textMuted }]}>support@thrivingskill.com</Text>
+            </TouchableOpacity>
+
+            <View style={[styles.footerDot, { backgroundColor: colors.border }]} />
+
+            <TouchableOpacity
+              style={styles.footerContactItem}
+              onPress={() => Linking.openURL('https://thrivingskill.com').catch(() => {})}
+            >
+              <Ionicons name="globe-outline" size={14} color={colors.textMuted} />
+              <Text style={[styles.footerContactText, { color: colors.textMuted }]}>thrivingskill.com</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* All Rights Reserved Notice */}
+          <View style={styles.footerCopyrightBox}>
+            <Text style={[styles.copyrightNotice, { color: colors.textMuted }]}>
+              © 2026 Thriving Skills Limited (TSL). All Rights Reserved.
+            </Text>
+            <Text style={[styles.copyrightSubtext, { color: colors.textMuted }]}>
+              Gulshan-2, Dhaka-1212, Bangladesh • Registered Company under RJSC • Powered by Gemini AI
+            </Text>
+          </View>
+        </View>
       </ScrollView>
 
       <CommunityFeedModal
         visible={communityModalVisible}
         onClose={() => setCommunityModalVisible(false)}
+      />
+
+      <AboutTSLModal
+        visible={aboutModalVisible}
+        onClose={() => setAboutModalVisible(false)}
+        initialTab={aboutInitialTab}
+        onNavigateTab={onNavigateTab}
+      />
+
+      <LegalPolicyModal
+        visible={legalModalVisible}
+        onClose={() => setLegalModalVisible(false)}
+        initialTab={legalInitialTab}
       />
     </View>
   );
@@ -1314,5 +1625,255 @@ const styles = StyleSheet.create({
   articleReadMore: {
     fontSize: 11,
     fontWeight: '700',
+  },
+  leadershipSpotlightSection: {
+    marginHorizontal: 16,
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  leadershipCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  leadershipCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  badgePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  badgePillText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  viewLeadershipBtn: {
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+  },
+  viewLeadershipText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  leadershipTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    lineHeight: 20,
+    marginBottom: 12,
+  },
+  foundersRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  founderMiniCard: {
+    flex: 1,
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 10,
+    alignItems: 'center',
+  },
+  founderImgContainer: {
+    position: 'relative',
+    marginBottom: 8,
+  },
+  founderAvatar: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: '#334155',
+  },
+  verifiedDot: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+  },
+  founderName: {
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  founderRole: {
+    fontSize: 10.5,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  partnerSection: {
+    marginTop: 16,
+    marginBottom: 10,
+  },
+  partnerHeaderRow: {
+    paddingHorizontal: 16,
+    marginBottom: 12,
+  },
+  partnerBadgeTag: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+  },
+  partnerSectionTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+    marginTop: 2,
+    marginBottom: 3,
+  },
+  partnerSectionSubtitle: {
+    fontSize: 11.5,
+    lineHeight: 16,
+  },
+  partnerCardsScroll: {
+    paddingHorizontal: 16,
+    gap: 10,
+    paddingBottom: 6,
+  },
+  partnerCardItem: {
+    width: 210,
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 12,
+  },
+  partnerCardItemHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  partnerItemIconBg: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  partnerItemTag: {
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  partnerItemTagText: {
+    fontSize: 9.5,
+    fontWeight: '800',
+  },
+  partnerOrgTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  partnerOrgDesc: {
+    fontSize: 10.5,
+    lineHeight: 14,
+  },
+  seeAllPartnersBtn: {
+    marginHorizontal: 16,
+    marginTop: 10,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  seeAllPartnersText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  enterpriseFooter: {
+    marginHorizontal: 16,
+    marginTop: 24,
+    marginBottom: 20,
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 16,
+  },
+  footerBrandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 14,
+  },
+  footerLogo: {
+    width: 38,
+    height: 38,
+    borderRadius: 9,
+  },
+  footerBrandName: {
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  footerTagline: {
+    fontSize: 11,
+    marginTop: 1,
+  },
+  footerLegalLinksRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 14,
+  },
+  legalPillBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  legalPillText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  footerContactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    gap: 10,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    marginBottom: 12,
+  },
+  footerContactItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  footerContactText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  footerDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+  },
+  footerCopyrightBox: {
+    alignItems: 'center',
+  },
+  copyrightNotice: {
+    fontSize: 11,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 3,
+  },
+  copyrightSubtext: {
+    fontSize: 10,
+    textAlign: 'center',
+    lineHeight: 14,
   },
 });

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -17,23 +17,44 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 
+import { LegalPolicyModal, LegalTabKey } from './LegalPolicyModal';
+
+export type AboutTabKey = 'overview' | 'pillars' | 'partners' | 'summits' | 'leadership' | 'contact';
+
 interface AboutTSLModalProps {
   visible: boolean;
   onClose: () => void;
   onNavigateTab?: (tab: any) => void;
+  initialTab?: AboutTabKey;
 }
 
-type TabKey = 'overview' | 'pillars' | 'summits' | 'leadership' | 'contact';
+// Authentic Founder & Leadership Team Assets from official thrivingskill.com portal
+const FOUNDER_IMAGES = {
+  abdullah_al_mahmud: require('../../assets/team/abdullah_al_mahmud.jpeg'),
+  syed_nuruddin_ahmed: require('../../assets/team/syed_nuruddin_ahmed.jpeg'),
+  yusuf_iqbal: require('../../assets/team/yusuf_iqbal.jpeg'),
+  tareq_siddiqui: require('../../assets/team/tareq_siddiqui.jpeg'),
+  abdulla_al_noman: require('../../assets/team/abdulla_al_noman.jpeg'),
+};
 
 export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
   visible,
   onClose,
   onNavigateTab,
+  initialTab = 'overview',
 }) => {
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
   const insets = useSafeAreaInsets();
-  const [activeTab, setActiveTab] = useState<TabKey>('overview');
+  const [activeTab, setActiveTab] = useState<AboutTabKey>(initialTab);
+  const [legalModalVisible, setLegalModalVisible] = useState(false);
+  const [legalInitialTab, setLegalInitialTab] = useState<LegalTabKey>('terms');
+
+  useEffect(() => {
+    if (visible && initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [visible, initialTab]);
 
   if (!visible) return null;
 
@@ -104,9 +125,10 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
             {[
               { key: 'overview', label: isBangla ? 'সংক্ষিপ্ত তথ্য' : 'Overview', icon: 'information-circle-outline' },
               { key: 'pillars', label: isBangla ? '৪টি মূল স্তম্ভ' : '4 Pillars', icon: 'layers-outline' },
-              { key: 'summits', label: isBangla ? 'সামিট ও পার্টনার' : 'Summits', icon: 'ribbon-outline' },
-              { key: 'leadership', label: isBangla ? 'নেতৃত্ব দল' : 'Leadership', icon: 'people-outline' },
-              { key: 'contact', label: isBangla ? 'যোগাযোগ' : 'Contact', icon: 'call-outline' },
+              { key: 'partners', label: isBangla ? 'পার্টনার্স ও সহযোগী' : 'Partners & MoUs', icon: 'shield-checkmark-outline' },
+              { key: 'summits', label: isBangla ? 'সামিট ও ইভেন্ট' : 'Summits', icon: 'ribbon-outline' },
+              { key: 'leadership', label: isBangla ? 'নেতৃত্ব ও ফাউন্ডার্স' : 'Founders & Team', icon: 'people-outline' },
+              { key: 'contact', label: isBangla ? 'যোগাযোগ ও আইনি' : 'Contact & Legal', icon: 'call-outline' },
             ].map((tab) => {
               const isActive = activeTab === tab.key;
               return (
@@ -119,7 +141,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                       borderColor: isActive ? colors.primary : colors.border,
                     },
                   ]}
-                  onPress={() => setActiveTab(tab.key as TabKey)}
+                  onPress={() => setActiveTab(tab.key as AboutTabKey)}
                 >
                   <Ionicons
                     name={tab.icon as any}
@@ -292,7 +314,158 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
             </View>
           )}
 
-          {/* TAB 3: NATIONAL SUMMITS */}
+          {/* TAB 3: TRUSTED PARTNERS & MOUS */}
+          {activeTab === 'partners' && (
+            <View style={styles.sectionContainer}>
+              <View
+                style={[
+                  styles.verifiedHeaderBanner,
+                  { backgroundColor: isDark ? 'rgba(37, 99, 235, 0.12)' : '#EFF6FF', borderColor: '#2563EB44' },
+                ]}
+              >
+                <Ionicons name="ribbon" size={20} color="#2563EB" />
+                <Text style={[styles.verifiedHeaderText, { color: isDark ? '#93C5FD' : '#1E40AF' }]}>
+                  {isBangla
+                    ? 'শীর্ষস্থানীয় বিশ্ববিদ্যালয়, সরকারি উদ্ভাবনী বিভাগ ও শিল্প অংশীদারদের সাথে কার্যকর কোলাবরেশন'
+                    : 'Strategic Partnerships, Signed MoUs & Academic Co-Organizers'}
+                </Text>
+              </View>
+
+              <Text style={[styles.subheading, { color: colors.textMuted }]}>
+                {isBangla ? 'থ্রাইভিং স্কিলসের প্রাতিষ্ঠানিক ও জাতীয় সহযোগীসমূহ:' : 'TSL Institutional & Strategic Alliances:'}
+              </Text>
+
+              {[
+                {
+                  category: isBangla ? 'জাতীয় বিশ্ববিদ্যালয় ও অ্যাকাডেমিক পার্টনার্স' : 'Academic & University Alliances',
+                  icon: 'school-outline',
+                  color: '#2563EB',
+                  items: [
+                    {
+                      name: 'University of Dhaka (DU) / DUCSU',
+                      role: isBangla ? 'জাতীয় স্কিলস সামিট কো-অর্গানাইজার' : 'National Skills Summit Co-Organizer',
+                      scope: isBangla
+                        ? 'ঢাকা বিশ্ববিদ্যালয়ের সিনেট ভবনে বাংলাদেশ স্কিলস সামিট আয়োজনের যৌথ অংশীদার। জাতীয় পুনর্গঠন ও কর্মদক্ষতা রূপান্তরে অগ্রণী।'
+                        : 'Co-organizer of the Bangladesh Skills Summit at the Senate Bhaban, University of Dhaka, advancing national workforce reform.',
+                      badge: 'DU Senate Bhaban Summit',
+                    },
+                    {
+                      name: 'North South University (NSU)',
+                      role: isBangla ? '৪আইআর সামিট ও প্লেসমেন্ট পার্টনার' : '4IR Skills Summit & Placement Partner',
+                      scope: isBangla
+                        ? 'নর্থ সাউথ ইউনিভার্সিটির ক্যারিয়ার অ্যান্ড প্লেসমেন্ট সেন্টারের (CPC) সাথে ফোর্থ ইন্ডাস্ট্রিয়াল রেভোলিউশন সামিট কো-অর্গানাইজার।'
+                        : 'Organized the 4th Industrial Revolution (4IR) Skills Summit with NSU’s Career and Placement Center (CPC) to equip youth with modern AI capabilities.',
+                      badge: 'NSU CPC Partner',
+                    },
+                    {
+                      name: 'Eastern University (EU)',
+                      role: isBangla ? 'দ্বিপাক্ষিক সমঝোতা স্মারক (MoU) স্বাক্ষরিত' : 'Official Bilateral MoU Signed',
+                      scope: isBangla
+                        ? 'শিক্ষা, গবেষণা ও প্রাতিষ্ঠানিক দক্ষতায় এআই (AI) অন্তর্ভুক্তির লক্ষ্যে আনুষ্ঠানিক চুক্তি (MoU) স্বাক্ষরিত। শিক্ষক ও কর্মকর্তাদের এআই প্রশিক্ষণ প্রদান।'
+                        : 'Signed a formal Memorandum of Understanding (MoU) to integrate Artificial Intelligence into university teaching, student curricula, and administrative workflows.',
+                      badge: 'Signed AI Integration MoU',
+                    },
+                    {
+                      name: 'Ahsanullah University of Science & Tech (AUST)',
+                      role: isBangla ? 'এমপ্লয়েবিলিটি সামিট কো-অর্গানাইজার' : 'Employability & Skills Summit Co-Organizer',
+                      scope: isBangla
+                        ? 'অস্ট স্কুল অব বিজনেস-এর যৌথ উদ্যোগে এমপ্লয়েবিলিটি অ্যান্ড স্কিলস সামিট, জব ফেয়ার এবং কর্পোরেট একাডেমি ডায়ালগ পরিচালনা।'
+                        : 'Partnered with AUST School of Business to host the national Employability & Skills Summit, corporate job fairs, and industry masterclasses.',
+                      badge: 'AUST School of Business',
+                    },
+                    {
+                      name: 'Comilla University (CoU) & Manarat Int. University',
+                      role: isBangla ? 'দক্ষতা উন্নয়ন কর্মশালা ও ফ্যাকাল্টি পার্টনার' : 'Skills Workshop & Faculty Partner',
+                      scope: isBangla
+                        ? 'শিক্ষার্থীদের ক্যারিয়ার প্রস্তুতি, সফটওয়্যার স্কিলস এবং ডেটা অ্যানালিটিক্স প্রশিক্ষণে সক্রিয় প্রাতিষ্ঠানিক অংশীদার।'
+                        : 'Delivering tailored masterclasses in data literacy, business presentation, and enterprise digital tools for graduating student cohorts.',
+                      badge: 'Regional Academic Alliances',
+                    },
+                  ],
+                },
+                {
+                  category: isBangla ? 'সরকারি সংস্থা ও আন্তর্জাতিক ফ্রেমওয়ার্ক' : 'Government & Innovation Frameworks',
+                  icon: 'globe-outline',
+                  color: '#10B981',
+                  items: [
+                    {
+                      name: 'Aspire to Innovate (a2i) — ICT & Cabinet Division',
+                      role: isBangla ? 'স্মার্ট বাংলাদেশ ও ৪আইআর পার্টনার' : 'National 4IR & Smart Workforce Partner',
+                      scope: isBangla
+                        ? 'চতুর্থ শিল্প বিপ্লবের চ্যালেঞ্জ মোকাবিলা এবং জাতীয় তরুণদের ডিজিটাল কর্মসংস্থানে যৌথ উদ্যোগ ও কনফারেন্স কোলাবরেশন।'
+                        : 'Strategic alignment with a2i (ICT Division & Cabinet Division, Bangladesh) for 4IR skills adoption and tech workforce readiness.',
+                      badge: 'a2i / ICT Division',
+                    },
+                    {
+                      name: 'United Nations SDG-4 (Quality Education)',
+                      role: isBangla ? 'টেকসই উন্নয়ন লক্ষ্যমাত্রা ৪.৪ বাস্তবায়ন' : 'UN SDG Goal 4.4 Framework',
+                      scope: isBangla
+                        ? 'জীবনব্যাপী শিক্ষা নিশ্চিতকরণ এবং তরুণ প্রজন্মের কর্মসংস্থান ও উদ্যোক্তা দক্ষতায় অবদান রাখতে এসডিজি-৪ মানদণ্ড বাস্তবায়ন।'
+                        : 'Dedicated to UN Sustainable Development Goal 4: Substantially increasing the percentage of skilled youth and adults ready for entrepreneurship and global careers.',
+                      badge: 'UN SDG-4 Quality Education',
+                    },
+                  ],
+                },
+                {
+                  category: isBangla ? 'পেশাদার ও জাতীয় শিল্প সমিতি' : 'Professional & Industry Associations',
+                  icon: 'briefcase-outline',
+                  color: '#8B5CF6',
+                  items: [
+                    {
+                      name: 'ICMAB (Cost & Management Accountants)',
+                      role: isBangla ? 'প্রফেশনাল ফিন্যান্স স্কিলিং পার্টনার' : 'Professional Finance Skilling Partner',
+                      scope: isBangla
+                        ? 'পেশাদার একাউন্ট্যান্টদের জন্য কৃত্রিম বুদ্ধিমত্তা (AI) ও প্রেডিক্টিভ বিজনেস অ্যানালিটিক্স কর্মশালা পরিচালনা।'
+                        : 'Joint webinars and masterclasses equipping professional cost & management accountants with applied AI in corporate finance.',
+                      badge: 'Chartered Professional Body',
+                    },
+                    {
+                      name: 'BASIS (Software & Information Services)',
+                      role: isBangla ? 'আইটি ইন্ডাস্ট্রি লিংকেজ ও সফটএক্সপো' : 'BASIS SoftExpo & Committee Partner',
+                      scope: isBangla
+                        ? 'জাতীয় সফটএক্সপোতে সক্রিয় অংশগ্রহণ, আইটি কমিটির প্রতিনিধিত্ব এবং সফটওয়্যার ইন্ডাস্ট্রির স্কিলস গ্যাপ দূরীকরণে কাজ।'
+                        : 'Engaged with BASIS SoftExpo and standing committees to connect software talent with tech employer demands.',
+                      badge: 'Apex IT Industry Body',
+                    },
+                  ],
+                },
+              ].map((group, groupIdx) => (
+                <View key={groupIdx} style={styles.partnerGroupBlock}>
+                  <View style={styles.partnerGroupHeader}>
+                    <Ionicons name={group.icon as any} size={18} color={group.color} />
+                    <Text style={[styles.partnerGroupTitle, { color: colors.text }]}>{group.category}</Text>
+                  </View>
+
+                  {group.items.map((item, itemIdx) => (
+                    <View
+                      key={itemIdx}
+                      style={[
+                        styles.partnerCard,
+                        {
+                          backgroundColor: colors.surfaceCard,
+                          borderColor: colors.border,
+                        },
+                      ]}
+                    >
+                      <View style={styles.partnerCardTop}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={[styles.partnerOrgName, { color: colors.text }]}>{item.name}</Text>
+                          <Text style={[styles.partnerOrgRole, { color: colors.primary }]}>{item.role}</Text>
+                        </View>
+                        <View style={[styles.partnerBadgeTag, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#F1F5F9' }]}>
+                          <Ionicons name="checkmark-circle" size={13} color="#10B981" />
+                          <Text style={[styles.partnerBadgeTagText, { color: colors.textMuted }]}>{item.badge}</Text>
+                        </View>
+                      </View>
+                      <Text style={[styles.partnerOrgScope, { color: colors.textMuted }]}>{item.scope}</Text>
+                    </View>
+                  ))}
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* TAB 4: NATIONAL SUMMITS */}
           {activeTab === 'summits' && (
             <View style={styles.sectionContainer}>
               <Text style={[styles.subheading, { color: colors.textMuted }]}>
@@ -371,60 +544,174 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
             </View>
           )}
 
-          {/* TAB 4: LEADERSHIP */}
+          {/* TAB 4: LEADERSHIP & FOUNDERS */}
           {activeTab === 'leadership' && (
             <View style={styles.sectionContainer}>
+              <View style={[styles.verifiedHeaderBanner, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.12)' : '#ECFDF5', borderColor: '#10B981' }]}>
+                <Ionicons name="shield-checkmark" size={18} color="#10B981" />
+                <Text style={[styles.verifiedHeaderText, { color: isDark ? '#34D399' : '#065F46' }]}>
+                  {isBangla
+                    ? 'অফিসিয়াল পোর্টাল (thrivingskill.com) থেকে ভেরিফাইড পরিচালনা পর্ষদ ও ফাউন্ডার্স'
+                    : 'Official Verified Leadership & Founders from thrivingskill.com'}
+                </Text>
+              </View>
+
               <Text style={[styles.subheading, { color: colors.textMuted }]}>
-                {isBangla ? 'থ্রাইভিং স্কিলস লিমিটেডের নির্বাহী পরিচালনা পর্ষদ:' : 'Executive Leadership & Board of Directors:'}
+                {isBangla ? 'থ্রাইভিং স্কিলস লিমিটেডের প্রতিষ্ঠাতা ও পরিচালনা পর্ষদ:' : 'Executive Leadership & Board of Directors:'}
               </Text>
 
               {[
                 {
                   name: 'Md. Abdullah Al Mahmud',
-                  title: 'Chief Executive Officer (CEO) & Co-Founder',
-                  desc: 'Visionary edtech entrepreneur committed to human potential development and bridging industry-academia skills gaps across Bangladesh.',
-                  avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
+                  title: isBangla ? 'প্রতিষ্ঠাতা ও প্রধান নির্বাহী কর্মকর্তা (সিইও)' : 'Founder & Chief Executive Officer (CEO)',
+                  badge: isBangla ? 'প্রতিষ্ঠাতা ও সিইও' : 'Founder & CEO',
+                  isFounder: true,
+                  desc: isBangla
+                    ? 'থ্রাইভিং স্কিলসের মূল প্রতিষ্ঠাতা ও স্বপ্নদ্রষ্টা। বাংলাদেশের কর্মক্ষম তরুণদের চতুর্থ শিল্প বিপ্লব (4IR) ও এআই যুগের জন্য দক্ষ করতে নিবেদিতপ্রাণ এডটেক উদ্যোক্তা।'
+                    : 'Visionary founder & CEO spearheading 21st-century human potential development, 4IR skills readiness, and bridging industry-academia gaps across Bangladesh.',
+                  localAvatar: FOUNDER_IMAGES.abdullah_al_mahmud,
+                  webAvatar: 'https://thrivingskill.com/wp-content/uploads/2015/11/About-us.jpeg',
+                  profileUrl: 'https://thrivingskill.com/our_team/abdullah_al_mahmud/',
+                  linkedin: 'https://www.linkedin.com/in/md-abdullah-al-mahmud/',
                 },
                 {
                   name: 'Syed Nuruddin Ahmed',
-                  title: 'Director & Strategic Advisor',
-                  desc: 'Senior corporate governance leader, institutional strategist, and advocate for sustainable workforce development.',
-                  avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&auto=format&fit=crop&q=80',
+                  title: isBangla ? 'প্রতিষ্ঠাতা ও চেয়ারম্যান' : 'Founder & Chairman',
+                  badge: isBangla ? 'প্রতিষ্ঠাতা ও চেয়ারম্যান' : 'Founder & Chairman',
+                  isFounder: true,
+                  desc: isBangla
+                    ? 'কর্পোরেট সুশাসন, প্রাতিষ্ঠানিক কৌশল ও জাতীয় মানবসম্পদ উন্নয়নে নিবেদিতপ্রাণ দূরদর্শী উদ্যোক্তা ও প্রতিষ্ঠাতা চেয়ারম্যান।'
+                    : 'Senior corporate governance leader, institutional strategist, and founder advocating for sustainable lifelong learning ecosystems and workforce empowerment.',
+                  localAvatar: FOUNDER_IMAGES.syed_nuruddin_ahmed,
+                  webAvatar: 'https://thrivingskill.com/wp-content/uploads/2015/11/WhatsApp-Image-2020-10-28-at-2.09.53-PM.jpeg',
+                  profileUrl: 'https://thrivingskill.com/our_team/syed_nuruddin_ahmed/',
+                  linkedin: undefined,
                 },
                 {
                   name: 'Yusuf Iqbal',
-                  title: 'Director, Operations & Partnerships',
-                  desc: 'Leading strategic alliances with national universities, chambers of commerce, and multilateral organizations.',
-                  avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&auto=format&fit=crop&q=80',
-                },
-                {
-                  name: 'Sayed Sirajul Islam',
-                  title: 'Director, Digital Learning Technologies',
-                  desc: 'Spearheading LMS platform infrastructure, enterprise digital systems, and scalable cloud architectures.',
-                  avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=300&auto=format&fit=crop&q=80',
+                  title: isBangla ? 'কর্পোরেট একাউন্ট্যান্ট ও অপারেশনস' : 'Corporate Accountant & Operations',
+                  badge: 'Finance & Operations',
+                  isFounder: false,
+                  desc: isBangla
+                    ? 'প্রাতিষ্ঠানিক আর্থিক পরিকল্পনা, প্রাতিষ্ঠানিক অডিট, বাণিজ্য সংগঠন ও জাতীয় বিশ্ববিদ্যালয় পার্টনারশিপ সমন্বয়কারী।'
+                    : 'Leading institutional fiscal planning, university alliances, chambers of commerce partnerships, and operational financial compliance.',
+                  localAvatar: FOUNDER_IMAGES.yusuf_iqbal,
+                  webAvatar: 'https://thrivingskill.com/wp-content/uploads/2023/06/Yusuf-Iqbal.jpeg',
+                  profileUrl: 'https://thrivingskill.com/our_team/yusuf-iqbal/',
+                  linkedin: undefined,
                 },
                 {
                   name: 'Md. Tareq Siddiqui',
-                  title: 'Head of Strategic Communications',
-                  desc: 'Driving national skills initiatives, media relations, and high-impact corporate ecosystem outreach.',
-                  avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=300&auto=format&fit=crop&q=80',
+                  title: isBangla ? 'সিনিয়র এক্সিকিউটিভ, প্রোডাকশন' : 'Senior Executive, Production & Content Strategy',
+                  badge: 'Production & Media',
+                  isFounder: false,
+                  desc: isBangla
+                    ? 'ডিজিটাল লার্নিং কন্টেন্ট প্রোডাকশন, স্টুডিও ফ্যাসিলিটেশন এবং ন্যাশনাল স্কিলস সামিটের স্ট্র্যাটেজিক যোগাযোগ সমন্বয়ক।'
+                    : 'Driving multimedia instructional production, national skills summits communications, and enterprise video learning experiences.',
+                  localAvatar: FOUNDER_IMAGES.tareq_siddiqui,
+                  webAvatar: 'https://thrivingskill.com/wp-content/uploads/2023/06/file.jpeg',
+                  profileUrl: 'https://thrivingskill.com/our_team/md-tareq-siddiqui-2/',
+                  linkedin: undefined,
                 },
                 {
                   name: 'Md: Abdulla Al Noman',
-                  title: 'Head of Learning Operations',
-                  desc: 'Managing 300+ course curriculums, certified instructor cohorts, and enterprise learner satisfaction.',
-                  avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=300&auto=format&fit=crop&q=80',
+                  title: isBangla ? 'ওয়েব ডেভেলপার ও প্ল্যাটফর্ম অ্যাডমিনিস্ট্রেটর' : 'Web Developer & Platform Administrator',
+                  badge: 'Platform Engineering',
+                  isFounder: false,
+                  desc: isBangla
+                    ? 'থ্রাইভিং স্কিলসের মূল এলএমএস আর্কিটেকচার, ওয়েব পোর্টাল সিকিউরিটি এবং এন্টারপ্রাইজ ডিজিটাল লার্নিং ক্লাউড পরিচালনা।'
+                    : 'Architecting core LMS infrastructure, enterprise learner portals, web performance optimization, and cybersecurity.',
+                  localAvatar: FOUNDER_IMAGES.abdulla_al_noman,
+                  webAvatar: 'https://thrivingskill.com/wp-content/uploads/2023/06/nOMAN.jpeg',
+                  profileUrl: 'https://thrivingskill.com/our_team/md-abdulla-al-noman/',
+                  linkedin: 'http://linkedin.com/in/abdulla-al-noman-3076b4182/',
                 },
               ].map((leader, idx) => (
                 <View
                   key={idx}
-                  style={[styles.leaderCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
+                  style={[
+                    styles.leaderCard,
+                    {
+                      backgroundColor: colors.surfaceCard,
+                      borderColor: leader.isFounder ? (isDark ? '#F59E0B66' : '#FDE68A') : colors.border,
+                      borderWidth: leader.isFounder ? 1.5 : 1,
+                    },
+                  ]}
                 >
-                  <Image source={{ uri: leader.avatar }} style={styles.leaderAvatar} />
+                  <View style={styles.leaderAvatarContainer}>
+                    <Image
+                      source={leader.localAvatar || { uri: leader.webAvatar }}
+                      style={styles.leaderAvatar}
+                      resizeMode="cover"
+                    />
+                    {leader.isFounder ? (
+                      <View style={styles.founderStarBadge}>
+                        <Ionicons name="star" size={10} color="#FFFFFF" />
+                      </View>
+                    ) : (
+                      <View style={styles.verifiedCheckDot}>
+                        <Ionicons name="checkmark" size={9} color="#FFFFFF" />
+                      </View>
+                    )}
+                  </View>
+
                   <View style={{ flex: 1, marginLeft: 12 }}>
-                    <Text style={[styles.leaderName, { color: colors.text }]}>{leader.name}</Text>
+                    <View style={styles.leaderHeaderLine}>
+                      <Text style={[styles.leaderName, { color: colors.text }]}>{leader.name}</Text>
+                      {leader.badge && (
+                        <View
+                          style={[
+                            styles.leaderBadgePill,
+                            {
+                              backgroundColor: leader.isFounder
+                                ? (isDark ? '#78350F' : '#FEF3C7')
+                                : (isDark ? '#064E3B' : '#E0F2FE'),
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.leaderBadgePillText,
+                              {
+                                color: leader.isFounder ? (isDark ? '#FCD34D' : '#92400E') : (isDark ? '#6EE7B7' : '#0369A1'),
+                              },
+                            ]}
+                          >
+                            {leader.badge}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+
                     <Text style={[styles.leaderTitle, { color: colors.primary }]}>{leader.title}</Text>
                     <Text style={[styles.leaderDesc, { color: colors.textMuted }]}>{leader.desc}</Text>
+
+                    {/* Official Verification Links */}
+                    <View style={styles.leaderActionsRow}>
+                      {leader.profileUrl && (
+                        <TouchableOpacity
+                          style={[styles.leaderMiniBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#F1F5F9' }]}
+                          onPress={() => handleOpenUrl(leader.profileUrl)}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons name="globe-outline" size={12} color={colors.primary} />
+                          <Text style={[styles.leaderMiniBtnText, { color: colors.primary }]}>
+                            {isBangla ? 'অফিসিয়াল প্রোফাইল' : 'Official Bio'}
+                          </Text>
+                          <Ionicons name="open-outline" size={10} color={colors.primary} />
+                        </TouchableOpacity>
+                      )}
+                      {leader.linkedin && (
+                        <TouchableOpacity
+                          style={[styles.leaderMiniBtn, { backgroundColor: isDark ? 'rgba(10, 102, 194, 0.15)' : '#EFF6FF' }]}
+                          onPress={() => handleOpenUrl(leader.linkedin)}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons name="logo-linkedin" size={12} color="#0A66C2" />
+                          <Text style={[styles.leaderMiniBtnText, { color: '#0A66C2' }]}>LinkedIn</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
                   </View>
                 </View>
               ))}
@@ -547,10 +834,76 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                   </TouchableOpacity>
                 ))}
               </View>
+
+              {/* LEGAL & COPYRIGHT POLICIES */}
+              <View style={[styles.legalAccessCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+                <View style={styles.legalAccessHeader}>
+                  <Ionicons name="shield-checkmark" size={18} color={colors.primary} />
+                  <Text style={[styles.legalAccessTitle, { color: colors.text }]}>
+                    {isBangla ? 'আইনি নীতিমালা ও সর্বস্বত্ব' : 'Legal Policies & Rights'}
+                  </Text>
+                </View>
+                <Text style={[styles.legalAccessDesc, { color: colors.textMuted }]}>
+                  {isBangla
+                    ? 'থ্রাইভিং স্কিলস লিমিটেডের প্রাতিষ্ঠানিক শর্তাবলী ও ডাটা সুরক্ষা নীতিমালা পর্যালোচনা করুন।'
+                    : 'Review official terms of enrollment, platform intellectual property, and learner privacy safeguards.'}
+                </Text>
+                <View style={styles.legalActionRow}>
+                  <TouchableOpacity
+                    style={[styles.legalBtn, { borderColor: colors.primary }]}
+                    onPress={() => {
+                      setLegalInitialTab('terms');
+                      setLegalModalVisible(true);
+                    }}
+                  >
+                    <Ionicons name="document-text-outline" size={14} color={colors.primary} />
+                    <Text style={[styles.legalBtnText, { color: colors.primary }]}>
+                      {isBangla ? 'শর্তাবলী' : 'Terms of Use'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.legalBtn, { borderColor: colors.secondary }]}
+                    onPress={() => {
+                      setLegalInitialTab('privacy_en');
+                      setLegalModalVisible(true);
+                    }}
+                  >
+                    <Ionicons name="lock-closed-outline" size={14} color={colors.secondary} />
+                    <Text style={[styles.legalBtnText, { color: colors.secondary }]}>Privacy Policy</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.legalBtn, { borderColor: '#8B5CF6' }]}
+                    onPress={() => {
+                      setLegalInitialTab('privacy_bn');
+                      setLegalModalVisible(true);
+                    }}
+                  >
+                    <Ionicons name="book-outline" size={14} color="#8B5CF6" />
+                    <Text style={[styles.legalBtnText, { color: '#8B5CF6' }]}>গোপনীয়তা (বাংলা)</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* ALL RIGHTS RESERVED FOOTER NOTICE */}
+              <View style={styles.copyrightBlock}>
+                <Ionicons name="ribbon" size={16} color="#F59E0B" />
+                <Text style={[styles.copyrightNoticeText, { color: colors.textMuted }]}>
+                  © 2026 Thriving Skills Limited. All Rights Reserved.{'\n'}
+                  Registered under Companies Act of Bangladesh • Gulshan-2, Dhaka
+                </Text>
+              </View>
             </View>
           )}
         </ScrollView>
       </View>
+
+      <LegalPolicyModal
+        visible={legalModalVisible}
+        onClose={() => setLegalModalVisible(false)}
+        initialTab={legalInitialTab}
+      />
     </Modal>
   );
 };
@@ -751,31 +1104,113 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 17,
   },
+  verifiedHeaderBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 10,
+    borderWidth: 1,
+    gap: 8,
+    marginBottom: 6,
+  },
+  verifiedHeaderText: {
+    fontSize: 12,
+    fontWeight: '700',
+    flex: 1,
+  },
   leaderCard: {
     flexDirection: 'row',
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    alignItems: 'center',
+    padding: 13,
+    borderRadius: 14,
+    alignItems: 'flex-start',
+    gap: 2,
+  },
+  leaderAvatarContainer: {
+    position: 'relative',
+    marginTop: 2,
   },
   leaderAvatar: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#E2E8F0',
+  },
+  founderStarBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#F59E0B',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+  },
+  verifiedCheckDot: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 17,
+    height: 17,
+    borderRadius: 8.5,
+    backgroundColor: '#10B981',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+  },
+  leaderHeaderLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    flexWrap: 'wrap',
   },
   leaderName: {
-    fontSize: 14,
+    fontSize: 14.5,
     fontWeight: '800',
   },
+  leaderBadgePill: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  leaderBadgePillText: {
+    fontSize: 9.5,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
   leaderTitle: {
-    fontSize: 11,
+    fontSize: 11.5,
     fontWeight: '700',
-    marginTop: 1,
+    marginTop: 2,
   },
   leaderDesc: {
+    fontSize: 11.5,
+    lineHeight: 16,
+    marginTop: 4,
+  },
+  leaderActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 8,
+    flexWrap: 'wrap',
+  },
+  leaderMiniBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    gap: 4,
+  },
+  leaderMiniBtnText: {
     fontSize: 11,
-    lineHeight: 15,
-    marginTop: 3,
+    fontWeight: '700',
   },
   contactCard: {
     padding: 14,
@@ -829,5 +1264,113 @@ const styles = StyleSheet.create({
   socialName: {
     fontSize: 12,
     fontWeight: '700',
+  },
+  partnerGroupBlock: {
+    gap: 8,
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  partnerGroupHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 6,
+    marginBottom: 2,
+  },
+  partnerGroupTitle: {
+    fontSize: 13.5,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  partnerCard: {
+    padding: 13,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 6,
+  },
+  partnerCardTop: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  partnerOrgName: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  partnerOrgRole: {
+    fontSize: 11,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  partnerBadgeTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  partnerBadgeTagText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  partnerOrgScope: {
+    fontSize: 11.5,
+    lineHeight: 16,
+  },
+  legalAccessCard: {
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 8,
+    marginTop: 14,
+  },
+  legalAccessHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  legalAccessTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  legalAccessDesc: {
+    fontSize: 11.5,
+    lineHeight: 16,
+  },
+  legalActionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 4,
+  },
+  legalBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  legalBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  copyrightBlock: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    justifyContent: 'center',
+    marginTop: 6,
+  },
+  copyrightNoticeText: {
+    fontSize: 11,
+    lineHeight: 16,
+    textAlign: 'center',
   },
 });

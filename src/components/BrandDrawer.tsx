@@ -17,7 +17,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useSaaS } from '../context/SaaSContext';
 import { useLanguage } from '../context/LanguageContext';
-import { AboutTSLModal } from './AboutTSLModal';
+import { AboutTSLModal, AboutTabKey } from './AboutTSLModal';
+import { LegalPolicyModal, LegalTabKey } from './LegalPolicyModal';
 import { RootTab } from '../types';
 
 interface BrandDrawerProps {
@@ -47,6 +48,9 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
   const { language, setLanguage, isBangla } = useLanguage();
   const insets = useSafeAreaInsets();
   const [aboutModalVisible, setAboutModalVisible] = useState(false);
+  const [aboutInitialTab, setAboutInitialTab] = useState<AboutTabKey>('overview');
+  const [legalModalVisible, setLegalModalVisible] = useState(false);
+  const [legalInitialTab, setLegalInitialTab] = useState<LegalTabKey>('terms');
 
   const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
 
@@ -321,20 +325,107 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
             {/* Section 3: Official Links & Contact */}
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>ABOUT & SUPPORT</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>ABOUT & GOVERNANCE</Text>
 
             <TouchableOpacity
               style={styles.actionRow}
-              onPress={() => setAboutModalVisible(true)}
+              onPress={() => {
+                setAboutInitialTab('overview');
+                setAboutModalVisible(true);
+              }}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
                 <Text style={[styles.actionLabel, { color: colors.text }]}>About Thriving Skills (TSL)</Text>
               </View>
               <View style={[styles.pillState, { backgroundColor: colors.surfaceSubtle }]}>
-                <Text style={[styles.pillStateText, { color: colors.primary }]}>Pillars & Team</Text>
+                <Text style={[styles.pillStateText, { color: colors.primary }]}>Overview</Text>
               </View>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={() => {
+                setAboutInitialTab('leadership');
+                setAboutModalVisible(true);
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Ionicons name="people-outline" size={18} color="#F59E0B" />
+                <Text style={[styles.actionLabel, { color: colors.text }]}>Founders & Leadership</Text>
+              </View>
+              <View style={[styles.pillState, { backgroundColor: 'rgba(245, 158, 11, 0.12)' }]}>
+                <Text style={[styles.pillStateText, { color: '#F59E0B' }]}>Exec Board</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={() => {
+                setAboutInitialTab('partners');
+                setAboutModalVisible(true);
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Ionicons name="shield-checkmark-outline" size={18} color="#10B981" />
+                <Text style={[styles.actionLabel, { color: colors.text }]}>Trusted Partners & MoUs</Text>
+              </View>
+              <View style={[styles.pillState, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
+                <Text style={[styles.pillStateText, { color: '#10B981' }]}>Govt & Universities</Text>
+              </View>
+            </TouchableOpacity>
+
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+            {/* Section 4: Legal & Policies */}
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>LEGAL & POLICIES</Text>
+
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={() => {
+                setLegalInitialTab('terms');
+                setLegalModalVisible(true);
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Ionicons name="document-text-outline" size={18} color={colors.textMuted} />
+                <Text style={[styles.actionLabel, { color: colors.text }]}>Terms & Conditions</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={() => {
+                setLegalInitialTab('privacy_en');
+                setLegalModalVisible(true);
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Ionicons name="shield-outline" size={18} color={colors.textMuted} />
+                <Text style={[styles.actionLabel, { color: colors.text }]}>Privacy Policy (English)</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={() => {
+                setLegalInitialTab('privacy_bn');
+                setLegalModalVisible(true);
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Ionicons name="language-outline" size={18} color={colors.primary} />
+                <Text style={[styles.actionLabel, { color: colors.primary }]}>গোপনীয়তা নীতি (বাংলা)</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={14} color={colors.primary} />
+            </TouchableOpacity>
+
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+            {/* Section 5: Support */}
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>SUPPORT & CONTACT</Text>
 
             <TouchableOpacity style={styles.actionRow} onPress={handleCallHelpline}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -359,7 +450,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               Thriving Skills Limited • Dhaka, BD
             </Text>
             <Text style={[styles.footerSub, { color: colors.textMuted }]}>
-              SDG-4 Quality Education & Future of Work
+              © 2026 All Rights Reserved • SDG-4
             </Text>
           </View>
         </Animated.View>
@@ -368,10 +459,17 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
       <AboutTSLModal
         visible={aboutModalVisible}
         onClose={() => setAboutModalVisible(false)}
+        initialTab={aboutInitialTab}
         onNavigateTab={(tab) => {
           setAboutModalVisible(false);
           handleNav(() => onNavigateTab(tab));
         }}
+      />
+
+      <LegalPolicyModal
+        visible={legalModalVisible}
+        onClose={() => setLegalModalVisible(false)}
+        initialTab={legalInitialTab}
       />
     </Modal>
   );

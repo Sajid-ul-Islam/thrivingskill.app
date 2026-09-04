@@ -19,7 +19,8 @@ import { useLanguage } from '../context/LanguageContext';
 import { useGamification } from '../context/GamificationContext';
 import { Header } from '../components/Header';
 import { AppUpdateModal } from '../components/AppUpdateModal';
-import { AboutTSLModal } from '../components/AboutTSLModal';
+import { AboutTSLModal, AboutTabKey } from '../components/AboutTSLModal';
+import { LegalPolicyModal, LegalTabKey } from '../components/LegalPolicyModal';
 
 interface ProfileScreenProps {
   onOpenCorporateModal: () => void;
@@ -42,6 +43,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [biometricEnabled, setBiometricEnabled] = useState(true);
   const [updateModalVisible, setUpdateModalVisible] = useState(false);
   const [aboutModalVisible, setAboutModalVisible] = useState(false);
+  const [aboutInitialTab, setAboutInitialTab] = useState<AboutTabKey>('overview');
+  const [legalModalVisible, setLegalModalVisible] = useState(false);
+  const [legalInitialTab, setLegalInitialTab] = useState<LegalTabKey>('terms');
   const { userProgress, certificates } = useLearning();
   const { user, isAuthenticated, logout, setAuthModalVisible } = useAuth();
   const {
@@ -432,14 +436,73 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.settingRow}
-              onPress={() => setAboutModalVisible(true)}
+              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
+              onPress={() => {
+                setAboutInitialTab('overview');
+                setAboutModalVisible(true);
+              }}
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
                 <Text style={[styles.settingLabel, { color: colors.text }]}>About Thriving Skills (TSL)</Text>
               </View>
-              <Text style={[styles.versionText, { color: colors.primary, fontWeight: '600' }]}>Pillars & Team →</Text>
+              <Text style={[styles.versionText, { color: colors.primary, fontWeight: '600' }]}>Vision & Values →</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
+              onPress={() => {
+                setAboutInitialTab('leadership');
+                setAboutModalVisible(true);
+              }}
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="people-outline" size={20} color="#F59E0B" />
+                <Text style={[styles.settingLabel, { color: colors.text }]}>Founders & Leadership</Text>
+              </View>
+              <Text style={[styles.versionText, { color: '#F59E0B', fontWeight: '600' }]}>Exec Board →</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
+              onPress={() => {
+                setAboutInitialTab('partners');
+                setAboutModalVisible(true);
+              }}
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="shield-checkmark-outline" size={20} color="#10B981" />
+                <Text style={[styles.settingLabel, { color: colors.text }]}>Trusted Partners & MoUs</Text>
+              </View>
+              <Text style={[styles.versionText, { color: '#10B981', fontWeight: '600' }]}>Universities & a2i →</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
+              onPress={() => {
+                setLegalInitialTab('terms');
+                setLegalModalVisible(true);
+              }}
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="document-text-outline" size={20} color={colors.textMuted} />
+                <Text style={[styles.settingLabel, { color: colors.text }]}>Terms & Conditions</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.settingRow}
+              onPress={() => {
+                setLegalInitialTab('privacy_en');
+                setLegalModalVisible(true);
+              }}
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="shield-outline" size={20} color={colors.textMuted} />
+                <Text style={[styles.settingLabel, { color: colors.text }]}>Privacy Policy (EN / বাংলা)</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
             </TouchableOpacity>
 
             {/* Auth Action Row */}
@@ -476,13 +539,31 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             )}
           </View>
         </View>
+
+        {/* All Rights Reserved Enterprise Footer */}
+        <View style={{ alignItems: 'center', marginTop: 24, marginBottom: 12, paddingHorizontal: 20 }}>
+          <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textMuted, textAlign: 'center' }}>
+            © 2026 Thriving Skills Limited (TSL). All Rights Reserved.
+          </Text>
+          <Text style={{ fontSize: 10, color: colors.textMuted, textAlign: 'center', marginTop: 3 }}>
+            Gulshan-2, Dhaka • RJSC Registered • SDG-4 Quality Education
+          </Text>
+        </View>
       </ScrollView>
 
       {/* About TSL Modal */}
       <AboutTSLModal
         visible={aboutModalVisible}
         onClose={() => setAboutModalVisible(false)}
+        initialTab={aboutInitialTab}
         onNavigateTab={onNavigateTab}
+      />
+
+      {/* Legal & Policy Modal */}
+      <LegalPolicyModal
+        visible={legalModalVisible}
+        onClose={() => setLegalModalVisible(false)}
+        initialTab={legalInitialTab}
       />
 
       {/* In-App OTA Update Modal */}
