@@ -21,6 +21,7 @@ import { WorkshopsScreen } from './src/screens/WorkshopsScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { CourseDetailScreen } from './src/screens/CourseDetailScreen';
 import { LessonPlayerScreen } from './src/screens/LessonPlayerScreen';
+import { YouTubeVideosScreen } from './src/screens/YouTubeVideosScreen';
 
 import { SubscriptionModal } from './src/components/SubscriptionModal';
 import { NotificationModal } from './src/components/NotificationModal';
@@ -110,6 +111,8 @@ const MainAppContent: React.FC = () => {
             onBack={navigateBackToTabs}
             onSelectLesson={navigateToLesson}
           />
+        ) : activeScreen.name === 'YouTubeVideos' ? (
+          <YouTubeVideosScreen onBack={navigateBackToTabs} />
         ) : (
           <>
             {activeTab === 'Home' && (
@@ -121,6 +124,7 @@ const MainAppContent: React.FC = () => {
                 onOpenSubscription={() => setSubscriptionModalVisible(true)}
                 onOpenNotifications={() => setNotificationModalVisible(true)}
                 onOpenAssessment={() => setAssessmentModalVisible(true)}
+                onOpenYouTube={() => setActiveScreen({ name: 'YouTubeVideos' })}
               />
             )}
             {activeTab === 'Courses' && (

@@ -14,6 +14,7 @@ interface HeaderProps {
   rightAction?: React.ReactNode;
   onOpenSubscription?: () => void;
   onOpenNotifications?: () => void;
+  onOpenYouTube?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -25,6 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
   rightAction,
   onOpenSubscription,
   onOpenNotifications,
+  onOpenYouTube,
 }) => {
   const { colors, toggleTheme, isDark } = useTheme();
   const { language, toggleLanguage } = useLanguage();
@@ -125,6 +127,18 @@ export const Header: React.FC<HeaderProps> = ({
 
       <View style={styles.rightRow}>
         {rightAction}
+
+        {/* YouTube Channel Button */}
+        {onOpenYouTube && (
+          <TouchableOpacity
+            style={[styles.iconButton, { backgroundColor: 'rgba(255, 0, 0, 0.08)' }]}
+            onPress={onOpenYouTube}
+            activeOpacity={0.7}
+            accessibilityLabel="YouTube Channel Videos"
+          >
+            <Ionicons name="logo-youtube" size={18} color="#FF0000" />
+          </TouchableOpacity>
+        )}
 
         {/* Notifications Bell with Unread Badge */}
         {onOpenNotifications && (

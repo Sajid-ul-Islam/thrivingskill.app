@@ -1,0 +1,492 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Modal,
+  TouchableOpacity,
+  ScrollView,
+  Platform,
+  Linking,
+  Share,
+  Dimensions,
+  Image,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { WebView } from 'react-native-webview';
+import { useTheme } from '../context/ThemeContext';
+import { YouTubeVideo, YOUTUBE_CHANNEL, YOUTUBE_VIDEOS } from '../data/youtubeVideos';
+
+interface YouTubePlayerModalProps {
+  visible: boolean;
+  video: YouTubeVideo | null;
+  onClose: () => void;
+  onSelectVideo?: (video: YouTubeVideo) => void;
+}
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
+  visible,
+  video,
+  onClose,
+  onSelectVideo,
+}) => {
+  const { colors, isDark } = useTheme();
+  const [currentVideo, setCurrentVideo] = useState<YouTubeVideo | null>(video);
+
+  // Sync state if prop changes
+  React.useEffect(() => {
+    if (video) {
+      setCurrentVideo(video);
+    }
+  }, [video]);
+
+  if (!currentVideo) {
+    return null;
+  }
+
+  const handleShare = async () => {
+    try {
+      await Share.share({
+        title: currentVideo.title,
+        message: `${currentVideo.title}\n\nWatch on Thriving Skills YouTube: ${currentVideo.url}`,
+        url: currentVideo.url,
+      });
+    } catch {
+      // Ignored
+    }
+  };
+
+  const handleOpenYouTube = () => {
+    Linking.openURL(currentVideo.url);
+  };
+
+  const handleOpenChannel = () => {
+    Linking.openURL(YOUTUBE_CHANNEL.url);
+  };
+
+  const handleSelectRelated = (v: YouTubeVideo) => {
+    setCurrentVideo(v);
+    if (onSelectVideo) {
+      onSelectVideo(v);
+    }
+  };
+
+  const relatedVideos = YOUTUBE_VIDEOS.filter((v) => v.id !== currentVideo.id);
+
+  // Embedded player URL with parameters for clean mobile playback
+  const embedUrl = `https://www.youtube-nocookie.com/embed/${currentVideo.id}?autoplay=1&playsinline=1&rel=0&modestbranding=1&controls=1`;
+
+  // HTML embed string for WebView
+  const embedHtml = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          html, body { width: 100%; height: 100%; background-color: #000; overflow: hidden; }
+          .video-container { position: relative; width: 100%; height: 100%; }
+          iframe { width: 100%; height: 100%; border: none; }
+        </style>
+      </head>
+      <body>
+        <div class="video-container">
+          <iframe
+            src="${embedUrl}"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen>
+          </iframe>
+        </div>
+      </body>
+    </html>
+  `;
+
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        {/* Header Bar */}
+        <View style={[styles.header, { borderBottomColor: colors.border, backgroundColor: colors.surface }]}>
+          <View style={styles.headerLeft}>
+            <View style={styles.ytBadge}>
+              <Ionicons name="logo-youtube" size={18} color="#FF0000" />
+              <Text style={styles.ytBadgeText}>YouTube Player</Text>
+            </View>
+          </View>
+          <TouchableOpacity
+            style={[styles.closeBtn, { backgroundColor: isDark ? '#333' : '#E5E7EB' }]}
+            onPress={onClose}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Ionicons name="close" size={20} color={colors.text} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Player Section (16:9 aspect ratio) */}
+        <View style={styles.playerContainer}>
+          {Platform.OS === 'web' ? (
+            // On web render native iframe
+            <iframe
+              src={embedUrl}
+              style={{ width: '100%', height: '100%', border: 'none' }}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          ) : (
+            // On iOS/Android render WebView
+            <WebView
+              key={currentVideo.id}
+              source={{ html: embedHtml, baseUrl: 'https://www.youtube.com' }}
+              style={styles.webView}
+              javaScriptEnabled
+              domStorageEnabled
+              allowsFullscreenVideo
+              mediaPlaybackRequiresUserAction={false}
+              allowsInlineMediaPlayback
+              scalesPageToFit
+              originWhitelist={['*']}
+            />
+          )}
+        </View>
+
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          {/* Video Metadata */}
+          <View style={[styles.metaCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <Text style={[styles.videoTitle, { color: colors.text }]}>{currentVideo.title}</Text>
+
+            <View style={styles.statsRow}>
+              {currentVideo.duration ? (
+                <View style={styles.statBadge}>
+                  <Ionicons name="time-outline" size={13} color={colors.textMuted} />
+                  <Text style={[styles.statText, { color: colors.textMuted }]}>{currentVideo.duration}</Text>
+                </View>
+              ) : null}
+
+              {currentVideo.views ? (
+                <View style={styles.statBadge}>
+                  <Ionicons name="eye-outline" size={13} color={colors.textMuted} />
+                  <Text style={[styles.statText, { color: colors.textMuted }]}>{currentVideo.views}</Text>
+                </View>
+              ) : null}
+
+              {currentVideo.published ? (
+                <View style={styles.statBadge}>
+                  <Ionicons name="calendar-outline" size={13} color={colors.textMuted} />
+                  <Text style={[styles.statText, { color: colors.textMuted }]}>{currentVideo.published}</Text>
+                </View>
+              ) : null}
+            </View>
+
+            {/* Action Buttons Row */}
+            <View style={styles.actionRow}>
+              <TouchableOpacity style={styles.openYouTubeBtn} onPress={handleOpenYouTube}>
+                <Ionicons name="logo-youtube" size={16} color="#FFFFFF" />
+                <Text style={styles.openYouTubeText}>Open in YouTube</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.shareBtn, { borderColor: colors.border, backgroundColor: colors.background }]}
+                onPress={handleShare}
+              >
+                <Ionicons name="share-social-outline" size={16} color={colors.text} />
+                <Text style={[styles.shareBtnText, { color: colors.text }]}>Share</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Channel Banner */}
+          <TouchableOpacity
+            style={[styles.channelCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            onPress={handleOpenChannel}
+          >
+            <View style={styles.channelAvatar}>
+              <Ionicons name="logo-youtube" size={24} color="#FF0000" />
+            </View>
+            <View style={styles.channelInfo}>
+              <Text style={[styles.channelName, { color: colors.text }]}>{YOUTUBE_CHANNEL.name}</Text>
+              <Text style={[styles.channelHandle, { color: colors.textMuted }]}>{YOUTUBE_CHANNEL.handle}</Text>
+            </View>
+            <View style={styles.subscribeBtn}>
+              <Text style={styles.subscribeText}>Visit Channel</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* More Videos from Channel */}
+          <View style={styles.relatedSection}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>More From @ThrivingSkills</Text>
+              <Text style={[styles.sectionCount, { color: colors.textMuted }]}>
+                {relatedVideos.length} videos
+              </Text>
+            </View>
+
+            {relatedVideos.slice(0, 15).map((rel) => {
+              return (
+                <TouchableOpacity
+                  key={rel.id}
+                  style={[styles.relatedCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                  onPress={() => handleSelectRelated(rel)}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.relatedThumbContainer}>
+                    <Image source={{ uri: rel.thumbnail }} style={styles.relatedThumb} />
+                    {rel.duration ? (
+                      <View style={styles.relatedDurationBadge}>
+                        <Text style={styles.durationBadgeText}>{rel.duration}</Text>
+                      </View>
+                    ) : null}
+                    <View style={styles.playOverlayMini}>
+                      <Ionicons name="play" size={14} color="#FFFFFF" />
+                    </View>
+                  </View>
+
+                  <View style={styles.relatedContent}>
+                    <Text style={[styles.relatedTitle, { color: colors.text }]} numberOfLines={2}>
+                      {rel.title}
+                    </Text>
+                    <View style={styles.relatedMeta}>
+                      {rel.views ? <Text style={[styles.relatedMetaText, { color: colors.textMuted }]}>{rel.views}</Text> : null}
+                      {rel.views && rel.published ? <Text style={[styles.relatedMetaDot, { color: colors.textMuted }]}>•</Text> : null}
+                      {rel.published ? <Text style={[styles.relatedMetaText, { color: colors.textMuted }]}>{rel.published}</Text> : null}
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  ytBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  ytBadgeText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FF0000',
+  },
+  closeBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  playerContainer: {
+    width: SCREEN_WIDTH,
+    height: (SCREEN_WIDTH * 9) / 16,
+    backgroundColor: '#000000',
+  },
+  webView: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  scrollContent: {
+    padding: 16,
+    gap: 16,
+    paddingBottom: 40,
+  },
+  metaCard: {
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  videoTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    lineHeight: 24,
+    marginBottom: 8,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginBottom: 16,
+  },
+  statBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  statText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  openYouTubeBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#FF0000',
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  openYouTubeText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  shareBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  shareBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  channelCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 12,
+  },
+  channelAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 0, 0, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  channelInfo: {
+    flex: 1,
+  },
+  channelName: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  channelHandle: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  subscribeBtn: {
+    backgroundColor: '#102E52',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  subscribeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  relatedSection: {
+    marginTop: 8,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  sectionCount: {
+    fontSize: 12,
+  },
+  relatedCard: {
+    flexDirection: 'row',
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 10,
+    gap: 12,
+  },
+  relatedThumbContainer: {
+    width: 120,
+    height: 68,
+    borderRadius: 8,
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: '#000',
+  },
+  relatedThumb: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  relatedDurationBadge: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  durationBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  playOverlayMini: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -12 }, { translateY: -12 }],
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,0,0,0.85)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  relatedContent: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  relatedTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 18,
+    marginBottom: 4,
+  },
+  relatedMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  relatedMetaText: {
+    fontSize: 11,
+  },
+  relatedMetaDot: {
+    fontSize: 11,
+  },
+});

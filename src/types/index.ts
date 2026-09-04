@@ -289,4 +289,5 @@ export type ActiveScreen =
   | { name: 'LessonPlayer'; courseId: string; lessonId: string }
   | { name: 'CorporateSolutions' }
   | { name: 'CertificateView'; certificateId: string }
-  | { name: 'SkillAssessment' };
+  | { name: 'SkillAssessment' }
+  | { name: 'YouTubeVideos' };

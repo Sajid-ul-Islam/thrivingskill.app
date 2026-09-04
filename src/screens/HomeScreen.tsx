@@ -22,6 +22,9 @@ import { CategoryPills } from '../components/CategoryPills';
 import { CourseCard } from '../components/CourseCard';
 import { SpecialBundleCard } from '../components/SpecialBundleCard';
 import { SummitCard } from '../components/SummitCard';
+import { YouTubeCard } from '../components/YouTubeCard';
+import { YouTubePlayerModal } from '../components/YouTubePlayerModal';
+import { YOUTUBE_VIDEOS, YOUTUBE_CHANNEL, YouTubeVideo } from '../data/youtubeVideos';
 import {
   CORPORATE_CLIENTS,
   SPECIAL_BUNDLES,
@@ -38,6 +41,7 @@ interface HomeScreenProps {
   onOpenSubscription: () => void;
   onOpenNotifications: () => void;
   onOpenAssessment: () => void;
+  onOpenYouTube?: () => void;
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
@@ -48,6 +52,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onOpenSubscription,
   onOpenNotifications,
   onOpenAssessment,
+  onOpenYouTube,
 }) => {
   const { colors, isDark } = useTheme();
   const { t, isBangla } = useLanguage();
@@ -85,11 +90,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     return matchesCategory && matchesSearch;
   });
 
+  const [activeYouTubeVideo, setActiveYouTubeVideo] = React.useState<YouTubeVideo | null>(null);
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
         onOpenSubscription={onOpenSubscription}
         onOpenNotifications={onOpenNotifications}
+        onOpenYouTube={onOpenYouTube}
       />
 
       <ScrollView
@@ -365,6 +373,41 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           ))}
         </View>
 
+        {/* Thriving Skills YouTube Masterclasses */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Ionicons name="logo-youtube" size={20} color="#FF0000" />
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>YouTube Masterclasses</Text>
+              </View>
+              <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
+                Free industry lessons from {YOUTUBE_CHANNEL.handle}
+              </Text>
+            </View>
+            <TouchableOpacity onPress={onOpenYouTube}>
+              <Text style={[styles.seeAllText, { color: '#FF0000', fontWeight: '700' }]}>
+                View All ({YOUTUBE_VIDEOS.length}) →
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 14, paddingRight: 16 }}
+          >
+            {YOUTUBE_VIDEOS.slice(0, 8).map((ytVideo) => (
+              <YouTubeCard
+                key={ytVideo.id}
+                video={ytVideo}
+                width={260}
+                onPress={(v) => setActiveYouTubeVideo(v)}
+              />
+            ))}
+          </ScrollView>
+        </View>
+
         {/* National & Regional Skills Summits */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -557,6 +600,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </View>
         </View>
       </ScrollView>
+
+      {/* Embedded In-App YouTube Player */}
+      <YouTubePlayerModal
+        visible={activeYouTubeVideo !== null}
+        video={activeYouTubeVideo}
+        onClose={() => setActiveYouTubeVideo(null)}
+        onSelectVideo={(v) => setActiveYouTubeVideo(v)}
+      />
     </View>
   );
 };
