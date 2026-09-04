@@ -17,6 +17,7 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useGamification } from '../context/GamificationContext';
 import { Header } from '../components/Header';
+import { AppUpdateModal } from '../components/AppUpdateModal';
 
 interface ProfileScreenProps {
   onOpenCorporateModal: () => void;
@@ -35,6 +36,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const { language, toggleLanguage, isBangla, t } = useLanguage();
   const { badges } = useGamification();
   const [biometricEnabled, setBiometricEnabled] = useState(true);
+  const [updateModalVisible, setUpdateModalVisible] = useState(false);
   const { userProgress, certificates } = useLearning();
   const { user, isAuthenticated, logout, setAuthModalVisible } = useAuth();
   const {
@@ -250,6 +252,29 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               { backgroundColor: colors.surfaceCard, borderColor: colors.border },
             ]}
           >
+            {/* In-App OTA Updates (No APK Rebuild Required) */}
+            <TouchableOpacity
+              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
+              onPress={() => setUpdateModalVisible(true)}
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="cloud-download-outline" size={20} color="#10B981" />
+                <View style={{ marginLeft: 6 }}>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>
+                    {isBangla ? 'ইন-অ্যাপ আপডেট (OTA)' : 'In-App Updates (OTA)'}
+                  </Text>
+                  <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                    {isBangla ? 'APK রি-বিল্ড ছাড়াই নতুন ফিচার পান' : 'Instant updates without rebuilding APK'}
+                  </Text>
+                </View>
+              </View>
+              <View style={[styles.langPill, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
+                <Text style={[styles.langPillText, { color: '#10B981', fontWeight: '800' }]}>
+                  OTA Engine
+                </Text>
+              </View>
+            </TouchableOpacity>
+
             {/* Language Switcher */}
             <TouchableOpacity
               style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
@@ -446,6 +471,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </View>
         </View>
       </ScrollView>
+
+      {/* In-App OTA Update Modal */}
+      <AppUpdateModal
+        visible={updateModalVisible}
+        onClose={() => setUpdateModalVisible(false)}
+      />
     </View>
   );
 };

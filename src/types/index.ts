@@ -313,3 +313,6 @@ export type ActiveScreen =
   | { name: 'YouTubeVideos' }
   | { name: 'SocialFeed' };
 
+export * from './notebookLM';
+
+
