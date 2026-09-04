@@ -163,6 +163,8 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
                 play={isPlaying}
                 videoId={currentVideo.id}
                 playbackRate={playbackSpeed}
+                useLocalHTML={true}
+                baseUrlOverride="https://thrivingskill.com"
                 onReady={() => setPlayerLoading(false)}
                 onChangeState={(state: string) => {
                   if (state === 'ended') setIsPlaying(false);
@@ -176,10 +178,15 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
                   modestbranding: true,
                   preventFullScreen: false,
                   rel: false,
+                  origin: 'https://thrivingskill.com',
                 }}
                 webViewProps={{
                   androidLayerType: 'hardware',
                   allowsInlineMediaPlayback: true,
+                  originWhitelist: ['*'],
+                  headers: {
+                    'Referer': 'https://thrivingskill.com',
+                  },
                 }}
               />
               {playerLoading && !playerError && (
@@ -190,12 +197,23 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
               )}
               {playerError && (
                 <View style={styles.playerErrorOverlay}>
-                  <Ionicons name="alert-circle-outline" size={26} color="#EF4444" />
+                  <Ionicons name="play-circle-outline" size={36} color="#EF4444" />
                   <Text style={styles.playerErrorText}>
-                    Playback error ({playerError})
+                    {playerError.includes('150') || playerError.includes('152') || playerError.includes('153')
+                      ? 'Protected YouTube Masterclass'
+                      : `Playback Alert (${playerError})`}
                   </Text>
-                  <TouchableOpacity style={styles.errorOpenBtn} onPress={handleOpenYouTube}>
-                    <Ionicons name="logo-youtube" size={14} color="#FFFFFF" />
+                  <Text style={styles.playerErrorSubtext}>
+                    This YouTube video has restricted embed permissions. Tap below to watch seamlessly in the YouTube app.
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.errorOpenBtn}
+                    onPress={handleOpenYouTube}
+                    activeOpacity={0.85}
+                    accessibilityRole="button"
+                    accessibilityLabel="Open and play video in YouTube app"
+                  >
+                    <Ionicons name="logo-youtube" size={16} color="#FFFFFF" />
                     <Text style={styles.errorOpenBtnText}>Watch in YouTube App</Text>
                   </TouchableOpacity>
                 </View>
@@ -515,9 +533,17 @@ const styles = StyleSheet.create({
   },
   playerErrorText: {
     color: '#F87171',
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
     textAlign: 'center',
+  },
+  playerErrorSubtext: {
+    color: '#CBD5E1',
+    fontSize: 12,
+    lineHeight: 16,
+    textAlign: 'center',
+    marginHorizontal: 16,
+    marginBottom: 4,
   },
   errorOpenBtn: {
     flexDirection: 'row',
