@@ -14,7 +14,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { WebView } from 'react-native-webview';
+import YoutubePlayer from 'react-native-youtube-iframe';
 import { useTheme } from '../context/ThemeContext';
 import { useLearning } from '../context/LearningContext';
 import { useYouTube } from '../context/YouTubeContext';
@@ -46,39 +46,22 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
   const [currentVideo, setCurrentVideo] = useState<YouTubeVideo | null>(video);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1);
   const [playerLoading, setPlayerLoading] = useState<boolean>(true);
-  const webViewRef = React.useRef<any>(null);
+  const [isPlaying, setIsPlaying] = useState<boolean>(true);
+  const [playerError, setPlayerError] = useState<string | null>(null);
 
   // Sync state if prop changes
   React.useEffect(() => {
     if (video) {
       setCurrentVideo(video);
       setPlaybackSpeed(1);
+      setIsPlaying(true);
+      setPlayerError(null);
       setPlayerLoading(true);
     }
   }, [video]);
 
   const handleSetSpeed = (speed: number) => {
     setPlaybackSpeed(speed);
-    const jsCode = `
-      (function() {
-        try {
-          var v = document.querySelector('video');
-          if (v) { v.playbackRate = ${speed}; }
-          var iframe = document.querySelector('iframe');
-          if (iframe && iframe.contentWindow) {
-            iframe.contentWindow.postMessage(JSON.stringify({
-              event: 'command',
-              func: 'setPlaybackRate',
-              args: [${speed}]
-            }), '*');
-          }
-        } catch(e) {}
-      })();
-      true;
-    `;
-    if (webViewRef.current) {
-      webViewRef.current.injectJavaScript(jsCode);
-    }
   };
 
   if (!currentVideo) {
@@ -111,6 +94,8 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
 
   const handleSelectRelated = (v: YouTubeVideo) => {
     setCurrentVideo(v);
+    setIsPlaying(true);
+    setPlayerError(null);
     setPlayerLoading(true);
     if (onSelectVideo) {
       onSelectVideo(v);
@@ -131,9 +116,6 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
       onNavigateToCourse(relatedCourse.id);
     }
   };
-
-  // Official direct embed URL with parameters for clean mobile playback
-  const embedUrl = `https://www.youtube.com/embed/${currentVideo.id}?autoplay=1&playsinline=1&enablejsapi=1&rel=0&modestbranding=1&fs=1`;
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
@@ -168,40 +150,54 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
         <View style={styles.playerContainer}>
           {Platform.OS === 'web' ? (
             <iframe
-              src={embedUrl}
+              src={`https://www.youtube.com/embed/${currentVideo.id}?autoplay=1&playsinline=1`}
               style={{ width: '100%', height: '100%', border: 'none' }}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
           ) : (
-            <View style={{ flex: 1, position: 'relative' }}>
-              <WebView
-                ref={webViewRef}
-                key={currentVideo.id}
-                source={{
-                  uri: embedUrl,
-                  headers: {
-                    Referer: 'https://www.youtube.com',
-                  },
+            <View style={{ width: SCREEN_WIDTH, height: (SCREEN_WIDTH * 9) / 16, position: 'relative' }}>
+              <YoutubePlayer
+                height={(SCREEN_WIDTH * 9) / 16}
+                width={SCREEN_WIDTH}
+                play={isPlaying}
+                videoId={currentVideo.id}
+                playbackRate={playbackSpeed}
+                onReady={() => setPlayerLoading(false)}
+                onChangeState={(state: string) => {
+                  if (state === 'ended') setIsPlaying(false);
                 }}
-                style={styles.webView}
-                javaScriptEnabled
-                domStorageEnabled
-                allowsFullscreenVideo
-                mediaPlaybackRequiresUserAction={false}
-                allowsInlineMediaPlayback
-                mixedContentMode="always"
-                androidLayerType="hardware"
-                androidHardwareAccelerationDisabled={false}
-                userAgent="Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
-                originWhitelist={['*']}
-                onLoadStart={() => setPlayerLoading(true)}
-                onLoadEnd={() => setPlayerLoading(false)}
+                onError={(error: string) => {
+                  setPlayerError(error);
+                  setPlayerLoading(false);
+                }}
+                initialPlayerParams={{
+                  controls: true,
+                  modestbranding: true,
+                  preventFullScreen: false,
+                  rel: false,
+                }}
+                webViewProps={{
+                  androidLayerType: 'hardware',
+                  allowsInlineMediaPlayback: true,
+                }}
               />
-              {playerLoading && (
+              {playerLoading && !playerError && (
                 <View style={styles.playerLoadingOverlay}>
                   <ActivityIndicator size="small" color="#FF0000" />
                   <Text style={styles.playerLoadingText}>Loading video...</Text>
+                </View>
+              )}
+              {playerError && (
+                <View style={styles.playerErrorOverlay}>
+                  <Ionicons name="alert-circle-outline" size={26} color="#EF4444" />
+                  <Text style={styles.playerErrorText}>
+                    Playback error ({playerError})
+                  </Text>
+                  <TouchableOpacity style={styles.errorOpenBtn} onPress={handleOpenYouTube}>
+                    <Ionicons name="logo-youtube" size={14} color="#FFFFFF" />
+                    <Text style={styles.errorOpenBtnText}>Watch in YouTube App</Text>
+                  </TouchableOpacity>
                 </View>
               )}
             </View>
@@ -504,6 +500,39 @@ const styles = StyleSheet.create({
   quickYtFallbackText: {
     fontSize: 12,
     fontWeight: '600',
+  },
+  playerErrorOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#0F172A',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    gap: 8,
+  },
+  playerErrorText: {
+    color: '#F87171',
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  errorOpenBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#EF4444',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+    marginTop: 4,
+  },
+  errorOpenBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
   },
   scrollContent: {
     padding: 16,
