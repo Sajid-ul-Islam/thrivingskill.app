@@ -199,6 +199,7 @@ export interface UserProgress {
   enrolledDate: string;
   completedLessonIds: string[];
   lastAccessedLessonId?: string;
+  lastWatchPositionSeconds?: Record<string, number>;
   isCompleted: boolean;
   completedDate?: string;
   certificateId?: string;

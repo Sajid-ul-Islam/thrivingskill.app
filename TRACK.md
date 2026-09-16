@@ -123,7 +123,16 @@ gantt
 
 ## 📜 Changelog
 
-### v1.3.0 (Current)
+### v1.4.0 (Current)
+- Aligned features with **TSL App Specifications**:
+  - **Section 2**: Added Administrator detection and **Admin Management Console** in [`ProfileScreen.tsx`](file:///h:/Repo/thrivingskill.app/src/screens/ProfileScreen.tsx) with direct links to Courses, Students, Orders, and Statistics on WordPress.
+  - **Section 3**: Added complete Drawer menu items in [`BrandDrawer.tsx`](file:///h:/Repo/thrivingskill.app/src/components/BrandDrawer.tsx): Watch History & Progress, Help & FAQ, WhatsApp Live Chat, and dynamic Login/Logout session control.
+  - **Section 5**: Added Free/Paid segmented filters and 'Newest First' sorting in [`CoursesScreen.tsx`](file:///h:/Repo/thrivingskill.app/src/screens/CoursesScreen.tsx).
+  - **Sections 10 & 11**: Implemented persistent video watch position tracking & resume learning (`lastWatchPositionSeconds`) in [`LearningContext.tsx`](file:///h:/Repo/thrivingskill.app/src/context/LearningContext.tsx) and live scrubber playback in [`LessonPlayerScreen.tsx`](file:///h:/Repo/thrivingskill.app/src/screens/LessonPlayerScreen.tsx).
+  - **Section 14**: Wired `quizId` and background LearnPress `/learnpress/v1/quiz/finish` synchronization in [`QuizPlayerModal.tsx`](file:///h:/Repo/thrivingskill.app/src/components/QuizPlayerModal.tsx).
+- Resolved all TypeScript compiler issues for React 19 compatibility (`npx tsc --noEmit` verified: **0 errors**).
+
+### v1.3.0
 - Integrated local payment gateways: **bKash**, **Nagad**, **Rocket**, and **Cards** with coupon code support.
 - Added full bilingual support with English and **বাংলা** switcher.
 - Added **Gamification Engine** with daily streaks, goal rings, and achievement badges.

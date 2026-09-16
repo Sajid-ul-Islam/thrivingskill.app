@@ -98,4 +98,18 @@ export const Env = {
   get WC_CONSUMER_SECRET(): string | undefined {
     return getEnvVar('EXPO_PUBLIC_WC_CONSUMER_SECRET');
   },
+
+  /**
+   * Optional Google Gemini API Key
+   */
+  get GEMINI_API_KEY(): string | undefined {
+    return getEnvVar('EXPO_PUBLIC_GEMINI_API_KEY');
+  },
+
+  /**
+   * Optional Google API Key
+   */
+  get GOOGLE_API_KEY(): string | undefined {
+    return getEnvVar('EXPO_PUBLIC_GOOGLE_API_KEY');
+  },
 };

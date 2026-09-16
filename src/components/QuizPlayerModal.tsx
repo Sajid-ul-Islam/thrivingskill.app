@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useGamification } from '../context/GamificationContext';
+import { LessonsService } from '../services/api/lessonsService';
 
 export interface QuizItem {
   id: string;
@@ -24,6 +25,7 @@ export interface QuizItem {
 interface QuizPlayerModalProps {
   visible: boolean;
   courseTitle: string;
+  quizId?: string | number;
   questions?: QuizItem[];
   onClose: () => void;
   onPassed?: () => void;
@@ -61,6 +63,7 @@ const DEFAULT_QUESTIONS: QuizItem[] = [
 export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
   visible,
   courseTitle,
+  quizId,
   questions = DEFAULT_QUESTIONS,
   onClose,
   onPassed,
@@ -107,6 +110,11 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
     if (score >= 70) {
       unlockBadge('quiz_master');
       if (onPassed) onPassed();
+    }
+    if (quizId) {
+      LessonsService.finishQuiz(quizId).catch((err) => {
+        console.log('[QuizPlayerModal] Background LearnPress quiz finish:', err?.message || err);
+      });
     }
   };
 

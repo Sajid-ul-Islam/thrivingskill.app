@@ -28,7 +28,8 @@ interface CoursesScreenProps {
 }
 
 type LevelFilter = 'All' | 'Beginner' | 'Intermediate' | 'Advanced';
-type SortOption = 'popular' | 'rating' | 'price-low' | 'price-high';
+type PriceFilter = 'all' | 'free' | 'paid';
+type SortOption = 'popular' | 'newest' | 'rating' | 'price-low' | 'price-high';
 
 export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   onNavigateToCourse,
@@ -49,6 +50,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   } = useLearning();
 
   const [selectedLevel, setSelectedLevel] = useState<LevelFilter>('All');
+  const [selectedPriceFilter, setSelectedPriceFilter] = useState<PriceFilter>('all');
   const [selectedSort, setSelectedSort] = useState<SortOption>('popular');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
@@ -68,16 +70,21 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
       selectedLevel === 'All' ||
       course.level === selectedLevel ||
       course.level === 'All Levels';
+    const matchesPrice =
+      selectedPriceFilter === 'all' ||
+      (selectedPriceFilter === 'free' && (course.price === 0 || !course.price)) ||
+      (selectedPriceFilter === 'paid' && course.price > 0);
     const matchesSearch =
       !searchQuery ||
       course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       course.subtitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
       course.instructor.name.toLowerCase().includes(searchQuery.toLowerCase());
 
-    return matchesCategory && matchesLevel && matchesSearch;
+    return matchesCategory && matchesLevel && matchesPrice && matchesSearch;
   });
 
   filtered.sort((a, b) => {
+    if (selectedSort === 'newest') return Number(b.id) - Number(a.id);
     if (selectedSort === 'rating') return b.rating - a.rating;
     if (selectedSort === 'price-low') return a.price - b.price;
     if (selectedSort === 'price-high') return b.price - a.price;
@@ -230,38 +237,65 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
           </View>
         )}
 
-        {/* Result Header */}
+        {/* Result Header & Filters */}
         <View style={styles.resultMetaRow}>
           <Text style={[styles.resultCount, { color: colors.textMuted }]}>
             {isBundleView ? (
-              <>Showing <Text style={{ color: colors.text, fontWeight: '700' }}>{SPECIAL_BUNDLES.length}</Text> Special Bundles</>
+              <>Showing <Text style={{ color: colors.text, fontWeight: '700' }}>{SPECIAL_BUNDLES.length}</Text> Bundles</>
             ) : (
               <>Showing <Text style={{ color: colors.text, fontWeight: '700' }}>{filtered.length}</Text> courses</>
             )}
           </Text>
 
           {!isBundleView && (
-            <TouchableOpacity
-              style={[styles.sortBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
-              onPress={() => {
-                const order: SortOption[] = ['popular', 'rating', 'price-low', 'price-high'];
-                const nextIdx = (order.indexOf(selectedSort) + 1) % order.length;
-                setSelectedSort(order[nextIdx]);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={`Sort courses by ${selectedSort}`}
-            >
-              <Ionicons name="swap-vertical" size={13} color={colors.primary} />
-              <Text style={[styles.sortBtnText, { color: colors.text }]}>
-                {selectedSort === 'popular'
-                  ? 'Most Popular'
-                  : selectedSort === 'rating'
-                  ? 'Top Rated'
-                  : selectedSort === 'price-low'
-                  ? 'Price: Low'
-                  : 'Price: High'}
-              </Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              {/* Free / Paid / All Segmented Pills (Section 5 Spec) */}
+              <View style={[styles.priceFilterGroup, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+                {(['all', 'free', 'paid'] as PriceFilter[]).map((pf) => (
+                  <TouchableOpacity
+                    key={pf}
+                    style={[
+                      styles.priceFilterBtn,
+                      selectedPriceFilter === pf && { backgroundColor: colors.primary },
+                    ]}
+                    onPress={() => setSelectedPriceFilter(pf)}
+                  >
+                    <Text
+                      style={[
+                        styles.priceFilterBtnText,
+                        { color: selectedPriceFilter === pf ? '#FFFFFF' : colors.textMuted },
+                      ]}
+                    >
+                      {pf === 'all' ? 'All' : pf === 'free' ? 'Free' : 'Paid'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <TouchableOpacity
+                style={[styles.sortBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                onPress={() => {
+                  const order: SortOption[] = ['popular', 'newest', 'rating', 'price-low', 'price-high'];
+                  const nextIdx = (order.indexOf(selectedSort) + 1) % order.length;
+                  setSelectedSort(order[nextIdx]);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`Sort courses by ${selectedSort}`}
+              >
+                <Ionicons name="swap-vertical" size={13} color={colors.primary} />
+                <Text style={[styles.sortBtnText, { color: colors.text }]}>
+                  {selectedSort === 'popular'
+                    ? 'Popular'
+                    : selectedSort === 'newest'
+                    ? 'Newest'
+                    : selectedSort === 'rating'
+                    ? 'Top Rated'
+                    : selectedSort === 'price-low'
+                    ? 'Price: Low'
+                    : 'Price: High'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
 
@@ -414,6 +448,22 @@ const styles = StyleSheet.create({
   sortBtnText: {
     fontSize: 12,
     fontWeight: '600',
+  },
+  priceFilterGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 8,
+    borderWidth: 1,
+    padding: 2,
+  },
+  priceFilterBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  priceFilterBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
   coursesContainer: {
     paddingHorizontal: 16,

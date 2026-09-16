@@ -56,6 +56,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
   const enrolledCount = Object.keys(userProgress).length;
   const completedCount = Object.values(userProgress).filter((p) => p.isCompleted).length;
+  const isAdmin =
+    user?.roles?.includes('administrator') ||
+    user?.username?.toLowerCase() === 'admin' ||
+    user?.email?.toLowerCase().includes('admin@');
 
   const handleDownloadInvoice = () => {
     Alert.alert(
@@ -98,21 +102,27 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <View
                 style={[
                   styles.verifiedBadge,
-                  { backgroundColor: isAuthenticated ? colors.primaryLight : colors.surfaceSubtle },
+                  {
+                    backgroundColor: isAdmin
+                      ? 'rgba(239, 68, 68, 0.12)'
+                      : isAuthenticated
+                      ? colors.primaryLight
+                      : colors.surfaceSubtle,
+                  },
                 ]}
               >
                 <Ionicons
-                  name={isAuthenticated ? 'checkmark-circle' : 'person-outline'}
+                  name={isAdmin ? 'shield-checkmark' : isAuthenticated ? 'school-outline' : 'person-outline'}
                   size={12}
-                  color={isAuthenticated ? colors.primary : colors.textMuted}
+                  color={isAdmin ? '#EF4444' : isAuthenticated ? colors.primary : colors.textMuted}
                 />
                 <Text
                   style={[
                     styles.verifiedText,
-                    { color: isAuthenticated ? colors.primary : colors.textMuted },
+                    { color: isAdmin ? '#EF4444' : isAuthenticated ? colors.primary : colors.textMuted },
                   ]}
                 >
-                  {isAuthenticated ? 'WORDPRESS' : 'GUEST'}
+                  {isAdmin ? 'ADMINISTRATOR' : isAuthenticated ? 'STUDENT' : 'GUEST'}
                 </Text>
               </View>
             </View>
@@ -126,6 +136,93 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </Text>
           </View>
         </View>
+
+        {/* Administrator Management Console (Section 2 Spec) */}
+        {isAdmin && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+              {isBangla ? 'অ্যাডমিন কন্ট্রোল সেন্টার' : 'ADMIN MANAGEMENT CONSOLE'}
+            </Text>
+            <View
+              style={[
+                styles.cardGroup,
+                { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+              ]}
+            >
+              <TouchableOpacity
+                style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
+                onPress={() => Linking.openURL('https://thrivingskill.com/wp-admin/edit.php?post_type=lp_course')}
+              >
+                <View style={styles.settingLeft}>
+                  <Ionicons name="book-outline" size={20} color="#3B82F6" />
+                  <View style={{ marginLeft: 6 }}>
+                    <Text style={[styles.settingLabel, { color: colors.text }]}>
+                      {isBangla ? 'কোর্স ও লেসন ম্যানেজমেন্ট' : 'Courses & Lessons Management'}
+                    </Text>
+                    <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                      {isBangla ? 'কোর্স, মডিউল ও ভিডিও কনটেন্ট পরিচালনা করুন' : 'Manage courses, modules & videos on WP'}
+                    </Text>
+                  </View>
+                </View>
+                <Ionicons name="open-outline" size={16} color={colors.textMuted} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
+                onPress={() => Linking.openURL('https://thrivingskill.com/wp-admin/users.php')}
+              >
+                <View style={styles.settingLeft}>
+                  <Ionicons name="people-outline" size={20} color="#10B981" />
+                  <View style={{ marginLeft: 6 }}>
+                    <Text style={[styles.settingLabel, { color: colors.text }]}>
+                      {isBangla ? 'শিক্ষার্থী ও ইউজার ম্যানেজমেন্ট' : 'Students & Users'}
+                    </Text>
+                    <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                      {isBangla ? 'স্টুডেন্ট তালিকা, অ্যাক্সেস ও প্রোগ্রেস মনিটরিং' : 'Student enrollment & progress tracking'}
+                    </Text>
+                  </View>
+                </View>
+                <Ionicons name="open-outline" size={16} color={colors.textMuted} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
+                onPress={() => Linking.openURL('https://thrivingskill.com/wp-admin/edit.php?post_type=lp_order')}
+              >
+                <View style={styles.settingLeft}>
+                  <Ionicons name="card-outline" size={20} color="#F59E0B" />
+                  <View style={{ marginLeft: 6 }}>
+                    <Text style={[styles.settingLabel, { color: colors.text }]}>
+                      {isBangla ? 'পেমেন্ট ও অর্ডার ম্যানেজমেন্ট' : 'Payments & Orders'}
+                    </Text>
+                    <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                      {isBangla ? 'bKash/Nagad/Rocket অর্ডার ও ট্রানজ্যাকশন' : 'Review orders & payment transactions'}
+                    </Text>
+                  </View>
+                </View>
+                <Ionicons name="open-outline" size={16} color={colors.textMuted} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
+                onPress={() => Linking.openURL('https://thrivingskill.com/wp-admin/admin.php?page=learnpress-statistics')}
+              >
+                <View style={styles.settingLeft}>
+                  <Ionicons name="analytics-outline" size={20} color="#8B5CF6" />
+                  <View style={{ marginLeft: 6 }}>
+                    <Text style={[styles.settingLabel, { color: colors.text }]}>
+                      {isBangla ? 'রিপোর্ট ও অ্যানালিটিক্স' : 'Reports & Analytics'}
+                    </Text>
+                    <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                      {isBangla ? 'লার্নিং অ্যানালিটিক্স ও কমপ্লিশন রিপোর্ট' : 'Learning stats & course performance'}
+                    </Text>
+                  </View>
+                </View>
+                <Ionicons name="open-outline" size={16} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         {/* SaaS Subscription & Membership Card */}
         <View style={styles.section}>

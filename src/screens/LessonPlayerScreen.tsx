@@ -46,6 +46,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     markLessonCompleted,
     getNotesForLesson,
     certificates,
+    recordWatchPosition,
+    getWatchPosition,
   } = useLearning();
 
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
@@ -57,6 +59,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const [notesModalVisible, setNotesModalVisible] = useState<boolean>(false);
   const [certModalVisible, setCertModalVisible] = useState<boolean>(false);
   const [isDownloaded, setIsDownloaded] = useState<boolean>(false);
+  const [currentPositionSeconds, setCurrentPositionSeconds] = useState<number>(0);
 
   const course = getCourseById(courseId);
 
@@ -79,8 +82,61 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   useEffect(() => {
     if (currentLesson?.id) {
       OfflineManager.isLessonDownloaded(currentLesson.id).then(setIsDownloaded);
+      const savedSec = getWatchPosition(courseId, currentLesson.id);
+      setCurrentPositionSeconds(savedSec || 0);
     }
-  }, [currentLesson?.id]);
+  }, [currentLesson?.id, courseId]);
+
+  // Video watch time tracking interval & auto-sync (Section 11 Spec)
+  useEffect(() => {
+    if (!isPlaying || !currentLesson || !course) return;
+    const interval = setInterval(() => {
+      setCurrentPositionSeconds((prev) => {
+        const next = prev + 1;
+        if (next % 5 === 0) {
+          recordWatchPosition(course.id, currentLesson.id, next);
+        }
+        return next;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isPlaying, currentLesson?.id, course?.id]);
+
+  const handleRewind = (sec: number = 10) => {
+    setCurrentPositionSeconds((prev) => {
+      const next = Math.max(0, prev - sec);
+      if (course && currentLesson) recordWatchPosition(course.id, currentLesson.id, next);
+      return next;
+    });
+  };
+
+  const handleForward = (sec: number = 10) => {
+    setCurrentPositionSeconds((prev) => {
+      const next = prev + sec;
+      if (course && currentLesson) recordWatchPosition(course.id, currentLesson.id, next);
+      return next;
+    });
+  };
+
+  const formatSeconds = (sec: number): string => {
+    const mins = Math.floor(sec / 60);
+    const remainder = sec % 60;
+    return `${mins < 10 ? '0' : ''}${mins}:${remainder < 10 ? '0' : ''}${remainder}`;
+  };
+
+  const parseDurationToSeconds = (dur?: string): number => {
+    if (!dur) return 600;
+    if (dur.includes(':')) {
+      const parts = dur.split(':').map((p) => parseInt(p, 10));
+      if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) return parts[0] * 60 + parts[1];
+      if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    }
+    const mins = parseInt(dur, 10);
+    return !isNaN(mins) ? mins * 60 : 600;
+  };
+
+  const totalLessonSeconds = parseDurationToSeconds(currentLesson?.duration);
+  const playbackPercent = Math.min(100, Math.round((currentPositionSeconds / (totalLessonSeconds || 1)) * 100));
 
   const handleToggleOffline = async () => {
     if (!currentLesson || !course) return;
@@ -293,7 +349,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
             <View style={styles.commuteControlsRow}>
               <TouchableOpacity
                 style={styles.commuteSkipBtn}
-                onPress={() => Alert.alert('Rewind', 'Rewound 15 seconds.')}
+                onPress={() => handleRewind(15)}
               >
                 <Ionicons name="play-back" size={20} color="#FFFFFF" />
                 <Text style={styles.skipSecText}>15s</Text>
@@ -327,7 +383,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
 
               <TouchableOpacity
                 style={styles.commuteSkipBtn}
-                onPress={() => Alert.alert('Forward', 'Skipped forward 30 seconds.')}
+                onPress={() => handleForward(30)}
               >
                 <Ionicons name="play-forward" size={20} color="#FFFFFF" />
                 <Text style={styles.skipSecText}>30s</Text>
@@ -336,7 +392,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
 
             {/* Commute Bottom Status Bar */}
             <View style={styles.commuteBottomBar}>
-              <Text style={styles.commuteTimeText}>04:15 / {currentLesson.duration}</Text>
+              <Text style={styles.commuteTimeText}>{formatSeconds(currentPositionSeconds)} / {currentLesson.duration}</Text>
               <View style={styles.bgPlaybackNotice}>
                 <Ionicons name="radio" size={13} color="#10B981" />
                 <Text style={styles.bgPlaybackText}>Background Playback Active</Text>
@@ -354,7 +410,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               {/* Center Play/Pause & Skip buttons */}
               <View style={styles.playerControlsRow}>
                 <TouchableOpacity
-                  onPress={() => Alert.alert('Rewind', 'Rewound 10 seconds.')}
+                  onPress={() => handleRewind(10)}
                   style={styles.skipBtn}
                 >
                   <Ionicons name="play-back" size={20} color="#FFFFFF" />
@@ -387,7 +443,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  onPress={() => Alert.alert('Forward', 'Skipped forward 10 seconds.')}
+                  onPress={() => handleForward(10)}
                   style={styles.skipBtn}
                 >
                   <Ionicons name="play-forward" size={20} color="#FFFFFF" />
@@ -398,13 +454,13 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               <View style={styles.playerBottomBar}>
                 <View style={styles.timelineRow}>
                   <View style={styles.scrubberTrack}>
-                    <View style={[styles.scrubberProgress, { width: '42%' }]} />
+                    <View style={[styles.scrubberProgress, { width: `${Math.max(playbackPercent, 3)}%` }]} />
                     <View style={styles.scrubberThumb} />
                   </View>
                 </View>
 
                 <View style={styles.playerMetaRow}>
-                  <Text style={styles.playerTimeText}>04:15 / {currentLesson.duration}</Text>
+                  <Text style={styles.playerTimeText}>{formatSeconds(currentPositionSeconds)} / {currentLesson.duration}</Text>
 
                   <View style={styles.playerActionButtons}>
                     <TouchableOpacity style={styles.speedPill} onPress={cycleSpeed}>
@@ -780,6 +836,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
       <QuizPlayerModal
         visible={quizPlayerVisible}
         courseTitle={course.title}
+        quizId={currentLesson.id}
         onClose={() => setQuizPlayerVisible(false)}
         onPassed={() => {
           markLessonCompleted(course.id, currentLesson.id);
@@ -829,7 +886,11 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   playerOverlay: {
-    ...StyleSheet.absoluteFill,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'space-between',
     padding: 14,

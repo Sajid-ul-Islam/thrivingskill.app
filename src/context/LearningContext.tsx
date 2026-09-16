@@ -38,6 +38,8 @@ interface LearningContextType {
   deleteNote: (noteId: string) => void;
   getNotesForLesson: (courseId: string, lessonId: string) => Note[];
   getCourseProgressPercentage: (courseId: string) => number;
+  recordWatchPosition: (courseId: string, lessonId: string, seconds: number) => void;
+  getWatchPosition: (courseId: string, lessonId: string) => number;
   rsvpForWorkshop: (workshopId: string) => void;
   isRsvpd: (workshopId: string) => boolean;
   getCourseById: (courseId: string) => Course | undefined;
@@ -282,6 +284,33 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return Math.round((progress.completedLessonIds.length / totalLessons) * 100);
   };
 
+  const recordWatchPosition = (courseId: string, lessonId: string, seconds: number) => {
+    const current = userProgress[courseId] || {
+      courseId,
+      enrolledDate: new Date().toISOString().split('T')[0],
+      completedLessonIds: [],
+      isCompleted: false,
+    };
+    const updated = {
+      ...userProgress,
+      [courseId]: {
+        ...current,
+        lastAccessedLessonId: lessonId,
+        lastWatchPositionSeconds: {
+          ...(current.lastWatchPositionSeconds || {}),
+          [lessonId]: Math.max(0, Math.floor(seconds)),
+        },
+      },
+    };
+    setUserProgress(updated);
+    saveState(PROGRESS_STORAGE_KEY, updated);
+  };
+
+  const getWatchPosition = (courseId: string, lessonId: string): number => {
+    const progress = userProgress[courseId];
+    return progress?.lastWatchPositionSeconds?.[lessonId] || 0;
+  };
+
   const rsvpForWorkshop = (workshopId: string) => {
     if (rsvpWorkshops.includes(workshopId)) return;
     const updated = [...rsvpWorkshops, workshopId];
@@ -320,6 +349,8 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         deleteNote,
         getNotesForLesson,
         getCourseProgressPercentage,
+        recordWatchPosition,
+        getWatchPosition,
         rsvpForWorkshop,
         isRsvpd,
         getCourseById,

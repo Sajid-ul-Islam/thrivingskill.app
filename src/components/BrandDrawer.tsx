@@ -17,6 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useSaaS } from '../context/SaaSContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 import { AboutTSLModal, AboutTabKey } from './AboutTSLModal';
 import { LegalPolicyModal, LegalTabKey } from './LegalPolicyModal';
 import { RootTab } from '../types';
@@ -46,6 +47,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
   const { colors, isDark, toggleTheme } = useTheme();
   const { activeWorkspace, switchWorkspace, workspaces, subscriptionTier } = useSaaS();
   const { language, setLanguage, isBangla } = useLanguage();
+  const { user, isAuthenticated, logout, setAuthModalVisible } = useAuth();
   const insets = useSafeAreaInsets();
   const [aboutModalVisible, setAboutModalVisible] = useState(false);
   const [aboutInitialTab, setAboutInitialTab] = useState<AboutTabKey>('overview');
@@ -259,7 +261,22 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               <View style={[styles.navIconBg, { backgroundColor: '#ECFDF5' }]}>
                 <Ionicons name="ribbon-outline" size={18} color="#059669" />
               </View>
-              <Text style={[styles.navLabel, { color: colors.text }]}>Verified Digital Certificates</Text>
+              <Text style={[styles.navLabel, { color: colors.text }]}>
+                {isBangla ? 'ডিজিটাল সার্টিফিকেট' : 'Verified Certificates'}
+              </Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.navItem}
+              onPress={() => handleNav(() => onNavigateTab('MyLearning'))}
+            >
+              <View style={[styles.navIconBg, { backgroundColor: '#FEF3C7' }]}>
+                <Ionicons name="time-outline" size={18} color="#D97706" />
+              </View>
+              <Text style={[styles.navLabel, { color: colors.text }]}>
+                {isBangla ? 'ওয়াচ হিস্ট্রি ও প্রোগ্রেস' : 'Watch History & Progress'}
+              </Text>
               <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
             </TouchableOpacity>
 
@@ -428,6 +445,65 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               </View>
               <Ionicons name="open-outline" size={14} color={colors.textMuted} />
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={() => {
+                setAboutInitialTab('contact');
+                setAboutModalVisible(true);
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Ionicons name="help-circle-outline" size={18} color="#6366F1" />
+                <Text style={[styles.actionLabel, { color: colors.text }]}>
+                  {isBangla ? 'হেল্প ও এফএকিউ (FAQ)' : 'Help & FAQ'}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={() => Linking.openURL('https://wa.me/8801312100288')}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Ionicons name="logo-whatsapp" size={18} color="#25D366" />
+                <Text style={[styles.actionLabel, { color: colors.text }]}>WhatsApp Live Support</Text>
+              </View>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: '#25D366' }}>Active</Text>
+            </TouchableOpacity>
+
+            {/* Section 6: User Authentication & Logout */}
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+            <View style={{ paddingHorizontal: 8, paddingBottom: 10 }}>
+              {isAuthenticated ? (
+                <TouchableOpacity
+                  style={[styles.sessionBtn, { backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.3)' }]}
+                  onPress={() => {
+                    onClose();
+                    logout();
+                  }}
+                >
+                  <Ionicons name="log-out-outline" size={18} color="#EF4444" />
+                  <Text style={[styles.sessionBtnText, { color: '#EF4444' }]}>
+                    {isBangla ? 'লগআউট করুন' : 'Logout'} ({user?.username || 'Learner'})
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={[styles.sessionBtn, { backgroundColor: colors.primary, borderColor: colors.primary }]}
+                  onPress={() => {
+                    onClose();
+                    setAuthModalVisible(true);
+                  }}
+                >
+                  <Ionicons name="log-in-outline" size={18} color="#FFFFFF" />
+                  <Text style={[styles.sessionBtnText, { color: '#FFFFFF' }]}>
+                    {isBangla ? 'লগইন / সাইন আপ' : 'Sign In / Register'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </ScrollView>
 
           {/* Footer */}
@@ -657,5 +733,20 @@ const styles = StyleSheet.create({
   footerSub: {
     fontSize: 9.5,
     marginTop: 2,
+  },
+  sessionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 11,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 6,
+  },
+  sessionBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
 });
