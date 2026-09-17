@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Course, UserProgress, Certificate, Note, CategoryId, Workshop, Category, WpPost } from '../types';
+import { Course, UserProgress, Certificate, Note, CategoryId, Workshop, Category, WpPost, Review } from '../types';
 import { COURSES as INITIAL_COURSES, INITIAL_CERTIFICATES, WORKSHOPS, CATEGORIES as INITIAL_CATEGORIES } from '../data/mockData';
 import {
   fetchWpCourses,
@@ -34,12 +34,13 @@ interface LearningContextType {
   markLessonCompleted: (courseId: string, lessonId: string) => void;
   toggleBookmark: (courseId: string) => void;
   isBookmarked: (courseId: string) => boolean;
-  addNote: (courseId: string, lessonId: string, text: string) => void;
+  addNote: (courseId: string, lessonId: string, text: string, timestamp?: string) => void;
   deleteNote: (noteId: string) => void;
   getNotesForLesson: (courseId: string, lessonId: string) => Note[];
   getCourseProgressPercentage: (courseId: string) => number;
   recordWatchPosition: (courseId: string, lessonId: string, seconds: number) => void;
   getWatchPosition: (courseId: string, lessonId: string) => number;
+  addCourseReview: (courseId: string, review: Omit<Review, 'id' | 'date'>) => void;
   rsvpForWorkshop: (workshopId: string) => void;
   isRsvpd: (workshopId: string) => boolean;
   getCourseById: (courseId: string) => Course | undefined;
@@ -248,18 +249,42 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const isBookmarked = (courseId: string) => bookmarks.includes(courseId);
 
-  const addNote = (courseId: string, lessonId: string, text: string) => {
+  const addNote = (courseId: string, lessonId: string, text: string, timestamp?: string) => {
     const newNote: Note = {
       id: `note-${Date.now()}`,
       courseId,
       lessonId,
-      timestamp: '02:30',
+      timestamp: timestamp || '00:00',
       text,
       createdAt: new Date().toISOString().split('T')[0],
     };
     const updated = [newNote, ...notes];
     setNotes(updated);
     saveState(NOTES_STORAGE_KEY, updated);
+  };
+
+  const addCourseReview = (courseId: string, reviewData: Omit<Review, 'id' | 'date'>) => {
+    const newReview: Review = {
+      ...reviewData,
+      id: `rev-${Date.now()}`,
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    };
+    setCourses((prevCourses) =>
+      prevCourses.map((c) => {
+        if (c.id === courseId) {
+          const updatedReviews = [newReview, ...(c.reviews || [])];
+          const newAvgRating =
+            updatedReviews.reduce((sum, r) => sum + r.rating, 0) / updatedReviews.length;
+          return {
+            ...c,
+            reviews: updatedReviews,
+            reviewsCount: updatedReviews.length,
+            rating: Number(newAvgRating.toFixed(1)),
+          };
+        }
+        return c;
+      })
+    );
   };
 
   const deleteNote = (noteId: string) => {
@@ -351,6 +376,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         getCourseProgressPercentage,
         recordWatchPosition,
         getWatchPosition,
+        addCourseReview,
         rsvpForWorkshop,
         isRsvpd,
         getCourseById,

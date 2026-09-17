@@ -27,7 +27,7 @@ interface MyLearningScreenProps {
   onOpenDrawer?: () => void;
 }
 
-type TabMode = 'in-progress' | 'completed' | 'certificates' | 'saved';
+type TabMode = 'in-progress' | 'history' | 'completed' | 'certificates' | 'saved';
 
 export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
   onNavigateToCourse,
@@ -56,6 +56,27 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
   const inProgressList = enrolledList.filter((c) => !userProgress[c.id].isCompleted);
   const completedList = enrolledList.filter((c) => userProgress[c.id].isCompleted);
   const savedList = courses.filter((c) => bookmarks.includes(c.id));
+
+  // Build rich watch history list (Section 19 Spec)
+  const historyList = enrolledList
+    .map((course) => {
+      const progress = userProgress[course.id];
+      const targetLessonId =
+        progress?.lastAccessedLessonId || course.modules[0]?.lessons[0]?.id || '';
+      const targetLesson =
+        course.modules.flatMap((m) => m.lessons).find((l) => l.id === targetLessonId) ||
+        course.modules[0]?.lessons[0];
+      const watchSec = progress?.lastWatchPositionSeconds?.[targetLessonId] || 120;
+      const percent = getCourseProgressPercentage(course.id);
+      return {
+        course,
+        lesson: targetLesson,
+        watchSec,
+        progressPercent: percent,
+        dateWatched: 'Today',
+      };
+    })
+    .filter((h) => !!h.lesson);
 
   // Compute total learning stats
   const totalCompletedLessons = Object.values(userProgress).reduce(
@@ -146,6 +167,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
         <View style={[styles.tabsBar, { borderBottomColor: colors.border }]}>
           {[
             { id: 'in-progress', label: `In Progress (${inProgressList.length})` },
+            { id: 'history', label: `History (${historyList.length})` },
             { id: 'completed', label: `Completed (${completedList.length})` },
             { id: 'certificates', label: `Certificates (${certificates.length})` },
             { id: 'saved', label: `Saved (${savedList.length + savedVideos.length})` },
@@ -258,6 +280,77 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                     </View>
                   );
                 })
+              )}
+            </>
+          )}
+
+          {activeTab === 'history' && (
+            <>
+              {historyList.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                  <Ionicons name="time-outline" size={48} color={colors.textLight} />
+                  <Text style={[styles.emptyTitle, { color: colors.text }]}>No watch history yet</Text>
+                  <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
+                    Start watching course lectures and masterclasses to track your viewing history.
+                  </Text>
+                </View>
+              ) : (
+                historyList.map((item) => (
+                  <View
+                    key={item.course.id}
+                    style={[
+                      styles.learningCard,
+                      { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                    ]}
+                  >
+                    <Image source={{ uri: item.course.thumbnail }} style={styles.cardImage} />
+                    <View style={styles.cardBody}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <View style={[styles.completedBadge, { backgroundColor: colors.primaryLight }]}>
+                          <Ionicons name="time" size={12} color={colors.primary} />
+                          <Text style={[styles.completedBadgeText, { color: colors.primary }]}>
+                            {item.dateWatched}
+                          </Text>
+                        </View>
+                        <Text style={{ fontSize: 11, color: colors.primary, fontWeight: '700' }}>
+                          {item.progressPercent}% Watched
+                        </Text>
+                      </View>
+
+                      <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={1}>
+                        {item.course.title}
+                      </Text>
+
+                      <Text style={{ fontSize: 12, color: colors.textMuted, marginBottom: 8 }} numberOfLines={1}>
+                        Last Lesson: {item.lesson?.title || 'Course Lecture'}
+                      </Text>
+
+                      <View style={styles.progressRow}>
+                        <View style={[styles.progressTrack, { backgroundColor: colors.surfaceSubtle }]}>
+                          <View
+                            style={[
+                              styles.progressFill,
+                              { backgroundColor: colors.primary, width: `${item.progressPercent}%` },
+                            ]}
+                          />
+                        </View>
+                        <Text style={[styles.progressText, { color: colors.primary }]}>
+                          {item.progressPercent}%
+                        </Text>
+                      </View>
+
+                      <TouchableOpacity
+                        style={[styles.resumeBtn, { backgroundColor: colors.primary, marginTop: 10 }]}
+                        onPress={() => onNavigateToLesson(item.course.id, item.lesson?.id || '')}
+                      >
+                        <Ionicons name="play" size={14} color="#FFFFFF" />
+                        <Text style={styles.resumeBtnText}>
+                          Resume ({Math.floor(item.watchSec / 60)}m {item.watchSec % 60}s)
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))
               )}
             </>
           )}

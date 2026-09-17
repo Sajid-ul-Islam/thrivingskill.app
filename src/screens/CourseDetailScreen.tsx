@@ -9,10 +9,12 @@ import {
   Alert,
   ActivityIndicator,
   Modal,
+  TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useLearning } from '../context/LearningContext';
+import { useAuth } from '../context/AuthContext';
 import { Header } from '../components/Header';
 import { CurriculumAccordion } from '../components/CurriculumAccordion';
 import { PaymentModal } from '../components/PaymentModal';
@@ -43,12 +45,18 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     isBookmarked,
     toggleBookmark,
     getCourseProgressPercentage,
+    addCourseReview,
   } = useLearning();
+  const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'curriculum' | 'qna' | 'instructor' | 'reviews'>('curriculum');
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [certPreviewVisible, setCertPreviewVisible] = useState(false);
+  const [writeReviewModalVisible, setWriteReviewModalVisible] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -121,6 +129,31 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
 
   const handleSelectLesson = (lesson: Lesson) => {
     onNavigateToLesson(course.id, lesson.id);
+  };
+
+  const handleSubmitReview = () => {
+    if (!reviewComment.trim()) {
+      Alert.alert('Review Required', 'Please share your feedback or experience with this course.');
+      return;
+    }
+    setIsSubmittingReview(true);
+    addCourseReview(course.id, {
+      userName: user?.displayName || user?.username || 'Executive Learner',
+      userAvatar:
+        user?.avatar ||
+        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
+      rating: reviewRating,
+      comment: reviewComment.trim(),
+      userRole: isEnrolled ? 'Enrolled Student' : 'Verified Learner',
+      company: 'Corporate Professional',
+    });
+    setIsSubmittingReview(false);
+    setWriteReviewModalVisible(false);
+    setReviewComment('');
+    Alert.alert(
+      'Review Submitted! 🌟',
+      'Thank you for your rating and review. Your feedback helps fellow executives make informed learning decisions.'
+    );
   };
 
   return (
@@ -440,6 +473,21 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
 
           {activeTab === 'reviews' && (
             <View style={styles.reviewsTab}>
+              {/* Write a Review Button */}
+              <TouchableOpacity
+                style={[
+                  styles.writeReviewCTA,
+                  { backgroundColor: colors.primaryLight, borderColor: colors.primary },
+                ]}
+                onPress={() => setWriteReviewModalVisible(true)}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="star" size={16} color={colors.primary} />
+                <Text style={[styles.writeReviewCTAText, { color: colors.primary }]}>
+                  {isBangla ? 'আপনার মূল্যবান রিভিউ ও রেটিং দিন ★' : 'Rate & Write a Review ★'}
+                </Text>
+              </TouchableOpacity>
+
               {course.reviews.length === 0 ? (
                 <Text style={[styles.noReviews, { color: colors.textMuted }]}>
                   No reviews yet for this cohort.
@@ -673,6 +721,123 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                   onPress={() => setCertPreviewVisible(false)}
                 >
                   <Text style={[styles.certCloseBtnText, { color: colors.text }]}>Close Preview</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Interactive Write a Review Modal */}
+      <Modal
+        visible={writeReviewModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setWriteReviewModalVisible(false)}
+      >
+        <View style={styles.reviewModalOverlay}>
+          <View style={[styles.reviewModalCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+            <View style={styles.reviewModalHeader}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Ionicons name="star" size={20} color="#F59E0B" />
+                <Text style={[styles.reviewModalTitle, { color: colors.text }]}>
+                  {isBangla ? 'কোর্স রেটিং ও রিভিউ' : 'Rate & Review Course'}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setWriteReviewModalVisible(false)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="close" size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <Text style={[styles.reviewCourseTitle, { color: colors.text }]}>
+                {course.title}
+              </Text>
+              <Text style={[styles.reviewModalSub, { color: colors.textMuted }]}>
+                {isBangla
+                  ? 'আপনার অভিজ্ঞতার ওপর ভিত্তি করে রেটিং এবং মূল্যবান মতামত শেয়ার করুন।'
+                  : 'Select your rating score and write your genuine learning experience.'}
+              </Text>
+
+              {/* Star Rating Selector */}
+              <View style={styles.starsSelectorRow}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <TouchableOpacity
+                    key={star}
+                    onPress={() => setReviewRating(star)}
+                    style={styles.starTouch}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons
+                      name={star <= reviewRating ? 'star' : 'star-outline'}
+                      size={32}
+                      color="#F59E0B"
+                    />
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <Text style={[styles.ratingFeedbackLabel, { color: colors.primary }]}>
+                {reviewRating === 5
+                  ? '★★★★★ Outstanding / 5.0'
+                  : reviewRating === 4
+                  ? '★★★★ Very Good / 4.0'
+                  : reviewRating === 3
+                  ? '★★★ Good / 3.0'
+                  : reviewRating === 2
+                  ? '★★ Fair / 2.0'
+                  : '★ Needs Improvement / 1.0'}
+              </Text>
+
+              {/* Comment Input */}
+              <Text style={[styles.inputLabel, { color: colors.text }]}>
+                {isBangla ? 'আপনার রিভিউ লিখুন' : 'Your Detailed Feedback'}
+              </Text>
+              <TextInput
+                style={[
+                  styles.reviewTextInput,
+                  {
+                    backgroundColor: colors.surfaceSubtle,
+                    borderColor: colors.border,
+                    color: colors.text,
+                  },
+                ]}
+                placeholder={
+                  isBangla
+                    ? 'কোর্স কনটেন্ট, ইন্সট্রাক্টরের দক্ষতা ও আপনার অর্জিত অভিজ্ঞতা সম্পর্কে লিখুন...'
+                    : 'Share how this masterclass improved your executive skillset and workplace productivity...'
+                }
+                placeholderTextColor={colors.textMuted}
+                value={reviewComment}
+                onChangeText={setReviewComment}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+
+              {/* Actions */}
+              <View style={styles.reviewModalActions}>
+                <TouchableOpacity
+                  style={[styles.submitReviewBtn, { backgroundColor: colors.primary }]}
+                  onPress={handleSubmitReview}
+                  disabled={isSubmittingReview}
+                  activeOpacity={0.88}
+                >
+                  <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
+                  <Text style={styles.submitReviewBtnText}>
+                    {isBangla ? 'রিভিউ সাবমিট করুন' : 'Submit Review'}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.cancelReviewBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                  onPress={() => setWriteReviewModalVisible(false)}
+                >
+                  <Text style={[styles.cancelReviewBtnText, { color: colors.textMuted }]}>
+                    {isBangla ? 'বাতিল' : 'Cancel'}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>
@@ -1337,6 +1502,109 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
   certCloseBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  writeReviewCTA: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    marginBottom: 16,
+    gap: 8,
+  },
+  writeReviewCTAText: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  reviewModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    justifyContent: 'flex-end',
+  },
+  reviewModalCard: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderTopWidth: 1,
+    padding: 20,
+    maxHeight: '85%',
+  },
+  reviewModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  reviewModalTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+  },
+  reviewCourseTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  reviewModalSub: {
+    fontSize: 12,
+    marginBottom: 16,
+    lineHeight: 18,
+  },
+  starsSelectorRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 12,
+    marginVertical: 10,
+  },
+  starTouch: {
+    padding: 4,
+  },
+  ratingFeedbackLabel: {
+    textAlign: 'center',
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  reviewTextInput: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+    fontSize: 13,
+    minHeight: 90,
+    marginBottom: 18,
+  },
+  reviewModalActions: {
+    gap: 8,
+    marginBottom: 16,
+  },
+  submitReviewBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 13,
+    borderRadius: 12,
+    gap: 8,
+  },
+  submitReviewBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  cancelReviewBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 11,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  cancelReviewBtnText: {
     fontSize: 13,
     fontWeight: '600',
   },

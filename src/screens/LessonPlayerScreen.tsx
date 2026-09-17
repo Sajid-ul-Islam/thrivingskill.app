@@ -844,11 +844,20 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         }}
       />
 
-      {/* Notes Modal */}
+      {/* Notes Modal (Section 12 Spec) */}
       <NotesModal
         visible={notesModalVisible}
         courseId={course.id}
         lessonId={currentLesson.id}
+        currentPositionSeconds={currentPositionSeconds}
+        onSeekTo={(sec) => {
+          setCurrentPositionSeconds(sec);
+          if (course && currentLesson) recordWatchPosition(course.id, currentLesson.id, sec);
+          setNotesModalVisible(false);
+          const mins = Math.floor(sec / 60);
+          const secs = (sec % 60).toString().padStart(2, '0');
+          Alert.alert('Jumped to Video Bookmark ⏱️', `Player seeked to ${mins}:${secs}`);
+        }}
         onClose={() => setNotesModalVisible(false)}
       />
 

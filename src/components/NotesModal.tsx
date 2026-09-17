@@ -20,10 +20,34 @@ interface NotesModalProps {
   visible: boolean;
   courseId: string;
   lessonId: string;
+  currentPositionSeconds?: number;
+  onSeekTo?: (seconds: number) => void;
   onClose: () => void;
 }
 
-export const NotesModal: React.FC<NotesModalProps> = ({ visible, courseId, lessonId, onClose }) => {
+const formatSeconds = (totalSec: number): string => {
+  const m = Math.floor(totalSec / 60);
+  const s = Math.floor(totalSec % 60);
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+};
+
+const parseTimestampToSeconds = (ts: string): number => {
+  const clean = ts.replace(/[\[\]]/g, '').trim();
+  const parts = clean.split(':').map((p) => parseInt(p, 10));
+  if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+    return parts[0] * 60 + parts[1];
+  }
+  return 0;
+};
+
+export const NotesModal: React.FC<NotesModalProps> = ({
+  visible,
+  courseId,
+  lessonId,
+  currentPositionSeconds = 0,
+  onSeekTo,
+  onClose,
+}) => {
   const { colors } = useTheme();
   const { getNotesForLesson, addNote, deleteNote, courses } = useLearning();
   const [newNoteText, setNewNoteText] = useState('');
@@ -34,7 +58,8 @@ export const NotesModal: React.FC<NotesModalProps> = ({ visible, courseId, lesso
 
   const handleSaveNote = () => {
     if (!newNoteText.trim()) return;
-    addNote(courseId, lessonId, newNoteText.trim());
+    const timeStr = formatSeconds(currentPositionSeconds);
+    addNote(courseId, lessonId, newNoteText.trim(), timeStr);
     setNewNoteText('');
   };
 
@@ -107,6 +132,22 @@ export const NotesModal: React.FC<NotesModalProps> = ({ visible, courseId, lesso
           </View>
 
           <ScrollView contentContainerStyle={styles.scrollContent}>
+            {/* Stamp Playhead Tool */}
+            <View style={styles.stampBar}>
+              <TouchableOpacity
+                style={[styles.timestampChip, { backgroundColor: colors.primaryLight }]}
+                onPress={() => {
+                  const stamp = formatSeconds(currentPositionSeconds);
+                  setNewNoteText((prev) => (prev ? `[${stamp}] ${prev}` : `[${stamp}] `));
+                }}
+              >
+                <Ionicons name="time" size={13} color={colors.primary} />
+                <Text style={[styles.timestampChipText, { color: colors.primary }]}>
+                  Stamp Current Time ({formatSeconds(currentPositionSeconds)})
+                </Text>
+              </TouchableOpacity>
+            </View>
+
             {/* Input field */}
             <View
               style={[
@@ -158,12 +199,19 @@ export const NotesModal: React.FC<NotesModalProps> = ({ visible, courseId, lesso
                     ]}
                   >
                     <View style={styles.noteTopRow}>
-                      <View style={[styles.timeTag, { backgroundColor: colors.primaryLight }]}>
-                        <Ionicons name="time" size={11} color={colors.primary} />
+                      <TouchableOpacity
+                        style={[styles.timeTag, { backgroundColor: colors.primaryLight }]}
+                        onPress={() => {
+                          const sec = parseTimestampToSeconds(note.timestamp);
+                          onSeekTo?.(sec);
+                        }}
+                      >
+                        <Ionicons name="play" size={10} color={colors.primary} />
                         <Text style={[styles.timeText, { color: colors.primary }]}>
                           {note.timestamp}
                         </Text>
-                      </View>
+                        <Text style={{ fontSize: 9, color: colors.primary, fontWeight: '800' }}>▶ Jump</Text>
+                      </TouchableOpacity>
                       <TouchableOpacity
                         onPress={() => deleteNote(note.id)}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
@@ -238,6 +286,22 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: 20,
+  },
+  stampBar: {
+    marginBottom: 10,
+    flexDirection: 'row',
+  },
+  timestampChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    gap: 5,
+  },
+  timestampChipText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   inputWrapper: {
     borderRadius: 12,

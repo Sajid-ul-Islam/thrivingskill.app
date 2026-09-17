@@ -27,6 +27,8 @@ import { SummitCard } from '../components/SummitCard';
 import { YouTubeCard } from '../components/YouTubeCard';
 import { CommunityFeedShelf } from '../components/CommunityFeedShelf';
 import { CommunityFeedModal } from '../components/CommunityFeedModal';
+import { HelpFaqModal } from '../components/HelpFaqModal';
+import { BlogModal } from '../components/BlogModal';
 import { HeroCarousel, CarouselSlide } from '../components/HeroCarousel';
 import { QuickActionDock } from '../components/QuickActionDock';
 import { SearchSpotlightBar } from '../components/SearchSpotlightBar';
@@ -82,6 +84,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const [aboutInitialTab, setAboutInitialTab] = useState<AboutTabKey>('overview');
   const [legalModalVisible, setLegalModalVisible] = useState(false);
   const [legalInitialTab, setLegalInitialTab] = useState<LegalTabKey>('terms');
+  const [blogModalVisible, setBlogModalVisible] = useState(false);
+  const [helpFaqModalVisible, setHelpFaqModalVisible] = useState(false);
 
   const { t, isBangla } = useLanguage();
   const { streakDays, dailyMinutesSpent, dailyGoalMinutes } = useGamification();
@@ -776,13 +780,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {/* Career Insights & Articles (Live from WordPress) */}
         {blogPosts && blogPosts.length > 0 && (
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
+            <View style={[styles.sectionHeader, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
               <View>
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>Career Insights & Articles</Text>
                 <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
                   Live publications from Thriving Skills Editorial
                 </Text>
               </View>
+              <TouchableOpacity
+                style={{ paddingVertical: 4, paddingHorizontal: 10, borderRadius: 8, backgroundColor: colors.primaryLight }}
+                onPress={() => setBlogModalVisible(true)}
+              >
+                <Text style={{ fontSize: 11, fontWeight: '800', color: colors.primary }}>
+                  View All →
+                </Text>
+              </TouchableOpacity>
             </View>
 
             <ScrollView
@@ -801,9 +813,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                       shadowColor: colors.cardShadow,
                     },
                   ]}
-                  onPress={() => {
-                    post.link && Linking.openURL(post.link).catch(() => {});
-                  }}
+                  onPress={() => setBlogModalVisible(true)}
                   activeOpacity={0.88}
                 >
                   {post.featuredImageUrl ? (
@@ -825,7 +835,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                       {post.excerpt}
                     </Text>
                     <View style={styles.articleFooter}>
-                      <Text style={[styles.articleReadMore, { color: colors.primary }]}>Read on Web →</Text>
+                      <Text style={[styles.articleReadMore, { color: colors.primary }]}>Read In-App →</Text>
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -1090,6 +1100,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             >
               <Text style={[styles.legalPillText, { color: colors.text }]}>About TSL</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.legalPillBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+              onPress={() => setHelpFaqModalVisible(true)}
+            >
+              <Text style={[styles.legalPillText, { color: colors.text }]}>Help & FAQ</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.legalPillBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+              onPress={() => setBlogModalVisible(true)}
+            >
+              <Text style={[styles.legalPillText, { color: colors.text }]}>Articles & Blog</Text>
+            </TouchableOpacity>
           </View>
 
           {/* Contact / Helpline row */}
@@ -1151,6 +1175,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         visible={legalModalVisible}
         onClose={() => setLegalModalVisible(false)}
         initialTab={legalInitialTab}
+      />
+
+      <HelpFaqModal
+        visible={helpFaqModalVisible}
+        onClose={() => setHelpFaqModalVisible(false)}
+      />
+
+      <BlogModal
+        visible={blogModalVisible}
+        onClose={() => setBlogModalVisible(false)}
       />
     </View>
   );

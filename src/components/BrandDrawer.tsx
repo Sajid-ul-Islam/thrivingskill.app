@@ -20,6 +20,8 @@ import { useLanguage } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { AboutTSLModal, AboutTabKey } from './AboutTSLModal';
 import { LegalPolicyModal, LegalTabKey } from './LegalPolicyModal';
+import { HelpFaqModal } from './HelpFaqModal';
+import { BlogModal } from './BlogModal';
 import { RootTab } from '../types';
 
 interface BrandDrawerProps {
@@ -53,6 +55,8 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
   const [aboutInitialTab, setAboutInitialTab] = useState<AboutTabKey>('overview');
   const [legalModalVisible, setLegalModalVisible] = useState(false);
   const [legalInitialTab, setLegalInitialTab] = useState<LegalTabKey>('terms');
+  const [helpFaqModalVisible, setHelpFaqModalVisible] = useState(false);
+  const [blogModalVisible, setBlogModalVisible] = useState(false);
 
   const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
 
@@ -448,15 +452,25 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
 
             <TouchableOpacity
               style={styles.actionRow}
-              onPress={() => {
-                setAboutInitialTab('contact');
-                setAboutModalVisible(true);
-              }}
+              onPress={() => setHelpFaqModalVisible(true)}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <Ionicons name="help-circle-outline" size={18} color="#6366F1" />
                 <Text style={[styles.actionLabel, { color: colors.text }]}>
-                  {isBangla ? 'হেল্প ও এফএকিউ (FAQ)' : 'Help & FAQ'}
+                  {isBangla ? 'হেল্প ও এফএকিউ (FAQ)' : 'Help & FAQ Center'}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={() => setBlogModalVisible(true)}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Ionicons name="newspaper-outline" size={18} color="#8B5CF6" />
+                <Text style={[styles.actionLabel, { color: colors.text }]}>
+                  {isBangla ? 'টিএসএল ব্লগ ও আর্টিকেল' : 'Articles & Industry Insights'}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
@@ -532,6 +546,16 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
         visible={legalModalVisible}
         onClose={() => setLegalModalVisible(false)}
         initialTab={legalInitialTab}
+      />
+
+      <HelpFaqModal
+        visible={helpFaqModalVisible}
+        onClose={() => setHelpFaqModalVisible(false)}
+      />
+
+      <BlogModal
+        visible={blogModalVisible}
+        onClose={() => setBlogModalVisible(false)}
       />
     </Modal>
   );
