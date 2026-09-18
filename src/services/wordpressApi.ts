@@ -99,3 +99,17 @@ export async function registerWpUser(userData: {
 export async function validateWpToken(token: string): Promise<boolean> {
   return AuthService.validateToken(token);
 }
+
+/**
+ * Send SMS OTP to phone number (CR-04)
+ */
+export async function sendWpPhoneOtp(phone: string): Promise<{ success: boolean; message: string; testOtp?: string }> {
+  return AuthService.sendPhoneOtp(phone);
+}
+
+/**
+ * Verify SMS OTP and login/register user (CR-04)
+ */
+export async function verifyWpPhoneOtp(phone: string, otp: string, fullName?: string): Promise<WpUser> {
+  return AuthService.verifyPhoneOtp(phone, otp, fullName);
+}

@@ -20,11 +20,20 @@ interface AuthModalProps {
   onClose: () => void;
 }
 
-type AuthMode = 'login' | 'register';
+type AuthMode = 'login' | 'phone' | 'register';
 
 export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
   const { colors, isDark } = useTheme();
-  const { login, loginWithGoogle, loginWithFacebook, register, continueAsGuest, isLoading } = useAuth();
+  const {
+    login,
+    loginWithGoogle,
+    loginWithFacebook,
+    loginWithPhone,
+    sendPhoneOtp,
+    register,
+    continueAsGuest,
+    isLoading,
+  } = useAuth();
 
   const [mode, setMode] = useState<AuthMode>('login');
   const [name, setName] = useState('');
@@ -32,7 +41,80 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [socialLoading, setSocialLoading] = useState<'google' | 'facebook' | null>(null);
+
+  // Phone OTP States (CR-04)
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneFullName, setPhoneFullName] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
+
+  // 60-Second Resend Timer Effect
+  React.useEffect(() => {
+    if (resendTimer <= 0) return;
+    const interval = setInterval(() => {
+      setResendTimer((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [resendTimer]);
+
+  const handleSendOtp = async () => {
+    const rawDigits = phoneNumber.replace(/[^0-9]/g, '');
+    if (rawDigits.length < 10) {
+      setErrorMessage('Please enter a valid 11-digit Bangladeshi mobile number (e.g. 01712345678).');
+      return;
+    }
+    const fullPhone = rawDigits.startsWith('880')
+      ? `+${rawDigits}`
+      : rawDigits.startsWith('0')
+      ? `+88${rawDigits}`
+      : `+880${rawDigits}`;
+
+    setErrorMessage(null);
+    setInfoMessage(null);
+    setIsSendingOtp(true);
+    try {
+      const res = await sendPhoneOtp(fullPhone);
+      setIsOtpSent(true);
+      setResendTimer(60);
+      setInfoMessage(res.message || `Code sent to ${fullPhone}! (Sandbox test code: 123456)`);
+    } catch (e: any) {
+      setErrorMessage(e.message || 'Failed to send OTP SMS. Please try again.');
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (otpCode.trim().length !== 6) {
+      setErrorMessage('Please enter the 6-digit OTP code.');
+      return;
+    }
+    const rawDigits = phoneNumber.replace(/[^0-9]/g, '');
+    const fullPhone = rawDigits.startsWith('880')
+      ? `+${rawDigits}`
+      : rawDigits.startsWith('0')
+      ? `+88${rawDigits}`
+      : `+880${rawDigits}`;
+
+    setErrorMessage(null);
+    setIsVerifyingOtp(true);
+    try {
+      await loginWithPhone(fullPhone, otpCode.trim(), phoneFullName.trim() || undefined);
+      setPhoneNumber('');
+      setOtpCode('');
+      setIsOtpSent(false);
+      onClose();
+    } catch (e: any) {
+      setErrorMessage(e.message || 'Invalid or expired OTP code.');
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
 
   const handleLogin = async () => {
     if (!username.trim() || !password.trim()) {
@@ -191,7 +273,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
               <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
             </View>
 
-            {/* Mode Switch Tabs */}
+            {/* Mode Switch Tabs: Email / Mobile OTP / Register */}
             <View style={[styles.tabSwitch, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
               <TouchableOpacity
                 style={[
@@ -201,6 +283,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                 onPress={() => {
                   setMode('login');
                   setErrorMessage(null);
+                  setInfoMessage(null);
                 }}
               >
                 <Text
@@ -210,9 +293,35 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                     mode === 'login' && { fontWeight: '700' },
                   ]}
                 >
-                  Sign In
+                  Email Login
                 </Text>
               </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.tabSwitchItem,
+                  mode === 'phone' && [styles.tabSwitchActive, { backgroundColor: colors.surfaceCard }],
+                ]}
+                onPress={() => {
+                  setMode('phone');
+                  setErrorMessage(null);
+                  setInfoMessage(null);
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Ionicons name="call" size={13} color={mode === 'phone' ? colors.primary : colors.textMuted} />
+                  <Text
+                    style={[
+                      styles.tabSwitchText,
+                      { color: mode === 'phone' ? colors.text : colors.textMuted },
+                      mode === 'phone' && { fontWeight: '700' },
+                    ]}
+                  >
+                    Mobile OTP
+                  </Text>
+                </View>
+              </TouchableOpacity>
+
               <TouchableOpacity
                 style={[
                   styles.tabSwitchItem,
@@ -221,6 +330,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                 onPress={() => {
                   setMode('register');
                   setErrorMessage(null);
+                  setInfoMessage(null);
                 }}
               >
                 <Text
@@ -230,7 +340,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                     mode === 'register' && { fontWeight: '700' },
                   ]}
                 >
-                  New Account
+                  Register
                 </Text>
               </TouchableOpacity>
             </View>
@@ -243,117 +353,287 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
               </View>
             ) : null}
 
-            {/* Extra Full Name input for registration */}
-            {mode === 'register' && (
-              <View style={styles.inputGroup}>
-                <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Full Name</Text>
-                <View
-                  style={[
-                    styles.inputWrapper,
-                    { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
-                  ]}
-                >
-                  <Ionicons name="person-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
-                  <TextInput
-                    style={[styles.input, { color: colors.text }]}
-                    placeholder="e.g. Sajid Ul Islam"
-                    placeholderTextColor={colors.textMuted + '80'}
-                    value={name}
-                    onChangeText={(t) => {
-                      setName(t);
-                      if (errorMessage) setErrorMessage(null);
-                    }}
-                  />
+            {/* Info / Success Notification */}
+            {infoMessage ? (
+              <View style={[styles.infoBox, { backgroundColor: '#10B98115', borderColor: '#10B981' }]}>
+                <Ionicons name="checkmark-circle" size={18} color="#10B981" />
+                <Text style={[styles.infoText, { color: '#10B981' }]}>{infoMessage}</Text>
+              </View>
+            ) : null}
+
+            {/* Mode: Phone OTP Flow (CR-04) */}
+            {mode === 'phone' ? (
+              <View style={{ width: '100%' }}>
+                {!isOtpSent ? (
+                  /* Step 1: Phone number entry */
+                  <>
+                    <View style={styles.inputGroup}>
+                      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Full Name (Optional)</Text>
+                      <View
+                        style={[
+                          styles.inputWrapper,
+                          { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                        ]}
+                      >
+                        <Ionicons name="person-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                        <TextInput
+                          style={[styles.input, { color: colors.text }]}
+                          placeholder="e.g. Sajid Ul Islam"
+                          placeholderTextColor={colors.textMuted + '80'}
+                          value={phoneFullName}
+                          onChangeText={setPhoneFullName}
+                        />
+                      </View>
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
+                        Bangladeshi Mobile Number (মোবাইল নম্বর)
+                      </Text>
+                      <View
+                        style={[
+                          styles.inputWrapper,
+                          { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                        ]}
+                      >
+                        <View style={styles.countryCodeBadge}>
+                          <Text style={styles.flagEmoji}>🇧🇩</Text>
+                          <Text style={[styles.countryCodeText, { color: colors.text }]}>+880</Text>
+                        </View>
+                        <TextInput
+                          style={[styles.input, { color: colors.text, paddingLeft: 8 }]}
+                          placeholder="17XXXXXXXX"
+                          placeholderTextColor={colors.textMuted + '80'}
+                          value={phoneNumber}
+                          onChangeText={(t) => {
+                            setPhoneNumber(t);
+                            if (errorMessage) setErrorMessage(null);
+                          }}
+                          keyboardType="phone-pad"
+                          maxLength={11}
+                        />
+                      </View>
+                    </View>
+
+                    {/* Sandbox note */}
+                    <View style={[styles.sandboxBox, { backgroundColor: isDark ? '#1E1B4B' : '#EEF2FF', borderColor: '#6366F1' }]}>
+                      <Ionicons name="flash" size={14} color="#6366F1" />
+                      <Text style={[styles.sandboxText, { color: colors.text }]}>
+                        Sandbox Demo: Test OTP code is <Text style={{ fontWeight: '800', color: '#6366F1' }}>123456</Text>
+                      </Text>
+                    </View>
+
+                    <TouchableOpacity
+                      style={[styles.submitButton, { backgroundColor: colors.primary }]}
+                      onPress={handleSendOtp}
+                      disabled={isSendingOtp}
+                      activeOpacity={0.88}
+                    >
+                      {isSendingOtp ? (
+                        <ActivityIndicator color="#FFFFFF" size="small" />
+                      ) : (
+                        <>
+                          <Ionicons name="chatbox-ellipses" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+                          <Text style={styles.submitButtonText}>Send 6-Digit OTP SMS</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  /* Step 2: 6-Digit OTP Verification Screen */
+                  <>
+                    <View style={styles.otpHeaderBox}>
+                      <Text style={[styles.otpPromptTitle, { color: colors.text }]}>
+                        Enter 6-Digit Verification Code
+                      </Text>
+                      <Text style={[styles.otpPromptSubtitle, { color: colors.textMuted }]}>
+                        Sent to {phoneNumber.startsWith('0') ? `+88${phoneNumber}` : `+880${phoneNumber}`}
+                      </Text>
+                      <TouchableOpacity onPress={() => setIsOtpSent(false)} style={styles.changePhoneBtn}>
+                        <Text style={[styles.changePhoneText, { color: colors.primary }]}>Change Number</Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.inputGroup}>
+                      <View
+                        style={[
+                          styles.otpInputWrapper,
+                          { backgroundColor: colors.surfaceSubtle, borderColor: colors.primary },
+                        ]}
+                      >
+                        <TextInput
+                          style={[styles.otpInput, { color: colors.text }]}
+                          placeholder="123456"
+                          placeholderTextColor={colors.textMuted + '60'}
+                          value={otpCode}
+                          onChangeText={(t) => {
+                            setOtpCode(t);
+                            if (errorMessage) setErrorMessage(null);
+                          }}
+                          keyboardType="number-pad"
+                          maxLength={6}
+                          autoFocus
+                        />
+                      </View>
+                    </View>
+
+                    {/* Quick Test code filler button */}
+                    <TouchableOpacity
+                      style={styles.quickFillBtn}
+                      onPress={() => setOtpCode('123456')}
+                    >
+                      <Ionicons name="key" size={13} color="#6366F1" />
+                      <Text style={styles.quickFillText}>Auto-fill Sandbox OTP: 123456</Text>
+                    </TouchableOpacity>
+
+                    {/* Resend OTP row with 60s countdown */}
+                    <View style={styles.resendRow}>
+                      {resendTimer > 0 ? (
+                        <Text style={[styles.resendTimerText, { color: colors.textMuted }]}>
+                          Resend code in {resendTimer < 10 ? `0${resendTimer}` : resendTimer}s
+                        </Text>
+                      ) : (
+                        <TouchableOpacity onPress={handleSendOtp} disabled={isSendingOtp}>
+                          <Text style={[styles.resendActionText, { color: colors.primary }]}>
+                            Resend OTP SMS
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+
+                    <TouchableOpacity
+                      style={[styles.submitButton, { backgroundColor: colors.primary }]}
+                      onPress={handleVerifyOtp}
+                      disabled={isVerifyingOtp}
+                      activeOpacity={0.88}
+                    >
+                      {isVerifyingOtp ? (
+                        <ActivityIndicator color="#FFFFFF" size="small" />
+                      ) : (
+                        <>
+                          <Ionicons name="shield-checkmark" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+                          <Text style={styles.submitButtonText}>Verify & Sign In</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
+            ) : (
+              /* Email / Password Form (Sign In & Register) */
+              <View style={{ width: '100%' }}>
+                {mode === 'register' && (
+                  <View style={styles.inputGroup}>
+                    <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Full Name</Text>
+                    <View
+                      style={[
+                        styles.inputWrapper,
+                        { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                      ]}
+                    >
+                      <Ionicons name="person-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                      <TextInput
+                        style={[styles.input, { color: colors.text }]}
+                        placeholder="e.g. Sajid Ul Islam"
+                        placeholderTextColor={colors.textMuted + '80'}
+                        value={name}
+                        onChangeText={(t) => {
+                          setName(t);
+                          if (errorMessage) setErrorMessage(null);
+                        }}
+                      />
+                    </View>
+                  </View>
+                )}
+
+                {/* Email / Username Input */}
+                <View style={styles.inputGroup}>
+                  <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
+                    {mode === 'login' ? 'Email or Username' : 'Email Address'}
+                  </Text>
+                  <View
+                    style={[
+                      styles.inputWrapper,
+                      { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                    ]}
+                  >
+                    <Ionicons name="mail-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                    <TextInput
+                      style={[styles.input, { color: colors.text }]}
+                      placeholder={mode === 'login' ? 'e.g. user@thrivingskill.com' : 'e.g. name@domain.com'}
+                      placeholderTextColor={colors.textMuted + '80'}
+                      value={username}
+                      onChangeText={(t) => {
+                        setUsername(t);
+                        if (errorMessage) setErrorMessage(null);
+                      }}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      keyboardType="email-address"
+                    />
+                  </View>
                 </View>
-              </View>
-            )}
 
-            {/* Email / Username Input */}
-            <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
-                {mode === 'login' ? 'Email or Username' : 'Email Address'}
-              </Text>
-              <View
-                style={[
-                  styles.inputWrapper,
-                  { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
-                ]}
-              >
-                <Ionicons name="mail-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
-                <TextInput
-                  style={[styles.input, { color: colors.text }]}
-                  placeholder={mode === 'login' ? 'e.g. user@thrivingskill.com' : 'e.g. name@domain.com'}
-                  placeholderTextColor={colors.textMuted + '80'}
-                  value={username}
-                  onChangeText={(t) => {
-                    setUsername(t);
-                    if (errorMessage) setErrorMessage(null);
-                  }}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  keyboardType="email-address"
-                />
-              </View>
-            </View>
+                {/* Password Input */}
+                <View style={styles.inputGroup}>
+                  <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Password</Text>
+                  <View
+                    style={[
+                      styles.inputWrapper,
+                      { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                    ]}
+                  >
+                    <Ionicons
+                      name="lock-closed-outline"
+                      size={18}
+                      color={colors.textMuted}
+                      style={styles.inputIcon}
+                    />
+                    <TextInput
+                      style={[styles.input, { color: colors.text }]}
+                      placeholder={mode === 'login' ? 'Enter your password' : 'Create a secure password'}
+                      placeholderTextColor={colors.textMuted + '80'}
+                      value={password}
+                      onChangeText={(t) => {
+                        setPassword(t);
+                        if (errorMessage) setErrorMessage(null);
+                      }}
+                      secureTextEntry={!showPassword}
+                      autoCapitalize="none"
+                    />
+                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
+                      <Ionicons
+                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                        size={18}
+                        color={colors.textMuted}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
 
-            {/* Password Input */}
-            <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Password</Text>
-              <View
-                style={[
-                  styles.inputWrapper,
-                  { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
-                ]}
-              >
-                <Ionicons
-                  name="lock-closed-outline"
-                  size={18}
-                  color={colors.textMuted}
-                  style={styles.inputIcon}
-                />
-                <TextInput
-                  style={[styles.input, { color: colors.text }]}
-                  placeholder={mode === 'login' ? 'Enter your password' : 'Create a secure password'}
-                  placeholderTextColor={colors.textMuted + '80'}
-                  value={password}
-                  onChangeText={(t) => {
-                    setPassword(t);
-                    if (errorMessage) setErrorMessage(null);
-                  }}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                />
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
-                  <Ionicons
-                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                    size={18}
-                    color={colors.textMuted}
-                  />
+                {/* Submit Button */}
+                <TouchableOpacity
+                  style={[
+                    styles.submitButton,
+                    { backgroundColor: colors.accent },
+                  ]}
+                  onPress={handleLogin}
+                  disabled={isLoading || !!socialLoading}
+                  activeOpacity={0.88}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <>
+                      <Text style={styles.submitButtonText}>
+                        {mode === 'login' ? 'Sign In with Credentials' : 'Create Free Account'}
+                      </Text>
+                      <Ionicons name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
+                    </>
+                  )}
                 </TouchableOpacity>
               </View>
-            </View>
-
-            {/* Submit Button */}
-            <TouchableOpacity
-              style={[
-                styles.submitButton,
-                { backgroundColor: colors.accent },
-              ]}
-              onPress={handleLogin}
-              disabled={isLoading || !!socialLoading}
-              activeOpacity={0.88}
-            >
-              {isLoading ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <>
-                  <Text style={styles.submitButtonText}>
-                    {mode === 'login' ? 'Sign In with Credentials' : 'Create Free Account'}
-                  </Text>
-                  <Ionicons name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
-                </>
-              )}
-            </TouchableOpacity>
+            )}
 
             {/* Guest Action */}
             <TouchableOpacity
@@ -614,5 +894,114 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 16,
     lineHeight: 16,
+  },
+  infoBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    width: '100%',
+    marginBottom: 14,
+    gap: 8,
+  },
+  infoText: {
+    fontSize: 13,
+    fontWeight: '600',
+    flex: 1,
+  },
+  countryCodeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingRight: 10,
+    borderRightWidth: 1,
+    borderRightColor: 'rgba(150, 150, 150, 0.25)',
+    gap: 5,
+  },
+  flagEmoji: {
+    fontSize: 18,
+  },
+  countryCodeText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  sandboxBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginBottom: 14,
+    gap: 6,
+  },
+  sandboxText: {
+    fontSize: 12,
+  },
+  otpHeaderBox: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  otpPromptTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  otpPromptSubtitle: {
+    fontSize: 13,
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  changePhoneBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  changePhoneText: {
+    fontSize: 12,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  otpInputWrapper: {
+    borderRadius: 14,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 56,
+  },
+  otpInput: {
+    fontSize: 26,
+    fontWeight: '800',
+    letterSpacing: 10,
+    textAlign: 'center',
+    width: '100%',
+  },
+  quickFillBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 6,
+    marginBottom: 8,
+  },
+  quickFillText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6366F1',
+    textDecorationLine: 'underline',
+  },
+  resendRow: {
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  resendTimerText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  resendActionText: {
+    fontSize: 13,
+    fontWeight: '700',
+    textDecorationLine: 'underline',
   },
 });

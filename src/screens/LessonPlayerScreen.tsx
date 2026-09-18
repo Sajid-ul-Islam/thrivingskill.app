@@ -16,11 +16,12 @@ import { QuizModal } from '../components/QuizModal';
 import { QuizPlayerModal } from '../components/QuizPlayerModal';
 import { NotesModal } from '../components/NotesModal';
 import { CertificateModal } from '../components/CertificateModal';
+import { MandatoryReviewModal } from '../components/MandatoryReviewModal';
 import { CourseQnATab } from '../components/CourseQnATab';
 import { useLanguage } from '../context/LanguageContext';
 import { useGamification } from '../context/GamificationContext';
 import { OfflineManager } from '../services/offline/offlineManager';
-import { Lesson } from '../types';
+import { Lesson, Certificate } from '../types';
 
 interface LessonPlayerScreenProps {
   courseId: string;
@@ -38,7 +39,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   onSelectLesson,
 }) => {
   const { colors, isDark } = useTheme();
-  const { t } = useLanguage();
+  const { t, isBangla } = useLanguage();
   const { recordStudyTime, unlockBadge } = useGamification();
   const {
     getCourseById,
@@ -48,6 +49,10 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     certificates,
     recordWatchPosition,
     getWatchPosition,
+    hasReviewedCourse,
+    isCertificateUnlocked,
+    submitMandatoryCourseReview,
+    recordCategoryInteraction,
   } = useLearning();
 
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
@@ -58,6 +63,9 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const [quizPlayerVisible, setQuizPlayerVisible] = useState<boolean>(false);
   const [notesModalVisible, setNotesModalVisible] = useState<boolean>(false);
   const [certModalVisible, setCertModalVisible] = useState<boolean>(false);
+  const [mandatoryReviewVisible, setMandatoryReviewVisible] = useState<boolean>(false);
+  const [autoplayCountdown, setAutoplayCountdown] = useState<number | null>(null);
+  const [unlockedCert, setUnlockedCert] = useState<Certificate | null>(null);
   const [isDownloaded, setIsDownloaded] = useState<boolean>(false);
   const [currentPositionSeconds, setCurrentPositionSeconds] = useState<number>(0);
 
@@ -79,28 +87,85 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const isLessonCompleted = progress?.completedLessonIds.includes(currentLesson?.id || '') || false;
   const lessonNotes = currentLesson ? getNotesForLesson(courseId, currentLesson.id) : [];
 
+  const parseDurationToSeconds = (dur?: string): number => {
+    if (!dur) return 600;
+    if (dur.includes(':')) {
+      const parts = dur.split(':').map((p) => parseInt(p, 10));
+      if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) return parts[0] * 60 + parts[1];
+      if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    }
+    const mins = parseInt(dur, 10);
+    return !isNaN(mins) ? mins * 60 : 600;
+  };
+
+  const totalLessonSeconds = parseDurationToSeconds(currentLesson?.duration);
+  const playbackPercent = Math.min(100, Math.round((currentPositionSeconds / (totalLessonSeconds || 1)) * 100));
+
   useEffect(() => {
     if (currentLesson?.id) {
       OfflineManager.isLessonDownloaded(currentLesson.id).then(setIsDownloaded);
       const savedSec = getWatchPosition(courseId, currentLesson.id);
       setCurrentPositionSeconds(savedSec || 0);
+      setAutoplayCountdown(null);
     }
   }, [currentLesson?.id, courseId]);
 
-  // Video watch time tracking interval & auto-sync (Section 11 Spec)
   useEffect(() => {
-    if (!isPlaying || !currentLesson || !course) return;
+    if (course?.category) {
+      recordCategoryInteraction(course.category);
+    }
+  }, [course?.category]);
+
+  // CR-03: Auto-play Countdown Timer effect (Continuous Video Playback)
+  useEffect(() => {
+    if (autoplayCountdown === null) return;
+    if (autoplayCountdown <= 0) {
+      setAutoplayCountdown(null);
+      if (currentLessonIndex < allLessons.length - 1) {
+        const nextL = allLessons[currentLessonIndex + 1].lesson;
+        setCurrentPositionSeconds(0);
+        onSelectLesson(courseId, nextL.id);
+      }
+      return;
+    }
+    const timer = setTimeout(() => {
+      setAutoplayCountdown((prev) => (prev !== null ? prev - 1 : null));
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [autoplayCountdown, currentLessonIndex, allLessons, courseId]);
+
+  // Video watch time tracking interval & continuous video auto-play (CR-03)
+  useEffect(() => {
+    if (!isPlaying || !currentLesson || !course || autoplayCountdown !== null) return;
     const interval = setInterval(() => {
       setCurrentPositionSeconds((prev) => {
         const next = prev + 1;
         if (next % 5 === 0) {
           recordWatchPosition(course.id, currentLesson.id, next);
         }
+        // Auto-complete & transition when video duration finishes (CR-03)
+        if (next >= totalLessonSeconds && totalLessonSeconds > 0) {
+          markLessonCompleted(course.id, currentLesson.id);
+          recordStudyTime(10);
+          unlockBadge('streak_champ');
+
+          const isLastLesson = currentLessonIndex >= allLessons.length - 1;
+          if (isLastLesson) {
+            setIsPlaying(false);
+            if (!hasReviewedCourse(course.id)) {
+              setMandatoryReviewVisible(true);
+            } else {
+              setCertModalVisible(true);
+            }
+          } else {
+            setAutoplayCountdown(5);
+          }
+        }
         return next;
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [isPlaying, currentLesson?.id, course?.id]);
+  }, [isPlaying, currentLesson?.id, course?.id, autoplayCountdown, totalLessonSeconds, currentLessonIndex, allLessons.length]);
 
   const handleRewind = (sec: number = 10) => {
     setCurrentPositionSeconds((prev) => {
@@ -124,20 +189,6 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     return `${mins < 10 ? '0' : ''}${mins}:${remainder < 10 ? '0' : ''}${remainder}`;
   };
 
-  const parseDurationToSeconds = (dur?: string): number => {
-    if (!dur) return 600;
-    if (dur.includes(':')) {
-      const parts = dur.split(':').map((p) => parseInt(p, 10));
-      if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) return parts[0] * 60 + parts[1];
-      if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) return parts[0] * 3600 + parts[1] * 60 + parts[2];
-    }
-    const mins = parseInt(dur, 10);
-    return !isNaN(mins) ? mins * 60 : 600;
-  };
-
-  const totalLessonSeconds = parseDurationToSeconds(currentLesson?.duration);
-  const playbackPercent = Math.min(100, Math.round((currentPositionSeconds / (totalLessonSeconds || 1)) * 100));
-
   const handleToggleOffline = async () => {
     if (!currentLesson || !course) return;
     if (isDownloaded) {
@@ -152,16 +203,41 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   };
 
   const handleNextLesson = () => {
+    setAutoplayCountdown(null);
     if (currentLessonIndex < allLessons.length - 1) {
       const nextL = allLessons[currentLessonIndex + 1].lesson;
+      setCurrentPositionSeconds(0);
       onSelectLesson(courseId, nextL.id);
     }
   };
 
   const handlePrevLesson = () => {
+    setAutoplayCountdown(null);
     if (currentLessonIndex > 0) {
       const prevL = allLessons[currentLessonIndex - 1].lesson;
+      setCurrentPositionSeconds(0);
       onSelectLesson(courseId, prevL.id);
+    }
+  };
+
+  // Test action: Skip to video end to demonstrate auto-play
+  const handleSimulateVideoEnd = () => {
+    if (!currentLesson || !course) return;
+    setCurrentPositionSeconds(totalLessonSeconds);
+    markLessonCompleted(course.id, currentLesson.id);
+    recordStudyTime(10);
+    unlockBadge('streak_champ');
+
+    const isLastLesson = currentLessonIndex >= allLessons.length - 1;
+    if (isLastLesson) {
+      setIsPlaying(false);
+      if (!hasReviewedCourse(course.id)) {
+        setMandatoryReviewVisible(true);
+      } else {
+        setCertModalVisible(true);
+      }
+    } else {
+      setAutoplayCountdown(5);
     }
   };
 
@@ -172,38 +248,37 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     unlockBadge('streak_champ');
 
     const totalLessons = allLessons.length;
-    const completedCount = (progress?.completedLessonIds.length || 0) + (isLessonCompleted ? 0 : 1);
+    const currentCompleted = progress?.completedLessonIds.length || 0;
+    const isAlreadyMarked = progress?.completedLessonIds.includes(currentLesson.id);
+    const completedCount = isAlreadyMarked ? currentCompleted : currentCompleted + 1;
 
     if (completedCount >= totalLessons) {
-      Alert.alert(
-        '🏆 Course Completed!',
-        `Congratulations! You have completed all lessons for "${course.title}". Your official verified certificate is ready!`,
-        [
-          {
-            text: 'View Certificate',
-            onPress: () => setCertModalVisible(true),
-          },
-          {
-            text: 'Awesome',
-          },
-        ]
-      );
+      // Course finished! CR-02 check:
+      if (!hasReviewedCourse(course.id)) {
+        setMandatoryReviewVisible(true);
+      } else {
+        setCertModalVisible(true);
+      }
     } else {
-      Alert.alert(
-        'Lesson Completed! 🎉',
-        `Great job mastering "${currentLesson.title}"! Would you like to take a quick knowledge check to test your retention?`,
-        [
-          {
-            text: 'Take Quick Quiz 🧠',
-            onPress: () => setQuizPlayerVisible(true),
-          },
-          {
-            text: 'Next Lesson →',
-            onPress: handleNextLesson,
-          },
-        ]
-      );
+      // Start auto-play countdown for continuous learning (CR-03)
+      setAutoplayCountdown(5);
     }
+  };
+
+  const handleSubmitReview = (rating: number, feedback: string) => {
+    if (!course) return;
+    const newCert = submitMandatoryCourseReview(
+      course.id,
+      rating,
+      feedback,
+      'Sajid-ul Islam',
+      'Course Graduate'
+    );
+    setMandatoryReviewVisible(false);
+    if (newCert) {
+      setUnlockedCert(newCert);
+    }
+    setCertModalVisible(true);
   };
 
   const cycleSpeed = () => {
@@ -223,16 +298,34 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     );
   }
 
-  const userCert = certificates.find((c) => c.courseId === course.id) || {
-    id: `cert-${course.id}`,
-    courseId: course.id,
-    courseTitle: course.title,
-    studentName: 'Sajid-ul Islam',
-    issueDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
-    credentialId: `TS-2026-${course.id.slice(-4).toUpperCase()}`,
-    verificationUrl: `https://thrivingskill.com/verify/TS-2026-${course.id.slice(-4).toUpperCase()}`,
-    instructorName: course.instructor.name,
-  };
+  const isCertUnlocked = isCertificateUnlocked(course.id);
+  const certFromList =
+    certificates.find((c) => c.courseId === course.id) ||
+    (progress?.certificateId
+      ? certificates.find((c) => c.credentialId === progress.certificateId)
+      : null);
+
+  // Certificate is strictly gated: only unlocked after review is submitted (CR-02)
+  const userCert =
+    unlockedCert ||
+    (isCertUnlocked
+      ? certFromList || {
+          id: `cert-${course.id}`,
+          courseId: course.id,
+          courseTitle: course.title,
+          studentName: 'Sajid-ul Islam',
+          issueDate: new Date().toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          }),
+          credentialId: progress?.certificateId || `TS-2026-${course.id.slice(-4).toUpperCase()}`,
+          verificationUrl: `https://thrivingskill.com/verify/${
+            progress?.certificateId || `TS-2026-${course.id.slice(-4).toUpperCase()}`
+          }`,
+          instructorName: course.instructor.name,
+        }
+      : null);
 
   const isCourseCompleted =
     progress?.isCompleted ||
@@ -407,6 +500,59 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
           <View style={styles.playerContainer}>
             <Image source={{ uri: course.thumbnail }} style={styles.playerVideoBg} />
             <View style={styles.playerOverlay}>
+              {/* CR-03: Continuous Auto-Play Next Video Countdown Overlay */}
+              {autoplayCountdown !== null && (
+                <View style={styles.autoplayCountdownOverlay}>
+                  <View
+                    style={[
+                      styles.autoplayCard,
+                      {
+                        backgroundColor: isDark ? '#1E1B4B' : '#EEF2FF',
+                        borderColor: '#6366F1',
+                      },
+                    ]}
+                  >
+                    <View
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}
+                    >
+                      <Ionicons name="play-forward-circle" size={18} color="#6366F1" />
+                      <Text style={styles.autoplayBadgeText}>
+                        {isBangla ? 'স্বয়ংক্রিয়ভাবে পরবর্তী ভিডিও চালু হচ্ছে' : 'CONTINUOUS AUTO-PLAY'}
+                      </Text>
+                    </View>
+                    <Text style={styles.autoplayCountdownSec}>{autoplayCountdown}s</Text>
+                    <Text
+                      style={[styles.autoplayNextTitle, { color: isDark ? '#FFFFFF' : '#1F2937' }]}
+                      numberOfLines={1}
+                    >
+                      {allLessons[currentLessonIndex + 1]?.lesson.title || 'Next Lesson'}
+                    </Text>
+                    <View style={styles.autoplayActionsRow}>
+                      <TouchableOpacity
+                        style={[styles.autoplayCancelBtn, { borderColor: colors.border }]}
+                        onPress={() => setAutoplayCountdown(null)}
+                      >
+                        <Text style={[styles.autoplayCancelText, { color: colors.textMuted }]}>
+                          {isBangla ? 'বাতিল' : 'Cancel'}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.autoplayPlayNowBtn}
+                        onPress={() => {
+                          setAutoplayCountdown(null);
+                          handleNextLesson();
+                        }}
+                      >
+                        <Ionicons name="play" size={14} color="#FFFFFF" />
+                        <Text style={styles.autoplayPlayNowText}>
+                          {isBangla ? 'এখনই দেখুন' : 'Play Now'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </View>
+              )}
+
               {/* Center Play/Pause & Skip buttons */}
               <View style={styles.playerControlsRow}>
                 <TouchableOpacity
@@ -463,6 +609,17 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                   <Text style={styles.playerTimeText}>{formatSeconds(currentPositionSeconds)} / {currentLesson.duration}</Text>
 
                   <View style={styles.playerActionButtons}>
+                    {/* Fast-test button to simulate video finishing */}
+                    <TouchableOpacity
+                      style={[styles.speedPill, { backgroundColor: '#E11D4822', borderColor: '#E11D48', borderWidth: 1 }]}
+                      onPress={handleSimulateVideoEnd}
+                    >
+                      <Ionicons name="play-skip-forward" size={10} color="#E11D48" />
+                      <Text style={[styles.speedPillText, { color: '#E11D48' }]}>
+                        {isBangla ? 'শেষ' : 'Finish'}
+                      </Text>
+                    </TouchableOpacity>
+
                     <TouchableOpacity style={styles.speedPill} onPress={cycleSpeed}>
                       <Text style={styles.speedPillText}>{playbackSpeed}</Text>
                     </TouchableOpacity>
@@ -859,6 +1016,15 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
           Alert.alert('Jumped to Video Bookmark ⏱️', `Player seeked to ${mins}:${secs}`);
         }}
         onClose={() => setNotesModalVisible(false)}
+      />
+
+      {/* CR-02: Mandatory Course Review Modal before Certificate Unlock */}
+      <MandatoryReviewModal
+        visible={mandatoryReviewVisible}
+        courseTitle={course.title}
+        instructorName={course.instructor.name}
+        onSubmit={handleSubmitReview}
+        onDismissLater={() => setMandatoryReviewVisible(false)}
       />
 
       {/* Certificate Modal */}
@@ -1415,5 +1581,81 @@ const styles = StyleSheet.create({
     color: '#6EE7B7',
     fontSize: 11,
     fontWeight: '600',
+  },
+  autoplayCountdownOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.82)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    zIndex: 100,
+  },
+  autoplayCard: {
+    width: '90%',
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  autoplayBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#6366F1',
+    letterSpacing: 0.5,
+  },
+  autoplayCountdownSec: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#6366F1',
+    marginVertical: 4,
+  },
+  autoplayNextTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 14,
+    paddingHorizontal: 8,
+  },
+  autoplayActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    width: '100%',
+  },
+  autoplayCancelBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  autoplayCancelText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  autoplayPlayNowBtn: {
+    flex: 1.2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#6366F1',
+  },
+  autoplayPlayNowText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
   },
 });

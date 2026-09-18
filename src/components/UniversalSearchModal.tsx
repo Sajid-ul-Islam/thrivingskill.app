@@ -42,7 +42,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
   onSelectWorkshop,
 }) => {
   const { colors, isDark } = useTheme();
-  const { courses } = useLearning();
+  const { courses, recordCategoryInteraction, recordSearchKeyword } = useLearning();
   const { videos } = useYouTube();
 
   const [query, setQuery] = useState('');
@@ -123,7 +123,13 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
 
   const handleSelectItem = (item: UnifiedSearchResult) => {
     onClose();
+    if (query.trim()) {
+      recordSearchKeyword(query);
+    }
     if (item.type === 'course') {
+      if (item.data.category) {
+        recordCategoryInteraction(item.data.category);
+      }
       onSelectCourse(item.data.id);
     } else if (item.type === 'youtube') {
       onSelectYouTubeVideo(item.data);
@@ -149,6 +155,9 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
               placeholderTextColor={colors.textMuted}
               value={query}
               onChangeText={setQuery}
+              onSubmitEditing={() => {
+                if (query.trim()) recordSearchKeyword(query);
+              }}
               autoFocus
               clearButtonMode="while-editing"
             />

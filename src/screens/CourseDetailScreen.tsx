@@ -19,6 +19,7 @@ import { Header } from '../components/Header';
 import { CurriculumAccordion } from '../components/CurriculumAccordion';
 import { PaymentModal } from '../components/PaymentModal';
 import { CourseQnATab } from '../components/CourseQnATab';
+import { MandatoryReviewModal } from '../components/MandatoryReviewModal';
 import { useLanguage } from '../context/LanguageContext';
 import { useYouTube } from '../context/YouTubeContext';
 import { findRelatedVideoForCourse } from '../services/youtubeService';
@@ -46,6 +47,10 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     toggleBookmark,
     getCourseProgressPercentage,
     addCourseReview,
+    hasReviewedCourse,
+    isCertificateUnlocked,
+    submitMandatoryCourseReview,
+    recordCategoryInteraction,
   } = useLearning();
   const { user } = useAuth();
 
@@ -53,6 +58,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [certPreviewVisible, setCertPreviewVisible] = useState(false);
+  const [mandatoryReviewVisible, setMandatoryReviewVisible] = useState(false);
   const [writeReviewModalVisible, setWriteReviewModalVisible] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
@@ -97,6 +103,30 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
       : course.originalPrice && course.price && course.originalPrice > course.price
       ? Math.round(((course.originalPrice - course.price) / course.originalPrice) * 100)
       : 0;
+
+  useEffect(() => {
+    if (course?.category) {
+      recordCategoryInteraction(course.category);
+    }
+  }, [course?.category]);
+
+  const handleSubmitMandatoryReview = (rating: number, feedback: string) => {
+    submitMandatoryCourseReview(
+      course.id,
+      rating,
+      feedback,
+      user?.displayName || 'Sajid-ul Islam',
+      'Student'
+    );
+    setMandatoryReviewVisible(false);
+    setCertPreviewVisible(true);
+    Alert.alert(
+      isBangla ? 'সার্টিফিকেট আনলক হয়েছে! 🎓' : 'Certificate Unlocked! 🎓',
+      isBangla
+        ? 'আপনার রিভিউ সফলভাবে যুক্ত হয়েছে এবং সার্টিফিকেট আনলক করা হয়েছে।'
+        : 'Thank you for your review! Your official verified certificate is now unlocked.'
+    );
+  };
 
   const handleEnrollOrResume = () => {
     if (!isEnrolled) {
@@ -360,14 +390,64 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
             </View>
 
             <TouchableOpacity
-              style={[styles.certPreviewBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
-              onPress={() => setCertPreviewVisible(true)}
+              style={[
+                styles.certPreviewBtn,
+                {
+                  backgroundColor:
+                    userProgress[course.id]?.isCompleted && !hasReviewedCourse(course.id)
+                      ? '#FEF2F2'
+                      : colors.surfaceSubtle,
+                  borderColor:
+                    userProgress[course.id]?.isCompleted && !hasReviewedCourse(course.id)
+                      ? '#EF4444'
+                      : colors.border,
+                },
+              ]}
+              onPress={() => {
+                if (userProgress[course.id]?.isCompleted && !hasReviewedCourse(course.id)) {
+                  setMandatoryReviewVisible(true);
+                } else {
+                  setCertPreviewVisible(true);
+                }
+              }}
               accessibilityRole="button"
-              accessibilityLabel="Preview official certificate"
+              accessibilityLabel="Certificate preview or review to unlock"
             >
-              <Ionicons name="eye-outline" size={14} color={colors.primary} />
-              <Text style={[styles.certPreviewBtnText, { color: colors.primary }]}>
-                Preview
+              <Ionicons
+                name={
+                  userProgress[course.id]?.isCompleted && !hasReviewedCourse(course.id)
+                    ? 'lock-closed'
+                    : 'ribbon-outline'
+                }
+                size={14}
+                color={
+                  userProgress[course.id]?.isCompleted && !hasReviewedCourse(course.id)
+                    ? '#EF4444'
+                    : colors.primary
+                }
+              />
+              <Text
+                style={[
+                  styles.certPreviewBtnText,
+                  {
+                    color:
+                      userProgress[course.id]?.isCompleted && !hasReviewedCourse(course.id)
+                        ? '#EF4444'
+                        : colors.primary,
+                  },
+                ]}
+              >
+                {userProgress[course.id]?.isCompleted
+                  ? hasReviewedCourse(course.id)
+                    ? isBangla
+                      ? 'সার্টিফিকেট'
+                      : 'Certificate'
+                    : isBangla
+                    ? 'লক (রিভিউ দিন)'
+                    : 'Review to Unlock'
+                  : isBangla
+                  ? 'প্রিভিউ'
+                  : 'Preview'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -589,6 +669,15 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* CR-02: Mandatory Course Review Modal before Certificate Unlock */}
+      <MandatoryReviewModal
+        visible={mandatoryReviewVisible}
+        courseTitle={course.title}
+        instructorName={course.instructor.name}
+        onSubmit={handleSubmitMandatoryReview}
+        onDismissLater={() => setMandatoryReviewVisible(false)}
+      />
 
       {/* Local Payment Gateway Modal */}
       <PaymentModal

@@ -13,6 +13,9 @@ const PROGRESS_STORAGE_KEY = '@thriving_skill_progress';
 const BOOKMARKS_STORAGE_KEY = '@thriving_skill_bookmarks';
 const NOTES_STORAGE_KEY = '@thriving_skill_notes';
 const WORKSHOPS_STORAGE_KEY = '@thriving_skill_rsvps';
+const AFFINITIES_STORAGE_KEY = '@thriving_skill_affinities';
+const SEARCH_HISTORY_STORAGE_KEY = '@thriving_skill_searches';
+const REVIEWS_STORAGE_KEY = '@thriving_skill_reviewed_courses';
 
 interface LearningContextType {
   courses: Course[];
@@ -45,6 +48,23 @@ interface LearningContextType {
   isRsvpd: (workshopId: string) => boolean;
   getCourseById: (courseId: string) => Course | undefined;
   getWorkshopById: (workshopId: string) => Workshop | undefined;
+
+  // Behavior-based Recommendations (CR-01)
+  recordCategoryInteraction: (categoryId: string) => void;
+  recordSearchKeyword: (keyword: string) => void;
+  getRecommendedCourses: () => { courses: Course[]; rationale: string; rationaleBn: string };
+
+  // Mandatory Review & Certificate Gating (CR-02)
+  reviewedCourseIds: string[];
+  hasReviewedCourse: (courseId: string) => boolean;
+  isCertificateUnlocked: (courseId: string) => boolean;
+  submitMandatoryCourseReview: (
+    courseId: string,
+    rating: number,
+    feedback: string,
+    userName?: string,
+    userRole?: string
+  ) => Certificate | null;
 }
 
 const LearningContext = createContext<LearningContextType>({} as LearningContextType);
@@ -89,6 +109,14 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   ]);
   const [rsvpWorkshops, setRsvpWorkshops] = useState<string[]>(['ws-1']);
 
+  // Behavior tracking & mandatory reviews state
+  const [categoryAffinities, setCategoryAffinities] = useState<Record<string, number>>({
+    'generative-ai': 4,
+    'excel-data': 3,
+  });
+  const [searchKeywordsHistory, setSearchKeywordsHistory] = useState<string[]>(['ai', 'excel']);
+  const [reviewedCourseIds, setReviewedCourseIds] = useState<string[]>([]);
+
   // Fetch live courses, categories, and blog posts from WordPress
   const loadWordPressData = useCallback(async () => {
     setIsLoadingCourses(true);
@@ -119,17 +147,31 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     (async () => {
       try {
-        const [savedProgress, savedBookmarks, savedNotes, savedWorkshops] = await Promise.all([
+        const [
+          savedProgress,
+          savedBookmarks,
+          savedNotes,
+          savedWorkshops,
+          savedAffinities,
+          savedSearches,
+          savedReviews,
+        ] = await Promise.all([
           AsyncStorage.getItem(PROGRESS_STORAGE_KEY),
           AsyncStorage.getItem(BOOKMARKS_STORAGE_KEY),
           AsyncStorage.getItem(NOTES_STORAGE_KEY),
           AsyncStorage.getItem(WORKSHOPS_STORAGE_KEY),
+          AsyncStorage.getItem(AFFINITIES_STORAGE_KEY),
+          AsyncStorage.getItem(SEARCH_HISTORY_STORAGE_KEY),
+          AsyncStorage.getItem(REVIEWS_STORAGE_KEY),
         ]);
 
         if (savedProgress) setUserProgress(JSON.parse(savedProgress));
         if (savedBookmarks) setBookmarks(JSON.parse(savedBookmarks));
         if (savedNotes) setNotes(JSON.parse(savedNotes));
         if (savedWorkshops) setRsvpWorkshops(JSON.parse(savedWorkshops));
+        if (savedAffinities) setCategoryAffinities(JSON.parse(savedAffinities));
+        if (savedSearches) setSearchKeywordsHistory(JSON.parse(savedSearches));
+        if (savedReviews) setReviewedCourseIds(JSON.parse(savedReviews));
       } catch {
         // Safe fallback
       }
@@ -207,8 +249,11 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const totalLessons = course.modules.reduce((acc, m) => acc + m.lessons.length, 0);
     const isCompleted = totalLessons > 0 && newCompleted.length >= totalLessons;
 
+    const userHasReviewed = reviewedCourseIds.includes(courseId) || !!current.hasReviewed;
     let certId = current.certificateId;
-    if (isCompleted && !certId) {
+
+    // Certificate is ONLY generated if the course is completed AND the user has submitted a review (CR-02)
+    if (isCompleted && userHasReviewed && !certId) {
       certId = `TS-2026-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
       const newCert: Certificate = {
         id: `cert-${Date.now()}`,
@@ -230,7 +275,8 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         completedLessonIds: newCompleted,
         lastAccessedLessonId: lessonId,
         isCompleted,
-        completedDate: isCompleted ? new Date().toISOString().split('T')[0] : current.completedDate,
+        hasReviewed: userHasReviewed,
+        completedDate: isCompleted ? (current.completedDate || new Date().toISOString().split('T')[0]) : current.completedDate,
         certificateId: certId,
       },
     };
@@ -348,6 +394,176 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const getCourseById = (courseId: string) => courses.find((c) => c.id === courseId);
   const getWorkshopById = (workshopId: string) => WORKSHOPS.find((w) => w.id === workshopId);
 
+  const recordCategoryInteraction = (categoryId: string) => {
+    if (!categoryId || categoryId === 'all') return;
+    setCategoryAffinities((prev) => {
+      const current = prev[categoryId] || 0;
+      const updated = { ...prev, [categoryId]: current + 1 };
+      saveState(AFFINITIES_STORAGE_KEY, updated);
+      return updated;
+    });
+  };
+
+  const recordSearchKeyword = (keyword: string) => {
+    const trimmed = keyword.trim().toLowerCase();
+    if (!trimmed || trimmed.length < 2) return;
+    setSearchKeywordsHistory((prev) => {
+      const filtered = prev.filter((k) => k !== trimmed);
+      const updated = [trimmed, ...filtered].slice(0, 10);
+      saveState(SEARCH_HISTORY_STORAGE_KEY, updated);
+      return updated;
+    });
+  };
+
+  const hasReviewedCourse = (courseId: string) => {
+    return reviewedCourseIds.includes(courseId) || !!userProgress[courseId]?.hasReviewed;
+  };
+
+  const isCertificateUnlocked = (courseId: string) => {
+    const progress = userProgress[courseId];
+    if (!progress || !progress.isCompleted) return false;
+    return hasReviewedCourse(courseId);
+  };
+
+  const submitMandatoryCourseReview = (
+    courseId: string,
+    rating: number,
+    feedback: string,
+    userName = 'Sajid Islam',
+    userRole = 'Learner'
+  ): Certificate | null => {
+    // 1. Record review on course object
+    addCourseReview(courseId, {
+      userName,
+      userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120',
+      rating,
+      comment: feedback,
+      userRole,
+    });
+
+    // 2. Mark as reviewed in persistent list
+    const nextReviewed = reviewedCourseIds.includes(courseId)
+      ? reviewedCourseIds
+      : [...reviewedCourseIds, courseId];
+    setReviewedCourseIds(nextReviewed);
+    saveState(REVIEWS_STORAGE_KEY, nextReviewed);
+
+    // 3. Find course & unlock certificate
+    const course = courses.find((c) => c.id === courseId);
+    const current = userProgress[courseId] || {
+      courseId,
+      enrolledDate: new Date().toISOString().split('T')[0],
+      completedLessonIds: [],
+      isCompleted: true,
+    };
+
+    let certId = current.certificateId;
+    let cert: Certificate | null = null;
+
+    if (!certId && course) {
+      certId = `TS-2026-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+      cert = {
+        id: `cert-${Date.now()}`,
+        courseId: course.id,
+        courseTitle: course.title,
+        studentName: userName,
+        issueDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+        credentialId: certId,
+        instructorName: course.instructor?.name || 'Thriving Skills Instructor',
+        verificationUrl: `https://thrivingskill.com/verify/${certId}`,
+      };
+      setCertificates((prev) => [cert!, ...prev]);
+    } else if (certId) {
+      cert = certificates.find((c) => c.credentialId === certId || c.courseId === courseId) || null;
+    }
+
+    const updated = {
+      ...userProgress,
+      [courseId]: {
+        ...current,
+        isCompleted: true,
+        hasReviewed: true,
+        certificateId: certId,
+      },
+    };
+    setUserProgress(updated);
+    saveState(PROGRESS_STORAGE_KEY, updated);
+
+    return cert;
+  };
+
+  const getRecommendedCourses = (): { courses: Course[]; rationale: string; rationaleBn: string } => {
+    const scoreByCat: Record<string, number> = { ...categoryAffinities };
+
+    Object.keys(userProgress).forEach((cId) => {
+      const c = courses.find((item) => item.id === cId);
+      if (c && c.category) {
+        scoreByCat[c.category] = (scoreByCat[c.category] || 0) + 3;
+      }
+    });
+
+    let topCatId = '';
+    let topScore = 0;
+    Object.entries(scoreByCat).forEach(([catId, score]) => {
+      if (score > topScore) {
+        topScore = score;
+        topCatId = catId;
+      }
+    });
+
+    const topCatObj = categories.find((c) => c.id === topCatId);
+
+    const scoredCourses = courses.map((course) => {
+      let score = 0;
+      const progress = userProgress[course.id];
+
+      // Completed courses receive a penalty so user sees new recommendations
+      if (progress?.isCompleted) {
+        score -= 80;
+      } else if (progress && progress.completedLessonIds.length > 0) {
+        score += 15;
+      }
+
+      // Category affinity boost
+      const catAffinity = scoreByCat[course.category] || 0;
+      score += Math.min(50, catAffinity * 10);
+
+      // Search keyword matches
+      if (searchKeywordsHistory.length > 0) {
+        const titleLower = course.title.toLowerCase();
+        const descLower = (course.description || '').toLowerCase();
+        const matches = searchKeywordsHistory.some(
+          (kw) => titleLower.includes(kw) || descLower.includes(kw)
+        );
+        if (matches) score += 30;
+      }
+
+      // Rating quality score
+      score += (course.rating || 4.5) * 4;
+
+      // Popularity score
+      score += Math.min(15, Math.log10((course.enrolledCount || 100) + 1) * 5);
+
+      // Badges
+      if (course.badge === 'Bestseller' || course.badge === 'Trending') score += 10;
+
+      return { course, score };
+    });
+
+    scoredCourses.sort((a, b) => b.score - a.score);
+    const recommended = scoredCourses.slice(0, 6).map((item) => item.course);
+
+    let rationale = 'Curated based on top trending & your learning preferences';
+    let rationaleBn = 'জনপ্রিয় স্কিল ও রেটিংয়ের উপর ভিত্তি করে আপনার জন্য বিশেষভাবে নির্বাচিত';
+
+    if (topCatObj && topScore > 2) {
+      rationale = `Based on your interest in ${topCatObj.name}`;
+      rationaleBn = `আপনার "${topCatObj.banglaName || topCatObj.name}" বিষয়ক সক্রিয় আগ্রহের ভিত্তিতে প্রস্তাবিত`;
+    }
+
+    return { courses: recommended, rationale, rationaleBn };
+  };
+
   return (
     <LearningContext.Provider
       value={{
@@ -381,6 +597,13 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         isRsvpd,
         getCourseById,
         getWorkshopById,
+        recordCategoryInteraction,
+        recordSearchKeyword,
+        getRecommendedCourses,
+        reviewedCourseIds,
+        hasReviewedCourse,
+        isCertificateUnlocked,
+        submitMandatoryCourseReview,
       }}
     >
       {children}

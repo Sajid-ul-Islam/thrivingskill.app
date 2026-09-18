@@ -7,6 +7,8 @@ import {
   loginWpFacebook,
   registerWpUser,
   validateWpToken,
+  sendWpPhoneOtp,
+  verifyWpPhoneOtp,
 } from '../services/wordpressApi';
 
 const AUTH_USER_STORAGE_KEY = '@thrivingskill_auth_user';
@@ -23,6 +25,8 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<void>;
   loginWithGoogle: (email?: string, name?: string) => Promise<void>;
   loginWithFacebook: (email?: string, name?: string) => Promise<void>;
+  loginWithPhone: (phone: string, otp: string, fullName?: string) => Promise<void>;
+  sendPhoneOtp: (phone: string) => Promise<{ success: boolean; message: string; testOtp?: string }>;
   register: (username: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   continueAsGuest: () => void;
@@ -113,6 +117,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithPhone = async (phone: string, otp: string, fullName?: string) => {
+    setIsLoading(true);
+    try {
+      const loggedInUser = await verifyWpPhoneOtp(phone, otp, fullName);
+      await saveUserSession(loggedInUser);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const sendPhoneOtp = async (phone: string) => {
+    return sendWpPhoneOtp(phone);
+  };
+
   const register = async (username: string, email: string, password: string) => {
     setIsLoading(true);
     try {
@@ -154,6 +172,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         loginWithGoogle,
         loginWithFacebook,
+        loginWithPhone,
+        sendPhoneOtp,
         register,
         logout,
         continueAsGuest,

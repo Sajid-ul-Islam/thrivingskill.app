@@ -101,7 +101,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     setSearchQuery,
     userProgress,
     getCourseProgressPercentage,
+    recordCategoryInteraction,
+    recordSearchKeyword,
+    getRecommendedCourses,
   } = useLearning();
+
+  const {
+    courses: recommendedCourses,
+    rationale: recRationale,
+    rationaleBn: recRationaleBn,
+  } = getRecommendedCourses();
   const { activeWorkspace, subscriptionTier, assessmentResult } = useSaaS();
   const { lastWatchedVideo, playVideo } = useYouTube();
   const { user, isAuthenticated, isGuest, setAuthModalVisible } = useAuth();
@@ -390,6 +399,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         <SearchSpotlightBar
           onPress={() => onOpenSearch && onOpenSearch()}
           onSelectTag={(query) => {
+            recordSearchKeyword(query);
             setSearchQuery(query);
             if (onOpenSearch) onOpenSearch();
           }}
@@ -545,6 +555,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             selectedId={selectedCategory}
             categories={categories}
             onSelect={(id) => {
+              recordCategoryInteraction(id);
               setSelectedCategory(id);
               if (id !== 'all') {
                 onNavigateTab('Courses');
@@ -552,6 +563,56 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             }}
           />
         </View>
+
+        {/* CR-01: Behavior-Based Course Recommendations Shelf (আপনার পছন্দের ভিত্তিতে স্মার্ট রিকমেন্ডেশন) */}
+        {recommendedCourses.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View style={{ flex: 1, paddingRight: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: isDark ? '#312E81' : '#EEF2FF',
+                      paddingHorizontal: 8,
+                      paddingVertical: 3,
+                      borderRadius: 12,
+                      gap: 4,
+                    }}
+                  >
+                    <Ionicons name="sparkles" size={12} color="#6366F1" />
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: '#6366F1' }}>
+                      {isBangla ? 'স্মার্ট রিকমেন্ডেশন' : 'FOR YOU'}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                  {isBangla ? 'আপনার পছন্দের ভিত্তিতে প্রস্তাবিত' : 'Recommended For You'}
+                </Text>
+                <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]} numberOfLines={2}>
+                  {isBangla ? recRationaleBn : recRationale}
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => onNavigateTab('Courses')}>
+                <Text style={[styles.seeAllText, { color: colors.primary }]}>
+                  {isBangla ? 'সব দেখুন' : 'View All'} ({recommendedCourses.length}) →
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {recommendedCourses.slice(0, 3).map((course) => (
+              <CourseCard
+                key={`rec-${course.id}`}
+                course={course}
+                onPress={() => {
+                  recordCategoryInteraction(course.category);
+                  onNavigateToCourse(course.id);
+                }}
+              />
+            ))}
+          </View>
+        )}
 
         {/* Special Career Bundles Section (স্পেশাল বান্ডেল কোর্স) */}
         <View style={styles.section}>

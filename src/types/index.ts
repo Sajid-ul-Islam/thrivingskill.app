@@ -201,6 +201,7 @@ export interface UserProgress {
   lastAccessedLessonId?: string;
   lastWatchPositionSeconds?: Record<string, number>;
   isCompleted: boolean;
+  hasReviewed?: boolean;
   completedDate?: string;
   certificateId?: string;
   assignedByManager?: boolean;
