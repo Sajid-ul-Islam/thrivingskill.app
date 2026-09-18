@@ -19,6 +19,15 @@ Welcome to the technical documentation for the **Thriving Skills** frontend Andr
 7. [Offline Strategy & Data Resilience](#7-offline-strategy--data-resilience)
 8. [Setup, Execution & Build Instructions](#8-setup-execution--build-instructions)
 9. [Android & EAS Build Configuration](#9-android--eas-build-configuration)
+10. [Advanced LMS Features (v1.1.0)](#10-advanced-lms-features-v110)
+    - [Behavior-Based Recommendations](#behavior-based-recommendations)
+    - [Mandatory Review & Certificate Gating](#mandatory-review--certificate-gating)
+    - [Continuous Video Auto-Play](#continuous-video-auto-play)
+    - [Mobile Phone + SMS OTP Authentication](#mobile-phone--sms-otp-authentication)
+11. [Production CI/CD, Over-The-Air (OTA) Updates & Hotfixing](#11-production-cicd-over-the-air-ota-updates--hotfixing)
+    - [GitHub Actions CI Quality Gate](#github-actions-ci-quality-gate)
+    - [EAS Update Hotfix Deployment](#eas-update-hotfix-deployment)
+    - [Team Collaboration & Standards](#team-collaboration--standards)
 
 ---
 
@@ -340,3 +349,57 @@ npm install -g eas-cli
 # Build preview standalone APK for direct installation
 eas build -p android --profile preview
 ```
+
+---
+
+## 10. Advanced LMS Features (v1.1.0)
+
+### Behavior-Based Recommendations
+The recommendation engine in `LearningContext` computes dynamic relevance scores for each course:
+- **Category Affinity (+50 points)**: Automatically tracked whenever a user views course details or completes lessons in a category. Stored in `@thriving_skill_affinities`.
+- **Keyword Match (+30 points)**: Automatically logged when a user searches in `UniversalSearchModal`. Stored in `@thriving_skill_searches`.
+- **Quality & Popularity (+25 points)**: Evaluated based on high ratings (>= 4.5) and student enrollment counts.
+- **Already Completed (-80 points)**: Penalized to ensure users discover new courses rather than completed ones.
+- Displayed prominently in `HomeScreen` under the **"আপনার পছন্দের ভিত্তিতে প্রস্তাবিত / Recommended For You"** shelf with contextual rationale tags.
+
+### Mandatory Review & Certificate Gating
+- When a student finishes all lessons/modules, `markLessonCompleted` marks the course complete, but **defers** certificate ID generation until a review is recorded.
+- `MandatoryReviewModal` triggers automatically upon finishing the last lesson, allowing learners to rate 1–5 stars and submit written feedback.
+- The certificate CTA on `CourseDetailScreen` remains in a locked state (`🔒 Review to Unlock`) until `submitMandatoryCourseReview` is completed.
+
+### Continuous Video Auto-Play
+- In `LessonPlayerScreen`, completing a video lesson triggers a 5-second countdown overlay.
+- Features a circular animated countdown progress ring, next lesson title preview, an immediate "Play Now" skip button, and a "Cancel" option.
+- Upon 0 seconds, automatically transitions the player to the next sequential module.
+
+### Mobile Phone + SMS OTP Authentication
+- Supports direct login/registration via Bangladeshi phone numbers with the `+880` prefix.
+- Integrated with backend endpoints `/wp-json/tsl/v1/auth/send-otp` and `/wp-json/tsl/v1/auth/verify-otp`.
+- Features an automated 60-second resend cooldown timer and an instant sandbox test button (`123456`) for offline demonstrations and client testing.
+
+---
+
+## 11. Production CI/CD, Over-The-Air (OTA) Updates & Hotfixing
+
+### GitHub Actions CI Quality Gate
+Every push to `master` and pull request triggers `.github/workflows/ci.yml`:
+1. Checks out repository.
+2. Sets up Node.js 20 LTS with caching.
+3. Installs clean dependencies via `npm ci`.
+4. Runs strict TypeScript compilation (`npx tsc --noEmit`). If any type errors exist, merges are blocked.
+
+### EAS Update Hotfix Deployment
+For non-native JavaScript and UI fixes, patches can be deployed immediately without App Store / Play Store review:
+```bash
+# Verify type safety
+npm run typecheck
+
+# Deploy Over-The-Air update to production users
+eas update --channel production --message "Hotfix description"
+```
+
+### Team Collaboration & Standards
+- Detailed coworker instructions are maintained in [`CONTRIBUTING.md`](./CONTRIBUTING.md).
+- Version history is documented in [`CHANGELOG.md`](./CHANGELOG.md).
+- GitHub PR template is enforced via [`.github/pull_request_template.md`](./.github/pull_request_template.md).
+

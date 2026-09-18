@@ -2,12 +2,19 @@
 
 [![React Native](https://img.shields.io/badge/React_Native-Expo_SDK_51-20232A?style=for-the-badge&logo=react)](https://reactnative.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3_Strict-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![CI Quality Gate](https://img.shields.io/badge/CI-Passing_Strict-success?style=for-the-badge&logo=githubactions)](https://github.com/Sajid-ul-Islam/thrivingskill.app/actions)
 [![Google Gemini AI](https://img.shields.io/badge/Google_Gemini-2.5_Flash-8E75B2?style=for-the-badge&logo=google)](https://deepmind.google/technologies/gemini/)
 [![Bilingual](https://img.shields.io/badge/Language-English_%7C_বাংলা-10B981?style=for-the-badge)](https://thrivingskill.com)
-[![Status](https://img.shields.io/badge/Production-Verified_0_Errors-success?style=for-the-badge)]()
+[![Version](https://img.shields.io/badge/Release-v1.1.0-blue?style=for-the-badge)](./CHANGELOG.md)
 
 > **Official Mobile Application for [Thriving Skills Limited (thrivingskill.com)](https://thrivingskill.com)**  
 > Empowering over 100,000+ professionals, university graduates, and enterprise leaders across Bangladesh and South Asia with future-ready Fourth Industrial Revolution (4IR) capabilities, Generative AI integration, financial modeling, and executive leadership.
+
+### 📚 Team Documentation & Engineering Guides
+- 🤝 **[Contributing & Coworker Guide (CONTRIBUTING.md)](./CONTRIBUTING.md)**: Git branching strategy, conventional commits, PR process, EAS cloud builds, and hotfix workflows.
+- 📜 **[Changelog (CHANGELOG.md)](./CHANGELOG.md)**: Version release notes and features breakdown.
+- 📘 **[Technical Architecture & API Spec (DOCUMENTATION.md)](./DOCUMENTATION.md)**: Complete system architecture, REST endpoints, offline caching, and domain services.
+- ⚙️ **[Environment Setup Template (.env.example)](./.env.example)**: Expo public variable definitions.
 
 ---
 
@@ -180,10 +187,19 @@ npm run ios
 npm run web
 ```
 
-### 4. Verify Code Quality & Type Safety
+### 4. Quality Gate, Cloud Builds & OTA Updates
 ```bash
-# Run TypeScript compilation check
-npx tsc --noEmit
+# 1. Verify TypeScript compilation (0 errors)
+npm run typecheck
+
+# 2. Build installable Android APK for internal team testing (EAS)
+npm run build:preview
+
+# Build production Android App Bundle (.aab) for Google Play Console
+npm run build:prod
+
+# Deploy instant Over-The-Air (OTA) hotfix patch (no app store review required)
+npm run update:prod -- --message "Hotfix: describe bug fix here"
 ```
 
 ---
