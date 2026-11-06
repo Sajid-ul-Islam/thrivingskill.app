@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.1] - 2026-11-06
+
+### 🚀 Upgraded (Google Android & Architecture Standards)
+- **Google Play Store Production Compliance**:
+  - Added monotonic `android.versionCode: 10400` in `app.json`.
+  - Configured Android 12+ Adaptive Splash Screen API with `#102F53` Deep Navy background and contained branding asset.
+  - Added `android.softwareKeyboardLayoutMode: "resize"` to prevent virtual keyboard obscuring checkout/auth forms.
+  - Enabled deep linking URI scheme `thrivingskill://`.
+- **EAS Build Architecture Upgrade**:
+  - Configured `eas.json` production profile to output Google Play-mandated Android App Bundle (`.aab`) with resource split optimization.
+  - Retained fast standalone `.apk` distribution for team `preview` testing.
+- **Component Architecture Modularization**:
+  - Decomposed flat 34-component directory into clean domain submodules:
+    - `src/components/common/`: Shared UI primitives and headers.
+    - `src/components/cards/`: Course and event catalog cards.
+    - `src/components/modals/`: Interactive dialogs and payment bottom sheets.
+    - `src/components/player/`: Video curriculum accordion and player controls.
+    - `src/components/analytics/`: High-contrast SVG progress charts.
+  - Preserved complete backward compatibility with root and subdirectory `index.ts` barrel exports.
+  - Verified 0 broken imports and 0 compiler errors across all 117 source files.
+
+---
+
 ## [1.4.0] - 2026-11-06
 
 ### 🛠️ Fixed & Audited (Full Codebase Health Audit)

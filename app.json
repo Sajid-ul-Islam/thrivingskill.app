@@ -2,29 +2,37 @@
   "expo": {
     "name": "Thriving Skills",
     "slug": "thrivingskillapp",
-    "version": "1.0.0",
+    "version": "1.4.0",
+    "scheme": "thrivingskill",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#102F53"
+    },
     "ios": {
       "bundleIdentifier": "com.thrivingskill.app",
       "supportsTablet": true
     },
     "android": {
       "package": "com.thrivingskill.app",
+      "versionCode": 10400,
+      "softwareKeyboardLayoutMode": "resize",
       "permissions": [
         "INTERNET",
         "ACCESS_NETWORK_STATE"
       ],
       "adaptiveIcon": {
-        "backgroundColor": "#102E52",
+        "backgroundColor": "#102F53",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       }
     },
     "androidStatusBar": {
-      "barStyle": "dark-content",
+      "barStyle": "light-content",
       "translucent": true,
       "backgroundColor": "transparent"
     },

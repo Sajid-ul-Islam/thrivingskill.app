@@ -143,8 +143,34 @@ To eliminate memory leaks and runtime warnings in React Native:
 ## 7. TypeScript Compilation & Build Pipeline
 
 * **Type Checking**: Strict mode typechecking verified via `tsc --noEmit`. Exits with code 0.
-* **Codebase Scanner**: Automated verification script located at `scripts/audit_app.js` runs across all source files to validate:
+* **Codebase Scanner**: Automated verification script located at `scripts/audit_app.js` runs across all 117 source files to validate:
   - Relative import integrity.
   - StyleSheet property completeness.
   - Timer cleanup presence.
   - Absence of unsanitized `JSON.parse()`.
+
+---
+
+## 8. Android Enterprise Production & Play Store Architecture
+
+The mobile application conforms to modern Google Android (API 34/35) and Play Store standards:
+
+### 1. Android Manifest & App Configuration (`app.json`)
+* **Monotonic Version Code**: `android.versionCode: 10400` (Release v1.4.0) compliant with Google Play Console submission requirements.
+* **Android 12+ Adaptive Splash API**: Dedicated `splash` node configured with `#102F53` Deep Navy background and contained branding asset (`splash-icon.png`), preventing transition jumps on Android 12–15.
+* **Window Soft Input & Keyboard Handling**: Explicit `softwareKeyboardLayoutMode: "resize"` ensuring authentication and payment checkout forms remain fully visible above the virtual keyboard.
+* **Adaptive App Icons**: Density-independent vector layers configured for foreground, background, and monochrome icons for modern Android Material You theming.
+* **Deep Linking**: Custom URI scheme `thrivingskill://` enabled for app linking and payment redirection.
+
+### 2. EAS Build & Release Pipeline (`eas.json`)
+* **Development Profile**: Internal distribution with `developmentClient: true` for on-device debugging.
+* **Preview Profile**: Generates standalone test `.apk` for QA and team test devices.
+* **Production Profile**: Configured for Google Play distribution with `buildType: "app-bundle"` (`.aab`), enabling dynamic feature delivery, split APKs, and resource optimization.
+
+### 3. Modular UI Component Hierarchy
+`src/components/` is organized into clean, domain-specific modules with root and subfolder barrel exports:
+* `src/components/common/`: Primitive reusable UI controls (Header, ProgressBar, CategoryPills).
+* `src/components/cards/`: Content cards (CourseCard, WorkshopCard, SummitCard, YouTubeCard).
+* `src/components/modals/`: Interactive modals (AuthModal, PaymentModal, CertificateModal, ReviewModal).
+* `src/components/player/`: Video player controls (CurriculumAccordion, QnATab, MiniPlayer).
+* `src/components/analytics/`: High-fidelity SVG progress charts (ProfileLearningAnalytics).

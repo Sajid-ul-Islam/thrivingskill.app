@@ -93,9 +93,31 @@ This document records all software bugs, architectural edge cases, and runtime i
 
 ---
 
+### 9. Google Play Store Submission Non-Compliance (`versionCode` & Build Output)
+* **Status**: Resolved
+* **Symptom**: Attempting to upload production builds to Google Play Console would fail validation due to missing integer `versionCode` and non-AAB format.
+* **Root Cause**: `app.json` only specified string `"version": "1.0.0"`, and `eas.json` production profile targeted raw `"buildType": "apk"`. Google Play mandates Android App Bundle (`.aab`) and unique integer `versionCode` since August 2021.
+* **Resolution**:
+  - Added `android.versionCode: 10400` in `app.json`.
+  - Updated `eas.json` production profile to `buildType: "app-bundle"`.
+  - Configured Android 12+ Adaptive Splash Screen and `softwareKeyboardLayoutMode: "resize"`.
+
+---
+
+### 10. Monolithic Component Folder Scalability & Clutter
+* **Status**: Resolved
+* **Symptom**: 34 mixed UI components in flat `src/components/` directory causing poor code discoverability and import maintenance friction.
+* **Root Cause**: Rapid feature expansion without domain-based component categorization.
+* **Resolution**:
+  - Reorganized components into domain subfolders: `common/`, `cards/`, `modals/`, `player/`, and `analytics/`.
+  - Implemented root and subfolder index barrel exports (`index.ts`) and backward-compatible re-export stubs so zero existing imports break.
+  - Verified 0 broken imports across 117 files with automated scanner.
+
+---
+
 ## 🔍 Verification Protocol
 
 All bug fixes are subjected to the following automated verification suite:
-1. **Automated Static Codebase Audit**: `node scripts/audit_app.js` (validates all 75 files).
+1. **Automated Static Codebase Audit**: `node scripts/audit_app.js` (validates all 117 files).
 2. **TypeScript Strict Typecheck**: `npm run typecheck` (verifies 0 compiler errors).
 3. **Git Cleanliness Check**: `git status` verifies all changes are committed and synced.

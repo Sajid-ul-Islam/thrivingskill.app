@@ -273,7 +273,7 @@ App.tsx
   - Interactive live webinar sessions, registration RSVPs, and summit events.
 - **Profile (`ProfileScreen.tsx`)**:
   - WordPress user info display (`username`, `email`, connected status).
-  - Login / Logout triggers invoking [`AuthModal.tsx`](file:///h:/Repo/thrivingskill.app/src/components/AuthModal.tsx).
+  - Login / Logout triggers invoking [`AuthModal.tsx`](./src/components/modals/AuthModal.tsx).
 
 ### Stack Screens:
 - **Course Detail (`CourseDetailScreen.tsx`)**:

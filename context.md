@@ -22,16 +22,15 @@ This document provides a holistic domain and architectural reference for develop
 thrivingskill.app/
 ├── assets/                     # App icons, splash screens, certificate templates
 ├── scripts/                    # Codebase scanners, audit utilities & automation
-│   └── audit_app.js            # 75-file static analysis & health scanner
+│   └── audit_app.js            # 117-file static analysis & health scanner
 ├── src/
-│   ├── components/             # Reusable UI components & modals
-│   │   ├── AuthModal.tsx       # Dual-tab Direct Email & Mobile SMS OTP login
-│   │   ├── CourseCard.tsx      # High-performance catalog card with ratings
-│   │   ├── PaymentModal.tsx    # bKash, Nagad, Rocket & card checkout
-│   │   ├── MandatoryReviewModal.tsx # CR-02 review gate before certificate
-│   │   ├── CertificateModal.tsx# Digital credential viewer & social share
-│   │   ├── ProfileLearningAnalytics.tsx # CR-05 Donut & velocity charts
-│   │   └── VideoPlayer.tsx     # Native video player with 5s auto-play
+│   ├── components/             # Modular UI components & design system
+│   │   ├── common/             # Base primitives (Header, ProgressBar, CategoryPills)
+│   │   ├── cards/              # Domain cards (CourseCard, WorkshopCard, SummitCard)
+│   │   ├── modals/             # Full dialogs (AuthModal, PaymentModal, CertificateModal)
+│   │   ├── player/             # Video lecture player (CurriculumAccordion, QnA)
+│   │   ├── analytics/          # Data visualization (ProfileLearningAnalytics)
+│   │   └── index.ts            # Root barrel export + backward-compatible stubs
 │   ├── context/                # React State Contexts
 │   │   ├── AuthContext.tsx     # JWT authentication & user profile state
 │   │   ├── LearningContext.tsx # Course progress, CR-01 engine, certs
@@ -56,7 +55,8 @@ thrivingskill.app/
 │   │   └── offline/            # offlineManager (file downloads, queues)
 │   ├── theme/                  # Brand colors, typography, spacing tokens
 │   └── types/                  # TypeScript interfaces and entity types
-├── app.json                    # Expo configuration & permissions
+├── app.json                    # Google Android & iOS production configuration
+├── eas.json                    # EAS build profiles (APK preview + AAB production)
 ├── package.json                # Project dependencies and npm scripts
 ├── tsconfig.json               # TypeScript strict configuration
 └── *.md                        # Documentation and requirements suite
