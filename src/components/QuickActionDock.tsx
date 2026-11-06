@@ -5,22 +5,20 @@ import { useTheme } from '../context/ThemeContext';
 import { useSaaS } from '../context/SaaSContext';
 
 interface QuickActionDockProps {
-  onOpenCopilot: () => void;
+  onOpenCourses: () => void;
   onOpenAssessment: () => void;
   onOpenWorkshops: () => void;
-  onOpenTeamOrMyLearning: () => void;
+  onOpenMyLearning: () => void;
 }
 
 export const QuickActionDock: React.FC<QuickActionDockProps> = ({
-  onOpenCopilot,
+  onOpenCourses,
   onOpenAssessment,
   onOpenWorkshops,
-  onOpenTeamOrMyLearning,
+  onOpenMyLearning,
 }) => {
   const { colors, isDark } = useTheme();
-  const { activeWorkspace, assessmentResult } = useSaaS();
-
-  const isEnterprise = activeWorkspace.type === 'enterprise';
+  const { assessmentResult } = useSaaS();
 
   const actions: {
     id: string;
@@ -33,21 +31,21 @@ export const QuickActionDock: React.FC<QuickActionDockProps> = ({
     onPress: () => void;
   }[] = [
     {
-      id: 'copilot',
-      label: 'AI Assistant',
-      sublabel: 'Smart Prompt',
-      icon: 'sparkles',
-      badgeText: 'AI',
+      id: 'courses',
+      label: 'Explore',
+      sublabel: 'All Courses',
+      icon: 'compass',
+      badgeText: 'New',
       color: '#6366F1',
       bgColor: '#EEF2FF',
-      onPress: onOpenCopilot,
+      onPress: onOpenCourses,
     },
     {
       id: 'diagnostic',
-      label: 'Skill Diagnostic',
+      label: 'Diagnostic',
       sublabel: assessmentResult ? `${assessmentResult.overallScore}% Score` : '3-min Quiz',
       icon: 'analytics',
-      badgeText: assessmentResult ? 'Done' : 'New',
+      badgeText: assessmentResult ? 'Done' : 'Quiz',
       color: '#059669',
       bgColor: '#D1FAE5',
       onPress: onOpenAssessment,
@@ -63,13 +61,13 @@ export const QuickActionDock: React.FC<QuickActionDockProps> = ({
       onPress: onOpenWorkshops,
     },
     {
-      id: 'workspace',
-      label: isEnterprise ? 'Team Hub' : 'My Hub',
-      sublabel: isEnterprise ? '25 Seats' : 'Progress',
-      icon: isEnterprise ? 'business' : 'ribbon',
+      id: 'learning',
+      label: 'My Learning',
+      sublabel: 'My Hub',
+      icon: 'book',
       color: '#D97706',
       bgColor: '#FEF3C7',
-      onPress: onOpenTeamOrMyLearning,
+      onPress: onOpenMyLearning,
     },
   ];
 

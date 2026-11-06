@@ -79,54 +79,28 @@ export class AuthService {
     username: string;
     email: string;
     password: string;
+    confirm_password?: string;
+    phone?: string;
   }): Promise<any> {
-    return HttpClient.post(Endpoints.LEARNPRESS.TOKEN_REGISTER, userData, {
+    const payload: Record<string, any> = {
+      username: userData.username.trim(),
+      email: userData.email.trim(),
+      password: userData.password,
+      confirm_password: userData.confirm_password || userData.password,
+    };
+    if (userData.phone) {
+      payload.phone = userData.phone;
+      payload.phone_number = userData.phone;
+      payload.billing_phone = userData.phone;
+      payload._lp_custom_register_form = {
+        phone: userData.phone,
+        phone_number: userData.phone,
+        'Phone Number': userData.phone,
+      };
+    }
+    return HttpClient.post(Endpoints.LEARNPRESS.TOKEN_REGISTER, payload, {
       skipAuth: true,
     });
-  }
-
-  /**
-   * Log in or register using Google OAuth
-   */
-  static async loginWithGoogle(mockEmail?: string, mockName?: string): Promise<WpUser> {
-    // In production, this can exchange the Google idToken with WordPress social login endpoint
-    const id = 'google-' + Math.random().toString(36).substring(2, 9);
-    const email = mockEmail || 'sajid.professional@gmail.com';
-    const name = mockName || 'Sajid Ul Islam';
-    const fakeToken = `tsl_jwt_google_${Date.now()}_${id}`;
-
-    HttpClient.setAuthToken(fakeToken);
-    return {
-      id,
-      username: email.split('@')[0],
-      email,
-      displayName: name,
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200',
-      token: fakeToken,
-      roles: ['subscriber'],
-    };
-  }
-
-  /**
-   * Log in or register using Facebook OAuth
-   */
-  static async loginWithFacebook(mockEmail?: string, mockName?: string): Promise<WpUser> {
-    // In production, this can exchange Facebook access token with WordPress social login endpoint
-    const id = 'fb-' + Math.random().toString(36).substring(2, 9);
-    const email = mockEmail || 'sajid.facebook@thrivingskill.com';
-    const name = mockName || 'Sajid Ul Islam (FB)';
-    const fakeToken = `tsl_jwt_fb_${Date.now()}_${id}`;
-
-    HttpClient.setAuthToken(fakeToken);
-    return {
-      id,
-      username: email.split('@')[0],
-      email,
-      displayName: name,
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200',
-      token: fakeToken,
-      roles: ['subscriber'],
-    };
   }
 
   /**

@@ -6,14 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "updates": {
-      "url": "https://u.expo.dev/0b66cee6-c1a5-4c67-b12a-08f8f4356787",
-      "checkAutomatically": "ON_LOAD",
-      "fallbackToCacheTimeout": 3000
-    },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
     "ios": {
       "bundleIdentifier": "com.thrivingskill.app",
       "supportsTablet": true
@@ -39,11 +31,9 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "extra": {
-      "eas": {
-        "projectId": "0b66cee6-c1a5-4c67-b12a-08f8f4356787"
-      }
-    },
-    "owner": "sajid.islam"
+    "plugins": [
+      "expo-font",
+      "expo-status-bar"
+    ]
   }
 }

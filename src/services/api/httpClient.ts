@@ -181,8 +181,17 @@ export class HttpClient {
           throw err;
         }
 
+        let userFriendlyMsg = err.message || 'Network request failed. Please check your internet connection.';
+        if (
+          userFriendlyMsg.includes('UnknownHostException') ||
+          userFriendlyMsg.includes('Unable to resolve host') ||
+          userFriendlyMsg.includes('ENOTFOUND')
+        ) {
+          userFriendlyMsg = 'Cannot reach server (DNS resolution failed). Please check your internet connection, try mobile data (4G), or enable Private DNS in Android settings.';
+        }
+
         throw new ApiError(
-          err.message || 'Network request failed. Please check your internet connection.',
+          userFriendlyMsg,
           0,
           'NETWORK_ERROR',
           err

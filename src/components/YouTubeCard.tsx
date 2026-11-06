@@ -29,110 +29,103 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
 
   if (layout === 'horizontal') {
     return (
-      <TouchableOpacity
+      <View
         style={[
           styles.horizontalContainer,
           { backgroundColor: colors.surface, borderColor: colors.border },
         ]}
-        onPress={() => onPress(video)}
-        activeOpacity={0.8}
       >
-        <View style={styles.horizontalThumbWrapper}>
-          <Image source={{ uri: video.thumbnail }} style={styles.horizontalThumb} />
-          {video.duration ? (
-            <View style={styles.durationBadge}>
-              <Text style={styles.durationText}>{video.duration}</Text>
+        <TouchableOpacity
+          style={{ flex: 1, flexDirection: 'row' }}
+          onPress={() => onPress(video)}
+          activeOpacity={0.8}
+        >
+          <View style={styles.horizontalThumbWrapper}>
+            <Image source={{ uri: video.thumbnail }} style={styles.horizontalThumb} />
+            {video.duration ? (
+              <View style={styles.durationBadge}>
+                <Text style={styles.durationText}>{video.duration}</Text>
+              </View>
+            ) : null}
+            <View style={styles.playIconSmall}>
+              <Ionicons name="play" size={12} color="#FFFFFF" />
             </View>
-          ) : null}
-          <View style={styles.playIconSmall}>
-            <Ionicons name="play" size={12} color="#FFFFFF" />
           </View>
-        </View>
 
-        <View style={styles.horizontalInfo}>
-          {relatedCourse && (
-            <View style={styles.courseBadgeMini}>
-              <Ionicons name="school" size={10} color="#059669" />
-              <Text style={styles.courseBadgeMiniText} numberOfLines={1}>
-                {relatedCourse.category.toUpperCase()}
-              </Text>
+          <View style={styles.horizontalInfo}>
+            {relatedCourse && (
+              <View style={styles.courseBadgeMini}>
+                <Ionicons name="school" size={10} color="#059669" />
+                <Text style={styles.courseBadgeMiniText} numberOfLines={1}>
+                  {relatedCourse.category.toUpperCase()}
+                </Text>
+              </View>
+            )}
+
+            <Text style={[styles.horizontalTitle, { color: colors.text }]} numberOfLines={2}>
+              {video.title}
+            </Text>
+
+            <View style={styles.horizontalFooter}>
+              <View style={styles.metaRow}>
+                {video.views ? <Text style={[styles.metaText, { color: colors.textMuted }]}>{video.views}</Text> : null}
+                {video.views && video.published ? <Text style={[styles.metaDot, { color: colors.textMuted }]}>•</Text> : null}
+                {video.published ? <Text style={[styles.metaText, { color: colors.textMuted }]}>{video.published}</Text> : null}
+              </View>
             </View>
-          )}
-
-          <Text style={[styles.horizontalTitle, { color: colors.text }]} numberOfLines={2}>
-            {video.title}
-          </Text>
-
-          <View style={styles.horizontalFooter}>
-            <View style={styles.metaRow}>
-              {video.views ? <Text style={[styles.metaText, { color: colors.textMuted }]}>{video.views}</Text> : null}
-              {video.views && video.published ? <Text style={[styles.metaDot, { color: colors.textMuted }]}>•</Text> : null}
-              {video.published ? <Text style={[styles.metaText, { color: colors.textMuted }]}>{video.published}</Text> : null}
-            </View>
-
-            {/* Bookmark button */}
-            <TouchableOpacity
-              style={styles.bookmarkAction}
-              onPress={() => toggleSaveVideo(video.id)}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Ionicons
-                name={saved ? 'bookmark' : 'bookmark-outline'}
-                size={16}
-                color={saved ? '#102E52' : colors.textMuted}
-              />
-            </TouchableOpacity>
           </View>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+
+        {/* Bookmark button */}
+        <TouchableOpacity
+          style={styles.bookmarkAction}
+          onPress={(e) => { e?.stopPropagation?.(); toggleSaveVideo(video.id); }}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons
+            name={saved ? 'bookmark' : 'bookmark-outline'}
+            size={16}
+            color={saved ? '#102E52' : colors.textMuted}
+          />
+        </TouchableOpacity>
+      </View>
     );
   }
 
   return (
-    <TouchableOpacity
+    <View
       style={[
         styles.cardContainer,
         { backgroundColor: colors.surface, borderColor: colors.border },
         width ? { width } : undefined,
       ]}
-      onPress={() => onPress(video)}
-      activeOpacity={0.85}
     >
-      <View style={styles.thumbWrapper}>
-        <Image source={{ uri: video.thumbnail }} style={styles.thumbImage} />
-        {video.duration ? (
-          <View style={styles.durationBadge}>
-            <Text style={styles.durationText}>{video.duration}</Text>
-          </View>
-        ) : null}
+      <TouchableOpacity
+        onPress={() => onPress(video)}
+        activeOpacity={0.85}
+      >
+        <View style={styles.thumbWrapper}>
+          <Image source={{ uri: video.thumbnail }} style={styles.thumbImage} />
+          {video.duration ? (
+            <View style={styles.durationBadge}>
+              <Text style={styles.durationText}>{video.duration}</Text>
+            </View>
+          ) : null}
 
-        {/* Play Overlay */}
-        <View style={styles.playOverlay}>
-          <View style={styles.playButton}>
-            <Ionicons name="play" size={20} color="#FFFFFF" style={{ marginLeft: 2 }} />
+          {/* Play Overlay */}
+          <View style={styles.playOverlay}>
+            <View style={styles.playButton}>
+              <Ionicons name="play" size={20} color="#FFFFFF" style={{ marginLeft: 2 }} />
+            </View>
+          </View>
+
+          {/* YouTube logo badge */}
+          <View style={styles.ytLogoBadge}>
+            <Ionicons name="logo-youtube" size={14} color="#FF0000" />
           </View>
         </View>
 
-        {/* YouTube logo badge */}
-        <View style={styles.ytLogoBadge}>
-          <Ionicons name="logo-youtube" size={14} color="#FF0000" />
-        </View>
-
-        {/* Bookmark button on thumbnail */}
-        <TouchableOpacity
-          style={[styles.bookmarkThumbBtn, { backgroundColor: saved ? '#102E52' : 'rgba(0,0,0,0.6)' }]}
-          onPress={() => toggleSaveVideo(video.id)}
-          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-        >
-          <Ionicons
-            name={saved ? 'bookmark' : 'bookmark-outline'}
-            size={14}
-            color="#FFFFFF"
-          />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.cardContent}>
+        <View style={styles.cardContent}>
         {/* Course Cross-link indicator */}
         {relatedCourse && (
           <View style={styles.courseTagRow}>
@@ -160,7 +153,21 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
           </View>
         </View>
       </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+
+      {/* Bookmark button on thumbnail as sibling */}
+      <TouchableOpacity
+        style={[styles.bookmarkThumbBtn, { backgroundColor: saved ? '#102E52' : 'rgba(0,0,0,0.6)' }]}
+        onPress={(e) => { e?.stopPropagation?.(); toggleSaveVideo(video.id); }}
+        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+      >
+        <Ionicons
+          name={saved ? 'bookmark' : 'bookmark-outline'}
+          size={14}
+          color="#FFFFFF"
+        />
+      </TouchableOpacity>
+    </View>
   );
 };
 

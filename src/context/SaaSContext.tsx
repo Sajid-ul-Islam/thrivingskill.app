@@ -27,76 +27,14 @@ export const SAAS_PLAN_FEATURES: PlanFeature[] = [
 const INITIAL_WORKSPACES: Workspace[] = [
   {
     id: 'ws-personal',
-    name: 'Alex Rahman (Personal)',
+    name: 'Learner Account',
     type: 'personal',
     role: 'learner',
     companyName: 'Personal Account',
   },
-  {
-    id: 'ws-apex',
-    name: 'Apex Corp Enterprise',
-    type: 'enterprise',
-    role: 'admin',
-    companyName: 'Apex Corp Technologies',
-    activeSeats: 18,
-    totalSeats: 25,
-  },
 ];
 
-const INITIAL_TEAM_MEMBERS: TeamMember[] = [
-  {
-    id: 'tm-1',
-    name: 'Tariq Al-Mansoor',
-    email: 'tariq.m@apexcorp.com',
-    department: 'Financial Strategy',
-    role: 'FP&A Lead',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    assignedCourseIds: ['course-1', 'course-2'],
-    completedCoursesCount: 1,
-    progressPercent: 85,
-    lastActive: '2 hours ago',
-    skillsMastered: ['DCF Valuation', 'Prompt Engineering'],
-  },
-  {
-    id: 'tm-2',
-    name: 'Samira Chowdhury',
-    email: 'samira.c@apexcorp.com',
-    department: 'Operations & Tech',
-    role: 'Senior Product Operations',
-    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
-    assignedCourseIds: ['course-1', 'course-3'],
-    completedCoursesCount: 2,
-    progressPercent: 100,
-    lastActive: 'Yesterday',
-    skillsMastered: ['Generative AI', 'PowerBI Analytics', 'SQL'],
-  },
-  {
-    id: 'tm-3',
-    name: 'Nadim Hossain',
-    email: 'nadim.h@apexcorp.com',
-    department: 'People & Culture',
-    role: 'HR Business Partner',
-    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-    assignedCourseIds: ['course-4'],
-    completedCoursesCount: 0,
-    progressPercent: 45,
-    lastActive: '3 days ago',
-    skillsMastered: ['9-Box Talent Grid'],
-  },
-  {
-    id: 'tm-4',
-    name: 'Farhana Yasmin',
-    email: 'farhana.y@apexcorp.com',
-    department: 'Growth & Commercial',
-    role: 'Growth Marketing Lead',
-    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-    assignedCourseIds: ['course-6', 'course-1'],
-    completedCoursesCount: 1,
-    progressPercent: 70,
-    lastActive: 'Today',
-    skillsMastered: ['Growth Funnels', 'CAC/LTV Modeling'],
-  },
-];
+const INITIAL_TEAM_MEMBERS: TeamMember[] = [];
 
 const INITIAL_NOTIFICATIONS: SaaSNotification[] = [
   {
@@ -128,12 +66,12 @@ const INITIAL_NOTIFICATIONS: SaaSNotification[] = [
   },
   {
     id: 'notif-4',
-    title: 'AI Copilot Upgrade ⚡',
-    message: 'Executive Financial Auditing mode is now available in your AI Skill Copilot.',
+    title: 'New Masterclasses Available ⚡',
+    message: 'New executive workshops and courses are now available in your course catalog.',
     type: 'ai',
     timestamp: '3d ago',
     isRead: true,
-    actionRoute: { tab: 'Copilot' },
+    actionRoute: { tab: 'Courses' },
   },
 ];
 

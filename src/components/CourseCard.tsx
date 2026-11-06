@@ -31,7 +31,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
 
   if (horizontal) {
     return (
-      <TouchableOpacity
+      <View
         style={[
           styles.horizontalCard,
           {
@@ -40,69 +40,72 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
             shadowColor: colors.cardShadow,
           },
         ]}
-        onPress={onPress}
-        activeOpacity={0.85}
-        accessibilityRole="button"
-        accessibilityLabel={`${course.title} by ${course.instructor.name}`}
       >
-        <Image source={{ uri: course.thumbnail }} style={styles.horizontalThumb} />
-        {course.badge && (
-          <View style={[styles.badgeTag, { backgroundColor: colors.badgeBackground }]}>
-            <Text style={[styles.badgeText, { color: colors.badgeText }]}>{course.badge}</Text>
-          </View>
-        )}
-        <View style={styles.horizontalContent}>
-          <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
-            {course.title}
-          </Text>
-          <Text style={[styles.instructorName, { color: colors.textMuted }]} numberOfLines={1}>
-            {course.instructor.name}
-          </Text>
-
-          <View style={styles.statsRow}>
-            <View style={styles.ratingBadge}>
-              <Ionicons name="star" size={13} color={colors.starColor} />
-              <Text style={[styles.ratingNumber, { color: colors.text }]}>{course.rating}</Text>
-              <Text style={[styles.reviewsCount, { color: colors.textMuted }]}>
-                ({course.reviewsCount})
-              </Text>
-            </View>
-            <Text style={[styles.dotSeparator, { color: colors.textMuted }]}>•</Text>
-            <Text style={[styles.durationText, { color: colors.textMuted }]}>
-              {course.durationHours}h • {course.level}
-            </Text>
-          </View>
-
-          {isEnrolled ? (
-            <View style={styles.progressContainer}>
-              <View style={[styles.progressBarTrack, { backgroundColor: colors.surfaceSubtle }]}>
-                <View
-                  style={[
-                    styles.progressBarFill,
-                    { backgroundColor: colors.primary, width: `${progressPercent}%` },
-                  ]}
-                />
-              </View>
-              <Text style={[styles.progressLabel, { color: colors.primary }]}>
-                {progressPercent}% Complete
-              </Text>
-            </View>
-          ) : (
-            <View style={styles.priceRow}>
-              <Text style={[styles.currentPrice, { color: colors.primary }]}>
-                {displayPrice}
-              </Text>
-              <Text style={[styles.originalPrice, { color: colors.textMuted }]}>
-                {displayOrigPrice}
-              </Text>
-              {discountPercent > 0 && (
-                <View style={styles.discountBadge}>
-                  <Text style={styles.discountBadgeText}>{discountPercent}% OFF</Text>
-                </View>
-              )}
+        <TouchableOpacity
+          style={styles.horizontalCardBody}
+          onPress={onPress}
+          activeOpacity={0.85}
+          accessibilityLabel={`${course.title} by ${course.instructor?.name || 'Thriving Skills'}`}
+        >
+          <Image source={{ uri: course.thumbnail }} style={styles.horizontalThumb} />
+          {course.badge && (
+            <View style={[styles.badgeTag, { backgroundColor: colors.badgeBackground }]}>
+              <Text style={[styles.badgeText, { color: colors.badgeText }]}>{course.badge}</Text>
             </View>
           )}
-        </View>
+          <View style={styles.horizontalContent}>
+            <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
+              {course.title}
+            </Text>
+            <Text style={[styles.instructorName, { color: colors.textMuted }]} numberOfLines={1}>
+              {course.instructor?.name || 'Thriving Skills Instructor'}
+            </Text>
+
+            <View style={styles.statsRow}>
+              <View style={styles.ratingBadge}>
+                <Ionicons name="star" size={13} color={colors.starColor} />
+                <Text style={[styles.ratingNumber, { color: colors.text }]}>{course.rating}</Text>
+                <Text style={[styles.reviewsCount, { color: colors.textMuted }]}>
+                  ({course.reviewsCount})
+                </Text>
+              </View>
+              <Text style={[styles.dotSeparator, { color: colors.textMuted }]}>•</Text>
+              <Text style={[styles.durationText, { color: colors.textMuted }]}>
+                {course.durationHours}h • {course.level}
+              </Text>
+            </View>
+
+            {isEnrolled ? (
+              <View style={styles.progressContainer}>
+                <View style={[styles.progressBarTrack, { backgroundColor: colors.surfaceSubtle }]}>
+                  <View
+                    style={[
+                      styles.progressBarFill,
+                      { backgroundColor: colors.primary, width: `${progressPercent}%` },
+                    ]}
+                  />
+                </View>
+                <Text style={[styles.progressLabel, { color: colors.primary }]}>
+                  {progressPercent}% Complete
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.priceRow}>
+                <Text style={[styles.currentPrice, { color: colors.primary }]}>
+                  {displayPrice}
+                </Text>
+                <Text style={[styles.originalPrice, { color: colors.textMuted }]}>
+                  {displayOrigPrice}
+                </Text>
+                {discountPercent > 0 && (
+                  <View style={styles.discountBadge}>
+                    <Text style={styles.discountBadgeText}>{discountPercent}% OFF</Text>
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.bookmarkBtn, { backgroundColor: colors.surfaceSubtle }]}
@@ -118,12 +121,12 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
             color={bookmarked ? colors.primary : colors.textMuted}
           />
         </TouchableOpacity>
-      </TouchableOpacity>
+      </View>
     );
   }
 
   return (
-    <TouchableOpacity
+    <View
       style={[
         styles.card,
         {
@@ -132,99 +135,102 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
           shadowColor: colors.cardShadow,
         },
       ]}
-      onPress={onPress}
-      activeOpacity={0.88}
-      accessibilityRole="button"
-      accessibilityLabel={`${course.title} by ${course.instructor.name}`}
     >
-      <View style={styles.thumbWrapper}>
-        <Image source={{ uri: course.thumbnail }} style={styles.thumbnail} />
-        {course.badge && (
-          <View style={[styles.badgeTag, { backgroundColor: colors.badgeBackground }]}>
-            <Text style={[styles.badgeText, { color: colors.badgeText }]}>{course.badge}</Text>
-          </View>
-        )}
-        <TouchableOpacity
-          style={[styles.floatingBookmark, { backgroundColor: 'rgba(0,0,0,0.6)' }]}
-          onPress={() => toggleBookmark(course.id)}
-          activeOpacity={0.7}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          accessibilityRole="button"
-          accessibilityLabel={bookmarked ? "Remove bookmark" : "Save course bookmark"}
-        >
-          <Ionicons
-            name={bookmarked ? 'bookmark' : 'bookmark-outline'}
-            size={16}
-            color={bookmarked ? colors.primary : '#FFFFFF'}
-          />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.content}>
-        <Text style={[styles.categoryTag, { color: colors.secondary }]}>
-          {course.level.toUpperCase()}
-        </Text>
-        <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
-          {course.title}
-        </Text>
-        <Text style={[styles.instructorName, { color: colors.textMuted }]} numberOfLines={1}>
-          {course.instructor.name} • {course.instructor.company}
-        </Text>
-
-        <View style={styles.statsRow}>
-          <View style={styles.ratingBadge}>
-            <Ionicons name="star" size={13} color={colors.starColor} />
-            <Text style={[styles.ratingNumber, { color: colors.text }]}>{course.rating}</Text>
-            <Text style={[styles.reviewsCount, { color: colors.textMuted }]}>
-              ({course.reviewsCount})
-            </Text>
-          </View>
-          <Text style={[styles.dotSeparator, { color: colors.textMuted }]}>•</Text>
-          <Text style={[styles.durationText, { color: colors.textMuted }]}>
-            {course.durationHours}h ({course.lecturesCount} lectures)
-          </Text>
+      <TouchableOpacity
+        onPress={onPress}
+        activeOpacity={0.88}
+        accessibilityLabel={`${course.title} by ${course.instructor?.name || 'Thriving Skills'}`}
+      >
+        <View style={styles.thumbWrapper}>
+          <Image source={{ uri: course.thumbnail }} style={styles.thumbnail} />
+          {course.badge && (
+            <View style={[styles.badgeTag, { backgroundColor: colors.badgeBackground }]}>
+              <Text style={[styles.badgeText, { color: colors.badgeText }]}>{course.badge}</Text>
+            </View>
+          )}
         </View>
 
-        {isEnrolled ? (
-          <View style={styles.progressContainer}>
-            <View style={[styles.progressBarTrack, { backgroundColor: colors.surfaceSubtle }]}>
-              <View
-                style={[
-                  styles.progressBarFill,
-                  { backgroundColor: colors.primary, width: `${progressPercent}%` },
-                ]}
-              />
-            </View>
-            <View style={styles.progressRow}>
-              <Text style={[styles.progressLabel, { color: colors.primary }]}>
-                {progressPercent}% Complete
+        <View style={styles.content}>
+          <Text style={[styles.categoryTag, { color: colors.secondary }]}>
+            {course.level.toUpperCase()}
+          </Text>
+          <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
+            {course.title}
+          </Text>
+          <Text style={[styles.instructorName, { color: colors.textMuted }]} numberOfLines={1}>
+            {course.instructor?.name || 'Thriving Skills Instructor'}{course.instructor?.company ? ` • ${course.instructor.company}` : ''}
+          </Text>
+
+          <View style={styles.statsRow}>
+            <View style={styles.ratingBadge}>
+              <Ionicons name="star" size={13} color={colors.starColor} />
+              <Text style={[styles.ratingNumber, { color: colors.text }]}>{course.rating}</Text>
+              <Text style={[styles.reviewsCount, { color: colors.textMuted }]}>
+                ({course.reviewsCount})
               </Text>
-              <Text style={[styles.continueText, { color: colors.primary }]}>Resume →</Text>
             </View>
+            <Text style={[styles.dotSeparator, { color: colors.textMuted }]}>•</Text>
+            <Text style={[styles.durationText, { color: colors.textMuted }]}>
+              {course.durationHours}h ({course.lecturesCount} lectures)
+            </Text>
           </View>
-        ) : (
-          <View style={styles.cardFooter}>
-            <View style={styles.priceRow}>
-              <Text style={[styles.currentPrice, { color: colors.primary }]}>
-                {displayPrice}
-              </Text>
-              <Text style={[styles.originalPrice, { color: colors.textMuted }]}>
-                {displayOrigPrice}
-              </Text>
-              {discountPercent > 0 && (
-                <View style={styles.discountBadge}>
-                  <Text style={styles.discountBadgeText}>{discountPercent}% OFF</Text>
-                </View>
-              )}
+
+          {isEnrolled ? (
+            <View style={styles.progressContainer}>
+              <View style={[styles.progressBarTrack, { backgroundColor: colors.surfaceSubtle }]}>
+                <View
+                  style={[
+                    styles.progressBarFill,
+                    { backgroundColor: colors.primary, width: `${progressPercent}%` },
+                  ]}
+                />
+              </View>
+              <View style={styles.progressRow}>
+                <Text style={[styles.progressLabel, { color: colors.primary }]}>
+                  {progressPercent}% Complete
+                </Text>
+                <Text style={[styles.continueText, { color: colors.primary }]}>Resume →</Text>
+              </View>
             </View>
-            <View style={[styles.certBadge, { backgroundColor: colors.surfaceSubtle }]}>
-              <Ionicons name="ribbon-outline" size={13} color={colors.primary} />
-              <Text style={[styles.certText, { color: colors.textMuted }]}>Certificate</Text>
+          ) : (
+            <View style={styles.cardFooter}>
+              <View style={styles.priceRow}>
+                <Text style={[styles.currentPrice, { color: colors.primary }]}>
+                  {displayPrice}
+                </Text>
+                <Text style={[styles.originalPrice, { color: colors.textMuted }]}>
+                  {displayOrigPrice}
+                </Text>
+                {discountPercent > 0 && (
+                  <View style={styles.discountBadge}>
+                    <Text style={styles.discountBadgeText}>{discountPercent}% OFF</Text>
+                  </View>
+                )}
+              </View>
+              <View style={[styles.certBadge, { backgroundColor: colors.surfaceSubtle }]}>
+                <Ionicons name="ribbon-outline" size={13} color={colors.primary} />
+                <Text style={[styles.certText, { color: colors.textMuted }]}>Certificate</Text>
+              </View>
             </View>
-          </View>
-        )}
-      </View>
-    </TouchableOpacity>
+          )}
+        </View>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.floatingBookmark, { backgroundColor: 'rgba(0,0,0,0.6)' }]}
+        onPress={() => toggleBookmark(course.id)}
+        activeOpacity={0.7}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        accessibilityRole="button"
+        accessibilityLabel={bookmarked ? "Remove bookmark" : "Save course bookmark"}
+      >
+        <Ionicons
+          name={bookmarked ? 'bookmark' : 'bookmark-outline'}
+          size={16}
+          color={bookmarked ? colors.primary : '#FFFFFF'}
+        />
+      </TouchableOpacity>
+    </View>
   );
 };
 
@@ -394,12 +400,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: 'hidden',
     marginBottom: 12,
-    padding: 10,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 6,
     elevation: 2,
     position: 'relative',
+  },
+  horizontalCardBody: {
+    flex: 1,
+    flexDirection: 'row',
+    padding: 10,
   },
   horizontalThumb: {
     width: 100,

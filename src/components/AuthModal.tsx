@@ -27,8 +27,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
   const { colors, isDark } = useTheme();
   const {
     login,
-    loginWithGoogle,
-    loginWithFacebook,
     loginWithPhone,
     sendPhoneOtp,
     register,
@@ -40,10 +38,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [regPhone, setRegPhone] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
-  const [socialLoading, setSocialLoading] = useState<'google' | 'facebook' | null>(null);
 
   // Phone OTP States (CR-04)
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -130,42 +128,27 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
           setErrorMessage('Please provide your full name.');
           return;
         }
-        await register(name.trim().toLowerCase().replace(/\s+/g, '_'), username.trim(), password);
+        const generatedUser = name.trim().toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Math.floor(Math.random() * 9000 + 1000);
+        await register(generatedUser, username.trim(), password, regPhone.trim() || undefined);
       } else {
         await login(username.trim(), password);
       }
       setUsername('');
       setPassword('');
       setName('');
+      setRegPhone('');
       onClose();
     } catch (err: any) {
-      setErrorMessage(err.message || 'Authentication failed. Please check your credentials.');
-    }
-  };
-
-  const handleGoogleAuth = async () => {
-    setSocialLoading('google');
-    setErrorMessage(null);
-    try {
-      await loginWithGoogle();
-      onClose();
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Google sign-in could not be completed.');
-    } finally {
-      setSocialLoading(null);
-    }
-  };
-
-  const handleFacebookAuth = async () => {
-    setSocialLoading('facebook');
-    setErrorMessage(null);
-    try {
-      await loginWithFacebook();
-      onClose();
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Facebook sign-in could not be completed.');
-    } finally {
-      setSocialLoading(null);
+      if (
+        err.message?.includes('Phone Number is required field') ||
+        err.message?.includes('registration-custom-required-field')
+      ) {
+        setErrorMessage(
+          'WordPress site has a mandatory "Phone Number" requirement that LearnPress API blocks. Please use the "Mobile OTP" tab above to sign up directly with your phone number, or uncheck "Required" for Phone Number in WP LearnPress Settings.'
+        );
+      } else {
+        setErrorMessage(err.message || 'Authentication failed. Please check your credentials.');
+      }
     }
   };
 
@@ -212,67 +195,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                 ? 'Sign in to access your masterclasses, certificates, and learning track.'
                 : 'Join 50,000+ executives and learners across Bangladesh.'}
             </Text>
-
-            {/* Social Login Options */}
-            <View style={styles.socialButtonsContainer}>
-              {/* Google Button */}
-              <TouchableOpacity
-                style={[
-                  styles.socialButton,
-                  styles.googleButton,
-                  {
-                    backgroundColor: isDark ? '#1A2333' : '#FFFFFF',
-                    borderColor: isDark ? '#2E3D59' : '#E2E8F0',
-                  },
-                ]}
-                onPress={handleGoogleAuth}
-                disabled={!!socialLoading || isLoading}
-                activeOpacity={0.8}
-              >
-                {socialLoading === 'google' ? (
-                  <ActivityIndicator size="small" color="#EA4335" />
-                ) : (
-                  <>
-                    <View style={styles.socialIconCircle}>
-                      <Ionicons name="logo-google" size={18} color="#EA4335" />
-                    </View>
-                    <Text style={[styles.socialButtonText, { color: colors.text }]}>
-                      {mode === 'login' ? 'Continue with Google' : 'Sign up with Google'}
-                    </Text>
-                  </>
-                )}
-              </TouchableOpacity>
-
-              {/* Facebook Button */}
-              <TouchableOpacity
-                style={[styles.socialButton, styles.facebookButton]}
-                onPress={handleFacebookAuth}
-                disabled={!!socialLoading || isLoading}
-                activeOpacity={0.85}
-              >
-                {socialLoading === 'facebook' ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                ) : (
-                  <>
-                    <View style={[styles.socialIconCircle, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-                      <Ionicons name="logo-facebook" size={18} color="#FFFFFF" />
-                    </View>
-                    <Text style={[styles.socialButtonText, { color: '#FFFFFF' }]}>
-                      {mode === 'login' ? 'Continue with Facebook' : 'Sign up with Facebook'}
-                    </Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            </View>
-
-            {/* Or Divider */}
-            <View style={styles.dividerRow}>
-              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-              <Text style={[styles.dividerText, { color: colors.textMuted }]}>
-                or use {mode === 'login' ? 'email credentials' : 'direct sign up'}
-              </Text>
-              <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-            </View>
 
             {/* Mode Switch Tabs: Email / Mobile OTP / Register */}
             <View style={[styles.tabSwitch, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
@@ -524,27 +446,52 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
               /* Email / Password Form (Sign In & Register) */
               <View style={{ width: '100%' }}>
                 {mode === 'register' && (
-                  <View style={styles.inputGroup}>
-                    <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Full Name</Text>
-                    <View
-                      style={[
-                        styles.inputWrapper,
-                        { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
-                      ]}
-                    >
-                      <Ionicons name="person-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
-                      <TextInput
-                        style={[styles.input, { color: colors.text }]}
-                        placeholder="e.g. Sajid Ul Islam"
-                        placeholderTextColor={colors.textMuted + '80'}
-                        value={name}
-                        onChangeText={(t) => {
-                          setName(t);
-                          if (errorMessage) setErrorMessage(null);
-                        }}
-                      />
+                  <>
+                    <View style={styles.inputGroup}>
+                      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Full Name</Text>
+                      <View
+                        style={[
+                          styles.inputWrapper,
+                          { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                        ]}
+                      >
+                        <Ionicons name="person-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                        <TextInput
+                          style={[styles.input, { color: colors.text }]}
+                          placeholder="e.g. Sajid Ul Islam"
+                          placeholderTextColor={colors.textMuted + '80'}
+                          value={name}
+                          onChangeText={(t) => {
+                            setName(t);
+                            if (errorMessage) setErrorMessage(null);
+                          }}
+                        />
+                      </View>
                     </View>
-                  </View>
+
+                    <View style={styles.inputGroup}>
+                      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Phone Number (মোবাইল নম্বর)</Text>
+                      <View
+                        style={[
+                          styles.inputWrapper,
+                          { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                        ]}
+                      >
+                        <Ionicons name="call-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                        <TextInput
+                          style={[styles.input, { color: colors.text }]}
+                          placeholder="e.g. 01712345678"
+                          placeholderTextColor={colors.textMuted + '80'}
+                          value={regPhone}
+                          onChangeText={(t) => {
+                            setRegPhone(t);
+                            if (errorMessage) setErrorMessage(null);
+                          }}
+                          keyboardType="phone-pad"
+                        />
+                      </View>
+                    </View>
+                  </>
                 )}
 
                 {/* Email / Username Input */}
@@ -619,7 +566,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                     { backgroundColor: colors.accent },
                   ]}
                   onPress={handleLogin}
-                  disabled={isLoading || !!socialLoading}
+                  disabled={isLoading}
                   activeOpacity={0.88}
                 >
                   {isLoading ? (
@@ -734,58 +681,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 16,
     marginBottom: 18,
-  },
-  socialButtonsContainer: {
-    width: '100%',
-    gap: 10,
-    marginBottom: 16,
-  },
-  socialButton: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 48,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  googleButton: {
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-  },
-  facebookButton: {
-    backgroundColor: '#1877F2',
-    borderColor: '#1877F2',
-  },
-  socialIconCircle: {
-    marginRight: 10,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  socialButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    marginVertical: 14,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-  },
-  dividerText: {
-    paddingHorizontal: 12,
-    fontSize: 12,
-    fontWeight: '500',
   },
   tabSwitch: {
     flexDirection: 'row',

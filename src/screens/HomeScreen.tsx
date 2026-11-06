@@ -23,26 +23,18 @@ import { useGamification } from '../context/GamificationContext';
 import { Header } from '../components/Header';
 import { CategoryPills } from '../components/CategoryPills';
 import { CourseCard } from '../components/CourseCard';
-import { SpecialBundleCard } from '../components/SpecialBundleCard';
-import { SummitCard } from '../components/SummitCard';
 import { YouTubeCard } from '../components/YouTubeCard';
-import { CommunityFeedShelf } from '../components/CommunityFeedShelf';
-import { CommunityFeedModal } from '../components/CommunityFeedModal';
 import { HelpFaqModal } from '../components/HelpFaqModal';
 import { BlogModal } from '../components/BlogModal';
 import { HeroCarousel, CarouselSlide } from '../components/HeroCarousel';
 import { QuickActionDock } from '../components/QuickActionDock';
 import { SearchSpotlightBar } from '../components/SearchSpotlightBar';
 import { CourseCardSkeleton } from '../components/SkeletonLoader';
-import { CountdownWidget } from '../components/CountdownWidget';
-import { SkillBiteWidget } from '../components/SkillBiteWidget';
 import { useYouTube } from '../context/YouTubeContext';
 import { useAutoScroll } from '../hooks/useAutoScroll';
 import { YOUTUBE_VIDEOS, YOUTUBE_CHANNEL, YouTubeVideo } from '../data/youtubeVideos';
 import {
   CORPORATE_CLIENTS,
-  SPECIAL_BUNDLES,
-  SKILLS_SUMMITS,
   REVIEWS_WALL,
 } from '../data/mockData';
 import { RootTab } from '../types';
@@ -62,7 +54,6 @@ interface HomeScreenProps {
   onOpenAssessment: () => void;
   onOpenYouTube?: () => void;
   onOpenSearch?: () => void;
-  onOpenCommunityFeed?: () => void;
   onOpenDrawer?: () => void;
 }
 
@@ -76,11 +67,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onOpenAssessment,
   onOpenYouTube,
   onOpenSearch,
-  onOpenCommunityFeed,
   onOpenDrawer,
 }) => {
   const { colors, isDark } = useTheme();
-  const [communityModalVisible, setCommunityModalVisible] = useState(false);
   const [aboutModalVisible, setAboutModalVisible] = useState(false);
   const [aboutInitialTab, setAboutInitialTab] = useState<AboutTabKey>('overview');
   const [legalModalVisible, setLegalModalVisible] = useState(false);
@@ -534,21 +523,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
         {/* 4. Streamlined 4-Action Dock */}
         <QuickActionDock
-          onOpenCopilot={() => onNavigateTab('Copilot')}
+          onOpenCourses={() => onNavigateTab('Courses')}
           onOpenAssessment={onOpenAssessment}
           onOpenWorkshops={() => onNavigateTab('Workshops')}
-          onOpenTeamOrMyLearning={() =>
-            onNavigateTab(activeWorkspace.type === 'enterprise' ? 'TeamHub' : 'MyLearning')
-          }
+          onOpenMyLearning={() => onNavigateTab('MyLearning')}
         />
 
-        {/* 5. Live Summit Flash Sale Countdown Timer */}
-        <CountdownWidget
-          onClaimDiscount={() => onNavigateTab('Workshops')}
-        />
-
-        {/* 6. Daily Skill Bite Micro-Challenge Widget */}
-        <SkillBiteWidget />
+        
 
         {/* Category Filter Pills */}
         <View style={styles.categorySection}>
@@ -616,28 +597,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         )}
 
         {/* Special Career Bundles Section (স্পেশাল বান্ডেল কোর্স) */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>স্পেশাল বান্ডেল কোর্স</Text>
-              <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
-                সাশ্রয়ী প্যাকেজে ক্যারিয়ার উপযোগী কমপ্লিট স্কিল
-              </Text>
-            </View>
-            <TouchableOpacity onPress={() => onNavigateTab('Courses')}>
-              <Text style={[styles.seeAllText, { color: colors.primary }]}>View All ({SPECIAL_BUNDLES.length})</Text>
-            </TouchableOpacity>
-          </View>
-
-          {SPECIAL_BUNDLES.slice(0, 2).map((bundle) => (
-            <SpecialBundleCard
-              key={bundle.id}
-              bundle={bundle}
-              onPress={() => onNavigateTab('Courses')}
-            />
-          ))}
-        </View>
-
         {/* Popular Executive Masterclasses */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -666,76 +625,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               />
             ))
           )}
-        </View>
-
-        {/* Thriving Skills YouTube Masterclasses */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Ionicons name="logo-youtube" size={20} color="#FF0000" />
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>YouTube Masterclasses</Text>
-              </View>
-              <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
-                Free industry lessons from {YOUTUBE_CHANNEL.handle}
-              </Text>
-            </View>
-            <TouchableOpacity onPress={onOpenYouTube}>
-              <Text style={[styles.seeAllText, { color: '#FF0000', fontWeight: '700' }]}>
-                View All ({YOUTUBE_VIDEOS.length}) →
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView
-            ref={ytAutoScroll.scrollViewRef}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 14, paddingRight: 16 }}
-            {...ytAutoScroll.scrollProps}
-          >
-            {YOUTUBE_VIDEOS.slice(0, 8).map((ytVideo) => (
-              <YouTubeCard
-                key={ytVideo.id}
-                video={ytVideo}
-                width={260}
-                onPress={(v) => {
-                  ytAutoScroll.pauseTemporarily(4000);
-                  playVideo(v, 'modal');
-                }}
-              />
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Community & Social Feed (Facebook & LinkedIn) */}
-        <CommunityFeedShelf
-          onViewAll={() => {
-            if (onOpenCommunityFeed) {
-              onOpenCommunityFeed();
-            } else {
-              setCommunityModalVisible(true);
-            }
-          }}
-        />
-
-        {/* National & Regional Skills Summits */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>National Skills Summits</Text>
-              <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
-                Flagship Conferences on 4IR, AI, & Employability
-              </Text>
-            </View>
-            <TouchableOpacity onPress={() => onNavigateTab('Workshops')}>
-              <Text style={[styles.seeAllText, { color: colors.primary }]}>All Events →</Text>
-            </TouchableOpacity>
-          </View>
-
-          {SKILLS_SUMMITS.slice(0, 2).map((summit) => (
-            <SummitCard key={summit.id} summit={summit} />
-          ))}
         </View>
 
         {/* Corporate Solutions & SME Consultancy Spotlight */}
@@ -1221,10 +1110,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </View>
       </ScrollView>
 
-      <CommunityFeedModal
-        visible={communityModalVisible}
-        onClose={() => setCommunityModalVisible(false)}
-      />
+      
 
       <AboutTSLModal
         visible={aboutModalVisible}

@@ -31,12 +31,14 @@ export async function fetchWpCourses(params?: {
   perPage?: number;
   search?: string;
   categorySlug?: string;
+  forceRefresh?: boolean;
 }): Promise<Course[]> {
   return CoursesService.getCourses({
     page: params?.page,
     perPage: params?.perPage,
     search: params?.search,
     category: params?.categorySlug,
+    forceRefresh: params?.forceRefresh,
   });
 }
 
@@ -69,26 +71,14 @@ export async function loginWpUser(username: string, password: string): Promise<W
 }
 
 /**
- * Log in user with Google
- */
-export async function loginWpGoogle(email?: string, name?: string): Promise<WpUser> {
-  return AuthService.loginWithGoogle(email, name);
-}
-
-/**
- * Log in user with Facebook
- */
-export async function loginWpFacebook(email?: string, name?: string): Promise<WpUser> {
-  return AuthService.loginWithFacebook(email, name);
-}
-
-/**
  * Register student account
  */
 export async function registerWpUser(userData: {
   username: string;
   email: string;
   password: string;
+  confirm_password?: string;
+  phone?: string;
 }): Promise<any> {
   return AuthService.register(userData);
 }

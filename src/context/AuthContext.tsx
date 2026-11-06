@@ -3,8 +3,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WpUser } from '../types';
 import {
   loginWpUser,
-  loginWpGoogle,
-  loginWpFacebook,
   registerWpUser,
   validateWpToken,
   sendWpPhoneOtp,
@@ -23,11 +21,9 @@ interface AuthContextType {
   isAuthModalVisible: boolean;
   setAuthModalVisible: (visible: boolean) => void;
   login: (username: string, password: string) => Promise<void>;
-  loginWithGoogle: (email?: string, name?: string) => Promise<void>;
-  loginWithFacebook: (email?: string, name?: string) => Promise<void>;
   loginWithPhone: (phone: string, otp: string, fullName?: string) => Promise<void>;
   sendPhoneOtp: (phone: string) => Promise<{ success: boolean; message: string; testOtp?: string }>;
-  register: (username: string, email: string, password: string) => Promise<void>;
+  register: (username: string, email: string, password: string, phone?: string) => Promise<void>;
   logout: () => Promise<void>;
   continueAsGuest: () => void;
 }
@@ -97,26 +93,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const loginWithGoogle = async (email?: string, name?: string) => {
-    setIsLoading(true);
-    try {
-      const loggedInUser = await loginWpGoogle(email, name);
-      await saveUserSession(loggedInUser);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const loginWithFacebook = async (email?: string, name?: string) => {
-    setIsLoading(true);
-    try {
-      const loggedInUser = await loginWpFacebook(email, name);
-      await saveUserSession(loggedInUser);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const loginWithPhone = async (phone: string, otp: string, fullName?: string) => {
     setIsLoading(true);
     try {
@@ -131,10 +107,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return sendWpPhoneOtp(phone);
   };
 
-  const register = async (username: string, email: string, password: string) => {
+  const register = async (username: string, email: string, password: string, phone?: string) => {
     setIsLoading(true);
     try {
-      await registerWpUser({ username, email, password });
+      await registerWpUser({ username, email, password, confirm_password: password, phone });
       // Immediately log in new user
       await login(username, password);
     } finally {
@@ -170,8 +146,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthModalVisible,
         setAuthModalVisible,
         login,
-        loginWithGoogle,
-        loginWithFacebook,
         loginWithPhone,
         sendPhoneOtp,
         register,

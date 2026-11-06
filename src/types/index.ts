@@ -303,7 +303,7 @@ export interface SocialPost {
   badge?: string;
 }
 
-export type RootTab = 'Home' | 'Courses' | 'Copilot' | 'MyLearning' | 'TeamHub' | 'Workshops' | 'Profile';
+export type RootTab = 'Home' | 'Courses' | 'MyLearning' | 'Workshops' | 'Profile';
 
 export type ActiveScreen =
   | { name: 'MainTabs'; tab: RootTab }
@@ -312,9 +312,6 @@ export type ActiveScreen =
   | { name: 'CorporateSolutions' }
   | { name: 'CertificateView'; certificateId: string }
   | { name: 'SkillAssessment' }
-  | { name: 'YouTubeVideos' }
-  | { name: 'SocialFeed' };
-
-export * from './notebookLM';
+  | { name: 'YouTubeVideos' };
 
 

@@ -219,19 +219,6 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
 
             <TouchableOpacity
               style={styles.navItem}
-              onPress={() => handleNav(() => onNavigateTab('Copilot'))}
-            >
-              <View style={[styles.navIconBg, { backgroundColor: '#F0FDF4' }]}>
-                <Ionicons name="hardware-chip-outline" size={18} color="#10B981" />
-              </View>
-              <Text style={[styles.navLabel, { color: colors.text }]}>AI Assistant</Text>
-              <View style={[styles.badgeNew, { backgroundColor: colors.primary }]}>
-                <Text style={styles.badgeNewText}>AI</Text>
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.navItem}
               onPress={() => handleNav(() => onOpenYouTube?.())}
             >
               <View style={[styles.navIconBg, { backgroundColor: '#FEF2F2' }]}>
@@ -286,17 +273,6 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               <Text style={[styles.navLabel, { color: colors.text }]}>
                 {isBangla ? 'ওয়াচ হিস্ট্রি ও প্রোগ্রেস' : 'Watch History & Progress'}
               </Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.navItem}
-              onPress={() => handleNav(() => onNavigateTab('TeamHub'))}
-            >
-              <View style={[styles.navIconBg, { backgroundColor: '#EFF6FF' }]}>
-                <Ionicons name="people-outline" size={18} color="#2563EB" />
-              </View>
-              <Text style={[styles.navLabel, { color: colors.text }]}>Enterprise Workforce Hub</Text>
               <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
             </TouchableOpacity>
 

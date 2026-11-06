@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -68,6 +68,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const [unlockedCert, setUnlockedCert] = useState<Certificate | null>(null);
   const [isDownloaded, setIsDownloaded] = useState<boolean>(false);
   const [currentPositionSeconds, setCurrentPositionSeconds] = useState<number>(0);
+  const currentPosRef = useRef<number>(currentPositionSeconds);
+  currentPosRef.current = currentPositionSeconds;
 
   const course = getCourseById(courseId);
 
@@ -138,49 +140,47 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   useEffect(() => {
     if (!isPlaying || !currentLesson || !course || autoplayCountdown !== null) return;
     const interval = setInterval(() => {
-      setCurrentPositionSeconds((prev) => {
-        const next = prev + 1;
-        if (next % 5 === 0) {
-          recordWatchPosition(course.id, currentLesson.id, next);
-        }
-        // Auto-complete & transition when video duration finishes (CR-03)
-        if (next >= totalLessonSeconds && totalLessonSeconds > 0) {
-          markLessonCompleted(course.id, currentLesson.id);
-          recordStudyTime(10);
-          unlockBadge('streak_champ');
+      const next = currentPosRef.current + 1;
+      currentPosRef.current = next;
+      setCurrentPositionSeconds(next);
 
-          const isLastLesson = currentLessonIndex >= allLessons.length - 1;
-          if (isLastLesson) {
-            setIsPlaying(false);
-            if (!hasReviewedCourse(course.id)) {
-              setMandatoryReviewVisible(true);
-            } else {
-              setCertModalVisible(true);
-            }
+      if (next % 5 === 0) {
+        recordWatchPosition(course.id, currentLesson.id, next);
+      }
+      // Auto-complete & transition when video duration finishes (CR-03)
+      if (next >= totalLessonSeconds && totalLessonSeconds > 0) {
+        markLessonCompleted(course.id, currentLesson.id);
+        recordStudyTime(10);
+        unlockBadge('streak_champ');
+
+        const isLastLesson = currentLessonIndex >= allLessons.length - 1;
+        if (isLastLesson) {
+          setIsPlaying(false);
+          if (!hasReviewedCourse(course.id)) {
+            setMandatoryReviewVisible(true);
           } else {
-            setAutoplayCountdown(5);
+            setCertModalVisible(true);
           }
+        } else {
+          setAutoplayCountdown(5);
         }
-        return next;
-      });
+      }
     }, 1000);
     return () => clearInterval(interval);
   }, [isPlaying, currentLesson?.id, course?.id, autoplayCountdown, totalLessonSeconds, currentLessonIndex, allLessons.length]);
 
   const handleRewind = (sec: number = 10) => {
-    setCurrentPositionSeconds((prev) => {
-      const next = Math.max(0, prev - sec);
-      if (course && currentLesson) recordWatchPosition(course.id, currentLesson.id, next);
-      return next;
-    });
+    const next = Math.max(0, currentPosRef.current - sec);
+    currentPosRef.current = next;
+    setCurrentPositionSeconds(next);
+    if (course && currentLesson) recordWatchPosition(course.id, currentLesson.id, next);
   };
 
   const handleForward = (sec: number = 10) => {
-    setCurrentPositionSeconds((prev) => {
-      const next = prev + sec;
-      if (course && currentLesson) recordWatchPosition(course.id, currentLesson.id, next);
-      return next;
-    });
+    const next = currentPosRef.current + sec;
+    currentPosRef.current = next;
+    setCurrentPositionSeconds(next);
+    if (course && currentLesson) recordWatchPosition(course.id, currentLesson.id, next);
   };
 
   const formatSeconds = (sec: number): string => {

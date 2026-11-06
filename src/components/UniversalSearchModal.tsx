@@ -222,7 +222,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
               <Text style={[styles.resultsCountText, { color: colors.textMuted }]}>
                 {searchResults.length} {searchResults.length === 1 ? 'match' : 'matches'} found
               </Text>
-            ) : null
+            ) : undefined
           }
           renderItem={({ item }) => (
             <TouchableOpacity

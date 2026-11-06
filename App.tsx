@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Platform, StatusBar } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, Platform } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -14,9 +15,7 @@ import { RootTab, ActiveScreen } from './src/types';
 
 import { HomeScreen } from './src/screens/HomeScreen';
 import { CoursesScreen } from './src/screens/CoursesScreen';
-import { SkillCopilotScreen } from './src/screens/SkillCopilotScreen';
 import { MyLearningScreen } from './src/screens/MyLearningScreen';
-import { EnterpriseTeamScreen } from './src/screens/EnterpriseTeamScreen';
 import { WorkshopsScreen } from './src/screens/WorkshopsScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { CourseDetailScreen } from './src/screens/CourseDetailScreen';
@@ -77,9 +76,6 @@ const MainAppContent: React.FC = () => {
     setActiveScreen({ name: 'MainTabs', tab: activeTab });
   };
 
-  // Dynamically configure tabs based on Workspace (Personal vs Enterprise)
-  const isEnterpriseWorkspace = activeWorkspace.type === 'enterprise';
-
   const tabItems: {
     id: RootTab;
     label: string;
@@ -89,27 +85,20 @@ const MainAppContent: React.FC = () => {
   }[] = [
     { id: 'Home', label: t('tabHome'), icon: 'home', iconOutline: 'home-outline' },
     { id: 'Courses', label: t('tabExplore'), icon: 'compass', iconOutline: 'compass-outline' },
-    { id: 'Copilot', label: t('tabCopilot'), icon: 'sparkles', iconOutline: 'sparkles-outline' },
-    isEnterpriseWorkspace
-      ? { id: 'TeamHub', label: t('tabTeamHub'), icon: 'business', iconOutline: 'business-outline' }
-      : {
-          id: 'MyLearning',
-          label: t('tabMyHub'),
-          icon: 'book',
-          iconOutline: 'book-outline',
-          badgeCount: inProgressCount,
-        },
+    {
+      id: 'MyLearning',
+      label: t('tabMyHub'),
+      icon: 'book',
+      iconOutline: 'book-outline',
+      badgeCount: inProgressCount,
+    },
     { id: 'Workshops', label: t('tabLive'), icon: 'videocam', iconOutline: 'videocam-outline' },
     { id: 'Profile', label: t('tabProfile'), icon: 'person', iconOutline: 'person-outline' },
   ];
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['left', 'right']}>
-      <StatusBar
-        barStyle={isDark ? 'light-content' : 'dark-content'}
-        translucent
-        backgroundColor="transparent"
-      />
+      <StatusBar style={isDark ? "light" : "dark"} />
 
       <View style={styles.screenContainer}>
         {activeScreen.name === 'CourseDetail' ? (
@@ -154,14 +143,6 @@ const MainAppContent: React.FC = () => {
                 onOpenDrawer={() => setBrandDrawerVisible(true)}
               />
             )}
-            {activeTab === 'Copilot' && (
-              <SkillCopilotScreen
-                onOpenSubscription={() => setSubscriptionModalVisible(true)}
-                onOpenNotifications={() => setNotificationModalVisible(true)}
-                onNavigateToCourse={navigateToCourse}
-                onOpenDrawer={() => setBrandDrawerVisible(true)}
-              />
-            )}
             {activeTab === 'MyLearning' && (
               <MyLearningScreen
                 onNavigateToCourse={navigateToCourse}
@@ -170,14 +151,6 @@ const MainAppContent: React.FC = () => {
                 onOpenSubscription={() => setSubscriptionModalVisible(true)}
                 onOpenNotifications={() => setNotificationModalVisible(true)}
                 onOpenYouTube={() => setActiveScreen({ name: 'YouTubeVideos' })}
-                onOpenDrawer={() => setBrandDrawerVisible(true)}
-              />
-            )}
-            {activeTab === 'TeamHub' && (
-              <EnterpriseTeamScreen
-                onOpenSubscription={() => setSubscriptionModalVisible(true)}
-                onOpenNotifications={() => setNotificationModalVisible(true)}
-                onNavigateToCourse={navigateToCourse}
                 onOpenDrawer={() => setBrandDrawerVisible(true)}
               />
             )}
