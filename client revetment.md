@@ -17,6 +17,7 @@ The four client requirements are:
 2. **CR-02: Mandatory Course Review (1–5 Stars + Text Feedback) before Certificate Release**
 3. **CR-03: Continuous Video Auto-Play (Automatic Next Lesson Transition)**
 4. **CR-04: Mobile Number + SMS OTP Authentication for Login & Registration**
+5. **CR-05: Authenticated Learner Profile with Enrolled Courses, Graduated Courses & Learning Analytics Data Chart**
 
 ---
 
@@ -98,6 +99,35 @@ The four client requirements are:
 
 ---
 
+
+---
+
+### CR-05: Authenticated Learner Profile with Enrolled Courses, Graduated Courses & Learning Analytics Data Chart
+- **Client Prompt**: *"when user login they shodud see thera enrolled coursed and gradutaed curse and ith data chart on their profile, include this in client requrment /goal implement the featur and bandr clor combinsation should applied on the app"*
+- **Functional Description**:
+  When a learner logs in to the mobile application, their Profile screen must transform into an executive learning dashboard. It must showcase their active **Enrolled Courses**, **Graduated Courses** (100% completed with certification), and a high-fidelity **Visual Learning Analytics Data Chart** utilizing the authentic ThrivingSkills brand color palette.
+- **Key Modules & Capabilities**:
+  1. **Visual Learning Analytics Data Chart**:
+     - **Circular Skill Mastery Donut Chart**: SVG-rendered progress gauge indicating overall completion percentage across all enrolled programs with multi-segment arcs.
+     - **Weekly Learning Velocity Bar Chart**: 7-day activity metrics (Mon–Sun) tracking lessons completed and learning time, highlighted with streak indicators (e.g. "🔥 5-Day Learning Streak").
+     - **Core KPI Summary Cards**: Total Enrolled Courses, Graduated Courses, Total Study Hours, and Verified Digital Certificates.
+  2. **Active Enrolled Courses Shelf**:
+     - Filtered view of courses in progress (`!userProgress[id].isCompleted`).
+     - Real-time progress bar (e.g. `8/12 Lessons Complete • 67%`).
+     - Instant **"চালিয়ে যান / Continue Learning"** CTA button routing straight to the active lesson player.
+     - Engaging empty state with direct course catalog exploration for new students.
+  3. **Graduated Courses Shelf**:
+     - Dedicated showcase of finished courses (`userProgress[id].isCompleted === true`).
+     - Premium **"🎓 Graduated / সম্পন্ন"** badge rendered in ThrivingSkills Sunshine Gold (`#FFB606`).
+     - Completion date and score verification badge (`100% Mastery`).
+     - One-tap **"সনদপত্র দেখুন / View Certificate"** action that directly launches the interactive `CertificateModal` with PDF download and verification links.
+     - Direct course rating and review submission.
+  4. **ThrivingSkills Brand Color Harmonization**:
+     - **Brand Deep Navy (`#102F53`)**: Primary brand identity, header backgrounds, profile cards, and key navigation accents.
+     - **Sunshine Gold (`#FFB606`)**: Achievement badges, graduation ribbons, star ratings, and progress highlights.
+     - **Crimson / Coral Accent (`#E34234` / `#E11D48`)**: Primary calls to action, active indicators, and attention alerts.
+     - **Crisp Slate & Surface Whites (`#F8FAFC`, `#FFFFFF`, `#0F192C`)**: Accessible high-contrast typography and card surfaces.
+
 ## 3. Comparative Gap Analysis with CyberCraft Presentable Proposal
 
 We evaluated each of the four client requirements against the official vendor document:  
@@ -175,6 +205,18 @@ We evaluated each of the four client requirements against the official vendor do
   - In addition, Thriving Skills must purchase an SMS gateway plan from a Bangladeshi provider (Greenweb, BulkSMS BD, or SSL Wireless) with budget for OTP SMS charges.
 
 ---
+
+
+---
+
+#### 5. CR-05: Authenticated Learner Profile with Enrolled/Graduated Courses & Data Chart
+- **CyberCraft Proposal Scope**:
+  - *Section 4.5*: Describes a generic Profile screen with static account settings: *"User Profile: Display user avatar, name, email, subscription status, and app settings. Settings: Notification toggles, theme switcher, language selector, clear cache, and logout."*
+  - Mentions a separate My Learning tab for course listing, but proposes **no learning analytics data charts**, no graduation showcase, and no visual progress graphs on the user profile.
+- **Gap Analysis**:
+  - CyberCraft proposal lacks personal learning analytics data charts and dedicated Enrolled vs Graduated segmentation on the Profile screen.
+- **Feasibility & Solution**:
+  - Implemented directly on the Profile screen using React Native SVG data visualization, integrating with `LearningContext` (`userProgress`, `certificates`) and applying authentic brand color styling.
 
 ## 4. Technical Architecture & Implementation Blueprint
 

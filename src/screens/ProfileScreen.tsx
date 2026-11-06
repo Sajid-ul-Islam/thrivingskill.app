@@ -26,6 +26,9 @@ import { AboutTSLModal, AboutTabKey } from '../components/AboutTSLModal';
 import { LegalPolicyModal, LegalTabKey } from '../components/LegalPolicyModal';
 import { HelpFaqModal } from '../components/HelpFaqModal';
 import { BlogModal } from '../components/BlogModal';
+import { ProfileLearningAnalytics } from '../components/ProfileLearningAnalytics';
+import { CertificateModal } from '../components/CertificateModal';
+import { Course, Certificate } from '../types';
 import { CacheManager } from '../services/cache/cacheManager';
 import { Env } from '../config/env';
 
@@ -34,6 +37,8 @@ interface ProfileScreenProps {
   onOpenSubscription: () => void;
   onOpenNotifications: () => void;
   onNavigateTab: (tab: any) => void;
+  onNavigateToCourse?: (courseId: string) => void;
+  onNavigateToLesson?: (courseId: string, lessonId: string) => void;
   onOpenDrawer?: () => void;
 }
 
@@ -42,6 +47,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   onOpenSubscription,
   onOpenNotifications,
   onNavigateTab,
+  onNavigateToCourse,
+  onNavigateToLesson,
   onOpenDrawer,
 }) => {
   const { colors, isDark, toggleTheme } = useTheme();
@@ -1598,6 +1605,280 @@ const styles = StyleSheet.create({
   },
   invoiceReceiptBtnText: {
     fontSize: 11,
+    fontWeight: '700',
+  },
+  /* Guest Banner (CR-05) */
+  guestBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    borderWidth: 1.5,
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 18,
+    elevation: 2,
+  },
+  guestBannerIconBg: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  guestBannerTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  guestBannerSubtitle: {
+    fontSize: 11,
+    lineHeight: 16,
+    marginBottom: 10,
+  },
+  guestLoginBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+    gap: 6,
+  },
+  guestLoginBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+
+  /* Portfolio Section (CR-05) */
+  portfolioHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  titleWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sectionTitleMain: {
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: -0.2,
+  },
+  seeAllText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  portfolioTabs: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 14,
+  },
+  portfolioTabPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  portfolioTabPillText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  profileCourseCard: {
+    flexDirection: 'row',
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 10,
+    marginBottom: 12,
+    elevation: 1,
+    shadowColor: '#102F53',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+  },
+  graduatedCourseCard: {
+    borderWidth: 1.5,
+  },
+  courseThumb: {
+    width: 90,
+    height: 90,
+    borderRadius: 10,
+  },
+  graduatedThumbContainer: {
+    position: 'relative',
+  },
+  graduatedCapPill: {
+    position: 'absolute',
+    bottom: 4,
+    left: 4,
+    right: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 2,
+    borderRadius: 6,
+    gap: 3,
+  },
+  graduatedCapText: {
+    fontSize: 9,
+    fontWeight: '900',
+    color: '#102F53',
+  },
+  courseDetails: {
+    flex: 1,
+    marginLeft: 12,
+    justifyContent: 'center',
+  },
+  courseHeaderBadgeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  courseCategoryTag: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  courseCategoryText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  coursePercentText: {
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  graduatedBadgePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    gap: 3,
+  },
+  graduatedBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  scoreBadgePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    gap: 2,
+  },
+  scoreBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  courseCardTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 18,
+    marginBottom: 2,
+  },
+  courseCardInstructor: {
+    fontSize: 11,
+    marginBottom: 6,
+  },
+  courseProgressRow: {
+    marginBottom: 8,
+  },
+  courseProgressTrack: {
+    height: 5,
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginBottom: 3,
+  },
+  courseProgressFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  courseProgressSub: {
+    fontSize: 10,
+  },
+  continueBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 7,
+    alignSelf: 'flex-start',
+    gap: 4,
+  },
+  continueBtnText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  graduatedActionsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 6,
+  },
+  certificateActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 7,
+    gap: 4,
+  },
+  certificateActionBtnText: {
+    color: '#102F53',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  reviewActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 7,
+    borderWidth: 1,
+    gap: 3,
+  },
+  reviewActionBtnText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  emptyCourseCard: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  emptyCourseTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginTop: 10,
+    marginBottom: 4,
+  },
+  emptyCourseSub: {
+    fontSize: 11,
+    textAlign: 'center',
+    lineHeight: 16,
+    marginBottom: 14,
+  },
+  emptyActionBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  emptyActionBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
     fontWeight: '700',
   },
 });

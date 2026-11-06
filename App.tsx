@@ -167,6 +167,8 @@ const MainAppContent: React.FC = () => {
                 onOpenSubscription={() => setSubscriptionModalVisible(true)}
                 onOpenNotifications={() => setNotificationModalVisible(true)}
                 onNavigateTab={navigateToTab}
+                onNavigateToCourse={navigateToCourse}
+                onNavigateToLesson={navigateToLesson}
                 onOpenDrawer={() => setBrandDrawerVisible(true)}
               />
             )}

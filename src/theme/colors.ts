@@ -11,6 +11,9 @@ export const lightColors = {
   brandNavy: '#102F53',
   brandRed: '#E34234',
   brandGold: '#FFB606', // Thriving Skills Golden Amber
+  brandGoldLight: '#FEF3C7',
+  brandGoldSubtle: 'rgba(255, 182, 6, 0.12)',
+  brandNavySubtle: 'rgba(16, 47, 83, 0.08)',
   danger: '#DC2626',
   dangerLight: '#FEE2E2',
   background: '#F8FAFC',
@@ -47,6 +50,9 @@ export const darkColors = {
   brandNavy: '#102F53',
   brandRed: '#E34234',
   brandGold: '#FFB606',
+  brandGoldLight: '#78350F',
+  brandGoldSubtle: 'rgba(255, 182, 6, 0.20)',
+  brandNavySubtle: 'rgba(56, 189, 248, 0.15)',
   danger: '#F87171',
   dangerLight: '#7F1D1D',
   background: '#070D18', // Deep Navy Black
