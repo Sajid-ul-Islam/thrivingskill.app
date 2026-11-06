@@ -8,12 +8,12 @@ This document tracks implementation progress, backend API integration status, ar
 
 | Metric | Status | Details |
 | :--- | :--- | :--- |
-| **Current Milestone** | **Milestone 4 Complete** | All Feature Upgrades Implemented & Verified |
-| **Overall Progress** | **95% Complete** | Live WordPress LMS + Payments + Gamification + i18n + Quizzes |
+| **Current Milestone** | **Milestone 5 Complete** | Full Codebase Audit, Bug Eradication & Documentation Suite |
+| **Overall Progress** | **98% Complete** | Live WordPress LMS + CR-01 to CR-05 + Payments + i18n + Offline |
 | **Active Backend** | `https://thrivingskill.com/` | LearnPress v1 + WordPress Core v2 |
-| **TypeScript Health** | **100% (0 errors)** | Verified with `npx tsc --noEmit` |
-| **Metro Android Bundle** | **Verified (HTTP 200)** | 7.37 MB Android JS Bundle verified |
-| **Dev Server** | **Active on port 8081** | Ready for Expo Go and Emulator testing |
+| **TypeScript Health** | **100% (0 errors)** | Verified with `npm run typecheck` (`tsc --noEmit`) |
+| **Static Audit Health** | **100% Clean** | Verified with `node scripts/audit_app.js` (75 files) |
+| **Dev Server** | **Active on port 8081** | Ready for Expo Go, Android Emulator and Physical Devices |
 
 ---
 
@@ -27,23 +27,25 @@ gantt
     UI Design & Component Architecture   :done, m1, 2026-08-01, 2026-08-15
     Navigation & Screen Hierarchy        :done, m2, 2026-08-16, 2026-08-25
     section Phase 2: Live WP Integration
-    API Discovery & Endpoint Analysis   :done, m3, 2026-08-26, 2026-09-01
+    API Discovery & Endpoint Analysis    :done, m3, 2026-08-26, 2026-09-01
     LearnPress Courses & Detail Live Sync:done, m4, 2026-09-02, 2026-09-03
-    WordPress Blog Posts & BDT Currency :done, m5, 2026-09-03, 2026-09-03
+    WordPress Blog Posts & BDT Currency  :done, m5, 2026-09-03, 2026-09-03
     section Phase 3: Infrastructure
     Environment Config (.env.example)    :done, m6, 2026-09-03, 2026-09-03
     HttpClient & Two-Tier CacheManager   :done, m7, 2026-09-03, 2026-09-03
     Modular Domain Services Architecture :done, m8, 2026-09-03, 2026-09-03
-    section Phase 4: Feature Upgrades
-    Local Payments (bKash/Nagad/SSL)     :done, m9, 2026-09-03, 2026-09-03
+    section Phase 4: Feature Upgrades & Client Req
+    Local Payments (bKash/Nagad/Rocket)  :done, m9, 2026-09-03, 2026-09-03
     Bilingual Bangla/English (i18n)      :done, m10, 2026-09-03, 2026-09-03
     Gamification (Streaks & Badges)      :done, m11, 2026-09-03, 2026-09-03
     Interactive Quizzes & Video Player   :done, m12, 2026-09-03, 2026-09-03
     Offline Lesson Downloads             :done, m13, 2026-09-03, 2026-09-03
-    Biometric Security Simulation        :done, m14, 2026-09-03, 2026-09-03
-    section Phase 5: Production Release
-    User Defined .env Customization      :active, m15, 2026-09-04, 2026-09-10
-    Standalone APK/AAB Production Build  :planned, m16, 2026-09-11, 2026-09-20
+    Client Requirements CR-01 to CR-05   :done, m14, 2026-09-18, 2026-10-24
+    section Phase 5: Audit & Documentation
+    Full Codebase Audit & Bug Eradication:done, m15, 2026-11-06, 2026-11-06
+    Documentation Suite (PRD, TRD, etc.) :done, m16, 2026-11-06, 2026-11-06
+    section Phase 6: Cloud Build & Release
+    Standalone APK/AAB Production Build  :active, m17, 2026-11-07, 2026-11-15
 ```
 
 ---
@@ -54,7 +56,7 @@ gantt
 | :--- | :---: | :--- | :--- | :---: | :---: |
 | **Auth** | `POST` | `/learnpress/v1/token` | JWT User Login | ✅ Live | Yes |
 | **Auth** | `POST` | `/learnpress/v1/token/validate` | Session Verification | ✅ Live | Yes |
-| **Auth** | `POST` | `/learnpress/v1/token/register` | Student Registration | ✅ Integrated | Ready |
+| **Auth** | `POST` | `/learnpress/v1/token/register` | Student Registration | ✅ Integrated | Yes |
 | **Courses** | `GET` | `/learnpress/v1/courses` | 370+ Course Catalog | ✅ Live | Yes |
 | **Courses** | `GET` | `/learnpress/v1/courses/:id` | Curriculum & Lessons | ✅ Live | Yes |
 | **Courses** | `GET` | `/learnpress/v1/course_category` | Dynamic Categories | ✅ Live | Yes |
@@ -70,88 +72,10 @@ gantt
 
 ---
 
-## 📋 Feature Tracking & Workstreams
+## 📋 Client Functional Requirements Matrix
 
-### 1. Presentation & Mobile UI
-- [x] Responsive layout with Android safe area insets
-- [x] Dark Mode and Light Mode with dynamic brand tokens
-- [x] Authentic Thriving Skills branding & slogans (*"শিখুন এবং গড়ুন নিজের ক্যারিয়ার"*)
-- [x] Currency rendering in Bangladeshi Taka (`৳` BDT)
-- [x] Category pills with live categories from backend
-- [x] Live course cards with real thumbnails and ratings
-- [x] Interactive Lesson Player with module drawer
-- [x] Course Detail screen with curriculum accordion
-- [x] AI Copilot screen for executive skill assistance
-- [x] B2B Enterprise Team Hub with team roster
-- [x] Diagnostic skill assessment modal
-- [x] Corporate inquiry modal
-- [x] WordPress Login/Register bottom sheet modal ([`AuthModal.tsx`](file:///h:/Repo/thrivingskill.app/src/components/AuthModal.tsx))
-- [x] Pull-to-refresh on Home and Explore screens
-
-### 2. Upgraded Features & Capabilities (v1.3.0)
-- [x] **Local Payment Gateway Modal** ([`PaymentModal.tsx`](file:///h:/Repo/thrivingskill.app/src/components/PaymentModal.tsx))
-  - bKash (বিকাশ) mobile wallet checkout
-  - Nagad (নগদ) mobile wallet checkout
-  - DBBL Rocket checkout
-  - Credit / Debit Cards / NetBanking
-  - Coupon & Promo Code Engine (`TS50`, `EID2026`, `SKILLPRO`, `FREEPASS`)
-  - Automatic LearnPress course enrollment upon payment confirmation
-- [x] **Full Bilingual System (Bangla ⇄ English)**
-  - [`LanguageContext.tsx`](file:///h:/Repo/thrivingskill.app/src/context/LanguageContext.tsx) with persistent `@thriving_skill_lang`
-  - Complete dictionary [`src/i18n/translations.ts`](file:///h:/Repo/thrivingskill.app/src/i18n/translations.ts)
-  - 1-tap language toggle in Header pill and Profile settings
-- [x] **Gamification & Engagement Engine**
-  - [`GamificationContext.tsx`](file:///h:/Repo/thrivingskill.app/src/context/GamificationContext.tsx) with persistent storage
-  - Daily Study Streaks (Flame badge 🔥)
-  - Daily Goal Tracker (e.g. 15 mins daily target)
-  - Achievement Badges (*First Step*, *Consistency Champ*, *AI Pioneer*, *Certified Specialist*, etc.)
-  - Interactive Streak widget on HomeScreen
-- [x] **Enhanced Video Player & Controls** ([`LessonPlayerScreen.tsx`](file:///h:/Repo/thrivingskill.app/src/screens/LessonPlayerScreen.tsx))
-  - Playback speed selectors (`0.75x`, `1.0x`, `1.25x`, `1.5x`, `2.0x`)
-  - 10-second rewind (-10s) and fast-forward (+10s) skip buttons
-- [x] **Offline Study Mode** ([`OfflineManager.ts`](file:///h:/Repo/thrivingskill.app/src/services/offline/offlineManager.ts))
-  - Save lesson guides, summaries, and lecture notes for offline reading
-  - 1-tap download toggle in Lesson Player header
-- [x] **Interactive Chapter Assessment & Quiz Player** ([`QuizPlayerModal.tsx`](file:///h:/Repo/thrivingskill.app/src/components/QuizPlayerModal.tsx))
-  - Timed multiple-choice assessment
-  - Detailed question explanations
-  - Automatic pass/fail scoring and certificate unlocking
-- [x] **Biometric Security Simulation**
-  - Fingerprint / Face ID toggle in Profile Settings
-
----
-
-## 📜 Changelog
-
-### v1.4.0 (Current)
-- Aligned features with **TSL App Specifications**:
-  - **Section 2**: Added Administrator detection and **Admin Management Console** in [`ProfileScreen.tsx`](file:///h:/Repo/thrivingskill.app/src/screens/ProfileScreen.tsx) with direct links to Courses, Students, Orders, and Statistics on WordPress.
-  - **Section 3**: Added complete Drawer menu items in [`BrandDrawer.tsx`](file:///h:/Repo/thrivingskill.app/src/components/BrandDrawer.tsx): Watch History & Progress, Help & FAQ, WhatsApp Live Chat, and dynamic Login/Logout session control.
-  - **Section 5**: Added Free/Paid segmented filters and 'Newest First' sorting in [`CoursesScreen.tsx`](file:///h:/Repo/thrivingskill.app/src/screens/CoursesScreen.tsx).
-  - **Sections 10 & 11**: Implemented persistent video watch position tracking & resume learning (`lastWatchPositionSeconds`) in [`LearningContext.tsx`](file:///h:/Repo/thrivingskill.app/src/context/LearningContext.tsx) and live scrubber playback in [`LessonPlayerScreen.tsx`](file:///h:/Repo/thrivingskill.app/src/screens/LessonPlayerScreen.tsx).
-  - **Section 14**: Wired `quizId` and background LearnPress `/learnpress/v1/quiz/finish` synchronization in [`QuizPlayerModal.tsx`](file:///h:/Repo/thrivingskill.app/src/components/QuizPlayerModal.tsx).
-- Resolved all TypeScript compiler issues for React 19 compatibility (`npx tsc --noEmit` verified: **0 errors**).
-
-### v1.3.0
-- Integrated local payment gateways: **bKash**, **Nagad**, **Rocket**, and **Cards** with coupon code support.
-- Added full bilingual support with English and **বাংলা** switcher.
-- Added **Gamification Engine** with daily streaks, goal rings, and achievement badges.
-- Enhanced Video Player with variable speeds (`0.75x`–`2.0x`) and 10s skip controls.
-- Added **Offline Download Manager** for internet-free lesson studying.
-- Added **Interactive Quiz Player** with timed questions and explanations.
-- Verified TypeScript: **0 errors**; Metro Android JS bundle: **7.37 MB (HTTP 200)**.
-
-### v1.2.0
-- Implemented enterprise-grade API Infrastructure layer (`HttpClient`, `Endpoints`, `CacheManager`, Domain Services).
-- Created `.env.example` and `src/config/env.ts` with typed environment variables (`EXPO_PUBLIC_*`).
-- Added complete `DOCUMENTATION.md` and `TRACK.md` tracking files.
-
-### v1.1.0
-- Connected live WordPress & LearnPress REST API from `https://thrivingskill.com/`.
-- Integrated 370+ real courses, curriculum chapters, lessons, and categories.
-- Added live WordPress editorial articles carousel to HomeScreen.
-- Added Bangladeshi Taka (`৳` BDT) price formatting across CourseCard and CourseDetailScreen.
-- Implemented `AuthModal` for LearnPress JWT login.
-
-### v1.0.0
-- Initial frontend architecture with Expo SDK 51, TypeScript, and multi-tenant SaaS features.
+- [x] **CR-01: Behavior-Based Course Recommendation Engine**
+- [x] **CR-02: Mandatory Course Review Gate for Certificate Unlock**
+- [x] **CR-03: Continuous Video Auto-Play (5-Second Countdown)**
+- [x] **CR-04: Mobile Number + SMS OTP Authentication**
+- [x] **CR-05: Authenticated Learner Profile & Learning Analytics Dashboard**

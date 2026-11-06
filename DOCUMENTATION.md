@@ -4,6 +4,23 @@ Welcome to the technical documentation for the **Thriving Skills** frontend Andr
 
 ---
 
+## 📚 Complete Project Documentation Suite
+
+For specialized views into the product, engineering, task roadmap, bug resolutions, and autonomous agent workflows, consult the dedicated specifications:
+
+| Document | Purpose |
+| :--- | :--- |
+| **[PRD.md](./prd.md)** | **Product Requirements Document**: Vision, user personas, client requirements CR-01 to CR-05, and release gates. |
+| **[TRD.md](./trd.md)** | **Technical Requirements Document**: Deep architecture, state contexts, API client, recommendation heuristics, memory safety. |
+| **[TODO.md](./todo.md)** | **Implementation Roadmap & Tasks**: Completed milestones, in-progress items, and future backlog. |
+| **[BUGFIX.md](./bugfix.md)** | **Bug Fixes & Incident Log**: Detailed root-cause analysis, code resolutions, and verification protocols. |
+| **[AGENTS.md](./agents.md)** | **AI Agents Operating Manual**: Guidelines, constraints, PowerShell syntax rules, and verification checklist. |
+| **[CONTEXT.md](./context.md)** | **Project Context & Domain Reference**: Business domain, entity relations, storage keys, and authentication models. |
+| **[FEATURS.md](./featurs.md)** | **Master Features Inventory**: Comprehensive breakdown of all 18+ app features and interactive modules. |
+| **[SKILLS.md](./skills.md)** | **Developer Tooling & Skills Manual**: Automation scripts (`audit_app.js`), CLI commands, and test runbooks. |
+
+---
+
 ## Table of Contents
 
 1. [System Architecture](#1-system-architecture)

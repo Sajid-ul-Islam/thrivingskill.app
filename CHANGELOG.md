@@ -7,41 +7,84 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.0] - 2026-11-06
+
+### 🛠️ Fixed & Audited (Full Codebase Health Audit)
+- **Hardcoded Student Names Eradicated**:
+  - Replaced hardcoded `'Sajid-ul Islam'` in `LessonPlayerScreen.tsx`, `CourseDetailScreen.tsx`, and `LearningContext.tsx` with dynamic authenticated student identity: `user?.displayName || user?.username || 'Executive Graduate'`.
+- **Memory & Timer Leak Resolution**:
+  - Resolved `setTimeout` timer leak in `PaymentModal.tsx` using `useRef<ReturnType<typeof setTimeout> | null>(null)` with component unmount teardown effect.
+- **Type Safety & Strictness**:
+  - Fixed cross-platform timer type in `PaymentModal.tsx` to `ReturnType<typeof setTimeout>`.
+  - Added missing `phone?: string;` property to `WpUser` interface in `src/types/index.ts`.
+  - Added `onNavigateToCourse` and `onNavigateToLesson` to `ProfileScreenProps`.
+  - Achieved **0 TypeScript errors** on `npm run typecheck` across all 75 source files.
+- **Automated Verification Tooling**:
+  - Built and deployed `scripts/audit_app.js` to perform continuous 5-dimension static analysis across all files for import resolution, StyleSheet keys, timer hygiene, and unhandled JSON operations.
+
+### 📚 Documentation Suite Overhaul
+- Added and aligned the complete documentation suite:
+  - `prd.md`: Product Requirements Document
+  - `trd.md`: Technical Requirements Document
+  - `todo.md`: Task Management & Roadmap
+  - `bugfix.md`: Bug Fix & Incident Resolution Log
+  - `agents.md`: AI Agents Specification & Operating Instructions
+  - `context.md`: Project Context & Domain Reference
+  - `featurs.md`: Master Features Inventory
+  - `skills.md`: Antigravity Skills & Tooling Manual
+  - `README.md`: Modernized with badges, quickstart, and documentation links.
+
+---
+
+## [1.3.0] - 2026-10-24
+
+### 🚀 Added
+- **Authenticated Learner Profile & Analytics Dashboard (CR-05)**:
+  - **Visual Learning Analytics Data Chart**: High-contrast SVG Circular Mastery Donut Chart and 7-day Weekly Learning Velocity Bar Chart with active streak badge (`🔥 X-Day Streak`).
+  - **Active Enrolled Courses Shelf**: Filtered display of in-progress courses with real-time progress bars and instant "Continue Learning" CTA.
+  - **Graduated Courses Shelf**: Dedicated showcase of 100% completed courses with Sunshine Gold (`#FFB606`) graduate ribbon and one-tap "View Certificate" trigger.
+  - **Core KPI Metrics Cards**: Displaying Enrolled Courses, Graduated Courses, Total Study Hours, and Verified Certificates.
+  - **ThrivingSkills Brand Color Harmonization**: Full implementation of `#102F53` Deep Navy, `#FFB606` Sunshine Gold, and `#E34234` Crimson accents across the profile and navigation headers.
+
+---
+
+## [1.2.0] - 2026-10-05
+
+### 🚀 Added
+- **Local Mobile Financial Services (MFS) Checkout**:
+  - Interactive payment gateway modal (`PaymentModal.tsx`) supporting bKash, Nagad, DBBL Rocket, and Credit/Debit Cards.
+  - Promo code and coupon verification engine (`TS50`, `EID2026`, `SKILLPRO`, `FREEPASS`) with dynamic price calculations.
+  - Automatic LearnPress course enrollment upon payment confirmation.
+- **Bilingual Localization System**:
+  - Complete English ⇄ Bengali toggle in `LanguageContext.tsx` with persistent language preference.
+- **Offline Download Manager**:
+  - Local caching and video download orchestration via `OfflineManager.ts` with background sync queue.
+
+---
+
 ## [1.1.0] - 2026-09-18
 
 ### 🚀 Added
 - **Behavior-Based Course Recommendations (CR-01)**:
-  - Real-time affinity tracking based on user course browsing, enrollment, and category frequency (`@thriving_skill_affinities`).
-  - Search history tracking (`@thriving_skill_searches`) dynamically weighting course scoring (+50 category affinity, +30 search keyword, +25 high rating).
-  - Dedicated bilingual shelf on Home Screen: **"আপনার পছন্দের ভিত্তিতে প্রস্তাবিত / Recommended For You"** with transparent reasoning tags.
+  - Real-time affinity tracking based on user course browsing, enrollment, and category frequency.
+  - Search history tracking dynamically weighting course relevance.
+  - Dedicated shelf on Home Screen: **"আপনার পছন্দের ভিত্তিতে প্রস্তাবিত / Recommended For You"** with transparent reasoning tags.
 - **Mandatory Course Review & Certificate Gating (CR-02)**:
-  - `MandatoryReviewModal` component featuring interactive 1–5 star ratings and multiline feedback in English and Bengali.
-  - Strict certificate gating: completion of 100% course modules no longer issues a certificate until a review is submitted.
-  - Automatic review prompt on final lesson completion and locked certificate button (`🔒 Review to Unlock`) on Course Detail screen.
+  - `MandatoryReviewModal` component featuring interactive 1–5 star ratings and multiline qualitative feedback.
+  - Strict certificate gating: certificate remains locked until a review is submitted.
 - **Continuous Video Auto-Play (CR-03)**:
   - Automated 5-second countdown overlay on lesson completion displaying upcoming lesson title, circular progress, "Play Now", and "Cancel" buttons.
-  - Smooth automatic advance to the next curriculum lesson upon timer expiry.
 - **Mobile Number + SMS OTP Authentication (CR-04)**:
   - Phone-based registration and login for Bangladeshi numbers (`+880`).
   - 6-digit OTP verification with 60-second cooldown resend timer.
-  - Live API integration with `/wp-json/tsl/v1/auth/send-otp` and seamless sandbox test code (`123456`).
-- **Production Engineering & Collaboration Infrastructure**:
-  - GitHub Actions CI workflow (`.github/workflows/ci.yml`) enforcing zero TypeScript compilation errors.
-  - Standardized `.github/pull_request_template.md` and issue templates.
-  - Comprehensive `CONTRIBUTING.md` developer guide and `eas.json` multi-environment profiles.
-  - `.env.example` environment variable template.
 
 ---
 
 ## [1.0.0] - 2026-09-04
 
-### 🌟 Initial Production Release (40 Core Specifications)
+### 🌟 Initial Production Release
 - **LMS Engine**: Full LearnPress REST API integration, course catalog, category filters, curriculum outline, and progress tracking.
-- **Curriculum & Lesson Player**: Embedded YouTube/Vimeo video player, HTML lesson reader, and interactive quiz engine with score calculation.
+- **Curriculum & Lesson Player**: Native video player, HTML lesson reader, and interactive quiz engine with score calculation.
 - **Certificates**: Digital certificate generator with QR verification code, issue dates, and course completion badges.
 - **Offline Mode**: Local caching and offline lesson downloads via `AsyncStorage`.
-- **AI Career Mentor**: Google Gemini 2.5 Flash integration with resilient fallback ladder for real-time career guidance and prompt engineering blueprints.
-- **Executive Corporate Identity**: Authentic Thriving Skills executive team credentials, university MoUs (DU, NSU, EU, AUST), and government partnerships (a2i).
 - **Localization**: Native bilingual support for Bengali (বাংলা) and English.
-- **Universal Search**: Multi-facet modal search supporting courses, instructors, and skill tags.
-- **Security**: Token-based authentication, sanitized HTML rendering, and encrypted credential storage.
