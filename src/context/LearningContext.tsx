@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Env } from '../config/env';
 import { Course, UserProgress, Certificate, Note, CategoryId, Workshop, Category, WpPost, Review } from '../types';
 import { COURSES as INITIAL_COURSES, INITIAL_CERTIFICATES, WORKSHOPS, CATEGORIES as INITIAL_CATEGORIES } from '../data/mockData';
 import {
@@ -118,11 +119,11 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [reviewedCourseIds, setReviewedCourseIds] = useState<string[]>([]);
 
   // Fetch live courses, categories, and blog posts from WordPress
-  const loadWordPressData = useCallback(async () => {
+  const loadWordPressData = useCallback(async (forceRefresh: boolean = false) => {
     setIsLoadingCourses(true);
     try {
       const [wpCourses, wpCategories, wpPosts] = await Promise.allSettled([
-        fetchWpCourses({ perPage: 40 }),
+        fetchWpCourses({ perPage: 40, forceRefresh }),
         fetchWpCategories(),
         fetchWpPosts({ perPage: 6 }),
       ]);
@@ -263,7 +264,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         issueDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
         credentialId: certId,
         instructorName: course.instructor.name,
-        verificationUrl: `https://thrivingskill.com/verify/${certId}`,
+        verificationUrl: `${Env.SITE_URL}/verify/${certId}`,
       };
       setCertificates((prev) => [newCert, ...prev]);
     }
@@ -470,7 +471,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         issueDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
         credentialId: certId,
         instructorName: course.instructor?.name || 'Thriving Skills Instructor',
-        verificationUrl: `https://thrivingskill.com/verify/${certId}`,
+        verificationUrl: `${Env.SITE_URL}/verify/${certId}`,
       };
       setCertificates((prev) => [cert!, ...prev]);
     } else if (certId) {

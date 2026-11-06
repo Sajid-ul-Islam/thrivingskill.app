@@ -12,6 +12,7 @@ export interface CourseQueryParams {
   category?: string | number;
   order?: 'asc' | 'desc';
   orderby?: 'date' | 'title' | 'price' | 'popularity';
+  forceRefresh?: boolean;
 }
 
 export class CoursesService {
@@ -27,7 +28,7 @@ export class CoursesService {
     const cacheKey = `${this.COURSES_CACHE_PREFIX}_p${page}_pp${perPage}_s${params.search || ''}_c${params.category || ''}`;
 
     // Try fresh cache first if not searching
-    if (!params.search) {
+    if (!params.search && !params.forceRefresh) {
       const cached = await CacheManager.get<Course[]>(cacheKey);
       if (cached) return cached;
     }
@@ -72,11 +73,13 @@ export class CoursesService {
   /**
    * Fetch full course details by ID including curriculum sections and lessons
    */
-  static async getCourseDetail(courseId: string | number): Promise<Course> {
+  static async getCourseDetail(courseId: string | number, forceRefresh: boolean = false): Promise<Course> {
     const cacheKey = `course_detail_${courseId}`;
 
-    const cached = await CacheManager.get<Course>(cacheKey);
-    if (cached) return cached;
+    if (!forceRefresh) {
+      const cached = await CacheManager.get<Course>(cacheKey);
+      if (cached) return cached;
+    }
 
     try {
       const raw = await HttpClient.get<any>(Endpoints.LEARNPRESS.COURSE_DETAIL(courseId));

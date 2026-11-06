@@ -3,7 +3,7 @@
  * 
  * Supports Expo SDK 49+ EXPO_PUBLIC_* environment variables.
  * When environment variables are defined in .env, they are embedded at build time.
- * If not defined, sensible production defaults are applied automatically.
+ * If not defined, sensible staging defaults are applied automatically.
  */
 
 const normalizeUrl = (url?: string): string => {
@@ -22,18 +22,28 @@ const getEnvVar = (key: string): string | undefined => {
 export const Env = {
   /**
    * Base REST API URL (WordPress / LearnPress REST API)
-   * e.g. https://thrivingskill.com/wp-json
+   * e.g. https://staging.thrivingskill.com/wp-json
    */
   get API_URL(): string {
-    return normalizeUrl(getEnvVar('EXPO_PUBLIC_API_URL')) || 'https://thrivingskill.com/wp-json';
+    return normalizeUrl(getEnvVar('EXPO_PUBLIC_API_URL')) || 'https://staging.thrivingskill.com/wp-json';
   },
 
   /**
    * Main Website URL
-   * e.g. https://thrivingskill.com
+   * e.g. https://staging.thrivingskill.com
    */
   get SITE_URL(): string {
-    return normalizeUrl(getEnvVar('EXPO_PUBLIC_SITE_URL')) || 'https://thrivingskill.com';
+    return normalizeUrl(getEnvVar('EXPO_PUBLIC_SITE_URL')) || 'https://staging.thrivingskill.com';
+  },
+
+  /**
+   * WordPress Admin Console URL
+   * e.g. https://staging.thrivingskill.com/wp-admin/
+   */
+  get WP_ADMIN_URL(): string {
+    const raw = getEnvVar('EXPO_PUBLIC_WP_ADMIN_URL');
+    if (raw) return raw.endsWith('/') ? raw : `${raw}/`;
+    return `${this.SITE_URL}/wp-admin/`;
   },
 
   /**

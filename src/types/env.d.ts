@@ -3,6 +3,7 @@ declare global {
     interface ProcessEnv {
       EXPO_PUBLIC_API_URL?: string;
       EXPO_PUBLIC_SITE_URL?: string;
+      EXPO_PUBLIC_WP_ADMIN_URL?: string;
       EXPO_PUBLIC_REQUEST_TIMEOUT_MS?: string;
       EXPO_PUBLIC_MAX_RETRIES?: string;
       EXPO_PUBLIC_CACHE_TTL_MS?: string;

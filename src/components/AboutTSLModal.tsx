@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
+import { Env } from '../config/env';
 import { useLanguage } from '../context/LanguageContext';
 
 import { LegalPolicyModal, LegalTabKey } from './LegalPolicyModal';
@@ -771,7 +772,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                 {/* Web */}
                 <TouchableOpacity
                   style={styles.contactRow}
-                  onPress={() => handleOpenUrl('https://thrivingskill.com')}
+                  onPress={() => handleOpenUrl(Env.SITE_URL)}
                 >
                   <View style={[styles.contactIconBg, { backgroundColor: '#FEF2F2' }]}>
                     <Ionicons name="globe-outline" size={18} color="#EF4444" />
@@ -780,7 +781,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                     <Text style={[styles.contactLabel, { color: colors.textMuted }]}>
                       {isBangla ? 'অফিসিয়াল ওয়েবসাইট' : 'Official Portal'}
                     </Text>
-                    <Text style={[styles.contactValue, { color: colors.text }]}>thrivingskill.com</Text>
+                    <Text style={[styles.contactValue, { color: colors.text }]}>{Env.SITE_URL.replace(/^https?:\/\//, '')}</Text>
                   </View>
                   <Ionicons name="open-outline" size={16} color={colors.textMuted} />
                 </TouchableOpacity>

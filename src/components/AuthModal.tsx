@@ -14,6 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
+import { Env } from '../config/env';
 
 interface AuthModalProps {
   visible: boolean;
@@ -649,7 +650,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
             </TouchableOpacity>
 
             <Text style={[styles.disclaimerText, { color: colors.textMuted }]}>
-              Protected by TLS encryption. Connected to thrivingskill.com official LMS.
+              Protected by TLS encryption. Connected to ' + Env.SITE_URL.replace(/^https?:\/\//, '') + ' official LMS.
             </Text>
           </ScrollView>
         </View>

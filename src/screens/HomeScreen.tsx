@@ -14,6 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../context/ThemeContext';
+import { Env } from '../config/env';
 import { useLearning } from '../context/LearningContext';
 import { useSaaS } from '../context/SaaSContext';
 import { useAuth } from '../context/AuthContext';
@@ -1201,10 +1202,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
             <TouchableOpacity
               style={styles.footerContactItem}
-              onPress={() => Linking.openURL('https://thrivingskill.com').catch(() => {})}
+              onPress={() => Linking.openURL(Env.SITE_URL).catch(() => {})}
             >
               <Ionicons name="globe-outline" size={14} color={colors.textMuted} />
-              <Text style={[styles.footerContactText, { color: colors.textMuted }]}>thrivingskill.com</Text>
+              <Text style={[styles.footerContactText, { color: colors.textMuted }]}>{Env.SITE_URL.replace(/^https?:\/\//, '')}</Text>
             </TouchableOpacity>
           </View>
 

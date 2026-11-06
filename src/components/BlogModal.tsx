@@ -18,6 +18,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useLearning } from '../context/LearningContext';
 import { cleanHtml } from '../services/api/transformers';
+import { Env } from '../config/env';
 
 export interface BlogModalProps {
   visible: boolean;
@@ -164,7 +165,7 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
     try {
       await Share.share({
         title: article.title,
-        message: `${article.title}\n\nRead more on Thriving Skills: https://thrivingskill.com/blog`,
+        message: `${article.title}\n\nRead more on Thriving Skills: ${Env.SITE_URL}/blog`,
       });
     } catch {
       // Ignored
@@ -338,7 +339,7 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
               >
                 <Ionicons name="open-outline" size={16} color={colors.primary} />
                 <Text style={[styles.webLinkText, { color: colors.primary }]}>
-                  Read More on thrivingskill.com/blog
+                  Read More on ' + Env.SITE_URL.replace(/^https?:\/\//, '') + '/blog
                 </Text>
               </TouchableOpacity>
             </View>

@@ -27,6 +27,7 @@ import { LegalPolicyModal, LegalTabKey } from '../components/LegalPolicyModal';
 import { HelpFaqModal } from '../components/HelpFaqModal';
 import { BlogModal } from '../components/BlogModal';
 import { CacheManager } from '../services/cache/cacheManager';
+import { Env } from '../config/env';
 
 interface ProfileScreenProps {
   onOpenCorporateModal: () => void;
@@ -197,7 +198,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </Text>
             <Text style={[styles.role, { color: colors.secondary }]} numberOfLines={2}>
               {customBio || (isAuthenticated
-                ? `Connected to thrivingskill.com • ${activeWorkspace.name}`
+                ? `Connected to ${Env.SITE_URL.replace(/^https?:\/\//, "")} • ${activeWorkspace.name}`
                 : 'Thriving Skills Online Platform')}
             </Text>
 
@@ -230,7 +231,25 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             >
               <TouchableOpacity
                 style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-                onPress={() => Linking.openURL('https://thrivingskill.com/wp-admin/edit.php?post_type=lp_course')}
+                onPress={() => Linking.openURL(Env.WP_ADMIN_URL)}
+              >
+                <View style={styles.settingLeft}>
+                  <Ionicons name="speedometer-outline" size={20} color="#EC4899" />
+                  <View style={{ marginLeft: 6 }}>
+                    <Text style={[styles.settingLabel, { color: colors.text }]}>
+                      {isBangla ? 'ওয়ার্ডপ্রেস অ্যাডমিন ড্যাশবোর্ড' : 'WordPress Admin Dashboard'}
+                    </Text>
+                    <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                      {Env.WP_ADMIN_URL}
+                    </Text>
+                  </View>
+                </View>
+                <Ionicons name="open-outline" size={16} color={colors.textMuted} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
+                onPress={() => Linking.openURL(`${Env.SITE_URL}/wp-admin/edit.php?post_type=lp_course`)}
               >
                 <View style={styles.settingLeft}>
                   <Ionicons name="book-outline" size={20} color="#3B82F6" />
@@ -248,7 +267,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
               <TouchableOpacity
                 style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-                onPress={() => Linking.openURL('https://thrivingskill.com/wp-admin/users.php')}
+                onPress={() => Linking.openURL(`${Env.SITE_URL}/wp-admin/users.php`)}
               >
                 <View style={styles.settingLeft}>
                   <Ionicons name="people-outline" size={20} color="#10B981" />
@@ -266,7 +285,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
               <TouchableOpacity
                 style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-                onPress={() => Linking.openURL('https://thrivingskill.com/wp-admin/edit.php?post_type=lp_order')}
+                onPress={() => Linking.openURL(`${Env.SITE_URL}/wp-admin/edit.php?post_type=lp_order`)}
               >
                 <View style={styles.settingLeft}>
                   <Ionicons name="card-outline" size={20} color="#F59E0B" />
@@ -284,7 +303,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
               <TouchableOpacity
                 style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-                onPress={() => Linking.openURL('https://thrivingskill.com/wp-admin/admin.php?page=learnpress-statistics')}
+                onPress={() => Linking.openURL(`${Env.SITE_URL}/wp-admin/admin.php?page=learnpress-statistics`)}
               >
                 <View style={styles.settingLeft}>
                   <Ionicons name="analytics-outline" size={20} color="#8B5CF6" />
@@ -440,6 +459,25 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               { backgroundColor: colors.surfaceCard, borderColor: colors.border },
             ]}
           >
+            {/* WordPress Admin Portal Shortcut */}
+            <TouchableOpacity
+              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
+              onPress={() => Linking.openURL(Env.WP_ADMIN_URL)}
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="settings-outline" size={20} color="#EC4899" />
+                <View style={{ marginLeft: 6 }}>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>
+                    {isBangla ? 'ওয়ার্ডপ্রেস অ্যাডমিন পোর্টাল (WP-Admin)' : 'WordPress Admin Portal (WP-Admin)'}
+                  </Text>
+                  <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                    {Env.WP_ADMIN_URL}
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="open-outline" size={16} color={colors.textMuted} />
+            </TouchableOpacity>
+
             {/* In-App OTA Updates (No APK Rebuild Required) */}
             <TouchableOpacity
               style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}

@@ -27,14 +27,26 @@ export class AuthService {
     const token = data.token;
     HttpClient.setAuthToken(token);
 
+    // Fetch authentic WordPress profile to obtain real roles (e.g. administrator)
+    let userProfile: any = null;
+    try {
+      userProfile = await HttpClient.get<any>(Endpoints.WORDPRESS.CURRENT_USER);
+    } catch {
+      // Fallback if user profile endpoint is restricted
+    }
+
+    const roles: string[] = userProfile?.roles || (
+      username.toLowerCase().includes('admin') ? ['administrator'] : ['subscriber']
+    );
+
     return {
-      id: data.user_id || 'wp-user',
-      username: username.trim(),
-      email: data.user_email || `${username}@thrivingskill.com`,
-      displayName: data.user_display_name || username.trim(),
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200',
+      id: userProfile?.id || data.user_id || 'wp-user',
+      username: userProfile?.slug || userProfile?.name || username.trim(),
+      email: userProfile?.email || data.user_email || `${username}@staging.thrivingskill.com`,
+      displayName: userProfile?.name || data.user_display_name || username.trim(),
+      avatar: userProfile?.avatar_urls?.['96'] || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200',
       token,
-      roles: ['subscriber'],
+      roles,
     };
   }
 

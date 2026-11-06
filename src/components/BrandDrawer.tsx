@@ -23,6 +23,7 @@ import { LegalPolicyModal, LegalTabKey } from './LegalPolicyModal';
 import { HelpFaqModal } from './HelpFaqModal';
 import { BlogModal } from './BlogModal';
 import { RootTab } from '../types';
+import { Env } from '../config/env';
 
 interface BrandDrawerProps {
   visible: boolean;
@@ -88,8 +89,12 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
     Linking.openURL('tel:01312100288').catch(() => {});
   };
 
+  const handleOpenWpAdmin = () => {
+    Linking.openURL(Env.WP_ADMIN_URL).catch(() => {});
+  };
+
   const handleOpenWebsite = () => {
-    Linking.openURL('https://thrivingskill.com').catch(() => {});
+    Linking.openURL(Env.SITE_URL).catch(() => {});
   };
 
   return (
@@ -445,7 +450,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
             <TouchableOpacity style={styles.actionRow} onPress={handleOpenWebsite}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <Ionicons name="globe" size={18} color={colors.textMuted} />
-                <Text style={[styles.actionLabel, { color: colors.text }]}>Visit thrivingskill.com</Text>
+                <Text style={[styles.actionLabel, { color: colors.text }]}>{'Visit ' + Env.SITE_URL.replace(/^https?:\/\//, '')}</Text>
               </View>
               <Ionicons name="open-outline" size={14} color={colors.textMuted} />
             </TouchableOpacity>
