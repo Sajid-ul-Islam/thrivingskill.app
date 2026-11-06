@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Modal,
   View,
@@ -48,6 +48,15 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
+  const paymentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (paymentTimerRef.current) {
+        clearTimeout(paymentTimerRef.current);
+      }
+    };
+  }, []);
 
   if (!course) return null;
 
@@ -83,7 +92,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     setIsProcessing(true);
 
     // Simulate merchant gateway handshake
-    setTimeout(() => {
+    paymentTimerRef.current = setTimeout(() => {
       setIsProcessing(false);
       const trxId = `TRX-${Math.random().toString(36).substring(2, 9).toUpperCase()}`;
 

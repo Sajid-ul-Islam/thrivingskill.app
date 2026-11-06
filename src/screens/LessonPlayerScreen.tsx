@@ -18,6 +18,7 @@ import { NotesModal } from '../components/NotesModal';
 import { CertificateModal } from '../components/CertificateModal';
 import { MandatoryReviewModal } from '../components/MandatoryReviewModal';
 import { CourseQnATab } from '../components/CourseQnATab';
+import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useGamification } from '../context/GamificationContext';
 import { OfflineManager } from '../services/offline/offlineManager';
@@ -40,6 +41,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const { t, isBangla } = useLanguage();
+  const { user } = useAuth();
   const { recordStudyTime, unlockBadge } = useGamification();
   const {
     getCourseById,
@@ -271,7 +273,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
       course.id,
       rating,
       feedback,
-      'Sajid-ul Islam',
+      (user?.displayName || user?.username || 'Executive Graduate'),
       'Course Graduate'
     );
     setMandatoryReviewVisible(false);
@@ -313,7 +315,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
           id: `cert-${course.id}`,
           courseId: course.id,
           courseTitle: course.title,
-          studentName: 'Sajid-ul Islam',
+          studentName: user?.displayName || user?.username || 'Executive Graduate',
           issueDate: new Date().toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'long',

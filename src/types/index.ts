@@ -26,6 +26,7 @@ export interface WpUser {
   username: string;
   email: string;
   displayName: string;
+  phone?: string;
   avatar?: string;
   token?: string;
   roles?: string[];

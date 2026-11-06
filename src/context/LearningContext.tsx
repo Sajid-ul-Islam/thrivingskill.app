@@ -260,7 +260,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         id: `cert-${Date.now()}`,
         courseId: course.id,
         courseTitle: course.title,
-        studentName: 'Sajid Islam',
+        studentName: 'Executive Graduate',
         issueDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
         credentialId: certId,
         instructorName: course.instructor.name,
@@ -430,7 +430,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     courseId: string,
     rating: number,
     feedback: string,
-    userName = 'Sajid Islam',
+    userName = 'Executive Graduate',
     userRole = 'Learner'
   ): Certificate | null => {
     // 1. Record review on course object

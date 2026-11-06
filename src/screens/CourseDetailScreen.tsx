@@ -115,7 +115,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
       course.id,
       rating,
       feedback,
-      user?.displayName || 'Sajid-ul Islam',
+      user?.displayName || user?.username || 'Executive Graduate',
       'Student'
     );
     setMandatoryReviewVisible(false);
@@ -745,7 +745,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                   </Text>
 
                   <Text style={[styles.certLearnerName, { color: colors.text }]}>
-                    Sajid-ul-Islam
+                    {user?.displayName || user?.username || 'Executive Graduate'}
                   </Text>
                   <View style={[styles.nameUnderline, { backgroundColor: '#D4AF37' }]} />
 
