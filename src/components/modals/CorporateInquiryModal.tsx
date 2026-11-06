@@ -55,7 +55,7 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
           style={[
             styles.modalContainer,
             { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-          ]}
+          ]} accessibilityViewIsModal={true}
         >
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
@@ -70,7 +70,7 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
                 </Text>
               </View>
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn} accessibilityRole="button" accessibilityLabel="Close inquiry dialog">
               <Ionicons name="close" size={22} color={colors.textMuted} />
             </TouchableOpacity>
           </View>

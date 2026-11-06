@@ -164,7 +164,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
         style={styles.backdrop}
       >
         <TouchableOpacity style={styles.outsideOverlay} activeOpacity={1} onPress={onClose} />
-        <View style={[styles.modalCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View style={[styles.modalCard, { backgroundColor: colors.surface, borderColor: colors.border }]} accessibilityViewIsModal={true}>
           {/* Drag Handle */}
           <View style={[styles.handleBar, { backgroundColor: colors.border }]} />
 
@@ -172,6 +172,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
           <TouchableOpacity
             style={[styles.closeButton, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' }]}
             onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel="Close dialog"
           >
             <Ionicons name="close" size={20} color={colors.textMuted} />
           </TouchableOpacity>
@@ -199,6 +201,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
             {/* Mode Switch Tabs: Email / Mobile OTP / Register */}
             <View style={[styles.tabSwitch, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
               <TouchableOpacity
+                accessibilityRole="tab"
+                accessibilityState={{ selected: mode === 'login' }}
                 style={[
                   styles.tabSwitchItem,
                   mode === 'login' && [styles.tabSwitchActive, { backgroundColor: colors.surfaceCard }],
@@ -221,6 +225,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
               </TouchableOpacity>
 
               <TouchableOpacity
+                accessibilityRole="tab"
+                accessibilityState={{ selected: mode === 'phone' }}
                 style={[
                   styles.tabSwitchItem,
                   mode === 'phone' && [styles.tabSwitchActive, { backgroundColor: colors.surfaceCard }],
@@ -246,6 +252,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
               </TouchableOpacity>
 
               <TouchableOpacity
+                accessibilityRole="tab"
+                accessibilityState={{ selected: mode === 'register' }}
                 style={[
                   styles.tabSwitchItem,
                   mode === 'register' && [styles.tabSwitchActive, { backgroundColor: colors.surfaceCard }],
@@ -270,7 +278,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
 
             {/* Error Notification */}
             {errorMessage ? (
-              <View style={[styles.errorBox, { backgroundColor: colors.danger + '15', borderColor: colors.danger }]}>
+              <View
+                accessibilityRole="alert"
+                accessibilityLiveRegion="polite"
+                style={[styles.errorBox, { backgroundColor: colors.danger + '15', borderColor: colors.danger }]}
+              >
                 <Ionicons name="alert-circle" size={18} color={colors.danger} />
                 <Text style={[styles.errorText, { color: colors.danger }]}>{errorMessage}</Text>
               </View>
@@ -278,7 +290,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
 
             {/* Info / Success Notification */}
             {infoMessage ? (
-              <View style={[styles.infoBox, { backgroundColor: '#10B98115', borderColor: '#10B981' }]}>
+              <View
+                accessibilityRole="status"
+                accessibilityLiveRegion="polite"
+                style={[styles.infoBox, { backgroundColor: '#10B98115', borderColor: '#10B981' }]}
+              >
                 <Ionicons name="checkmark-circle" size={18} color="#10B981" />
                 <Text style={[styles.infoText, { color: '#10B981' }]}>{infoMessage}</Text>
               </View>
@@ -305,6 +321,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                           placeholderTextColor={colors.textMuted + '80'}
                           value={phoneFullName}
                           onChangeText={setPhoneFullName}
+                          autoComplete="name"
+                          textContentType="name"
                         />
                       </View>
                     </View>
@@ -333,6 +351,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                             if (errorMessage) setErrorMessage(null);
                           }}
                           keyboardType="phone-pad"
+                          autoComplete="tel"
+                          textContentType="telephoneNumber"
                           maxLength={11}
                         />
                       </View>
@@ -351,6 +371,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                       onPress={handleSendOtp}
                       disabled={isSendingOtp}
                       activeOpacity={0.88}
+                      accessibilityRole="button"
                     >
                       {isSendingOtp ? (
                         <ActivityIndicator color="#FFFFFF" size="small" />
@@ -372,7 +393,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                       <Text style={[styles.otpPromptSubtitle, { color: colors.textMuted }]}>
                         Sent to {phoneNumber.startsWith('0') ? `+88${phoneNumber}` : `+880${phoneNumber}`}
                       </Text>
-                      <TouchableOpacity onPress={() => setIsOtpSent(false)} style={styles.changePhoneBtn}>
+                      <TouchableOpacity onPress={() => setIsOtpSent(false)} style={styles.changePhoneBtn} accessibilityRole="button">
                         <Text style={[styles.changePhoneText, { color: colors.primary }]}>Change Number</Text>
                       </TouchableOpacity>
                     </View>
@@ -394,6 +415,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                             if (errorMessage) setErrorMessage(null);
                           }}
                           keyboardType="number-pad"
+                          autoComplete="one-time-code"
+                          textContentType="oneTimeCode"
                           maxLength={6}
                           autoFocus
                         />
@@ -404,6 +427,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                     <TouchableOpacity
                       style={styles.quickFillBtn}
                       onPress={() => setOtpCode('123456')}
+                      accessibilityRole="button"
+                      accessibilityLabel="Auto-fill Sandbox OTP 123456"
                     >
                       <Ionicons name="key" size={13} color="#6366F1" />
                       <Text style={styles.quickFillText}>Auto-fill Sandbox OTP: 123456</Text>
@@ -416,7 +441,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                           Resend code in {resendTimer < 10 ? `0${resendTimer}` : resendTimer}s
                         </Text>
                       ) : (
-                        <TouchableOpacity onPress={handleSendOtp} disabled={isSendingOtp}>
+                        <TouchableOpacity onPress={handleSendOtp} disabled={isSendingOtp} accessibilityRole="button">
                           <Text style={[styles.resendActionText, { color: colors.primary }]}>
                             Resend OTP SMS
                           </Text>
@@ -429,6 +454,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                       onPress={handleVerifyOtp}
                       disabled={isVerifyingOtp}
                       activeOpacity={0.88}
+                      accessibilityRole="button"
                     >
                       {isVerifyingOtp ? (
                         <ActivityIndicator color="#FFFFFF" size="small" />
@@ -465,6 +491,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                             setName(t);
                             if (errorMessage) setErrorMessage(null);
                           }}
+                          autoComplete="name"
+                          textContentType="name"
                         />
                       </View>
                     </View>
@@ -488,6 +516,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                             if (errorMessage) setErrorMessage(null);
                           }}
                           keyboardType="phone-pad"
+                          autoComplete="tel"
+                          textContentType="telephoneNumber"
                         />
                       </View>
                     </View>
@@ -518,6 +548,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                       autoCapitalize="none"
                       autoCorrect={false}
                       keyboardType="email-address"
+                      autoComplete="email"
+                      textContentType="username"
                     />
                   </View>
                 </View>
@@ -548,8 +580,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                       }}
                       secureTextEntry={!showPassword}
                       autoCapitalize="none"
+                      autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                      textContentType={mode === 'login' ? 'password' : 'newPassword'}
                     />
-                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeButton}>
+                    <TouchableOpacity
+                      onPress={() => setShowPassword(!showPassword)}
+                      style={styles.eyeButton}
+                      accessibilityRole="button"
+                      accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+                    >
                       <Ionicons
                         name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                         size={18}
@@ -568,6 +607,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                   onPress={handleLogin}
                   disabled={isLoading}
                   activeOpacity={0.88}
+                  accessibilityRole="button"
                 >
                   {isLoading ? (
                     <ActivityIndicator color="#FFFFFF" size="small" />

@@ -155,7 +155,9 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
                       setErrorMessage('');
                     }}
                     style={styles.starTouchArea}
-                    accessibilityLabel={`Rate ${star} star`}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: rating >= star }}
+                    accessibilityLabel={`Rate ${star} ${star === 1 ? "star" : "stars"}`}
                   >
                     <Ionicons
                       name={rating >= star ? 'star' : 'star-outline'}
@@ -216,6 +218,7 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
             <TouchableOpacity
               style={[styles.submitButton, { backgroundColor: colors.primary }]}
               onPress={handleSubmit}
+              accessibilityRole="button"
               activeOpacity={0.85}
             >
               <Ionicons name="lock-open" size={18} color="#FFFFFF" />

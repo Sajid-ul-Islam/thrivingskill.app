@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -27,6 +27,15 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
   onClose,
 }) => {
   const { colors, isDark } = useTheme();
+  const pdfTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (pdfTimerRef.current) clearTimeout(pdfTimerRef.current);
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+    };
+  }, []);
   const [copied, setCopied] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
@@ -45,7 +54,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
 
   const handleDownloadPdf = async () => {
     setIsDownloadingPdf(true);
-    setTimeout(async () => {
+    pdfTimerRef.current = setTimeout(async () => {
       setIsDownloadingPdf(false);
       try {
         await Share.share({
@@ -66,7 +75,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
 
   const handleCopyLink = () => {
     setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
+    copyTimerRef.current = setTimeout(() => setCopied(false), 2500);
   };
 
   const handleAddToLinkedIn = () => {
@@ -100,7 +109,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
           style={[
             styles.modalContainer,
             { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-          ]}
+          ]} accessibilityViewIsModal={true}
         >
           {/* Top Bar */}
           <View style={[styles.topBar, { borderBottomColor: colors.border }]}>
@@ -108,7 +117,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
               <Ionicons name="ribbon" size={20} color={colors.accent} />
               <Text style={[styles.topBarTitle, { color: colors.text }]}>Verified Certificate</Text>
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+            <TouchableOpacity onPress={onClose} style={styles.closeBtn} accessibilityRole="button" accessibilityLabel="Close certificate dialog">
               <Ionicons name="close" size={22} color={colors.textMuted} />
             </TouchableOpacity>
           </View>

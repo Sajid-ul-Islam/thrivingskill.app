@@ -115,6 +115,26 @@ This document records all software bugs, architectural edge cases, and runtime i
 
 ---
 
+### 11. Accessibility Feedback Gap on Dynamic Auth & Review Errors
+* **Status**: Resolved
+* **Symptom**: When authentication or review validation failed, visual error banners were displayed, but screen readers (TalkBack / VoiceOver / Web NVDA) did not announce the error.
+* **Root Cause**: Dynamic error containers lacked semantic ARIA roles and live region attributes.
+* **Resolution**:
+  - Injected `accessibilityRole="alert"` and `accessibilityLiveRegion="polite"` on error notice views in `AuthModal.tsx` and `MandatoryReviewModal.tsx`.
+  - Added `accessibilityViewIsModal={true}` to modal containers to prevent screen readers from announcing background elements.
+
+---
+
+### 12. Potential Unmount Timer Leak in Certificate PDF Export
+* **Status**: Resolved
+* **Symptom**: Warning during fast modal dismissal while exporting certificate PDF.
+* **Root Cause**: `CertificateModal.tsx` executed `setTimeout` for PDF export simulation and copy confirmation without unmount teardown.
+* **Resolution**:
+  - Introduced `pdfTimerRef` and `copyTimerRef` using `useRef<ReturnType<typeof setTimeout> | null>(null)`.
+  - Registered `useEffect` unmount cleanup to clear active timers.
+
+---
+
 ## 🔍 Verification Protocol
 
 All bug fixes are subjected to the following automated verification suite:

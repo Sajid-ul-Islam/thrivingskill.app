@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.2] - 2026-11-07
+
+### ♿ Accessibility & Modern Web Guidance Implementation
+- **Dynamic Accessible Error & Status Announcements**:
+  - Injected `accessibilityRole="alert"` and `accessibilityLiveRegion="polite"` on dynamic error notices in `AuthModal.tsx` and `MandatoryReviewModal.tsx`.
+  - Added `accessibilityRole="status"` on verification and success message banners.
+- **Browser Autofill & Form Semantics**:
+  - Configured `autoComplete="email"`, `autoComplete="tel"`, `autoComplete="name"`, and `autoComplete="one-time-code"` across authentication and payment forms.
+  - Enabled browser password autofill (`current-password` / `new-password`) with `textContentType` integration.
+- **Semantic Dialog & Button Controls**:
+  - Enforced `accessibilityViewIsModal={true}` across all modal containers (`AuthModal`, `PaymentModal`, `CertificateModal`, `MandatoryReviewModal`, `CorporateInquiryModal`).
+  - Added explicit `accessibilityRole="button"` and `accessibilityLabel` for icon-only close buttons, password visibility toggles, and catalog cards.
+  - Configured payment method selectors with `accessibilityRole="radio"` and `accessibilityState={{ selected }}`.
+- **Timer Hygiene & Memory Safety**:
+  - Eliminated unhandled `setTimeout` calls in `CertificateModal.tsx` using `pdfTimerRef` and `copyTimerRef` with component unmount teardown.
+- **Compiler Health**:
+  - Maintained 100% strict TypeScript compliance (0 errors) across all 117 files.
+
+---
+
 ## [1.4.1] - 2026-11-06
 
 ### 🚀 Upgraded (Google Android & Architecture Standards)

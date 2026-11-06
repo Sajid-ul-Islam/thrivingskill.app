@@ -89,6 +89,14 @@
 - [x] Maintained 100% backward compatibility via root and subfolder barrel exports (`index.ts`).
 - [x] Verified 0 TypeScript compilation errors (`npm run typecheck`) and audited all 117 source files (`node scripts/audit_app.js`).
 
+### Phase 7: Modern Web Guidance & Accessibility Hardening
+- [x] Injected `accessibilityRole="alert"` and `accessibilityLiveRegion="polite"` on error feedback banners (`AuthModal.tsx`, `MandatoryReviewModal.tsx`).
+- [x] Configured browser autofill attributes (`autoComplete="email"`, `autoComplete="tel"`, `autoComplete="one-time-code"`, `autoComplete="name"`, `autoComplete="current-password"`).
+- [x] Added `accessibilityViewIsModal={true}` to all modal containers (`AuthModal`, `PaymentModal`, `CertificateModal`, `MandatoryReviewModal`, `CorporateInquiryModal`).
+- [x] Added `accessibilityRole="button"` and `accessibilityLabel` to close buttons, password toggle eyes, and course card buttons.
+- [x] Resolved timer leaks in `CertificateModal.tsx` using `useRef` + `useEffect` teardown.
+- [x] Verified 0 TypeScript compiler errors and 0 static audit warnings.
+
 ---
 
 ## 🛠️ In-Progress Tasks

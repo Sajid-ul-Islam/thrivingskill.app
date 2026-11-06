@@ -45,7 +45,8 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
           style={styles.horizontalCardBody}
           onPress={onPress}
           activeOpacity={0.85}
-          accessibilityLabel={`${course.title} by ${course.instructor?.name || 'Thriving Skills'}`}
+          accessibilityRole="button"
+          accessibilityLabel={`${course.title} by ${course.instructor?.name || "Thriving Skills"}`}
         >
           <Image source={{ uri: course.thumbnail }} style={styles.horizontalThumb} />
           {course.badge && (
@@ -139,7 +140,8 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
       <TouchableOpacity
         onPress={onPress}
         activeOpacity={0.88}
-        accessibilityLabel={`${course.title} by ${course.instructor?.name || 'Thriving Skills'}`}
+        accessibilityRole="button"
+        accessibilityLabel={`${course.title} by ${course.instructor?.name || "Thriving Skills"}`}
       >
         <View style={styles.thumbWrapper}>
           <Image source={{ uri: course.thumbnail }} style={styles.thumbnail} />

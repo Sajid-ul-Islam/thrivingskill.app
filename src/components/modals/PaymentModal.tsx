@@ -126,12 +126,14 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         style={styles.backdrop}
       >
         <TouchableOpacity style={styles.overlayClose} activeOpacity={1} onPress={onClose} />
-        <View style={[styles.modalCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View style={[styles.modalCard, { backgroundColor: colors.surface, borderColor: colors.border }]} accessibilityViewIsModal={true}>
           <View style={[styles.handle, { backgroundColor: colors.border }]} />
 
           <TouchableOpacity
-            style={[styles.closeBtn, { backgroundColor: isDark ? '#27272A' : '#F4F4F5' }]}
+            style={[styles.closeBtn, { backgroundColor: isDark ? "#27272A" : "#F4F4F5" }]}
             onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel="Close checkout"
           >
             <Ionicons name="close" size={20} color={colors.textMuted} />
           </TouchableOpacity>
@@ -156,6 +158,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 return (
                   <TouchableOpacity
                     key={opt.id}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: isSelected }}
+                    accessibilityLabel={opt.name}
                     style={[
                       styles.methodCard,
                       {
@@ -196,6 +201,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     placeholder={t('enterWalletNumber')}
                     placeholderTextColor={colors.textMuted + '80'}
                     keyboardType="phone-pad"
+                    autoComplete="tel"
+                    textContentType="telephoneNumber"
                     value={walletNumber}
                     onChangeText={setWalletNumber}
                   />
@@ -217,8 +224,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   <TextInput
                     style={[styles.textInput, { color: colors.text }]}
                     placeholder="e.g. TS50 or EID2026"
-                    placeholderTextColor={colors.textMuted + '80'}
+                    placeholderTextColor={colors.textMuted + "80"}
                     autoCapitalize="characters"
+                    autoComplete="off"
                     value={couponInput}
                     onChangeText={setCouponInput}
                   />
@@ -226,6 +234,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <TouchableOpacity
                   style={[styles.applyBtn, { backgroundColor: colors.primary }]}
                   onPress={handleApplyCoupon}
+                  accessibilityRole="button"
                 >
                   <Text style={styles.applyBtnText}>{t('applyCoupon')}</Text>
                 </TouchableOpacity>
@@ -257,6 +266,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
             {/* Confirm Payment Button */}
             <TouchableOpacity
+              accessibilityRole="button"
               style={[
                 styles.payButton,
                 { backgroundColor: selectedMethod === 'bkash' ? '#D12053' : selectedMethod === 'nagad' ? '#F7941D' : colors.primary },
