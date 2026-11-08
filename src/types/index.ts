@@ -67,8 +67,10 @@ export interface QuizQuestion {
 export interface Lesson {
   id: string;
   title: string;
-  duration: string; // e.g. "12:45"
+  duration: string;
   videoUrl?: string;
+  videoIntro?: string;
+  videoType?: 'vimeo' | 'youtube' | 'mp4' | 'iframe' | 'none';
   isFreePreview?: boolean;
   summary?: string;
   quiz?: QuizQuestion[];

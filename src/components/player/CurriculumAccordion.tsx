@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CourseModule, Lesson } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
@@ -9,6 +9,7 @@ interface CurriculumAccordionProps {
   courseId: string;
   modules: CourseModule[];
   isEnrolled: boolean;
+  isAdmin?: boolean;
   activeLessonId?: string;
   onSelectLesson: (lesson: Lesson) => void;
 }
@@ -17,6 +18,7 @@ export const CurriculumAccordion: React.FC<CurriculumAccordionProps> = ({
   courseId,
   modules,
   isEnrolled,
+  isAdmin = false,
   activeLessonId,
   onSelectLesson,
 }) => {
@@ -100,7 +102,7 @@ export const CurriculumAccordion: React.FC<CurriculumAccordionProps> = ({
                 {mod.lessons.map((lesson) => {
                   const isCompleted = completedLessonIds.includes(lesson.id);
                   const isActive = activeLessonId === lesson.id;
-                  const isAccessible = isEnrolled || lesson.isFreePreview;
+                  const isAccessible = isAdmin || isEnrolled || Boolean(lesson.isFreePreview);
 
                   return (
                     <TouchableOpacity
@@ -176,10 +178,17 @@ export const CurriculumAccordion: React.FC<CurriculumAccordionProps> = ({
                         </View>
                       </View>
 
-                      {lesson.isFreePreview && !isEnrolled && (
+                      {lesson.isFreePreview && !isEnrolled && !isAdmin && (
                         <View style={[styles.previewBadge, { backgroundColor: colors.secondaryLight }]}>
                           <Text style={[styles.previewText, { color: colors.secondary }]}>
                             Preview
+                          </Text>
+                        </View>
+                      )}
+                      {isAdmin && !isEnrolled && (
+                        <View style={[styles.previewBadge, { backgroundColor: 'rgba(255, 182, 6, 0.15)' }]}>
+                          <Text style={[styles.previewText, { color: '#B45309', fontWeight: '700' }]}>
+                            Admin
                           </Text>
                         </View>
                       )}

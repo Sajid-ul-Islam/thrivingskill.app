@@ -7,8 +7,10 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { WebView } from 'react-native-webview';
 import { useTheme } from '../context/ThemeContext';
 import { useLearning } from '../context/LearningContext';
 import { Header } from '../components/Header';
@@ -17,11 +19,15 @@ import { QuizPlayerModal } from '../components/QuizPlayerModal';
 import { NotesModal } from '../components/NotesModal';
 import { CertificateModal } from '../components/CertificateModal';
 import { MandatoryReviewModal } from '../components/MandatoryReviewModal';
+import { PaymentModal } from '../components/PaymentModal';
 import { CourseQnATab } from '../components/CourseQnATab';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useGamification } from '../context/GamificationContext';
+import { useYouTube } from '../context/YouTubeContext';
+import { findRelatedVideoForCourse } from '../services/youtubeService';
 import { OfflineManager } from '../services/offline/offlineManager';
+import { LessonsService, LessonDetail } from '../services/api/lessonsService';
 import { Lesson, Certificate } from '../types';
 
 interface LessonPlayerScreenProps {
@@ -42,10 +48,12 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const { colors, isDark } = useTheme();
   const { t, isBangla } = useLanguage();
   const { user } = useAuth();
+  const { videos } = useYouTube();
   const { recordStudyTime, unlockBadge } = useGamification();
   const {
     getCourseById,
     userProgress,
+    enrollInCourse,
     markLessonCompleted,
     getNotesForLesson,
     certificates,
@@ -66,12 +74,20 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const [notesModalVisible, setNotesModalVisible] = useState<boolean>(false);
   const [certModalVisible, setCertModalVisible] = useState<boolean>(false);
   const [mandatoryReviewVisible, setMandatoryReviewVisible] = useState<boolean>(false);
+  const [paymentModalVisible, setPaymentModalVisible] = useState<boolean>(false);
   const [autoplayCountdown, setAutoplayCountdown] = useState<number | null>(null);
   const [unlockedCert, setUnlockedCert] = useState<Certificate | null>(null);
   const [isDownloaded, setIsDownloaded] = useState<boolean>(false);
   const [currentPositionSeconds, setCurrentPositionSeconds] = useState<number>(0);
+  const [lessonDetail, setLessonDetail] = useState<LessonDetail | null>(null);
+  const [isLoadingVideo, setIsLoadingVideo] = useState<boolean>(true);
+
   const currentPosRef = useRef<number>(currentPositionSeconds);
   currentPosRef.current = currentPositionSeconds;
+
+  // Timer refs conforming to AGENTS.md Rule 3
+  const autoplayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const course = getCourseById(courseId);
 
@@ -87,9 +103,52 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const currentItem = allLessons[currentLessonIndex] || allLessons[0];
   const currentLesson = currentItem?.lesson;
 
+  // Access Control: Administrator has master power to play all videos without purchase
+  const isAdmin = Array.isArray(user?.roles) && user.roles.includes('administrator');
+  const isEnrolled = !!userProgress[course?.id || ''];
+  const isFreePreview = Boolean(currentLesson?.isFreePreview);
+  const canPlayVideo = isAdmin || isEnrolled || isFreePreview;
+
   const progress = course ? userProgress[course.id] : undefined;
   const isLessonCompleted = progress?.completedLessonIds.includes(currentLesson?.id || '') || false;
   const lessonNotes = currentLesson ? getNotesForLesson(courseId, currentLesson.id) : [];
+
+  // Fetch actual lesson details and video metadata from backend
+  useEffect(() => {
+    let isMounted = true;
+    if (currentLesson?.id) {
+      setIsLoadingVideo(true);
+      LessonsService.getLessonDetail(currentLesson.id)
+        .then((detail) => {
+          if (isMounted) {
+            setLessonDetail(detail);
+            setIsLoadingVideo(false);
+          }
+        })
+        .catch(() => {
+          if (isMounted) {
+            setIsLoadingVideo(false);
+          }
+        });
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [currentLesson?.id]);
+
+  // Cleanup all timers on unmount conforming to AGENTS.md Rule 3
+  useEffect(() => {
+    return () => {
+      if (autoplayTimerRef.current) {
+        clearTimeout(autoplayTimerRef.current);
+        autoplayTimerRef.current = null;
+      }
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+    };
+  }, []);
 
   const parseDurationToSeconds = (dur?: string): number => {
     if (!dur) return 600;
@@ -120,7 +179,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     }
   }, [course?.category]);
 
-  // CR-03: Auto-play Countdown Timer effect (Continuous Video Playback)
+  // Continuous Auto-play countdown effect
   useEffect(() => {
     if (autoplayCountdown === null) return;
     if (autoplayCountdown <= 0) {
@@ -132,16 +191,27 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
       }
       return;
     }
-    const timer = setTimeout(() => {
+
+    if (autoplayTimerRef.current) clearTimeout(autoplayTimerRef.current);
+    autoplayTimerRef.current = setTimeout(() => {
+      autoplayTimerRef.current = null;
       setAutoplayCountdown((prev) => (prev !== null ? prev - 1 : null));
     }, 1000);
-    return () => clearTimeout(timer);
+
+    return () => {
+      if (autoplayTimerRef.current) {
+        clearTimeout(autoplayTimerRef.current);
+        autoplayTimerRef.current = null;
+      }
+    };
   }, [autoplayCountdown, currentLessonIndex, allLessons, courseId]);
 
-  // Video watch time tracking interval & continuous video auto-play (CR-03)
+  // Video watch time tracking interval & continuous video auto-play
   useEffect(() => {
-    if (!isPlaying || !currentLesson || !course || autoplayCountdown !== null) return;
-    const interval = setInterval(() => {
+    if (!isPlaying || !currentLesson || !course || autoplayCountdown !== null || !canPlayVideo) return;
+
+    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+    progressIntervalRef.current = setInterval(() => {
       const next = currentPosRef.current + 1;
       currentPosRef.current = next;
       setCurrentPositionSeconds(next);
@@ -149,7 +219,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
       if (next % 5 === 0) {
         recordWatchPosition(course.id, currentLesson.id, next);
       }
-      // Auto-complete & transition when video duration finishes (CR-03)
+      // Auto-complete & transition when video duration finishes
       if (next >= totalLessonSeconds && totalLessonSeconds > 0) {
         markLessonCompleted(course.id, currentLesson.id);
         recordStudyTime(10);
@@ -168,8 +238,14 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         }
       }
     }, 1000);
-    return () => clearInterval(interval);
-  }, [isPlaying, currentLesson?.id, course?.id, autoplayCountdown, totalLessonSeconds, currentLessonIndex, allLessons.length]);
+
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+    };
+  }, [isPlaying, currentLesson?.id, course?.id, autoplayCountdown, totalLessonSeconds, currentLessonIndex, allLessons.length, canPlayVideo]);
 
   const handleRewind = (sec: number = 10) => {
     const next = Math.max(0, currentPosRef.current - sec);
@@ -222,7 +298,6 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     }
   };
 
-  // Test action: Skip to video end to demonstrate auto-play
   const handleSimulateVideoEnd = () => {
     if (!currentLesson || !course) return;
     setCurrentPositionSeconds(totalLessonSeconds);
@@ -255,14 +330,12 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     const completedCount = isAlreadyMarked ? currentCompleted : currentCompleted + 1;
 
     if (completedCount >= totalLessons) {
-      // Course finished! CR-02 check:
       if (!hasReviewedCourse(course.id)) {
         setMandatoryReviewVisible(true);
       } else {
         setCertModalVisible(true);
       }
     } else {
-      // Start auto-play countdown for continuous learning (CR-03)
       setAutoplayCountdown(5);
     }
   };
@@ -273,7 +346,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
       course.id,
       rating,
       feedback,
-      (user?.displayName || user?.username || 'Executive Graduate'),
+      user?.displayName || user?.username || 'Executive Graduate',
       'Course Graduate'
     );
     setMandatoryReviewVisible(false);
@@ -307,7 +380,6 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
       ? certificates.find((c) => c.credentialId === progress.certificateId)
       : null);
 
-  // Certificate is strictly gated: only unlocked after review is submitted (CR-02)
   const userCert =
     unlockedCert ||
     (isCertUnlocked
@@ -334,6 +406,75 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     (allLessons.length > 0 &&
       allLessons.every((item) => progress?.completedLessonIds.includes(item.lesson.id)));
 
+  // Fallback video from YouTube masterclass library if lesson has no direct URL
+  const relatedTrailer = findRelatedVideoForCourse(course, videos);
+
+  // Determine active video source
+  const activeVideoUrl = lessonDetail?.videoUrl || currentLesson?.videoUrl || (relatedTrailer ? relatedTrailer.url : undefined);
+  const activeVideoIntro = lessonDetail?.videoIntro || currentLesson?.videoIntro;
+
+  // Build responsive embedded HTML player
+  const buildVideoHtml = () => {
+    let embedMarkup = '';
+    if (activeVideoIntro && activeVideoIntro.includes('<iframe')) {
+      embedMarkup = activeVideoIntro
+        .replace(/width="[^"]*"/gi, 'width="100%"')
+        .replace(/height="[^"]*"/gi, 'height="100%"');
+    } else if (activeVideoUrl) {
+      if (activeVideoUrl.includes('vimeo.com')) {
+        const vMatch = activeVideoUrl.match(/\/video\/(\d+)/) || activeVideoUrl.match(/vimeo\.com\/(\d+)/);
+        const vId = vMatch ? vMatch[1] : '';
+        const vSrc = vId ? `https://player.vimeo.com/video/${vId}?autoplay=1&title=0&byline=0&portrait=0` : activeVideoUrl;
+        embedMarkup = `<iframe src="${vSrc}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+      } else if (activeVideoUrl.includes('youtube.com') || activeVideoUrl.includes('youtu.be')) {
+        let ytId = '';
+        const yMatch = activeVideoUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
+        if (yMatch && yMatch[1]) ytId = yMatch[1];
+        const ytSrc = ytId ? `https://www.youtube.com/embed/${ytId}?autoplay=1&playsinline=1&modestbranding=1&rel=0` : activeVideoUrl;
+        embedMarkup = `<iframe src="${ytSrc}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+      } else if (activeVideoUrl.match(/\.(mp4|m3u8|webm)($|\?)/i)) {
+        embedMarkup = `<video src="${activeVideoUrl}" controls autoplay playsinline style="width:100%;height:100%;object-fit:contain;background:#000;"></video>`;
+      } else {
+        embedMarkup = `<iframe src="${activeVideoUrl}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+      }
+    } else {
+      embedMarkup = `<div style="color:#FFF;font-family:system-ui,sans-serif;text-align:center;padding:40px 20px;"><div style="font-size:32px;margin-bottom:8px;">▶️</div><div>Loading lecture media stream...</div></div>`;
+    }
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #000000;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    iframe, video {
+      width: 100vw !important;
+      height: 100vh !important;
+      max-width: 100% !important;
+      max-height: 100% !important;
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+  ${embedMarkup}
+</body>
+</html>`;
+  };
+
+  const previewLesson = course.modules[0]?.lessons.find((l) => l.isFreePreview);
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
@@ -344,6 +485,29 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
       />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        {/* Administrator Access Banner if viewing as admin */}
+        {isAdmin && (
+          <View style={[styles.adminBanner, { backgroundColor: '#102F53', borderColor: '#FFB606' }]}>
+            <View style={styles.adminBannerLeft}>
+              <Ionicons name="shield-checkmark" size={15} color="#FFB606" />
+              <Text style={styles.adminBannerTitle}>ADMINISTRATOR ACCESS ACTIVE</Text>
+            </View>
+            <Text style={styles.adminBannerSub}>
+              {isBangla ? 'অ্যাডমিন ক্ষমতা: কোর্সের সকল ভিডিও আনলক করা হয়েছে' : 'Master bypass: Unrestricted playback of all course videos'}
+            </Text>
+          </View>
+        )}
+
+        {/* Free Preview Banner if guest or unpurchased learner on free preview lesson */}
+        {!isAdmin && !isEnrolled && isFreePreview && (
+          <View style={[styles.previewBanner, { backgroundColor: '#EFF6FF', borderColor: '#3B82F6' }]}>
+            <Ionicons name="sparkles" size={15} color="#3B82F6" />
+            <Text style={styles.previewBannerText}>
+              {isBangla ? 'ফ্রি প্রিভিউ লেকচার চলছে' : 'Free Preview Lesson • Enroll for Full Access'}
+            </Text>
+          </View>
+        )}
+
         {/* Mode Switcher: Video vs Commute Audio */}
         <View style={styles.modeSwitchBar}>
           <TouchableOpacity
@@ -400,8 +564,55 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
           </TouchableOpacity>
         </View>
 
-        {isCommuteMode ? (
-          /* Interactive Commute Mode Player Simulation */
+        {/* Video / Commute Player Area */}
+        {!canPlayVideo ? (
+          /* LOCKED PAYWALL STATE: User has not purchased this course */
+          <View style={[styles.lockedCard, { backgroundColor: isDark ? '#0F192C' : '#102F53' }]}>
+            <View style={styles.lockedIconBg}>
+              <Ionicons name="lock-closed" size={38} color="#FFB606" />
+            </View>
+
+            <Text style={styles.lockedTitle}>
+              {isBangla ? 'কোর্সটি কেনা হয়নি' : 'Course Not Purchased'}
+            </Text>
+            <Text style={styles.lockedSub}>
+              {isBangla
+                ? 'এই প্রিমিয়াম পাঠের ভিডিও দেখতে সম্পূর্ণ কোর্সে ভর্তি হন। আজীবন অ্যাক্সেস, রিসোর্স এবং ভেরিফাইড সার্টিফিকেট অন্তর্ভুক্ত।'
+                : 'This premium lesson video requires course enrollment. Purchase this course to get full lifetime access to all lectures, downloadable resources, and verified credentials.'}
+            </Text>
+
+            <View style={styles.lockedActionsCol}>
+              <TouchableOpacity
+                style={styles.lockedPurchaseBtn}
+                onPress={() => setPaymentModalVisible(true)}
+                activeOpacity={0.88}
+                accessibilityRole="button"
+                accessibilityLabel="Purchase or enroll in course"
+              >
+                <Ionicons name="card" size={16} color="#102F53" />
+                <Text style={styles.lockedPurchaseBtnText}>
+                  {isBangla ? 'কোর্সটি কিনুন / ভর্তি হন' : 'Purchase Course / Enroll'}
+                </Text>
+              </TouchableOpacity>
+
+              {previewLesson && previewLesson.id !== currentLesson.id && (
+                <TouchableOpacity
+                  style={styles.lockedPreviewBtn}
+                  onPress={() => onSelectLesson(courseId, previewLesson.id)}
+                  activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Watch free preview lesson"
+                >
+                  <Ionicons name="play-outline" size={14} color="#FFB606" />
+                  <Text style={styles.lockedPreviewBtnText}>
+                    {isBangla ? 'ফ্রি প্রিভিউ দেখুন' : 'Watch Free Preview'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+        ) : isCommuteMode ? (
+          /* Interactive Commute Mode Player */
           <View
             style={[
               styles.commutePlayerCard,
@@ -498,143 +709,114 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
             </View>
           </View>
         ) : (
-          /* Interactive Video Player Simulation */
+          /* ACTUAL REAL VIDEO PLAYER: WebView with responsive embedded video */
           <View style={styles.playerContainer}>
-            <Image source={{ uri: course.thumbnail }} style={styles.playerVideoBg} />
-            <View style={styles.playerOverlay}>
-              {/* CR-03: Continuous Auto-Play Next Video Countdown Overlay */}
-              {autoplayCountdown !== null && (
-                <View style={styles.autoplayCountdownOverlay}>
-                  <View
-                    style={[
-                      styles.autoplayCard,
-                      {
-                        backgroundColor: isDark ? '#1E1B4B' : '#EEF2FF',
-                        borderColor: '#6366F1',
-                      },
-                    ]}
-                  >
-                    <View
-                      style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}
-                    >
-                      <Ionicons name="play-forward-circle" size={18} color="#6366F1" />
-                      <Text style={styles.autoplayBadgeText}>
-                        {isBangla ? 'স্বয়ংক্রিয়ভাবে পরবর্তী ভিডিও চালু হচ্ছে' : 'CONTINUOUS AUTO-PLAY'}
-                      </Text>
-                    </View>
-                    <Text style={styles.autoplayCountdownSec}>{autoplayCountdown}s</Text>
-                    <Text
-                      style={[styles.autoplayNextTitle, { color: isDark ? '#FFFFFF' : '#1F2937' }]}
-                      numberOfLines={1}
-                    >
-                      {allLessons[currentLessonIndex + 1]?.lesson.title || 'Next Lesson'}
-                    </Text>
-                    <View style={styles.autoplayActionsRow}>
-                      <TouchableOpacity
-                        style={[styles.autoplayCancelBtn, { borderColor: colors.border }]}
-                        onPress={() => setAutoplayCountdown(null)}
-                      >
-                        <Text style={[styles.autoplayCancelText, { color: colors.textMuted }]}>
-                          {isBangla ? 'বাতিল' : 'Cancel'}
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.autoplayPlayNowBtn}
-                        onPress={() => {
-                          setAutoplayCountdown(null);
-                          handleNextLesson();
-                        }}
-                      >
-                        <Ionicons name="play" size={14} color="#FFFFFF" />
-                        <Text style={styles.autoplayPlayNowText}>
-                          {isBangla ? 'এখনই দেখুন' : 'Play Now'}
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </View>
-              )}
+            {isLoadingVideo ? (
+              <View style={styles.loadingVideoOverlay}>
+                <ActivityIndicator size="large" color="#FFB606" />
+                <Text style={styles.loadingVideoText}>Loading video stream...</Text>
+              </View>
+            ) : (
+              <WebView
+                source={{ html: buildVideoHtml() }}
+                style={styles.videoWebView}
+                allowsFullscreenVideo
+                javaScriptEnabled
+                domStorageEnabled
+                mediaPlaybackRequiresUserAction={false}
+                allowsInlineMediaPlayback
+              />
+            )}
 
-              {/* Center Play/Pause & Skip buttons */}
-              <View style={styles.playerControlsRow}>
-                <TouchableOpacity
-                  onPress={() => handleRewind(10)}
-                  style={styles.skipBtn}
-                >
-                  <Ionicons name="play-back" size={20} color="#FFFFFF" />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={handlePrevLesson}
-                  disabled={currentLessonIndex === 0}
-                  style={[styles.skipBtn, currentLessonIndex === 0 && { opacity: 0.4 }]}
-                >
-                  <Ionicons name="play-skip-back" size={22} color="#FFFFFF" />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.mainPlayBtn}
-                  onPress={() => setIsPlaying(!isPlaying)}
-                >
-                  <Ionicons name={isPlaying ? 'pause' : 'play'} size={32} color="#FFFFFF" />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={handleNextLesson}
-                  disabled={currentLessonIndex === allLessons.length - 1}
+            {/* Continuous Auto-Play Next Video Countdown Overlay */}
+            {autoplayCountdown !== null && (
+              <View style={styles.autoplayCountdownOverlay}>
+                <View
                   style={[
-                    styles.skipBtn,
-                    currentLessonIndex === allLessons.length - 1 && { opacity: 0.4 },
+                    styles.autoplayCard,
+                    {
+                      backgroundColor: isDark ? '#1E1B4B' : '#EEF2FF',
+                      borderColor: '#6366F1',
+                    },
                   ]}
                 >
-                  <Ionicons name="play-skip-forward" size={22} color="#FFFFFF" />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={() => handleForward(10)}
-                  style={styles.skipBtn}
-                >
-                  <Ionicons name="play-forward" size={20} color="#FFFFFF" />
-                </TouchableOpacity>
-              </View>
-
-              {/* Bottom Scrubber & Info */}
-              <View style={styles.playerBottomBar}>
-                <View style={styles.timelineRow}>
-                  <View style={styles.scrubberTrack}>
-                    <View style={[styles.scrubberProgress, { width: `${Math.max(playbackPercent, 3)}%` }]} />
-                    <View style={styles.scrubberThumb} />
+                  <View
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}
+                  >
+                    <Ionicons name="play-forward-circle" size={18} color="#6366F1" />
+                    <Text style={styles.autoplayBadgeText}>
+                      {isBangla ? 'স্বয়ংক্রিয় পরবর্তী পাঠ শুরু হচ্ছে' : 'CONTINUOUS AUTO-PLAY'}
+                    </Text>
                   </View>
-                </View>
-
-                <View style={styles.playerMetaRow}>
-                  <Text style={styles.playerTimeText}>{formatSeconds(currentPositionSeconds)} / {currentLesson.duration}</Text>
-
-                  <View style={styles.playerActionButtons}>
-                    {/* Fast-test button to simulate video finishing */}
+                  <Text style={styles.autoplayCountdownSec}>{autoplayCountdown}s</Text>
+                  <Text
+                    style={[styles.autoplayNextTitle, { color: isDark ? '#FFFFFF' : '#1F2937' }]}
+                    numberOfLines={1}
+                  >
+                    {allLessons[currentLessonIndex + 1]?.lesson.title || 'Next Lesson'}
+                  </Text>
+                  <View style={styles.autoplayActionsRow}>
                     <TouchableOpacity
-                      style={[styles.speedPill, { backgroundColor: '#E11D4822', borderColor: '#E11D48', borderWidth: 1 }]}
-                      onPress={handleSimulateVideoEnd}
+                      style={[styles.autoplayCancelBtn, { borderColor: colors.border }]}
+                      onPress={() => setAutoplayCountdown(null)}
                     >
-                      <Ionicons name="play-skip-forward" size={10} color="#E11D48" />
-                      <Text style={[styles.speedPillText, { color: '#E11D48' }]}>
-                        {isBangla ? 'শেষ' : 'Finish'}
+                      <Text style={[styles.autoplayCancelText, { color: colors.textMuted }]}>
+                        {isBangla ? 'বাতিল' : 'Cancel'}
                       </Text>
                     </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.speedPill} onPress={cycleSpeed}>
-                      <Text style={styles.speedPillText}>{playbackSpeed}</Text>
-                    </TouchableOpacity>
-
                     <TouchableOpacity
-                      style={styles.fullscreenBtn}
-                      onPress={() => Alert.alert('Fullscreen', 'Rotated to landscape player.')}
+                      style={styles.autoplayPlayNowBtn}
+                      onPress={() => {
+                        setAutoplayCountdown(null);
+                        handleNextLesson();
+                      }}
                     >
-                      <Ionicons name="scan-outline" size={18} color="#FFFFFF" />
+                      <Ionicons name="play" size={14} color="#FFFFFF" />
+                      <Text style={styles.autoplayPlayNowText}>
+                        {isBangla ? 'এখনই দেখুন' : 'Play Now'}
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 </View>
               </View>
+            )}
+          </View>
+        )}
+
+        {/* Fast Action Scrub / Sim bar under player */}
+        {canPlayVideo && (
+          <View style={[styles.playbackToolbar, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+            <View style={styles.playbackLeftControls}>
+              <TouchableOpacity onPress={() => handleRewind(10)} style={styles.toolBtn}>
+                <Ionicons name="play-back" size={18} color={colors.text} />
+                <Text style={[styles.toolBtnText, { color: colors.textMuted }]}>10s</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handlePrevLesson} disabled={currentLessonIndex === 0} style={[styles.toolBtn, currentLessonIndex === 0 && { opacity: 0.3 }]}>
+                <Ionicons name="play-skip-back" size={18} color={colors.text} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleNextLesson} disabled={currentLessonIndex === allLessons.length - 1} style={[styles.toolBtn, currentLessonIndex === allLessons.length - 1 && { opacity: 0.3 }]}>
+                <Ionicons name="play-skip-forward" size={18} color={colors.text} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => handleForward(10)} style={styles.toolBtn}>
+                <Ionicons name="play-forward" size={18} color={colors.text} />
+                <Text style={[styles.toolBtnText, { color: colors.textMuted }]}>10s</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.playbackRightControls}>
+              <TouchableOpacity style={styles.speedPill} onPress={cycleSpeed}>
+                <Text style={styles.speedPillText}>{playbackSpeed}</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.speedPill, { backgroundColor: '#E11D4822', borderColor: '#E11D48', borderWidth: 1 }]}
+                onPress={handleSimulateVideoEnd}
+              >
+                <Ionicons name="checkmark-done" size={12} color="#E11D48" />
+                <Text style={[styles.speedPillText, { color: '#E11D48' }]}>
+                  {isBangla ? 'শেষ' : 'Finish'}
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -713,7 +895,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
             <View style={styles.completionContent}>
               <View style={styles.completionHeaderRow}>
                 <Text style={[styles.completionTitle, { color: isDark ? '#A7F3D0' : '#065F46' }]}>
-                  Course Completed! 🎉
+                  Course Completed! 🎓
                 </Text>
                 <View style={styles.completionXpBadge}>
                   <Text style={styles.completionXpText}>+150 XP</Text>
@@ -792,6 +974,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               {allLessons.map((item, idx) => {
                 const isSelected = item.lesson.id === currentLesson.id;
                 const isCompleted = progress?.completedLessonIds.includes(item.lesson.id);
+                const itemAccessible = isAdmin || isEnrolled || Boolean(item.lesson.isFreePreview);
 
                 return (
                   <TouchableOpacity
@@ -804,7 +987,16 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                       },
                       { borderColor: colors.border },
                     ]}
-                    onPress={() => onSelectLesson(courseId, item.lesson.id)}
+                    onPress={() => {
+                      if (itemAccessible) {
+                        onSelectLesson(courseId, item.lesson.id);
+                      } else {
+                        Alert.alert(
+                          'Course Not Purchased',
+                          'This lesson is part of the complete course. Please enroll or purchase the course to unlock full access.'
+                        );
+                      }
+                    }}
                     activeOpacity={0.7}
                   >
                     <View
@@ -815,6 +1007,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                             ? colors.primaryLight
                             : isSelected
                             ? colors.primary
+                            : itemAccessible
+                            ? colors.surfaceSubtle
                             : colors.surfaceSubtle,
                         },
                       ]}
@@ -823,10 +1017,10 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                         <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
                       ) : isSelected ? (
                         <Ionicons name="play" size={14} color="#FFFFFF" />
+                      ) : itemAccessible ? (
+                        <Ionicons name="play-outline" size={14} color={colors.textMuted} />
                       ) : (
-                        <Text style={[styles.playlistIndex, { color: colors.textMuted }]}>
-                          {idx + 1}
-                        </Text>
+                        <Ionicons name="lock-closed" size={14} color={colors.textMuted} />
                       )}
                     </View>
 
@@ -835,7 +1029,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                         style={[
                           styles.playlistTitle,
                           {
-                            color: isSelected ? colors.primary : colors.text,
+                            color: isSelected ? colors.primary : itemAccessible ? colors.text : colors.textMuted,
                             fontWeight: isSelected ? '700' : '500',
                           },
                         ]}
@@ -847,6 +1041,19 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                         {item.lesson.duration}
                       </Text>
                     </View>
+
+                    {item.lesson.isFreePreview && !isEnrolled && !isAdmin && (
+                      <View style={[styles.previewBadge, { backgroundColor: colors.secondaryLight }]}>
+                        <Text style={[styles.previewText, { color: colors.secondary }]}>Preview</Text>
+                      </View>
+                    )}
+
+                    {isAdmin && (
+                      <View style={[styles.adminPlaylistBadge, { backgroundColor: '#FFB60620' }]}>
+                        <Ionicons name="shield-checkmark" size={10} color="#FFB606" />
+                        <Text style={styles.adminPlaylistText}>Admin</Text>
+                      </View>
+                    )}
 
                     {item.lesson.quiz && (
                       <TouchableOpacity
@@ -869,7 +1076,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                 Lesson Description
               </Text>
               <Text style={[styles.overviewText, { color: colors.textMuted }]}>
-                {currentLesson.summary ||
+                {lessonDetail?.content || currentLesson.summary ||
                   'In this lecture, you will explore core operational frameworks and practical workflows designed for maximum business productivity.'}
               </Text>
 
@@ -986,7 +1193,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
           onClose={() => setQuizModalVisible(false)}
           onPass={() => {
             markLessonCompleted(course.id, currentLesson.id);
-            Alert.alert('Quiz Passed! ✅', 'Lesson marked as completed.');
+            Alert.alert('Quiz Passed! 🏆', 'Lesson marked as completed.');
           }}
         />
       )}
@@ -1003,7 +1210,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         }}
       />
 
-      {/* Notes Modal (Section 12 Spec) */}
+      {/* Notes Modal */}
       <NotesModal
         visible={notesModalVisible}
         courseId={course.id}
@@ -1020,7 +1227,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         onClose={() => setNotesModalVisible(false)}
       />
 
-      {/* CR-02: Mandatory Course Review Modal before Certificate Unlock */}
+      {/* Mandatory Course Review Modal before Certificate Unlock */}
       <MandatoryReviewModal
         visible={mandatoryReviewVisible}
         courseTitle={course.title}
@@ -1034,6 +1241,21 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         visible={certModalVisible}
         certificate={userCert || null}
         onClose={() => setCertModalVisible(false)}
+      />
+
+      {/* In-Player Payment Modal for Unlocked Access */}
+      <PaymentModal
+        visible={paymentModalVisible}
+        course={course}
+        onClose={() => setPaymentModalVisible(false)}
+        onSuccess={(cId) => {
+          enrollInCourse(cId);
+          setPaymentModalVisible(false);
+          Alert.alert(
+            isBangla ? 'ভর্তি সফল হয়েছে! 🎓' : 'Enrollment Successful! 🎓',
+            isBangla ? 'কোর্সের সকল ভিডিও এখন আনলক করা হয়েছে।' : 'All course videos are now unlocked.'
+          );
+        }}
       />
     </View>
   );
@@ -1051,115 +1273,365 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  adminBanner: {
+    flexDirection: 'column',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderBottomWidth: 1,
+    gap: 2,
+  },
+  adminBannerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  adminBannerTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#FFB606',
+    letterSpacing: 0.5,
+  },
+  adminBannerSub: {
+    fontSize: 11,
+    color: '#F8FAFC',
+  },
+  previewBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderBottomWidth: 1,
+  },
+  previewBannerText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#2563EB',
+  },
+  modeSwitchBar: {
+    flexDirection: 'row',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    gap: 8,
+  },
+  modeSwitchBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 6,
+  },
+  modeSwitchActive: {
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  modeSwitchText: {
+    fontSize: 12,
+  },
+  saveDataBadge: {
+    backgroundColor: '#10B981',
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  saveDataBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '700',
+  },
   playerContainer: {
-    height: 220,
+    height: 225,
     backgroundColor: '#000000',
     position: 'relative',
   },
-  playerVideoBg: {
+  videoWebView: {
     width: '100%',
     height: '100%',
-    resizeMode: 'cover',
-    opacity: 0.7,
+    backgroundColor: '#000000',
   },
-  playerOverlay: {
+  loadingVideoOverlay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#000000',
+  },
+  loadingVideoText: {
+    color: '#FFB606',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  lockedCard: {
+    height: 240,
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  lockedIconBg: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 182, 6, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  lockedTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    textAlign: 'center',
+  },
+  lockedSub: {
+    fontSize: 12,
+    color: '#94A3B8',
+    textAlign: 'center',
+    lineHeight: 16,
+    paddingHorizontal: 12,
+  },
+  lockedActionsCol: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 8,
+  },
+  lockedPurchaseBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FFB606',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  lockedPurchaseBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#102F53',
+  },
+  lockedPreviewBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#FFB606',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  lockedPreviewBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFB606',
+  },
+  playbackToolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+  },
+  playbackLeftControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  toolBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    padding: 4,
+  },
+  toolBtnText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  playbackRightControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  speedPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    backgroundColor: 'rgba(0,0,0,0.06)',
+    borderRadius: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  speedPillText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  commutePlayerCard: {
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  commuteHeaderBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 12,
+  },
+  commuteHeaderBadgeText: {
+    color: '#10B981',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  waveformContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 60,
+    gap: 4,
+    marginBottom: 12,
+  },
+  waveBar: {
+    width: 4,
+    borderRadius: 2,
+  },
+  commuteLessonTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 2,
+  },
+  commuteInstructorText: {
+    fontSize: 12,
+    color: '#94A3B8',
+    marginBottom: 16,
+  },
+  commuteControlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 20,
+    marginBottom: 16,
+  },
+  commuteSkipBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 6,
+  },
+  skipSecText: {
+    color: '#94A3B8',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  commuteMainPlayBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  commuteBottomBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+  },
+  commuteTimeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  bgPlaybackNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  bgPlaybackText: {
+    color: '#10B981',
+    fontSize: 10,
+  },
+  autoplayCountdownOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'space-between',
-    padding: 14,
-  },
-  playerControlsRow: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
-    gap: 30,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    padding: 16,
   },
-  skipBtn: {
-    padding: 8,
-  },
-  mainPlayBtn: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: 'rgba(5, 150, 105, 0.85)',
+  autoplayCard: {
+    width: '90%',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
     alignItems: 'center',
-    justifyContent: 'center',
   },
-  playerBottomBar: {
-    gap: 6,
-  },
-  timelineRow: {
-    width: '100%',
-  },
-  scrubberTrack: {
-    height: 4,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    borderRadius: 2,
-    position: 'relative',
-  },
-  scrubberProgress: {
-    height: '100%',
-    backgroundColor: '#10B981',
-    borderRadius: 2,
-  },
-  scrubberThumb: {
-    position: 'absolute',
-    left: '42%',
-    top: -4,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#FFFFFF',
-  },
-  playerMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  playerTimeText: {
-    color: '#FFFFFF',
+  autoplayBadgeText: {
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '800',
+    color: '#6366F1',
   },
-  playerActionButtons: {
+  autoplayCountdownSec: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#6366F1',
+    marginVertical: 4,
+  },
+  autoplayNextTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  autoplayActionsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     gap: 12,
   },
-  speedPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+  autoplayCancelBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  autoplayCancelText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  autoplayPlayNowBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#6366F1',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     borderRadius: 6,
   },
-  speedPillText: {
+  autoplayPlayNowText: {
     color: '#FFFFFF',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
-  },
-  fullscreenBtn: {
-    padding: 2,
   },
   lessonHeaderCard: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
-    gap: 12,
   },
   titleCol: {
     flex: 1,
+    marginRight: 12,
   },
   lessonTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
     marginBottom: 4,
-    lineHeight: 22,
   },
   lessonInstructor: {
     fontSize: 12,
@@ -1170,9 +1642,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   offlineBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1180,31 +1652,26 @@ const styles = StyleSheet.create({
   completeBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 10,
     gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 8,
   },
   completeBtnText: {
     fontSize: 12,
     fontWeight: '700',
   },
   completionBanner: {
-    flexDirection: 'row',
-    marginHorizontal: 16,
-    marginBottom: 16,
+    marginHorizontal: 14,
+    marginBottom: 12,
     padding: 14,
-    borderRadius: 14,
-    borderWidth: 1.5,
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
     gap: 12,
   },
   completionIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(245, 158, 11, 0.18)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginTop: 2,
   },
   completionContent: {
     flex: 1,
@@ -1216,18 +1683,18 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   completionTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '800',
   },
   completionXpBadge: {
-    backgroundColor: '#F59E0B',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
+    backgroundColor: '#10B981',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 4,
   },
   completionXpText: {
     color: '#FFFFFF',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '800',
   },
   completionSub: {
@@ -1238,35 +1705,36 @@ const styles = StyleSheet.create({
   claimCertCTA: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: '#059669',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
     gap: 6,
+    backgroundColor: '#10B981',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
   },
   claimCertCTAText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
   },
   tabsStrip: {
     flexDirection: 'row',
-    paddingHorizontal: 16,
     borderBottomWidth: 1,
+    paddingHorizontal: 8,
   },
   tabButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    marginRight: 18,
-    gap: 6,
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: 10,
   },
   tabButtonText: {
-    fontSize: 13,
+    fontSize: 11,
   },
   tabPanel: {
-    padding: 16,
+    padding: 14,
   },
   curriculumList: {
     gap: 8,
@@ -1274,20 +1742,20 @@ const styles = StyleSheet.create({
   playlistRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
+    padding: 10,
+    borderRadius: 8,
     borderWidth: 1,
+    gap: 10,
   },
   playlistIconBg: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
   },
   playlistIndex: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
   },
   playlistInfo: {
@@ -1300,46 +1768,71 @@ const styles = StyleSheet.create({
   playlistDuration: {
     fontSize: 11,
   },
+  previewBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  previewText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  adminPlaylistBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 0.5,
+    borderColor: '#FFB60680',
+  },
+  adminPlaylistText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#FFB606',
+  },
   quizPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    gap: 4,
+    gap: 2,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
   },
   quizPillText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
   },
   overviewContainer: {
     gap: 12,
   },
   overviewHeading: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
   },
   overviewText: {
     fontSize: 13,
-    lineHeight: 20,
+    lineHeight: 18,
   },
   quizCallout: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 14,
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
-    marginTop: 10,
+    marginTop: 8,
+    gap: 10,
   },
   quizCalloutLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
     flex: 1,
   },
   quizCalloutTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
   },
   quizCalloutSub: {
@@ -1347,13 +1840,13 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   startQuizBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 6,
   },
   startQuizText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
   },
   notesTab: {
@@ -1365,35 +1858,36 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   notesTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
   },
   takeNoteBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
     gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
   },
   takeNoteText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
   },
   emptyNotesBox: {
+    padding: 30,
     alignItems: 'center',
-    paddingVertical: 30,
+    justifyContent: 'center',
+    gap: 8,
   },
   emptyNotesText: {
-    fontSize: 13,
+    fontSize: 12,
     textAlign: 'center',
-    marginTop: 8,
-    maxWidth: 240,
+    lineHeight: 16,
   },
   noteCard: {
     padding: 12,
-    borderRadius: 10,
+    borderRadius: 8,
     borderWidth: 1,
     gap: 4,
   },
@@ -1406,258 +1900,32 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   resourcesTab: {
-    gap: 10,
+    gap: 8,
   },
   resourceRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 12,
+    padding: 10,
+    borderRadius: 8,
     borderWidth: 1,
+    gap: 10,
   },
   fileIconBg: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
   },
   fileMeta: {
     flex: 1,
   },
   fileName: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
+    marginBottom: 2,
   },
   fileSize: {
-    fontSize: 11,
-    marginTop: 2,
-  },
-  modeSwitchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    gap: 10,
-  },
-  modeSwitchBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    gap: 6,
-  },
-  modeSwitchActive: {
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  modeSwitchText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  saveDataBadge: {
-    backgroundColor: '#10B981',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    marginLeft: 2,
-  },
-  saveDataBadgeText: {
-    color: '#FFFFFF',
     fontSize: 10,
-    fontWeight: '800',
-  },
-  commutePlayerCard: {
-    marginHorizontal: 16,
-    borderRadius: 20,
-    padding: 18,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  commuteHeaderBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-    gap: 6,
-    marginBottom: 14,
-  },
-  commuteHeaderBadgeText: {
-    color: '#34D399',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  waveformContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 56,
-    gap: 4,
-    marginBottom: 14,
-    width: '100%',
-  },
-  waveBar: {
-    width: 6,
-    borderRadius: 3,
-  },
-  commuteLessonTitle: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '800',
-    textAlign: 'center',
-    marginBottom: 4,
-  },
-  commuteInstructorText: {
-    color: '#94A3B8',
-    fontSize: 12,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  commuteControlsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-    marginBottom: 16,
-  },
-  commuteSkipBtn: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  skipSecText: {
-    color: '#FFFFFF',
-    fontSize: 9,
-    fontWeight: '800',
-    marginTop: -2,
-  },
-  commuteMainPlayBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 4,
-    shadowColor: '#E34234',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
-  commuteBottomBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  commuteTimeText: {
-    color: '#CBD5E1',
-    fontSize: 12,
-    fontVariant: ['tabular-nums'],
-    fontWeight: '600',
-  },
-  bgPlaybackNotice: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  bgPlaybackText: {
-    color: '#6EE7B7',
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  autoplayCountdownOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.82)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    zIndex: 100,
-  },
-  autoplayCard: {
-    width: '90%',
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    shadowColor: '#6366F1',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 6,
-  },
-  autoplayBadgeText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#6366F1',
-    letterSpacing: 0.5,
-  },
-  autoplayCountdownSec: {
-    fontSize: 32,
-    fontWeight: '900',
-    color: '#6366F1',
-    marginVertical: 4,
-  },
-  autoplayNextTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: 14,
-    paddingHorizontal: 8,
-  },
-  autoplayActionsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    width: '100%',
-  },
-  autoplayCancelBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  autoplayCancelText: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  autoplayPlayNowBtn: {
-    flex: 1.2,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: '#6366F1',
-  },
-  autoplayPlayNowText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '700',
   },
 });

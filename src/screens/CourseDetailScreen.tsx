@@ -94,6 +94,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     );
   }
 
+  const isAdmin = Array.isArray(user?.roles) && user.roles.includes('administrator');
   const isEnrolled = !!userProgress[course.id];
   const progressPercent = getCourseProgressPercentage(course.id);
   const bookmarked = isBookmarked(course.id);
@@ -145,6 +146,16 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
   };
 
   const handleEnrollOrResume = () => {
+    if (isAdmin) {
+      const targetLessonId =
+        userProgress[course.id]?.lastAccessedLessonId ||
+        course.modules[0]?.lessons[0]?.id ||
+        '';
+      if (targetLessonId) {
+        onNavigateToLesson(course.id, targetLessonId);
+      }
+      return;
+    }
     if (!isEnrolled) {
       if ((course.priceBdt && course.priceBdt > 0) || (course.price && course.price > 0)) {
         setPaymentModalVisible(true);
@@ -509,6 +520,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                 courseId={course.id}
                 modules={course.modules}
                 isEnrolled={isEnrolled}
+                isAdmin={isAdmin}
                 onSelectLesson={handleSelectLesson}
               />
             </View>
@@ -634,7 +646,19 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
           },
         ]}
       >
-        {!isEnrolled ? (
+        {isAdmin ? (
+          <View style={styles.bottomPriceCol}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Ionicons name="shield-checkmark" size={14} color="#D97706" />
+              <Text style={[styles.bottomPriceLabel, { color: '#D97706', fontWeight: '800' }]}>
+                ADMIN ACCESS
+              </Text>
+            </View>
+            <Text style={[styles.enrolledStatus, { color: colors.textMuted }]}>
+              All course videos unlocked
+            </Text>
+          </View>
+        ) : !isEnrolled ? (
           <View style={styles.bottomPriceCol}>
             <View style={styles.priceRow}>
               <Text style={[styles.bottomPrice, { color: colors.primary }]}>
@@ -671,7 +695,18 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
         )}
 
         <TouchableOpacity
-          style={[styles.enrollCTAButton, { backgroundColor: isEnrolled ? colors.primary : isPaidCourse ? '#FFB606' : colors.primary }]}
+          style={[
+          styles.enrollCTAButton,
+          {
+            backgroundColor: isAdmin
+              ? '#102F53'
+              : isEnrolled
+              ? colors.primary
+              : isPaidCourse
+              ? '#FFB606'
+              : colors.primary,
+          },
+        ]}
           onPress={handleEnrollOrResume}
           activeOpacity={0.88}
           accessibilityRole="button"
@@ -684,12 +719,14 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
           }
         >
           <Ionicons
-            name={isEnrolled ? 'play' : isPaidCourse ? 'open-outline' : 'flash'}
+            name={isAdmin ? 'play-circle' : isEnrolled ? 'play' : isPaidCourse ? 'open-outline' : 'flash'}
             size={18}
             color={!isEnrolled && isPaidCourse ? '#102F53' : '#FFFFFF'}
           />
           <Text style={[styles.enrollCTAText, !isEnrolled && isPaidCourse ? { color: '#102F53', fontWeight: '800' } : null]}>
-            {isEnrolled
+            {isAdmin
+              ? (isBangla ? 'কোর্স ভিডিও দেখুন' : 'Play Course (Admin)')
+              : isEnrolled
               ? (isBangla ? 'লেসনে যান' : 'Resume Course')
               : isPaidCourse
               ? (isBangla ? 'ওয়েবসাইটে ভর্তি হন' : 'Enroll via Web')

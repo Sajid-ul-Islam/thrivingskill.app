@@ -8,13 +8,15 @@ export interface LessonDetail {
   name: string;
   content: string;
   videoUrl?: string;
+  videoIntro?: string;
+  videoType?: 'vimeo' | 'youtube' | 'mp4' | 'iframe' | 'none';
   duration?: string;
   completed?: boolean;
 }
 
 export class LessonsService {
   /**
-   * Fetch lesson content and metadata
+   * Fetch lesson content and metadata including embedded video details
    */
   static async getLessonDetail(lessonId: string | number): Promise<LessonDetail> {
     const cacheKey = `lesson_detail_${lessonId}`;
@@ -23,11 +25,36 @@ export class LessonsService {
 
     try {
       const raw = await HttpClient.get<any>(Endpoints.LEARNPRESS.LESSON_DETAIL(lessonId));
+      
+      const videoIntro = raw.video_intro || raw.meta_data?._lp_lesson_video_intro || '';
+      let videoUrl = raw.video_url || raw.meta_data?.video_url || '';
+
+      if (!videoUrl && videoIntro) {
+        const srcMatch = videoIntro.match(/src=["']([^"']+)["']/i);
+        if (srcMatch && srcMatch[1]) {
+          videoUrl = srcMatch[1];
+        } else if (videoIntro.startsWith('http://') || videoIntro.startsWith('https://')) {
+          videoUrl = videoIntro.trim();
+        }
+      }
+
+      let videoType: 'vimeo' | 'youtube' | 'mp4' | 'iframe' | 'none' = 'none';
+      if (videoUrl) {
+        if (videoUrl.includes('vimeo.com')) videoType = 'vimeo';
+        else if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) videoType = 'youtube';
+        else if (videoUrl.match(/\.(mp4|m3u8|webm)($|\?)/i)) videoType = 'mp4';
+        else videoType = 'iframe';
+      } else if (videoIntro) {
+        videoType = 'iframe';
+      }
+
       const detail: LessonDetail = {
         id: raw.id,
         name: cleanHtml(raw.name || raw.title),
         content: cleanHtml(raw.content),
-        videoUrl: raw.video_url || raw.meta_data?.video_url,
+        videoUrl: videoUrl || undefined,
+        videoIntro: videoIntro || undefined,
+        videoType,
         duration: raw.duration,
         completed: raw.completed,
       };
