@@ -42,6 +42,12 @@
     "plugins": [
       "expo-font",
       "expo-status-bar"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "0b66cee6-c1a5-4c67-b12a-08f8f4356787"
+      }
+    },
+    "owner": "sajid.islam"
   }
 }
