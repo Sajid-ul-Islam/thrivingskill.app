@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback } from 'react';
-import { ScrollView, ScrollViewInstance, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent } from 'react-native';
+import { ScrollView, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent } from 'react-native';
 
 export interface UseAutoScrollOptions {
   /** Whether auto-scroll is actively enabled (default: true) */
@@ -17,7 +17,7 @@ export interface UseAutoScrollOptions {
 }
 
 export interface UseAutoScrollReturn {
-  scrollViewRef: React.RefObject<ScrollViewInstance>;
+  scrollViewRef: React.RefObject<ScrollView>;
   pauseTemporarily: (ms?: number) => void;
   resume: () => void;
   scrollProps: {
@@ -41,7 +41,7 @@ export const useAutoScroll = (options: UseAutoScrollOptions = {}): UseAutoScroll
     loopMode = 'reverse',
   } = options;
 
-  const scrollViewRef = useRef<ScrollViewInstance>(null!);
+  const scrollViewRef = useRef<ScrollView>(null!);
   const scrollPosRef = useRef<number>(0);
   const contentWidthRef = useRef<number>(0);
   const containerWidthRef = useRef<number>(0);

@@ -291,7 +291,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
             {/* Info / Success Notification */}
             {infoMessage ? (
               <View
-                accessibilityRole="status"
+                accessibilityRole="alert"
                 accessibilityLiveRegion="polite"
                 style={[styles.infoBox, { backgroundColor: '#10B98115', borderColor: '#10B981' }]}
               >
