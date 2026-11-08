@@ -95,7 +95,7 @@ export const Header: React.FC<HeaderProps> = ({
           >
             {/* App Brand Icon in Top Left Corner */}
             <Image
-              source={require('../../assets/icon.png')}
+              source={require('../../../assets/icon.png')}
               style={styles.brandAppIcon}
               resizeMode="contain"
             />

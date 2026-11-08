@@ -46,6 +46,26 @@ files.forEach(f => {
     }
   }
 
+  // Check 1b: Unresolved relative requires (assets, images, scripts)
+  const requireRegex = /require\(['"](\.[^'"]+)['"]\)/g;
+  let reqMatch;
+  while ((reqMatch = requireRegex.exec(content)) !== null) {
+    const rel = reqMatch[1];
+    const dir = path.dirname(f);
+    const resolved = path.resolve(dir, rel);
+    const exists =
+      fs.existsSync(resolved + '.ts') ||
+      fs.existsSync(resolved + '.tsx') ||
+      fs.existsSync(resolved + '.js') ||
+      fs.existsSync(resolved + '.png') ||
+      fs.existsSync(resolved + '.jpg') ||
+      fs.existsSync(resolved + '.jpeg') ||
+      fs.existsSync(resolved);
+    if (!exists) {
+      issues.push({ file: f, line: 1, type: 'Broken Asset Require', msg: `Cannot resolve require('${rel}')` });
+    }
+  }
+
   // Check 2: Missing styles referenced in component
   if (f.endsWith('.tsx') && content.includes('StyleSheet.create')) {
     const styleDefIndex = content.indexOf('StyleSheet.create');
@@ -99,6 +119,8 @@ files.forEach(f => {
 });
 
 console.log('Total issues discovered:', issues.length);
-issues.forEach(iss => {
-  console.log(`[${iss.type}] ${iss.file}:${iss.line} -> ${iss.msg}`);
-});
+issues.forEach(i => console.log(`[${i.type}] ${path.relative('.', i.file)}:${i.line} -> ${i.msg}`));
+
+if (issues.some(i => i.type === 'Broken Import' || i.type === 'Broken Asset Require' || i.type === 'Missing Style Definition')) {
+  process.exit(1);
+}

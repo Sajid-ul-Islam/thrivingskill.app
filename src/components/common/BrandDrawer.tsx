@@ -131,7 +131,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
           <View style={styles.drawerHeader}>
             <View style={styles.brandRow}>
               <Image
-                source={require('../../assets/icon.png')}
+                source={require('../../../assets/icon.png')}
                 style={styles.brandLogo}
                 resizeMode="contain"
               />

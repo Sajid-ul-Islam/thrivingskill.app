@@ -31,11 +31,11 @@ interface AboutTSLModalProps {
 
 // Authentic Founder & Leadership Team Assets from official thrivingskill.com portal
 const FOUNDER_IMAGES = {
-  abdullah_al_mahmud: require('../../assets/team/abdullah_al_mahmud.jpeg'),
-  syed_nuruddin_ahmed: require('../../assets/team/syed_nuruddin_ahmed.jpeg'),
-  yusuf_iqbal: require('../../assets/team/yusuf_iqbal.jpeg'),
-  tareq_siddiqui: require('../../assets/team/tareq_siddiqui.jpeg'),
-  abdulla_al_noman: require('../../assets/team/abdulla_al_noman.jpeg'),
+  abdullah_al_mahmud: require('../../../assets/team/abdullah_al_mahmud.jpeg'),
+  syed_nuruddin_ahmed: require('../../../assets/team/syed_nuruddin_ahmed.jpeg'),
+  yusuf_iqbal: require('../../../assets/team/yusuf_iqbal.jpeg'),
+  tareq_siddiqui: require('../../../assets/team/tareq_siddiqui.jpeg'),
+  abdulla_al_noman: require('../../../assets/team/abdulla_al_noman.jpeg'),
 };
 
 export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
@@ -96,7 +96,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
         >
           <View style={styles.headerTitleRow}>
             <Image
-              source={require('../../assets/icon.png')}
+              source={require('../../../assets/icon.png')}
               style={styles.logo}
               resizeMode="contain"
             />
