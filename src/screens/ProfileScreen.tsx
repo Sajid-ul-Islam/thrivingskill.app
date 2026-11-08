@@ -846,21 +846,23 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
             </TouchableOpacity>
 
-            {/* Account & Data Deletion Row (Google Play Mandatory Policy) */}
+            {/* Account & Data Deletion Row (Google Play Mandatory Policy: https://thrivingskill.com/delete-account/) */}
             <TouchableOpacity
               style={styles.settingRow}
               onPress={() => {
-                Linking.openURL('https://thrivingskill.com/delete-account/').catch(() => {
+                Linking.openURL(Env.ACCOUNT_DELETION_URL).catch(() => {
                   Alert.alert(
-                    'Web Data Deletion Form',
-                    'Please visit https://thrivingskill.com/delete-account/ in your web browser to submit an account deletion request.'
+                    isBangla ? 'ওয়েব ডাটা মুছে ফেলার ফর্ম' : 'Web Data Deletion Form',
+                    t('deleteAccountWebPrompt')
                   );
                 });
               }}
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="person-remove-outline" size={20} color={colors.textMuted} />
-                <Text style={[styles.settingLabel, { color: colors.text }]}>Data Deletion Request (Web)</Text>
+                <Text style={[styles.settingLabel, { color: colors.text }]}>
+                  {t('dataDeletionRequestWeb')}
+                </Text>
               </View>
               <Ionicons name="open-outline" size={16} color={colors.textMuted} />
             </TouchableOpacity>
@@ -870,28 +872,30 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: colors.borderSubtle }]}
                 onPress={() => {
                   Alert.alert(
-                    'Delete Account & Data',
-                    'Are you sure you want to permanently delete your Thriving Skills account?\n\nThis will permanently delete your course enrollments, learning progress, notes, and certificate verification records. This action cannot be reversed.',
+                    t('deleteAccountConfirmTitle'),
+                    t('deleteAccountConfirmMsg'),
                     [
-                      { text: 'Cancel', style: 'cancel' },
+                      { text: isBangla ? 'বাতিল' : 'Cancel', style: 'cancel' },
                       {
-                        text: 'Request via Web Form',
+                        text: isBangla ? 'ওয়েব ফর্মে যান' : 'Request via Web Form',
                         onPress: () => {
-                          Linking.openURL('https://thrivingskill.com/delete-account/').catch(() => {
-                            Alert.alert('Web Link', 'Please visit https://thrivingskill.com/delete-account/ to submit your data deletion request.');
+                          Linking.openURL(Env.ACCOUNT_DELETION_URL).catch(() => {
+                            Alert.alert('Web Link', t('deleteAccountWebPrompt'));
                           });
                         },
                       },
                       {
-                        text: 'Delete In-App',
+                        text: isBangla ? 'ইন-অ্যাপ ডিলিট' : 'Delete In-App',
                         style: 'destructive',
                         onPress: () => {
                           Alert.alert(
-                            'Account Deletion Requested 🗑️',
-                            'Your deletion request has been registered. You will now be signed out, and your student profile and progress data will be purged within 24-48 hours in compliance with Google Play Data Safety policies.',
+                            isBangla ? 'অ্যাকাউন্ট মুছে ফেলার অনুরোধ গৃহীত হয়েছে 🗑️' : 'Account Deletion Requested 🗑️',
+                            isBangla
+                              ? 'আপনার অনুরোধ গৃহীত হয়েছে। আপনাকে এখনই সাইন আউট করা হচ্ছে এবং গুগল প্লে ডেটা সুরক্ষা নীতিমালা অনুযায়ী পরবর্তী ২৪-৪৮ ঘণ্টার মধ্যে আপনার সকল তথ্য মুছে ফেলা হবে।'
+                              : 'Your deletion request has been registered. You will now be signed out, and your student profile and progress data will be purged within 24-48 hours in compliance with Google Play Data Safety policies.',
                             [
                               {
-                                text: 'OK',
+                                text: isBangla ? 'ঠিক আছে' : 'OK',
                                 onPress: () => {
                                   logout();
                                 },
@@ -907,7 +911,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 <View style={styles.settingLeft}>
                   <Ionicons name="trash-outline" size={20} color={colors.danger} />
                   <Text style={[styles.settingLabel, { color: colors.danger, fontWeight: '700' }]}>
-                    Delete Account & Data
+                    {t('deleteAccount')}
                   </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={16} color={colors.danger} />

@@ -33,12 +33,12 @@ const FAQ_DATA: FaqItem[] = [
   {
     id: 'pay-1',
     category: 'payment',
-    question: 'How do I pay using bKash, Nagad, or DBBL Rocket?',
-    banglaQuestion: 'বিকাশ, নগদ বা রকেটের মাধ্যমে কীভাবে কোর্স ফি পেমেন্ট করব?',
+    question: 'How do I enroll in paid courses using bKash, Nagad, or Cards?',
+    banglaQuestion: 'বিকাশ, নগদ বা কার্ডের মাধ্যমে পেইড কোর্সে কীভাবে ভর্তি হব?',
     answer:
-      'Select your course, tap "Enroll Now", and choose bKash, Nagad, or Rocket. Enter your mobile wallet account number. Once confirmed, your course will be instantly unlocked and synchronized with your account.',
+      'Select your course and tap "Enroll via Web". You will be securely directed to our official web checkout bridge supporting bKash, Nagad, Rocket, and SSLCommerz. Once completed, return to the app and your course will automatically sync and unlock!',
     banglaAnswer:
-      'কোর্স সিলেক্ট করে "এখনই ভর্তি হন" বাটনে চাপুন এবং বিকাশ, নগদ বা রকেট নির্বাচন করুন। আপনার মোবাইল ওয়ালেট নম্বর প্রদান করুন। পেমেন্ট কনফার্ম হওয়া মাত্রই কোর্সটি সঙ্গে সঙ্গে আনলক হয়ে যাবে।',
+      'কোর্সটি সিলেক্ট করে "ওয়েবসাইটে ভর্তি হন" বাটনে চাপুন। আমাদের সুরক্ষিত অফিসিয়াল চেকআউটে গিয়ে বিকাশ, নগদ, রকেট অথবা কার্ড দিয়ে পেমেন্ট সম্পন্ন করে অ্যাপে ফিরলে কোর্সটি স্বয়ংক্রিয়ভাবে আনলক হয়ে যাবে।',
   },
   {
     id: 'pay-2',
@@ -121,6 +121,16 @@ const FAQ_DATA: FaqItem[] = [
       'হ্যাঁ! সার্টিফিকেট ভিউয়ার থেকে "Add to LinkedIn" বাটনে চাপলে সরাসরি আপনার লিংকডইন প্রোফাইলে ভেরিফাইড ক্রেডেনশিয়াল যুক্ত হবে।',
   },
   {
+    id: 'account-del-1',
+    category: 'account',
+    question: 'How do I request account and data deletion (Google Play Data Safety)?',
+    banglaQuestion: 'কীভাবে আমার অ্যাকাউন্ট ও সকল ব্যক্তিগত তথ্য মুছে ফেলার অনুরোধ করব?',
+    answer:
+      'In compliance with Google Play User Data policies, any registered user can request permanent deletion of their account and all associated data at any time. You can request deletion directly in the app via Profile → Account Settings → Delete Account & Data, or submit an online request directly at https://thrivingskill.com/delete-account/ without having the app installed.',
+    banglaAnswer:
+      'গুগল প্লে স্টোরের পলিসি অনুযায়ী, যেকোনো নিবন্ধিত শিক্ষার্থী অ্যাপের Profile → Account Settings → Delete Account থেকে অথবা সরাসরি https://thrivingskill.com/delete-account/ লিংকে গিয়ে তাদের অ্যাকাউন্ট ও সকল ব্যক্তিগত তথ্য মুছে ফেলার অনুরোধ জমা দিতে পারেন।',
+  },
+  {
     id: 'tech-1',
     category: 'tech',
     question: 'Who can I contact if I encounter any technical issue?',
@@ -153,6 +163,7 @@ export const HelpFaqModal: React.FC<HelpFaqModalProps> = ({ visible, onClose }) 
     { id: 'access', label: isBangla ? 'কোর্স অ্যাক্সেস' : 'Enrollment', icon: 'book-outline' },
     { id: 'video', label: isBangla ? 'ভিডিও ও প্লেয়ার' : 'Video & Audio', icon: 'play-circle-outline' },
     { id: 'certificate', label: isBangla ? 'সার্টিফিকেট' : 'Certificates', icon: 'ribbon-outline' },
+    { id: 'account', label: isBangla ? 'অ্যাকাউন্ট ও নিরাপত্তা' : 'Account & Safety', icon: 'shield-checkmark-outline' },
     { id: 'tech', label: isBangla ? 'টেকনিক্যাল সাপোর্ট' : 'Support', icon: 'headset-outline' },
   ];
 

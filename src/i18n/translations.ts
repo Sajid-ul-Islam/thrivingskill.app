@@ -130,6 +130,13 @@ export const translations = {
     signInWordPress: 'Sign In with Thriving Skills Account',
     signOut: 'Sign Out from WordPress',
     supportHotline: 'Support Hotline',
+    deleteAccount: 'Delete Account & Data',
+    dataDeletionRequestWeb: 'Data Deletion Request (Web)',
+    deleteAccountConfirmTitle: 'Delete Account & Data',
+    deleteAccountConfirmMsg:
+      'Are you sure you want to permanently delete your Thriving Skills account?\n\nThis will permanently delete your course enrollments, learning progress, notes, and certificate verification records. This action cannot be reversed.',
+    deleteAccountWebPrompt:
+      'Please visit https://thrivingskill.com/delete-account/ in your web browser to submit an account deletion request.',
   },
   bn: {
     // Navigation & Tabs
@@ -260,6 +267,13 @@ export const translations = {
     signInWordPress: 'থ্রাইভিং স্কিলস অ্যাকাউন্টে সাইন ইন',
     signOut: 'ওয়ার্ডপ্রেস থেকে সাইন আউট',
     supportHotline: 'হেল্পলাইন সাপোর্ট',
+    deleteAccount: 'অ্যাকাউন্ট ও তথ্য মুছে ফেলুন',
+    dataDeletionRequestWeb: 'ডাটা মুছে ফেলার অনুরোধ (ওয়েব)',
+    deleteAccountConfirmTitle: 'অ্যাকাউন্ট ও তথ্য মুছে ফেলা',
+    deleteAccountConfirmMsg:
+      'আপনি কি নিশ্চিত যে আপনার থ্রাইভিং স্কিলস অ্যাকাউন্টটি স্থায়ীভাবে মুছে ফেলতে চান?\n\nএটি আপনার কোর্স এনরোলমেন্ট, শেখার অগ্রগতি, নোট এবং সার্টিফিকেট রেকর্ড স্থায়ীভাবে মুছে ফেলবে। এই প্রক্রিয়াটি পুনরায় ফিরিয়ে আনা সম্ভব নয়।',
+    deleteAccountWebPrompt:
+      'অ্যাকাউন্ট মুছে ফেলার অনুরোধ জমা দিতে অনুগ্রহ করে আপনার ব্রাউজারে https://thrivingskill.com/delete-account/ লিংকে প্রবেশ করুন।',
   },
 };
 

@@ -47,6 +47,17 @@ export const Env = {
   },
 
   /**
+   * Google Play Mandatory Account & Data Deletion Public URL
+   * Official public link where users can submit account and data deletion requests.
+   * e.g. https://thrivingskill.com/delete-account/
+   */
+  get ACCOUNT_DELETION_URL(): string {
+    const raw = getEnvVar('EXPO_PUBLIC_ACCOUNT_DELETION_URL');
+    if (raw) return raw.endsWith('/') ? raw : `${raw}/`;
+    return 'https://thrivingskill.com/delete-account/';
+  },
+
+  /**
    * Request Timeout in milliseconds
    */
   get REQUEST_TIMEOUT_MS(): number {
