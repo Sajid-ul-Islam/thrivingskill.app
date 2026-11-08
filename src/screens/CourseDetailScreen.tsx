@@ -10,6 +10,8 @@ import {
   ActivityIndicator,
   Modal,
   TextInput,
+  AppState,
+  AppStateStatus,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
@@ -51,6 +53,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     isCertificateUnlocked,
     submitMandatoryCourseReview,
     recordCategoryInteraction,
+    refreshCourses,
   } = useLearning();
   const { user } = useAuth();
 
@@ -96,6 +99,19 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
   const bookmarked = isBookmarked(course.id);
   const { videos, playVideo } = useYouTube();
   const trailerVideo = findRelatedVideoForCourse(course, videos);
+  const isPaidCourse = Boolean((course.priceBdt && course.priceBdt > 0) || (course.price && course.price > 0));
+
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'active' && !isEnrolled && courseId) {
+        refreshCourses().catch(() => {});
+      }
+    };
+    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    return () => {
+      subscription.remove();
+    };
+  }, [courseId, isEnrolled, refreshCourses]);
 
   const discountPercent =
     course.originalPriceBdt && course.priceBdt && course.originalPriceBdt > course.priceBdt
@@ -622,7 +638,9 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
           <View style={styles.bottomPriceCol}>
             <View style={styles.priceRow}>
               <Text style={[styles.bottomPrice, { color: colors.primary }]}>
-                {course.priceBdt ? `৳${course.priceBdt.toLocaleString()}` : `$${course.price.toFixed(2)}`}
+                {isPaidCourse
+                  ? (course.priceBdt ? `৳${course.priceBdt.toLocaleString()}` : `${course.price.toFixed(2)}`)
+                  : (isBangla ? 'বিনামূল্যে' : 'Free')}
               </Text>
               {(course.originalPriceBdt || course.originalPrice) && (
                 <Text style={[styles.bottomOriginalPrice, { color: colors.textMuted }]}>
@@ -653,19 +671,29 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
         )}
 
         <TouchableOpacity
-          style={[styles.enrollCTAButton, { backgroundColor: colors.primary }]}
+          style={[styles.enrollCTAButton, { backgroundColor: isEnrolled ? colors.primary : isPaidCourse ? '#FFB606' : colors.primary }]}
           onPress={handleEnrollOrResume}
           activeOpacity={0.88}
           accessibilityRole="button"
-          accessibilityLabel={isEnrolled ? (isBangla ? 'লেসনে যান' : 'Resume Course') : (isBangla ? 'এখনই ভর্তি হন' : 'Enroll Now')}
+          accessibilityLabel={
+            isEnrolled
+              ? (isBangla ? 'লেসনে যান' : 'Resume Course')
+              : isPaidCourse
+              ? (isBangla ? 'ওয়েবসাইটে ভর্তি হন (বিকাশ / নগদ)' : 'Enroll via Web (bKash / Nagad)')
+              : (isBangla ? 'বিনামূল্যে ভর্তি হন' : 'Enroll for Free')
+          }
         >
           <Ionicons
-            name={isEnrolled ? 'play' : 'flash'}
+            name={isEnrolled ? 'play' : isPaidCourse ? 'open-outline' : 'flash'}
             size={18}
-            color="#FFFFFF"
+            color={!isEnrolled && isPaidCourse ? '#102F53' : '#FFFFFF'}
           />
-          <Text style={styles.enrollCTAText}>
-            {isEnrolled ? (isBangla ? 'লেসনে যান' : 'Resume Course') : (isBangla ? 'এখনই ভর্তি হন' : 'Enroll Now')}
+          <Text style={[styles.enrollCTAText, !isEnrolled && isPaidCourse ? { color: '#102F53', fontWeight: '800' } : null]}>
+            {isEnrolled
+              ? (isBangla ? 'লেসনে যান' : 'Resume Course')
+              : isPaidCourse
+              ? (isBangla ? 'ওয়েবসাইটে ভর্তি হন' : 'Enroll via Web')
+              : (isBangla ? 'বিনামূল্যে ভর্তি হন' : 'Enroll for Free')}
           </Text>
         </TouchableOpacity>
       </View>

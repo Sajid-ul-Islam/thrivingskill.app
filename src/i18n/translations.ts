@@ -72,6 +72,31 @@ export const translations = {
     paymentSuccessTitle: 'Payment Successful! 🎉',
     paymentSuccessMsg: 'Your course has been activated. Start learning now!',
 
+    // Web Checkout Bridge (Approach 1 - Google Play Compliant)
+    webCheckoutTitle: 'Secure Web Enrollment',
+    webCheckoutSubtitle: 'Official Portal Checkout (bKash / Nagad / Cards)',
+    webCheckoutNotice:
+      'To support Bangladesh local payment methods (bKash, Nagad, Rocket) and cards with 100% bank-grade SSL security, enrollments are processed via our official web portal.',
+    howItWorks: 'How it Works',
+    step1Web: '1. Tap below to launch secure checkout in your browser',
+    step2Web: '2. Complete payment via bKash, Nagad, Rocket, or Card',
+    step3Web: '3. Return to the app — your course syncs & unlocks automatically',
+    proceedToWebCheckout: 'Proceed to Official Web Checkout',
+    openInBrowser: 'Opens secure web portal in browser',
+    alreadyPaidSync: 'I Already Paid — Sync Enrollment',
+    syncingEnrollment: 'Verifying enrollment with servers...',
+    syncSuccessTitle: 'Enrollment Confirmed! 🎉',
+    syncSuccessMsg: 'Your course enrollment has been confirmed. You now have full access!',
+    syncPendingTitle: 'Enrollment Not Detected Yet',
+    syncPendingMsg:
+      'If you just completed payment, please wait 30–60 seconds for gateway confirmation and tap Sync again. You can also paste your Order ID or contact support.',
+    orderIdOptional: 'Order ID / bKash TrxID (Optional)',
+    enterOrderIdPlaceholder: 'e.g. 12345 or TRX987654',
+    verifyOrderId: 'Verify & Activate Course',
+    enrollViaWeb: 'Enroll via Web (bKash / Nagad)',
+    freeEnroll: 'Enroll for Free',
+    acceptedGateways: 'Accepted Local Payment Methods',
+
     // Video & Lesson Player
     playbackSpeed: 'Speed',
     saveOffline: 'Save Offline',
@@ -176,6 +201,31 @@ export const translations = {
     confirmPayment: 'পেমেন্ট নিশ্চিত করুন',
     paymentSuccessTitle: 'পেমেন্ট সফল হয়েছে! 🎉',
     paymentSuccessMsg: 'আপনার কোর্সটি সক্রিয় হয়েছে। এখনই শেখা শুরু করুন!',
+
+    // Web Checkout Bridge (Approach 1 - Google Play Compliant)
+    webCheckoutTitle: 'নিরাপদ ওয়েব এনরোলমেন্ট',
+    webCheckoutSubtitle: 'অফিসিয়াল পোর্টাল চেকআউট (বিকাশ / নগদ / কার্ড)',
+    webCheckoutNotice:
+      'বিকাশ, নগদ, রকেট ও ভিসা/মাস্টারকার্ডের মাধ্যমে ব্যাংক-গ্রেড নিরাপত্তায় অতিরিক্ত চার্জ ছাড়া পেমেন্ট করতে আমাদের অফিসিয়াল ওয়েবসাইট ব্যবহার করা হয়।',
+    howItWorks: 'কীভাবে সম্পন্ন করবেন',
+    step1Web: '১. নিচের বাটনে ট্যাপ করে ব্রাউজারে অফিসিয়াল চেকআউট ওপেন করুন',
+    step2Web: '২. আপনার সুবিধাজনক বিকাশ, নগদ বা কার্ড দিয়ে পেমেন্ট সম্পন্ন করুন',
+    step3Web: '৩. অ্যাপে ফিরে আসুন — আপনার কোর্সটি স্বয়ংক্রিয়ভাবে আনলক হয়ে যাবে',
+    proceedToWebCheckout: 'অফিসিয়াল ওয়েবসাইট চেকআউটে যান',
+    openInBrowser: 'ব্রাউজারে সুরক্ষিত পোর্টাল ওপেন হবে',
+    alreadyPaidSync: 'পেমেন্ট করেছি — এনরোলমেন্ট সিঙ্ক করুন',
+    syncingEnrollment: 'সার্ভারের সাথে এনরোলমেন্ট যাচাই করা হচ্ছে...',
+    syncSuccessTitle: 'এনরোলমেন্ট নিশ্চিত হয়েছে! 🎉',
+    syncSuccessMsg: 'আপনার কোর্স এনরোলমেন্ট সফলভাবে সম্পন্ন হয়েছে। এখনই শেখা শুরু করুন!',
+    syncPendingTitle: 'এনরোলমেন্ট এখনও পাওয়া যায়নি',
+    syncPendingMsg:
+      'আপনি মাত্রই পেমেন্ট করে থাকলে গেটওয়ে কনফার্মেশনের জন্য ৩০–৬০ সেকেন্ড অপেক্ষা করে আবার সিঙ্ক করুন। অথবা আপনার অর্ডার আইডি প্রদান করুন।',
+    orderIdOptional: 'অর্ডার আইডি / বিকাশ ট্রানজেকশন আইডি (ঐচ্ছিক)',
+    enterOrderIdPlaceholder: 'যেমনঃ ১২৩৪৫ অথবা TRX987654',
+    verifyOrderId: 'যাচাই করে কোর্স চালু করুন',
+    enrollViaWeb: 'ওয়েবসাইটে গিয়ে ভর্তি হন (বিকাশ / নগদ)',
+    freeEnroll: 'বিনামূল্যে ভর্তি হন',
+    acceptedGateways: 'অনুমোদিত পেমেন্ট মাধ্যমসমূহ',
 
     // Video & Lesson Player
     playbackSpeed: 'স্পিড',
