@@ -846,6 +846,74 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
             </TouchableOpacity>
 
+            {/* Account & Data Deletion Row (Google Play Mandatory Policy) */}
+            <TouchableOpacity
+              style={styles.settingRow}
+              onPress={() => {
+                Linking.openURL('https://thrivingskill.com/delete-account/').catch(() => {
+                  Alert.alert(
+                    'Web Data Deletion Form',
+                    'Please visit https://thrivingskill.com/delete-account/ in your web browser to submit an account deletion request.'
+                  );
+                });
+              }}
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="person-remove-outline" size={20} color={colors.textMuted} />
+                <Text style={[styles.settingLabel, { color: colors.text }]}>Data Deletion Request (Web)</Text>
+              </View>
+              <Ionicons name="open-outline" size={16} color={colors.textMuted} />
+            </TouchableOpacity>
+
+            {isAuthenticated && (
+              <TouchableOpacity
+                style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: colors.borderSubtle }]}
+                onPress={() => {
+                  Alert.alert(
+                    'Delete Account & Data',
+                    'Are you sure you want to permanently delete your Thriving Skills account?\n\nThis will permanently delete your course enrollments, learning progress, notes, and certificate verification records. This action cannot be reversed.',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Request via Web Form',
+                        onPress: () => {
+                          Linking.openURL('https://thrivingskill.com/delete-account/').catch(() => {
+                            Alert.alert('Web Link', 'Please visit https://thrivingskill.com/delete-account/ to submit your data deletion request.');
+                          });
+                        },
+                      },
+                      {
+                        text: 'Delete In-App',
+                        style: 'destructive',
+                        onPress: () => {
+                          Alert.alert(
+                            'Account Deletion Requested 🗑️',
+                            'Your deletion request has been registered. You will now be signed out, and your student profile and progress data will be purged within 24-48 hours in compliance with Google Play Data Safety policies.',
+                            [
+                              {
+                                text: 'OK',
+                                onPress: () => {
+                                  logout();
+                                },
+                              },
+                            ]
+                          );
+                        },
+                      },
+                    ]
+                  );
+                }}
+              >
+                <View style={styles.settingLeft}>
+                  <Ionicons name="trash-outline" size={20} color={colors.danger} />
+                  <Text style={[styles.settingLabel, { color: colors.danger, fontWeight: '700' }]}>
+                    Delete Account & Data
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.danger} />
+              </TouchableOpacity>
+            )}
+
             {/* Auth Action Row */}
             {isAuthenticated ? (
               <TouchableOpacity

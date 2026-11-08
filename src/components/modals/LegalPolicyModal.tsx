@@ -241,6 +241,22 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
                     thrivingskill.com does not knowingly collect Personally Identifiable Information from children under the age of 13. If you believe such data has been entered without parental consent, contact our Data Protection Officer immediately for swift removal.
                   </Text>
 
+                  <Text style={[styles.sectionHeading, { color: colors.text }]}>5. Account Deletion & Right to Erasure (Google Play Policy)</Text>
+                  <Text style={[styles.bodyText, { color: colors.textMuted }]}>
+                    In compliance with Google Play User Data policies, any registered user can request permanent deletion of their account and all associated data at any time. You may initiate deletion in the app via Profile → Account Settings → Delete Account, or submit an online request directly at https://thrivingskill.com/delete-account/ without having the app installed. Upon confirmation, your user profile, course progress records, and personal identifiers will be purged within 48 hours.
+                  </Text>
+
+                  <TouchableOpacity
+                    style={[styles.webLinkBtn, { borderColor: colors.danger, marginBottom: 12 }]}
+                    onPress={() => handleOpenWebLegal('https://thrivingskill.com/delete-account/')}
+                  >
+                    <Ionicons name="trash-bin-outline" size={16} color={colors.danger} />
+                    <Text style={[styles.webLinkText, { color: colors.danger }]}>
+                      Submit Web Account Deletion Request
+                    </Text>
+                    <Ionicons name="open-outline" size={14} color={colors.danger} />
+                  </TouchableOpacity>
+
                   <TouchableOpacity
                     style={[styles.webLinkBtn, { borderColor: colors.primary }]}
                     onPress={() => handleOpenWebLegal('https://thrivingskill.com/privacy-policy/')}
