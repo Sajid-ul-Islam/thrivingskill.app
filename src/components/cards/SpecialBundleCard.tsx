@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SpecialBundle } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
+import { shape } from '../../theme/shapes';
 
 interface SpecialBundleCardProps {
   bundle: SpecialBundle;
@@ -65,7 +66,7 @@ export const SpecialBundleCard: React.FC<SpecialBundleCardProps> = ({ bundle, on
         <View style={[styles.footerRow, { borderTopColor: colors.borderSubtle }]}>
           <View style={styles.statsCol}>
             <View style={styles.ratingRow}>
-              <Ionicons name="star" size={13} color="#F59E0B" />
+              <Ionicons name="star" size={13} color={colors.starColor} />
               <Text style={[styles.ratingText, { color: colors.text }]}>{bundle.rating}</Text>
               <Text style={[styles.enrolledText, { color: colors.textMuted }]}>
                 ({bundle.enrolledCount.toLocaleString()} enrolled)
@@ -89,7 +90,7 @@ export const SpecialBundleCard: React.FC<SpecialBundleCardProps> = ({ bundle, on
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 16,
+    borderRadius: shape.large,
     borderWidth: 1,
     overflow: 'hidden',
     marginBottom: 16,
@@ -122,7 +123,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#D97706',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: shape.extraSmall,
     gap: 4,
   },
   bundleBadgeText: {
@@ -135,7 +136,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#DC2626',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: shape.extraSmall,
   },
   discountText: {
     color: '#FFFFFF',

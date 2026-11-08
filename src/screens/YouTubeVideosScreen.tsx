@@ -19,6 +19,7 @@ import { useYouTube } from '../context/YouTubeContext';
 import { YouTubeCard } from '../components/YouTubeCard';
 import { YouTubeVideo, YOUTUBE_CHANNEL } from '../data/youtubeVideos';
 import { useAutoScroll } from '../hooks/useAutoScroll';
+import { shape } from '../theme/shapes';
 
 interface YouTubeVideosScreenProps {
   onBack: () => void;
@@ -202,19 +203,20 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
                 style={[
                   styles.pill,
                   {
-                    backgroundColor: isSelected ? '#102E52' : colors.surface,
-                    borderColor: isSelected ? '#102E52' : colors.border,
+                    backgroundColor: isSelected ? '#102F53' : colors.surface,
+                    borderColor: isSelected ? '#102F53' : colors.border,
                   },
                 ]}
                 onPress={() => {
                   topicPillsAutoScroll.pauseTemporarily(3000);
                   setSelectedCategory(cat.id);
                 }}
+                hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
               >
                 <Ionicons
                   name={cat.icon as any}
                   size={14}
-                  color={isSelected ? '#FFFFFF' : cat.id === 'saved' && savedVideos.length > 0 ? '#102E52' : colors.textMuted}
+                  color={isSelected ? '#FFFFFF' : cat.id === 'saved' && savedVideos.length > 0 ? '#102F53' : colors.textMuted}
                 />
                 <Text
                   style={[
@@ -376,7 +378,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 20,
+    borderRadius: shape.full,
     borderWidth: 1,
   },
   pillText: {

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Platform } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, Platform, Pressable } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { shape } from './src/theme/shapes';
 
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { LearningProvider, useLearning } from './src/context/LearningContext';
@@ -195,26 +196,34 @@ const MainAppContent: React.FC = () => {
           {tabItems.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
-              <TouchableOpacity
+              <Pressable
                 key={tab.id}
-                style={[
-                  styles.tabButton,
-                  isActive && {
-                    backgroundColor: colors.primaryLight,
-                    borderRadius: 14,
-                  },
-                ]}
+                style={styles.tabButton}
                 onPress={() => navigateToTab(tab.id)}
-                activeOpacity={0.7}
+                android_ripple={{
+                  color: isDark ? 'rgba(56, 189, 248, 0.12)' : 'rgba(16, 47, 83, 0.08)',
+                  borderless: true,
+                  radius: 32,
+                }}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: isActive }}
+                accessibilityLabel={tab.label}
               >
-                <View style={styles.tabIconWrapper}>
+                <View
+                  style={[
+                    styles.tabPillIndicator,
+                    isActive && {
+                      backgroundColor: isDark ? 'rgba(56, 189, 248, 0.16)' : colors.primaryLight,
+                    },
+                  ]}
+                >
                   <Ionicons
                     name={(isActive ? tab.icon : tab.iconOutline) as any}
                     size={21}
                     color={isActive ? colors.primary : colors.tabInactive}
                   />
                   {tab.badgeCount && tab.badgeCount > 0 ? (
-                    <View style={[styles.tabBadge, { backgroundColor: colors.primary }]}>
+                    <View style={[styles.tabBadge, { backgroundColor: colors.accent }]}>
                       <Text style={styles.tabBadgeText}>{tab.badgeCount}</Text>
                     </View>
                   ) : null}
@@ -224,14 +233,14 @@ const MainAppContent: React.FC = () => {
                     styles.tabButtonLabel,
                     {
                       color: isActive ? colors.primary : colors.tabInactive,
-                      fontWeight: isActive ? '800' : '500',
+                      fontWeight: isActive ? '700' : '500',
                     },
                   ]}
                   numberOfLines={1}
                 >
                   {tab.label}
                 </Text>
-              </TouchableOpacity>
+              </Pressable>
             );
           })}
         </View>
@@ -362,29 +371,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
-    paddingVertical: 3,
+    minHeight: 48,
+    paddingVertical: 4,
   },
-  tabIconWrapper: {
+  tabPillIndicator: {
+    width: 60,
+    height: 32,
+    borderRadius: shape.full,
+    alignItems: 'center',
+    justifyContent: 'center',
     position: 'relative',
+    backgroundColor: 'transparent',
   },
   tabBadge: {
     position: 'absolute',
-    top: -4,
-    right: -8,
-    minWidth: 15,
-    height: 15,
-    borderRadius: 7.5,
+    top: 1,
+    right: 12,
+    minWidth: 16,
+    height: 16,
+    borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 3,
   },
   tabBadgeText: {
     color: '#FFFFFF',
-    fontSize: 8,
+    fontSize: 8.5,
     fontWeight: '800',
   },
   tabButtonLabel: {
-    fontSize: 10,
+    fontSize: 10.5,
     marginTop: 3,
   },
 });

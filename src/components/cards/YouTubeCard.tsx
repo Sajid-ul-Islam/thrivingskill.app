@@ -6,6 +6,7 @@ import { useLearning } from '../../context/LearningContext';
 import { useYouTube } from '../../context/YouTubeContext';
 import { YouTubeVideo } from '../../data/youtubeVideos';
 import { findRelatedCourse } from '../../services/youtubeService';
+import { shape } from '../../theme/shapes';
 
 interface YouTubeCardProps {
   video: YouTubeVideo;
@@ -85,7 +86,7 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
           <Ionicons
             name={saved ? 'bookmark' : 'bookmark-outline'}
             size={16}
-            color={saved ? '#102E52' : colors.textMuted}
+            color={saved ? '#102F53' : colors.textMuted}
           />
         </TouchableOpacity>
       </View>
@@ -157,7 +158,7 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
 
       {/* Bookmark button on thumbnail as sibling */}
       <TouchableOpacity
-        style={[styles.bookmarkThumbBtn, { backgroundColor: saved ? '#102E52' : 'rgba(0,0,0,0.6)' }]}
+        style={[styles.bookmarkThumbBtn, { backgroundColor: saved ? '#102F53' : 'rgba(0,0,0,0.6)' }]}
         onPress={(e) => { e?.stopPropagation?.(); toggleSaveVideo(video.id); }}
         hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
       >
@@ -173,7 +174,7 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
 
 const styles = StyleSheet.create({
   cardContainer: {
-    borderRadius: 14,
+    borderRadius: shape.large,
     borderWidth: 1,
     overflow: 'hidden',
     marginBottom: 12,
@@ -196,7 +197,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.85)',
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: shape.extraSmall,
   },
   durationText: {
     color: '#FFFFFF',
@@ -216,7 +217,7 @@ const styles = StyleSheet.create({
   playButton: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: shape.full,
     backgroundColor: '#FF0000',
     alignItems: 'center',
     justifyContent: 'center',
@@ -233,7 +234,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.95)',
     paddingHorizontal: 6,
     paddingVertical: 3,
-    borderRadius: 4,
+    borderRadius: shape.extraSmall,
   },
   bookmarkThumbBtn: {
     position: 'absolute',
@@ -241,7 +242,7 @@ const styles = StyleSheet.create({
     right: 8,
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -255,7 +256,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(5, 150, 105, 0.08)',
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 4,
+    borderRadius: shape.extraSmall,
     alignSelf: 'flex-start',
     marginBottom: 6,
     maxWidth: '100%',
@@ -301,7 +302,7 @@ const styles = StyleSheet.create({
   // Horizontal layout styles
   horizontalContainer: {
     flexDirection: 'row',
-    borderRadius: 12,
+    borderRadius: shape.medium,
     borderWidth: 1,
     padding: 10,
     marginBottom: 10,
@@ -310,7 +311,7 @@ const styles = StyleSheet.create({
   horizontalThumbWrapper: {
     width: 120,
     height: 68,
-    borderRadius: 8,
+    borderRadius: shape.small,
     overflow: 'hidden',
     position: 'relative',
     backgroundColor: '#000',
@@ -327,7 +328,7 @@ const styles = StyleSheet.create({
     transform: [{ translateX: -11 }, { translateY: -11 }],
     width: 22,
     height: 22,
-    borderRadius: 11,
+    borderRadius: shape.full,
     backgroundColor: '#FF0000',
     alignItems: 'center',
     justifyContent: 'center',

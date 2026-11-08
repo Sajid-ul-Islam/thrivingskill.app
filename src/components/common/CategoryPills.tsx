@@ -6,6 +6,7 @@ import { Category, CategoryId } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAutoScroll } from '../../hooks/useAutoScroll';
+import { shape } from '../../theme/shapes';
 
 interface CategoryPillsProps {
   selectedId: CategoryId;
@@ -65,6 +66,7 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({
             ]}
             onPress={() => handlePressCategory(cat.id)}
             activeOpacity={0.75}
+            hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
           >
             <Ionicons
               name={cat.icon as any}
@@ -120,7 +122,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 20,
+    borderRadius: shape.full,
     borderWidth: 1,
   },
   selectedPillShadow: {
@@ -139,7 +141,7 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 10,
+    borderRadius: shape.full,
   },
   countText: {
     fontSize: 11,

@@ -23,6 +23,7 @@ import { LegalPolicyModal, LegalTabKey } from '../modals/LegalPolicyModal';
 import { HelpFaqModal } from '../modals/HelpFaqModal';
 import { BlogModal } from '../modals/BlogModal';
 import { RootTab } from '../../types';
+import { shape } from '../../theme/shapes';
 import { Env } from '../../config/env';
 
 interface BrandDrawerProps {
@@ -60,6 +61,15 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
   const [blogModalVisible, setBlogModalVisible] = useState(false);
 
   const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
+  const navTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (navTimerRef.current) {
+        clearTimeout(navTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (visible) {
@@ -82,7 +92,13 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
 
   const handleNav = (action: () => void) => {
     onClose();
-    setTimeout(action, 150);
+    if (navTimerRef.current) {
+      clearTimeout(navTimerRef.current);
+    }
+    navTimerRef.current = setTimeout(() => {
+      navTimerRef.current = null;
+      action();
+    }, 150);
   };
 
   const handleCallHelpline = () => {
@@ -183,6 +199,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
                     const nextWs = workspaces.find((w) => w.id !== activeWorkspace.id);
                     if (nextWs) switchWorkspace(nextWs.id);
                   }}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
                   <Ionicons name="swap-horizontal" size={14} color={colors.text} />
                   <Text style={[styles.switchWsText, { color: colors.text }]}>Switch</Text>
@@ -593,7 +610,7 @@ const styles = StyleSheet.create({
   closeBtn: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: shape.large,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -603,7 +620,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   workspaceCard: {
-    borderRadius: 12,
+    borderRadius: shape.medium,
     borderWidth: 1,
     padding: 10,
     marginBottom: 12,
@@ -620,7 +637,7 @@ const styles = StyleSheet.create({
   wsIconCircle: {
     width: 30,
     height: 30,
-    borderRadius: 15,
+    borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -639,7 +656,7 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 5,
-    borderRadius: 8,
+    borderRadius: shape.small,
     borderWidth: StyleSheet.hairlineWidth,
     marginLeft: 6,
   },
@@ -648,7 +665,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   partnerBanner: {
-    borderRadius: 12,
+    borderRadius: shape.medium,
     borderWidth: 1,
     padding: 10,
     marginBottom: 16,
@@ -675,14 +692,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 9,
     paddingHorizontal: 8,
-    borderRadius: 10,
+    borderRadius: shape.medium,
     marginBottom: 2,
     gap: 10,
   },
   navIconBg: {
     width: 32,
     height: 32,
-    borderRadius: 8,
+    borderRadius: shape.small,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -694,7 +711,7 @@ const styles = StyleSheet.create({
   badgeNew: {
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 6,
+    borderRadius: shape.extraSmall,
   },
   badgeNewText: {
     color: '#FFFFFF',
@@ -711,6 +728,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 10,
     paddingHorizontal: 8,
+    minHeight: 48,
   },
   actionLabel: {
     fontSize: 13,
@@ -719,7 +737,7 @@ const styles = StyleSheet.create({
   pillState: {
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 10,
+    borderRadius: shape.medium,
   },
   pillStateText: {
     fontSize: 10,
@@ -746,7 +764,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 11,
     paddingHorizontal: 16,
-    borderRadius: 12,
+    borderRadius: shape.medium,
     borderWidth: 1,
     marginTop: 6,
   },

@@ -20,6 +20,7 @@ import { useLearning } from '../../context/LearningContext';
 import { useYouTube } from '../../context/YouTubeContext';
 import { YouTubeVideo, YOUTUBE_CHANNEL } from '../../data/youtubeVideos';
 import { findRelatedCourse } from '../../services/youtubeService';
+import { shape } from '../../theme/shapes';
 
 interface YouTubePlayerModalProps {
   visible: boolean;
@@ -270,7 +271,7 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
                 style={[
                   styles.saveBtn,
                   saved
-                    ? { backgroundColor: '#102E52', borderColor: '#102E52' }
+                    ? { backgroundColor: '#102F53', borderColor: '#102F53' }
                     : { backgroundColor: colors.background, borderColor: colors.border },
                 ]}
                 onPress={() => toggleSaveVideo(currentVideo.id)}
@@ -366,7 +367,7 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
 
               <View style={styles.courseMetaRow}>
                 <View style={styles.courseMetaItem}>
-                  <Ionicons name="star" size={13} color="#F59E0B" />
+                  <Ionicons name="star" size={13} color={colors.starColor} />
                   <Text style={[styles.courseMetaText, { color: colors.text }]}>{relatedCourse.rating}</Text>
                 </View>
                 <Text style={styles.courseMetaDot}>•</Text>
@@ -602,7 +603,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: shape.medium,
     borderWidth: 1,
   },
   saveBtnText: {
@@ -615,7 +616,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: shape.medium,
     borderWidth: 1,
   },
   shareBtnText: {
@@ -629,7 +630,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: shape.medium,
     backgroundColor: '#FF0000',
   },
   openYouTubeText: {
@@ -662,7 +663,7 @@ const styles = StyleSheet.create({
   speedPill: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: shape.small,
     borderWidth: 1,
     minWidth: 38,
     alignItems: 'center',
@@ -674,7 +675,7 @@ const styles = StyleSheet.create({
   // Course Cross-Linking Card
   coursePromoCard: {
     padding: 16,
-    borderRadius: 14,
+    borderRadius: shape.large,
     borderWidth: 1.5,
     gap: 8,
   },
@@ -691,7 +692,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(5, 150, 105, 0.12)',
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 6,
+    borderRadius: shape.extraSmall,
   },
   badgePillText: {
     fontSize: 10,
@@ -736,9 +737,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#102E52',
+    backgroundColor: '#102F53',
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: shape.medium,
     marginTop: 6,
   },
   viewCourseBtnText: {
@@ -751,14 +752,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 14,
-    borderRadius: 14,
+    borderRadius: shape.large,
     borderWidth: 1,
     gap: 12,
   },
   channelAvatar: {
     width: 44,
     height: 44,
-    borderRadius: 22,
+    borderRadius: shape.full,
     backgroundColor: 'rgba(255, 0, 0, 0.08)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -775,10 +776,10 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   subscribeBtn: {
-    backgroundColor: '#102E52',
+    backgroundColor: '#102F53',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: shape.small,
   },
   subscribeText: {
     color: '#FFFFFF',

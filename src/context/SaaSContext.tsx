@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   SubscriptionTier,
@@ -138,6 +138,16 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     keyInsight: 'Strong executive communication and AI adoption potential. Recommended focus on Data Analytics & Python to complete end-to-end automation.',
   });
 
+  const copilotTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copilotTimerRef.current) {
+        clearTimeout(copilotTimerRef.current);
+      }
+    };
+  }, []);
+
   // Load from AsyncStorage
   useEffect(() => {
     (async () => {
@@ -249,8 +259,12 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     setCopilotMessages((prev) => [...prev, userMsg]);
 
+    if (copilotTimerRef.current) {
+      clearTimeout(copilotTimerRef.current);
+    }
+
     // Generate intelligent contextual response
-    setTimeout(() => {
+    copilotTimerRef.current = setTimeout(() => {
       let reply = '';
       let actions: string[] = [];
       const lower = userText.toLowerCase();

@@ -29,6 +29,7 @@ import { BlogModal } from '../components/BlogModal';
 import { ProfileLearningAnalytics } from '../components/ProfileLearningAnalytics';
 import { CertificateModal } from '../components/CertificateModal';
 import { Course, Certificate } from '../types';
+import { UserService } from '../services/api/userService';
 import { CacheManager } from '../services/cache/cacheManager';
 import { Env } from '../config/env';
 
@@ -55,7 +56,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const { language, toggleLanguage, isBangla, t } = useLanguage();
   const { badges } = useGamification();
   const { userProgress, certificates } = useLearning();
-  const { user, isAuthenticated, logout, setAuthModalVisible } = useAuth();
+  const { user, isAuthenticated, logout, setAuthModalVisible, updateUserProfile } = useAuth();
   const {
     subscriptionTier,
     billingInterval,
@@ -75,15 +76,26 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [paymentHistoryModalVisible, setPaymentHistoryModalVisible] = useState(false);
 
   // Edit Profile Form (Section 25 Spec)
-  const [customName, setCustomName] = useState(user?.displayName || user?.username || 'Executive Learner');
-  const [customPhone, setCustomPhone] = useState('01712000000');
-  const [customBio, setCustomBio] = useState('Senior Business Executive & Continuous Learner');
-  const [customCity, setCustomCity] = useState('Gulshan-2, Dhaka');
+  const [customName, setCustomName] = useState(user?.name || user?.displayName || user?.username || '');
+  const [customPhone, setCustomPhone] = useState(user?.phone || '');
+  const [customBio, setCustomBio] = useState(user?.description || '');
+  const [customCity, setCustomCity] = useState(user?.city || '');
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+
+  React.useEffect(() => {
+    if (user) {
+      setCustomName(user.name || user.displayName || user.username || '');
+      setCustomPhone(user.phone || '');
+      setCustomBio(user.description || '');
+      setCustomCity(user.city || '');
+    }
+  }, [user]);
 
   // Change Password Form (Section 26 Spec)
   const [currentPass, setCurrentPass] = useState('');
   const [newPass, setNewPass] = useState('');
   const [confirmPass, setConfirmPass] = useState('');
+  const [isChangingPass, setIsChangingPass] = useState(false);
 
   // Video Streaming Preference (Section 26 Spec)
   const [videoQuality, setVideoQuality] = useState<'Auto' | '1080p' | '720p' | '480p'>('Auto');
@@ -103,37 +115,140 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     );
   };
 
-  const handleSaveProfile = () => {
-    setEditProfileModalVisible(false);
-    Alert.alert('Profile Updated! ✅', 'Your personal executive details have been saved successfully.');
+  const handleSaveProfile = async () => {
+    if (!isAuthenticated) {
+      setEditProfileModalVisible(false);
+      setAuthModalVisible(true);
+      return;
+    }
+
+    setIsSavingProfile(true);
+    try {
+      const updatedUser = await UserService.updateProfile({
+        name: customName.trim(),
+        description: customBio.trim(),
+        phone: customPhone.trim(),
+      });
+
+      await updateUserProfile({
+        ...updatedUser,
+        name: customName.trim(),
+        displayName: customName.trim(),
+        description: customBio.trim(),
+        phone: customPhone.trim(),
+        city: customCity.trim(),
+      });
+
+      setEditProfileModalVisible(false);
+      Alert.alert(
+        isBangla ? 'প্রোফাইল আপডেট হয়েছে! ✅' : 'Profile Updated! ✅',
+        isBangla
+          ? 'আপনার প্রোফাইল তথ্য সফলভাবে সংরক্ষিত ও সিঙ্ক হয়েছে।'
+          : 'Your personal executive details have been saved successfully.'
+      );
+    } catch (err: any) {
+      console.warn('Profile update remote sync error:', err);
+      try {
+        await updateUserProfile({
+          name: customName.trim(),
+          displayName: customName.trim(),
+          description: customBio.trim(),
+          phone: customPhone.trim(),
+          city: customCity.trim(),
+        });
+        setEditProfileModalVisible(false);
+        Alert.alert(
+          isBangla ? 'প্রোফাইল আপডেট হয়েছে! ✅' : 'Profile Updated! ✅',
+          isBangla
+            ? 'আপনার প্রোফাইল তথ্য লোকালি সংরক্ষিত হয়েছে।'
+            : 'Your personal executive details have been saved locally.'
+        );
+      } catch {
+        Alert.alert(
+          isBangla ? 'ত্রুটি' : 'Error',
+          err?.message || (isBangla ? 'প্রোফাইল সংরক্ষণ ব্যর্থ হয়েছে।' : 'Failed to save profile. Please try again.')
+        );
+      }
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (!currentPass || !newPass || !confirmPass) {
-      Alert.alert('Incomplete Form', 'Please fill in all password fields.');
+      Alert.alert(
+        isBangla ? 'অসম্পূর্ণ ফর্ম' : 'Incomplete Form',
+        isBangla ? 'অনুগ্রহ করে সকল পাসওয়ার্ড ঘর পূরণ করুন।' : 'Please fill in all password fields.'
+      );
       return;
     }
     if (newPass !== confirmPass) {
-      Alert.alert('Mismatch', 'New password and confirm password do not match.');
+      Alert.alert(
+        isBangla ? 'পাসওয়ার্ড মেলেনি' : 'Mismatch',
+        isBangla ? 'নতুন পাসওয়ার্ড ও নিশ্চিতকরণ পাসওয়ার্ড মেলেনি।' : 'New password and confirm password do not match.'
+      );
       return;
     }
     if (newPass.length < 6) {
-      Alert.alert('Security Notice', 'New password must be at least 6 characters.');
+      Alert.alert(
+        isBangla ? 'নিরাপত্তা বার্তা' : 'Security Notice',
+        isBangla ? 'নতুন পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।' : 'New password must be at least 6 characters.'
+      );
       return;
     }
-    setCurrentPass('');
-    setNewPass('');
-    setConfirmPass('');
-    setChangePasswordModalVisible(false);
-    Alert.alert('Password Changed! 🔒', 'Your account credentials have been updated successfully.');
+
+    if (!isAuthenticated) {
+      setChangePasswordModalVisible(false);
+      setAuthModalVisible(true);
+      return;
+    }
+
+    setIsChangingPass(true);
+    try {
+      const res = await UserService.changePassword({
+        old_password: currentPass,
+        new_password: newPass,
+        confirm_password: confirmPass,
+      });
+
+      setCurrentPass('');
+      setNewPass('');
+      setConfirmPass('');
+      setChangePasswordModalVisible(false);
+      Alert.alert(
+        isBangla ? 'পাসওয়ার্ড পরিবর্তিত হয়েছে! 🔒' : 'Password Changed! 🔒',
+        res.message || (isBangla ? 'আপনার অ্যাকাউন্টের পাসওয়ার্ড সফলভাবে আপডেট করা হয়েছে।' : 'Your account credentials have been updated successfully.')
+      );
+    } catch (err: any) {
+      const msg = err?.message || '';
+      if (
+        msg.includes('current password is incorrect') ||
+        err?.code === 'rest_user_incorrect_password' ||
+        err?.data?.code === 'rest_user_incorrect_password'
+      ) {
+        Alert.alert(
+          isBangla ? 'ভুল বর্তমান পাসওয়ার্ড' : 'Incorrect Current Password',
+          isBangla
+            ? 'আপনার বর্তমান পাসওয়ার্ডটি সঠিক নয়। অনুগ্রহ করে পুনরায় চেক করুন।'
+            : 'Your current password is incorrect. Please check and try again.'
+        );
+      } else {
+        Alert.alert(
+          isBangla ? 'ত্রুটি' : 'Error',
+          msg || (isBangla ? 'পাসওয়ার্ড পরিবর্তন ব্যর্থ হয়েছে।' : 'Failed to change password. Please try again.')
+        );
+      }
+    } finally {
+      setIsChangingPass(false);
+    }
   };
 
   const enrolledCount = Object.keys(userProgress).length;
   const completedCount = Object.values(userProgress).filter((p) => p.isCompleted).length;
-  const isAdmin =
-    user?.roles?.includes('administrator') ||
-    user?.username?.toLowerCase() === 'admin' ||
-    user?.email?.toLowerCase().includes('admin@');
+  const isAdmin = Array.isArray(user?.roles) && user.roles.includes('administrator');
+
+
+
 
   const handleDownloadInvoice = () => {
     Alert.alert(
@@ -164,6 +279,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             source={{
               uri:
                 user?.avatar ||
+                (user?.avatar_urls && (user.avatar_urls['96'] || user.avatar_urls['48'] || user.avatar_urls['24'])) ||
                 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
             }}
             style={styles.avatar}
@@ -171,7 +287,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           <View style={styles.profileInfo}>
             <View style={styles.nameRow}>
               <Text style={[styles.name, { color: colors.text }]}>
-                {customName || user?.displayName || user?.username || 'Guest Learner'}
+                {user?.name || user?.displayName || user?.username || customName || (isBangla ? 'অতিথি শিক্ষার্থী' : 'Guest Learner')}
               </Text>
               <View
                 style={[
@@ -201,10 +317,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               </View>
             </View>
             <Text style={[styles.email, { color: colors.textMuted }]}>
-              {user?.email || 'Explore catalog & courses freely'}
+              {user?.email || (isBangla ? 'কোর্স ক্যাটালগ এক্সপ্লোর করুন' : 'Explore catalog & courses freely')}
             </Text>
             <Text style={[styles.role, { color: colors.secondary }]} numberOfLines={2}>
-              {customBio || (isAuthenticated
+              {user?.description || customBio || (isAuthenticated
                 ? `Connected to ${Env.SITE_URL.replace(/^https?:\/\//, "")} • ${activeWorkspace.name}`
                 : 'Thriving Skills Online Platform')}
             </Text>
@@ -214,7 +330,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 styles.editProfileBtn,
                 { backgroundColor: colors.primaryLight, borderColor: colors.primary },
               ]}
-              onPress={() => setEditProfileModalVisible(true)}
+              onPress={() => {
+                if (user) {
+                  setCustomName(user.name || user.displayName || user.username || '');
+                  setCustomPhone(user.phone || '');
+                  setCustomBio(user.description || '');
+                  setCustomCity(user.city || '');
+                }
+                setEditProfileModalVisible(true);
+              }}
             >
               <Ionicons name="create-outline" size={13} color={colors.primary} />
               <Text style={[styles.editProfileBtnText, { color: colors.primary }]}>
@@ -467,6 +591,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             ]}
           >
             {/* WordPress Admin Portal Shortcut */}
+            {isAdmin && (
             <TouchableOpacity
               style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
               onPress={() => Linking.openURL(Env.WP_ADMIN_URL)}
@@ -484,6 +609,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               </View>
               <Ionicons name="open-outline" size={16} color={colors.textMuted} />
             </TouchableOpacity>
+            )}
 
             {/* In-App OTA Updates (No APK Rebuild Required) */}
             <TouchableOpacity
@@ -1078,12 +1204,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.saveBtn, { backgroundColor: colors.primary }]}
+                style={[styles.saveBtn, { backgroundColor: colors.primary, opacity: isSavingProfile ? 0.7 : 1 }]}
                 onPress={handleSaveProfile}
+                disabled={isSavingProfile}
               >
                 <Ionicons name="checkmark-circle-outline" size={16} color="#FFFFFF" />
                 <Text style={styles.saveBtnText}>
-                  {isBangla ? 'সংরক্ষণ করুন' : 'Save Changes'}
+                  {isSavingProfile
+                    ? (isBangla ? 'সংরক্ষণ হচ্ছে...' : 'Saving...')
+                    : (isBangla ? 'সংরক্ষণ করুন' : 'Save Changes')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1168,12 +1297,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.saveBtn, { backgroundColor: colors.primary }]}
+                style={[styles.saveBtn, { backgroundColor: colors.primary, opacity: isChangingPass ? 0.7 : 1 }]}
                 onPress={handleChangePassword}
+                disabled={isChangingPass}
               >
                 <Ionicons name="shield-checkmark-outline" size={16} color="#FFFFFF" />
                 <Text style={styles.saveBtnText}>
-                  {isBangla ? 'পাসওয়ার্ড আপডেট' : 'Update Password'}
+                  {isChangingPass
+                    ? (isBangla ? 'আপডেট হচ্ছে...' : 'Updating...')
+                    : (isBangla ? 'পাসওয়ার্ড আপডেট' : 'Update Password')}
                 </Text>
               </TouchableOpacity>
             </View>

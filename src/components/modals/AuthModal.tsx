@@ -10,18 +10,20 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { Env } from '../../config/env';
+import { AuthService } from '../../services/api/authService';
 
 interface AuthModalProps {
   visible: boolean;
   onClose: () => void;
 }
 
-type AuthMode = 'login' | 'register';
+type AuthMode = 'login' | 'register' | 'forgot_password';
 
 export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
   const { colors, isDark } = useTheme();
@@ -40,6 +42,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
+  const [isResetLoading, setIsResetLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!username.trim() || !password.trim()) {
@@ -65,16 +68,68 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
       setRegPhone('');
       onClose();
     } catch (err: any) {
-      if (
-        err.message?.includes('Phone Number is required field') ||
-        err.message?.includes('registration-custom-required-field')
+      const code = String(err?.code || err?.data?.code || '');
+      const message = String(err?.message || '');
+
+      if (code.includes('invalid_username')) {
+        setErrorMessage('Username or email is not registered. Please check your spelling or create an account.');
+      } else if (code.includes('incorrect_password')) {
+        setErrorMessage("Incorrect password. Please try again or tap 'Forgot Password' below.");
+      } else if (code.includes('empty_username')) {
+        setErrorMessage('Please enter your username or email address.');
+      } else if (
+        message.includes('Phone Number is required field') ||
+        message.includes('registration-custom-required-field') ||
+        code.includes('phone')
       ) {
         setErrorMessage(
           'WordPress requires a phone number for registration. Please enter your mobile number in the Phone Number field above or contact support.'
         );
+      } else if (code.includes('username_exists')) {
+        setErrorMessage('This username is already registered. Please choose another username or sign in.');
+      } else if (code.includes('email_exists')) {
+        setErrorMessage('An account with this email already exists. Please sign in or reset your password.');
       } else {
-        setErrorMessage(err.message || 'Authentication failed. Please check your credentials.');
+        setErrorMessage(message || 'Authentication failed. Please check your credentials.');
       }
+    }
+  };
+
+  const handleResetPassword = async () => {
+    const userLogin = username.trim();
+    if (!userLogin) {
+      setErrorMessage('Please enter your username or email address.');
+      return;
+    }
+
+    setErrorMessage(null);
+    setInfoMessage(null);
+    setIsResetLoading(true);
+
+    try {
+      const res = await AuthService.resetPassword(userLogin);
+      if (res?.code === 'success' || !res?.code) {
+        const successMsg = 'A link to reset your password has been emailed to you.';
+        setInfoMessage(successMsg);
+        Alert.alert('Reset Link Sent 📧', successMsg);
+      } else {
+        setInfoMessage(res.message || 'Password reset request submitted successfully.');
+      }
+    } catch (err: any) {
+      const code = String(err?.code || err?.data?.code || '');
+      const msg = String(err?.message || '');
+
+      if (code.includes('error_not_user') || msg.includes('error_not_user') || msg.includes('Invalid username or email')) {
+        const notFoundMsg = 'User not found. No account is registered with this username or email.';
+        setErrorMessage(notFoundMsg);
+        Alert.alert('User Not Found', notFoundMsg);
+      } else if (code.includes('error_santize_login') || msg.includes('Enter a username')) {
+        setErrorMessage('Enter a valid username or email address.');
+      } else {
+        setErrorMessage(msg || 'Failed to send password reset email. Please try again.');
+      }
+    } finally {
+      setIsResetLoading(false);
     }
   };
 
@@ -116,64 +171,72 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
             </View>
 
             <Text style={[styles.title, { color: colors.text }]}>
-              {mode === 'login' ? 'Welcome Back, Professional' : 'Create Your Free Account'}
+              {mode === 'login'
+                ? 'Welcome Back, Professional'
+                : mode === 'register'
+                ? 'Create Your Free Account'
+                : 'Reset Your Password'}
             </Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]}>
               {mode === 'login'
                 ? 'Sign in to access your masterclasses, certificates, and learning track.'
-                : 'Join 50,000+ executives and learners across Bangladesh.'}
+                : mode === 'register'
+                ? 'Join 50,000+ executives and learners across Bangladesh.'
+                : 'Enter your username or email address and we will email you a link to reset your password.'}
             </Text>
 
             {/* Mode Switch Tabs: Email / Mobile OTP / Register */}
-            <View style={[styles.tabSwitch, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
-              <TouchableOpacity
-                accessibilityRole="tab"
-                accessibilityState={{ selected: mode === 'login' }}
-                style={[
-                  styles.tabSwitchItem,
-                  mode === 'login' && [styles.tabSwitchActive, { backgroundColor: colors.surfaceCard }],
-                ]}
-                onPress={() => {
-                  setMode('login');
-                  setErrorMessage(null);
-                  setInfoMessage(null);
-                }}
-              >
-                <Text
+            {mode !== 'forgot_password' && (
+              <View style={[styles.tabSwitch, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+                <TouchableOpacity
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: mode === 'login' }}
                   style={[
-                    styles.tabSwitchText,
-                    { color: mode === 'login' ? colors.text : colors.textMuted },
-                    mode === 'login' && { fontWeight: '700' },
+                    styles.tabSwitchItem,
+                    mode === 'login' && [styles.tabSwitchActive, { backgroundColor: colors.surfaceCard }],
                   ]}
+                  onPress={() => {
+                    setMode('login');
+                    setErrorMessage(null);
+                    setInfoMessage(null);
+                  }}
                 >
-                  Email Login
-                </Text>
-              </TouchableOpacity>
+                  <Text
+                    style={[
+                      styles.tabSwitchText,
+                      { color: mode === 'login' ? colors.text : colors.textMuted },
+                      mode === 'login' && { fontWeight: '700' },
+                    ]}
+                  >
+                    Email Login
+                  </Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                accessibilityRole="tab"
-                accessibilityState={{ selected: mode === 'register' }}
-                style={[
-                  styles.tabSwitchItem,
-                  mode === 'register' && [styles.tabSwitchActive, { backgroundColor: colors.surfaceCard }],
-                ]}
-                onPress={() => {
-                  setMode('register');
-                  setErrorMessage(null);
-                  setInfoMessage(null);
-                }}
-              >
-                <Text
+                <TouchableOpacity
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: mode === 'register' }}
                   style={[
-                    styles.tabSwitchText,
-                    { color: mode === 'register' ? colors.text : colors.textMuted },
-                    mode === 'register' && { fontWeight: '700' },
+                    styles.tabSwitchItem,
+                    mode === 'register' && [styles.tabSwitchActive, { backgroundColor: colors.surfaceCard }],
                   ]}
+                  onPress={() => {
+                    setMode('register');
+                    setErrorMessage(null);
+                    setInfoMessage(null);
+                  }}
                 >
-                  Register
-                </Text>
-              </TouchableOpacity>
-            </View>
+                  <Text
+                    style={[
+                      styles.tabSwitchText,
+                      { color: mode === 'register' ? colors.text : colors.textMuted },
+                      mode === 'register' && { fontWeight: '700' },
+                    ]}
+                  >
+                    Register
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
 
             {/* Error Notification */}
             {errorMessage ? (
@@ -199,171 +262,270 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
               </View>
             ) : null}
 
-            /* Email / Password Form (Sign In & Register) */
-              <View style={{ width: '100%' }}>
-                {mode === 'register' && (
-                  <>
-                    <View style={styles.inputGroup}>
-                      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Full Name</Text>
-                      <View
-                        style={[
-                          styles.inputWrapper,
-                          { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
-                        ]}
-                      >
-                        <Ionicons name="person-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
-                        <TextInput
-                          style={[styles.input, { color: colors.text }]}
-                          placeholder="e.g. Sajid Ul Islam"
-                          placeholderTextColor={colors.textMuted + '80'}
-                          value={name}
-                          onChangeText={(t) => {
-                            setName(t);
-                            if (errorMessage) setErrorMessage(null);
-                          }}
-                          autoComplete="name"
-                          textContentType="name"
-                        />
-                      </View>
-                    </View>
-
-                    <View style={styles.inputGroup}>
-                      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Phone Number (মোবাইল নম্বর)</Text>
-                      <View
-                        style={[
-                          styles.inputWrapper,
-                          { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
-                        ]}
-                      >
-                        <Ionicons name="call-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
-                        <TextInput
-                          style={[styles.input, { color: colors.text }]}
-                          placeholder="e.g. 01712345678"
-                          placeholderTextColor={colors.textMuted + '80'}
-                          value={regPhone}
-                          onChangeText={(t) => {
-                            setRegPhone(t);
-                            if (errorMessage) setErrorMessage(null);
-                          }}
-                          keyboardType="phone-pad"
-                          autoComplete="tel"
-                          textContentType="telephoneNumber"
-                        />
-                      </View>
-                    </View>
-                  </>
-                )}
-
-                {/* Email / Username Input */}
-                <View style={styles.inputGroup}>
-                  <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
-                    {mode === 'login' ? 'Email or Username' : 'Email Address'}
-                  </Text>
-                  <View
-                    style={[
-                      styles.inputWrapper,
-                      { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
-                    ]}
-                  >
-                    <Ionicons name="mail-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
-                    <TextInput
-                      style={[styles.input, { color: colors.text }]}
-                      placeholder={mode === 'login' ? 'e.g. user@thrivingskill.com' : 'e.g. name@domain.com'}
-                      placeholderTextColor={colors.textMuted + '80'}
-                      value={username}
-                      onChangeText={(t) => {
-                        setUsername(t);
-                        if (errorMessage) setErrorMessage(null);
-                      }}
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                      keyboardType="email-address"
-                      autoComplete="email"
-                      textContentType="username"
-                    />
-                  </View>
-                </View>
-
-                {/* Password Input */}
-                <View style={styles.inputGroup}>
-                  <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Password</Text>
-                  <View
-                    style={[
-                      styles.inputWrapper,
-                      { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
-                    ]}
-                  >
-                    <Ionicons
-                      name="lock-closed-outline"
-                      size={18}
-                      color={colors.textMuted}
-                      style={styles.inputIcon}
-                    />
-                    <TextInput
-                      style={[styles.input, { color: colors.text }]}
-                      placeholder={mode === 'login' ? 'Enter your password' : 'Create a secure password'}
-                      placeholderTextColor={colors.textMuted + '80'}
-                      value={password}
-                      onChangeText={(t) => {
-                        setPassword(t);
-                        if (errorMessage) setErrorMessage(null);
-                      }}
-                      secureTextEntry={!showPassword}
-                      autoCapitalize="none"
-                      autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                      textContentType={mode === 'login' ? 'password' : 'newPassword'}
-                    />
-                    <TouchableOpacity
-                      onPress={() => setShowPassword(!showPassword)}
-                      style={styles.eyeButton}
-                      accessibilityRole="button"
-                      accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+            {/* Form Section */}
+            <View style={{ width: '100%' }}>
+              {mode === 'forgot_password' ? (
+                <>
+                  {/* Email / Username Input for Reset */}
+                  <View style={styles.inputGroup}>
+                    <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
+                      Email or Username
+                    </Text>
+                    <View
+                      style={[
+                        styles.inputWrapper,
+                        { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                      ]}
                     >
-                      <Ionicons
-                        name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                        size={18}
-                        color={colors.textMuted}
+                      <Ionicons name="mail-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                      <TextInput
+                        style={[styles.input, { color: colors.text }]}
+                        placeholder="e.g. user@thrivingskill.com or username"
+                        placeholderTextColor={colors.textMuted + '80'}
+                        value={username}
+                        onChangeText={(t) => {
+                          setUsername(t);
+                          if (errorMessage) setErrorMessage(null);
+                        }}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        keyboardType="email-address"
+                        autoComplete="email"
+                        textContentType="username"
                       />
-                    </TouchableOpacity>
+                    </View>
                   </View>
-                </View>
 
-                {/* Submit Button */}
-                <TouchableOpacity
-                  style={[
-                    styles.submitButton,
-                    { backgroundColor: colors.accent },
-                  ]}
-                  onPress={handleLogin}
-                  disabled={isLoading}
-                  activeOpacity={0.88}
-                  accessibilityRole="button"
-                >
-                  {isLoading ? (
-                    <ActivityIndicator color="#FFFFFF" size="small" />
-                  ) : (
+                  {/* Send Reset Link Submit Button */}
+                  <TouchableOpacity
+                    style={[
+                      styles.submitButton,
+                      { backgroundColor: colors.accent },
+                    ]}
+                    onPress={handleResetPassword}
+                    disabled={isResetLoading}
+                    activeOpacity={0.88}
+                    accessibilityRole="button"
+                    accessibilityLabel="Send Password Reset Link"
+                  >
+                    {isResetLoading ? (
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    ) : (
+                      <>
+                        <Text style={styles.submitButtonText}>
+                          Send Password Reset Link
+                        </Text>
+                        <Ionicons name="mail-unread-outline" size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
+                      </>
+                    )}
+                  </TouchableOpacity>
+
+                  {/* Back to Sign In */}
+                  <TouchableOpacity
+                    style={styles.backToLoginBtn}
+                    onPress={() => {
+                      setMode('login');
+                      setErrorMessage(null);
+                      setInfoMessage(null);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Back to Sign In"
+                  >
+                    <Ionicons name="arrow-back" size={16} color={colors.accent} />
+                    <Text style={[styles.backToLoginText, { color: colors.accent }]}>
+                      Back to Sign In
+                    </Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  {mode === 'register' && (
                     <>
-                      <Text style={styles.submitButtonText}>
-                        {mode === 'login' ? 'Sign In with Credentials' : 'Create Free Account'}
-                      </Text>
-                      <Ionicons name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
+                      <View style={styles.inputGroup}>
+                        <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Full Name</Text>
+                        <View
+                          style={[
+                            styles.inputWrapper,
+                            { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                          ]}
+                        >
+                          <Ionicons name="person-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                          <TextInput
+                            style={[styles.input, { color: colors.text }]}
+                            placeholder="e.g. Sajid Ul Islam"
+                            placeholderTextColor={colors.textMuted + '80'}
+                            value={name}
+                            onChangeText={(t) => {
+                              setName(t);
+                              if (errorMessage) setErrorMessage(null);
+                            }}
+                            autoComplete="name"
+                            textContentType="name"
+                          />
+                        </View>
+                      </View>
+
+                      <View style={styles.inputGroup}>
+                        <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Phone Number (মোবাইল নম্বর)</Text>
+                        <View
+                          style={[
+                            styles.inputWrapper,
+                            { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                          ]}
+                        >
+                          <Ionicons name="call-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                          <TextInput
+                            style={[styles.input, { color: colors.text }]}
+                            placeholder="e.g. 01712345678"
+                            placeholderTextColor={colors.textMuted + '80'}
+                            value={regPhone}
+                            onChangeText={(t) => {
+                              setRegPhone(t);
+                              if (errorMessage) setErrorMessage(null);
+                            }}
+                            keyboardType="phone-pad"
+                            autoComplete="tel"
+                            textContentType="telephoneNumber"
+                          />
+                        </View>
+                      </View>
                     </>
                   )}
-                </TouchableOpacity>
-              </View>
+
+                  {/* Email / Username Input */}
+                  <View style={styles.inputGroup}>
+                    <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
+                      {mode === 'login' ? 'Email or Username' : 'Email Address'}
+                    </Text>
+                    <View
+                      style={[
+                        styles.inputWrapper,
+                        { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                      ]}
+                    >
+                      <Ionicons name="mail-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                      <TextInput
+                        style={[styles.input, { color: colors.text }]}
+                        placeholder={mode === 'login' ? 'e.g. user@thrivingskill.com' : 'e.g. name@domain.com'}
+                        placeholderTextColor={colors.textMuted + '80'}
+                        value={username}
+                        onChangeText={(t) => {
+                          setUsername(t);
+                          if (errorMessage) setErrorMessage(null);
+                        }}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        keyboardType="email-address"
+                        autoComplete="email"
+                        textContentType="username"
+                      />
+                    </View>
+                  </View>
+
+                  {/* Password Input */}
+                  <View style={styles.inputGroup}>
+                    <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Password</Text>
+                    <View
+                      style={[
+                        styles.inputWrapper,
+                        { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                      ]}
+                    >
+                      <Ionicons
+                        name="lock-closed-outline"
+                        size={18}
+                        color={colors.textMuted}
+                        style={styles.inputIcon}
+                      />
+                      <TextInput
+                        style={[styles.input, { color: colors.text }]}
+                        placeholder={mode === 'login' ? 'Enter your password' : 'Create a secure password'}
+                        placeholderTextColor={colors.textMuted + '80'}
+                        value={password}
+                        onChangeText={(t) => {
+                          setPassword(t);
+                          if (errorMessage) setErrorMessage(null);
+                        }}
+                        secureTextEntry={!showPassword}
+                        autoCapitalize="none"
+                        autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                        textContentType={mode === 'login' ? 'password' : 'newPassword'}
+                      />
+                      <TouchableOpacity
+                        onPress={() => setShowPassword(!showPassword)}
+                        style={styles.eyeButton}
+                        accessibilityRole="button"
+                        accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+                      >
+                        <Ionicons
+                          name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                          size={18}
+                          color={colors.textMuted}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  {/* Forgot Password Touchable Option */}
+                  {mode === 'login' && (
+                    <View style={styles.forgotPasswordContainer}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setMode('forgot_password');
+                          setErrorMessage(null);
+                          setInfoMessage(null);
+                        }}
+                        style={styles.forgotPasswordTouch}
+                        accessibilityRole="button"
+                        accessibilityLabel="Forgot Password?"
+                      >
+                        <Text style={[styles.forgotPasswordText, { color: colors.accent }]}>
+                          Forgot Password?
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+
+                  {/* Submit Button */}
+                  <TouchableOpacity
+                    style={[
+                      styles.submitButton,
+                      { backgroundColor: colors.accent },
+                    ]}
+                    onPress={handleLogin}
+                    disabled={isLoading}
+                    activeOpacity={0.88}
+                    accessibilityRole="button"
+                  >
+                    {isLoading ? (
+                      <ActivityIndicator color="#FFFFFF" size="small" />
+                    ) : (
+                      <>
+                        <Text style={styles.submitButtonText}>
+                          {mode === 'login' ? 'Sign In with Credentials' : 'Create Free Account'}
+                        </Text>
+                        <Ionicons name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
 
             {/* Guest Action */}
-            <TouchableOpacity
-              style={[
-                styles.guestButton,
-                { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
-              ]}
-              onPress={handleGuest}
-              activeOpacity={0.75}
-            >
-              <Ionicons name="compass-outline" size={18} color={colors.text} style={{ marginRight: 8 }} />
-              <Text style={[styles.guestButtonText, { color: colors.text }]}>Explore as Guest</Text>
-            </TouchableOpacity>
+            {mode !== 'forgot_password' && (
+              <TouchableOpacity
+                style={[
+                  styles.guestButton,
+                  { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                ]}
+                onPress={handleGuest}
+                activeOpacity={0.75}
+              >
+                <Ionicons name="compass-outline" size={18} color={colors.text} style={{ marginRight: 8 }} />
+                <Text style={[styles.guestButtonText, { color: colors.text }]}>Explore as Guest</Text>
+              </TouchableOpacity>
+            )}
 
             <Text style={[styles.disclaimerText, { color: colors.textMuted }]}>
               Protected by TLS encryption. Connected to ' + Env.SITE_URL.replace(/^https?:\/\//, '') + ' official LMS.
@@ -539,6 +701,35 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '700',
+  },
+  forgotPasswordContainer: {
+    width: '100%',
+    alignItems: 'flex-end',
+    marginBottom: 8,
+    marginTop: -4,
+  },
+  forgotPasswordTouch: {
+    minHeight: 48,
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+  },
+  forgotPasswordText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  backToLoginBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
+    paddingVertical: 8,
+    marginBottom: 10,
+  },
+  backToLoginText: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 6,
   },
   guestButton: {
     flexDirection: 'row',

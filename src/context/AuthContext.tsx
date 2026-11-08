@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WpUser } from '../types';
+import { UserProfile } from '../services/api/userService';
 import {
   loginWpUser,
   registerWpUser,
@@ -9,11 +10,13 @@ import {
   verifyWpPhoneOtp,
 } from '../services/wordpressApi';
 
+export type { UserProfile };
+
 const AUTH_USER_STORAGE_KEY = '@thrivingskill_auth_user';
 const AUTH_TOKEN_STORAGE_KEY = '@thrivingskill_auth_token';
 
 interface AuthContextType {
-  user: WpUser | null;
+  user: UserProfile | null;
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -24,6 +27,7 @@ interface AuthContextType {
   loginWithPhone: (phone: string, otp: string, fullName?: string) => Promise<void>;
   sendPhoneOtp: (phone: string) => Promise<{ success: boolean; message: string; testOtp?: string }>;
   register: (username: string, email: string, password: string, phone?: string) => Promise<void>;
+  updateUserProfile: (updates: Partial<UserProfile>) => Promise<void>;
   logout: () => Promise<void>;
   continueAsGuest: () => void;
 }
@@ -31,7 +35,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<WpUser | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isGuest, setIsGuest] = useState<boolean>(true);
@@ -46,7 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ]);
 
         if (savedUser && savedToken) {
-          const parsedUser: WpUser = JSON.parse(savedUser);
+          const parsedUser: UserProfile = JSON.parse(savedUser);
           setUser(parsedUser);
           setToken(savedToken);
           setIsGuest(false);
@@ -69,8 +73,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     })();
   }, []);
 
-  const saveUserSession = async (loggedInUser: WpUser) => {
-    setUser(loggedInUser);
+  const saveUserSession = async (loggedInUser: WpUser | UserProfile) => {
+    setUser(loggedInUser as UserProfile);
     setToken(loggedInUser.token || null);
     setIsGuest(false);
     setAuthModalVisible(false);
@@ -81,6 +85,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ? AsyncStorage.setItem(AUTH_TOKEN_STORAGE_KEY, loggedInUser.token)
         : Promise.resolve(),
     ]);
+  };
+
+  const updateUserProfile = async (updates: Partial<UserProfile>): Promise<void> => {
+    if (!user) return;
+    const updatedUser: UserProfile = {
+      ...user,
+      ...updates,
+      displayName: updates.name || updates.displayName || user.displayName,
+      name: updates.name !== undefined ? updates.name : (user.name || user.displayName),
+    };
+    setUser(updatedUser);
+    try {
+      await AsyncStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(updatedUser));
+    } catch (e) {
+      console.warn('Failed to persist user profile update:', e);
+    }
   };
 
   const login = async (username: string, password: string) => {
@@ -149,6 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loginWithPhone,
         sendPhoneOtp,
         register,
+        updateUserProfile,
         logout,
         continueAsGuest,
       }}

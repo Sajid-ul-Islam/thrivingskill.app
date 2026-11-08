@@ -19,6 +19,7 @@ import { SpecialBundleCard } from '../components/SpecialBundleCard';
 import { CourseCardSkeleton } from '../components/SkeletonLoader';
 import { SPECIAL_BUNDLES } from '../data/mockData';
 import { useAutoScroll } from '../hooks/useAutoScroll';
+import { shape } from '../theme/shapes';
 
 interface CoursesScreenProps {
   onNavigateToCourse: (courseId: string) => void;
@@ -188,6 +189,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                   }}
                   accessibilityRole="button"
                   accessibilityLabel={`Filter by ${lvl} difficulty`}
+                  hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
                 >
                   <Text
                     style={[
@@ -211,6 +213,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                 onPress={() => setViewMode('grid')}
                 accessibilityRole="button"
                 accessibilityLabel="Switch to grid layout"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <Ionicons
                   name="grid-outline"
@@ -226,6 +229,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                 onPress={() => setViewMode('list')}
                 accessibilityRole="button"
                 accessibilityLabel="Switch to list layout"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <Ionicons
                   name="list-outline"
@@ -259,6 +263,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                       selectedPriceFilter === pf && { backgroundColor: colors.primary },
                     ]}
                     onPress={() => setSelectedPriceFilter(pf)}
+                    hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
                   >
                     <Text
                       style={[
@@ -281,6 +286,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                 }}
                 accessibilityRole="button"
                 accessibilityLabel={`Sort courses by ${selectedSort}`}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <Ionicons name="swap-vertical" size={13} color={colors.primary} />
                 <Text style={[styles.sortBtnText, { color: colors.text }]}>
@@ -408,7 +414,7 @@ const styles = StyleSheet.create({
   levelPill: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: shape.small,
     borderWidth: 1,
   },
   levelText: {
@@ -422,7 +428,7 @@ const styles = StyleSheet.create({
   viewToggleBtn: {
     width: 32,
     height: 32,
-    borderRadius: 8,
+    borderRadius: shape.small,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -441,7 +447,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: shape.small,
     borderWidth: 1,
     gap: 6,
   },
@@ -452,14 +458,14 @@ const styles = StyleSheet.create({
   priceFilterGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: shape.small,
     borderWidth: 1,
     padding: 2,
   },
   priceFilterBtn: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: shape.extraSmall,
   },
   priceFilterBtnText: {
     fontSize: 11,
@@ -476,7 +482,7 @@ const styles = StyleSheet.create({
   emptyIconCircle: {
     width: 80,
     height: 80,
-    borderRadius: 40,
+    borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
@@ -503,7 +509,7 @@ const styles = StyleSheet.create({
   suggestionChip: {
     paddingHorizontal: 12,
     paddingVertical: 7,
-    borderRadius: 20,
+    borderRadius: shape.full,
     borderWidth: 1,
   },
   suggestionText: {
@@ -516,7 +522,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 20,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: shape.medium,
   },
   resetBtnText: {
     color: '#FFFFFF',
