@@ -49,7 +49,7 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
               </View>
             ) : null}
             <View style={styles.playIconSmall}>
-              <Ionicons name="play" size={12} color="#FFFFFF" />
+              <Ionicons name="play" size={12} color={saved && isDark ? '#102F53' : '#FFFFFF'} />
             </View>
           </View>
 
@@ -86,7 +86,7 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
           <Ionicons
             name={saved ? 'bookmark' : 'bookmark-outline'}
             size={16}
-            color={saved ? '#102F53' : colors.textMuted}
+            color={saved ? (isDark ? '#FFB606' : '#102F53') : colors.textMuted}
           />
         </TouchableOpacity>
       </View>
@@ -158,7 +158,7 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
 
       {/* Bookmark button on thumbnail as sibling */}
       <TouchableOpacity
-        style={[styles.bookmarkThumbBtn, { backgroundColor: saved ? '#102F53' : 'rgba(0,0,0,0.6)' }]}
+        style={[styles.bookmarkThumbBtn, { backgroundColor: saved ? (isDark ? '#FFB606' : '#102F53') : 'rgba(0,0,0,0.6)' }]}
         onPress={(e) => { e?.stopPropagation?.(); toggleSaveVideo(video.id); }}
         hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
       >

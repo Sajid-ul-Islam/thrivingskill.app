@@ -178,7 +178,13 @@ const MainAppContent: React.FC = () => {
       </View>
 
       {/* Floating Mini Player (visible when player is minimized) */}
-      <YouTubeMiniPlayer bottomOffset={activeScreen.name === 'MainTabs' ? 64 : 16} />
+      <YouTubeMiniPlayer
+        bottomOffset={
+          activeScreen.name === 'MainTabs'
+            ? 64 + Math.max(insets.bottom, Platform.OS === 'ios' ? 12 : 8)
+            : Math.max(insets.bottom, 16)
+        }
+      />
 
       {/* Bottom Tab Bar (shown only when on MainTabs) */}
       {activeScreen.name === 'MainTabs' && (

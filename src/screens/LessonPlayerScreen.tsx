@@ -8,6 +8,7 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
@@ -408,34 +409,43 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
 
   // Fallback video from YouTube masterclass library if lesson has no direct URL
   const relatedTrailer = findRelatedVideoForCourse(course, videos);
+  const fallbackVideo = relatedTrailer || (videos && videos.length > 0 ? videos[0] : null);
 
-  // Determine active video source
-  const activeVideoUrl = lessonDetail?.videoUrl || currentLesson?.videoUrl || (relatedTrailer ? relatedTrailer.url : undefined);
+  // Determine active video source & intro markup
   const activeVideoIntro = lessonDetail?.videoIntro || currentLesson?.videoIntro;
+  const rawUrl = lessonDetail?.videoUrl || currentLesson?.videoUrl;
+  const activeVideoUrl = rawUrl || (activeVideoIntro && !activeVideoIntro.includes('<iframe') && (activeVideoIntro.startsWith('http') || activeVideoIntro.includes('vimeo') || activeVideoIntro.includes('youtu')) ? activeVideoIntro.trim() : undefined) || (fallbackVideo ? fallbackVideo.url : undefined);
+
+  // Resolved clean video link for external playback
+  const resolvedVideoUrl = activeVideoUrl || (fallbackVideo ? fallbackVideo.url : undefined);
 
   // Build responsive embedded HTML player
   const buildVideoHtml = () => {
     let embedMarkup = '';
     if (activeVideoIntro && activeVideoIntro.includes('<iframe')) {
       embedMarkup = activeVideoIntro
+        .replace(/src=["']\/\//gi, 'src="https://')
         .replace(/width="[^"]*"/gi, 'width="100%"')
         .replace(/height="[^"]*"/gi, 'height="100%"');
+      if (!embedMarkup.includes('allow=')) {
+        embedMarkup = embedMarkup.replace('<iframe', '<iframe allow="autoplay; fullscreen; picture-in-picture" allowfullscreen');
+      }
     } else if (activeVideoUrl) {
       if (activeVideoUrl.includes('vimeo.com')) {
         const vMatch = activeVideoUrl.match(/\/video\/(\d+)/) || activeVideoUrl.match(/vimeo\.com\/(\d+)/);
         const vId = vMatch ? vMatch[1] : '';
-        const vSrc = vId ? `https://player.vimeo.com/video/${vId}?autoplay=1&title=0&byline=0&portrait=0` : activeVideoUrl;
-        embedMarkup = `<iframe src="${vSrc}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+        const vSrc = vId ? `https://player.vimeo.com/video/${vId}?autoplay=1&title=0&byline=0&portrait=0&dnt=1` : activeVideoUrl;
+        embedMarkup = `<iframe src="${vSrc}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
       } else if (activeVideoUrl.includes('youtube.com') || activeVideoUrl.includes('youtu.be')) {
         let ytId = '';
         const yMatch = activeVideoUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
         if (yMatch && yMatch[1]) ytId = yMatch[1];
-        const ytSrc = ytId ? `https://www.youtube.com/embed/${ytId}?autoplay=1&playsinline=1&modestbranding=1&rel=0` : activeVideoUrl;
-        embedMarkup = `<iframe src="${ytSrc}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>`;
+        const ytSrc = ytId ? `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&playsinline=1&modestbranding=1&rel=0&enablejsapi=1` : activeVideoUrl;
+        embedMarkup = `<iframe src="${ytSrc}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
       } else if (activeVideoUrl.match(/\.(mp4|m3u8|webm)($|\?)/i)) {
-        embedMarkup = `<video src="${activeVideoUrl}" controls autoplay playsinline style="width:100%;height:100%;object-fit:contain;background:#000;"></video>`;
+        embedMarkup = `<video src="${activeVideoUrl}" controls autoplay playsinline style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;"></video>`;
       } else {
-        embedMarkup = `<iframe src="${activeVideoUrl}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+        embedMarkup = `<iframe src="${activeVideoUrl}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
       }
     } else {
       embedMarkup = `<div style="color:#FFF;font-family:system-ui,sans-serif;text-align:center;padding:40px 20px;"><div style="font-size:32px;margin-bottom:8px;">▶️</div><div>Loading lecture media stream...</div></div>`;
@@ -454,13 +464,24 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
       height: 100%;
       background-color: #000000;
       overflow: hidden;
+    }
+    .video-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
+      background: #000000;
     }
     iframe, video {
-      width: 100vw !important;
-      height: 100vh !important;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100% !important;
+      height: 100% !important;
       max-width: 100% !important;
       max-height: 100% !important;
       border: 0;
@@ -468,7 +489,9 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   </style>
 </head>
 <body>
-  ${embedMarkup}
+  <div class="video-wrapper">
+    ${embedMarkup}
+  </div>
 </body>
 </html>`;
   };
@@ -718,13 +741,37 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               </View>
             ) : (
               <WebView
-                source={{ html: buildVideoHtml() }}
+                source={{ html: buildVideoHtml(), baseUrl: 'https://thrivingskill.com' }}
                 style={styles.videoWebView}
                 allowsFullscreenVideo
                 javaScriptEnabled
                 domStorageEnabled
                 mediaPlaybackRequiresUserAction={false}
                 allowsInlineMediaPlayback
+                originWhitelist={['*']}
+                mixedContentMode="always"
+                androidLayerType="hardware"
+                allowsProtectedMedia={true}
+                userAgent="Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+                renderError={() => (
+                  <View style={styles.loadingVideoOverlay}>
+                    <Ionicons name="alert-circle-outline" size={32} color="#FFB606" />
+                    <Text style={[styles.loadingVideoText, { color: '#FFFFFF', marginTop: 4 }]}>
+                      {isBangla ? 'ভিডিও স্ট্রিমে সংযোগ ব্যর্থ হয়েছে' : 'Video stream unavailable'}
+                    </Text>
+                    {resolvedVideoUrl && (
+                      <TouchableOpacity
+                        style={styles.videoFallbackBtn}
+                        onPress={() => Linking.openURL(resolvedVideoUrl).catch(() => {})}
+                      >
+                        <Ionicons name="open-outline" size={14} color="#102F53" />
+                        <Text style={styles.videoFallbackBtnText}>
+                          {isBangla ? 'ব্রাউজারে ভিডিও চালু করুন' : 'Watch in Browser / App'}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
               />
             )}
 
@@ -804,6 +851,18 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
             </View>
 
             <View style={styles.playbackRightControls}>
+              {resolvedVideoUrl && (
+                <TouchableOpacity
+                  style={[styles.speedPill, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border, borderWidth: 1 }]}
+                  onPress={() => Linking.openURL(resolvedVideoUrl).catch(() => {})}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open video externally"
+                >
+                  <Ionicons name="open-outline" size={13} color={colors.text} />
+                  <Text style={[styles.speedPillText, { color: colors.text }]}>Open</Text>
+                </TouchableOpacity>
+              )}
+
               <TouchableOpacity style={styles.speedPill} onPress={cycleSpeed}>
                 <Text style={styles.speedPillText}>{playbackSpeed}</Text>
               </TouchableOpacity>
@@ -1427,6 +1486,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: '#FFB606',
+  },
+  videoFallbackBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FFB606',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  videoFallbackBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#102F53',
   },
   playbackToolbar: {
     flexDirection: 'row',

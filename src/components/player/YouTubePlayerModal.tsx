@@ -69,6 +69,14 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
     return null;
   }
 
+  const cleanVideoId = React.useMemo(() => {
+    if (!currentVideo?.id) return '';
+    const match =
+      currentVideo.id.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/) ||
+      (currentVideo.url ? currentVideo.url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/) : null);
+    return match && match[1] ? match[1] : currentVideo.id.trim();
+  }, [currentVideo?.id, currentVideo?.url]);
+
   const saved = isSaved(currentVideo.id);
   const relatedCourse = findRelatedCourse(currentVideo, courses);
   const relatedVideos = videos.filter((v) => v.id !== currentVideo.id);
@@ -162,9 +170,9 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
                 height={(SCREEN_WIDTH * 9) / 16}
                 width={SCREEN_WIDTH}
                 play={isPlaying}
-                videoId={currentVideo.id}
+                videoId={cleanVideoId}
                 playbackRate={playbackSpeed}
-                useLocalHTML={true}
+                useLocalHTML={false}
                 baseUrlOverride="https://thrivingskill.com"
                 onReady={() => setPlayerLoading(false)}
                 onChangeState={(state: string) => {

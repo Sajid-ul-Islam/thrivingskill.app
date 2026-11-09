@@ -71,10 +71,12 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
       selectedLevel === 'All' ||
       course.level === selectedLevel ||
       course.level === 'All Levels';
+    const isFree = (!course.price || course.price === 0) && (!course.priceBdt || course.priceBdt === 0);
+    const isPaid = (course.price && course.price > 0) || (course.priceBdt && course.priceBdt > 0);
     const matchesPrice =
       selectedPriceFilter === 'all' ||
-      (selectedPriceFilter === 'free' && (course.price === 0 || !course.price)) ||
-      (selectedPriceFilter === 'paid' && course.price > 0);
+      (selectedPriceFilter === 'free' && isFree) ||
+      (selectedPriceFilter === 'paid' && isPaid);
     const matchesSearch =
       !searchQuery ||
       course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -87,8 +89,10 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   filtered.sort((a, b) => {
     if (selectedSort === 'newest') return Number(b.id) - Number(a.id);
     if (selectedSort === 'rating') return b.rating - a.rating;
-    if (selectedSort === 'price-low') return a.price - b.price;
-    if (selectedSort === 'price-high') return b.price - a.price;
+    const priceA = a.priceBdt !== undefined && a.priceBdt > 0 ? a.priceBdt : (a.price ? a.price * 118 : 0);
+    const priceB = b.priceBdt !== undefined && b.priceBdt > 0 ? b.priceBdt : (b.price ? b.price * 118 : 0);
+    if (selectedSort === 'price-low') return priceA - priceB;
+    if (selectedSort === 'price-high') return priceB - priceA;
     return b.enrolledCount - a.enrolledCount; // popular
   });
 

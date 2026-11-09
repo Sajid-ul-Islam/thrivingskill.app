@@ -246,6 +246,10 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
           <TouchableOpacity
             style={[styles.previewPlayBtn, { backgroundColor: 'rgba(0,0,0,0.7)' }]}
             onPress={() => {
+              if (isEnrolled || isAdmin) {
+                handleEnrollOrResume();
+                return;
+              }
               if (trailerVideo) {
                 playVideo(trailerVideo, 'modal');
                 return;
@@ -259,11 +263,21 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
             }}
             activeOpacity={0.8}
             accessibilityRole="button"
-            accessibilityLabel={trailerVideo ? 'Watch Video Trailer' : 'Watch Free Preview'}
+            accessibilityLabel={
+              isEnrolled || isAdmin
+                ? 'Resume course lecture'
+                : trailerVideo
+                ? 'Watch Video Trailer'
+                : 'Watch Free Preview'
+            }
           >
             <Ionicons name="play" size={28} color="#FFFFFF" />
             <Text style={styles.previewBtnText}>
-              {trailerVideo ? 'Watch Video Trailer' : 'Watch Free Preview'}
+              {isEnrolled || isAdmin
+                ? (isBangla ? 'কোর্স শুরু / চালিয়ে যান' : 'Resume Course')
+                : trailerVideo
+                ? (isBangla ? 'ট্রেইলার ভিডিও দেখুন' : 'Watch Video Trailer')
+                : (isBangla ? 'ফ্রি প্রিভিউ দেখুন' : 'Watch Free Preview')}
             </Text>
           </TouchableOpacity>
         </View>
