@@ -1,3 +1,4 @@
+import { SpringPressable } from '../common';
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -41,10 +42,10 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
           },
         ]}
       >
-        <TouchableOpacity
+        <SpringPressable
           style={styles.horizontalCardBody}
           onPress={onPress}
-          activeOpacity={0.85}
+          activeScale={0.97}
           accessibilityRole="button"
           accessibilityLabel={`${course.title} by ${course.instructor?.name || "Thriving Skills"}`}
         >
@@ -106,9 +107,9 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
               </View>
             )}
           </View>
-        </TouchableOpacity>
+        </SpringPressable>
 
-        <TouchableOpacity
+        <SpringPressable
           style={[styles.bookmarkBtn, { backgroundColor: colors.surfaceSubtle }]}
           onPress={() => toggleBookmark(course.id)}
           activeOpacity={0.7}
@@ -121,7 +122,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
             size={18}
             color={bookmarked ? colors.primary : colors.textMuted}
           />
-        </TouchableOpacity>
+        </SpringPressable>
       </View>
     );
   }
@@ -137,9 +138,9 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
         },
       ]}
     >
-      <TouchableOpacity
+      <SpringPressable
         onPress={onPress}
-        activeOpacity={0.88}
+        activeScale={0.97}
         accessibilityRole="button"
         accessibilityLabel={`${course.title} by ${course.instructor?.name || "Thriving Skills"}`}
       >
@@ -216,9 +217,9 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
             </View>
           )}
         </View>
-      </TouchableOpacity>
+      </SpringPressable>
 
-      <TouchableOpacity
+      <SpringPressable
         style={[styles.floatingBookmark, { backgroundColor: 'rgba(0,0,0,0.6)' }]}
         onPress={() => toggleBookmark(course.id)}
         activeOpacity={0.7}
@@ -231,7 +232,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
           size={16}
           color={bookmarked ? colors.primary : '#FFFFFF'}
         />
-      </TouchableOpacity>
+      </SpringPressable>
     </View>
   );
 };

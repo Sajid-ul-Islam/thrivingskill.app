@@ -13,6 +13,7 @@ import { useLearning } from '../context/LearningContext';
 import { Header } from '../components/Header';
 import { CertificateModal } from '../components/CertificateModal';
 import { YouTubeCard } from '../components/YouTubeCard';
+import { AnimatedTabContent } from '../components/common';
 import { useYouTube } from '../context/YouTubeContext';
 import { Certificate } from '../types';
 import { YouTubeVideo } from '../data/youtubeVideos';
@@ -200,6 +201,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
 
         {/* Tab Content */}
         <View style={styles.tabContent}>
+          <AnimatedTabContent tabKey={activeTab}>
           {activeTab === 'in-progress' && (
             <>
               {inProgressList.length === 0 ? (
@@ -548,6 +550,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
               )}
             </>
           )}
+          </AnimatedTabContent>
         </View>
       </ScrollView>
 

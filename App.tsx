@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Platform, Pressable } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, Text, Platform, Pressable, BackHandler, UIManager } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -33,6 +33,11 @@ import { YouTubePlayerModal } from './src/components/YouTubePlayerModal';
 import { UniversalSearchModal } from './src/components/UniversalSearchModal';
 import { BrandDrawer } from './src/components/BrandDrawer';
 import { AppUpdateModal } from './src/components/AppUpdateModal';
+import { ScreenTransition } from './src/components/common/ScreenTransition';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 const MainAppContent: React.FC = () => {
   const { colors, isDark } = useTheme();
@@ -77,6 +82,62 @@ const MainAppContent: React.FC = () => {
     setActiveScreen({ name: 'MainTabs', tab: activeTab });
   };
 
+  // Android Hardware Back Button Hook (prevents accidental app exit)
+  useEffect(() => {
+    const onHardwareBack = () => {
+      if (brandDrawerVisible) {
+        setBrandDrawerVisible(false);
+        return true;
+      }
+      if (searchModalVisible) {
+        setSearchModalVisible(false);
+        return true;
+      }
+      if (updateModalVisible) {
+        setUpdateModalVisible(false);
+        return true;
+      }
+      if (subscriptionModalVisible) {
+        setSubscriptionModalVisible(false);
+        return true;
+      }
+      if (notificationModalVisible) {
+        setNotificationModalVisible(false);
+        return true;
+      }
+      if (assessmentModalVisible) {
+        setAssessmentModalVisible(false);
+        return true;
+      }
+      if (corporateModalVisible) {
+        setCorporateModalVisible(false);
+        return true;
+      }
+      if (playerMode === 'modal') {
+        minimizePlayer();
+        return true;
+      }
+      if (activeScreen.name !== 'MainTabs') {
+        navigateBackToTabs();
+        return true;
+      }
+      return false;
+    };
+
+    const sub = BackHandler.addEventListener('hardwareBackPress', onHardwareBack);
+    return () => sub.remove();
+  }, [
+    brandDrawerVisible,
+    searchModalVisible,
+    updateModalVisible,
+    subscriptionModalVisible,
+    notificationModalVisible,
+    assessmentModalVisible,
+    corporateModalVisible,
+    playerMode,
+    activeScreen.name,
+  ]);
+
   const tabItems: {
     id: RootTab;
     label: string;
@@ -103,23 +164,29 @@ const MainAppContent: React.FC = () => {
 
       <View style={styles.screenContainer}>
         {activeScreen.name === 'CourseDetail' ? (
-          <CourseDetailScreen
-            courseId={activeScreen.courseId}
-            onBack={navigateBackToTabs}
-            onNavigateToLesson={navigateToLesson}
-          />
+          <ScreenTransition key={`detail-${activeScreen.courseId}`} direction="horizontal">
+            <CourseDetailScreen
+              courseId={activeScreen.courseId}
+              onBack={navigateBackToTabs}
+              onNavigateToLesson={navigateToLesson}
+            />
+          </ScreenTransition>
         ) : activeScreen.name === 'LessonPlayer' ? (
-          <LessonPlayerScreen
-            courseId={activeScreen.courseId}
-            lessonId={activeScreen.lessonId}
-            onBack={navigateBackToTabs}
-            onSelectLesson={navigateToLesson}
-          />
+          <ScreenTransition key={`player-${activeScreen.lessonId}`} direction="horizontal">
+            <LessonPlayerScreen
+              courseId={activeScreen.courseId}
+              lessonId={activeScreen.lessonId}
+              onBack={navigateBackToTabs}
+              onSelectLesson={navigateToLesson}
+            />
+          </ScreenTransition>
         ) : activeScreen.name === 'YouTubeVideos' ? (
-          <YouTubeVideosScreen
-            onBack={navigateBackToTabs}
-            onNavigateToCourse={navigateToCourse}
-          />
+          <ScreenTransition key="yt-videos" direction="horizontal">
+            <YouTubeVideosScreen
+              onBack={navigateBackToTabs}
+              onNavigateToCourse={navigateToCourse}
+            />
+          </ScreenTransition>
         ) : (
           <>
             {activeTab === 'Home' && (

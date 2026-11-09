@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { SpringPressable } from './SpringPressable';
 import {
   View,
   Text,
+  LayoutAnimation,
   StyleSheet,
   Dimensions,
   TouchableOpacity,
@@ -82,6 +84,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
     timerRef.current = setInterval(() => {
       setActiveIndex((prev) => {
         const nextIndex = (prev + 1) % SLIDES.length;
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
         flatListRef.current?.scrollToIndex({
           index: nextIndex,
           animated: true,
@@ -107,17 +110,14 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
     const offsetX = e.nativeEvent.contentOffset.x;
     const index = Math.round(offsetX / CARD_WIDTH);
     if (index !== activeIndex && index >= 0 && index < SLIDES.length) {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setActiveIndex(index);
     }
   };
 
   const renderItem = ({ item }: { item: CarouselSlide }) => {
     return (
-      <TouchableOpacity
-        activeOpacity={0.92}
-        onPress={() => onSelectSlide(item)}
-        style={[styles.slideCard, { width: CARD_WIDTH }]}
-      >
+      <SpringPressable onPress={() => onSelectSlide(item)} activeScale={0.98} style={[styles.slideCard, { width: CARD_WIDTH }]}>
         <LinearGradient
           colors={item.gradientColors}
           start={{ x: 0, y: 0 }}
@@ -159,7 +159,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
             </Text>
           </View>
         </LinearGradient>
-      </TouchableOpacity>
+      </SpringPressable>
     );
   };
 

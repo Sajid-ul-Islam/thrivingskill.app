@@ -19,6 +19,7 @@ import { useLearning } from '../context/LearningContext';
 import { useAuth } from '../context/AuthContext';
 import { Header } from '../components/Header';
 import { CurriculumAccordion } from '../components/CurriculumAccordion';
+import { AnimatedTabContent } from '../components/common';
 import { PaymentModal } from '../components/PaymentModal';
 import { CourseQnATab } from '../components/CourseQnATab';
 import { MandatoryReviewModal } from '../components/MandatoryReviewModal';
@@ -528,6 +529,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
           </View>
 
           {/* Tab Content */}
+          <AnimatedTabContent tabKey={activeTab}>
           {activeTab === 'curriculum' && (
             <View style={styles.curriculumTab}>
               <CurriculumAccordion
@@ -646,6 +648,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
               )}
             </View>
           )}
+          </AnimatedTabContent>
         </View>
       </ScrollView>
 

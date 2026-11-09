@@ -60,7 +60,9 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
   const [helpFaqModalVisible, setHelpFaqModalVisible] = useState(false);
   const [blogModalVisible, setBlogModalVisible] = useState(false);
 
+  const [modalRendered, setModalRendered] = useState(visible);
   const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
   const navTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -73,22 +75,39 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
 
   useEffect(() => {
     if (visible) {
-      Animated.spring(slideAnim, {
-        toValue: 0,
-        useNativeDriver: true,
-        bounciness: 4,
-        speed: 14,
-      }).start();
+      setModalRendered(true);
+      Animated.parallel([
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          useNativeDriver: true,
+          bounciness: 3,
+          speed: 16,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 220,
+          useNativeDriver: true,
+        }),
+      ]).start();
     } else {
-      Animated.timing(slideAnim, {
-        toValue: -DRAWER_WIDTH,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: -DRAWER_WIDTH,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setModalRendered(false);
+      });
     }
-  }, [visible, slideAnim]);
+  }, [visible, slideAnim, fadeAnim]);
 
-  if (!visible) return null;
+  if (!modalRendered) return null;
 
   const handleNav = (action: () => void) => {
     onClose();
@@ -116,19 +135,21 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
   return (
     <Modal
       transparent
-      visible={visible}
+      visible={modalRendered}
       animationType="none"
       onRequestClose={onClose}
       statusBarTranslucent
     >
       <View style={styles.modalOverlay}>
         {/* Backdrop */}
-        <TouchableOpacity
-          style={styles.backdrop}
-          activeOpacity={1}
-          onPress={onClose}
-          accessibilityLabel="Close Drawer"
-        />
+        <Animated.View style={[styles.backdrop, { opacity: fadeAnim }]}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={onClose}
+            accessibilityLabel="Close Drawer"
+          />
+        </Animated.View>
 
         {/* Sliding Drawer Container */}
         <Animated.View

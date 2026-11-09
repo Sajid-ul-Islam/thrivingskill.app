@@ -1,8 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Platform } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Animated, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { useYouTube } from '../../context/YouTubeContext';
+import { SpringPressable } from '../common/SpringPressable';
 
 interface YouTubeMiniPlayerProps {
   bottomOffset?: number;
@@ -12,12 +13,59 @@ export const YouTubeMiniPlayer: React.FC<YouTubeMiniPlayerProps> = ({ bottomOffs
   const { colors, isDark } = useTheme();
   const { activeVideo, playerMode, maximizePlayer, closePlayer } = useYouTube();
 
+  const translateY = useRef(new Animated.Value(70)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+  const isClosingRef = useRef(false);
+
+  useEffect(() => {
+    if (playerMode === 'mini' && activeVideo) {
+      isClosingRef.current = false;
+      translateY.setValue(70);
+      opacity.setValue(0);
+
+      Animated.parallel([
+        Animated.spring(translateY, {
+          toValue: 0,
+          friction: 8,
+          tension: 65,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 180,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [playerMode, activeVideo?.id]);
+
+  const handleDismiss = () => {
+    if (isClosingRef.current) return;
+    isClosingRef.current = true;
+
+    Animated.parallel([
+      Animated.timing(translateY, {
+        toValue: 70,
+        duration: 160,
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 160,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      closePlayer();
+      isClosingRef.current = false;
+    });
+  };
+
   if (playerMode !== 'mini' || !activeVideo) {
     return null;
   }
 
   return (
-    <View
+    <Animated.View
       style={[
         styles.container,
         {
@@ -25,6 +73,8 @@ export const YouTubeMiniPlayer: React.FC<YouTubeMiniPlayerProps> = ({ bottomOffs
           backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
           borderColor: colors.border,
           shadowColor: '#000',
+          opacity,
+          transform: [{ translateY }],
         },
       ]}
     >
@@ -33,6 +83,8 @@ export const YouTubeMiniPlayer: React.FC<YouTubeMiniPlayerProps> = ({ bottomOffs
         style={styles.mainContent}
         onPress={maximizePlayer}
         activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={`Resume watching ${activeVideo.title}`}
       >
         <View style={styles.thumbnailWrapper}>
           <Image source={{ uri: activeVideo.thumbnail }} style={styles.thumbnail} />
@@ -56,23 +108,25 @@ export const YouTubeMiniPlayer: React.FC<YouTubeMiniPlayerProps> = ({ bottomOffs
 
       {/* Control Buttons */}
       <View style={styles.controlsRow}>
-        <TouchableOpacity
+        <SpringPressable
           style={[styles.controlBtn, { backgroundColor: isDark ? '#2C2C2E' : '#F3F4F6' }]}
           onPress={maximizePlayer}
+          activeScale={0.88}
           accessibilityLabel="Expand video"
         >
           <Ionicons name="expand-outline" size={18} color={colors.text} />
-        </TouchableOpacity>
+        </SpringPressable>
 
-        <TouchableOpacity
+        <SpringPressable
           style={[styles.controlBtn, { backgroundColor: isDark ? '#2C2C2E' : '#F3F4F6' }]}
-          onPress={closePlayer}
+          onPress={handleDismiss}
+          activeScale={0.88}
           accessibilityLabel="Close player"
         >
           <Ionicons name="close" size={18} color={colors.text} />
-        </TouchableOpacity>
+        </SpringPressable>
       </View>
-    </View>
+    </Animated.View>
   );
 };
 

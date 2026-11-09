@@ -22,6 +22,7 @@ import { CertificateModal } from '../components/CertificateModal';
 import { MandatoryReviewModal } from '../components/MandatoryReviewModal';
 import { PaymentModal } from '../components/PaymentModal';
 import { CourseQnATab } from '../components/CourseQnATab';
+import { AnimatedTabContent } from '../components/common';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useGamification } from '../context/GamificationContext';
@@ -1019,6 +1020,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
 
         {/* Tab Content Panels */}
         <View style={styles.tabPanel}>
+          <AnimatedTabContent tabKey={activeTab}>
           {activeTab === 'qna' && (
             <View style={{ paddingVertical: 4 }}>
               <CourseQnATab
@@ -1241,6 +1243,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               ))}
             </View>
           )}
+          </AnimatedTabContent>
         </View>
       </ScrollView>
 

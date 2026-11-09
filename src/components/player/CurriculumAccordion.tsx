@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert , LayoutAnimation } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CourseModule, Lesson } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
@@ -30,6 +30,7 @@ export const CurriculumAccordion: React.FC<CurriculumAccordionProps> = ({
   const completedLessonIds = progress?.completedLessonIds || [];
 
   const toggleModule = (id: string) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     if (expandedModuleIds.includes(id)) {
       setExpandedModuleIds(expandedModuleIds.filter((mId) => mId !== id));
     } else {

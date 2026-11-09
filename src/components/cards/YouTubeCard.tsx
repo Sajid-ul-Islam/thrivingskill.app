@@ -1,3 +1,4 @@
+import { SpringPressable } from '../common';
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -36,10 +37,10 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
           { backgroundColor: colors.surface, borderColor: colors.border },
         ]}
       >
-        <TouchableOpacity
+        <SpringPressable
           style={{ flex: 1, flexDirection: 'row' }}
           onPress={() => onPress(video)}
-          activeOpacity={0.8}
+          activeScale={0.97}
         >
           <View style={styles.horizontalThumbWrapper}>
             <Image source={{ uri: video.thumbnail }} style={styles.horizontalThumb} />
@@ -75,10 +76,10 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
               </View>
             </View>
           </View>
-        </TouchableOpacity>
+        </SpringPressable>
 
         {/* Bookmark button */}
-        <TouchableOpacity
+        <SpringPressable
           style={styles.bookmarkAction}
           onPress={(e) => { e?.stopPropagation?.(); toggleSaveVideo(video.id); }}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -88,7 +89,7 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
             size={16}
             color={saved ? (isDark ? '#FFB606' : '#102F53') : colors.textMuted}
           />
-        </TouchableOpacity>
+        </SpringPressable>
       </View>
     );
   }
@@ -101,7 +102,7 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
         width ? { width } : undefined,
       ]}
     >
-      <TouchableOpacity
+      <SpringPressable
         onPress={() => onPress(video)}
         activeOpacity={0.85}
       >
@@ -154,10 +155,10 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
           </View>
         </View>
       </View>
-      </TouchableOpacity>
+      </SpringPressable>
 
       {/* Bookmark button on thumbnail as sibling */}
-      <TouchableOpacity
+      <SpringPressable
         style={[styles.bookmarkThumbBtn, { backgroundColor: saved ? (isDark ? '#FFB606' : '#102F53') : 'rgba(0,0,0,0.6)' }]}
         onPress={(e) => { e?.stopPropagation?.(); toggleSaveVideo(video.id); }}
         hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
@@ -167,7 +168,7 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
           size={14}
           color="#FFFFFF"
         />
-      </TouchableOpacity>
+      </SpringPressable>
     </View>
   );
 };

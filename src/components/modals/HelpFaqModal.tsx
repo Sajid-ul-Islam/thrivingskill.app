@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
+  LayoutAnimation,
   StyleSheet,
   Modal,
   ScrollView,
@@ -154,6 +155,7 @@ export const HelpFaqModal: React.FC<HelpFaqModalProps> = ({ visible, onClose }) 
   if (!visible) return null;
 
   const toggleExpand = (id: string) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpandedIds((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 

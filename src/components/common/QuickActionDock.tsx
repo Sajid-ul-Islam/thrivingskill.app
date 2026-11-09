@@ -1,4 +1,5 @@
 import React from 'react';
+import { SpringPressable } from './SpringPressable';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
@@ -75,7 +76,7 @@ export const QuickActionDock: React.FC<QuickActionDockProps> = ({
     <View style={styles.container}>
       <View style={styles.grid}>
         {actions.map((act) => (
-          <TouchableOpacity
+          <SpringPressable
             key={act.id}
             style={[
               styles.actionItem,
@@ -85,7 +86,7 @@ export const QuickActionDock: React.FC<QuickActionDockProps> = ({
               },
             ]}
             onPress={act.onPress}
-            activeOpacity={0.8}
+            activeScale={0.94}
           >
             {act.badgeText && (
               <View
@@ -120,7 +121,7 @@ export const QuickActionDock: React.FC<QuickActionDockProps> = ({
             <Text style={[styles.sublabel, { color: colors.textMuted }]} numberOfLines={1}>
               {act.sublabel}
             </Text>
-          </TouchableOpacity>
+          </SpringPressable>
         ))}
       </View>
     </View>
