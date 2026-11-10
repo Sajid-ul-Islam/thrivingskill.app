@@ -126,6 +126,8 @@ export function transformWpCourse(raw: any): Course {
             title: cleanHtml(item.title || `Lesson ${itemIdx + 1}`),
             duration: item.duration || videoData.duration || '15:00',
             videoUrl: item.video_url || videoData.videoUrl,
+            videoIntro: item.video_intro || videoData.videoIntro,
+            videoType: item.video_intro?.includes('vimeo') ? 'vimeo' : videoData.videoType,
             isFreePreview: Boolean(item.preview) || itemIdx === 0,
             summary: item.summary || videoData.summary || `Interactive lesson covering ${item.title || 'course competencies'}.`,
           };
@@ -139,7 +141,14 @@ export function transformWpCourse(raw: any): Course {
       { id: `les-${id}-3`, title: 'Practical Methodology & Use Cases', isFreePreview: false },
     ].map((l, idx) => {
       const v = resolveLessonVideoData({ id, title, category: catId }, l, idx);
-      return { ...l, duration: v.duration, videoUrl: v.videoUrl, summary: v.summary };
+      return {
+        ...l,
+        duration: v.duration,
+        videoUrl: v.videoUrl,
+        videoIntro: v.videoIntro,
+        videoType: v.videoType,
+        summary: v.summary,
+      };
     });
 
     const fallbackLessonsMod2 = [
@@ -148,7 +157,14 @@ export function transformWpCourse(raw: any): Course {
       { id: `les-${id}-6`, title: 'Final Project Evaluation & Certification', isFreePreview: false },
     ].map((l, idx) => {
       const v = resolveLessonVideoData({ id, title, category: catId }, l, idx + 3);
-      return { ...l, duration: v.duration, videoUrl: v.videoUrl, summary: v.summary };
+      return {
+        ...l,
+        duration: v.duration,
+        videoUrl: v.videoUrl,
+        videoIntro: v.videoIntro,
+        videoType: v.videoType,
+        summary: v.summary,
+      };
     });
 
     lecturesCount = 6;

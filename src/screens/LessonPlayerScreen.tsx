@@ -27,8 +27,6 @@ import { AnimatedTabContent } from '../components/common';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useGamification } from '../context/GamificationContext';
-import { useYouTube } from '../context/YouTubeContext';
-import { findRelatedVideoForCourse } from '../services/youtubeService';
 import { resolveLessonVideoData } from '../data/lessonVideosRegistry';
 import { OfflineManager } from '../services/offline/offlineManager';
 import { LessonsService, LessonDetail } from '../services/api/lessonsService';
@@ -53,7 +51,6 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const insets = useSafeAreaInsets();
   const { t, isBangla } = useLanguage();
   const { user, isAdmin } = useAuth();
-  const { videos } = useYouTube();
   const { recordStudyTime, unlockBadge } = useGamification();
   const {
     getCourseById,
@@ -430,6 +427,14 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   // Resolved clean video link for external playback
   const resolvedVideoUrl = activeVideoUrl || fallbackLessonVideo.videoUrl;
 
+  // Check if current lesson is a live cohort masterclass with a Zoom link
+  const rawContent = lessonDetail?.content || currentLesson?.summary || '';
+  const zoomMatch =
+    (activeVideoIntro && activeVideoIntro.match(/https?:\/\/[^\s"'<>]*zoom\.us\/[^\s"'<>]*/i)) ||
+    (activeVideoUrl && activeVideoUrl.match(/https?:\/\/[^\s"'<>]*zoom\.us\/[^\s"'<>]*/i)) ||
+    (rawContent && rawContent.match(/https?:\/\/[^\s"'<>]*zoom\.us\/[^\s"'<>]*/i));
+  const zoomMeetingUrl = zoomMatch ? zoomMatch[0].replace(/&amp;/g, '&') : null;
+
   // Build responsive embedded HTML player
   const buildVideoHtml = () => {
     let embedMarkup = '';
@@ -443,10 +448,15 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
       }
     } else if (activeVideoUrl) {
       if (activeVideoUrl.includes('vimeo.com')) {
-        const vMatch = activeVideoUrl.match(/\/video\/(\d+)/) || activeVideoUrl.match(/vimeo\.com\/(\d+)/);
-        const vId = vMatch ? vMatch[1] : '';
-        const vSrc = vId ? `https://player.vimeo.com/video/${vId}?autoplay=1&title=0&byline=0&portrait=0&dnt=1` : activeVideoUrl;
-        embedMarkup = `<iframe src="${vSrc}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
+        let vSrc = activeVideoUrl;
+        if (!activeVideoUrl.includes('player.vimeo.com/video/')) {
+          const vMatch = activeVideoUrl.match(/vimeo\.com\/(\d+)/);
+          const vId = vMatch ? vMatch[1] : '';
+          vSrc = `https://player.vimeo.com/video/${vId}`;
+        }
+        const joinChar = vSrc.includes('?') ? '&' : '?';
+        const vUrlWithParams = `${vSrc}${joinChar}autoplay=1&title=0&byline=0&portrait=0&dnt=1`;
+        embedMarkup = `<iframe src="${vUrlWithParams}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
       } else if (activeVideoUrl.includes('youtube.com') || activeVideoUrl.includes('youtu.be')) {
         let ytId = '';
         const yMatch = activeVideoUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
@@ -741,6 +751,38 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                 <Text style={styles.speedPillText}>{playbackSpeed}</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        ) : zoomMeetingUrl ? (
+          /* LIVE COHORT MASTERCLASS: Direct Zoom Session Launcher */
+          <View style={[styles.playerContainer, { backgroundColor: '#102F53', justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
+            <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#2D8CFF25', justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}>
+              <Ionicons name="videocam" size={28} color="#2D8CFF" />
+            </View>
+            <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '800', textAlign: 'center', marginBottom: 4 }}>
+              {isBangla ? 'লাইভ জুম মাস্টারক্লাস' : 'Live Cohort Masterclass'}
+            </Text>
+            <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, textAlign: 'center', marginBottom: 16, maxWidth: 280 }}>
+              {isBangla
+                ? 'এই সেশনটি সরাসরি জুমে অনুষ্ঠিত হবে। ক্লাসে যোগ দিতে নিচের বাটনে ক্লিক করুন।'
+                : 'This session is conducted live via Zoom. Click below to launch the live interactive workshop.'}
+            </Text>
+            <TouchableOpacity
+              style={{
+                backgroundColor: '#2D8CFF',
+                paddingHorizontal: 20,
+                paddingVertical: 10,
+                borderRadius: 8,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
+              }}
+              onPress={() => Linking.openURL(zoomMeetingUrl).catch(() => {})}
+            >
+              <Ionicons name="open-outline" size={16} color="#FFFFFF" />
+              <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 13 }}>
+                {isBangla ? 'জুমে ক্লাসে যোগ দিন' : 'Launch Live Zoom Session'}
+              </Text>
+            </TouchableOpacity>
           </View>
         ) : (
           /* ACTUAL REAL VIDEO PLAYER: WebView with responsive embedded video */

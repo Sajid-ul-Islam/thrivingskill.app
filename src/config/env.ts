@@ -25,15 +25,15 @@ export const Env = {
    * e.g. https://staging.thrivingskill.com/wp-json
    */
   get API_URL(): string {
-    return normalizeUrl(getEnvVar('EXPO_PUBLIC_API_URL')) || 'https://staging.thrivingskill.com/wp-json';
+    return normalizeUrl(getEnvVar('EXPO_PUBLIC_API_URL')) || 'https://thrivingskill.com/wp-json';
   },
 
   /**
    * Main Website URL
-   * e.g. https://staging.thrivingskill.com
+   * e.g. https://thrivingskill.com
    */
   get SITE_URL(): string {
-    return normalizeUrl(getEnvVar('EXPO_PUBLIC_SITE_URL')) || 'https://staging.thrivingskill.com';
+    return normalizeUrl(getEnvVar('EXPO_PUBLIC_SITE_URL')) || 'https://thrivingskill.com';
   },
 
   /**

@@ -21,6 +21,8 @@ export const Endpoints = {
     COURSE_RETAKE: '/learnpress/v1/courses/retake',
     COURSE_CATEGORIES: '/learnpress/v1/course_category',
     COURSE_CATEGORY_DETAIL: (id: string | number) => `/learnpress/v1/course_category/${id}`,
+    SECTIONS_BY_COURSE: (courseId: string | number) => `/learnpress/v1/sections/sections-by-course-id/${courseId}`,
+    SECTION_ITEMS: (sectionId: string | number) => `/learnpress/v1/section-items/items/${sectionId}`,
 
     // Lessons
     LESSONS: '/learnpress/v1/lessons',
