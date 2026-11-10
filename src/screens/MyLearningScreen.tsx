@@ -14,7 +14,7 @@ import { useLearning } from '../context/LearningContext';
 import { Header } from '../components/Header';
 import { CertificateModal } from '../components/CertificateModal';
 import { YouTubeCard } from '../components/YouTubeCard';
-import { AnimatedTabContent } from '../components/common';
+import { AnimatedTabContent, CircularProgressRing, SpringPressable } from '../components/common';
 import { useYouTube } from '../context/YouTubeContext';
 import { Certificate } from '../types';
 import { YouTubeVideo } from '../data/youtubeVideos';
@@ -237,9 +237,19 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                     >
                       <Image source={{ uri: course.thumbnail }} style={styles.cardImage} />
                       <View style={styles.cardBody}>
-                        <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
-                          {course.title}
-                        </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                          <Text style={[styles.cardTitle, { color: colors.text, flex: 1 }]} numberOfLines={2}>
+                            {course.title}
+                          </Text>
+                          <CircularProgressRing
+                            progress={percent}
+                            size={38}
+                            strokeWidth={3.5}
+                            progressColor={colors.primary}
+                            trackColor={colors.surfaceSubtle}
+                            textSize={10}
+                          />
+                        </View>
                         <Text style={[styles.cardInstructor, { color: colors.textMuted }]}>
                           {course.instructor.name}
                         </Text>
@@ -272,13 +282,16 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                             </Text>
                           </TouchableOpacity>
 
-                          <TouchableOpacity
+                          <SpringPressable
                             style={[styles.resumeBtn, { backgroundColor: colors.primary }]}
                             onPress={() => onNavigateToLesson(course.id, targetLessonId)}
+                            activeScale={0.96}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Resume lecture for ${course.title}`}
                           >
                             <Ionicons name="play" size={14} color="#FFFFFF" />
                             <Text style={styles.resumeBtnText}>Resume Lecture</Text>
-                          </TouchableOpacity>
+                          </SpringPressable>
                         </View>
                       </View>
                     </View>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SpringPressable } from '../common';
 import { SpecialBundle } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { shape } from '../../theme/shapes';
@@ -14,7 +15,7 @@ export const SpecialBundleCard: React.FC<SpecialBundleCardProps> = ({ bundle, on
   const { colors, isDark } = useTheme();
 
   return (
-    <TouchableOpacity
+    <SpringPressable
       style={[
         styles.card,
         {
@@ -24,7 +25,9 @@ export const SpecialBundleCard: React.FC<SpecialBundleCardProps> = ({ bundle, on
         },
       ]}
       onPress={onPress}
-      activeOpacity={0.88}
+      activeScale={0.97}
+      accessibilityRole="button"
+      accessibilityLabel={`Special bundle: ${bundle.title}`}
     >
       <View style={styles.imageWrapper}>
         <Image source={{ uri: bundle.thumbnail }} style={styles.thumbnail} />
@@ -84,7 +87,7 @@ export const SpecialBundleCard: React.FC<SpecialBundleCardProps> = ({ bundle, on
           </View>
         </View>
       </View>
-    </TouchableOpacity>
+    </SpringPressable>
   );
 };
 

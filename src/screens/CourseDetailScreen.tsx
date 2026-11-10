@@ -20,7 +20,7 @@ import { useLearning } from '../context/LearningContext';
 import { useAuth } from '../context/AuthContext';
 import { Header } from '../components/Header';
 import { CurriculumAccordion } from '../components/CurriculumAccordion';
-import { AnimatedTabContent } from '../components/common';
+import { AnimatedTabContent, SpringPressable, CircularProgressRing } from '../components/common';
 import { PaymentModal } from '../components/PaymentModal';
 import { CourseQnATab } from '../components/CourseQnATab';
 import { MandatoryReviewModal } from '../components/MandatoryReviewModal';
@@ -704,16 +704,29 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
           </View>
         ) : (
           <View style={styles.bottomPriceCol}>
-            <Text style={[styles.bottomPriceLabel, { color: colors.primary, fontWeight: '700' }]}>
-              Enrolled ({progressPercent}%)
-            </Text>
-            <Text style={[styles.enrolledStatus, { color: colors.textMuted }]}>
-              {userProgress[course.id]?.isCompleted ? 'Completed 🎓' : 'In Progress ⏳'}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <CircularProgressRing
+                progress={progressPercent}
+                size={34}
+                strokeWidth={3.5}
+                progressColor={colors.primary}
+                trackColor={colors.surfaceSubtle}
+                textSize={9}
+              />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.bottomPriceLabel, { color: colors.primary, fontWeight: '700' }]} numberOfLines={1}>
+                  Enrolled ({progressPercent}%)
+                </Text>
+                <Text style={[styles.enrolledStatus, { color: colors.textMuted }]} numberOfLines={1}>
+                  {userProgress[course.id]?.isCompleted ? 'Completed 🎓' : 'In Progress ⏳'}
+                </Text>
+              </View>
+            </View>
           </View>
         )}
 
-        <TouchableOpacity
+        <SpringPressable
+          activeScale={0.96}
           style={[
           styles.enrollCTAButton,
           {
@@ -751,7 +764,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
               ? (isBangla ? 'ওয়েবসাইটে ভর্তি হন' : 'Enroll via Web')
               : (isBangla ? 'বিনামূল্যে ভর্তি হন' : 'Enroll for Free')}
           </Text>
-        </TouchableOpacity>
+        </SpringPressable>
       </View>
 
       {/* CR-02: Mandatory Course Review Modal before Certificate Unlock */}

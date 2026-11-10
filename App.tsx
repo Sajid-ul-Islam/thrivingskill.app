@@ -10,7 +10,7 @@ import { LearningProvider, useLearning } from './src/context/LearningContext';
 import { SaaSProvider, useSaaS } from './src/context/SaaSContext';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { LanguageProvider, useLanguage } from './src/context/LanguageContext';
-import { GamificationProvider } from './src/context/GamificationContext';
+import { GamificationProvider, useGamification } from './src/context/GamificationContext';
 import { YouTubeProvider, useYouTube } from './src/context/YouTubeContext';
 import { RootTab, ActiveScreen } from './src/types';
 
@@ -33,7 +33,7 @@ import { YouTubePlayerModal } from './src/components/YouTubePlayerModal';
 import { UniversalSearchModal } from './src/components/UniversalSearchModal';
 import { BrandDrawer } from './src/components/BrandDrawer';
 import { AppUpdateModal } from './src/components/AppUpdateModal';
-import { ScreenTransition } from './src/components/common/ScreenTransition';
+import { ScreenTransition, CelebrationToast } from './src/components/common';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -46,6 +46,7 @@ const MainAppContent: React.FC = () => {
   const { userProgress } = useLearning();
   const { activeWorkspace, unreadNotificationsCount } = useSaaS();
   const { isAuthModalVisible, setAuthModalVisible } = useAuth();
+  const { celebration, clearCelebration } = useGamification();
   const { activeVideo, playerMode, closePlayer, minimizePlayer, playVideo } = useYouTube();
 
   const [activeTab, setActiveTab] = useState<RootTab>('Home');
@@ -190,55 +191,65 @@ const MainAppContent: React.FC = () => {
         ) : (
           <>
             {activeTab === 'Home' && (
-              <HomeScreen
-                onNavigateToCourse={navigateToCourse}
-                onNavigateToLesson={navigateToLesson}
-                onNavigateTab={navigateToTab}
-                onOpenCorporateModal={() => setCorporateModalVisible(true)}
-                onOpenSubscription={() => setSubscriptionModalVisible(true)}
-                onOpenNotifications={() => setNotificationModalVisible(true)}
-                onOpenAssessment={() => setAssessmentModalVisible(true)}
-                onOpenYouTube={() => setActiveScreen({ name: 'YouTubeVideos' })}
-                onOpenSearch={() => setSearchModalVisible(true)}
-                onOpenDrawer={() => setBrandDrawerVisible(true)}
-              />
+              <ScreenTransition key="tab-Home" direction="vertical" duration={180}>
+                <HomeScreen
+                  onNavigateToCourse={navigateToCourse}
+                  onNavigateToLesson={navigateToLesson}
+                  onNavigateTab={navigateToTab}
+                  onOpenCorporateModal={() => setCorporateModalVisible(true)}
+                  onOpenSubscription={() => setSubscriptionModalVisible(true)}
+                  onOpenNotifications={() => setNotificationModalVisible(true)}
+                  onOpenAssessment={() => setAssessmentModalVisible(true)}
+                  onOpenYouTube={() => setActiveScreen({ name: 'YouTubeVideos' })}
+                  onOpenSearch={() => setSearchModalVisible(true)}
+                  onOpenDrawer={() => setBrandDrawerVisible(true)}
+                />
+              </ScreenTransition>
             )}
             {activeTab === 'Courses' && (
-              <CoursesScreen
-                onNavigateToCourse={navigateToCourse}
-                onOpenSubscription={() => setSubscriptionModalVisible(true)}
-                onOpenNotifications={() => setNotificationModalVisible(true)}
-                onOpenDrawer={() => setBrandDrawerVisible(true)}
-              />
+              <ScreenTransition key="tab-Courses" direction="vertical" duration={180}>
+                <CoursesScreen
+                  onNavigateToCourse={navigateToCourse}
+                  onOpenSubscription={() => setSubscriptionModalVisible(true)}
+                  onOpenNotifications={() => setNotificationModalVisible(true)}
+                  onOpenDrawer={() => setBrandDrawerVisible(true)}
+                />
+              </ScreenTransition>
             )}
             {activeTab === 'MyLearning' && (
-              <MyLearningScreen
-                onNavigateToCourse={navigateToCourse}
-                onNavigateToLesson={navigateToLesson}
-                onBrowseCourses={() => navigateToTab('Courses')}
-                onOpenSubscription={() => setSubscriptionModalVisible(true)}
-                onOpenNotifications={() => setNotificationModalVisible(true)}
-                onOpenYouTube={() => setActiveScreen({ name: 'YouTubeVideos' })}
-                onOpenDrawer={() => setBrandDrawerVisible(true)}
-              />
+              <ScreenTransition key="tab-MyLearning" direction="vertical" duration={180}>
+                <MyLearningScreen
+                  onNavigateToCourse={navigateToCourse}
+                  onNavigateToLesson={navigateToLesson}
+                  onBrowseCourses={() => navigateToTab('Courses')}
+                  onOpenSubscription={() => setSubscriptionModalVisible(true)}
+                  onOpenNotifications={() => setNotificationModalVisible(true)}
+                  onOpenYouTube={() => setActiveScreen({ name: 'YouTubeVideos' })}
+                  onOpenDrawer={() => setBrandDrawerVisible(true)}
+                />
+              </ScreenTransition>
             )}
             {activeTab === 'Workshops' && (
-              <WorkshopsScreen
-                onOpenSubscription={() => setSubscriptionModalVisible(true)}
-                onOpenNotifications={() => setNotificationModalVisible(true)}
-                onOpenDrawer={() => setBrandDrawerVisible(true)}
-              />
+              <ScreenTransition key="tab-Workshops" direction="vertical" duration={180}>
+                <WorkshopsScreen
+                  onOpenSubscription={() => setSubscriptionModalVisible(true)}
+                  onOpenNotifications={() => setNotificationModalVisible(true)}
+                  onOpenDrawer={() => setBrandDrawerVisible(true)}
+                />
+              </ScreenTransition>
             )}
             {activeTab === 'Profile' && (
-              <ProfileScreen
-                onOpenCorporateModal={() => setCorporateModalVisible(true)}
-                onOpenSubscription={() => setSubscriptionModalVisible(true)}
-                onOpenNotifications={() => setNotificationModalVisible(true)}
-                onNavigateTab={navigateToTab}
-                onNavigateToCourse={navigateToCourse}
-                onNavigateToLesson={navigateToLesson}
-                onOpenDrawer={() => setBrandDrawerVisible(true)}
-              />
+              <ScreenTransition key="tab-Profile" direction="vertical" duration={180}>
+                <ProfileScreen
+                  onOpenCorporateModal={() => setCorporateModalVisible(true)}
+                  onOpenSubscription={() => setSubscriptionModalVisible(true)}
+                  onOpenNotifications={() => setNotificationModalVisible(true)}
+                  onNavigateTab={navigateToTab}
+                  onNavigateToCourse={navigateToCourse}
+                  onNavigateToLesson={navigateToLesson}
+                  onOpenDrawer={() => setBrandDrawerVisible(true)}
+                />
+              </ScreenTransition>
             )}
           </>
         )}
@@ -395,6 +406,9 @@ const MainAppContent: React.FC = () => {
           navigateToTab('Workshops');
         }}
       />
+
+      {/* Global Milestone & Lesson Completion Celebration HUD */}
+      <CelebrationToast data={celebration} onDismiss={clearCelebration} />
     </SafeAreaView>
   );
 };

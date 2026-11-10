@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SpringPressable, CircularProgressRing } from '../common';
 import { useTheme } from '../../context/ThemeContext';
 import { Course } from '../../types';
 
@@ -38,9 +39,19 @@ export const ResumeLearningCard: React.FC<ResumeLearningCardProps> = ({
               JUMP BACK IN
             </Text>
           </View>
-          <Text style={[styles.progressRatio, { color: colors.textMuted }]}>
-            {progressPercent}% Complete
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <CircularProgressRing
+              progress={progressPercent}
+              size={24}
+              strokeWidth={3}
+              progressColor={colors.primary}
+              trackColor={colors.surfaceSubtle}
+              showText={false}
+            />
+            <Text style={[styles.progressRatio, { color: colors.textMuted }]}>
+              {progressPercent}% Complete
+            </Text>
+          </View>
         </View>
 
         {/* Middle Course Info Row */}
@@ -73,15 +84,17 @@ export const ResumeLearningCard: React.FC<ResumeLearningCardProps> = ({
         </View>
 
         {/* CTA Resume Button */}
-        <TouchableOpacity
+        <SpringPressable
           style={[styles.resumeBtn, { backgroundColor: colors.primary }]}
           onPress={onResume}
-          activeOpacity={0.88}
+          activeScale={0.97}
+          accessibilityRole="button"
+          accessibilityLabel={`Resume lesson for ${course.title}`}
         >
           <Ionicons name="play-circle" size={18} color="#FFFFFF" />
           <Text style={styles.resumeBtnText}>Resume Lesson</Text>
           <Ionicons name="arrow-forward" size={14} color="#FFFFFF" style={{ marginLeft: 'auto' }} />
-        </TouchableOpacity>
+        </SpringPressable>
       </View>
     </View>
   );

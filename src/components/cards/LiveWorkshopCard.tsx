@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SpringPressable } from '../common';
 import { Workshop } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { useLearning } from '../../context/LearningContext';
@@ -89,7 +90,7 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop, on
             </Text>
           </View>
 
-          <TouchableOpacity
+          <SpringPressable
             style={[
               styles.rsvpBtn,
               {
@@ -104,7 +105,7 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop, on
               );
             }}
             disabled={registered}
-            activeOpacity={0.8}
+            activeScale={0.96}
             accessibilityRole="button"
             accessibilityLabel={registered ? `Seat already reserved for ${workshop.title}` : `Reserve seat for ${workshop.title}`}
           >
@@ -121,7 +122,7 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop, on
             >
               {registered ? 'Seat Reserved' : 'Reserve Seat'}
             </Text>
-          </TouchableOpacity>
+          </SpringPressable>
         </View>
       </View>
     </View>

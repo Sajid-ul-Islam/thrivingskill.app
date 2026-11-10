@@ -30,7 +30,7 @@ import { BlogModal } from '../components/BlogModal';
 import { HeroCarousel, CarouselSlide } from '../components/HeroCarousel';
 import { QuickActionDock } from '../components/QuickActionDock';
 import { SearchSpotlightBar } from '../components/SearchSpotlightBar';
-import { CourseCardSkeleton } from '../components/SkeletonLoader';
+import { CourseCardSkeleton, SpringPressable } from '../components/common';
 import { useYouTube } from '../context/YouTubeContext';
 import { useAutoScroll } from '../hooks/useAutoScroll';
 import { YOUTUBE_VIDEOS, YOUTUBE_CHANNEL, YouTubeVideo } from '../data/youtubeVideos';
@@ -664,14 +664,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             ))}
           </View>
 
-          <TouchableOpacity
+          <SpringPressable
             style={[styles.corporateBtn, { backgroundColor: colors.secondary }]}
             onPress={onOpenCorporateModal}
-            activeOpacity={0.85}
+            activeScale={0.96}
+            accessibilityRole="button"
+            accessibilityLabel="Request Enterprise Proposal"
           >
             <Text style={styles.corporateBtnText}>Request Enterprise Proposal</Text>
             <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
-          </TouchableOpacity>
+          </SpringPressable>
         </View>
 
         {/* Verified Learners' Wall of Love (Real Reviews) */}

@@ -75,6 +75,13 @@ const DEFAULT_BADGES: AchievementBadge[] = [
   },
 ];
 
+export interface CelebrationEvent {
+  title: string;
+  subtitle: string;
+  xpAwarded?: number;
+  icon?: string;
+}
+
 interface GamificationState {
   streakDays: number;
   lastActiveDate: string;
@@ -85,16 +92,20 @@ interface GamificationState {
 }
 
 interface GamificationContextType extends GamificationState {
+  celebration: CelebrationEvent | null;
   recordStudyTime: (minutes: number) => void;
   unlockBadge: (badgeId: string) => void;
   setDailyGoal: (minutes: number) => void;
   addXP: (amount: number) => void;
   incrementStreak: () => void;
+  triggerCelebration: (event: CelebrationEvent) => void;
+  clearCelebration: () => void;
 }
 
 const GamificationContext = createContext<GamificationContextType>({} as GamificationContextType);
 
 export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [celebration, setCelebration] = useState<CelebrationEvent | null>(null);
   const [state, setState] = useState<GamificationState>({
     streakDays: 4,
     lastActiveDate: new Date().toISOString().split('T')[0],
@@ -166,13 +177,31 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     saveState(updated);
   };
 
+  const triggerCelebration = (event: CelebrationEvent) => {
+    setCelebration(event);
+  };
+
+  const clearCelebration = () => {
+    setCelebration(null);
+  };
+
   const unlockBadge = (badgeId: string) => {
+    const existing = state.badges.find((b) => b.id === badgeId);
     const updatedBadges = state.badges.map((b) =>
       b.id === badgeId
         ? { ...b, isUnlocked: true, unlockedAt: new Date().toISOString().split('T')[0] }
         : b
     );
     saveState({ ...state, badges: updatedBadges, xp: (state.xp || 0) + 100 });
+
+    if (existing && !existing.isUnlocked) {
+      triggerCelebration({
+        title: `Badge Unlocked: ${existing.title}! 🏆`,
+        subtitle: existing.description,
+        xpAwarded: 100,
+        icon: existing.icon,
+      });
+    }
   };
 
   const setDailyGoal = (minutes: number) => {
@@ -183,11 +212,14 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     <GamificationContext.Provider
       value={{
         ...state,
+        celebration,
         recordStudyTime,
         unlockBadge,
         setDailyGoal,
         addXP,
         incrementStreak,
+        triggerCelebration,
+        clearCelebration,
       }}
     >
       {children}

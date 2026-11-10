@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { SpringPressable } from '../common';
 import { SkillsSummit } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -58,14 +59,16 @@ export const SummitCard: React.FC<SummitCardProps> = ({ summit }) => {
             </Text>
           </View>
 
-          <TouchableOpacity
+          <SpringPressable
             style={[styles.rsvpBtn, { backgroundColor: colors.primary }]}
             onPress={handleRegister}
-            activeOpacity={0.85}
+            activeScale={0.96}
+            accessibilityRole="button"
+            accessibilityLabel={`RSVP Free for ${summit.title}`}
           >
             <Text style={styles.rsvpBtnText}>RSVP Free</Text>
             <Ionicons name="arrow-forward" size={13} color="#FFFFFF" />
-          </TouchableOpacity>
+          </SpringPressable>
         </View>
       </View>
     </View>

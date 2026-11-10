@@ -23,7 +23,8 @@ import { CertificateModal } from '../components/CertificateModal';
 import { MandatoryReviewModal } from '../components/MandatoryReviewModal';
 import { PaymentModal } from '../components/PaymentModal';
 import { CourseQnATab } from '../components/CourseQnATab';
-import { AnimatedTabContent } from '../components/common';
+import { LiveAudioWaveform } from '../components/player/LiveAudioWaveform';
+import { AnimatedTabContent, SpringPressable } from '../components/common';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useGamification } from '../context/GamificationContext';
@@ -51,7 +52,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const insets = useSafeAreaInsets();
   const { t, isBangla } = useLanguage();
   const { user, isAdmin } = useAuth();
-  const { recordStudyTime, unlockBadge } = useGamification();
+  const { recordStudyTime, unlockBadge, triggerCelebration } = useGamification();
   const {
     getCourseById,
     userProgress,
@@ -324,6 +325,13 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     markLessonCompleted(course.id, currentLesson.id);
     recordStudyTime(10);
     unlockBadge('streak_champ');
+
+    triggerCelebration({
+      title: isBangla ? 'পাঠ সম্পন্ন হয়েছে! 🎉' : 'Lesson Mastered! 🎉',
+      subtitle: `${currentLesson.title} • +50 XP`,
+      xpAwarded: 50,
+      icon: 'checkmark-circle',
+    });
 
     const totalLessons = allLessons.length;
     const currentCompleted = progress?.completedLessonIds.length || 0;
@@ -670,23 +678,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               </Text>
             </View>
 
-            {/* Oscillating Audio Waveform */}
-            <View style={styles.waveformContainer}>
-              {[18, 30, 48, 22, 38, 54, 20, 36, 44, 26, 40, 52, 16, 32, 46, 24, 38, 44, 28, 18].map(
-                (h, i) => (
-                  <View
-                    key={i}
-                    style={[
-                      styles.waveBar,
-                      {
-                        height: isPlaying ? h : 8,
-                        backgroundColor: i % 2 === 0 ? '#FFB606' : '#E34234',
-                      },
-                    ]}
-                  />
-                )
-              )}
-            </View>
+            {/* Dynamic Living Audio Waveform */}
+            <LiveAudioWaveform isPlaying={isPlaying} primaryColor="#FFB606" accentColor="#E34234" />
 
             <Text style={styles.commuteLessonTitle} numberOfLines={1}>
               {currentLesson.title}
@@ -961,7 +954,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               />
             </TouchableOpacity>
 
-            <TouchableOpacity
+            <SpringPressable
               style={[
                 styles.completeBtn,
                 {
@@ -969,7 +962,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                 },
               ]}
               onPress={handleMarkComplete}
-              activeOpacity={0.8}
+              activeScale={0.96}
               accessibilityRole="button"
               accessibilityLabel={isLessonCompleted ? "Lesson already completed" : "Mark lesson as complete"}
             >
@@ -986,7 +979,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               >
                 {isLessonCompleted ? t('lessonCompleted') : t('markComplete')}
               </Text>
-            </TouchableOpacity>
+            </SpringPressable>
           </View>
         </View>
 

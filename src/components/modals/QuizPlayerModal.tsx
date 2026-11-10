@@ -72,7 +72,7 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
-  const { unlockBadge } = useGamification();
+  const { unlockBadge, triggerCelebration } = useGamification();
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
@@ -111,6 +111,12 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
     const score = calculateScore();
     if (score >= 70) {
       unlockBadge('quiz_master');
+      triggerCelebration({
+        title: 'Quiz Passed! 🏆',
+        subtitle: `Scored ${score}% • Knowledge Milestone Achieved`,
+        xpAwarded: 100,
+        icon: 'trophy',
+      });
       if (onPassed) onPassed();
     }
     if (quizId) {
