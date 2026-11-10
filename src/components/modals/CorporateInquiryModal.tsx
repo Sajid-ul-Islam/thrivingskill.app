@@ -11,6 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 
 interface CorporateInquiryModalProps {
@@ -23,6 +24,7 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
   onClose,
 }) => {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [companyName, setCompanyName] = useState('');
   const [contactName, setContactName] = useState('');
   const [workEmail, setWorkEmail] = useState('');
@@ -54,8 +56,13 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
         <View
           style={[
             styles.modalContainer,
-            { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-          ]} accessibilityViewIsModal={true}
+            {
+              backgroundColor: colors.surfaceCard,
+              borderColor: colors.border,
+              paddingBottom: Math.max(insets.bottom, 24),
+            },
+          ]}
+          accessibilityViewIsModal={true}
         >
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>

@@ -14,6 +14,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import { useTheme } from '../../context/ThemeContext';
 import { useLearning } from '../../context/LearningContext';
@@ -42,6 +43,7 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
   onMinimize,
 }) => {
   const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const { courses } = useLearning();
   const { videos, isSaved, toggleSaveVideo, minimizePlayer } = useYouTube();
   const [currentVideo, setCurrentVideo] = useState<YouTubeVideo | null>(video);
@@ -130,7 +132,16 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Header Bar */}
-        <View style={[styles.header, { borderBottomColor: colors.border, backgroundColor: colors.surface }]}>
+        <View
+          style={[
+            styles.header,
+            {
+              borderBottomColor: colors.border,
+              backgroundColor: colors.surface,
+              paddingTop: Math.max(insets.top, 12),
+            },
+          ]}
+        >
           {/* Minimize / Down Arrow */}
           <TouchableOpacity
             style={[styles.headerBtn, { backgroundColor: isDark ? '#333' : '#E5E7EB' }]}
@@ -244,7 +255,13 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
           <Ionicons name="open-outline" size={13} color="#FF0000" />
         </TouchableOpacity>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: Math.max(insets.bottom + 20, 40) },
+          ]}
+        >
           {/* Video Metadata Card */}
           <View style={[styles.metaCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <Text style={[styles.videoTitle, { color: colors.text }]}>{currentVideo.title}</Text>

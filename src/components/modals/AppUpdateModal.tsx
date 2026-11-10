@@ -9,6 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { AppUpdateService } from '../../services/appUpdateService';
 
@@ -19,6 +20,7 @@ interface AppUpdateModalProps {
 
 export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose }) => {
   const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const [isChecking, setIsChecking] = useState(false);
   const [updateReady, setUpdateReady] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -48,7 +50,15 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
 
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <View
+        style={[
+          styles.overlay,
+          {
+            paddingTop: Math.max(insets.top, 20),
+            paddingBottom: Math.max(insets.bottom, 20),
+          },
+        ]}
+      >
         <View style={[styles.card, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
           {/* Header */}
           <View style={styles.header}>

@@ -63,6 +63,14 @@ const modals = [
   'src/components/modals/SubscriptionModal.tsx',
   'src/components/modals/NotificationModal.tsx',
   'src/components/modals/MandatoryReviewModal.tsx',
+  'src/components/modals/NotesModal.tsx',
+  'src/components/modals/QuizPlayerModal.tsx',
+  'src/components/modals/SkillAssessmentModal.tsx',
+  'src/components/modals/CorporateInquiryModal.tsx',
+  'src/components/modals/QuizModal.tsx',
+  'src/components/modals/CertificateModal.tsx',
+  'src/components/modals/AppUpdateModal.tsx',
+  'src/components/player/YouTubePlayerModal.tsx',
 ];
 
 modals.forEach((file) => {

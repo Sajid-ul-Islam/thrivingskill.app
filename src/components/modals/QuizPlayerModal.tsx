@@ -9,6 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useGamification } from '../../context/GamificationContext';
@@ -69,6 +70,7 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
   onPassed,
 }) => {
   const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const { unlockBadge } = useGamification();
 
@@ -138,7 +140,16 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.backdrop}>
-        <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              paddingBottom: Math.max(insets.bottom, Platform.OS === 'ios' ? 24 : 16),
+            },
+          ]}
+        >
           {/* Header */}
           <View style={[styles.topRow, { borderBottomColor: colors.border }]}>
             <View style={{ flex: 1 }}>

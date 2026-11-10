@@ -13,6 +13,7 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useLearning } from '../../context/LearningContext';
 
@@ -49,6 +50,7 @@ export const NotesModal: React.FC<NotesModalProps> = ({
   onClose,
 }) => {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { getNotesForLesson, addNote, deleteNote, courses } = useLearning();
   const [newNoteText, setNewNoteText] = useState('');
 
@@ -105,7 +107,11 @@ export const NotesModal: React.FC<NotesModalProps> = ({
         <View
           style={[
             styles.modalContainer,
-            { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+            {
+              backgroundColor: colors.surfaceCard,
+              borderColor: colors.border,
+              paddingBottom: Math.max(insets.bottom, 24),
+            },
           ]}
         >
           {/* Header */}

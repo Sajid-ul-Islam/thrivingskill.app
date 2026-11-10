@@ -254,7 +254,13 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
                 {filteredVideos.length} {filteredVideos.length === 1 ? 'Video' : 'Videos'} • Pull down to sync RSS
               </Text>
             </View>
-            <TouchableOpacity style={styles.ytChannelLink} onPress={handleOpenChannel}>
+            <TouchableOpacity
+              style={styles.ytChannelLink}
+              onPress={handleOpenChannel}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel="Open Thriving Skills YouTube channel"
+            >
               <Ionicons name="open-outline" size={14} color="#FF0000" />
               <Text style={styles.ytChannelLinkText}>YouTube Channel</Text>
             </TouchableOpacity>

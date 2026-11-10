@@ -1172,8 +1172,11 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                       <TouchableOpacity
                         style={[styles.quizPill, { backgroundColor: colors.secondaryLight }]}
                         onPress={() => setQuizModalVisible(true)}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        accessibilityRole="button"
+                        accessibilityLabel="Open quiz"
                       >
-                        <Ionicons name="help-circle" size={12} color={colors.secondary} />
+                        <Ionicons name="help-circle" size={13} color={colors.secondary} />
                         <Text style={[styles.quizPillText, { color: colors.secondary }]}>Quiz</Text>
                       </TouchableOpacity>
                     )}

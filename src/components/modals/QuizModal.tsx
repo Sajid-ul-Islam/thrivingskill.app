@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { QuizQuestion } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -13,6 +14,7 @@ interface QuizModalProps {
 
 export const QuizModal: React.FC<QuizModalProps> = ({ visible, questions, onClose, onPass }) => {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
@@ -63,7 +65,11 @@ export const QuizModal: React.FC<QuizModalProps> = ({ visible, questions, onClos
         <View
           style={[
             styles.modalContainer,
-            { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+            {
+              backgroundColor: colors.surfaceCard,
+              borderColor: colors.border,
+              paddingBottom: Math.max(insets.bottom, 24),
+            },
           ]}
         >
           {/* Header */}
