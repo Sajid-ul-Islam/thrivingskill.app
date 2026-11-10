@@ -1,4 +1,5 @@
 import { Course, CourseModule, CategoryId } from '../../types';
+import { resolveLessonVideoData } from '../../data/lessonVideosRegistry';
 
 // Clean HTML tags and HTML entities from WordPress text
 export function cleanHtml(text?: string): string {
@@ -107,41 +108,60 @@ export function transformWpCourse(raw: any): Course {
   let modules: CourseModule[] = [];
   let lecturesCount = 0;
   if (Array.isArray(raw.sections) && raw.sections.length > 0) {
+    let globalLessonIdx = 0;
     modules = raw.sections.map((sec: any, secIdx: number) => {
       const items = Array.isArray(sec.items) ? sec.items : [];
       lecturesCount += items.length;
       return {
         id: String(sec.id || `mod-${secIdx + 1}`),
         title: cleanHtml(sec.title || `Module ${secIdx + 1}`),
-        lessons: items.map((item: any, itemIdx: number) => ({
-          id: String(item.id || `les-${secIdx}-${itemIdx}`),
-          title: cleanHtml(item.title || `Lesson ${itemIdx + 1}`),
-          duration: item.duration || '05:00',
-          isFreePreview: Boolean(item.preview),
-          summary: `Interactive lesson covering ${item.title || 'course competencies'}.`,
-        })),
+        lessons: items.map((item: any, itemIdx: number) => {
+          const videoData = resolveLessonVideoData(
+            { id, title, category: catId },
+            { id: String(item.id), title: cleanHtml(item.title) },
+            globalLessonIdx++
+          );
+          return {
+            id: String(item.id || `les-${secIdx}-${itemIdx}`),
+            title: cleanHtml(item.title || `Lesson ${itemIdx + 1}`),
+            duration: item.duration || videoData.duration || '15:00',
+            videoUrl: item.video_url || videoData.videoUrl,
+            isFreePreview: Boolean(item.preview) || itemIdx === 0,
+            summary: item.summary || videoData.summary || `Interactive lesson covering ${item.title || 'course competencies'}.`,
+          };
+        }),
       };
     });
   } else {
-    lecturesCount = 8;
+    const fallbackLessonsMod1 = [
+      { id: `les-${id}-1`, title: 'Course Orientation & Objectives', isFreePreview: true },
+      { id: `les-${id}-2`, title: 'Key Frameworks & Essential Concepts', isFreePreview: true },
+      { id: `les-${id}-3`, title: 'Practical Methodology & Use Cases', isFreePreview: false },
+    ].map((l, idx) => {
+      const v = resolveLessonVideoData({ id, title, category: catId }, l, idx);
+      return { ...l, duration: v.duration, videoUrl: v.videoUrl, summary: v.summary };
+    });
+
+    const fallbackLessonsMod2 = [
+      { id: `les-${id}-4`, title: 'Hands-on Execution & Real-world Workflows', isFreePreview: false },
+      { id: `les-${id}-5`, title: 'Industry Best Practices & Troubleshooting', isFreePreview: false },
+      { id: `les-${id}-6`, title: 'Final Project Evaluation & Certification', isFreePreview: false },
+    ].map((l, idx) => {
+      const v = resolveLessonVideoData({ id, title, category: catId }, l, idx + 3);
+      return { ...l, duration: v.duration, videoUrl: v.videoUrl, summary: v.summary };
+    });
+
+    lecturesCount = 6;
     modules = [
       {
         id: `mod-${id}-1`,
         title: 'Foundations & Core Principles',
-        lessons: [
-          { id: `les-${id}-1`, title: 'Course Orientation & Objectives', duration: '08:15', isFreePreview: true },
-          { id: `les-${id}-2`, title: 'Key Frameworks & Essential Concepts', duration: '14:20', isFreePreview: true },
-          { id: `les-${id}-3`, title: 'Practical Methodology & Use Cases', duration: '18:40', isFreePreview: false },
-        ],
+        lessons: fallbackLessonsMod1,
       },
       {
         id: `mod-${id}-2`,
         title: 'Applied Skills & Implementation',
-        lessons: [
-          { id: `les-${id}-4`, title: 'Hands-on Execution & Real-world Workflows', duration: '22:10', isFreePreview: false },
-          { id: `les-${id}-5`, title: 'Industry Best Practices & Troubleshooting', duration: '16:30', isFreePreview: false },
-          { id: `les-${id}-6`, title: 'Final Project Evaluation & Certification', duration: '12:00', isFreePreview: false },
-        ],
+        lessons: fallbackLessonsMod2,
       },
     ];
   }

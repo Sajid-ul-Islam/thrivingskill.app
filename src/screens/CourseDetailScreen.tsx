@@ -58,7 +58,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     recordCategoryInteraction,
     refreshCourses,
   } = useLearning();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'curriculum' | 'qna' | 'instructor' | 'reviews'>('curriculum');
   const [loadingDetail, setLoadingDetail] = useState(false);
@@ -97,7 +97,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     );
   }
 
-  const isAdmin = Array.isArray(user?.roles) && user.roles.includes('administrator');
+  // Master Admin bypass or verified role handled by useAuth
   const isEnrolled = !!userProgress[course.id];
   const progressPercent = getCourseProgressPercentage(course.id);
   const bookmarked = isBookmarked(course.id);

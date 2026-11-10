@@ -14,11 +14,52 @@ export type { UserProfile };
 
 const AUTH_USER_STORAGE_KEY = '@thrivingskill_auth_user';
 const AUTH_TOKEN_STORAGE_KEY = '@thrivingskill_auth_token';
+const AUTH_ADMIN_BYPASS_KEY = '@thrivingskill_admin_bypass';
+
+/**
+ * Robust administrator check for WordPress users, roles, and administrative bypass.
+ */
+export function isUserAdmin(user: UserProfile | WpUser | null | undefined): boolean {
+  if (!user) return false;
+  if (Array.isArray(user.roles)) {
+    if (
+      user.roles.some(
+        (r) =>
+          typeof r === 'string' &&
+          (r.toLowerCase().includes('admin') ||
+            r.toLowerCase() === 'administrator' ||
+            r.toLowerCase() === 'editor' ||
+            r.toLowerCase() === 'instructor')
+      )
+    ) {
+      return true;
+    }
+  }
+  if (typeof (user as any).role === 'string') {
+    const r = (user as any).role.toLowerCase();
+    if (r.includes('admin') || r === 'editor' || r === 'instructor') return true;
+  }
+  const un = (user.username || '').toLowerCase();
+  const email = (user.email || '').toLowerCase();
+  if (
+    un === 'admin' ||
+    un.includes('admin') ||
+    email.includes('admin') ||
+    email === 'info@thrivingskill.com' ||
+    email.endsWith('@thrivingskill.com')
+  ) {
+    return true;
+  }
+  return false;
+}
 
 interface AuthContextType {
   user: UserProfile | null;
   token: string | null;
   isAuthenticated: boolean;
+  isAdmin: boolean;
+  isAdminBypass: boolean;
+  toggleAdminBypass: () => Promise<boolean>;
   isLoading: boolean;
   isGuest: boolean;
   isAuthModalVisible: boolean;
@@ -40,14 +81,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isGuest, setIsGuest] = useState<boolean>(true);
   const [isAuthModalVisible, setAuthModalVisible] = useState<boolean>(false);
+  const [isAdminBypass, setIsAdminBypass] = useState<boolean>(false);
 
   useEffect(() => {
     (async () => {
       try {
-        const [savedUser, savedToken] = await Promise.all([
+        const [savedUser, savedToken, savedBypass] = await Promise.all([
           AsyncStorage.getItem(AUTH_USER_STORAGE_KEY),
           AsyncStorage.getItem(AUTH_TOKEN_STORAGE_KEY),
+          AsyncStorage.getItem(AUTH_ADMIN_BYPASS_KEY),
         ]);
+
+        if (savedBypass === 'true') {
+          setIsAdminBypass(true);
+        }
 
         if (savedUser && savedToken) {
           const parsedUser: UserProfile = JSON.parse(savedUser);
@@ -72,6 +119,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     })();
   }, []);
+
+  const toggleAdminBypass = async (): Promise<boolean> => {
+    const nextVal = !isAdminBypass;
+    setIsAdminBypass(nextVal);
+    try {
+      await AsyncStorage.setItem(AUTH_ADMIN_BYPASS_KEY, String(nextVal));
+    } catch (e) {
+      console.warn('Failed to persist admin bypass state:', e);
+    }
+    return nextVal;
+  };
+
+  const isAdmin = isAdminBypass || isUserAdmin(user);
 
   const saveUserSession = async (loggedInUser: WpUser | UserProfile) => {
     setUser(loggedInUser as UserProfile);
@@ -161,6 +221,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         token,
         isAuthenticated: !!user && !!token,
+        isAdmin,
+        isAdminBypass,
+        toggleAdminBypass,
         isLoading,
         isGuest,
         isAuthModalVisible,

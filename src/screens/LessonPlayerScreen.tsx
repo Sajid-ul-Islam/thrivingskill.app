@@ -29,6 +29,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useGamification } from '../context/GamificationContext';
 import { useYouTube } from '../context/YouTubeContext';
 import { findRelatedVideoForCourse } from '../services/youtubeService';
+import { resolveLessonVideoData } from '../data/lessonVideosRegistry';
 import { OfflineManager } from '../services/offline/offlineManager';
 import { LessonsService, LessonDetail } from '../services/api/lessonsService';
 import { Lesson, Certificate } from '../types';
@@ -51,7 +52,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { t, isBangla } = useLanguage();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { videos } = useYouTube();
   const { recordStudyTime, unlockBadge } = useGamification();
   const {
@@ -108,7 +109,6 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const currentLesson = currentItem?.lesson;
 
   // Access Control: Administrator has master power to play all videos without purchase
-  const isAdmin = Array.isArray(user?.roles) && user.roles.includes('administrator');
   const isEnrolled = !!userProgress[course?.id || ''];
   const isFreePreview = Boolean(currentLesson?.isFreePreview);
   const canPlayVideo = isAdmin || isEnrolled || isFreePreview;
@@ -410,17 +410,25 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     (allLessons.length > 0 &&
       allLessons.every((item) => progress?.completedLessonIds.includes(item.lesson.id)));
 
-  // Fallback video from YouTube masterclass library if lesson has no direct URL
-  const relatedTrailer = findRelatedVideoForCourse(course, videos);
-  const fallbackVideo = relatedTrailer || (videos && videos.length > 0 ? videos[0] : null);
+  // Fallback authentic video from Thriving Skills Lesson Video Registry
+  const fallbackLessonVideo = resolveLessonVideoData(
+    course || { id: courseId, title: 'Course' },
+    currentLesson,
+    currentLessonIndex >= 0 ? currentLessonIndex : 0
+  );
 
   // Determine active video source & intro markup
   const activeVideoIntro = lessonDetail?.videoIntro || currentLesson?.videoIntro;
   const rawUrl = lessonDetail?.videoUrl || currentLesson?.videoUrl;
-  const activeVideoUrl = rawUrl || (activeVideoIntro && !activeVideoIntro.includes('<iframe') && (activeVideoIntro.startsWith('http') || activeVideoIntro.includes('vimeo') || activeVideoIntro.includes('youtu')) ? activeVideoIntro.trim() : undefined) || (fallbackVideo ? fallbackVideo.url : undefined);
+  const activeVideoUrl =
+    rawUrl ||
+    (activeVideoIntro && !activeVideoIntro.includes('<iframe') && (activeVideoIntro.startsWith('http') || activeVideoIntro.includes('vimeo') || activeVideoIntro.includes('youtu'))
+      ? activeVideoIntro.trim()
+      : undefined) ||
+    fallbackLessonVideo.videoUrl;
 
   // Resolved clean video link for external playback
-  const resolvedVideoUrl = activeVideoUrl || (fallbackVideo ? fallbackVideo.url : undefined);
+  const resolvedVideoUrl = activeVideoUrl || fallbackLessonVideo.videoUrl;
 
   // Build responsive embedded HTML player
   const buildVideoHtml = () => {
@@ -1511,41 +1519,45 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
     borderBottomWidth: 1,
+    flexWrap: 'nowrap',
   },
   playbackLeftControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 8,
+    flexShrink: 0,
   },
   toolBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
-    padding: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 2,
   },
   toolBtnText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600',
   },
   playbackRightControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
+    flexShrink: 0,
   },
   speedPill: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     paddingVertical: 3,
     backgroundColor: 'rgba(0,0,0,0.06)',
     borderRadius: 6,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 3,
   },
   speedPillText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
   },
   commutePlayerCard: {

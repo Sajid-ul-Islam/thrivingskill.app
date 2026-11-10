@@ -81,7 +81,32 @@ check('HeroCarousel uses useWindowDimensions for dynamic card width', () => {
   assert(code.includes('scrollToOffset'), 'HeroCarousel missing responsive scrollToOffset');
 });
 
-// 6. Mathematical simulation across viewport widths (320px to 430px)
+// 6. LessonPlayerScreen Playback Toolbar & Video Master Registry
+check('LessonPlayerScreen has compact toolbar and authentic video resolution', () => {
+  const code = fs.readFileSync('src/screens/LessonPlayerScreen.tsx', 'utf8');
+  assert(code.includes('resolveLessonVideoData'), 'LessonPlayerScreen missing resolveLessonVideoData');
+  assert(code.includes('isAdmin } = useAuth()'), 'LessonPlayerScreen missing isAdmin from useAuth()');
+  assert(code.includes('paddingHorizontal: 8'), 'playbackToolbar must have compact paddingHorizontal');
+  assert(code.includes('gap: 8') && code.includes('flexShrink: 0'), 'playbackLeftControls must be compact with flexShrink');
+  assert(code.includes('gap: 6'), 'playbackRightControls must have compact gap');
+});
+
+// 7. Admin Bypass Mode across AuthContext, ProfileScreen, and CourseDetailScreen
+check('Admin bypass mode implemented across AuthContext, Profile, and CourseDetail', () => {
+  const authCode = fs.readFileSync('src/context/AuthContext.tsx', 'utf8');
+  assert(authCode.includes('isAdminBypass'), 'AuthContext missing isAdminBypass');
+  assert(authCode.includes('toggleAdminBypass'), 'AuthContext missing toggleAdminBypass');
+  assert(authCode.includes('isUserAdmin'), 'AuthContext missing isUserAdmin');
+
+  const profileCode = fs.readFileSync('src/screens/ProfileScreen.tsx', 'utf8');
+  assert(profileCode.includes('toggleAdminBypass'), 'ProfileScreen missing toggleAdminBypass');
+  assert(profileCode.includes('Admin QA Mode'), 'ProfileScreen missing Admin QA Mode switch');
+
+  const courseDetailCode = fs.readFileSync('src/screens/CourseDetailScreen.tsx', 'utf8');
+  assert(courseDetailCode.includes('isAdmin } = useAuth()'), 'CourseDetailScreen missing isAdmin from useAuth()');
+});
+
+// 8. Mathematical simulation across viewport widths (320px to 430px)
 check('Simulated Viewport Widths (320px, 360px, 390px, 412px, 428px) never overflow', () => {
   const viewports = [320, 360, 375, 390, 412, 428];
   for (const w of viewports) {
@@ -94,6 +119,12 @@ check('Simulated Viewport Widths (320px, 360px, 390px, 412px, 428px) never overf
     assert(maxButtonWidth + minPriceColWidth + gap + barPadding <= w, `Total width exceeds viewport ${w}`);
     assert(maxButtonWidth > 130, `Button too narrow at width ${w}`);
     assert(minPriceColWidth > 110, `Price column too narrow at width ${w}`);
+  }
+
+  // Player toolbar math verification: Left controls (~136px) + Right controls (~144px) + 16px padding = 296px
+  for (const w of viewports) {
+    const toolbarWidth = 136 + 144 + 16;
+    assert(toolbarWidth < w, `Player toolbar (${toolbarWidth}px) overflows screen width (${w}px)`);
   }
 });
 

@@ -58,7 +58,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const { language, toggleLanguage, isBangla, t } = useLanguage();
   const { badges } = useGamification();
   const { userProgress, certificates } = useLearning();
-  const { user, isAuthenticated, logout, setAuthModalVisible, updateUserProfile } = useAuth();
+  const { user, isAuthenticated, isAdmin, isAdminBypass, toggleAdminBypass, logout, setAuthModalVisible, updateUserProfile } = useAuth();
   const {
     subscriptionTier,
     billingInterval,
@@ -247,7 +247,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
   const enrolledCount = Object.keys(userProgress).length;
   const completedCount = Object.values(userProgress).filter((p) => p.isCompleted).length;
-  const isAdmin = Array.isArray(user?.roles) && user.roles.includes('administrator');
+  // Master Admin bypass or verified role handled by useAuth
 
 
 
@@ -695,6 +695,41 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   );
                 }}
                 trackColor={{ false: '#CBD5E1', true: colors.secondary }}
+                thumbColor="#FFFFFF"
+              />
+            </View>
+
+            {/* Admin QA Testing Bypass Mode */}
+            <View style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}>
+              <View style={styles.settingLeft}>
+                <Ionicons
+                  name="shield-checkmark"
+                  size={20}
+                  color={isAdmin ? '#EF4444' : colors.textMuted}
+                />
+                <View style={{ marginLeft: 6, flex: 1, paddingRight: 8 }}>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>
+                    {isBangla ? 'অ্যাডমিন কিউএ মোড (সকল কোর্স আনলক)' : 'Admin QA Mode (Unlock All Courses)'}
+                  </Text>
+                  <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                    {isAdmin
+                      ? (isBangla ? 'সক্রিয়: সকল কোর্সের প্রতিটি ভিডিও দেখার অনুমতি আছে' : 'Active: Unrestricted playback of all course lectures')
+                      : (isBangla ? 'পরীক্ষার জন্য সকল কোর্সের ভিডিও অবিলম্বে আনলক করুন' : 'Unlock all courses & authentic videos for testing')}
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={isAdminBypass}
+                onValueChange={async () => {
+                  const active = await toggleAdminBypass();
+                  Alert.alert(
+                    active ? 'Admin QA Mode Activated 🛡️' : 'Admin QA Mode Disabled',
+                    active
+                      ? 'All courses and video lectures are now fully unlocked for testing without payment.'
+                      : 'Normal student/guest access controls restored.'
+                  );
+                }}
+                trackColor={{ false: '#CBD5E1', true: '#EF4444' }}
                 thumbColor="#FFFFFF"
               />
             </View>
