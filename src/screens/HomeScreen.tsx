@@ -12,6 +12,7 @@ import {
   Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../context/ThemeContext';
 import { Env } from '../config/env';
@@ -70,6 +71,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onOpenDrawer,
 }) => {
   const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const [aboutModalVisible, setAboutModalVisible] = useState(false);
   const [aboutInitialTab, setAboutInitialTab] = useState<AboutTabKey>('overview');
   const [legalModalVisible, setLegalModalVisible] = useState(false);
@@ -223,7 +225,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}
         refreshControl={
           <RefreshControl
             refreshing={isLoadingCourses}

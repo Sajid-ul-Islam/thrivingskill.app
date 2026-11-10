@@ -16,6 +16,7 @@ import {
   AppStateStatus,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
@@ -38,6 +39,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   onSuccess,
 }) => {
   const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const { t, isBangla } = useLanguage();
   const { user } = useAuth();
   const { userProgress, enrollInCourse, refreshCourses, loadCourseDetail } = useLearning();
@@ -280,7 +282,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       >
         <TouchableOpacity style={styles.overlayClose} activeOpacity={1} onPress={onClose} />
         <View
-          style={[styles.modalCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          style={[styles.modalCard, { backgroundColor: colors.surface, borderColor: colors.border, paddingBottom: Math.max(insets.bottom, 20) + 12 }]}
           accessibilityViewIsModal={true}
         >
           <View style={[styles.handle, { backgroundColor: colors.border }]} />

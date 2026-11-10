@@ -12,6 +12,7 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 
@@ -31,6 +32,7 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
   onDismissLater,
 }) => {
   const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const { isBangla } = useLanguage();
 
   const [rating, setRating] = useState<number>(5);
@@ -96,7 +98,7 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
         style={styles.overlay}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={[styles.modalCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+        <View style={[styles.modalCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border, paddingBottom: Math.max(insets.bottom, 16) + 16 }]}>
           <ScrollView
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}

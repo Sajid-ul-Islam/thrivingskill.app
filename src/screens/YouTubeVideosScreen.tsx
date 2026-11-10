@@ -236,7 +236,7 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
       <FlatList
         data={filteredVideos}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[styles.listContent, { paddingBottom: Math.max(insets.bottom, 16) + 40 }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl

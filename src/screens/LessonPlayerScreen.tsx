@@ -11,6 +11,7 @@ import {
   Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { useTheme } from '../context/ThemeContext';
 import { useLearning } from '../context/LearningContext';
@@ -48,6 +49,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   onSelectLesson,
 }) => {
   const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const { t, isBangla } = useLanguage();
   const { user } = useAuth();
   const { videos } = useYouTube();
@@ -508,7 +510,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         subtitle={currentItem?.moduleTitle}
       />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 60 }]}>
         {/* Administrator Access Banner if viewing as admin */}
         {isAdmin && (
           <View style={[styles.adminBanner, { backgroundColor: '#102F53', borderColor: '#FFB606' }]}>

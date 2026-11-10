@@ -8,6 +8,7 @@ import {
   Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { useLearning } from '../context/LearningContext';
 import { Header } from '../components/Header';
@@ -40,6 +41,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
   onOpenDrawer,
 }) => {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { savedVideos, playVideo } = useYouTube();
   const {
     courses,
@@ -97,7 +99,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
         onOpenDrawer={onOpenDrawer}
       />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}>
         {/* Stats Dashboard Card */}
         <View
           style={[

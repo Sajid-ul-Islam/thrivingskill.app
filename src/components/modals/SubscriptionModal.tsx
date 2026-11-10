@@ -9,6 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useSaaS, SAAS_PLAN_FEATURES } from '../../context/SaaSContext';
 import { SubscriptionTier } from '../../types';
@@ -20,6 +21,7 @@ interface SubscriptionModalProps {
 
 export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, onClose }) => {
   const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const { subscriptionTier, billingInterval, setSubscriptionTier, setBillingInterval } = useSaaS();
   const [selectedTier, setSelectedTier] = useState<SubscriptionTier>(subscriptionTier);
   const [currency, setCurrency] = useState<'BDT' | 'USD'>('BDT');
@@ -61,7 +63,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 20) + 40 }]}>
             {/* Currency & Interval Controls */}
             <View style={styles.controlsRow}>
               {/* Currency Toggle */}

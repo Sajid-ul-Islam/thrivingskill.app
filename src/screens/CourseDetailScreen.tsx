@@ -14,6 +14,7 @@ import {
   AppStateStatus,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { useLearning } from '../context/LearningContext';
 import { useAuth } from '../context/AuthContext';
@@ -40,6 +41,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
   onNavigateToLesson,
 }) => {
   const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const { t, isBangla } = useLanguage();
   const {
     getCourseById,
@@ -234,7 +236,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
         }
       />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 12) + 100 }]}>
         {/* Thumbnail Hero with Preview Button */}
         <View style={styles.heroWrapper}>
           <Image source={{ uri: course.thumbnail }} style={styles.heroThumbnail} />
@@ -335,28 +337,28 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
           <View style={[styles.statsBar, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
             <View style={styles.statCell}>
               <Ionicons name="star" size={16} color={colors.starColor} />
-              <Text style={[styles.statValue, { color: colors.text }]}>{course.rating}</Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>({course.reviewsCount})</Text>
+              <Text style={[styles.statValue, { color: colors.text }]} numberOfLines={1}>{course.rating}</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]} numberOfLines={1}>({course.reviewsCount})</Text>
             </View>
 
             <View style={[styles.statDivider, { backgroundColor: colors.borderSubtle }]} />
 
             <View style={styles.statCell}>
               <Ionicons name="people-outline" size={16} color={colors.primary} />
-              <Text style={[styles.statValue, { color: colors.text }]}>
+              <Text style={[styles.statValue, { color: colors.text }]} numberOfLines={1}>
                 {course.enrolledCount.toLocaleString()}
               </Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Enrolled</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]} numberOfLines={1}>Enrolled</Text>
             </View>
 
             <View style={[styles.statDivider, { backgroundColor: colors.borderSubtle }]} />
 
             <View style={styles.statCell}>
               <Ionicons name="time-outline" size={16} color={colors.secondary} />
-              <Text style={[styles.statValue, { color: colors.text }]}>
+              <Text style={[styles.statValue, { color: colors.text }]} numberOfLines={1}>
                 {course.durationHours}h
               </Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Total</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]} numberOfLines={1}>Total</Text>
             </View>
           </View>
 
@@ -660,9 +662,9 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
             backgroundColor: colors.surfaceCard,
             borderTopColor: colors.border,
             shadowColor: colors.cardShadow,
+            paddingBottom: Math.max(insets.bottom, 12),
           },
-        ]}
-      >
+        ]}>
         {isAdmin ? (
           <View style={styles.bottomPriceCol}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
@@ -678,13 +680,13 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
         ) : !isEnrolled ? (
           <View style={styles.bottomPriceCol}>
             <View style={styles.priceRow}>
-              <Text style={[styles.bottomPrice, { color: colors.primary }]}>
+              <Text style={[styles.bottomPrice, { color: colors.primary }]} numberOfLines={1}>
                 {isPaidCourse
                   ? (course.priceBdt ? `৳${course.priceBdt.toLocaleString()}` : `${course.price.toFixed(2)}`)
                   : (isBangla ? 'বিনামূল্যে' : 'Free')}
               </Text>
               {(course.originalPriceBdt || course.originalPrice) && (
-                <Text style={[styles.bottomOriginalPrice, { color: colors.textMuted }]}>
+                <Text style={[styles.bottomOriginalPrice, { color: colors.textMuted }]} numberOfLines={1}>
                   {course.originalPriceBdt
                     ? `৳${course.originalPriceBdt.toLocaleString()}`
                     : `$${course.originalPrice.toFixed(2)}`}
@@ -696,9 +698,9 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                 </View>
               )}
             </View>
-            <Text style={[styles.bottomPriceLabel, { color: colors.textMuted }]}>
-              Lifetime Access • Certificate Included
-            </Text>
+            <Text style={[styles.bottomPriceLabel, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
+            {isBangla ? 'লাইফটাইম অ্যাক্সেস • সার্টিফিকেট' : 'Lifetime Access • Certificate'}
+          </Text>
           </View>
         ) : (
           <View style={styles.bottomPriceCol}>
@@ -740,7 +742,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
             size={18}
             color={!isEnrolled && isPaidCourse ? '#102F53' : '#FFFFFF'}
           />
-          <Text style={[styles.enrollCTAText, !isEnrolled && isPaidCourse ? { color: '#102F53', fontWeight: '800' } : null]}>
+          <Text style={[styles.enrollCTAText, !isEnrolled && isPaidCourse ? { color: '#102F53', fontWeight: '800' } : null]} numberOfLines={1} ellipsizeMode="tail">
             {isAdmin
               ? (isBangla ? 'কোর্স ভিডিও দেখুন' : 'Play Course (Admin)')
               : isEnrolled
@@ -1326,63 +1328,71 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingHorizontal: 16,
+    paddingTop: 10,
     borderTopWidth: 1,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 8,
+    gap: 8,
   },
   bottomPriceCol: {
+    flex: 1,
+    minWidth: 0,
     justifyContent: 'center',
   },
   bottomPriceLabel: {
-    fontSize: 11,
+    fontSize: 10.5,
     textTransform: 'uppercase',
   },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    gap: 6,
+    gap: 5,
+    flexWrap: 'wrap',
   },
   bottomPrice: {
-    fontSize: 20,
+    fontSize: 19,
     fontWeight: '800',
   },
   bottomOriginalPrice: {
-    fontSize: 13,
+    fontSize: 12,
     textDecorationLine: 'line-through',
   },
   detailDiscountTag: {
     backgroundColor: '#E34234',
-    paddingHorizontal: 6,
+    paddingHorizontal: 5,
     paddingVertical: 2,
     borderRadius: 4,
     marginLeft: 2,
   },
   detailDiscountText: {
     color: '#FFFFFF',
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: '800',
     letterSpacing: 0.3,
   },
   enrolledStatus: {
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: '600',
   },
   enrollCTAButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 24,
+    justifyContent: 'center',
+    paddingHorizontal: 14,
     paddingVertical: 12,
     borderRadius: 12,
-    gap: 8,
+    gap: 6,
+    flexShrink: 0,
+    maxWidth: '56%',
   },
   enrollCTAText: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 13.5,
     fontWeight: '700',
+    flexShrink: 1,
   },
   // Trust Strip
   trustStripCard: {

@@ -10,6 +10,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { useLearning } from '../context/LearningContext';
 import { Header } from '../components/Header';
@@ -39,6 +40,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   onOpenDrawer,
 }) => {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const {
     courses,
     categories,
@@ -119,7 +121,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}
         refreshControl={
           <RefreshControl
             refreshing={isLoadingCourses}

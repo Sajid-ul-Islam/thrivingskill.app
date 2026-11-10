@@ -14,6 +14,7 @@ import {
   Share,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { useLearning } from '../context/LearningContext';
 import { useSaaS } from '../context/SaaSContext';
@@ -53,6 +54,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   onOpenDrawer,
 }) => {
   const { colors, isDark, toggleTheme } = useTheme();
+  const insets = useSafeAreaInsets();
   const { language, toggleLanguage, isBangla, t } = useLanguage();
   const { badges } = useGamification();
   const { userProgress, certificates } = useLearning();
@@ -267,7 +269,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         onOpenDrawer={onOpenDrawer}
       />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}>
         {/* Profile Card */}
         <View
           style={[

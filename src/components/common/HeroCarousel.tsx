@@ -10,6 +10,7 @@ import {
   FlatList,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -75,6 +76,8 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
   onSelectSlide,
 }) => {
   const { colors, isDark } = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
+  const cardWidth = Math.max(280, screenWidth - 32);
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -85,8 +88,8 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
       setActiveIndex((prev) => {
         const nextIndex = (prev + 1) % SLIDES.length;
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-        flatListRef.current?.scrollToIndex({
-          index: nextIndex,
+        flatListRef.current?.scrollToOffset({
+          offset: nextIndex * (cardWidth + 12),
           animated: true,
         });
         return nextIndex;
@@ -178,7 +181,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
         onTouchStart={stopAutoScroll}
         onTouchEnd={startAutoScroll}
         contentContainerStyle={styles.listContent}
-        snapToInterval={CARD_WIDTH + 12}
+        snapToInterval={cardWidth + 12}
         decelerationRate="fast"
       />
 

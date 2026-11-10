@@ -93,10 +93,10 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
               </View>
             ) : (
               <View style={styles.priceRow}>
-                <Text style={[styles.currentPrice, { color: colors.primary }]}>
+                <Text style={[styles.currentPrice, { color: colors.primary }]} numberOfLines={1}>
                   {displayPrice}
                 </Text>
-                <Text style={[styles.originalPrice, { color: colors.textMuted }]}>
+                <Text style={[styles.originalPrice, { color: colors.textMuted }]} numberOfLines={1}>
                   {displayOrigPrice}
                 </Text>
                 {discountPercent > 0 && (

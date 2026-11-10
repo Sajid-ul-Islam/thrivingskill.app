@@ -13,6 +13,7 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { Env } from '../../config/env';
@@ -27,6 +28,7 @@ type AuthMode = 'login' | 'register' | 'forgot_password';
 
 export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
   const { colors, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const {
     login,
             register,
@@ -145,7 +147,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
         style={styles.backdrop}
       >
         <TouchableOpacity style={styles.outsideOverlay} activeOpacity={1} onPress={onClose} />
-        <View style={[styles.modalCard, { backgroundColor: colors.surface, borderColor: colors.border }]} accessibilityViewIsModal={true}>
+        <View style={[styles.modalCard, { backgroundColor: colors.surface, borderColor: colors.border, paddingBottom: Math.max(insets.bottom, 20) + 12 }]} accessibilityViewIsModal={true}>
           {/* Drag Handle */}
           <View style={[styles.handleBar, { backgroundColor: colors.border }]} />
 

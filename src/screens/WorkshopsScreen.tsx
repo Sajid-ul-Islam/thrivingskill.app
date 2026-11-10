@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { Header } from '../components/Header';
 import { LiveWorkshopCard } from '../components/LiveWorkshopCard';
@@ -21,6 +22,7 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
   onOpenDrawer,
 }) => {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<TabType>('all');
 
   return (
@@ -33,7 +35,7 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
         onOpenDrawer={onOpenDrawer}
       />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}>
         {/* Banner */}
         <View
           style={[

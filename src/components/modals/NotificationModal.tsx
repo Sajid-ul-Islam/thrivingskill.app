@@ -8,6 +8,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useSaaS } from '../../context/SaaSContext';
 import { SaaSNotification } from '../../types';
@@ -24,6 +25,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
   onNavigateToTab,
 }) => {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
   const { notifications, markNotificationRead, markAllNotificationsRead } = useSaaS();
   const [filterType, setFilterType] = useState<string>('all');
 
@@ -60,7 +62,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
         <View
           style={[
             styles.modalContainer,
-            { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+            { backgroundColor: colors.surfaceCard, borderColor: colors.border, paddingBottom: Math.max(insets.bottom, 20) + 12 },
           ]}
         >
           {/* Header */}
