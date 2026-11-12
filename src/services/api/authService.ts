@@ -126,13 +126,11 @@ export class AuthService {
         { skipAuth: true }
       );
       return res;
-    } catch {
-      // Sandbox fallback for local and client testing without live SMS credits
-      return {
-        success: true,
-        message: `OTP sent successfully to ${cleanPhone}. (Sandbox test code: 123456)`,
-        testOtp: '123456',
-      };
+    } catch (err: any) {
+      throw new Error(
+        err?.message ||
+          'Phone OTP verification service is currently unavailable. Please sign in using your email or username and password.'
+      );
     }
   }
 
@@ -170,22 +168,8 @@ export class AuthService {
         token,
         roles: ['subscriber'],
       };
-    } catch {
-      // Allow sandbox OTP verification (123456 or any 6-digit in test environment)
-      if (cleanOtp === '123456' || cleanOtp.length === 6) {
-        const fakeToken = `tsl_jwt_otp_${Date.now()}_${cleanPhone.slice(-6)}`;
-        HttpClient.setAuthToken(fakeToken);
-        return {
-          id: `phone-${cleanPhone.slice(-6)}`,
-          username: cleanPhone,
-          email: `${cleanPhone.replace(/\+/g, '')}@thrivingskill.com`,
-          displayName: fullName || `Learner (${cleanPhone.slice(-4)})`,
-          avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200',
-          token: fakeToken,
-          roles: ['subscriber'],
-        };
-      }
-      throw new Error('Invalid OTP code. Please enter the 6-digit code or test code 123456.');
+    } catch (err: any) {
+      throw new Error(err?.message || 'OTP verification failed. Please check the code and try again.');
     }
   }
 }

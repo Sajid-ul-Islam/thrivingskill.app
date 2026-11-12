@@ -12,6 +12,9 @@ import {
   Modal,
   TextInput,
   Share,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -57,8 +60,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const insets = useSafeAreaInsets();
   const { language, toggleLanguage, isBangla, t } = useLanguage();
   const { badges } = useGamification();
-  const { userProgress, certificates } = useLearning();
-  const { user, isAuthenticated, isAdmin, isAdminBypass, toggleAdminBypass, logout, setAuthModalVisible, updateUserProfile } = useAuth();
+  const { courses, userProgress, certificates } = useLearning();
+  const { user, isAuthenticated, isAdmin, logout, deleteAccount, setAuthModalVisible, updateUserProfile } = useAuth();
   const {
     subscriptionTier,
     billingInterval,
@@ -76,6 +79,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [editProfileModalVisible, setEditProfileModalVisible] = useState(false);
   const [changePasswordModalVisible, setChangePasswordModalVisible] = useState(false);
   const [paymentHistoryModalVisible, setPaymentHistoryModalVisible] = useState(false);
+  const [deleteAccountModalVisible, setDeleteAccountModalVisible] = useState(false);
+  const [deletePass, setDeletePass] = useState('');
+  const [deleteError, setDeleteError] = useState('');
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
   // Edit Profile Form (Section 25 Spec)
   const [customName, setCustomName] = useState(user?.name || user?.displayName || user?.username || '');
@@ -247,16 +254,41 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
   const enrolledCount = Object.keys(userProgress).length;
   const completedCount = Object.values(userProgress).filter((p) => p.isCompleted).length;
-  // Master Admin bypass or verified role handled by useAuth
 
+  const enrolledOrderCourses = Object.keys(userProgress)
+    .map((id) => courses.find((c) => c.id === id))
+    .filter((c): c is Course => Boolean(c));
 
+  const handleConfirmDeleteAccount = async () => {
+    if (!deletePass.trim()) {
+      setDeleteError(
+        isBangla ? 'স্থায়ীভাবে অ্যাকাউন্ট মুছে ফেলতে আপনার পাসওয়ার্ড দিন।' : 'Please enter your current password to confirm deletion.'
+      );
+      return;
+    }
 
-
-  const handleDownloadInvoice = () => {
-    Alert.alert(
-      'Invoice Downloaded 📥',
-      `Invoice #INV-2026-TS884 (৳${billingInterval === 'annual' ? '2,900.00' : '290.00'} BDT) has been downloaded to your device storage.`
-    );
+    setDeleteError('');
+    setIsDeletingAccount(true);
+    try {
+      await deleteAccount(deletePass);
+      setDeleteAccountModalVisible(false);
+      setDeletePass('');
+      Alert.alert(
+        isBangla ? 'অ্যাকাউন্ট স্থায়ীভাবে মুছে ফেলা হয়েছে' : 'Account Permanently Deleted',
+        isBangla
+          ? 'আপনার ওয়ার্ডপ্রেস/লার্নপ্রেস অ্যাকাউন্ট এবং সংশ্লিষ্ট ডেটা সার্ভার থেকে স্থায়ীভাবে মুছে ফেলা হয়েছে।'
+          : 'Your account and associated learning records have been permanently deleted from our servers.'
+      );
+    } catch (err: any) {
+      setDeleteError(
+        err?.message ||
+          (isBangla
+            ? 'অ্যাকাউন্ট মুছে ফেলা যায়নি। অনুগ্রহ করে পাসওয়ার্ড যাচাই করুন অথবা ওয়েব ফর্ম ব্যবহার করুন।'
+            : 'Unable to delete account. Please verify your password or submit via the web form.')
+      );
+    } finally {
+      setIsDeletingAccount(false);
+    }
   };
 
   return (
@@ -699,55 +731,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               />
             </View>
 
-            {/* Admin QA Testing Bypass Mode */}
-            <View style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}>
-              <View style={styles.settingLeft}>
-                <Ionicons
-                  name="shield-checkmark"
-                  size={20}
-                  color={isAdmin ? '#EF4444' : colors.textMuted}
-                />
-                <View style={{ marginLeft: 6, flex: 1, paddingRight: 8 }}>
-                  <Text style={[styles.settingLabel, { color: colors.text }]}>
-                    {isBangla ? 'অ্যাডমিন কিউএ মোড (সকল কোর্স আনলক)' : 'Admin QA Mode (Unlock All Courses)'}
-                  </Text>
-                  <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                    {isAdmin
-                      ? (isBangla ? 'সক্রিয়: সকল কোর্সের প্রতিটি ভিডিও দেখার অনুমতি আছে' : 'Active: Unrestricted playback of all course lectures')
-                      : (isBangla ? 'পরীক্ষার জন্য সকল কোর্সের ভিডিও অবিলম্বে আনলক করুন' : 'Unlock all courses & authentic videos for testing')}
-                  </Text>
-                </View>
-              </View>
-              <Switch
-                value={isAdminBypass}
-                onValueChange={async () => {
-                  const active = await toggleAdminBypass();
-                  Alert.alert(
-                    active ? 'Admin QA Mode Activated 🛡️' : 'Admin QA Mode Disabled',
-                    active
-                      ? 'All courses and video lectures are now fully unlocked for testing without payment.'
-                      : 'Normal student/guest access controls restored.'
-                  );
-                }}
-                trackColor={{ false: '#CBD5E1', true: '#EF4444' }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-
-            {/* Offline downloads */}
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => Alert.alert('Offline Content', 'You have 3 downloaded lessons (142 MB).')}
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="cloud-download-outline" size={20} color={colors.text} />
-                <Text style={[styles.settingLabel, { color: colors.text }]}>
-                  {isBangla ? 'ডাউনলোডকৃত লেসন' : 'Downloaded Lectures'}
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-            </TouchableOpacity>
-
             {/* Video Streaming Resolution (Section 26) */}
             <TouchableOpacity
               style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
@@ -1034,41 +1017,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <TouchableOpacity
                 style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: colors.borderSubtle }]}
                 onPress={() => {
-                  Alert.alert(
-                    t('deleteAccountConfirmTitle'),
-                    t('deleteAccountConfirmMsg'),
-                    [
-                      { text: isBangla ? 'বাতিল' : 'Cancel', style: 'cancel' },
-                      {
-                        text: isBangla ? 'ওয়েব ফর্মে যান' : 'Request via Web Form',
-                        onPress: () => {
-                          Linking.openURL(Env.ACCOUNT_DELETION_URL).catch(() => {
-                            Alert.alert('Web Link', t('deleteAccountWebPrompt'));
-                          });
-                        },
-                      },
-                      {
-                        text: isBangla ? 'ইন-অ্যাপ ডিলিট' : 'Delete In-App',
-                        style: 'destructive',
-                        onPress: () => {
-                          Alert.alert(
-                            isBangla ? 'অ্যাকাউন্ট মুছে ফেলার অনুরোধ গৃহীত হয়েছে 🗑️' : 'Account Deletion Requested 🗑️',
-                            isBangla
-                              ? 'আপনার অনুরোধ গৃহীত হয়েছে। আপনাকে এখনই সাইন আউট করা হচ্ছে এবং গুগল প্লে ডেটা সুরক্ষা নীতিমালা অনুযায়ী পরবর্তী ২৪-৪৮ ঘণ্টার মধ্যে আপনার সকল তথ্য মুছে ফেলা হবে।'
-                              : 'Your deletion request has been registered. You will now be signed out, and your student profile and progress data will be purged within 24-48 hours in compliance with Google Play Data Safety policies.',
-                            [
-                              {
-                                text: isBangla ? 'ঠিক আছে' : 'OK',
-                                onPress: () => {
-                                  logout();
-                                },
-                              },
-                            ]
-                          );
-                        },
-                      },
-                    ]
-                  );
+                  setDeletePass('');
+                  setDeleteError('');
+                  setDeleteAccountModalVisible(true);
                 }}
               >
                 <View style={styles.settingLeft}>
@@ -1373,85 +1324,185 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 8, gap: 12 }}>
-              {[
-                {
-                  id: 'INV-2026-TS884',
-                  item: 'Pro Executive Plan (Annual Access)',
-                  amount: '৳2,900 BDT',
-                  date: 'Sep 15, 2026',
-                  gateway: 'bKash Merchant (01312100288)',
-                  status: 'PAID',
-                },
-                {
-                  id: 'INV-2026-TS721',
-                  item: 'Advanced Supply Chain Analytics & Power BI',
-                  amount: '৳1,500 BDT',
-                  date: 'Aug 02, 2026',
-                  gateway: 'Nagad Direct',
-                  status: 'PAID',
-                },
-                {
-                  id: 'INV-2026-TS590',
-                  item: 'Generative AI for Corporate Leaders',
-                  amount: '৳2,000 BDT',
-                  date: 'Jul 14, 2026',
-                  gateway: 'SSLCommerz (Visa / Mastercard)',
-                  status: 'PAID',
-                },
-                {
-                  id: 'INV-2026-TS432',
-                  item: 'Professional Excel & Financial Modeling',
-                  amount: '৳1,200 BDT',
-                  date: 'May 28, 2026',
-                  gateway: 'bKash Merchant',
-                  status: 'PAID',
-                },
-              ].map((inv) => (
-                <View
-                  key={inv.id}
-                  style={[
-                    styles.invoiceItemCard,
-                    { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderSubtle },
-                  ]}
-                >
-                  <View style={styles.invoiceItemTop}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.invoiceItemTitle, { color: colors.text }]}>{inv.item}</Text>
-                      <Text style={[styles.invoiceMeta, { color: colors.textMuted }]}>
-                        {inv.id} • {inv.date}
-                      </Text>
-                    </View>
-                    <View style={styles.invoiceStatusBadge}>
-                      <Text style={styles.invoiceStatusText}>{inv.status}</Text>
-                    </View>
-                  </View>
-
-                  <View style={[styles.invoiceItemBottom, { borderTopColor: colors.borderSubtle }]}>
-                    <View>
-                      <Text style={[styles.invoiceAmount, { color: colors.primary }]}>{inv.amount}</Text>
-                      <Text style={[styles.invoiceGateway, { color: colors.textMuted }]}>{inv.gateway}</Text>
-                    </View>
-                    <TouchableOpacity
-                      style={[styles.invoiceReceiptBtn, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
-                      onPress={() =>
-                        Alert.alert(
-                          'Invoice Receipt Downloaded 📥',
-                          `Invoice #${inv.id}\nItem: ${inv.item}\nAmount: ${inv.amount}\nGateway: ${inv.gateway}\nStatus: Paid\n\nOfficial VAT receipt ready for corporate expensing.`
-                        )
-                      }
-                    >
-                      <Ionicons name="document-text-outline" size={14} color={colors.primary} />
-                      <Text style={[styles.invoiceReceiptBtnText, { color: colors.primary }]}>
-                        {isBangla ? 'রশিদ ডাউনলোড' : 'Receipt'}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 8, gap: 12, paddingBottom: Math.max(insets.bottom, 16) }}>
+              {enrolledOrderCourses.length === 0 ? (
+                <View style={[styles.invoiceItemCard, { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderSubtle, alignItems: 'center', paddingVertical: 20 }]}>
+                  <Ionicons name="receipt-outline" size={28} color={colors.textMuted} />
+                  <Text style={[styles.invoiceItemTitle, { color: colors.text, textAlign: 'center' }]}>
+                    {isBangla ? 'কোনো সক্রিয় কোর্স এনরোলমেন্ট পাওয়া যায়নি' : 'No Active Course Records Yet'}
+                  </Text>
+                  <Text style={[styles.invoiceGateway, { color: colors.textMuted, textAlign: 'center' }]}>
+                    {isBangla
+                      ? 'আপনার অফিসিয়াল অর্ডার ও ভ্যাট রশিদ ওয়েব পোর্টালে সংরক্ষিত থাকে।'
+                      : 'Official billing records and VAT invoices are hosted securely on your web account.'}
+                  </Text>
                 </View>
-              ))}
+              ) : (
+                enrolledOrderCourses.map((courseItem) => {
+                  const prog = userProgress[courseItem.id];
+                  const isFree = !courseItem.price || courseItem.price === 0;
+                  return (
+                    <View
+                      key={courseItem.id}
+                      style={[
+                        styles.invoiceItemCard,
+                        { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderSubtle },
+                      ]}
+                    >
+                      <View style={styles.invoiceItemTop}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={[styles.invoiceItemTitle, { color: colors.text }]} numberOfLines={2}>
+                            {courseItem.title}
+                          </Text>
+                          <Text style={[styles.invoiceMeta, { color: colors.textMuted }]}>
+                            {courseItem.instructor?.name || 'Thriving Skills'} • {prog?.isCompleted ? 'Completed' : 'In Progress'}
+                          </Text>
+                        </View>
+                        <View style={styles.invoiceStatusBadge}>
+                          <Text style={styles.invoiceStatusText}>{isFree ? 'FREE' : 'ENROLLED'}</Text>
+                        </View>
+                      </View>
+                    </View>
+                  );
+                })
+              )}
+
+              <TouchableOpacity
+                style={[styles.saveBtn, { backgroundColor: colors.primary, flex: 0, marginTop: 4, paddingHorizontal: 16 }]}
+                onPress={() => {
+                  const ordersUrl = `${Env.SITE_URL.replace(/\/+$/, '')}/my-account/orders/`;
+                  Linking.openURL(ordersUrl).catch(() => {});
+                }}
+              >
+                <Ionicons name="open-outline" size={16} color={colors.onPrimary} style={{ flexShrink: 0 }} />
+                <Text style={[styles.saveBtnText, { color: colors.onPrimary, flexShrink: 1 }]} numberOfLines={2}>
+                  {isBangla ? 'ওয়েবসাইটে অফিশিয়াল ইনভয়েস দেখুন' : 'View Official Web Orders & Invoices'}
+                </Text>
+              </TouchableOpacity>
             </ScrollView>
           </View>
         </View>
+      </Modal>
+
+      {/* Permanent In-App Account Deletion Modal (Google Play User Data Policy) */}
+      <Modal
+        visible={deleteAccountModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          if (!isDeletingAccount) setDeleteAccountModalVisible(false);
+        }}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.modalBackdrop}
+        >
+          <View
+            style={[
+              styles.modalCard,
+              {
+                backgroundColor: colors.surfaceCard,
+                borderColor: colors.border,
+                paddingBottom: Math.max(insets.bottom, 20) + 12,
+              },
+            ]}
+          >
+            <View style={styles.modalHeader}>
+              <View style={{ flex: 1, paddingRight: 8 }}>
+                <Text style={[styles.modalTitle, { color: colors.danger }]}>
+                  {t('deleteAccountConfirmTitle')}
+                </Text>
+                <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
+                  {user?.email || user?.username}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => !isDeletingAccount && setDeleteAccountModalVisible(false)}
+                style={styles.modalCloseBtn}
+                disabled={isDeletingAccount}
+              >
+                <Ionicons name="close" size={20} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={{ fontSize: 12, lineHeight: 18, color: colors.textMuted, marginBottom: 14 }}>
+              {t('deleteAccountConfirmMsg')}
+            </Text>
+
+            <View>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>
+                {isBangla ? 'নিশ্চিত করতে বর্তমান পাসওয়ার্ড দিন' : 'Enter Current Password to Confirm'}
+              </Text>
+              <TextInput
+                style={[
+                  styles.modalInput,
+                  {
+                    backgroundColor: colors.surfaceSubtle,
+                    color: colors.text,
+                    borderColor: deleteError ? colors.danger : colors.border,
+                  },
+                ]}
+                value={deletePass}
+                onChangeText={(txt) => {
+                  setDeletePass(txt);
+                  if (deleteError) setDeleteError('');
+                }}
+                secureTextEntry
+                placeholder="••••••••"
+                placeholderTextColor={colors.textMuted}
+                editable={!isDeletingAccount}
+              />
+            </View>
+
+            {!!deleteError && (
+              <Text style={{ fontSize: 12, color: colors.danger, marginTop: 8, fontWeight: '600' }}>
+                {deleteError}
+              </Text>
+            )}
+
+            <View style={styles.modalActionRow}>
+              <TouchableOpacity
+                style={[styles.cancelBtn, { borderColor: colors.border }]}
+                onPress={() => setDeleteAccountModalVisible(false)}
+                disabled={isDeletingAccount}
+              >
+                <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>
+                  {isBangla ? 'বাতিল' : 'Cancel'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.saveBtn, { backgroundColor: colors.danger, opacity: isDeletingAccount ? 0.7 : 1 }]}
+                onPress={handleConfirmDeleteAccount}
+                disabled={isDeletingAccount}
+              >
+                {isDeletingAccount ? (
+                  <ActivityIndicator size="small" color={colors.onDanger} />
+                ) : (
+                  <Ionicons name="trash-outline" size={16} color={colors.onDanger} />
+                )}
+                <Text style={[styles.saveBtnText, { color: colors.onDanger }]}>
+                  {isDeletingAccount
+                    ? isBangla
+                      ? 'মুছে ফেলা হচ্ছে...'
+                      : 'Deleting...'
+                    : isBangla
+                    ? 'স্থায়ীভাবে মুছুন'
+                    : 'Permanently Delete'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={{ marginTop: 14, alignItems: 'center' }}
+              onPress={() => Linking.openURL(Env.ACCOUNT_DELETION_URL).catch(() => {})}
+              disabled={isDeletingAccount}
+            >
+              <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '700' }}>
+                {t('dataDeletionRequestWeb')} →
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );

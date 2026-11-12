@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WpUser } from '../types';
-import { UserProfile } from '../services/api/userService';
+import { UserProfile, UserService } from '../services/api/userService';
+import { HttpClient } from '../services/api/httpClient';
 import {
   loginWpUser,
   registerWpUser,
@@ -53,6 +54,8 @@ export function isUserAdmin(user: UserProfile | WpUser | null | undefined): bool
   return false;
 }
 
+const isDevMode = typeof __DEV__ !== 'undefined' && __DEV__;
+
 interface AuthContextType {
   user: UserProfile | null;
   token: string | null;
@@ -70,6 +73,7 @@ interface AuthContextType {
   register: (username: string, email: string, password: string, phone?: string) => Promise<void>;
   updateUserProfile: (updates: Partial<UserProfile>) => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: (password: string) => Promise<void>;
   continueAsGuest: () => void;
 }
 
@@ -92,8 +96,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           AsyncStorage.getItem(AUTH_ADMIN_BYPASS_KEY),
         ]);
 
-        if (savedBypass === 'true') {
+        if (isDevMode && savedBypass === 'true') {
           setIsAdminBypass(true);
+        } else if (!isDevMode && savedBypass) {
+          await AsyncStorage.removeItem(AUTH_ADMIN_BYPASS_KEY);
         }
 
         if (savedUser && savedToken) {
@@ -121,6 +127,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const toggleAdminBypass = async (): Promise<boolean> => {
+    if (!isDevMode) {
+      setIsAdminBypass(false);
+      return false;
+    }
     const nextVal = !isAdminBypass;
     setIsAdminBypass(nextVal);
     try {
@@ -131,7 +141,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return nextVal;
   };
 
-  const isAdmin = isAdminBypass || isUserAdmin(user);
+  const isAdmin = (isDevMode && isAdminBypass) || isUserAdmin(user);
 
   const saveUserSession = async (loggedInUser: WpUser | UserProfile) => {
     setUser(loggedInUser as UserProfile);
@@ -202,12 +212,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setToken(null);
     setIsGuest(true);
+    HttpClient.setAuthToken(null);
     try {
       await Promise.all([
         AsyncStorage.removeItem(AUTH_USER_STORAGE_KEY),
         AsyncStorage.removeItem(AUTH_TOKEN_STORAGE_KEY),
       ]);
     } catch {}
+  };
+
+  const deleteAccount = async (password: string): Promise<void> => {
+    if (!user || !token) {
+      throw new Error('You must be signed in to delete your account.');
+    }
+    await UserService.deleteAccount(user.id, password);
+    setIsAdminBypass(false);
+    try {
+      await AsyncStorage.removeItem(AUTH_ADMIN_BYPASS_KEY);
+    } catch {}
+    await logout();
   };
 
   const continueAsGuest = () => {
@@ -222,7 +245,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         token,
         isAuthenticated: !!user && !!token,
         isAdmin,
-        isAdminBypass,
+        isAdminBypass: isDevMode ? isAdminBypass : false,
         toggleAdminBypass,
         isLoading,
         isGuest,
@@ -234,6 +257,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         register,
         updateUserProfile,
         logout,
+        deleteAccount,
         continueAsGuest,
       }}
     >

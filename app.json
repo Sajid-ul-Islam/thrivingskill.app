@@ -24,6 +24,11 @@
         "INTERNET",
         "ACCESS_NETWORK_STATE"
       ],
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#102F53",
         "foregroundImage": "./assets/android-icon-foreground.png",

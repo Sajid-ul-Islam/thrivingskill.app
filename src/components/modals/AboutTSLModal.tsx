@@ -625,7 +625,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                   localAvatar: FOUNDER_IMAGES.abdulla_al_noman,
                   webAvatar: 'https://thrivingskill.com/wp-content/uploads/2023/06/nOMAN.jpeg',
                   profileUrl: 'https://thrivingskill.com/our_team/md-abdulla-al-noman/',
-                  linkedin: 'http://linkedin.com/in/abdulla-al-noman-3076b4182/',
+                  linkedin: 'https://linkedin.com/in/abdulla-al-noman-3076b4182/',
                 },
               ].map((leader, idx) => (
                 <View

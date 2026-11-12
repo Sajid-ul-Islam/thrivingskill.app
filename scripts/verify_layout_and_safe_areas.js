@@ -99,19 +99,24 @@ check('LessonPlayerScreen has compact toolbar and authentic video resolution', (
   assert(code.includes('gap: 6'), 'playbackRightControls must have compact gap');
 });
 
-// 7. Admin Bypass Mode across AuthContext, ProfileScreen, and CourseDetailScreen
-check('Admin bypass mode implemented across AuthContext, Profile, and CourseDetail', () => {
+// 7. Play Store Security & Compliance (No public admin bypass toggle; real account deletion & admin role checks)
+check('Admin access gated to server roles in production and real deleteAccount wired', () => {
   const authCode = fs.readFileSync('src/context/AuthContext.tsx', 'utf8');
-  assert(authCode.includes('isAdminBypass'), 'AuthContext missing isAdminBypass');
-  assert(authCode.includes('toggleAdminBypass'), 'AuthContext missing toggleAdminBypass');
   assert(authCode.includes('isUserAdmin'), 'AuthContext missing isUserAdmin');
+  assert(authCode.includes('isDevMode'), 'AuthContext must gate any admin bypass strictly to __DEV__');
+  assert(authCode.includes('UserService.deleteAccount'), 'AuthContext must delegate deleteAccount to UserService.deleteAccount');
 
   const profileCode = fs.readFileSync('src/screens/ProfileScreen.tsx', 'utf8');
-  assert(profileCode.includes('toggleAdminBypass'), 'ProfileScreen missing toggleAdminBypass');
-  assert(profileCode.includes('Admin QA Mode'), 'ProfileScreen missing Admin QA Mode switch');
+  assert(!profileCode.includes('Admin QA Mode'), 'ProfileScreen must not expose public Admin QA Mode bypass toggle');
+  assert(!profileCode.includes('INV-2026-TS884'), 'ProfileScreen must not contain hardcoded fake invoices');
+  assert(!profileCode.includes('You have 3 downloaded lessons'), 'ProfileScreen must not contain stub offline downloads alert');
+  assert(profileCode.includes('deleteAccountModalVisible'), 'ProfileScreen missing in-app account deletion confirmation modal');
 
   const courseDetailCode = fs.readFileSync('src/screens/CourseDetailScreen.tsx', 'utf8');
   assert(courseDetailCode.includes('isAdmin } = useAuth()'), 'CourseDetailScreen missing isAdmin from useAuth()');
+
+  const appJson = fs.readFileSync('app.json', 'utf8');
+  assert(appJson.includes('android.permission.SYSTEM_ALERT_WINDOW'), 'app.json missing blockedPermissions for SYSTEM_ALERT_WINDOW');
 });
 
 // 8. Mathematical simulation across viewport widths (320px to 430px)

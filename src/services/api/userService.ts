@@ -144,5 +144,29 @@ export class UserService {
   static async getLearnPressUser(userId: string | number): Promise<any> {
     return HttpClient.get(Endpoints.LEARNPRESS.USER_DETAIL(userId));
   }
+
+  /**
+   * Permanently delete authenticated WordPress/LearnPress user account (/learnpress/v1/users/delete)
+   */
+  static async deleteAccount(
+    userId: string | number,
+    password: string
+  ): Promise<{ code?: string; message?: string; status?: string }> {
+    const numericId = Number(userId);
+    if (!Number.isInteger(numericId) || numericId <= 0) {
+      throw new Error('This account does not have a valid server user ID. Please use the web deletion form.');
+    }
+    if (!password || !password.trim()) {
+      throw new Error('Password is required to confirm permanent account deletion.');
+    }
+
+    return HttpClient.post<{ code?: string; message?: string; status?: string }>(
+      Endpoints.LEARNPRESS.USER_DELETE,
+      {
+        id: numericId,
+        password,
+      }
+    );
+  }
 }
 

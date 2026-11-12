@@ -42,6 +42,7 @@ export const Endpoints = {
     USER_DETAIL: (id: string | number) => `/learnpress/v1/users/${id}`,
     USER_CHANGE_PASSWORD: '/learnpress/v1/users/change-password',
     USER_RESET_PASSWORD: '/learnpress/v1/users/reset-password',
+    USER_DELETE: '/learnpress/v1/users/delete',
   },
 
   // --------------------------------------------------------------------------
