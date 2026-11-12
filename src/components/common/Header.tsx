@@ -220,6 +220,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 4,
     right: 4,
+    zIndex: 10,
+    elevation: 3,
     minWidth: 16,
     height: 16,
     borderRadius: 8,
@@ -230,6 +232,8 @@ const styles = StyleSheet.create({
   notifBadgeText: {
     color: '#FFFFFF',
     fontSize: 9,
+    lineHeight: 11,
+    includeFontPadding: false,
     fontWeight: '800',
   },
 });

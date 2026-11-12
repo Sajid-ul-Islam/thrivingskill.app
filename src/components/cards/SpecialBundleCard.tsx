@@ -187,9 +187,12 @@ const styles = StyleSheet.create({
   },
   statsCol: {
     flex: 1,
+    minWidth: 0,
+    paddingRight: 8,
   },
   ratingRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     gap: 4,
   },
@@ -202,6 +205,7 @@ const styles = StyleSheet.create({
   },
   priceCol: {
     alignItems: 'flex-end',
+    flexShrink: 0,
   },
   origPrice: {
     fontSize: 11,

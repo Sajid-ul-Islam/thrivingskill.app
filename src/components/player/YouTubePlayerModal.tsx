@@ -9,7 +9,7 @@ import {
   Platform,
   Linking,
   Share,
-  Dimensions,
+  useWindowDimensions,
   Image,
   ActivityIndicator,
 } from 'react-native';
@@ -32,8 +32,6 @@ interface YouTubePlayerModalProps {
   onMinimize?: () => void;
 }
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
   visible,
   video,
@@ -42,6 +40,8 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
   onNavigateToCourse,
   onMinimize,
 }) => {
+  const { width: windowWidth } = useWindowDimensions();
+  const playerHeight = (windowWidth * 9) / 16;
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { courses } = useLearning();
@@ -67,10 +67,6 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
     setPlaybackSpeed(speed);
   };
 
-  if (!currentVideo) {
-    return null;
-  }
-
   const cleanVideoId = React.useMemo(() => {
     if (!currentVideo?.id) return '';
     const match =
@@ -78,6 +74,10 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
       (currentVideo.url ? currentVideo.url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/) : null);
     return match && match[1] ? match[1] : currentVideo.id.trim();
   }, [currentVideo?.id, currentVideo?.url]);
+
+  if (!currentVideo) {
+    return null;
+  }
 
   const saved = isSaved(currentVideo.id);
   const relatedCourse = findRelatedCourse(currentVideo, courses);
@@ -167,7 +167,7 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
         </View>
 
         {/* Player Section (16:9 aspect ratio) */}
-        <View style={styles.playerContainer}>
+        <View style={[styles.playerContainer, { width: windowWidth, height: playerHeight }]}>
           {Platform.OS === 'web' ? (
             <iframe
               src={`https://www.youtube.com/embed/${currentVideo.id}?autoplay=1&playsinline=1`}
@@ -176,10 +176,10 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
               allowFullScreen
             />
           ) : (
-            <View style={{ width: SCREEN_WIDTH, height: (SCREEN_WIDTH * 9) / 16, position: 'relative' }}>
+            <View style={{ width: windowWidth, height: playerHeight, position: 'relative' }}>
               <YoutubePlayer
-                height={(SCREEN_WIDTH * 9) / 16}
-                width={SCREEN_WIDTH}
+                height={playerHeight}
+                width={windowWidth}
                 play={isPlaying}
                 videoId={cleanVideoId}
                 playbackRate={playbackSpeed}
@@ -510,8 +510,8 @@ const styles = StyleSheet.create({
     color: '#FF0000',
   },
   playerContainer: {
-    width: SCREEN_WIDTH,
-    height: (SCREEN_WIDTH * 9) / 16,
+    width: '100%',
+    aspectRatio: 16 / 9,
     backgroundColor: '#000000',
   },
   webView: {
@@ -666,8 +666,10 @@ const styles = StyleSheet.create({
   // Speed Row
   speedRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 8,
     marginTop: 10,
     paddingTop: 10,
     borderTopWidth: 1,
@@ -683,7 +685,8 @@ const styles = StyleSheet.create({
   },
   speedPills: {
     flexDirection: 'row',
-    gap: 6,
+    flexWrap: 'wrap',
+    gap: 5,
   },
   speedPill: {
     paddingHorizontal: 8,

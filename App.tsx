@@ -474,6 +474,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 1,
     right: 12,
+    zIndex: 10,
+    elevation: 3,
     minWidth: 16,
     height: 16,
     borderRadius: shape.full,
@@ -484,6 +486,8 @@ const styles = StyleSheet.create({
   tabBadgeText: {
     color: '#FFFFFF',
     fontSize: 8.5,
+    lineHeight: 10,
+    includeFontPadding: false,
     fontWeight: '800',
   },
   tabButtonLabel: {

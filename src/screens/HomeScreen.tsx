@@ -602,13 +602,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {/* Popular Executive Masterclasses */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <View>
+            <View style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>জনপ্রিয় কোর্সসমূহ</Text>
-              <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
+              <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]} numberOfLines={2}>
                 Executive Masterclasses in Generative AI, Excel & Finance
               </Text>
             </View>
-            <TouchableOpacity onPress={() => onNavigateTab('Courses')}>
+            <TouchableOpacity onPress={() => onNavigateTab('Courses')} style={{ flexShrink: 0 }}>
               <Text style={[styles.seeAllText, { color: colors.primary }]}>View All ({courses.length})</Text>
             </TouchableOpacity>
           </View>
@@ -736,14 +736,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {blogPosts && blogPosts.length > 0 && (
           <View style={styles.section}>
             <View style={[styles.sectionHeader, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
-              <View>
+              <View style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
                 <Text style={[styles.sectionTitle, { color: colors.text }]}>Career Insights & Articles</Text>
-                <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
+                <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]} numberOfLines={2}>
                   Live publications from Thriving Skills Editorial
                 </Text>
               </View>
               <TouchableOpacity
-                style={{ paddingVertical: 4, paddingHorizontal: 10, borderRadius: 8, backgroundColor: colors.primaryLight }}
+                style={{ flexShrink: 0, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 8, backgroundColor: colors.primaryLight }}
                 onPress={() => setBlogModalVisible(true)}
               >
                 <Text style={{ fontSize: 11, fontWeight: '800', color: colors.primary }}>
@@ -1182,6 +1182,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: -1,
     right: -1,
+    zIndex: 10,
+    elevation: 3,
     width: 12,
     height: 12,
     borderRadius: 6,
@@ -1619,8 +1621,10 @@ const styles = StyleSheet.create({
   },
   leadershipCardHeader: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 8,
     marginBottom: 8,
   },
   badgePill: {
@@ -1675,6 +1679,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: -2,
     right: -2,
+    zIndex: 10,
+    elevation: 3,
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
   },

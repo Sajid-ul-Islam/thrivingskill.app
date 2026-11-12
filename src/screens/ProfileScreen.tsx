@@ -288,7 +288,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           />
           <View style={styles.profileInfo}>
             <View style={styles.nameRow}>
-              <Text style={[styles.name, { color: colors.text }]}>
+              <Text style={[styles.name, { color: colors.text, flexShrink: 1 }]} numberOfLines={1}>
                 {user?.name || user?.displayName || user?.username || customName || (isBangla ? 'অতিথি শিক্ষার্থী' : 'Guest Learner')}
               </Text>
               <View
@@ -1494,6 +1494,7 @@ const styles = StyleSheet.create({
   verifiedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 0,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -1501,6 +1502,8 @@ const styles = StyleSheet.create({
   },
   verifiedText: {
     fontSize: 9,
+    lineHeight: 11,
+    includeFontPadding: false,
     fontWeight: '900',
     letterSpacing: 0.5,
   },

@@ -1757,13 +1757,16 @@ const styles = StyleSheet.create({
   },
   lessonHeaderCard: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 10,
     padding: 16,
   },
   titleCol: {
     flex: 1,
-    marginRight: 12,
+    minWidth: 160,
+    marginRight: 4,
   },
   lessonTitle: {
     fontSize: 16,
@@ -1824,14 +1827,16 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   completionXpBadge: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#047857',
     paddingHorizontal: 6,
-    paddingVertical: 1,
+    paddingVertical: 2,
     borderRadius: 4,
   },
   completionXpText: {
     color: '#FFFFFF',
     fontSize: 10,
+    lineHeight: 12,
+    includeFontPadding: false,
     fontWeight: '800',
   },
   completionSub: {
@@ -1843,7 +1848,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#10B981',
+    backgroundColor: '#047857',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,

@@ -72,7 +72,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
                 </Text>
               </View>
               <Text style={[styles.dotSeparator, { color: colors.textMuted }]}>•</Text>
-              <Text style={[styles.durationText, { color: colors.textMuted }]}>
+              <Text style={[styles.durationText, { color: colors.textMuted }]} numberOfLines={1}>
                 {course.durationHours}h • {course.level}
               </Text>
             </View>
@@ -173,7 +173,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
               </Text>
             </View>
             <Text style={[styles.dotSeparator, { color: colors.textMuted }]}>•</Text>
-            <Text style={[styles.durationText, { color: colors.textMuted }]}>
+            <Text style={[styles.durationText, { color: colors.textMuted }]} numberOfLines={1}>
               {course.durationHours}h ({course.lecturesCount} lectures)
             </Text>
           </View>
@@ -262,6 +262,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     left: 10,
+    zIndex: 8,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
@@ -275,6 +276,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     right: 10,
+    zIndex: 10,
+    elevation: 4,
     width: 32,
     height: 32,
     borderRadius: 16,
@@ -322,11 +325,13 @@ const styles = StyleSheet.create({
   },
   durationText: {
     fontSize: 12,
+    flexShrink: 1,
   },
   cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 8,
     paddingTop: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(150, 150, 150, 0.2)',
@@ -334,6 +339,9 @@ const styles = StyleSheet.create({
   priceRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
+    flexWrap: 'wrap',
+    flex: 1,
+    minWidth: 0,
     gap: 6,
   },
   currentPrice: {
@@ -354,12 +362,15 @@ const styles = StyleSheet.create({
   discountBadgeText: {
     color: '#FFFFFF',
     fontSize: 10,
+    lineHeight: 12,
+    includeFontPadding: false,
     fontWeight: '800',
     letterSpacing: 0.3,
   },
   certBadge: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 0,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
@@ -429,6 +440,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 10,
     right: 10,
+    zIndex: 10,
+    elevation: 3,
     width: 30,
     height: 30,
     borderRadius: 15,

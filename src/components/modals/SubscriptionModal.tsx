@@ -454,7 +454,8 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   plansContainer: {
-    gap: 16,
+    gap: 18,
+    paddingTop: 10,
   },
   planCard: {
     borderRadius: 18,
@@ -469,6 +470,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -12,
     right: 18,
+    zIndex: 10,
+    elevation: 4,
     backgroundColor: '#059669',
     flexDirection: 'row',
     alignItems: 'center',
@@ -480,6 +483,8 @@ const styles = StyleSheet.create({
   popularBadgeText: {
     color: '#FFFFFF',
     fontSize: 9,
+    lineHeight: 12,
+    includeFontPadding: false,
     fontWeight: '800',
   },
   enterpriseBadge: {

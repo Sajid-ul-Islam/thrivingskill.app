@@ -5,7 +5,6 @@ import {
   Text,
   LayoutAnimation,
   StyleSheet,
-  Dimensions,
   TouchableOpacity,
   FlatList,
   NativeSyntheticEvent,
@@ -15,9 +14,6 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = SCREEN_WIDTH - 32;
 
 export interface CarouselSlide {
   id: string;

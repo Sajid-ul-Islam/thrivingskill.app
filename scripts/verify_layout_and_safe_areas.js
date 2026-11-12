@@ -155,6 +155,33 @@ check('QuickActionDock miniBadge has zIndex clearance above iconBox and HeroCaro
   assert(!hcCode.includes('offsetX / CARD_WIDTH'), 'HeroCarousel handleScroll must use dynamic cardWidth');
 });
 
+// 11. Dynamic useWindowDimensions across responsive components & zero module-level Dimensions.get UI traps
+check('BrandDrawer, HeroCarousel, and YouTubePlayerModal use useWindowDimensions dynamically', () => {
+  ['src/components/common/BrandDrawer.tsx', 'src/components/common/HeroCarousel.tsx', 'src/components/player/YouTubePlayerModal.tsx'].forEach((file) => {
+    const code = fs.readFileSync(file, 'utf8');
+    assert(code.includes('useWindowDimensions'), `${file} missing useWindowDimensions`);
+    assert(!code.includes('Dimensions.get('), `${file} still uses static Dimensions.get`);
+  });
+
+  const bdCode = fs.readFileSync('src/components/common/BrandDrawer.tsx', 'utf8');
+  assert(bdCode.includes('flexGrow: 0'), 'BrandDrawer drawerContent must avoid flex: 1 row stretch');
+
+  const ytCode = fs.readFileSync('src/components/player/YouTubePlayerModal.tsx', 'utf8');
+  assert(ytCode.indexOf('useMemo') < ytCode.indexOf('if (!currentVideo)'), 'YouTubePlayerModal useMemo must run before conditional return');
+});
+
+// 12. Floating badge zIndex layering and narrow-viewport flex shrink guards
+check('Floating badges have zIndex layering and flex rows have shrink/wrap guards', () => {
+  const subCode = fs.readFileSync('src/components/modals/SubscriptionModal.tsx', 'utf8');
+  assert(subCode.includes('paddingTop: 10') && subCode.includes('zIndex: 10'), 'SubscriptionModal popularBadge missing top clearance or zIndex');
+
+  const ccCode = fs.readFileSync('src/components/cards/CourseCard.tsx', 'utf8');
+  assert(ccCode.includes("flexWrap: 'wrap'") && ccCode.includes('zIndex: 10'), 'CourseCard missing priceRow wrap or bookmark zIndex');
+
+  const profCode = fs.readFileSync('src/screens/ProfileScreen.tsx', 'utf8');
+  assert(profCode.includes('flexShrink: 1') && profCode.includes('flexShrink: 0'), 'ProfileScreen nameRow missing shrink protection');
+});
+
 console.log('\n====================================================');
 console.log(`TOTAL AUDIT CHECKS: ${passCount + failCount} | PASSED: ${passCount} | FAILED: ${failCount}`);
 console.log('====================================================');

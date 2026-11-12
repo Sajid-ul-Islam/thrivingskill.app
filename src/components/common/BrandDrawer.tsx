@@ -8,7 +8,7 @@ import {
   ScrollView,
   Modal,
   Animated,
-  Dimensions,
+  useWindowDimensions,
   Linking,
   Platform,
 } from 'react-native';
@@ -36,9 +36,6 @@ interface BrandDrawerProps {
   onOpenUpdate?: () => void;
 }
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const DRAWER_WIDTH = Math.min(SCREEN_WIDTH * 0.82, 340);
-
 export const BrandDrawer: React.FC<BrandDrawerProps> = ({
   visible,
   onClose,
@@ -48,6 +45,8 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
   onOpenSubscription,
   onOpenUpdate,
 }) => {
+  const { width: windowWidth } = useWindowDimensions();
+  const drawerWidth = Math.min(windowWidth * 0.82, 340);
   const { colors, isDark, toggleTheme } = useTheme();
   const { activeWorkspace, switchWorkspace, workspaces, subscriptionTier } = useSaaS();
   const { language, setLanguage, isBangla } = useLanguage();
@@ -61,7 +60,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
   const [blogModalVisible, setBlogModalVisible] = useState(false);
 
   const [modalRendered, setModalRendered] = useState(visible);
-  const slideAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
+  const slideAnim = useRef(new Animated.Value(-drawerWidth)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const navTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -92,7 +91,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
     } else {
       Animated.parallel([
         Animated.timing(slideAnim, {
-          toValue: -DRAWER_WIDTH,
+          toValue: -drawerWidth,
           duration: 200,
           useNativeDriver: true,
         }),
@@ -105,7 +104,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
         setModalRendered(false);
       });
     }
-  }, [visible, slideAnim, fadeAnim]);
+  }, [visible, drawerWidth, slideAnim, fadeAnim]);
 
   if (!modalRendered) return null;
 
@@ -156,7 +155,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
           style={[
             styles.drawerContent,
             {
-              width: DRAWER_WIDTH,
+              width: drawerWidth,
               backgroundColor: colors.surface,
               paddingTop: Math.max(insets.top, 24) + 12,
               paddingBottom: Math.max(insets.bottom, 16) + 8,
@@ -594,7 +593,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.55)',
   },
   drawerContent: {
-    flex: 1,
+    height: '100%',
+    flexGrow: 0,
+    flexShrink: 0,
     shadowColor: '#000',
     shadowOffset: { width: 4, height: 0 },
     shadowOpacity: 0.25,
