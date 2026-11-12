@@ -4,6 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { QuizQuestion } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
+import { triggerHaptic } from '../../utils/haptics';
+import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
+import { shape } from '../../theme/shapes';
 
 interface QuizModalProps {
   visible: boolean;
@@ -42,6 +45,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({ visible, questions, onClos
 
   const handleSelectOption = (index: number) => {
     if (isSubmitted) return;
+    triggerHaptic('selection');
     setSelectedOption(index);
   };
 
@@ -85,7 +89,15 @@ export const QuizModal: React.FC<QuizModalProps> = ({ visible, questions, onClos
               <Ionicons name="help-circle" size={22} color={colors.secondary} />
               <Text style={[styles.headerTitle, { color: colors.text }]}>Knowledge Check</Text>
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+            <TouchableOpacity
+              onPress={() => {
+                triggerHaptic('light');
+                onClose();
+              }}
+              style={styles.closeBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Close knowledge check"
+            >
               <Ionicons name="close" size={22} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
@@ -321,8 +333,8 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: shape.extraLarge,
+    borderTopRightRadius: shape.extraLarge,
     borderWidth: 1,
     maxHeight: '85%',
     paddingBottom: 24,
@@ -341,12 +353,11 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
+    ...typography.h4,
   },
   closeBtn: {
-    minWidth: 44,
-    minHeight: 44,
+    minWidth: MIN_TOUCH_TARGET,
+    minHeight: MIN_TOUCH_TARGET,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -8,6 +8,7 @@ import {
   PressableProps,
   GestureResponderEvent,
 } from 'react-native';
+import { triggerHaptic, HapticKind } from '../../utils/haptics';
 
 export interface SpringPressableProps extends Omit<PressableProps, 'style'> {
   children: React.ReactNode;
@@ -16,6 +17,7 @@ export interface SpringPressableProps extends Omit<PressableProps, 'style'> {
   activeOpacity?: number;
   friction?: number;
   tension?: number;
+  haptic?: HapticKind;
 }
 
 const OUTER_LAYOUT_KEYS = new Set<keyof ViewStyle>([
@@ -62,6 +64,7 @@ export const SpringPressable: React.FC<SpringPressableProps> = ({
   activeOpacity,
   friction = 7,
   tension = 120,
+  haptic = 'selection',
   onPressIn,
   onPressOut,
   disabled,
@@ -113,6 +116,9 @@ export const SpringPressable: React.FC<SpringPressableProps> = ({
 
   const handlePressIn = (event: GestureResponderEvent) => {
     if (!disabled) {
+      if (haptic !== 'none') {
+        triggerHaptic(haptic);
+      }
       Animated.spring(scaleAnim, {
         toValue: activeScale,
         friction,

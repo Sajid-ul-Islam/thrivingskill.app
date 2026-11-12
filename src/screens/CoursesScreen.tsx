@@ -221,14 +221,16 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                   styles.viewToggleBtn,
                   viewMode === 'grid' && { backgroundColor: colors.surfaceSubtle },
                 ]}
-                onPress={() => setViewMode('grid')}
+                onPress={() => {
+                  triggerHaptic('selection');
+                  setViewMode('grid');
+                }}
                 accessibilityRole="button"
                 accessibilityLabel="Switch to grid layout"
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <Ionicons
                   name="grid-outline"
-                  size={16}
+                  size={18}
                   color={viewMode === 'grid' ? colors.primary : colors.textLight}
                 />
               </TouchableOpacity>
@@ -237,10 +239,12 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                   styles.viewToggleBtn,
                   viewMode === 'list' && { backgroundColor: colors.surfaceSubtle },
                 ]}
-                onPress={() => setViewMode('list')}
+                onPress={() => {
+                  triggerHaptic('selection');
+                  setViewMode('list');
+                }}
                 accessibilityRole="button"
                 accessibilityLabel="Switch to list layout"
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <Ionicons
                   name="list-outline"
@@ -441,8 +445,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   viewToggleBtn: {
-    width: 38,
-    height: 38,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
     borderRadius: shape.small,
     alignItems: 'center',
     justifyContent: 'center',

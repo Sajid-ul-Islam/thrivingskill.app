@@ -21,6 +21,8 @@ import { useLearning } from '../../context/LearningContext';
 import { useYouTube } from '../../context/YouTubeContext';
 import { YouTubeVideo, YOUTUBE_CHANNEL } from '../../data/youtubeVideos';
 import { findRelatedCourse } from '../../services/youtubeService';
+import { triggerHaptic } from '../../utils/haptics';
+import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
 
 interface YouTubePlayerModalProps {
@@ -493,9 +495,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   headerBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -639,6 +641,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
+    minHeight: MIN_TOUCH_TARGET,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: shape.medium,
@@ -689,11 +692,12 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   speedPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: shape.small,
     borderWidth: 1,
-    minWidth: 38,
+    minWidth: MIN_TOUCH_TARGET,
+    minHeight: MIN_TOUCH_TARGET,
     alignItems: 'center',
     justifyContent: 'center',
   },

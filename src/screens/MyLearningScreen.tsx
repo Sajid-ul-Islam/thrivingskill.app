@@ -14,10 +14,10 @@ import { useLearning } from '../context/LearningContext';
 import { Header } from '../components/Header';
 import { CertificateModal } from '../components/CertificateModal';
 import { YouTubeCard } from '../components/YouTubeCard';
-import { AnimatedTabContent, CircularProgressRing, SpringPressable } from '../components/common';
+import { AnimatedTabContent, CircularProgressRing, SpringPressable, StateView } from '../components/common';
 import { useYouTube } from '../context/YouTubeContext';
 import { Certificate } from '../types';
-import { YouTubeVideo } from '../data/youtubeVideos';
+import { MIN_TOUCH_TARGET } from '../theme/typography';
 
 interface MyLearningScreenProps {
   onNavigateToCourse: (courseId: string) => void;
@@ -166,8 +166,13 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
           </View>
         </View>
 
-        {/* Tabs Bar */}
-        <View style={[styles.tabsBar, { borderBottomColor: colors.border }]}>
+        {/* Tabs Bar (Horizontally scrollable so 5 tabs never overflow compact viewports) */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={[styles.tabsBarScroll, { borderBottomColor: colors.border }]}
+          contentContainerStyle={styles.tabsBar}
+        >
           {[
             { id: 'in-progress', label: `In Progress (${inProgressList.length})` },
             { id: 'history', label: `History (${historyList.length})` },
@@ -184,6 +189,8 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                   isActive && { borderBottomColor: colors.primary, borderBottomWidth: 2 },
                 ]}
                 onPress={() => setActiveTab(tab.id as TabMode)}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: isActive }}
               >
                 <Text
                   style={[
@@ -199,7 +206,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
               </TouchableOpacity>
             );
           })}
-        </View>
+        </ScrollView>
 
         {/* Tab Content */}
         <View style={styles.tabContent}>
@@ -207,19 +214,14 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
           {activeTab === 'in-progress' && (
             <>
               {inProgressList.length === 0 ? (
-                <View style={styles.emptyContainer}>
-                  <Ionicons name="school-outline" size={48} color={colors.textLight} />
-                  <Text style={[styles.emptyTitle, { color: colors.text }]}>No courses in progress</Text>
-                  <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
-                    Explore our top-rated executive masterclasses and start learning!
-                  </Text>
-                  <TouchableOpacity
-                    style={[styles.actionBtn, { backgroundColor: colors.primary }]}
-                    onPress={onBrowseCourses}
-                  >
-                    <Text style={[styles.actionBtnText, { color: colors.onPrimary }]}>Explore Catalog</Text>
-                  </TouchableOpacity>
-                </View>
+                <StateView
+                  mode="empty"
+                  icon="school-outline"
+                  title="No courses in progress"
+                  message="Explore our top-rated executive masterclasses and start learning!"
+                  primaryActionLabel="Explore Catalog"
+                  onPrimaryAction={onBrowseCourses}
+                />
               ) : (
                 inProgressList.map((course) => {
                   const percent = getCourseProgressPercentage(course.id);
@@ -304,13 +306,14 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
           {activeTab === 'history' && (
             <>
               {historyList.length === 0 ? (
-                <View style={styles.emptyContainer}>
-                  <Ionicons name="time-outline" size={48} color={colors.textLight} />
-                  <Text style={[styles.emptyTitle, { color: colors.text }]}>No watch history yet</Text>
-                  <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
-                    Start watching course lectures and masterclasses to track your viewing history.
-                  </Text>
-                </View>
+                <StateView
+                  mode="empty"
+                  icon="time-outline"
+                  title="No watch history yet"
+                  message="Start watching course lectures and masterclasses to track your viewing history."
+                  primaryActionLabel="Browse Courses"
+                  onPrimaryAction={onBrowseCourses}
+                />
               ) : (
                 historyList.map((item) => (
                   <View
@@ -375,13 +378,14 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
           {activeTab === 'completed' && (
             <>
               {completedList.length === 0 ? (
-                <View style={styles.emptyContainer}>
-                  <Ionicons name="trophy-outline" size={48} color={colors.textLight} />
-                  <Text style={[styles.emptyTitle, { color: colors.text }]}>No completed courses yet</Text>
-                  <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
-                    Complete all modules and pass quizzes to earn industry-verified certificates.
-                  </Text>
-                </View>
+                <StateView
+                  mode="empty"
+                  icon="trophy-outline"
+                  title="No completed courses yet"
+                  message="Complete all modules and pass quizzes to earn industry-verified certificates."
+                  primaryActionLabel="Explore Catalog"
+                  onPrimaryAction={onBrowseCourses}
+                />
               ) : (
                 completedList.map((course) => (
                   <View
@@ -407,14 +411,15 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                       </Text>
 
                       <TouchableOpacity
-                        style={[styles.viewCertBtn, { backgroundColor: colors.accentLight }]}
+                        style={[styles.viewCertBtn, { backgroundColor: colors.primaryLight }]}
                         onPress={() => {
                           const cert = certificates.find((c) => c.courseId === course.id);
                           if (cert) setSelectedCert(cert);
                         }}
+                        accessibilityRole="button"
                       >
-                        <Ionicons name="ribbon" size={16} color={colors.accent} />
-                        <Text style={[styles.viewCertText, { color: colors.accent }]}>
+                        <Ionicons name="ribbon" size={16} color={colors.primary} />
+                        <Text style={[styles.viewCertText, { color: colors.primary }]}>
                           View Digital Certificate
                         </Text>
                       </TouchableOpacity>
@@ -428,13 +433,14 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
           {activeTab === 'certificates' && (
             <>
               {certificates.length === 0 ? (
-                <View style={styles.emptyContainer}>
-                  <Ionicons name="ribbon-outline" size={48} color={colors.textLight} />
-                  <Text style={[styles.emptyTitle, { color: colors.text }]}>No certificates issued</Text>
-                  <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
-                    Finish your active courses to unlock shareable credentials.
-                  </Text>
-                </View>
+                <StateView
+                  mode="empty"
+                  icon="ribbon-outline"
+                  title="No certificates issued"
+                  message="Finish your active courses to unlock shareable credentials."
+                  primaryActionLabel="Explore Courses"
+                  onPrimaryAction={onBrowseCourses}
+                />
               ) : (
                 certificates.map((cert) => (
                   <TouchableOpacity
@@ -458,8 +464,8 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
 
                     <View style={styles.certCol}>
                       <View style={styles.verifiedTag}>
-                        <Ionicons name="checkmark-circle" size={11} color="#10B981" />
-                        <Text style={styles.verifiedTagText}>VERIFIED CREDENTIAL</Text>
+                        <Ionicons name="checkmark-circle" size={11} color={isDark ? '#34D399' : '#047857'} />
+                        <Text style={[styles.verifiedTagText, { color: isDark ? '#34D399' : '#047857' }]}>VERIFIED CREDENTIAL</Text>
                       </View>
                       <Text style={[styles.certItemTitle, { color: colors.text }]} numberOfLines={2}>
                         {cert.courseTitle}
@@ -675,14 +681,18 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 15,
   },
+  tabsBarScroll: {
+    borderBottomWidth: 1,
+  },
   tabsBar: {
     flexDirection: 'row',
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
   },
   tabItem: {
-    paddingVertical: 12,
-    marginRight: 18,
+    minHeight: MIN_TOUCH_TARGET,
+    justifyContent: 'center',
+    paddingVertical: 10,
+    marginRight: 20,
   },
   tabLabel: {
     fontSize: 13,
@@ -739,6 +749,8 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   syllabusBtn: {
+    minHeight: MIN_TOUCH_TARGET,
+    justifyContent: 'center',
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 10,
@@ -750,6 +762,7 @@ const styles = StyleSheet.create({
   },
   resumeBtn: {
     flex: 1,
+    minHeight: MIN_TOUCH_TARGET,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -777,6 +790,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   viewCertBtn: {
+    minHeight: MIN_TOUCH_TARGET,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

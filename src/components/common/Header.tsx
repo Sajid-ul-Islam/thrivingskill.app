@@ -12,6 +12,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { useSaaS } from '../../context/SaaSContext';
+import { useLearning } from '../../context/LearningContext';
+import { OfflineBanner } from './OfflineBanner';
+import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
+import { shape } from '../../theme/shapes';
 
 interface HeaderProps {
   title?: string;
@@ -26,6 +30,7 @@ interface HeaderProps {
   onOpenSearch?: () => void;
   onOpenUpdate?: () => void;
   onOpenDrawer?: () => void;
+  onOpenOfflineContent?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -36,10 +41,11 @@ export const Header: React.FC<HeaderProps> = ({
   rightAction,
   onOpenNotifications,
   onOpenSearch,
-  onOpenDrawer,
+  onOpenOfflineContent,
 }) => {
   const { colors } = useTheme();
   const { unreadNotificationsCount } = useSaaS();
+  const { refreshCourses } = useLearning();
   const insets = useSafeAreaInsets();
 
   const topInset = Math.max(
@@ -47,110 +53,109 @@ export const Header: React.FC<HeaderProps> = ({
     Platform.OS === 'android' ? (RNStatusBar.currentHeight || 24) : 0
   );
 
+  const backIconName = Platform.OS === 'ios' ? 'chevron-back' : 'arrow-back';
+
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor: colors.surface,
-          borderBottomColor: colors.border,
-          paddingTop: topInset + 6,
-        },
-      ]}
-    >
-      {/* Left Area: Back Button + Screen Title OR Clean Official Brand Icon + Logo */}
-      <View style={styles.leftRow}>
-        {showBack ? (
-          <View style={styles.backGroup}>
+    <View style={{ backgroundColor: colors.surface }}>
+      <View
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.surface,
+            borderBottomColor: colors.border,
+            paddingTop: topInset + 6,
+          },
+        ]}
+      >
+        {/* Left Area: Back Button + Screen Title OR Clean Brand Logo */}
+        <View style={styles.leftRow}>
+          {showBack ? (
+            <View style={styles.backGroup}>
+              <TouchableOpacity
+                style={[styles.iconButton, { backgroundColor: colors.surfaceSubtle }]}
+                onPress={onBack}
+                activeOpacity={0.7}
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                accessibilityRole="button"
+                accessibilityLabel="Go back"
+              >
+                <Ionicons name={backIconName} size={22} color={colors.text} />
+              </TouchableOpacity>
+
+              <View style={styles.titleContainer}>
+                <Text style={[typography.h4, styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
+                  {title || 'Thriving Skills'}
+                </Text>
+                {subtitle && (
+                  <Text style={[typography.caption, styles.headerSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
+                    {subtitle}
+                  </Text>
+                )}
+              </View>
+            </View>
+          ) : (
+            <View style={styles.brandRow}>
+              <Image
+                source={require('../../../assets/icon.png')}
+                style={styles.brandAppIcon}
+                resizeMode="contain"
+              />
+
+              <View style={styles.brandTitleCol}>
+                <Text style={[typography.h3, styles.brandTitle, { color: colors.text }]}>
+                  Thriving<Text style={{ color: colors.primary }}>Skills</Text>
+                </Text>
+                {title && title !== 'Thriving Skills' ? (
+                  <Text style={[typography.caption, { color: colors.textMuted }]} numberOfLines={1}>
+                    {title}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+          )}
+        </View>
+
+        {/* Right Area: Minimal, Uncluttered 1-2 Actions Max (44x44 touch targets) */}
+        <View style={styles.rightRow}>
+          {rightAction}
+
+          {onOpenSearch && (
             <TouchableOpacity
               style={[styles.iconButton, { backgroundColor: colors.surfaceSubtle }]}
-              onPress={onBack}
+              onPress={onOpenSearch}
               activeOpacity={0.7}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
               accessibilityRole="button"
-              accessibilityLabel="Go back"
+              accessibilityLabel="Universal Search"
             >
-              <Ionicons name="arrow-back" size={20} color={colors.text} />
+              <Ionicons name="search" size={20} color={colors.text} />
             </TouchableOpacity>
+          )}
 
-            <View style={styles.titleContainer}>
-              <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
-                {title || 'Thriving Skills'}
-              </Text>
-              {subtitle && (
-                <Text style={[styles.headerSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
-                  {subtitle}
-                </Text>
+          {onOpenNotifications && (
+            <TouchableOpacity
+              style={[styles.iconButton, { backgroundColor: colors.surfaceSubtle }]}
+              onPress={onOpenNotifications}
+              activeOpacity={0.7}
+              hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+              accessibilityRole="button"
+              accessibilityLabel="Notifications"
+            >
+              <Ionicons name="notifications-outline" size={20} color={colors.text} />
+              {unreadNotificationsCount > 0 && (
+                <View style={[styles.notifBadge, { backgroundColor: colors.danger }]}>
+                  <Text style={[styles.notifBadgeText, { color: colors.onDanger }]}>{unreadNotificationsCount}</Text>
+                </View>
               )}
-            </View>
-          </View>
-        ) : (
-          <TouchableOpacity
-            style={styles.brandRow}
-            onPress={onOpenDrawer}
-            disabled={!onOpenDrawer}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel="Open brand drawer"
-          >
-            {/* App Brand Icon in Top Left Corner */}
-            <Image
-              source={require('../../../assets/icon.png')}
-              style={styles.brandAppIcon}
-              resizeMode="contain"
-            />
-
-            {/* Clean Brand Typography without noisy pills */}
-            <View style={styles.brandTitleCol}>
-              <Text style={[styles.brandTitle, { color: colors.text }]}>
-                Thriving<Text style={{ color: colors.primary }}>Skills</Text>
-              </Text>
-            </View>
-
-            {onOpenDrawer && (
-              <Ionicons name="menu-outline" size={17} color={colors.textMuted} style={{ marginLeft: 2 }} />
-            )}
-          </TouchableOpacity>
-        )}
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
-      {/* Right Area: Minimal, Uncluttered 1-2 Actions Max */}
-      <View style={styles.rightRow}>
-        {rightAction}
-
-        {/* Universal Search (only when onOpenSearch is passed) */}
-        {onOpenSearch && (
-          <TouchableOpacity
-            style={[styles.iconButton, { backgroundColor: colors.surfaceSubtle }]}
-            onPress={onOpenSearch}
-            activeOpacity={0.7}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityRole="button"
-            accessibilityLabel="Universal Search"
-          >
-            <Ionicons name="search" size={18} color={colors.text} />
-          </TouchableOpacity>
-        )}
-
-        {/* Notifications (only when onOpenNotifications is passed) */}
-        {onOpenNotifications && (
-          <TouchableOpacity
-            style={[styles.iconButton, { backgroundColor: colors.surfaceSubtle }]}
-            onPress={onOpenNotifications}
-            activeOpacity={0.7}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityRole="button"
-            accessibilityLabel="Notifications"
-          >
-            <Ionicons name="notifications-outline" size={18} color={colors.text} />
-            {unreadNotificationsCount > 0 && (
-              <View style={[styles.notifBadge, { backgroundColor: colors.danger }]}>
-                <Text style={[styles.notifBadgeText, { color: colors.onDanger }]}>{unreadNotificationsCount}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        )}
-      </View>
+      <OfflineBanner
+        onRetry={refreshCourses}
+        onOpenOfflineContent={onOpenOfflineContent}
+      />
     </View>
   );
 };
@@ -168,22 +173,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    minWidth: 0,
   },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    flex: 1,
+    minWidth: 0,
   },
   brandAppIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 8,
+    width: 36,
+    height: 36,
+    borderRadius: shape.small,
   },
   brandTitleCol: {
     justifyContent: 'center',
+    flex: 1,
+    minWidth: 0,
   },
   brandTitle: {
-    fontSize: 18,
     fontWeight: '800',
     letterSpacing: -0.3,
   },
@@ -192,27 +201,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     gap: 10,
+    minWidth: 0,
   },
   titleContainer: {
     flex: 1,
+    minWidth: 0,
   },
   headerTitle: {
-    fontSize: 16,
     fontWeight: '700',
   },
   headerSubtitle: {
-    fontSize: 11,
     marginTop: 1,
   },
   rightRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flexShrink: 0,
   },
   iconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -224,7 +234,7 @@ const styles = StyleSheet.create({
     elevation: 3,
     minWidth: 16,
     height: 16,
-    borderRadius: 8,
+    borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 3,

@@ -15,6 +15,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { triggerHaptic } from '../../utils/haptics';
+import { MIN_TOUCH_TARGET } from '../../theme/typography';
 
 interface MandatoryReviewModalProps {
   visible: boolean;
@@ -153,6 +155,7 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
                     key={star}
                     activeOpacity={0.7}
                     onPress={() => {
+                      triggerHaptic('selection');
                       setRating(star);
                       setErrorMessage('');
                     }}
@@ -277,7 +280,7 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#D97706',
+    color: '#B45309',
     letterSpacing: 0.5,
   },
   trophyIconContainer: {
@@ -351,12 +354,15 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   starTouchArea: {
-    padding: 4,
+    minWidth: MIN_TOUCH_TARGET,
+    minHeight: MIN_TOUCH_TARGET,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   ratingScoreLabel: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#D97706',
+    color: '#B45309',
   },
   inputContainer: {
     width: '100%',
@@ -416,7 +422,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   laterButton: {
-    paddingVertical: 12,
+    minHeight: MIN_TOUCH_TARGET,
+    justifyContent: 'center',
+    paddingHorizontal: 12,
     marginTop: 4,
   },
   laterButtonText: {

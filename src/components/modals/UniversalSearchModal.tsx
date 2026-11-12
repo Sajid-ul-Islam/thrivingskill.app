@@ -18,6 +18,9 @@ import { useYouTube } from '../../context/YouTubeContext';
 import { SKILLS_SUMMITS } from '../../data/mockData';
 import { Course } from '../../types';
 import { YouTubeVideo } from '../../data/youtubeVideos';
+import { triggerHaptic } from '../../utils/haptics';
+import { shape } from '../../theme/shapes';
+import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
 
 interface UniversalSearchModalProps {
   visible: boolean;
@@ -162,19 +165,35 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
               clearButtonMode="while-editing"
             />
             {query.length > 0 && (
-              <TouchableOpacity onPress={handleClear} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <TouchableOpacity
+                onPress={() => {
+                  triggerHaptic('selection');
+                  handleClear();
+                }}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                accessibilityRole="button"
+                accessibilityLabel="Clear search query"
+              >
                 <Ionicons name="close-circle" size={18} color={colors.textMuted} />
               </TouchableOpacity>
             )}
           </View>
 
-          <TouchableOpacity onPress={onClose} style={styles.cancelBtn}>
+          <TouchableOpacity
+            onPress={() => {
+              triggerHaptic('light');
+              onClose();
+            }}
+            style={styles.cancelBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Cancel search"
+          >
             <Text style={[styles.cancelBtnText, { color: colors.primary }]}>Cancel</Text>
           </TouchableOpacity>
         </View>
 
         {/* Filter Pills */}
-        <View style={[styles.filterBar, { borderBottomColor: colors.border }]}>
+        <View style={[styles.filterBar, { borderBottomColor: colors.border }]} accessibilityRole="tablist">
           {filterTabs.map((tab) => {
             const isSelected = activeFilter === tab.id;
             return (
@@ -187,7 +206,13 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                     borderColor: isSelected ? colors.primary : colors.border,
                   },
                 ]}
-                onPress={() => setActiveFilter(tab.id)}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: isSelected }}
+                accessibilityLabel={`Filter results by ${tab.label}`}
+                onPress={() => {
+                  triggerHaptic('selection');
+                  setActiveFilter(tab.id);
+                }}
               >
                 <Ionicons
                   name={tab.icon as any}
@@ -368,7 +393,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
-    height: 40,
+    height: 44,
     borderRadius: 10,
     gap: 8,
   },
@@ -378,11 +403,14 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   cancelBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 4,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 6,
   },
   cancelBtnText: {
-    fontSize: 15,
+    ...typography.button,
     fontWeight: '600',
   },
   filterBar: {
@@ -394,23 +422,23 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   filterPill: {
+    minHeight: MIN_TOUCH_TARGET,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: shape.medium,
     borderWidth: 1,
   },
   filterPillText: {
-    fontSize: 12,
+    ...typography.caption,
   },
   listContent: {
     padding: 16,
     gap: 10,
   },
   resultsCountText: {
-    fontSize: 12,
+    ...typography.caption,
     fontWeight: '600',
     marginBottom: 6,
   },
@@ -418,7 +446,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
-    borderRadius: 12,
+    borderRadius: shape.medium,
     borderWidth: 1,
     gap: 12,
   },

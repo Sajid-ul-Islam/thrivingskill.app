@@ -41,6 +41,14 @@ export function sanitizeWpMessage(message?: string): string {
 
 export class HttpClient {
   private static activeToken: string | null = null;
+  private static connectivityListener: ((isOnline: boolean, errorMsg?: string) => void) | null = null;
+
+  /**
+   * Register a global listener for network reachability changes detected by HTTP calls
+   */
+  static setConnectivityListener(listener: ((isOnline: boolean, errorMsg?: string) => void) | null): void {
+    this.connectivityListener = listener;
+  }
 
   /**
    * Set the active JWT authentication token in memory
@@ -156,6 +164,7 @@ export class HttpClient {
           throw new ApiError(cleanMessage, response.status, errorCode, responseData);
         }
 
+        this.connectivityListener?.(true);
         return responseData as T;
       } catch (err: any) {
         clearTimeout(timer);
@@ -174,10 +183,12 @@ export class HttpClient {
         }
 
         if (isAbort) {
+          this.connectivityListener?.(false, 'Connection timed out.');
           throw new ApiError(`Request timeout after ${timeoutMs}ms`, 408, 'REQUEST_TIMEOUT');
         }
 
         if (err instanceof ApiError) {
+          this.connectivityListener?.(true);
           throw err;
         }
 
@@ -190,6 +201,7 @@ export class HttpClient {
           userFriendlyMsg = 'Cannot reach server (DNS resolution failed). Please check your internet connection, try mobile data (4G), or enable Private DNS in Android settings.';
         }
 
+        this.connectivityListener?.(false, userFriendlyMsg);
         throw new ApiError(
           userFriendlyMsg,
           0,

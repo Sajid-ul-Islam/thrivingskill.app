@@ -60,6 +60,7 @@ When working within Google Antigravity, the following specialized skills enhance
 | **`android-cli`** | Orchestrates Android Virtual Devices (AVDs), takes screenshots, and verifies layout on physical devices. | Used when checking notch handling, safe area insets, and keyboard avoiding views. |
 | **`gemini-api-dev`** | Powers the AI Skill Copilot screen (`CopilotScreen.tsx`) for conversational skill advising. | Consulted when updating Copilot prompts or model generation parameters. |
 | **`auth0` / Authentication** | Security reference for JWT token validation, bearer token headers, and mobile OTP session expiration. | Consulted when updating authentication contracts. |
+| **`ui-ux-design-laws`** (`.agents/skills/ui-ux-design-laws/SKILL.md`) | Audits and enforces Core UI Principles, UX Honeycomb, and Hick's, Fitts's, Jakob's, Miller's, and Aesthetic-Usability laws. | Triggered whenever designing, modifying, or verifying any UI screen, modal, form, or component. |
 
 ---
 

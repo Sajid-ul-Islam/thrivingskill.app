@@ -15,6 +15,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { triggerHaptic } from '../../utils/haptics';
+import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
+import { shape } from '../../theme/shapes';
 
 export interface HelpFaqModalProps {
   visible: boolean;
@@ -214,7 +217,12 @@ export const HelpFaqModal: React.FC<HelpFaqModalProps> = ({ visible, onClose }) 
             </View>
             <TouchableOpacity
               style={[styles.closeBtn, { backgroundColor: colors.surfaceSubtle }]}
-              onPress={onClose}
+              onPress={() => {
+                triggerHaptic('light');
+                onClose();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Close Help and FAQ Center"
             >
               <Ionicons name="close" size={20} color={colors.text} />
             </TouchableOpacity>
@@ -386,24 +394,23 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   iconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    borderRadius: shape.medium,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 17,
-    fontWeight: '800',
+    ...typography.h4,
   },
   headerSub: {
-    fontSize: 11,
+    ...typography.caption,
     marginTop: 1,
   },
   closeBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
   },

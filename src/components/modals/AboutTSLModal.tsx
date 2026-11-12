@@ -17,6 +17,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { Env } from '../../config/env';
 import { useLanguage } from '../../context/LanguageContext';
+import { triggerHaptic } from '../../utils/haptics';
+import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
+import { shape } from '../../theme/shapes';
 
 import { LegalPolicyModal, LegalTabKey } from './LegalPolicyModal';
 
@@ -110,8 +113,12 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
             </View>
             <TouchableOpacity
               style={[styles.closeBtn, { backgroundColor: colors.surfaceSubtle }]}
-              onPress={onClose}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              onPress={() => {
+                triggerHaptic('light');
+                onClose();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Close About Thriving Skills modal"
             >
               <Ionicons name="close" size={20} color={colors.text} />
             </TouchableOpacity>
@@ -918,18 +925,16 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   companyTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: -0.3,
+    ...typography.h3,
   },
   companySubtitle: {
-    fontSize: 12,
+    ...typography.caption,
     marginTop: 1,
   },
   closeBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
   },

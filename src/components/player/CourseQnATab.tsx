@@ -12,6 +12,10 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useFeedback } from '../../context/FeedbackContext';
+import { triggerHaptic } from '../../utils/haptics';
+import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
+import { shape } from '../../theme/shapes';
 
 export interface QnAItem {
   id: string;
@@ -83,12 +87,14 @@ interface CourseQnATabProps {
 export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLessonTitle }) => {
   const { colors, isDark } = useTheme();
   const { user } = useAuth();
+  const { showToast } = useFeedback();
 
   const [questions, setQuestions] = useState<QnAItem[]>(INITIAL_QNA);
   const [askModalVisible, setAskModalVisible] = useState<boolean>(false);
   const [newQuestionText, setNewQuestionText] = useState<string>('');
 
   const handleToggleUpvote = (id: string) => {
+    triggerHaptic('selection');
     setQuestions((prev) =>
       prev.map((item) => {
         if (item.id === id) {
@@ -106,7 +112,8 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
 
   const handlePostQuestion = () => {
     if (!newQuestionText.trim()) {
-      Alert.alert('Empty Inquiry', 'Please write your question before submitting.');
+      triggerHaptic('warning');
+      showToast({ message: 'Please write your question before submitting.', type: 'error' });
       return;
     }
 
@@ -127,7 +134,8 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
     setQuestions([newQ, ...questions]);
     setNewQuestionText('');
     setAskModalVisible(false);
-    Alert.alert('Question Posted! 🚀', 'Your question has been sent to the instructor and discussion forum.');
+    triggerHaptic('success');
+    showToast({ message: 'Question posted to instructor Q&A', type: 'success' });
   };
 
   return (
@@ -270,7 +278,12 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
           >
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.text }]}>Ask Course Instructor</Text>
-              <TouchableOpacity onPress={() => setAskModalVisible(false)} style={styles.closeBtn}>
+              <TouchableOpacity
+                onPress={() => setAskModalVisible(false)}
+                style={[styles.closeBtn, { backgroundColor: colors.surfaceSubtle }]}
+                accessibilityRole="button"
+                accessibilityLabel="Close Ask Instructor dialog"
+              >
                 <Ionicons name="close" size={20} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
@@ -439,7 +452,7 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   verifiedBadgeText: {
-    color: '#10B981',
+    color: '#047857',
     fontSize: 10,
     fontWeight: '700',
   },
@@ -484,7 +497,11 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   closeBtn: {
-    padding: 4,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    borderRadius: shape.full,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modalHint: {
     fontSize: 12,

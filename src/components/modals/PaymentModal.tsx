@@ -16,6 +16,9 @@ import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { useLearning } from '../../context/LearningContext';
+import { useFeedback } from '../../context/FeedbackContext';
+import { triggerHaptic } from '../../utils/haptics';
+import { MIN_TOUCH_TARGET } from '../../theme/typography';
 import { Course } from '../../types';
 import { CoursesService } from '../../services/api/coursesService';
 
@@ -40,9 +43,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const insets = useSafeAreaInsets();
   const { t, isBangla } = useLanguage();
   const { user, isAuthenticated, setAuthModalVisible } = useAuth();
+  const { showToast } = useFeedback();
   const { userProgress, enrollInCourse, refreshCourses, loadCourseDetail } = useLearning();
 
   const [isSyncing, setIsSyncing] = useState(false);
+  const syncStep = isSyncing || (isAuthenticated && userProgress[course?.id || '']) ? 2 : isAuthenticated ? 2 : 1;
 
   useEffect(() => {
     if (visible) {
@@ -99,6 +104,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
       if (backendVerified || userProgress[course.id]) {
         enrollInCourse(course.id);
+        triggerHaptic('success');
+        showToast({ message: 'Enrollment synced & unlocked!', type: 'success' });
         Alert.alert(
           t('syncSuccessTitle'),
           t('syncSuccessMsg'),
@@ -185,6 +192,21 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 </Text>
                 <Text style={[styles.subtitle, { color: colors.textMuted }]}>
                   {isBangla ? 'আপনার থ্রাইভিং স্কিলস অ্যাকাউন্ট থেকে এনরোলমেন্ট সিঙ্ক করুন' : 'Sync enrolled courses with your Thriving Skills account'}
+                </Text>
+              </View>
+            </View>
+
+            {/* Progressive 2-Step Access Sync Indicator */}
+            <View style={[styles.stepperCard, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+              <View style={[styles.stepperTrack, { backgroundColor: colors.border }]}>
+                <View style={[styles.stepperFill, { backgroundColor: colors.primary, width: syncStep === 1 ? '50%' : '100%' }]} />
+              </View>
+              <View style={styles.stepperLabels}>
+                <Text style={[styles.stepperLabelText, { color: colors.primary, fontWeight: '700' }]}>
+                  {isAuthenticated ? '✓ 1. Signed In' : '1. Sign In'}
+                </Text>
+                <Text style={[styles.stepperLabelText, { color: syncStep === 2 ? colors.primary : colors.textMuted, fontWeight: syncStep === 2 ? '700' : '500' }]}>
+                  2. Sync Library
                 </Text>
               </View>
             </View>
@@ -315,14 +337,37 @@ const styles = StyleSheet.create({
   },
   closeBtn: {
     position: 'absolute',
-    top: 16,
-    right: 18,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    top: 12,
+    right: 14,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
+  },
+  stepperCard: {
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 14,
+  },
+  stepperTrack: {
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginBottom: 6,
+  },
+  stepperFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  stepperLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  stepperLabelText: {
+    fontSize: 11,
   },
   scroll: {
     paddingBottom: 12,

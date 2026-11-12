@@ -6,16 +6,13 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  TextInput,
   Alert,
   RefreshControl,
-  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../context/ThemeContext';
-import { Env } from '../config/env';
 import { useLearning } from '../context/LearningContext';
 import { useSaaS } from '../context/SaaSContext';
 import { useAuth } from '../context/AuthContext';
@@ -24,26 +21,15 @@ import { useGamification } from '../context/GamificationContext';
 import { Header } from '../components/Header';
 import { CategoryPills } from '../components/CategoryPills';
 import { CourseCard } from '../components/CourseCard';
-import { YouTubeCard } from '../components/YouTubeCard';
-import { HelpFaqModal } from '../components/HelpFaqModal';
-import { BlogModal } from '../components/BlogModal';
 import { HeroCarousel, CarouselSlide } from '../components/HeroCarousel';
 import { QuickActionDock } from '../components/QuickActionDock';
 import { SearchSpotlightBar } from '../components/SearchSpotlightBar';
-import { CourseCardSkeleton, SpringPressable } from '../components/common';
+import { CourseCardSkeleton, SpringPressable, StateView } from '../components/common';
 import { useYouTube } from '../context/YouTubeContext';
-import { useAutoScroll } from '../hooks/useAutoScroll';
-import { YOUTUBE_VIDEOS, YOUTUBE_CHANNEL, YouTubeVideo } from '../data/youtubeVideos';
-import {
-  CORPORATE_CLIENTS,
-  REVIEWS_WALL,
-} from '../data/mockData';
 import { RootTab } from '../types';
 import { AboutTSLModal, AboutTabKey } from '../components/AboutTSLModal';
-import { LegalPolicyModal, LegalTabKey } from '../components/LegalPolicyModal';
-
-const FOUNDER_MAHMUD = require('../../assets/team/abdullah_al_mahmud.jpeg');
-const FOUNDER_SYED = require('../../assets/team/syed_nuruddin_ahmed.jpeg');
+import { typography, MIN_TOUCH_TARGET } from '../theme/typography';
+import { shape } from '../theme/shapes';
 
 interface HomeScreenProps {
   onNavigateToCourse: (courseId: string) => void;
@@ -74,18 +60,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const insets = useSafeAreaInsets();
   const [aboutModalVisible, setAboutModalVisible] = useState(false);
   const [aboutInitialTab, setAboutInitialTab] = useState<AboutTabKey>('overview');
-  const [legalModalVisible, setLegalModalVisible] = useState(false);
-  const [legalInitialTab, setLegalInitialTab] = useState<LegalTabKey>('terms');
-  const [blogModalVisible, setBlogModalVisible] = useState(false);
-  const [helpFaqModalVisible, setHelpFaqModalVisible] = useState(false);
 
   const { t, isBangla } = useLanguage();
   const { streakDays, dailyMinutesSpent, dailyGoalMinutes } = useGamification();
   const {
     courses,
     categories,
-    blogPosts,
     isLoadingCourses,
+    coursesError,
     refreshCourses,
     selectedCategory,
     setSelectedCategory,
@@ -173,13 +155,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     return isBangla ? 'আজকে আপনি কোন নতুন স্কিল শিখবেন?' : 'What skill will you master today?';
   })();
 
-  // Dynamic slow auto-scroll hook for YouTube videos shelf
-  const ytAutoScroll = useAutoScroll({
-    speed: 0.45,
-    pauseAtEdgeMs: 1800,
-    resumeDelayMs: 2800,
-  });
-
   // Filter courses
   const filteredCourses = courses.filter((course) => {
     const matchesCategory =
@@ -221,6 +196,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         onOpenYouTube={onOpenYouTube}
         onOpenSearch={onOpenSearch}
         onOpenDrawer={onOpenDrawer}
+        onOpenOfflineContent={() => onNavigateTab('MyLearning')}
       />
 
       <ScrollView
@@ -408,7 +384,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 </Text>
               </View>
               {activeCourse && (
-                <TouchableOpacity onPress={() => onNavigateTab('MyLearning')}>
+                <TouchableOpacity
+                  style={styles.seeAllTouch}
+                  onPress={() => onNavigateTab('MyLearning')}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  accessibilityRole="button"
+                >
                   <Text style={[styles.seeAllText, { color: colors.primary }]}>
                     {isBangla ? 'মাই হাব →' : 'My Hub →'}
                   </Text>
@@ -558,27 +539,32 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
-                      backgroundColor: isDark ? '#312E81' : '#EEF2FF',
+                      backgroundColor: colors.primaryLight,
                       paddingHorizontal: 8,
                       paddingVertical: 3,
                       borderRadius: 12,
                       gap: 4,
                     }}
                   >
-                    <Ionicons name="sparkles" size={12} color="#6366F1" />
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: '#6366F1' }}>
+                    <Ionicons name="sparkles" size={12} color={colors.primary} />
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary }}>
                       {isBangla ? 'স্মার্ট রিকমেন্ডেশন' : 'FOR YOU'}
                     </Text>
                   </View>
                 </View>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                <Text style={[typography.h3, styles.sectionTitle, { color: colors.text }]}>
                   {isBangla ? 'আপনার পছন্দের ভিত্তিতে প্রস্তাবিত' : 'Recommended For You'}
                 </Text>
-                <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]} numberOfLines={2}>
+                <Text style={[typography.bodySmall, styles.sectionSubtitle, { color: colors.textMuted }]} numberOfLines={2}>
                   {isBangla ? recRationaleBn : recRationale}
                 </Text>
               </View>
-              <TouchableOpacity onPress={() => onNavigateTab('Courses')}>
+              <TouchableOpacity
+                style={styles.seeAllTouch}
+                onPress={() => onNavigateTab('Courses')}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+              >
                 <Text style={[styles.seeAllText, { color: colors.primary }]}>
                   {isBangla ? 'সব দেখুন' : 'View All'} ({recommendedCourses.length}) →
                 </Text>
@@ -598,17 +584,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </View>
         )}
 
-        {/* Special Career Bundles Section (স্পেশাল বান্ডেল কোর্স) */}
         {/* Popular Executive Masterclasses */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <View style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>জনপ্রিয় কোর্সসমূহ</Text>
-              <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]} numberOfLines={2}>
+              <Text style={[typography.h3, styles.sectionTitle, { color: colors.text }]}>
+                {isBangla ? 'জনপ্রিয় কোর্সসমূহ' : 'Popular Masterclasses'}
+              </Text>
+              <Text style={[typography.bodySmall, styles.sectionSubtitle, { color: colors.textMuted }]} numberOfLines={2}>
                 Executive Masterclasses in Generative AI, Excel & Finance
               </Text>
             </View>
-            <TouchableOpacity onPress={() => onNavigateTab('Courses')} style={{ flexShrink: 0 }}>
+            <TouchableOpacity
+              onPress={() => onNavigateTab('Courses')}
+              style={[styles.seeAllTouch, { flexShrink: 0 }]}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+            >
               <Text style={[styles.seeAllText, { color: colors.primary }]}>View All ({courses.length})</Text>
             </TouchableOpacity>
           </View>
@@ -618,6 +610,27 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <CourseCardSkeleton />
               <CourseCardSkeleton />
             </>
+          ) : coursesError && courses.length === 0 ? (
+            <StateView
+              mode="error"
+              title={isBangla ? 'কোর্স লোড করা যায়নি' : 'Could not load courses'}
+              message={coursesError}
+              primaryActionLabel={isBangla ? 'আবার চেষ্টা করুন' : 'Retry'}
+              onPrimaryAction={refreshCourses}
+              compact
+            />
+          ) : filteredCourses.length === 0 ? (
+            <StateView
+              mode="empty"
+              title={isBangla ? 'কোনো কোর্স পাওয়া যায়নি' : 'No matching courses'}
+              message={isBangla ? 'ফিল্টার রিসেট করে সকল কোর্স দেখুন।' : 'Reset filters to browse all executive courses.'}
+              primaryActionLabel={isBangla ? 'সকল কোর্স' : 'Reset Filters'}
+              onPrimaryAction={() => {
+                setSelectedCategory('all');
+                setSearchQuery('');
+              }}
+              compact
+            />
           ) : (
             filteredCourses.slice(0, 3).map((course) => (
               <CourseCard
@@ -629,487 +642,61 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           )}
         </View>
 
-        {/* Corporate Solutions & SME Consultancy Spotlight */}
-        <View
-          style={[
-            styles.corporateBanner,
-            {
-              backgroundColor: isDark ? colors.surfaceCard : '#1E1B4B',
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          <View style={styles.corporateBadge}>
-            <Ionicons name="business" size={14} color="#818CF8" />
-            <Text style={styles.corporateBadgeText}>FOR CORPORATE & SME TEAMS</Text>
-          </View>
-          <Text style={styles.corporateTitle}>
-            কাস্টমাইজড Corporate Training & Strategic Advisory
-          </Text>
-          <Text style={styles.corporateSubtitle}>
-            আপনার টিমের পেশাদার দক্ষতা বৃদ্ধি, কার্যকর এবং ফলাফলমুখী করতে আমরা প্রদান করি ডিজিটাল লার্নিং সলিউশন, LMS সেটআপ এবং বিজনেস কনসালটেন্সি।
-          </Text>
-
-          <View style={styles.corpServicesGrid}>
-            {[
-              { title: 'Corporate Training', icon: 'school' },
-              { title: 'Digital LMS Platform', icon: 'laptop' },
-              { title: 'SME Consultancy', icon: 'briefcase' },
-              { title: 'ICT Policy Consulting', icon: 'shield-checkmark' },
-            ].map((serv, idx) => (
-              <View key={idx} style={styles.corpServItem}>
-                <Ionicons name={serv.icon as any} size={14} color="#818CF8" />
-                <Text style={styles.corpServText}>{serv.title}</Text>
-              </View>
-            ))}
-          </View>
-
-          <SpringPressable
-            style={[styles.corporateBtn, { backgroundColor: colors.secondary }]}
-            onPress={onOpenCorporateModal}
-            activeScale={0.96}
-            accessibilityRole="button"
-            accessibilityLabel="Request Enterprise Proposal"
-          >
-            <Text style={[styles.corporateBtnText, { color: colors.onSecondary }]}>Request Enterprise Proposal</Text>
-            <Ionicons name="arrow-forward" size={16} color={colors.onSecondary} />
-          </SpringPressable>
-        </View>
-
-        {/* Verified Learners' Wall of Love (Real Reviews) */}
+        {/* Streamlined Enterprise & About Gateway Card (Keeps Home focused on Learning Launchpad) */}
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Learner Experiences</Text>
-              <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
-                What corporate professionals say about Thriving Skills
-              </Text>
-            </View>
-          </View>
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.reviewsScroll}
+          <View
+            style={[
+              styles.gatewayCard,
+              { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+            ]}
           >
-            {REVIEWS_WALL.map((rev) => (
-              <View
-                key={rev.id}
+            <View style={styles.gatewayHeaderRow}>
+              <View style={[styles.gatewayIconWrap, { backgroundColor: colors.primaryLight }]}>
+                <Ionicons name="business-outline" size={20} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={[typography.h4, { color: colors.text }]}>
+                  {isBangla ? 'টিএসএল ইকোসিস্টেম ও কর্পোরেট সল্যুশন' : 'TSL Enterprise & Ecosystem'}
+                </Text>
+                <Text style={[typography.bodySmall, { color: colors.textMuted }]} numberOfLines={2}>
+                  {isBangla
+                    ? 'টিম ট্রেনিং, ইউনিভার্সিটি পার্টনারশিপ ও প্রতিষ্ঠান সম্পর্কে জানুন।'
+                    : 'Corporate training proposals, university MoUs, and leadership info.'}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.gatewayActionsRow}>
+              <SpringPressable
+                style={[styles.gatewayPrimaryBtn, { backgroundColor: colors.primary }]}
+                onPress={onOpenCorporateModal}
+                accessibilityRole="button"
+                accessibilityLabel="Corporate Solutions"
+              >
+                <Ionicons name="briefcase-outline" size={16} color={colors.onPrimary} />
+                <Text style={[typography.button, { color: colors.onPrimary }]} numberOfLines={1}>
+                  {isBangla ? 'কর্পোরেট প্রস্তাব' : 'Corporate Inquiry'}
+                </Text>
+              </SpringPressable>
+
+              <SpringPressable
                 style={[
-                  styles.reviewCard,
-                  {
-                    backgroundColor: colors.surfaceCard,
-                    borderColor: colors.border,
-                    shadowColor: colors.cardShadow,
-                  },
+                  styles.gatewaySecondaryBtn,
+                  { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
                 ]}
-              >
-                <View style={styles.reviewHeader}>
-                  <Image source={{ uri: rev.userAvatar }} style={styles.revAvatar} />
-                  <View style={styles.revUserCol}>
-                    <Text style={[styles.revName, { color: colors.text }]}>{rev.userName}</Text>
-                    <Text style={[styles.revRole, { color: colors.textMuted }]}>{rev.userRole}</Text>
-                  </View>
-                  <View style={styles.starsRow}>
-                    <Ionicons name="star" size={12} color="#F59E0B" />
-                    <Ionicons name="star" size={12} color="#F59E0B" />
-                    <Ionicons name="star" size={12} color="#F59E0B" />
-                    <Ionicons name="star" size={12} color="#F59E0B" />
-                    <Ionicons name="star" size={12} color="#F59E0B" />
-                  </View>
-                </View>
-                <Text style={[styles.revComment, { color: colors.text }]} numberOfLines={4}>
-                  "{rev.comment}"
-                </Text>
-                <View style={styles.verifiedTag}>
-                  <Ionicons name="checkmark-circle" size={12} color={colors.primary} />
-                  <Text style={[styles.verifiedTagText, { color: colors.primary }]}>
-                    {rev.company || 'Verified Professional'}
-                  </Text>
-                </View>
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Career Insights & Articles (Live from WordPress) */}
-        {blogPosts && blogPosts.length > 0 && (
-          <View style={styles.section}>
-            <View style={[styles.sectionHeader, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
-              <View style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Career Insights & Articles</Text>
-                <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]} numberOfLines={2}>
-                  Live publications from Thriving Skills Editorial
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={{ flexShrink: 0, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 8, backgroundColor: colors.primaryLight }}
-                onPress={() => setBlogModalVisible(true)}
-              >
-                <Text style={{ fontSize: 11, fontWeight: '800', color: colors.primary }}>
-                  View All →
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.articlesScroll}
-            >
-              {blogPosts.map((post) => (
-                <TouchableOpacity
-                  key={post.id}
-                  style={[
-                    styles.articleCard,
-                    {
-                      backgroundColor: colors.surfaceCard,
-                      borderColor: colors.border,
-                      shadowColor: colors.cardShadow,
-                    },
-                  ]}
-                  onPress={() => setBlogModalVisible(true)}
-                  activeOpacity={0.88}
-                >
-                  {post.featuredImageUrl ? (
-                    <Image source={{ uri: post.featuredImageUrl }} style={styles.articleThumb} />
-                  ) : (
-                    <View style={[styles.articleThumbPlaceholder, { backgroundColor: colors.primary + '15' }]}>
-                      <Ionicons name="newspaper-outline" size={32} color={colors.primary} />
-                    </View>
-                  )}
-                  <View style={styles.articleBody}>
-                    <View style={styles.articleMeta}>
-                      <Text style={[styles.articleDate, { color: colors.primary }]}>{post.date}</Text>
-                      <Text style={[styles.articleAuthor, { color: colors.textMuted }]}>• {post.authorName}</Text>
-                    </View>
-                    <Text style={[styles.articleTitle, { color: colors.text }]} numberOfLines={2}>
-                      {post.title}
-                    </Text>
-                    <Text style={[styles.articleExcerpt, { color: colors.textMuted }]} numberOfLines={2}>
-                      {post.excerpt}
-                    </Text>
-                    <View style={styles.articleFooter}>
-                      <Text style={[styles.articleReadMore, { color: colors.primary }]}>Read In-App →</Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
-        {/* Founders & Leadership Spotlight */}
-        <View style={styles.leadershipSpotlightSection}>
-          <View style={[styles.leadershipCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
-            <View style={styles.leadershipCardHeader}>
-              <View style={[styles.badgePill, { backgroundColor: 'rgba(245, 158, 11, 0.12)' }]}>
-                <Ionicons name="star" size={12} color="#F59E0B" />
-                <Text style={[styles.badgePillText, { color: '#F59E0B' }]}>
-                  {isBangla ? 'প্রতিষ্ঠাতা ও নেতৃত্ব' : 'LEADERSHIP & FOUNDERS'}
-                </Text>
-              </View>
-              <TouchableOpacity
                 onPress={() => {
-                  setAboutInitialTab('leadership');
+                  setAboutInitialTab('overview');
                   setAboutModalVisible(true);
                 }}
-                style={styles.viewLeadershipBtn}
+                accessibilityRole="button"
+                accessibilityLabel="About Thriving Skills"
               >
-                <Text style={[styles.viewLeadershipText, { color: colors.primary }]}>
-                  {isBangla ? 'টিম প্রোফাইল →' : 'View Bios →'}
+                <Ionicons name="information-circle-outline" size={16} color={colors.text} />
+                <Text style={[typography.button, { color: colors.text }]} numberOfLines={1}>
+                  {isBangla ? 'আমাদের সম্পর্কে' : 'About TSL'}
                 </Text>
-              </TouchableOpacity>
+              </SpringPressable>
             </View>
-
-            <Text style={[styles.leadershipTitle, { color: colors.text }]}>
-              {isBangla
-                ? 'বাংলাদেশের দক্ষ জনশক্তি ও ৪র্থ শিল্পবিপ্লবের পথপ্রদর্শক'
-                : 'Pioneering Future-Ready 4IR Capabilities in Bangladesh'}
-            </Text>
-
-            {/* Founder Avatars Row */}
-            <View style={styles.foundersRow}>
-              {/* Founder 1: Md. Abdullah Al Mahmud */}
-              <TouchableOpacity
-                style={[styles.founderMiniCard, { borderColor: colors.border, backgroundColor: isDark ? '#1E293B' : '#F8FAFC' }]}
-                onPress={() => {
-                  setAboutInitialTab('leadership');
-                  setAboutModalVisible(true);
-                }}
-                activeOpacity={0.8}
-              >
-                <View style={styles.founderImgContainer}>
-                  <Image source={FOUNDER_MAHMUD} style={styles.founderAvatar} />
-                  <View style={styles.verifiedDot}>
-                    <Ionicons name="checkmark-circle" size={14} color="#10B981" />
-                  </View>
-                </View>
-                <Text style={[styles.founderName, { color: colors.text }]} numberOfLines={1}>
-                  Md. Abdullah Al Mahmud
-                </Text>
-                <Text style={[styles.founderRole, { color: colors.primary }]} numberOfLines={1}>
-                  Founder & CEO
-                </Text>
-              </TouchableOpacity>
-
-              {/* Founder 2: Syed Nuruddin Ahmed */}
-              <TouchableOpacity
-                style={[styles.founderMiniCard, { borderColor: colors.border, backgroundColor: isDark ? '#1E293B' : '#F8FAFC' }]}
-                onPress={() => {
-                  setAboutInitialTab('leadership');
-                  setAboutModalVisible(true);
-                }}
-                activeOpacity={0.8}
-              >
-                <View style={styles.founderImgContainer}>
-                  <Image source={FOUNDER_SYED} style={styles.founderAvatar} />
-                  <View style={styles.verifiedDot}>
-                    <Ionicons name="checkmark-circle" size={14} color="#10B981" />
-                  </View>
-                </View>
-                <Text style={[styles.founderName, { color: colors.text }]} numberOfLines={1}>
-                  Syed Nuruddin Ahmed
-                </Text>
-                <Text style={[styles.founderRole, { color: colors.secondary }]} numberOfLines={1}>
-                  Founder & Chairman
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-
-        {/* Trusted Institutional Partners & MoUs */}
-        <View style={styles.partnerSection}>
-          <View style={styles.partnerHeaderRow}>
-            <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                <Ionicons name="shield-checkmark" size={16} color="#10B981" />
-                <Text style={[styles.partnerBadgeTag, { color: colors.textMuted }]}>
-                  {isBangla ? 'অফিসিয়াল পার্টনারশিপ ও সমঝোতা স্মারক' : 'ACCREDITED & RECOGNIZED'}
-                </Text>
-              </View>
-              <Text style={[styles.partnerSectionTitle, { color: colors.text }]}>
-                {isBangla ? 'বিশ্ববিদ্যালয় ও প্রাতিষ্ঠানিক পার্টনারসমূহ' : 'Trusted Institutional Partners & MoUs'}
-              </Text>
-              <Text style={[styles.partnerSectionSubtitle, { color: colors.textMuted }]}>
-                {isBangla
-                  ? 'শীর্ষ বিশ্ববিদ্যালয়, আইসিটি ডিভিশন (a2i) এবং প্রফেশনাল বডিসমূহের সাথে সমঝোতা চুক্তি'
-                  : 'Bilateral MoUs with renowned universities, ICT Division (a2i), and industry councils'}
-              </Text>
-            </View>
-          </View>
-
-          {/* Institutional Partner Cards */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.partnerCardsScroll}>
-            {[
-              {
-                org: 'Eastern University (EU)',
-                tag: 'Bilateral MoU',
-                tagColor: '#3B82F6',
-                icon: 'school-outline',
-                desc: 'Official MoU for AI curriculum integration and student capability development.',
-              },
-              {
-                org: 'Dhaka University (DUCSU)',
-                tag: 'National Summit',
-                tagColor: '#8B5CF6',
-                icon: 'business-outline',
-                desc: 'Co-organized Bangladesh Skills Summit at DU Senate Bhaban.',
-              },
-              {
-                org: 'North South University',
-                tag: '4IR Summit',
-                tagColor: '#10B981',
-                icon: 'hardware-chip-outline',
-                desc: 'Organized the 4IR Skills Summit bridging GenAI and youth skills.',
-              },
-              {
-                org: 'a2i (ICT Division)',
-                tag: 'Govt. Alliance',
-                tagColor: '#F59E0B',
-                icon: 'shield-outline',
-                desc: 'Collaboration for nationwide digital literacy and 4IR readiness.',
-              },
-              {
-                org: 'AUST School of Business',
-                tag: 'MoU Partner',
-                tagColor: '#EC4899',
-                icon: 'trophy-outline',
-                desc: 'Employability & Skills Summit partner for corporate recruitment.',
-              },
-              {
-                org: 'ICMAB & BASIS',
-                tag: 'Professional Body',
-                tagColor: '#059669',
-                icon: 'ribbon-outline',
-                desc: 'Chartered accounting & software industry executive skilling partner.',
-              },
-            ].map((partner, pIdx) => (
-              <TouchableOpacity
-                key={pIdx}
-                style={[styles.partnerCardItem, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
-                onPress={() => {
-                  setAboutInitialTab('partners');
-                  setAboutModalVisible(true);
-                }}
-                activeOpacity={0.75}
-              >
-                <View style={styles.partnerCardItemHeader}>
-                  <View style={[styles.partnerItemIconBg, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' }]}>
-                    <Ionicons name={partner.icon as any} size={18} color={partner.tagColor} />
-                  </View>
-                  <View style={[styles.partnerItemTag, { backgroundColor: partner.tagColor + '18' }]}>
-                    <Text style={[styles.partnerItemTagText, { color: partner.tagColor }]}>{partner.tag}</Text>
-                  </View>
-                </View>
-                <Text style={[styles.partnerOrgTitle, { color: colors.text }]} numberOfLines={1}>
-                  {partner.org}
-                </Text>
-                <Text style={[styles.partnerOrgDesc, { color: colors.textMuted }]} numberOfLines={2}>
-                  {partner.desc}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-
-          <TouchableOpacity
-            style={[styles.seeAllPartnersBtn, { borderColor: colors.border, backgroundColor: colors.surfaceSubtle }]}
-            onPress={() => {
-              setAboutInitialTab('partners');
-              setAboutModalVisible(true);
-            }}
-          >
-            <Ionicons name="document-text-outline" size={15} color={colors.primary} />
-            <Text style={[styles.seeAllPartnersText, { color: colors.primary }]}>
-              {isBangla ? 'সকল পার্টনারশিপ, সামিট ও MoU দেখুন →' : 'View All Institutional Partnerships & MoUs →'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Trusted Corporate Clients */}
-        <View style={styles.trustSection}>
-          <Text style={[styles.trustHeading, { color: colors.textMuted }]}>
-            TRUSTED BY PROFESSIONALS ACROSS LEADING CORPORATIONS
-          </Text>
-          <View style={styles.clientLogosRow}>
-            {CORPORATE_CLIENTS.map((client, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.clientChip,
-                  { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-                ]}
-              >
-                <Ionicons name={client.logo as any} size={14} color={colors.primary} />
-                <Text style={[styles.clientName, { color: colors.text }]}>{client.name}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-
-        {/* Enterprise Brand & Legal Footer */}
-        <View style={[styles.enterpriseFooter, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
-          <View style={styles.footerBrandRow}>
-            <Image
-              source={require('../../assets/icon.png')}
-              style={styles.footerLogo}
-              resizeMode="contain"
-            />
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.footerBrandName, { color: colors.text }]}>Thriving Skills Limited</Text>
-              <Text style={[styles.footerTagline, { color: colors.textMuted }]}>
-                Next-Gen AI & Career Excellence Platform
-              </Text>
-            </View>
-          </View>
-
-          {/* Quick Legal and Info Actions */}
-          <View style={styles.footerLegalLinksRow}>
-            <TouchableOpacity
-              style={[styles.legalPillBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
-              onPress={() => {
-                setLegalInitialTab('terms');
-                setLegalModalVisible(true);
-              }}
-            >
-              <Text style={[styles.legalPillText, { color: colors.text }]}>Terms & Conditions</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.legalPillBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
-              onPress={() => {
-                setLegalInitialTab('privacy');
-                setLegalModalVisible(true);
-              }}
-            >
-              <Text style={[styles.legalPillText, { color: colors.text }]}>Privacy Policy</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.legalPillBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
-              onPress={() => {
-                setAboutInitialTab('overview');
-                setAboutModalVisible(true);
-              }}
-            >
-              <Text style={[styles.legalPillText, { color: colors.text }]}>About TSL</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.legalPillBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
-              onPress={() => setHelpFaqModalVisible(true)}
-            >
-              <Text style={[styles.legalPillText, { color: colors.text }]}>Help & FAQ</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.legalPillBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
-              onPress={() => setBlogModalVisible(true)}
-            >
-              <Text style={[styles.legalPillText, { color: colors.text }]}>Articles & Blog</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Contact / Helpline row */}
-          <View style={[styles.footerContactRow, { borderTopColor: colors.borderSubtle, borderBottomColor: colors.borderSubtle }]}>
-            <TouchableOpacity
-              style={styles.footerContactItem}
-              onPress={() => Linking.openURL('tel:01312100288').catch(() => {})}
-            >
-              <Ionicons name="call-outline" size={14} color={colors.primary} />
-              <Text style={[styles.footerContactText, { color: colors.primary }]}>01312 100288</Text>
-            </TouchableOpacity>
-
-            <View style={[styles.footerDot, { backgroundColor: colors.border }]} />
-
-            <TouchableOpacity
-              style={styles.footerContactItem}
-              onPress={() => Linking.openURL('mailto:support@thrivingskill.com').catch(() => {})}
-            >
-              <Ionicons name="mail-outline" size={14} color={colors.textMuted} />
-              <Text style={[styles.footerContactText, { color: colors.textMuted }]}>support@thrivingskill.com</Text>
-            </TouchableOpacity>
-
-            <View style={[styles.footerDot, { backgroundColor: colors.border }]} />
-
-            <TouchableOpacity
-              style={styles.footerContactItem}
-              onPress={() => Linking.openURL(Env.SITE_URL).catch(() => {})}
-            >
-              <Ionicons name="globe-outline" size={14} color={colors.textMuted} />
-              <Text style={[styles.footerContactText, { color: colors.textMuted }]}>{Env.SITE_URL.replace(/^https?:\/\//, '')}</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* All Rights Reserved Notice */}
-          <View style={styles.footerCopyrightBox}>
-            <Text style={[styles.copyrightNotice, { color: colors.textMuted }]}>
-              © 2026 Thriving Skills Limited (TSL). All Rights Reserved.
-            </Text>
-            <Text style={[styles.copyrightSubtext, { color: colors.textMuted }]}>
-              Gulshan-2, Dhaka-1212, Bangladesh • Registered Company under RJSC • Powered by Gemini AI
-            </Text>
           </View>
         </View>
       </ScrollView>
@@ -1121,22 +708,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         onClose={() => setAboutModalVisible(false)}
         initialTab={aboutInitialTab}
         onNavigateTab={onNavigateTab}
-      />
-
-      <LegalPolicyModal
-        visible={legalModalVisible}
-        onClose={() => setLegalModalVisible(false)}
-        initialTab={legalInitialTab}
-      />
-
-      <HelpFaqModal
-        visible={helpFaqModalVisible}
-        onClose={() => setHelpFaqModalVisible(false)}
-      />
-
-      <BlogModal
-        visible={blogModalVisible}
-        onClose={() => setBlogModalVisible(false)}
       />
     </View>
   );
@@ -1304,9 +875,58 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 1,
   },
+  seeAllTouch: {
+    minHeight: MIN_TOUCH_TARGET,
+    minWidth: MIN_TOUCH_TARGET,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+  },
   seeAllText: {
     fontSize: 12,
     fontWeight: '700',
+  },
+  gatewayCard: {
+    borderRadius: shape.large,
+    borderWidth: 1,
+    padding: 16,
+    gap: 14,
+  },
+  gatewayHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  gatewayIconWrap: {
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    borderRadius: shape.medium,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gatewayActionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  gatewayPrimaryBtn: {
+    flex: 1,
+    minHeight: MIN_TOUCH_TARGET,
+    borderRadius: shape.medium,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+  },
+  gatewaySecondaryBtn: {
+    flex: 1,
+    minHeight: MIN_TOUCH_TARGET,
+    borderRadius: shape.medium,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
   },
   resumeCard: {
     flexDirection: 'row',

@@ -12,6 +12,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useSaaS } from '../../context/SaaSContext';
 import { useLearning } from '../../context/LearningContext';
+import { triggerHaptic } from '../../utils/haptics';
+import { MIN_TOUCH_TARGET } from '../../theme/typography';
 import { SkillAssessmentQuestion, SkillAssessmentResult } from '../../types';
 
 interface SkillAssessmentModalProps {
@@ -97,6 +99,7 @@ export const SkillAssessmentModal: React.FC<SkillAssessmentModalProps> = ({
   const isLastQuestion = currentIndex === totalQuestions - 1;
 
   const handleSelectOption = (points: number) => {
+    triggerHaptic('selection');
     const updated = { ...selectedAnswers, [currentQ.id]: points };
     setSelectedAnswers(updated);
 
@@ -104,6 +107,7 @@ export const SkillAssessmentModal: React.FC<SkillAssessmentModalProps> = ({
       setCurrentIndex(currentIndex + 1);
     } else {
       // Calculate results
+      triggerHaptic('success');
       computeAndSaveResult(updated);
     }
   };
@@ -179,7 +183,12 @@ export const SkillAssessmentModal: React.FC<SkillAssessmentModalProps> = ({
                 Executive Skill Diagnostic
               </Text>
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+            <TouchableOpacity
+              onPress={onClose}
+              style={styles.closeBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Close diagnostic"
+            >
               <Ionicons name="close" size={22} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
@@ -193,7 +202,7 @@ export const SkillAssessmentModal: React.FC<SkillAssessmentModalProps> = ({
                     <Text style={[styles.progressStepText, { color: colors.primary }]}>
                       Question {currentIndex + 1} of {totalQuestions}
                     </Text>
-                    <Text style={[styles.domainBadge, { color: colors.secondary, backgroundColor: colors.secondaryLight }]}>
+                    <Text style={[styles.domainBadge, { color: colors.primary, backgroundColor: colors.primaryLight }]}>
                       {currentQ.domain}
                     </Text>
                   </View>
@@ -380,7 +389,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   closeBtn: {
-    padding: 4,
+    minWidth: MIN_TOUCH_TARGET,
+    minHeight: MIN_TOUCH_TARGET,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollContent: {
     padding: 20,
@@ -454,8 +466,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    marginTop: 20,
-    paddingVertical: 8,
+    marginTop: 16,
+    minHeight: MIN_TOUCH_TARGET,
+    paddingHorizontal: 14,
   },
   backBtnText: {
     fontSize: 13,
@@ -534,6 +547,7 @@ const styles = StyleSheet.create({
   },
   enrollTrackBtn: {
     width: '100%',
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -548,7 +562,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   retakeBtn: {
-    paddingVertical: 8,
+    minHeight: MIN_TOUCH_TARGET,
+    paddingHorizontal: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   retakeBtnText: {
     fontSize: 13,

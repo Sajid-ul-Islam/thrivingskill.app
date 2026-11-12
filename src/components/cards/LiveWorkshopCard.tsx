@@ -1,20 +1,37 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SpringPressable } from '../common';
 import { Workshop } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { useLearning } from '../../context/LearningContext';
+import { useFeedback } from '../../context/FeedbackContext';
+import { MIN_TOUCH_TARGET } from '../../theme/typography';
 
 interface LiveWorkshopCardProps {
   workshop: Workshop;
-  onPress: () => void;
+  onPress?: () => void;
 }
 
-export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop, onPress }) => {
+export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop }) => {
   const { colors } = useTheme();
-  const { isRsvpd, rsvpForWorkshop } = useLearning();
+  const { isRsvpd, toggleWorkshopRsvp } = useLearning();
+  const { showToast } = useFeedback();
   const registered = isRsvpd(workshop.id);
+
+  const handleToggleRsvp = () => {
+    const nowRegistered = toggleWorkshopRsvp(workshop.id);
+    showToast({
+      message: nowRegistered
+        ? `Seat reserved for "${workshop.title}"`
+        : `Reservation cancelled for "${workshop.title}"`,
+      type: nowRegistered ? 'success' : 'info',
+      actionLabel: 'Undo',
+      onAction: () => {
+        toggleWorkshopRsvp(workshop.id);
+      },
+    });
+  };
 
   return (
     <View
@@ -97,17 +114,11 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop, on
                 backgroundColor: registered ? colors.primaryLight : colors.primary,
               },
             ]}
-            onPress={() => {
-              rsvpForWorkshop(workshop.id);
-              Alert.alert(
-                'Seat Reserved! 🎟️',
-                `You are officially registered for "${workshop.title}" on ${workshop.date} at ${workshop.time}. Zoom credentials & calendar invite sent to your email.`
-              );
-            }}
-            disabled={registered}
+            onPress={handleToggleRsvp}
             activeScale={0.96}
             accessibilityRole="button"
-            accessibilityLabel={registered ? `Seat already reserved for ${workshop.title}` : `Reserve seat for ${workshop.title}`}
+            accessibilityState={{ selected: registered }}
+            accessibilityLabel={registered ? `Cancel reservation for ${workshop.title}` : `Reserve seat for ${workshop.title}`}
           >
             <Ionicons
               name={registered ? 'checkmark-circle' : 'ticket-outline'}
@@ -259,8 +270,10 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   rsvpBtn: {
+    minHeight: MIN_TOUCH_TARGET,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 10,

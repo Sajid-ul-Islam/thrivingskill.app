@@ -11,6 +11,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useSaaS } from '../../context/SaaSContext';
+import { useFeedback } from '../../context/FeedbackContext';
+import { StateView } from '../common';
+import { triggerHaptic } from '../../utils/haptics';
+import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
+import { shape } from '../../theme/shapes';
 import { SaaSNotification } from '../../types';
 
 interface NotificationModalProps {
@@ -27,6 +32,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const { notifications, markNotificationRead, markAllNotificationsRead } = useSaaS();
+  const { showToast } = useFeedback();
   const [filterType, setFilterType] = useState<string>('all');
 
   const filtered = notifications.filter(
@@ -73,17 +79,34 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
             </View>
 
             <View style={styles.headerRight}>
-              <TouchableOpacity onPress={markAllNotificationsRead} style={styles.markAllBtn}>
+              <TouchableOpacity
+                onPress={() => {
+                  triggerHaptic('selection');
+                  markAllNotificationsRead();
+                  showToast({ message: 'All notifications marked as read', type: 'info' });
+                }}
+                style={styles.markAllBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Mark all notifications as read"
+              >
                 <Text style={[styles.markAllText, { color: colors.primary }]}>Mark all read</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-                <Ionicons name="close" size={22} color={colors.textMuted} />
+              <TouchableOpacity
+                onPress={() => {
+                  triggerHaptic('light');
+                  onClose();
+                }}
+                style={[styles.closeBtn, { backgroundColor: colors.surfaceSubtle }]}
+                accessibilityRole="button"
+                accessibilityLabel="Close notifications"
+              >
+                <Ionicons name="close" size={20} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Filter Pills */}
-          <View style={styles.filterRow}>
+          {/* Filter Pills (Hick's Law: 4 tabs) */}
+          <View style={styles.filterRow} accessibilityRole="tablist">
             {[
               { id: 'all', label: 'All' },
               { id: 'assignment', label: 'Assignments' },
@@ -100,7 +123,13 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                     borderColor: filterType === f.id ? colors.primary : colors.border,
                   },
                 ]}
-                onPress={() => setFilterType(f.id)}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: filterType === f.id }}
+                accessibilityLabel={`Filter by ${f.label}`}
+                onPress={() => {
+                  triggerHaptic('selection');
+                  setFilterType(f.id);
+                }}
               >
                 <Text
                   style={[
@@ -117,12 +146,13 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
           {/* Notifications List */}
           <ScrollView contentContainerStyle={styles.listContent}>
             {filtered.length === 0 ? (
-              <View style={styles.emptyContainer}>
-                <Ionicons name="notifications-off-outline" size={40} color={colors.textLight} />
-                <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                  No notifications in this category
-                </Text>
-              </View>
+              <StateView
+                mode="empty"
+                icon="notifications-off-outline"
+                title="No notifications in this category"
+                message="You're all caught up on learning updates and credentials."
+                compact
+              />
             ) : (
               filtered.map((item) => {
                 const icon = getIconForType(item.type);
@@ -185,8 +215,8 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     maxHeight: '80%',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: shape.extraLarge,
+    borderTopRightRadius: shape.extraLarge,
     borderWidth: 1,
     paddingBottom: 24,
   },
@@ -195,7 +225,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 14,
     borderBottomWidth: 1,
   },
   headerTitleRow: {
@@ -204,24 +234,28 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
+    ...typography.h3,
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
   },
   markAllBtn: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    minHeight: MIN_TOUCH_TARGET,
+    justifyContent: 'center',
+    paddingHorizontal: 10,
   },
   markAllText: {
-    fontSize: 12,
+    ...typography.caption,
     fontWeight: '700',
   },
   closeBtn: {
-    padding: 4,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    borderRadius: shape.full,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   filterRow: {
     flexDirection: 'row',
@@ -230,9 +264,11 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   filterPill: {
+    minHeight: 40,
+    justifyContent: 'center',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: shape.small,
     borderWidth: 1,
   },
   filterText: {

@@ -24,6 +24,10 @@ import { useSaaS } from '../context/SaaSContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useGamification } from '../context/GamificationContext';
+import { useFeedback } from '../context/FeedbackContext';
+import { triggerHaptic } from '../utils/haptics';
+import { MIN_TOUCH_TARGET } from '../theme/typography';
+import { shape } from '../theme/shapes';
 import { Header } from '../components/Header';
 import { AppUpdateModal } from '../components/AppUpdateModal';
 import { AboutTSLModal, AboutTabKey } from '../components/AboutTSLModal';
@@ -60,6 +64,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const insets = useSafeAreaInsets();
   const { language, toggleLanguage, isBangla, t } = useLanguage();
   const { badges } = useGamification();
+  const { showToast } = useFeedback();
   const { courses, userProgress, certificates } = useLearning();
   const { user, isAuthenticated, isAdmin, logout, deleteAccount, setAuthModalVisible, updateUserProfile } = useAuth();
   const {
@@ -69,6 +74,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   } = useSaaS();
 
   const [biometricEnabled, setBiometricEnabled] = useState(true);
+  const [profileSection, setProfileSection] = useState<'learning' | 'settings'>('learning');
+  const [portfolioTab, setPortfolioTab] = useState<'in-progress' | 'graduated' | 'all'>('in-progress');
+  const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
   const [updateModalVisible, setUpdateModalVisible] = useState(false);
   const [aboutModalVisible, setAboutModalVisible] = useState(false);
   const [aboutInitialTab, setAboutInitialTab] = useState<AboutTabKey>('overview');
@@ -113,15 +121,18 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     const qualities: ('Auto' | '1080p' | '720p' | '480p')[] = ['Auto', '1080p', '720p', '480p'];
     const nextIdx = (qualities.indexOf(videoQuality) + 1) % qualities.length;
     setVideoQuality(qualities[nextIdx]);
-    Alert.alert('Video Quality Updated', `Default streaming resolution set to ${qualities[nextIdx]}.`);
+    showToast({
+      message: `Streaming resolution set to ${qualities[nextIdx]}`,
+      type: 'info',
+    });
   };
 
   const handleClearCache = async () => {
     await CacheManager.clearAll();
-    Alert.alert(
-      'App Cache Cleared 🧹',
-      'Local API data, cached thumbnails, and temporary runtime files (38.4 MB) have been freed up successfully.'
-    );
+    showToast({
+      message: isBangla ? 'অ্যাপ ক্যাশ ক্লিয়ার হয়েছে' : 'App cache cleared successfully',
+      type: 'success',
+    });
   };
 
   const handleSaveProfile = async () => {
@@ -254,6 +265,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
   const enrolledCount = Object.keys(userProgress).length;
   const completedCount = Object.values(userProgress).filter((p) => p.isCompleted).length;
+  const inProgressCourses = courses.filter((c) => userProgress[c.id] && !userProgress[c.id].isCompleted);
+  const graduatedCourses = courses.filter((c) => userProgress[c.id]?.isCompleted);
+  const totalCompletedLessons = Object.values(userProgress).reduce(
+    (acc, p) => acc + p.completedLessonIds.length,
+    0
+  );
+  const totalHoursLearned = (totalCompletedLessons * 0.35).toFixed(1);
+  const completionRate = enrolledCount > 0 ? Math.round((completedCount / enrolledCount) * 100) : 0;
 
   const enrolledOrderCourses = Object.keys(userProgress)
     .map((id) => courses.find((c) => c.id === id))
@@ -373,8 +392,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 }
                 setEditProfileModalVisible(true);
               }}
+              accessibilityRole="button"
+              accessibilityLabel="Edit profile"
             >
-              <Ionicons name="create-outline" size={13} color={colors.primary} />
+              <Ionicons name="create-outline" size={14} color={colors.primary} />
               <Text style={[styles.editProfileBtnText, { color: colors.primary }]}>
                 {isBangla ? 'প্রোফাইল সম্পাদন' : 'Edit Profile'}
               </Text>
@@ -382,6 +403,315 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </View>
         </View>
 
+        {/* Focused Segmented Switcher (One Screen, One Job) */}
+        <View
+          style={[
+            styles.profileSegmentedWrap,
+            { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+          ]}
+        >
+          <TouchableOpacity
+            style={[
+              styles.profileSegmentedBtn,
+              profileSection === 'learning' && { backgroundColor: colors.primary },
+            ]}
+            onPress={() => {
+              triggerHaptic('selection');
+              setProfileSection('learning');
+            }}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: profileSection === 'learning' }}
+          >
+            <Ionicons
+              name="bar-chart-outline"
+              size={16}
+              color={profileSection === 'learning' ? colors.onPrimary : colors.textMuted}
+            />
+            <Text
+              style={[
+                styles.profileSegmentedText,
+                { color: profileSection === 'learning' ? colors.onPrimary : colors.textMuted },
+              ]}
+            >
+              {isBangla ? 'লার্নিং ও অ্যানালিটিক্স' : 'Learning & Stats'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.profileSegmentedBtn,
+              profileSection === 'settings' && { backgroundColor: colors.primary },
+            ]}
+            onPress={() => {
+              triggerHaptic('selection');
+              setProfileSection('settings');
+            }}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: profileSection === 'settings' }}
+          >
+            <Ionicons
+              name="settings-outline"
+              size={16}
+              color={profileSection === 'settings' ? colors.onPrimary : colors.textMuted}
+            />
+            <Text
+              style={[
+                styles.profileSegmentedText,
+                { color: profileSection === 'settings' ? colors.onPrimary : colors.textMuted },
+              ]}
+            >
+              {isBangla ? 'সেটিংস ও অ্যাকাউন্ট' : 'Settings & Account'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {profileSection === 'learning' && (
+          <>
+            {!isAuthenticated && (
+              <View style={styles.section}>
+                <View
+                  style={[
+                    styles.guestBanner,
+                    { backgroundColor: colors.surfaceCard, borderColor: colors.primary },
+                  ]}
+                >
+                  <View style={[styles.guestBannerIconBg, { backgroundColor: colors.primaryLight }]}>
+                    <Ionicons name="person-circle-outline" size={22} color={colors.primary} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.guestBannerTitle, { color: colors.text }]}>
+                      {isBangla ? 'আপনার প্রগ্রেস সিঙ্ক করতে সাইন ইন করুন' : 'Sign in to Sync Your Learning'}
+                    </Text>
+                    <Text style={[styles.guestBannerSubtitle, { color: colors.textMuted }]}>
+                      {isBangla
+                        ? 'আপনার এনরোল করা কোর্স, সার্টিফিকেট এবং ডেইলি স্ট্রিক সংরক্ষণ করুন।'
+                        : 'Keep your enrolled courses, certificates, and daily streak synced across devices.'}
+                    </Text>
+                    <TouchableOpacity
+                      style={[styles.guestLoginBtn, { backgroundColor: colors.primary }]}
+                      onPress={() => setAuthModalVisible(true)}
+                      accessibilityRole="button"
+                    >
+                      <Ionicons name="log-in-outline" size={16} color={colors.onPrimary} />
+                      <Text style={[styles.guestLoginBtnText, { color: colors.onPrimary }]}>
+                        {isBangla ? 'সাইন ইন করুন' : 'Sign In / Register'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            )}
+
+            {/* CR-05: Learning Analytics Data Chart */}
+            <View style={styles.section}>
+              <ProfileLearningAnalytics
+                enrolledCount={enrolledCount}
+                inProgressCount={inProgressCourses.length}
+                completedCount={completedCount}
+                totalHours={totalHoursLearned}
+                certificatesCount={certificates.length}
+                completionRate={completionRate}
+                colors={colors}
+                isBangla={isBangla}
+                activeCourseTab={portfolioTab}
+                onSelectTab={(tab) => setPortfolioTab(tab)}
+              />
+            </View>
+
+            {/* CR-05: Enrolled & Graduated Courses Portfolio */}
+            <View style={styles.section}>
+              <View style={styles.portfolioHeaderRow}>
+                <View style={styles.titleWithIcon}>
+                  <Text style={[styles.sectionTitleMain, { color: colors.text }]}>
+                    {isBangla ? 'আমার কোর্স পোর্টফোলিও' : 'My Course Portfolio'}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => onNavigateTab('MyLearning')}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  style={{ minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' }}
+                >
+                  <Text style={[styles.seeAllText, { color: colors.primary }]}>
+                    {isBangla ? 'মাই হাব →' : 'Open Hub →'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.portfolioTabs}
+              >
+                {[
+                  { id: 'in-progress', label: `${isBangla ? 'চলমান' : 'In Progress'} (${inProgressCourses.length})` },
+                  { id: 'graduated', label: `${isBangla ? 'সম্পন্ন' : 'Graduated'} (${graduatedCourses.length})` },
+                  { id: 'all', label: `${isBangla ? 'সকল' : 'All'} (${enrolledOrderCourses.length})` },
+                ].map((tabItem) => {
+                  const active = portfolioTab === tabItem.id;
+                  return (
+                    <TouchableOpacity
+                      key={tabItem.id}
+                      style={[
+                        styles.portfolioTabPill,
+                        {
+                          backgroundColor: active ? colors.primary : colors.surfaceCard,
+                          borderColor: active ? colors.primary : colors.border,
+                        },
+                      ]}
+                      onPress={() => setPortfolioTab(tabItem.id as any)}
+                      accessibilityRole="tab"
+                      accessibilityState={{ selected: active }}
+                    >
+                      <Text
+                        style={[
+                          styles.portfolioTabPillText,
+                          { color: active ? colors.onPrimary : colors.text },
+                        ]}
+                      >
+                        {tabItem.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+
+              {(portfolioTab === 'in-progress'
+                ? inProgressCourses
+                : portfolioTab === 'graduated'
+                ? graduatedCourses
+                : enrolledOrderCourses
+              ).length === 0 ? (
+                <View
+                  style={[
+                    styles.emptyCourseCard,
+                    { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                  ]}
+                >
+                  <Ionicons name="school-outline" size={32} color={colors.textMuted} />
+                  <Text style={[styles.emptyCourseTitle, { color: colors.text }]}>
+                    {portfolioTab === 'graduated'
+                      ? isBangla
+                        ? 'এখনো কোনো কোর্স সম্পন্ন হয়নি'
+                        : 'No graduated courses yet'
+                      : isBangla
+                      ? 'কোনো কোর্স এনরোল করা নেই'
+                      : 'No courses in this view'}
+                  </Text>
+                  <Text style={[styles.emptyCourseSub, { color: colors.textMuted }]}>
+                    {isBangla
+                      ? 'নতুন কোর্স এক্সপ্লোর করুন এবং আপনার ক্যারিয়ার স্কিল উন্নত করুন।'
+                      : 'Explore the catalog to start an accredited executive masterclass.'}
+                  </Text>
+                  <TouchableOpacity
+                    style={[styles.emptyActionBtn, { backgroundColor: colors.primary }]}
+                    onPress={() => onNavigateTab('Courses')}
+                  >
+                    <Text style={[styles.emptyActionBtnText, { color: colors.onPrimary }]}>
+                      {isBangla ? 'কোর্স দেখুন' : 'Browse Catalog'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                (portfolioTab === 'in-progress'
+                  ? inProgressCourses
+                  : portfolioTab === 'graduated'
+                  ? graduatedCourses
+                  : enrolledOrderCourses
+                ).map((course) => {
+                  const prog = userProgress[course.id];
+                  const isGraduated = Boolean(prog?.isCompleted);
+                  const totalLessons = course.modules.reduce((acc, m) => acc + m.lessons.length, 0);
+                  const completedCountForCourse = prog?.completedLessonIds.length || 0;
+                  const pct = totalLessons > 0 ? Math.round((completedCountForCourse / totalLessons) * 100) : 0;
+                  const targetLessonId = prog?.lastAccessedLessonId || course.modules[0]?.lessons[0]?.id || '';
+                  const cert = certificates.find((c) => c.courseId === course.id);
+
+                  return (
+                    <View
+                      key={course.id}
+                      style={[
+                        styles.profileCourseCard,
+                        isGraduated && styles.graduatedCourseCard,
+                        {
+                          backgroundColor: colors.surfaceCard,
+                          borderColor: isGraduated ? colors.brandGold : colors.border,
+                        },
+                      ]}
+                    >
+                      <View style={styles.graduatedThumbContainer}>
+                        <Image source={{ uri: course.thumbnail }} style={styles.courseThumb} />
+                        {isGraduated && (
+                          <View style={[styles.graduatedCapPill, { backgroundColor: colors.brandGold }]}>
+                            <Ionicons name="ribbon" size={10} color="#102F53" />
+                            <Text style={styles.graduatedCapText}>GRADUATED</Text>
+                          </View>
+                        )}
+                      </View>
+                      <View style={styles.courseDetails}>
+                        <View style={styles.courseHeaderBadgeRow}>
+                          <View style={[styles.courseCategoryTag, { backgroundColor: colors.primaryLight }]}>
+                            <Text style={[styles.courseCategoryText, { color: colors.primary }]}>
+                              {course.level}
+                            </Text>
+                          </View>
+                          <Text style={[styles.coursePercentText, { color: isGraduated ? (isDark ? '#FBBF24' : '#B45309') : colors.primary }]}>
+                            {isGraduated ? '100% Mastery' : `${pct}%`}
+                          </Text>
+                        </View>
+                        <Text style={[styles.courseCardTitle, { color: colors.text }]} numberOfLines={2}>
+                          {course.title}
+                        </Text>
+                        <View style={styles.courseProgressRow}>
+                          <View style={[styles.courseProgressTrack, { backgroundColor: colors.surfaceSubtle }]}>
+                            <View
+                              style={[
+                                styles.courseProgressFill,
+                                {
+                                  backgroundColor: isGraduated ? colors.brandGold : colors.primary,
+                                  width: `${Math.max(pct, isGraduated ? 100 : 8)}%`,
+                                },
+                              ]}
+                            />
+                          </View>
+                        </View>
+                        {isGraduated && cert ? (
+                          <TouchableOpacity
+                            style={[styles.certificateActionBtn, { backgroundColor: colors.brandGold }]}
+                            onPress={() => setSelectedCert(cert)}
+                          >
+                            <Ionicons name="ribbon" size={14} color="#102F53" />
+                            <Text style={styles.certificateActionBtnText}>
+                              {isBangla ? 'সনদপত্র দেখুন' : 'View Certificate'}
+                            </Text>
+                          </TouchableOpacity>
+                        ) : (
+                          <TouchableOpacity
+                            style={[styles.continueBtn, { backgroundColor: colors.primary }]}
+                            onPress={() => {
+                              if (targetLessonId && onNavigateToLesson) {
+                                onNavigateToLesson(course.id, targetLessonId);
+                              } else {
+                                onNavigateToCourse?.(course.id);
+                              }
+                            }}
+                          >
+                            <Ionicons name="play" size={13} color={colors.onPrimary} />
+                            <Text style={[styles.continueBtnText, { color: colors.onPrimary }]}>
+                              {isBangla ? 'চালিয়ে যান' : 'Continue Learning'}
+                            </Text>
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    </View>
+                  );
+                })
+              )}
+            </View>
+          </>
+        )}
+
+        {profileSection === 'settings' && (
+          <>
         {/* Administrator Management Console (Section 2 Spec) */}
         {isAdmin && (
           <View style={styles.section}>
@@ -617,9 +947,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         </View>
 
         {/* Preferences & Settings */}
+        {/* Experience & Playback (Miller's Law: <= 5 items per Gestalt group) */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-            {isBangla ? 'অ্যাপ সেটিংস' : 'APP PREFERENCES'}
+            {isBangla ? 'অ্যাপ অভিজ্ঞতা ও প্লেব্যাক' : 'EXPERIENCE & PLAYBACK'}
           </Text>
           <View
             style={[
@@ -627,54 +958,19 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               { backgroundColor: colors.surfaceCard, borderColor: colors.border },
             ]}
           >
-            {/* WordPress Admin Portal Shortcut */}
-            {isAdmin && (
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => Linking.openURL(Env.WP_ADMIN_URL)}
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="settings-outline" size={20} color="#EC4899" />
-                <View style={{ marginLeft: 6 }}>
-                  <Text style={[styles.settingLabel, { color: colors.text }]}>
-                    {isBangla ? 'ওয়ার্ডপ্রেস অ্যাডমিন পোর্টাল (WP-Admin)' : 'WordPress Admin Portal (WP-Admin)'}
-                  </Text>
-                  <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                    {Env.WP_ADMIN_URL}
-                  </Text>
-                </View>
-              </View>
-              <Ionicons name="open-outline" size={16} color={colors.textMuted} />
-            </TouchableOpacity>
-            )}
-
-            {/* In-App OTA Updates (No APK Rebuild Required) */}
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => setUpdateModalVisible(true)}
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="cloud-download-outline" size={20} color="#10B981" />
-                <View style={{ marginLeft: 6 }}>
-                  <Text style={[styles.settingLabel, { color: colors.text }]}>
-                    {isBangla ? 'ইন-অ্যাপ আপডেট (OTA)' : 'In-App Updates (OTA)'}
-                  </Text>
-                  <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                    {isBangla ? 'APK রি-বিল্ড ছাড়াই নতুন ফিচার পান' : 'Instant updates without rebuilding APK'}
-                  </Text>
-                </View>
-              </View>
-              <View style={[styles.langPill, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
-                <Text style={[styles.langPillText, { color: '#10B981', fontWeight: '800' }]}>
-                  OTA Engine
-                </Text>
-              </View>
-            </TouchableOpacity>
-
             {/* Language Switcher */}
             <TouchableOpacity
               style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={toggleLanguage}
+              onPress={() => {
+                triggerHaptic('selection');
+                toggleLanguage();
+                showToast({
+                  message: language === 'en' ? 'ভাষা বাংলা (BN) নির্ধারণ করা হয়েছে' : 'Language switched to English (EN)',
+                  type: 'info',
+                });
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={isBangla ? 'ভাষা পরিবর্তন করুন' : 'Switch app language'}
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="language" size={20} color={colors.primary} />
@@ -690,8 +986,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </TouchableOpacity>
 
             {/* Dark mode switch */}
-            <View style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-            >
+            <View style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}>
               <View style={styles.settingLeft}>
                 <Ionicons
                   name={isDark ? 'moon' : 'sunny'}
@@ -704,12 +999,89 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               </View>
               <Switch
                 value={isDark}
-                onValueChange={toggleTheme}
+                accessibilityLabel={isBangla ? 'ডার্ক মোড টগল' : 'Toggle Dark Mode'}
+                onValueChange={() => {
+                  triggerHaptic('selection');
+                  toggleTheme();
+                  showToast({
+                    message: isDark ? 'Light mode enabled' : 'Dark mode enabled',
+                    type: 'info',
+                  });
+                }}
                 trackColor={{ false: '#CBD5E1', true: colors.primary }}
                 thumbColor="#FFFFFF"
               />
             </View>
 
+            {/* Video Streaming Resolution */}
+            <TouchableOpacity
+              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
+              onPress={() => {
+                triggerHaptic('selection');
+                cycleVideoQuality();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={isBangla ? 'ভিডিও স্ট্রিমিং কোয়ালিটি পরিবর্তন করুন' : 'Cycle video streaming quality'}
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="videocam-outline" size={20} color="#3B82F6" />
+                <View style={{ marginLeft: 6 }}>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>
+                    {isBangla ? 'ভিডিও স্ট্রিমিং কোয়ালিটি' : 'Video Streaming Quality'}
+                  </Text>
+                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
+                    {isBangla ? 'ডিফল্ট রেজোলিউশন প্রেফারেন্স' : 'Preferred playback resolution'}
+                  </Text>
+                </View>
+              </View>
+              <View style={[styles.langPill, { backgroundColor: 'rgba(59, 130, 246, 0.12)' }]}>
+                <Text style={[styles.langPillText, { color: isDark ? '#60A5FA' : '#1D4ED8', fontWeight: '800' }]}>
+                  {videoQuality}
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* In-App OTA Updates */}
+            <TouchableOpacity
+              style={[styles.settingRow, { borderBottomWidth: 0 }]}
+              onPress={() => {
+                triggerHaptic('light');
+                setUpdateModalVisible(true);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={isBangla ? 'ইন-অ্যাপ আপডেট দেখুন' : 'Check in-app OTA updates'}
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="cloud-download-outline" size={20} color="#10B981" />
+                <View style={{ marginLeft: 6 }}>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>
+                    {isBangla ? 'ইন-অ্যাপ আপডেট (OTA)' : 'In-App Updates (OTA)'}
+                  </Text>
+                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
+                    {isBangla ? 'APK রি-বিল্ড ছাড়াই নতুন ফিচার পান' : 'Instant updates without rebuilding APK'}
+                  </Text>
+                </View>
+              </View>
+              <View style={[styles.langPill, { backgroundColor: 'rgba(16, 185, 129, 0.14)' }]}>
+                <Text style={[styles.langPillText, { color: isDark ? '#34D399' : '#047857', fontWeight: '800' }]}>
+                  OTA Engine
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Security, Library & Storage (Miller's Law: <= 5 items per Gestalt group) */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+            {isBangla ? 'নিরাপত্তা ও লাইব্রেরি' : 'SECURITY & LIBRARY'}
+          </Text>
+          <View
+            style={[
+              styles.cardGroup,
+              { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+            ]}
+          >
             {/* Biometric unlock toggle */}
             <View style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}>
               <View style={styles.settingLeft}>
@@ -720,66 +1092,31 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               </View>
               <Switch
                 value={biometricEnabled}
+                accessibilityLabel={isBangla ? 'বায়োমেট্রিক নিরাপত্তা টগল' : 'Toggle Biometric Security'}
                 onValueChange={(val) => {
+                  triggerHaptic('selection');
                   setBiometricEnabled(val);
-                  Alert.alert(
-                    'Biometric Security',
-                    val
-                      ? 'Fingerprint & Face ID enabled for instant login.'
-                      : 'Biometric unlock disabled.'
-                  );
+                  showToast({
+                    message: val
+                      ? 'Biometric unlock enabled'
+                      : 'Biometric unlock disabled',
+                    type: 'info',
+                  });
                 }}
                 trackColor={{ false: '#CBD5E1', true: colors.secondary }}
                 thumbColor="#FFFFFF"
               />
             </View>
 
-            {/* Video Streaming Resolution (Section 26) */}
+            {/* Change Account Password */}
             <TouchableOpacity
               style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={cycleVideoQuality}
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="videocam-outline" size={20} color="#3B82F6" />
-                <View style={{ marginLeft: 6 }}>
-                  <Text style={[styles.settingLabel, { color: colors.text }]}>
-                    {isBangla ? 'ভিডিও স্ট্রিমিং কোয়ালিটি' : 'Video Streaming Quality'}
-                  </Text>
-                  <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                    {isBangla ? 'ডিফল্ট রেজোলিউশন প্রেফারেন্স' : 'Preferred playback resolution'}
-                  </Text>
-                </View>
-              </View>
-              <View style={[styles.langPill, { backgroundColor: 'rgba(59, 130, 246, 0.12)' }]}>
-                <Text style={[styles.langPillText, { color: '#3B82F6', fontWeight: '800' }]}>
-                  {videoQuality}
-                </Text>
-              </View>
-            </TouchableOpacity>
-
-            {/* Clear Storage & Cache (Section 26) */}
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={handleClearCache}
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="trash-outline" size={20} color="#EF4444" />
-                <View style={{ marginLeft: 6 }}>
-                  <Text style={[styles.settingLabel, { color: colors.text }]}>
-                    {isBangla ? 'ক্যাশ মেমোরি ক্লিয়ার করুন' : 'Clear Storage & Cache'}
-                  </Text>
-                  <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                    {isBangla ? 'অব্যবহৃত টেম্পোরারি ফাইল মুছুন (~38 MB)' : 'Free up temporary local storage (~38 MB)'}
-                  </Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            {/* Change Account Password (Section 26) */}
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => setChangePasswordModalVisible(true)}
+              onPress={() => {
+                triggerHaptic('light');
+                setChangePasswordModalVisible(true);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={isBangla ? 'পাসওয়ার্ড পরিবর্তন করুন' : 'Change Password'}
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="key-outline" size={20} color="#F59E0B" />
@@ -787,7 +1124,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   <Text style={[styles.settingLabel, { color: colors.text }]}>
                     {isBangla ? 'পাসওয়ার্ড পরিবর্তন' : 'Change Password'}
                   </Text>
-                  <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
                     {isBangla ? 'অ্যাকাউন্ট সিকিউরিটি ক্রেডেনশিয়াল' : 'Update your account security'}
                   </Text>
                 </View>
@@ -798,7 +1135,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             {/* Enrolled Courses & Library History */}
             <TouchableOpacity
               style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => setPaymentHistoryModalVisible(true)}
+              onPress={() => {
+                triggerHaptic('light');
+                setPaymentHistoryModalVisible(true);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={isBangla ? 'এনরোলমেন্ট রেকর্ড দেখুন' : 'View Enrollment Records'}
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="library-outline" size={20} color="#10B981" />
@@ -806,7 +1148,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   <Text style={[styles.settingLabel, { color: colors.text }]}>
                     {isBangla ? 'এনরোলমেন্ট রেকর্ড' : 'Enrollment Records'}
                   </Text>
-                  <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
                     {isBangla ? 'আপনার সিঙ্ক করা সকল কোর্স তালিকা' : 'Your synced LearnPress course library'}
                   </Text>
                 </View>
@@ -816,8 +1158,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
             {/* Push notifications */}
             <TouchableOpacity
-              style={styles.settingRow}
-              onPress={onOpenNotifications}
+              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
+              onPress={() => {
+                triggerHaptic('light');
+                onOpenNotifications?.();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={isBangla ? 'নোটিফিকেশন সেন্টার খুলুন' : 'Open Notification Center'}
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="notifications-outline" size={20} color={colors.text} />
@@ -827,6 +1174,53 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               </View>
               <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </TouchableOpacity>
+
+            {/* Clear Storage & Cache */}
+            <TouchableOpacity
+              style={[styles.settingRow, isAdmin ? { borderBottomColor: colors.borderSubtle } : { borderBottomWidth: 0 }]}
+              onPress={() => {
+                triggerHaptic('light');
+                handleClearCache();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={isBangla ? 'ক্যাশ মেমোরি ক্লিয়ার করুন' : 'Clear Storage and Cache'}
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="trash-outline" size={20} color={colors.danger} />
+                <View style={{ marginLeft: 6 }}>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>
+                    {isBangla ? 'ক্যাশ মেমোরি ক্লিয়ার করুন' : 'Clear Storage & Cache'}
+                  </Text>
+                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
+                    {isBangla ? 'অব্যবহৃত টেম্পোরারি ফাইল মুছুন (~38 MB)' : 'Free up temporary local storage (~38 MB)'}
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+            </TouchableOpacity>
+
+            {/* WordPress Admin Portal Shortcut (Admin only) */}
+            {isAdmin && (
+              <TouchableOpacity
+                style={[styles.settingRow, { borderBottomWidth: 0 }]}
+                onPress={() => Linking.openURL(Env.WP_ADMIN_URL)}
+                accessibilityRole="button"
+                accessibilityLabel={isBangla ? 'ওয়ার্ডপ্রেস অ্যাডমিন পোর্টাল খুলুন' : 'Open WordPress Admin Portal'}
+              >
+                <View style={styles.settingLeft}>
+                  <Ionicons name="settings-outline" size={20} color="#EC4899" />
+                  <View style={{ marginLeft: 6 }}>
+                    <Text style={[styles.settingLabel, { color: colors.text }]}>
+                      {isBangla ? 'ওয়ার্ডপ্রেস অ্যাডমিন পোর্টাল (WP-Admin)' : 'WordPress Admin Portal (WP-Admin)'}
+                    </Text>
+                    <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
+                      {Env.WP_ADMIN_URL}
+                    </Text>
+                  </View>
+                </View>
+                <Ionicons name="open-outline" size={16} color={colors.textMuted} />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
 
@@ -838,8 +1232,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               styles.corporateCard,
               { backgroundColor: colors.surfaceCard, borderColor: colors.secondary },
             ]}
-            onPress={onOpenCorporateModal}
+            onPress={() => {
+              triggerHaptic('light');
+              onOpenCorporateModal();
+            }}
             activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel="Corporate Training & SME Advisory"
           >
             <View style={[styles.corpIconBg, { backgroundColor: colors.secondaryLight }]}>
               <Ionicons name="business" size={22} color={colors.secondary} />
@@ -856,9 +1255,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </TouchableOpacity>
         </View>
 
-        {/* Support & About */}
+        {/* Support & Insights (Miller's Law: 4 items) */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>CONTACT & SUPPORT</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+            {isBangla ? 'সাপোর্ট ও রিসোর্স' : 'SUPPORT & RESOURCES'}
+          </Text>
           <View
             style={[
               styles.cardGroup,
@@ -867,7 +1268,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           >
             <TouchableOpacity
               style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => Linking.openURL('tel:01312100288').catch(() => {})}
+              onPress={() => {
+                triggerHaptic('light');
+                Linking.openURL('tel:01312100288').catch(() => {});
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Call Hotline Support 01312100288"
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="call-outline" size={20} color={colors.primary} />
@@ -878,7 +1284,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
             <TouchableOpacity
               style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => Linking.openURL('mailto:info@thrivingskill.com').catch(() => {})}
+              onPress={() => {
+                triggerHaptic('light');
+                Linking.openURL('mailto:info@thrivingskill.com').catch(() => {});
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Email Support info@thrivingskill.com"
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="mail-outline" size={20} color={colors.text} />
@@ -887,10 +1298,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <Text style={[styles.versionText, { color: colors.textMuted }]}>info@thrivingskill.com</Text>
             </TouchableOpacity>
 
-            {/* Help & FAQ Center (Section 24) */}
+            {/* Help & FAQ Center */}
             <TouchableOpacity
               style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => setHelpFaqModalVisible(true)}
+              onPress={() => {
+                triggerHaptic('light');
+                setHelpFaqModalVisible(true);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={isBangla ? 'সাহায্য ও প্রশ্নোত্তর (FAQ) খুলুন' : 'Open Help and FAQ Center'}
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="help-circle-outline" size={20} color="#0D9488" />
@@ -898,18 +1314,23 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   <Text style={[styles.settingLabel, { color: colors.text }]}>
                     {isBangla ? 'সাহায্য ও প্রশ্নোত্তর (FAQ)' : 'Help & FAQ Center'}
                   </Text>
-                  <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                    {isBangla ? 'পেমেন্ট, সার্টিফিকেট ও কোর্স নির্দেশিকা' : 'Payments, certificates & course guidance'}
+                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
+                    {isBangla ? 'সার্টিফিকেট ও কোর্স নির্দেশিকা' : 'Certificates, sync & course guidance'}
                   </Text>
                 </View>
               </View>
               <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
             </TouchableOpacity>
 
-            {/* Thriving Skills Blog & Articles (Section 22) */}
+            {/* Thriving Skills Blog & Articles */}
             <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => setBlogModalVisible(true)}
+              style={[styles.settingRow, { borderBottomWidth: 0 }]}
+              onPress={() => {
+                triggerHaptic('light');
+                setBlogModalVisible(true);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={isBangla ? 'টিএসএল ব্লগ ও আর্টিকেল খুলুন' : 'Open TSL Blog and Industry Articles'}
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="newspaper-outline" size={20} color="#8B5CF6" />
@@ -917,20 +1338,36 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   <Text style={[styles.settingLabel, { color: colors.text }]}>
                     {isBangla ? 'টিএসএল ব্লগ ও আর্টিকেল' : 'TSL Blog & Industry Articles'}
                   </Text>
-                  <Text style={{ fontSize: 11, color: colors.textMuted }}>
+                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
                     {isBangla ? 'AI, কর্পোরেট লিডারশিপ ও এক্সিকিউটিভ ইনসাইট' : 'AI, leadership & corporate insights'}
                   </Text>
                 </View>
               </View>
               <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
             </TouchableOpacity>
+          </View>
+        </View>
 
+        {/* About Thriving Skills (Miller's Law: 3 items) */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+            {isBangla ? 'থ্রাইভিং স্কিলস পরিচিতি' : 'ABOUT THRIVING SKILLS'}
+          </Text>
+          <View
+            style={[
+              styles.cardGroup,
+              { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+            ]}
+          >
             <TouchableOpacity
               style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
               onPress={() => {
+                triggerHaptic('light');
                 setAboutInitialTab('overview');
                 setAboutModalVisible(true);
               }}
+              accessibilityRole="button"
+              accessibilityLabel="About Thriving Skills Overview"
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
@@ -942,37 +1379,59 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             <TouchableOpacity
               style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
               onPress={() => {
+                triggerHaptic('light');
                 setAboutInitialTab('leadership');
                 setAboutModalVisible(true);
               }}
+              accessibilityRole="button"
+              accessibilityLabel="Founders and Leadership"
             >
               <View style={styles.settingLeft}>
-                <Ionicons name="people-outline" size={20} color="#F59E0B" />
+                <Ionicons name="people-outline" size={20} color={isDark ? '#FBBF24' : '#B45309'} />
                 <Text style={[styles.settingLabel, { color: colors.text }]}>Founders & Leadership</Text>
               </View>
-              <Text style={[styles.versionText, { color: '#F59E0B', fontWeight: '600' }]}>Exec Board →</Text>
+              <Text style={[styles.versionText, { color: isDark ? '#FBBF24' : '#B45309', fontWeight: '600' }]}>Exec Board →</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
+              style={[styles.settingRow, { borderBottomWidth: 0 }]}
               onPress={() => {
+                triggerHaptic('light');
                 setAboutInitialTab('partners');
                 setAboutModalVisible(true);
               }}
+              accessibilityRole="button"
+              accessibilityLabel="Trusted Partners and MoUs"
             >
               <View style={styles.settingLeft}>
-                <Ionicons name="shield-checkmark-outline" size={20} color="#10B981" />
+                <Ionicons name="shield-checkmark-outline" size={20} color={isDark ? '#34D399' : '#047857'} />
                 <Text style={[styles.settingLabel, { color: colors.text }]}>Trusted Partners & MoUs</Text>
               </View>
-              <Text style={[styles.versionText, { color: '#10B981', fontWeight: '600' }]}>Universities & a2i →</Text>
+              <Text style={[styles.versionText, { color: isDark ? '#34D399' : '#047857', fontWeight: '600' }]}>Universities & a2i →</Text>
             </TouchableOpacity>
+          </View>
+        </View>
 
+        {/* Legal & Data Privacy (Miller's Law: 3 items) */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+            {isBangla ? 'আইনগত নীতিমালা ও প্রাইভেসি' : 'LEGAL & DATA PRIVACY'}
+          </Text>
+          <View
+            style={[
+              styles.cardGroup,
+              { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+            ]}
+          >
             <TouchableOpacity
               style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
               onPress={() => {
+                triggerHaptic('light');
                 setLegalInitialTab('terms');
                 setLegalModalVisible(true);
               }}
+              accessibilityRole="button"
+              accessibilityLabel="Terms and Conditions"
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="document-text-outline" size={20} color={colors.textMuted} />
@@ -982,11 +1441,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.settingRow}
+              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
               onPress={() => {
+                triggerHaptic('light');
                 setLegalInitialTab('privacy');
                 setLegalModalVisible(true);
               }}
+              accessibilityRole="button"
+              accessibilityLabel="Privacy Policy"
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="shield-outline" size={20} color={colors.textMuted} />
@@ -997,8 +1459,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
             {/* Account & Data Deletion Row (Google Play Mandatory Policy: https://thrivingskill.com/delete-account/) */}
             <TouchableOpacity
-              style={styles.settingRow}
+              style={[styles.settingRow, { borderBottomWidth: 0 }]}
               onPress={() => {
+                triggerHaptic('light');
                 Linking.openURL(Env.ACCOUNT_DELETION_URL).catch(() => {
                   Alert.alert(
                     isBangla ? 'ওয়েব ডাটা মুছে ফেলার ফর্ম' : 'Web Data Deletion Form',
@@ -1006,6 +1469,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   );
                 });
               }}
+              accessibilityRole="button"
+              accessibilityLabel={t('dataDeletionRequestWeb')}
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="person-remove-outline" size={20} color={colors.textMuted} />
@@ -1015,15 +1480,31 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               </View>
               <Ionicons name="open-outline" size={16} color={colors.textMuted} />
             </TouchableOpacity>
+          </View>
+        </View>
 
+        {/* Account Actions (Isolated destructive/auth controls per Fitts's Law error prevention) */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+            {isBangla ? 'অ্যাকাউন্ট অ্যাকশন' : 'ACCOUNT ACTIONS'}
+          </Text>
+          <View
+            style={[
+              styles.cardGroup,
+              { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+            ]}
+          >
             {isAuthenticated && (
               <TouchableOpacity
-                style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: colors.borderSubtle }]}
+                style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
                 onPress={() => {
+                  triggerHaptic('warning');
                   setDeletePass('');
                   setDeleteError('');
                   setDeleteAccountModalVisible(true);
                 }}
+                accessibilityRole="button"
+                accessibilityLabel={t('deleteAccount')}
               >
                 <View style={styles.settingLeft}>
                   <Ionicons name="trash-outline" size={20} color={colors.danger} />
@@ -1038,13 +1519,16 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             {/* Auth Action Row */}
             {isAuthenticated ? (
               <TouchableOpacity
-                style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: colors.borderSubtle }]}
+                style={[styles.settingRow, { borderBottomWidth: 0 }]}
                 onPress={() => {
+                  triggerHaptic('warning');
                   Alert.alert('Sign Out', 'Are you sure you want to sign out from your WordPress account?', [
                     { text: 'Cancel', style: 'cancel' },
                     { text: 'Sign Out', style: 'destructive', onPress: logout },
                   ]);
                 }}
+                accessibilityRole="button"
+                accessibilityLabel="Sign Out from WordPress"
               >
                 <View style={styles.settingLeft}>
                   <Ionicons name="log-out-outline" size={20} color={colors.danger} />
@@ -1055,8 +1539,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
-                style={[styles.settingRow, { borderTopWidth: 1, borderTopColor: colors.borderSubtle }]}
-                onPress={() => setAuthModalVisible(true)}
+                style={[styles.settingRow, { borderBottomWidth: 0 }]}
+                onPress={() => {
+                  triggerHaptic('light');
+                  setAuthModalVisible(true);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Sign In with Thriving Skills Account"
               >
                 <View style={styles.settingLeft}>
                   <Ionicons name="log-in-outline" size={20} color={colors.primary} />
@@ -1069,6 +1558,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             )}
           </View>
         </View>
+          </>
+        )}
 
         {/* All Rights Reserved Enterprise Footer */}
         <View style={{ alignItems: 'center', marginTop: 24, marginBottom: 12, paddingHorizontal: 20 }}>
@@ -1254,13 +1745,25 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   {isBangla ? 'নতুন পাসওয়ার্ড' : 'New Password (min 6 chars)'}
                 </Text>
                 <TextInput
-                  style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
+                  style={[
+                    styles.modalInput,
+                    {
+                      backgroundColor: colors.surfaceSubtle,
+                      color: colors.text,
+                      borderColor: newPass.length > 0 && newPass.length < 6 ? colors.danger : colors.border,
+                    },
+                  ]}
                   value={newPass}
                   onChangeText={setNewPass}
                   secureTextEntry
                   placeholder="••••••••"
                   placeholderTextColor={colors.textMuted}
                 />
+                {newPass.length > 0 && newPass.length < 6 && (
+                  <Text style={{ fontSize: 11, color: colors.danger, marginTop: 4, fontWeight: '600' }}>
+                    {isBangla ? 'নতুন পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।' : 'Password must be at least 6 characters.'}
+                  </Text>
+                )}
               </View>
 
               <View>
@@ -1268,13 +1771,25 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   {isBangla ? 'পাসওয়ার্ড নিশ্চিত করুন' : 'Confirm New Password'}
                 </Text>
                 <TextInput
-                  style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
+                  style={[
+                    styles.modalInput,
+                    {
+                      backgroundColor: colors.surfaceSubtle,
+                      color: colors.text,
+                      borderColor: confirmPass.length > 0 && confirmPass !== newPass ? colors.danger : colors.border,
+                    },
+                  ]}
                   value={confirmPass}
                   onChangeText={setConfirmPass}
                   secureTextEntry
                   placeholder="••••••••"
                   placeholderTextColor={colors.textMuted}
                 />
+                {confirmPass.length > 0 && confirmPass !== newPass && (
+                  <Text style={{ fontSize: 11, color: colors.danger, marginTop: 4, fontWeight: '600' }}>
+                    {isBangla ? 'পাসওয়ার্ড মেলেনি।' : 'Passwords do not match.'}
+                  </Text>
+                )}
               </View>
             </View>
 
@@ -1494,6 +2009,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </View>
         </KeyboardAvoidingView>
       </Modal>
+      {/* Certificate Modal (CR-05) */}
+      <CertificateModal
+        visible={!!selectedCert}
+        certificate={selectedCert}
+        onClose={() => setSelectedCert(null)}
+      />
     </View>
   );
 };
@@ -1695,7 +2216,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   cardGroup: {
-    borderRadius: 16,
+    borderRadius: shape.large,
     borderWidth: 1,
     overflow: 'hidden',
   },
@@ -1703,18 +2224,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    minHeight: 48,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 12,
     borderBottomWidth: 1,
   },
   settingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    paddingRight: 8,
     gap: 12,
   },
   settingLabel: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  settingSubtext: {
+    fontSize: 11,
+    marginTop: 1,
   },
   versionText: {
     fontSize: 12,
@@ -1749,16 +2277,41 @@ const styles = StyleSheet.create({
   editProfileBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
+    justifyContent: 'center',
+    minHeight: MIN_TOUCH_TARGET,
+    gap: 5,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: shape.small,
     borderWidth: 1,
     alignSelf: 'flex-start',
-    marginTop: 6,
+    marginTop: 8,
   },
   editProfileBtnText: {
-    fontSize: 11,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  profileSegmentedWrap: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 4,
+    borderRadius: shape.medium,
+    borderWidth: 1,
+    gap: 4,
+  },
+  profileSegmentedBtn: {
+    flex: 1,
+    minHeight: MIN_TOUCH_TARGET,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderRadius: shape.small,
+    paddingHorizontal: 10,
+  },
+  profileSegmentedText: {
+    fontSize: 13,
     fontWeight: '700',
   },
   modalBackdrop: {
@@ -1788,7 +2341,10 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   modalCloseBtn: {
-    padding: 4,
+    minWidth: MIN_TOUCH_TARGET,
+    minHeight: MIN_TOUCH_TARGET,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   inputLabel: {
     fontSize: 12,
@@ -1809,6 +2365,7 @@ const styles = StyleSheet.create({
   },
   cancelBtn: {
     flex: 1,
+    minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
@@ -1821,6 +2378,7 @@ const styles = StyleSheet.create({
   },
   saveBtn: {
     flex: 2,
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1921,12 +2479,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   guestLoginBtn: {
+    minHeight: MIN_TOUCH_TARGET,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 10,
     alignSelf: 'flex-start',
     gap: 6,
   },
@@ -1962,12 +2521,14 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   portfolioTabPill: {
+    minHeight: MIN_TOUCH_TARGET,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 22,
     borderWidth: 1,
   },
   portfolioTabPillText: {
@@ -2089,18 +2650,19 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   continueBtn: {
+    minHeight: MIN_TOUCH_TARGET,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 7,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 8,
     alignSelf: 'flex-start',
-    gap: 4,
+    gap: 5,
   },
   continueBtnText: {
     color: '#FFFFFF',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
   },
   graduatedActionsRow: {
@@ -2109,13 +2671,15 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   certificateActionBtn: {
+    minHeight: MIN_TOUCH_TARGET,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 7,
-    gap: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+    gap: 5,
   },
   certificateActionBtnText: {
     color: '#102F53',
@@ -2157,9 +2721,11 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   emptyActionBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
+    minHeight: MIN_TOUCH_TARGET,
+    justifyContent: 'center',
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 10,
   },
   emptyActionBtnText: {
     color: '#FFFFFF',

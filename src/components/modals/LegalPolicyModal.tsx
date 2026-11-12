@@ -12,6 +12,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { triggerHaptic } from '../../utils/haptics';
+import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
+import { shape } from '../../theme/shapes';
 
 export type LegalTabKey = 'terms' | 'privacy';
 
@@ -337,8 +340,8 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
                 </Text>
               </View>
               <View style={styles.legalInfoRow}>
-                <Ionicons name="shield-checkmark-outline" size={14} color="#10B981" />
-                <Text style={[styles.legalInfoText, { color: '#10B981', fontWeight: '700' }]}>
+                <Ionicons name="shield-checkmark-outline" size={14} color={colors.success} />
+                <Text style={[styles.legalInfoText, { color: colors.success, fontWeight: '700' }]}>
                   Contributing to UN SDG-4 (Quality Education) & 4IR Readiness
                 </Text>
               </View>
@@ -379,17 +382,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 16,
-    fontWeight: '800',
+    ...typography.h4,
   },
   headerSub: {
-    fontSize: 11,
+    ...typography.caption,
     marginTop: 1,
   },
   closeBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
   },

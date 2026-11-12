@@ -67,6 +67,12 @@ All autonomous agents working on this project MUST strictly adhere to the follow
 * Maintain existing docstrings and architectural comments.
 * Always generate clickable GitHub-style file links (`file:///...`) for referenced files and types.
 
+### Rule 6: UI/UX Principles & Psychological Laws Compliance
+* Strictly follow [the workspace UI/UX Design Laws rule](.agents/rules/ui-ux-design-laws.md) and the `ui-ux-design-laws` skill on every screen, modal, and component edit:
+  - **Core UI Principles**: Visual Hierarchy (`typography` tokens), Consistency (`colors`, `shapes`), Proximity & Alignment (Gestalt `cardGroup` chunking), WCAG AA Contrast & Accessibility (`accessibilityRole`/`accessibilityLabel`, light & dark parity), and Immediate Feedback (`SpringPressable`, `triggerHaptic`, `useFeedback`).
+  - **UX Honeycomb**: Usefulness, Usability, Findability, Credibility (`StateView`, `OfflineBanner`), Desirability, Accessibility, and Value.
+  - **Psychological Laws**: Hick's Law (focused choices, 5 bottom tabs), Fitts's Law (`>= 44x44 dp` targets, isolated destructive actions), Jakob's Law (familiar mobile conventions), Miller's Law (`3–7` items per card group/step), and Aesthetic-Usability Effect.
+
 ---
 
 ## 3. Slash Command Reference for Developers & Agents

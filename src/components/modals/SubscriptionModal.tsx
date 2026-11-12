@@ -13,6 +13,9 @@ import { useTheme } from '../../context/ThemeContext';
 import { useSaaS, SAAS_PLAN_FEATURES } from '../../context/SaaSContext';
 import { useAuth } from '../../context/AuthContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { triggerHaptic } from '../../utils/haptics';
+import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
+import { shape } from '../../theme/shapes';
 
 interface SubscriptionModalProps {
   visible: boolean;
@@ -47,7 +50,15 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                 {isBangla ? 'আপনার অ্যাকাউন্টের সাথে সিঙ্ক করা সুবিধা' : 'Synced Thriving Skills Account Capabilities'}
               </Text>
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+            <TouchableOpacity
+              onPress={() => {
+                triggerHaptic('light');
+                onClose();
+              }}
+              style={styles.closeBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Close Membership and Learning Access dialog"
+            >
               <Ionicons name="close" size={22} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
@@ -81,9 +92,12 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                 <TouchableOpacity
                   style={[styles.syncSignInBtn, { backgroundColor: colors.primary }]}
                   onPress={() => {
+                    triggerHaptic('light');
                     onClose();
                     setAuthModalVisible(true);
                   }}
+                  accessibilityRole="button"
+                  accessibilityLabel={isBangla ? 'সাইন ইন করুন' : 'Sign In'}
                 >
                   <Ionicons name="log-in-outline" size={16} color={colors.onPrimary} />
                   <Text style={[styles.syncSignInText, { color: colors.onPrimary }]}>
@@ -317,21 +331,22 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
   },
   statusValue: {
-    fontSize: 16,
-    fontWeight: '800',
+    ...typography.h4,
     marginTop: 2,
   },
   statusMeta: {
-    fontSize: 11,
+    ...typography.caption,
     marginTop: 2,
   },
   syncSignInBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: MIN_TOUCH_TARGET,
     gap: 6,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: shape.medium,
   },
   syncSignInText: {
     fontSize: 12,

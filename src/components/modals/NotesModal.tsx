@@ -16,6 +16,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useLearning } from '../../context/LearningContext';
+import { useFeedback } from '../../context/FeedbackContext';
+import { triggerHaptic } from '../../utils/haptics';
+import { MIN_TOUCH_TARGET } from '../../theme/typography';
 
 interface NotesModalProps {
   visible: boolean;
@@ -51,7 +54,8 @@ export const NotesModal: React.FC<NotesModalProps> = ({
 }) => {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { getNotesForLesson, addNote, deleteNote, courses } = useLearning();
+  const { showToast } = useFeedback();
+  const { getNotesForLesson, addNote, deleteNote, restoreNote, courses } = useLearning();
   const [newNoteText, setNewNoteText] = useState('');
 
   const lessonNotes = getNotesForLesson(courseId, lessonId);
@@ -63,6 +67,21 @@ export const NotesModal: React.FC<NotesModalProps> = ({
     const timeStr = formatSeconds(currentPositionSeconds);
     addNote(courseId, lessonId, newNoteText.trim(), timeStr);
     setNewNoteText('');
+    showToast({ message: `Note saved at ${timeStr}`, type: 'success' });
+  };
+
+  const handleDeleteNote = (note: (typeof lessonNotes)[number]) => {
+    triggerHaptic('warning');
+    deleteNote(note.id);
+    showToast({
+      message: 'Study note deleted',
+      type: 'info',
+      actionLabel: 'Undo',
+      onAction: () => {
+        restoreNote(note);
+        showToast({ message: 'Note restored', type: 'success' });
+      },
+    });
   };
 
   const handleExportNotes = async () => {
@@ -131,7 +150,12 @@ export const NotesModal: React.FC<NotesModalProps> = ({
                   <Text style={[styles.exportBtnText, { color: colors.primary }]}>Export</Text>
                 </TouchableOpacity>
               )}
-              <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+              <TouchableOpacity
+                onPress={onClose}
+                style={styles.closeBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Close study notes"
+              >
                 <Ionicons name="close" size={22} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
@@ -207,6 +231,7 @@ export const NotesModal: React.FC<NotesModalProps> = ({
                     <View style={styles.noteTopRow}>
                       <TouchableOpacity
                         style={[styles.timeTag, { backgroundColor: colors.primaryLight }]}
+                        hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
                         onPress={() => {
                           const sec = parseTimestampToSeconds(note.timestamp);
                           onSeekTo?.(sec);
@@ -219,10 +244,13 @@ export const NotesModal: React.FC<NotesModalProps> = ({
                         <Text style={{ fontSize: 9, color: colors.primary, fontWeight: '800' }}>▶ Jump</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
-                        onPress={() => deleteNote(note.id)}
-                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                        onPress={() => handleDeleteNote(note)}
+                        style={styles.deleteNoteBtn}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        accessibilityRole="button"
+                        accessibilityLabel="Delete note"
                       >
-                        <Ionicons name="trash-outline" size={16} color={colors.danger} />
+                        <Ionicons name="trash-outline" size={18} color={colors.danger} />
                       </TouchableOpacity>
                     </View>
                     <Text style={[styles.noteContent, { color: colors.text }]}>{note.text}</Text>
@@ -278,9 +306,10 @@ const styles = StyleSheet.create({
   exportBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    minHeight: MIN_TOUCH_TARGET,
+    paddingHorizontal: 12,
     borderRadius: 8,
   },
   exportBtnText: {
@@ -288,7 +317,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   closeBtn: {
-    padding: 4,
+    minWidth: MIN_TOUCH_TARGET,
+    minHeight: MIN_TOUCH_TARGET,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollContent: {
     padding: 20,
@@ -300,8 +332,8 @@ const styles = StyleSheet.create({
   timestampChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    minHeight: MIN_TOUCH_TARGET,
+    paddingHorizontal: 12,
     borderRadius: 8,
     gap: 5,
   },
@@ -324,9 +356,9 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   addBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: 8,
@@ -366,10 +398,17 @@ const styles = StyleSheet.create({
   timeTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    minHeight: 36,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
     gap: 4,
+  },
+  deleteNoteBtn: {
+    minWidth: MIN_TOUCH_TARGET,
+    minHeight: MIN_TOUCH_TARGET,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   timeText: {
     fontSize: 11,

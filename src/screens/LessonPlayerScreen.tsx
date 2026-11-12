@@ -24,13 +24,15 @@ import { MandatoryReviewModal } from '../components/MandatoryReviewModal';
 import { PaymentModal } from '../components/PaymentModal';
 import { CourseQnATab } from '../components/CourseQnATab';
 import { LiveAudioWaveform } from '../components/player/LiveAudioWaveform';
-import { AnimatedTabContent, SpringPressable } from '../components/common';
+import { AnimatedTabContent, SpringPressable, StateView } from '../components/common';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useGamification } from '../context/GamificationContext';
+import { useFeedback } from '../context/FeedbackContext';
 import { resolveLessonVideoData } from '../data/lessonVideosRegistry';
 import { OfflineManager } from '../services/offline/offlineManager';
 import { LessonsService, LessonDetail } from '../services/api/lessonsService';
+import { MIN_TOUCH_TARGET } from '../theme/typography';
 import { Lesson, Certificate } from '../types';
 
 interface LessonPlayerScreenProps {
@@ -52,6 +54,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const insets = useSafeAreaInsets();
   const { t, isBangla } = useLanguage();
   const { user, isAdmin } = useAuth();
+  const { showToast } = useFeedback();
   const { recordStudyTime, unlockBadge, triggerCelebration } = useGamification();
   const {
     getCourseById,
@@ -274,11 +277,24 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     if (isDownloaded) {
       await OfflineManager.removeDownloadedLesson(currentLesson.id);
       setIsDownloaded(false);
-      Alert.alert('Offline Storage', 'Lesson removed from offline downloads.');
+      showToast({
+        message: 'Removed from offline downloads',
+        type: 'info',
+        actionLabel: 'Undo',
+        onAction: () => {
+          OfflineManager.saveLessonOffline(course.id, currentLesson).then(() => {
+            setIsDownloaded(true);
+            showToast({ message: 'Restored offline lesson', type: 'success' });
+          });
+        },
+      });
     } else {
       await OfflineManager.saveLessonOffline(course.id, currentLesson);
       setIsDownloaded(true);
-      Alert.alert('Downloaded! 💾', 'Lesson summary & resources saved for offline studying.');
+      showToast({
+        message: 'Lesson saved for offline studying',
+        type: 'success',
+      });
     }
   };
 
@@ -375,8 +391,14 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Header showBack onBack={onBack} title="Lesson Player" />
-        <View style={styles.centerContainer}>
-          <Text style={{ color: colors.text }}>Lesson not found.</Text>
+        <View style={[styles.centerContainer, { paddingHorizontal: 20 }]}>
+          <StateView
+            mode="error"
+            title="Lesson not found"
+            message="This lecture could not be loaded right now. Return to the course syllabus to choose another lesson."
+            primaryActionLabel="Go Back"
+            onPrimaryAction={onBack}
+          />
         </View>
       </View>
     );
@@ -912,7 +934,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                   accessibilityRole="button"
                   accessibilityLabel="Open video externally"
                 >
-                  <Ionicons name="open-outline" size={13} color={colors.text} />
+                  <Ionicons name="open-outline" size={16} color={colors.text} />
                   <Text style={[styles.speedPillText, { color: colors.text }]}>Open</Text>
                 </TouchableOpacity>
               )}
@@ -925,8 +947,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                 style={[styles.speedPill, { backgroundColor: '#E11D4822', borderColor: '#E11D48', borderWidth: 1 }]}
                 onPress={handleSimulateVideoEnd}
               >
-                <Ionicons name="checkmark-done" size={12} color="#E11D48" />
-                <Text style={[styles.speedPillText, { color: '#E11D48' }]}>
+                <Ionicons name="checkmark-done" size={16} color={colors.danger} />
+                <Text style={[styles.speedPillText, { color: colors.danger }]}>
                   {isBangla ? 'শেষ' : 'Finish'}
                 </Text>
               </TouchableOpacity>
@@ -1734,6 +1756,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   autoplayCancelBtn: {
+    minHeight: MIN_TOUCH_TARGET,
+    justifyContent: 'center',
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 6,
@@ -1744,8 +1768,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   autoplayPlayNowBtn: {
+    minHeight: MIN_TOUCH_TARGET,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 4,
     backgroundColor: '#6366F1',
     paddingHorizontal: 14,
@@ -1784,16 +1810,18 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   offlineBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    borderRadius: 22,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   completeBtn: {
+    minHeight: MIN_TOUCH_TARGET,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 9,
@@ -1847,8 +1875,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   claimCertCTA: {
+    minHeight: MIN_TOUCH_TARGET,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
     backgroundColor: '#047857',
     paddingHorizontal: 12,
@@ -1868,6 +1898,7 @@ const styles = StyleSheet.create({
   },
   tabButton: {
     flex: 1,
+    minHeight: MIN_TOUCH_TARGET,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

@@ -17,9 +17,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { useYouTube } from '../context/YouTubeContext';
 import { YouTubeCard } from '../components/YouTubeCard';
+import { StateView } from '../components/common';
 import { YouTubeVideo, YOUTUBE_CHANNEL } from '../data/youtubeVideos';
 import { useAutoScroll } from '../hooks/useAutoScroll';
 import { shape } from '../theme/shapes';
+import { MIN_TOUCH_TARGET } from '../theme/typography';
 
 interface YouTubeVideosScreenProps {
   onBack: () => void;
@@ -136,9 +138,11 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
         <TouchableOpacity
           style={[styles.backBtn, { backgroundColor: isDark ? '#2C2C2E' : '#F3F4F6' }]}
           onPress={onBack}
+          accessibilityRole="button"
           accessibilityLabel="Back"
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
         >
-          <Ionicons name="arrow-back" size={20} color={colors.text} />
+          <Ionicons name={Platform.OS === 'ios' ? 'chevron-back' : 'arrow-back'} size={22} color={colors.text} />
         </TouchableOpacity>
 
         <View style={styles.headerTitleContainer}>
@@ -149,7 +153,12 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
           <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>{YOUTUBE_CHANNEL.handle}</Text>
         </View>
 
-        <TouchableOpacity style={styles.subscribeBtn} onPress={handleOpenChannel}>
+        <TouchableOpacity
+          style={styles.subscribeBtn}
+          onPress={handleOpenChannel}
+          accessibilityRole="button"
+          accessibilityLabel="Subscribe on YouTube"
+        >
           <Text style={styles.subscribeBtnText}>Subscribe</Text>
         </TouchableOpacity>
       </View>
@@ -167,8 +176,13 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
             clearButtonMode="while-editing"
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={18} color={colors.textMuted} />
+            <TouchableOpacity
+              onPress={() => setSearchQuery('')}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityRole="button"
+              accessibilityLabel="Clear search"
+            >
+              <Ionicons name="close-circle" size={20} color={colors.textMuted} />
             </TouchableOpacity>
           )}
         </View>
@@ -257,12 +271,12 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
             <TouchableOpacity
               style={styles.ytChannelLink}
               onPress={handleOpenChannel}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               accessibilityRole="button"
               accessibilityLabel="Open Thriving Skills YouTube channel"
             >
-              <Ionicons name="open-outline" size={14} color="#FF0000" />
-              <Text style={styles.ytChannelLinkText}>YouTube Channel</Text>
+              <Ionicons name="open-outline" size={16} color={colors.danger} />
+              <Text style={[styles.ytChannelLinkText, { color: colors.danger }]}>YouTube Channel</Text>
             </TouchableOpacity>
           </View>
         }
@@ -274,21 +288,25 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
           />
         )}
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Ionicons
-              name={selectedCategory === 'saved' ? 'bookmark-outline' : 'videocam-off-outline'}
-              size={48}
-              color={colors.textMuted}
-            />
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>
-              {selectedCategory === 'saved' ? 'No saved videos yet' : 'No videos found'}
-            </Text>
-            <Text style={[styles.emptySub, { color: colors.textMuted }]}>
-              {selectedCategory === 'saved'
+          <StateView
+            mode="empty"
+            icon={selectedCategory === 'saved' ? 'bookmark-outline' : 'videocam-off-outline'}
+            title={selectedCategory === 'saved' ? 'No saved videos yet' : 'No videos found'}
+            message={
+              selectedCategory === 'saved'
                 ? 'Bookmark masterclasses to save them to your watch later list.'
-                : 'Try searching with a different term or select another category.'}
-            </Text>
-          </View>
+                : 'Try searching with a different term or select another category.'
+            }
+            primaryActionLabel={selectedCategory !== 'all' || searchQuery ? 'Show All Videos' : 'Sync Videos'}
+            onPrimaryAction={() => {
+              if (selectedCategory !== 'all' || searchQuery) {
+                setSelectedCategory('all');
+                setSearchQuery('');
+              } else {
+                refreshVideos();
+              }
+            }}
+          />
         }
       />
 
@@ -309,9 +327,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -332,10 +350,11 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   subscribeBtn: {
-    backgroundColor: '#FF0000',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+    backgroundColor: '#CC0000',
+    minHeight: MIN_TOUCH_TARGET,
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    borderRadius: 10,
   },
   subscribeBtnText: {
     color: '#FFFFFF',
@@ -364,8 +383,8 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   viewToggleBtn: {
-    width: 42,
-    height: 42,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
     borderRadius: 10,
     borderWidth: 1,
     alignItems: 'center',
@@ -379,11 +398,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   pill: {
+    minHeight: MIN_TOUCH_TARGET,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 14,
     borderRadius: shape.full,
     borderWidth: 1,
   },

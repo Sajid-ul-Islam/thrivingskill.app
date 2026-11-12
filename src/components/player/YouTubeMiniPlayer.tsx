@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { useYouTube } from '../../context/YouTubeContext';
 import { SpringPressable } from '../common/SpringPressable';
+import { shape } from '../../theme/shapes';
+import { MIN_TOUCH_TARGET } from '../../theme/typography';
 
 interface YouTubeMiniPlayerProps {
   bottomOffset?: number;
@@ -135,8 +137,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 12,
     right: 12,
-    height: 56,
-    borderRadius: 14,
+    minHeight: 60,
+    borderRadius: shape.large,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -210,9 +212,9 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   controlBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
   },

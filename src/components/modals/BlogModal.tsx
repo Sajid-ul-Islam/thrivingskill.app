@@ -17,7 +17,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useLearning } from '../../context/LearningContext';
+import { useFeedback } from '../../context/FeedbackContext';
 import { cleanHtml } from '../../services/api/transformers';
+import { triggerHaptic } from '../../utils/haptics';
+import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
+import { shape } from '../../theme/shapes';
 import { Env } from '../../config/env';
 
 export interface BlogModalProps {
@@ -118,6 +122,7 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
   const { blogPosts } = useLearning();
+  const { showToast } = useFeedback();
   const insets = useSafeAreaInsets();
 
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -162,13 +167,17 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
   });
 
   const handleShareArticle = async (article: BlogPostItem) => {
+    triggerHaptic('light');
     try {
-      await Share.share({
+      const res = await Share.share({
         title: article.title,
         message: `${article.title}\n\nRead more on Thriving Skills: ${Env.SITE_URL}/blog`,
       });
+      if (res.action === Share.sharedAction) {
+        showToast({ message: 'Article shared', type: 'success' });
+      }
     } catch {
-      // Ignored
+      showToast({ message: 'Unable to open share dialog right now', type: 'error' });
     }
   };
 
@@ -198,7 +207,12 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
             {activeArticle ? (
               <TouchableOpacity
                 style={[styles.backBtn, { backgroundColor: colors.surfaceSubtle }]}
-                onPress={() => setActiveArticle(null)}
+                onPress={() => {
+                  triggerHaptic('light');
+                  setActiveArticle(null);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Back to articles list"
               >
                 <Ionicons name="arrow-back" size={20} color={colors.text} />
               </TouchableOpacity>
@@ -223,7 +237,12 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
 
             <TouchableOpacity
               style={[styles.closeBtn, { backgroundColor: colors.surfaceSubtle }]}
-              onPress={onClose}
+              onPress={() => {
+                triggerHaptic('light');
+                onClose();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Close blog modal"
             >
               <Ionicons name="close" size={20} color={colors.text} />
             </TouchableOpacity>
@@ -322,6 +341,8 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
                 <TouchableOpacity
                   style={[styles.shareBtn, { backgroundColor: colors.surfaceSubtle }]}
                   onPress={() => handleShareArticle(activeArticle)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Share article"
                 >
                   <Ionicons name="share-social-outline" size={18} color={colors.primary} />
                 </TouchableOpacity>
@@ -422,31 +443,30 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   iconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    borderRadius: shape.medium,
     alignItems: 'center',
     justifyContent: 'center',
   },
   backBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 16,
-    fontWeight: '800',
+    ...typography.h4,
   },
   headerSub: {
-    fontSize: 11,
+    ...typography.caption,
     marginTop: 1,
   },
   closeBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -585,9 +605,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   shareBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
   },

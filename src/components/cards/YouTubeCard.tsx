@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { useLearning } from '../../context/LearningContext';
 import { useYouTube } from '../../context/YouTubeContext';
+import { useFeedback } from '../../context/FeedbackContext';
 import { YouTubeVideo } from '../../data/youtubeVideos';
 import { findRelatedCourse } from '../../services/youtubeService';
 import { shape } from '../../theme/shapes';
@@ -25,9 +26,22 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
   const { colors, isDark } = useTheme();
   const { courses } = useLearning();
   const { isSaved, toggleSaveVideo } = useYouTube();
+  const { showToast } = useFeedback();
 
   const saved = isSaved(video.id);
   const relatedCourse = findRelatedCourse(video, courses);
+
+  const handleToggleSave = (e?: any) => {
+    e?.stopPropagation?.();
+    const wasSaved = saved;
+    toggleSaveVideo(video.id);
+    showToast({
+      message: wasSaved ? 'Removed video from Saved' : 'Saved video to My Hub',
+      type: wasSaved ? 'info' : 'success',
+      actionLabel: wasSaved ? 'Undo' : undefined,
+      onAction: wasSaved ? () => toggleSaveVideo(video.id) : undefined,
+    });
+  };
 
   if (layout === 'horizontal') {
     return (
@@ -81,8 +95,10 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
         {/* Bookmark button */}
         <SpringPressable
           style={styles.bookmarkAction}
-          onPress={(e) => { e?.stopPropagation?.(); toggleSaveVideo(video.id); }}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          onPress={handleToggleSave}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityRole="button"
+          accessibilityLabel={saved ? 'Remove saved video' : 'Save video'}
         >
           <Ionicons
             name={saved ? 'bookmark' : 'bookmark-outline'}
@@ -159,9 +175,11 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
 
       {/* Bookmark button on thumbnail as sibling */}
       <SpringPressable
-        style={[styles.bookmarkThumbBtn, { backgroundColor: saved ? (isDark ? '#FFB606' : '#102F53') : 'rgba(0,0,0,0.6)' }]}
-        onPress={(e) => { e?.stopPropagation?.(); toggleSaveVideo(video.id); }}
-        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+        style={[styles.bookmarkThumbBtn, { backgroundColor: saved ? (isDark ? '#FFB606' : '#102F53') : 'rgba(0,0,0,0.68)' }]}
+        onPress={handleToggleSave}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        accessibilityRole="button"
+        accessibilityLabel={saved ? 'Remove saved video' : 'Save video'}
       >
         <Ionicons
           name={saved ? 'bookmark' : 'bookmark-outline'}
