@@ -71,14 +71,14 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({
             <Ionicons
               name={cat.icon as any}
               size={15}
-              color={isSelected ? '#FFFFFF' : colors.primary}
+              color={isSelected ? colors.onPrimary : colors.primary}
               style={styles.icon}
             />
             <Text
               style={[
                 styles.pillText,
                 {
-                  color: isSelected ? '#FFFFFF' : colors.text,
+                  color: isSelected ? colors.onPrimary : colors.text,
                   fontWeight: isSelected ? '700' : '600',
                 },
               ]}
@@ -90,14 +90,18 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({
                 style={[
                   styles.countBadge,
                   {
-                    backgroundColor: isSelected ? 'rgba(255,255,255,0.22)' : colors.surfaceSubtle,
+                    backgroundColor: isSelected
+                      ? isDark
+                        ? 'rgba(15, 23, 42, 0.16)'
+                        : 'rgba(255, 255, 255, 0.22)'
+                      : colors.surfaceSubtle,
                   },
                 ]}
               >
                 <Text
                   style={[
                     styles.countText,
-                    { color: isSelected ? '#FFFFFF' : colors.textMuted },
+                    { color: isSelected ? colors.onPrimary : colors.textMuted },
                   ]}
                 >
                   {cat.count}

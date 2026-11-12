@@ -265,12 +265,12 @@ export const HelpFaqModal: React.FC<HelpFaqModalProps> = ({ visible, onClose }) 
                   <Ionicons
                     name={cat.icon as any}
                     size={14}
-                    color={active ? '#FFFFFF' : colors.textMuted}
+                    color={active ? colors.onPrimary : colors.textMuted}
                   />
                   <Text
                     style={[
                       styles.catPillText,
-                      { color: active ? '#FFFFFF' : colors.text, fontWeight: active ? '700' : '500' },
+                      { color: active ? colors.onPrimary : colors.text, fontWeight: active ? '700' : '500' },
                     ]}
                   >
                     {cat.label}
@@ -360,8 +360,8 @@ export const HelpFaqModal: React.FC<HelpFaqModalProps> = ({ visible, onClose }) 
                 style={[styles.contactBtn, { backgroundColor: colors.primary }]}
                 onPress={() => Linking.openURL('tel:01312100288')}
               >
-                <Ionicons name="call" size={16} color="#FFFFFF" />
-                <Text style={styles.contactBtnText}>01312100288</Text>
+                <Ionicons name="call" size={16} color={colors.onPrimary} />
+                <Text style={[styles.contactBtnText, { color: colors.onPrimary }]}>01312100288</Text>
               </TouchableOpacity>
             </View>
           </View>

@@ -66,8 +66,8 @@ export const SummitCard: React.FC<SummitCardProps> = ({ summit }) => {
             accessibilityRole="button"
             accessibilityLabel={`RSVP Free for ${summit.title}`}
           >
-            <Text style={styles.rsvpBtnText}>RSVP Free</Text>
-            <Ionicons name="arrow-forward" size={13} color="#FFFFFF" />
+            <Text style={[styles.rsvpBtnText, { color: colors.onPrimary }]}>RSVP Free</Text>
+            <Ionicons name="arrow-forward" size={13} color={colors.onPrimary} />
           </SpringPressable>
         </View>
       </View>

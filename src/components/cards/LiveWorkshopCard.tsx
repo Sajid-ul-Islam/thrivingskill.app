@@ -112,12 +112,12 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop, on
             <Ionicons
               name={registered ? 'checkmark-circle' : 'ticket-outline'}
               size={16}
-              color={registered ? colors.primary : '#FFFFFF'}
+              color={registered ? colors.primary : colors.onPrimary}
             />
             <Text
               style={[
                 styles.rsvpText,
-                { color: registered ? colors.primary : '#FFFFFF' },
+                { color: registered ? colors.primary : colors.onPrimary },
               ]}
             >
               {registered ? 'Seat Reserved' : 'Reserve Seat'}

@@ -166,7 +166,7 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
         <Ionicons
           name={saved ? 'bookmark' : 'bookmark-outline'}
           size={14}
-          color="#FFFFFF"
+          color={saved && isDark ? '#102F53' : '#FFFFFF'}
         />
       </SpringPressable>
     </View>

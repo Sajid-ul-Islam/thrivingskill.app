@@ -239,11 +239,11 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
                 activeOpacity={0.88}
               >
                 {isDownloadingPdf ? (
-                  <ActivityIndicator color="#FFFFFF" size="small" />
+                  <ActivityIndicator color={colors.onAccent} size="small" />
                 ) : (
                   <>
-                    <Ionicons name="arrow-down-circle-outline" size={18} color="#FFFFFF" />
-                    <Text style={styles.downloadPdfText}>Download PDF Certificate</Text>
+                    <Ionicons name="arrow-down-circle-outline" size={18} color={colors.onAccent} />
+                    <Text style={[styles.downloadPdfText, { color: colors.onAccent }]}>Download PDF Certificate</Text>
                   </>
                 )}
               </TouchableOpacity>

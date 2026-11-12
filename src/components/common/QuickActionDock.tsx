@@ -95,10 +95,10 @@ export const QuickActionDock: React.FC<QuickActionDockProps> = ({
                   {
                     backgroundColor:
                       act.id === 'live'
-                        ? '#E11D48'
+                        ? '#DC2626'
                         : act.id === 'copilot'
-                        ? '#6366F1'
-                        : '#059669',
+                        ? '#4F46E5'
+                        : '#047857',
                   },
                 ]}
               >

@@ -104,7 +104,7 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
                   style={[styles.doneBtn, { backgroundColor: colors.primary }]}
                   onPress={handleResetAndClose}
                 >
-                  <Text style={styles.doneText}>Done</Text>
+                  <Text style={[styles.doneText, { color: colors.onPrimary }]}>Done</Text>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -236,7 +236,7 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
                         <Text
                           style={[
                             styles.sizePillText,
-                            { color: teamSize === size ? '#FFFFFF' : colors.text },
+                            { color: teamSize === size ? colors.onPrimary : colors.text },
                           ]}
                         >
                           {size}
@@ -260,7 +260,7 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
                   <Text
                     style={[
                       styles.submitText,
-                      { color: companyName && contactName && workEmail ? '#FFFFFF' : colors.textMuted },
+                      { color: companyName && contactName && workEmail ? colors.onPrimary : colors.textMuted },
                     ]}
                   >
                     Request Custom Training Proposal

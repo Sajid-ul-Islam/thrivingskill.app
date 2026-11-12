@@ -358,7 +358,7 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
                         style={[
                           styles.speedPillText,
                           {
-                            color: isActive ? '#FFFFFF' : colors.text,
+                            color: isActive ? colors.onPrimary : colors.text,
                             fontWeight: isActive ? '800' : '600',
                           },
                         ]}

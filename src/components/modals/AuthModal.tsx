@@ -311,13 +311,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                     accessibilityLabel="Send Password Reset Link"
                   >
                     {isResetLoading ? (
-                      <ActivityIndicator color="#FFFFFF" size="small" />
+                      <ActivityIndicator color={colors.onAccent} size="small" />
                     ) : (
                       <>
-                        <Text style={styles.submitButtonText}>
+                        <Text style={[styles.submitButtonText, { color: colors.onAccent }]}>
                           Send Password Reset Link
                         </Text>
-                        <Ionicons name="mail-unread-outline" size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
+                        <Ionicons name="mail-unread-outline" size={18} color={colors.onAccent} style={{ marginLeft: 6 }} />
                       </>
                     )}
                   </TouchableOpacity>
@@ -500,13 +500,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                     accessibilityRole="button"
                   >
                     {isLoading ? (
-                      <ActivityIndicator color="#FFFFFF" size="small" />
+                      <ActivityIndicator color={colors.onAccent} size="small" />
                     ) : (
                       <>
-                        <Text style={styles.submitButtonText}>
+                        <Text style={[styles.submitButtonText, { color: colors.onAccent }]}>
                           {mode === 'login' ? 'Sign In with Credentials' : 'Create Free Account'}
                         </Text>
-                        <Ionicons name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
+                        <Ionicons name="arrow-forward" size={18} color={colors.onAccent} style={{ marginLeft: 6 }} />
                       </>
                     )}
                   </TouchableOpacity>

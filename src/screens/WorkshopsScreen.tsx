@@ -78,7 +78,7 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
                   style={[
                     styles.filterPillText,
                     {
-                      color: isActive ? '#FFFFFF' : colors.text,
+                      color: isActive ? colors.onPrimary : colors.text,
                       fontWeight: isActive ? '700' : '500',
                     },
                   ]}

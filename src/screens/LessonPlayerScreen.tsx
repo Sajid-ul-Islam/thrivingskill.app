@@ -552,9 +552,17 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
 
         {/* Free Preview Banner if guest or unpurchased learner on free preview lesson */}
         {!isAdmin && !isEnrolled && isFreePreview && (
-          <View style={[styles.previewBanner, { backgroundColor: '#EFF6FF', borderColor: '#3B82F6' }]}>
-            <Ionicons name="sparkles" size={15} color="#3B82F6" />
-            <Text style={styles.previewBannerText}>
+          <View
+            style={[
+              styles.previewBanner,
+              {
+                backgroundColor: isDark ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF',
+                borderColor: '#3B82F6',
+              },
+            ]}
+          >
+            <Ionicons name="sparkles" size={15} color={isDark ? '#93C5FD' : '#2563EB'} />
+            <Text style={[styles.previewBannerText, { color: isDark ? '#93C5FD' : '#1D4ED8' }]}>
               {isBangla ? 'ফ্রি প্রিভিউ লেকচার চলছে' : 'Free Preview Lesson • Enroll for Full Access'}
             </Text>
           </View>
@@ -574,12 +582,12 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
             <Ionicons
               name="videocam"
               size={15}
-              color={!isCommuteMode ? '#FFFFFF' : colors.textMuted}
+              color={!isCommuteMode ? colors.onPrimary : colors.textMuted}
             />
             <Text
               style={[
                 styles.modeSwitchText,
-                { color: !isCommuteMode ? '#FFFFFF' : colors.textMuted },
+                { color: !isCommuteMode ? colors.onPrimary : colors.textMuted },
                 !isCommuteMode && { fontWeight: '700' },
               ]}
             >
@@ -710,7 +718,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                 style={[styles.commuteMainPlayBtn, { backgroundColor: colors.accent }]}
                 onPress={() => setIsPlaying(!isPlaying)}
               >
-                <Ionicons name={isPlaying ? 'pause' : 'play'} size={28} color="#FFFFFF" />
+                <Ionicons name={isPlaying ? 'pause' : 'play'} size={28} color={colors.onAccent} />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -969,12 +977,12 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               <Ionicons
                 name={isLessonCompleted ? 'checkmark-circle' : 'checkmark'}
                 size={16}
-                color={isLessonCompleted ? colors.primary : '#FFFFFF'}
+                color={isLessonCompleted ? colors.primary : colors.onPrimary}
               />
               <Text
                 style={[
                   styles.completeBtnText,
-                  { color: isLessonCompleted ? colors.primary : '#FFFFFF' },
+                  { color: isLessonCompleted ? colors.primary : colors.onPrimary },
                 ]}
               >
                 {isLessonCompleted ? t('lessonCompleted') : t('markComplete')}
@@ -1122,7 +1130,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                       {isCompleted ? (
                         <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
                       ) : isSelected ? (
-                        <Ionicons name="play" size={14} color="#FFFFFF" />
+                        <Ionicons name="play" size={14} color={colors.onPrimary} />
                       ) : itemAccessible ? (
                         <Ionicons name="play-outline" size={14} color={colors.textMuted} />
                       ) : (
@@ -1212,7 +1220,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                   accessibilityRole="button"
                   accessibilityLabel="Take knowledge check quiz"
                 >
-                  <Text style={styles.startQuizText}>Take Quiz</Text>
+                  <Text style={[styles.startQuizText, { color: colors.onSecondary }]}>Take Quiz</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -1228,8 +1236,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                   style={[styles.takeNoteBtn, { backgroundColor: colors.primary }]}
                   onPress={() => setNotesModalVisible(true)}
                 >
-                  <Ionicons name="add" size={16} color="#FFFFFF" />
-                  <Text style={styles.takeNoteText}>New Note</Text>
+                  <Ionicons name="add" size={16} color={colors.onPrimary} />
+                  <Text style={[styles.takeNoteText, { color: colors.onPrimary }]}>New Note</Text>
                 </TouchableOpacity>
               </View>
 
@@ -1443,7 +1451,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   saveDataBadge: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#047857',
     paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: 4,

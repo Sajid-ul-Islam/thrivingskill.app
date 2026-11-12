@@ -203,8 +203,8 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
                 style={[
                   styles.pill,
                   {
-                    backgroundColor: isSelected ? '#102F53' : colors.surface,
-                    borderColor: isSelected ? '#102F53' : colors.border,
+                    backgroundColor: isSelected ? colors.primary : colors.surface,
+                    borderColor: isSelected ? colors.primary : colors.border,
                   },
                 ]}
                 onPress={() => {
@@ -216,12 +216,12 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
                 <Ionicons
                   name={cat.icon as any}
                   size={14}
-                  color={isSelected ? '#FFFFFF' : cat.id === 'saved' && savedVideos.length > 0 ? '#102F53' : colors.textMuted}
+                  color={isSelected ? colors.onPrimary : cat.id === 'saved' && savedVideos.length > 0 ? colors.primary : colors.textMuted}
                 />
                 <Text
                   style={[
                     styles.pillText,
-                    { color: isSelected ? '#FFFFFF' : colors.text, fontWeight: isSelected ? '700' : '500' },
+                    { color: isSelected ? colors.onPrimary : colors.text, fontWeight: isSelected ? '700' : '500' },
                   ]}
                 >
                   {cat.label}

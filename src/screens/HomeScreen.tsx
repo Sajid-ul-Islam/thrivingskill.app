@@ -467,7 +467,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 </View>
 
                 <View style={[styles.playBtnBg, { backgroundColor: colors.primary }]}>
-                  <Ionicons name="play" size={16} color="#FFFFFF" />
+                  <Ionicons name="play" size={16} color={colors.onPrimary} />
                 </View>
               </TouchableOpacity>
             )}
@@ -671,8 +671,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Request Enterprise Proposal"
           >
-            <Text style={styles.corporateBtnText}>Request Enterprise Proposal</Text>
-            <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+            <Text style={[styles.corporateBtnText, { color: colors.onSecondary }]}>Request Enterprise Proposal</Text>
+            <Ionicons name="arrow-forward" size={16} color={colors.onSecondary} />
           </SpringPressable>
         </View>
 

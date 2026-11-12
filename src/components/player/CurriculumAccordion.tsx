@@ -137,7 +137,7 @@ export const CurriculumAccordion: React.FC<CurriculumAccordionProps> = ({
                           {isCompleted ? (
                             <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
                           ) : isActive ? (
-                            <Ionicons name="play" size={12} color="#FFFFFF" />
+                            <Ionicons name="play" size={12} color={colors.onPrimary} />
                           ) : isAccessible ? (
                             <Ionicons name="play-outline" size={14} color={colors.textMuted} />
                           ) : (

@@ -246,7 +246,7 @@ export const SkillAssessmentModal: React.FC<SkillAssessmentModalProps> = ({
                           <Text
                             style={[
                               styles.optionLetterText,
-                              { color: isSelected ? '#FFFFFF' : colors.text },
+                              { color: isSelected ? colors.onPrimary : colors.text },
                             ]}
                           >
                             {String.fromCharCode(65 + idx)}
@@ -329,8 +329,8 @@ export const SkillAssessmentModal: React.FC<SkillAssessmentModalProps> = ({
                   style={[styles.enrollTrackBtn, { backgroundColor: colors.primary }]}
                   onPress={handleEnrollTrack}
                 >
-                  <Ionicons name="rocket" size={18} color="#FFFFFF" />
-                  <Text style={styles.enrollTrackBtnText}>
+                  <Ionicons name="rocket" size={18} color={colors.onPrimary} />
+                  <Text style={[styles.enrollTrackBtnText, { color: colors.onPrimary }]}>
                     Enroll in Recommended Pathway
                   </Text>
                 </TouchableOpacity>

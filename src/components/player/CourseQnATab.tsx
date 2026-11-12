@@ -146,8 +146,8 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
           onPress={() => setAskModalVisible(true)}
           activeOpacity={0.85}
         >
-          <Ionicons name="chatbubble-ellipses" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
-          <Text style={styles.askBtnText}>Ask Question</Text>
+          <Ionicons name="chatbubble-ellipses" size={16} color={colors.onAccent} style={{ marginRight: 6 }} />
+          <Text style={[styles.askBtnText, { color: colors.onAccent }]}>Ask Question</Text>
         </TouchableOpacity>
       </View>
 
@@ -308,7 +308,7 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
                 style={[styles.submitQuestionBtn, { backgroundColor: colors.accent }]}
                 onPress={handlePostQuestion}
               >
-                <Text style={styles.submitQuestionText}>Submit Question</Text>
+                <Text style={[styles.submitQuestionText, { color: colors.onAccent }]}>Submit Question</Text>
               </TouchableOpacity>
             </View>
           </View>

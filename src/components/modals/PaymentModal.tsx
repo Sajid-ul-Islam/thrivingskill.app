@@ -338,7 +338,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     {t('totalCourseFee')}
                   </Text>
                   <View style={styles.priceContainer}>
-                    <Text style={[styles.payablePrice, { color: '#102F53' }]}>
+                    <Text style={[styles.payablePrice, { color: colors.primary }]}>
                       ৳{originalPriceBdt.toLocaleString()} BDT
                     </Text>
                     {hasDiscount && (
@@ -350,9 +350,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 </View>
 
                 {hasDiscount && (
-                  <View style={[styles.discountBadge, { backgroundColor: '#E34234' + '15' }]}>
-                    <Ionicons name="sparkles" size={13} color="#E34234" style={{ marginRight: 4 }} />
-                    <Text style={styles.discountBadgeText}>
+                  <View style={[styles.discountBadge, { backgroundColor: colors.accent + '15' }]}>
+                    <Ionicons name="sparkles" size={13} color={colors.accent} style={{ marginRight: 4 }} />
+                    <Text style={[styles.discountBadgeText, { color: colors.accent }]}>
                       SAVE ৳{discountSavings.toLocaleString()}
                     </Text>
                   </View>
@@ -361,10 +361,18 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             </View>
 
             {/* Google Play Compliance & SSL Notice Box */}
-            <View style={[styles.noticeBox, { backgroundColor: '#102F53' + '0C', borderColor: '#102F53' + '25' }]}>
+            <View
+              style={[
+                styles.noticeBox,
+                {
+                  backgroundColor: isDark ? colors.primaryLight : '#102F53' + '0C',
+                  borderColor: colors.primary + '35',
+                },
+              ]}
+            >
               <View style={styles.noticeHeader}>
-                <Ionicons name="information-circle" size={20} color="#102F53" />
-                <Text style={styles.noticeTitle}>
+                <Ionicons name="information-circle" size={20} color={colors.primary} />
+                <Text style={[styles.noticeTitle, { color: colors.primary }]}>
                   {isBangla ? 'অফিসিয়াল ওয়েবসাইট চেকআউট' : 'Official Web Checkout Bridge'}
                 </Text>
               </View>
@@ -402,7 +410,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               </Text>
               <View style={styles.stepItem}>
                 <View style={[styles.stepNum, { backgroundColor: colors.primary }]}>
-                  <Text style={styles.stepNumText}>1</Text>
+                  <Text style={[styles.stepNumText, { color: colors.onPrimary }]}>1</Text>
                 </View>
                 <Text style={[styles.stepDesc, { color: colors.text }]}>
                   {t('step1Web')}
@@ -410,7 +418,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               </View>
               <View style={styles.stepItem}>
                 <View style={[styles.stepNum, { backgroundColor: colors.primary }]}>
-                  <Text style={styles.stepNumText}>2</Text>
+                  <Text style={[styles.stepNumText, { color: colors.onPrimary }]}>2</Text>
                 </View>
                 <Text style={[styles.stepDesc, { color: colors.text }]}>
                   {t('step2Web')}
@@ -418,7 +426,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               </View>
               <View style={styles.stepItem}>
                 <View style={[styles.stepNum, { backgroundColor: colors.primary }]}>
-                  <Text style={styles.stepNumText}>3</Text>
+                  <Text style={[styles.stepNumText, { color: colors.onPrimary }]}>3</Text>
                 </View>
                 <Text style={[styles.stepDesc, { color: colors.text }]}>
                   {t('step3Web')}
@@ -446,8 +454,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               style={[
                 styles.syncBtn,
                 {
-                  backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
-                  borderColor: '#102F53',
+                  backgroundColor: isDark ? colors.surfaceCard : '#FFFFFF',
+                  borderColor: colors.primary,
                 },
               ]}
               onPress={() => performEnrollmentSync(false)}
@@ -458,15 +466,15 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             >
               {isSyncing ? (
                 <>
-                  <ActivityIndicator color="#102F53" size="small" style={{ marginRight: 8 }} />
-                  <Text style={[styles.syncBtnText, { color: '#102F53' }]}>
+                  <ActivityIndicator color={colors.primary} size="small" style={{ marginRight: 8 }} />
+                  <Text style={[styles.syncBtnText, { color: colors.primary }]}>
                     {t('syncingEnrollment')}
                   </Text>
                 </>
               ) : (
                 <>
-                  <Ionicons name="sync" size={18} color="#102F53" style={{ marginRight: 8 }} />
-                  <Text style={[styles.syncBtnText, { color: '#102F53' }]}>
+                  <Ionicons name="sync" size={18} color={colors.primary} style={{ marginRight: 8 }} />
+                  <Text style={[styles.syncBtnText, { color: colors.primary }]}>
                     {t('alreadyPaidSync')}
                   </Text>
                 </>

@@ -40,7 +40,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
   onOpenYouTube,
   onOpenDrawer,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { savedVideos, playVideo } = useYouTube();
   const {
@@ -217,7 +217,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                     style={[styles.actionBtn, { backgroundColor: colors.primary }]}
                     onPress={onBrowseCourses}
                   >
-                    <Text style={styles.actionBtnText}>Explore Catalog</Text>
+                    <Text style={[styles.actionBtnText, { color: colors.onPrimary }]}>Explore Catalog</Text>
                   </TouchableOpacity>
                 </View>
               ) : (
@@ -289,8 +289,8 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                             accessibilityRole="button"
                             accessibilityLabel={`Resume lecture for ${course.title}`}
                           >
-                            <Ionicons name="play" size={14} color="#FFFFFF" />
-                            <Text style={styles.resumeBtnText}>Resume Lecture</Text>
+                            <Ionicons name="play" size={14} color={colors.onPrimary} />
+                            <Text style={[styles.resumeBtnText, { color: colors.onPrimary }]}>Resume Lecture</Text>
                           </SpringPressable>
                         </View>
                       </View>
@@ -360,8 +360,8 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                         style={[styles.resumeBtn, { backgroundColor: colors.primary, marginTop: 10 }]}
                         onPress={() => onNavigateToLesson(item.course.id, item.lesson?.id || '')}
                       >
-                        <Ionicons name="play" size={14} color="#FFFFFF" />
-                        <Text style={styles.resumeBtnText}>
+                        <Ionicons name="play" size={14} color={colors.onPrimary} />
+                        <Text style={[styles.resumeBtnText, { color: colors.onPrimary }]}>
                           Resume ({Math.floor(item.watchSec / 60)}m {item.watchSec % 60}s)
                         </Text>
                       </TouchableOpacity>
@@ -452,8 +452,8 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                     accessibilityRole="button"
                     accessibilityLabel={`View verified digital certificate for ${cert.courseTitle}`}
                   >
-                    <View style={[styles.certIconBadge, { backgroundColor: '#FEF3C7' }]}>
-                      <Ionicons name="ribbon" size={26} color="#D97706" />
+                    <View style={[styles.certIconBadge, { backgroundColor: isDark ? 'rgba(217, 119, 6, 0.2)' : '#FEF3C7' }]}>
+                      <Ionicons name="ribbon" size={26} color={isDark ? '#FBBF24' : '#D97706'} />
                     </View>
 
                     <View style={styles.certCol}>
@@ -661,13 +661,13 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   streakRankBadge: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#FFB606',
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 6,
   },
   streakRankText: {
-    color: '#FFFFFF',
+    color: '#102F53',
     fontSize: 10,
     fontWeight: '800',
   },

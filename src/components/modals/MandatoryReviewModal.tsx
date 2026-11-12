@@ -223,8 +223,8 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
               accessibilityRole="button"
               activeOpacity={0.85}
             >
-              <Ionicons name="lock-open" size={18} color="#FFFFFF" />
-              <Text style={styles.submitButtonText}>
+              <Ionicons name="lock-open" size={18} color={colors.onPrimary} />
+              <Text style={[styles.submitButtonText, { color: colors.onPrimary }]}>
                 {isBangla ? 'রিভিউ জমা দিন ও সার্টিফিকেট আনলক করুন' : 'Submit Review & Unlock Certificate'}
               </Text>
             </TouchableOpacity>

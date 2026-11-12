@@ -192,13 +192,13 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 <Ionicons
                   name={tab.icon as any}
                   size={13}
-                  color={isSelected ? '#FFFFFF' : tab.id === 'youtube' ? '#FF0000' : colors.textMuted}
+                  color={isSelected ? colors.onPrimary : tab.id === 'youtube' ? '#FF0000' : colors.textMuted}
                 />
                 <Text
                   style={[
                     styles.filterPillText,
                     {
-                      color: isSelected ? '#FFFFFF' : colors.text,
+                      color: isSelected ? colors.onPrimary : colors.text,
                       fontWeight: isSelected ? '700' : '500',
                     },
                   ]}

@@ -105,7 +105,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                 <Text
                   style={[
                     styles.filterText,
-                    { color: filterType === f.id ? '#FFFFFF' : colors.textMuted },
+                    { color: filterType === f.id ? colors.onPrimary : colors.textMuted },
                   ]}
                 >
                   {f.label}

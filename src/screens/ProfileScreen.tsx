@@ -496,8 +496,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 style={[styles.managePlanBtn, { backgroundColor: colors.primary }]}
                 onPress={onOpenSubscription}
               >
-                <Ionicons name="card-outline" size={16} color="#FFFFFF" />
-                <Text style={styles.managePlanText}>Change / Upgrade Plan</Text>
+                <Ionicons name="card-outline" size={16} color={colors.onPrimary} />
+                <Text style={[styles.managePlanText, { color: colors.onPrimary }]}>Change / Upgrade Plan</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -1245,8 +1245,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 onPress={handleSaveProfile}
                 disabled={isSavingProfile}
               >
-                <Ionicons name="checkmark-circle-outline" size={16} color="#FFFFFF" />
-                <Text style={styles.saveBtnText}>
+                <Ionicons name="checkmark-circle-outline" size={16} color={colors.onPrimary} />
+                <Text style={[styles.saveBtnText, { color: colors.onPrimary }]}>
                   {isSavingProfile
                     ? (isBangla ? 'সংরক্ষণ হচ্ছে...' : 'Saving...')
                     : (isBangla ? 'সংরক্ষণ করুন' : 'Save Changes')}
@@ -1338,8 +1338,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 onPress={handleChangePassword}
                 disabled={isChangingPass}
               >
-                <Ionicons name="shield-checkmark-outline" size={16} color="#FFFFFF" />
-                <Text style={styles.saveBtnText}>
+                <Ionicons name="shield-checkmark-outline" size={16} color={colors.onPrimary} />
+                <Text style={[styles.saveBtnText, { color: colors.onPrimary }]}>
                   {isChangingPass
                     ? (isBangla ? 'আপডেট হচ্ছে...' : 'Updating...')
                     : (isBangla ? 'পাসওয়ার্ড আপডেট' : 'Update Password')}

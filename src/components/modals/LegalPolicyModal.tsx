@@ -185,7 +185,7 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
                   <Text
                     style={[
                       styles.langSwitchText,
-                      { color: privacyLang === 'en' ? '#FFFFFF' : colors.textMuted },
+                      { color: privacyLang === 'en' ? colors.onPrimary : colors.textMuted },
                     ]}
                   >
                     English
@@ -204,7 +204,7 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
                   <Text
                     style={[
                       styles.langSwitchText,
-                      { color: privacyLang === 'bn' ? '#FFFFFF' : colors.textMuted },
+                      { color: privacyLang === 'bn' ? colors.onPrimary : colors.textMuted },
                     ]}
                   >
                     বাংলা

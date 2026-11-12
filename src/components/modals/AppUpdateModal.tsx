@@ -151,11 +151,11 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
               disabled={isChecking}
             >
               {isChecking ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
+                <ActivityIndicator size="small" color={colors.onPrimary} />
               ) : (
                 <>
-                  <Ionicons name="sync-outline" size={18} color="#FFFFFF" />
-                  <Text style={styles.actionBtnText}>Check for Updates</Text>
+                  <Ionicons name="sync-outline" size={18} color={colors.onPrimary} />
+                  <Text style={[styles.actionBtnText, { color: colors.onPrimary }]}>Check for Updates</Text>
                 </>
               )}
             </TouchableOpacity>

@@ -145,7 +145,7 @@ export const Header: React.FC<HeaderProps> = ({
             <Ionicons name="notifications-outline" size={18} color={colors.text} />
             {unreadNotificationsCount > 0 && (
               <View style={[styles.notifBadge, { backgroundColor: colors.danger }]}>
-                <Text style={styles.notifBadgeText}>{unreadNotificationsCount}</Text>
+                <Text style={[styles.notifBadgeText, { color: colors.onDanger }]}>{unreadNotificationsCount}</Text>
               </View>
             )}
           </TouchableOpacity>

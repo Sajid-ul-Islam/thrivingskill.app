@@ -33,7 +33,7 @@ export const SpecialBundleCard: React.FC<SpecialBundleCardProps> = ({ bundle, on
         <Image source={{ uri: bundle.thumbnail }} style={styles.thumbnail} />
         <View style={styles.badgeRow}>
           <View style={styles.bundleBadge}>
-            <Ionicons name="cube" size={12} color="#FFFFFF" />
+            <Ionicons name="cube" size={12} color="#102F53" />
             <Text style={styles.bundleBadgeText}>SPECIAL BUNDLE</Text>
           </View>
           <View style={styles.discountBadge}>
@@ -123,14 +123,14 @@ const styles = StyleSheet.create({
   bundleBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#D97706',
+    backgroundColor: '#FFB606',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: shape.extraSmall,
     gap: 4,
   },
   bundleBadgeText: {
-    color: '#FFFFFF',
+    color: '#102F53',
     fontSize: 9,
     fontWeight: '900',
     letterSpacing: 0.5,

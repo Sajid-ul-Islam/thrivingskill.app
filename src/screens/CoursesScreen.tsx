@@ -274,7 +274,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                     <Text
                       style={[
                         styles.priceFilterBtnText,
-                        { color: selectedPriceFilter === pf ? '#FFFFFF' : colors.textMuted },
+                        { color: selectedPriceFilter === pf ? colors.onPrimary : colors.textMuted },
                       ]}
                     >
                       {pf === 'all' ? 'All' : pf === 'free' ? 'Free' : 'Paid'}
@@ -362,8 +362,8 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                   setSelectedLevel('All');
                 }}
               >
-                <Ionicons name="refresh" size={15} color="#FFFFFF" />
-                <Text style={styles.resetBtnText}>Reset All Filters</Text>
+                <Ionicons name="refresh" size={15} color={colors.onPrimary} />
+                <Text style={[styles.resetBtnText, { color: colors.onPrimary }]}>Reset All Filters</Text>
               </TouchableOpacity>
             </View>
           ) : (

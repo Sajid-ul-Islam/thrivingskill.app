@@ -72,7 +72,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                   style={[styles.currencyBtn, currency === 'BDT' && { backgroundColor: colors.primary }]}
                   onPress={() => setCurrency('BDT')}
                 >
-                  <Text style={[styles.currencyText, { color: currency === 'BDT' ? '#FFFFFF' : colors.textMuted }]}>
+                  <Text style={[styles.currencyText, { color: currency === 'BDT' ? colors.onPrimary : colors.textMuted }]}>
                     ৳ BDT
                   </Text>
                 </TouchableOpacity>
@@ -80,7 +80,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                   style={[styles.currencyBtn, currency === 'USD' && { backgroundColor: colors.primary }]}
                   onPress={() => setCurrency('USD')}
                 >
-                  <Text style={[styles.currencyText, { color: currency === 'USD' ? '#FFFFFF' : colors.textMuted }]}>
+                  <Text style={[styles.currencyText, { color: currency === 'USD' ? colors.onPrimary : colors.textMuted }]}>
                     $ USD
                   </Text>
                 </TouchableOpacity>
@@ -95,7 +95,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                   ]}
                   onPress={() => setBillingInterval('monthly')}
                 >
-                  <Text style={[styles.billingToggleText, { color: !isAnnual ? '#FFFFFF' : colors.textMuted }]}>
+                  <Text style={[styles.billingToggleText, { color: !isAnnual ? colors.onPrimary : colors.textMuted }]}>
                     Monthly
                   </Text>
                 </TouchableOpacity>
@@ -107,7 +107,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                   ]}
                   onPress={() => setBillingInterval('annual')}
                 >
-                  <Text style={[styles.billingToggleText, { color: isAnnual ? '#FFFFFF' : colors.textMuted }]}>
+                  <Text style={[styles.billingToggleText, { color: isAnnual ? colors.onPrimary : colors.textMuted }]}>
                     Annual
                   </Text>
                   <View style={styles.discountPill}>
@@ -211,7 +211,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                 <TouchableOpacity
                   style={[
                     styles.planCTA,
-                    { backgroundColor: '#10B981' },
+                    { backgroundColor: '#047857' },
                   ]}
                   onPress={() => handleUpgrade('pro')}
                 >
@@ -278,7 +278,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                   ]}
                   onPress={() => handleUpgrade('enterprise')}
                 >
-                  <Text style={[styles.planCTAText, { color: '#FFFFFF' }]}>
+                  <Text style={[styles.planCTAText, { color: colors.onSecondary }]}>
                     {subscriptionTier === 'enterprise' ? 'Current Enterprise Plan' : 'টিম লাইসেন্স নিন'}
                   </Text>
                 </TouchableOpacity>
@@ -443,13 +443,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   discountPill: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#FFB606',
     paddingHorizontal: 4,
     paddingVertical: 1,
     borderRadius: 4,
   },
   discountText: {
-    color: '#FFFFFF',
+    color: '#102F53',
     fontSize: 8,
     fontWeight: '800',
   },

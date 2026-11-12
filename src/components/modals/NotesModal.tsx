@@ -178,7 +178,7 @@ export const NotesModal: React.FC<NotesModalProps> = ({
                 onPress={handleSaveNote}
                 disabled={!newNoteText.trim()}
               >
-                <Ionicons name="send" size={16} color="#FFFFFF" />
+                <Ionicons name="send" size={16} color={newNoteText.trim() ? colors.onPrimary : colors.textMuted} />
               </TouchableOpacity>
             </View>
 

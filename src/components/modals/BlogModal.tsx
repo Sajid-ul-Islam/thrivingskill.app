@@ -275,7 +275,7 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
                       <Text
                         style={[
                           styles.catPillText,
-                          { color: active ? '#FFFFFF' : colors.text, fontWeight: active ? '700' : '500' },
+                          { color: active ? colors.onPrimary : colors.text, fontWeight: active ? '700' : '500' },
                         ]}
                       >
                         {cat.label}

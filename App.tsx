@@ -308,7 +308,7 @@ const MainAppContent: React.FC = () => {
                   />
                   {tab.badgeCount && tab.badgeCount > 0 ? (
                     <View style={[styles.tabBadge, { backgroundColor: colors.accent }]}>
-                      <Text style={styles.tabBadgeText}>{tab.badgeCount}</Text>
+                      <Text style={[styles.tabBadgeText, { color: colors.onAccent }]}>{tab.badgeCount}</Text>
                     </View>
                   ) : null}
                 </View>

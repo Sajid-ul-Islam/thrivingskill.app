@@ -420,8 +420,8 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
           {/* Official Certificate Card & Preview Trigger */}
           <View style={[styles.certPromoCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
             <View style={styles.certPromoLeft}>
-              <View style={[styles.certIconBg, { backgroundColor: '#FEF3C7' }]}>
-                <Ionicons name="ribbon" size={20} color="#D97706" />
+              <View style={[styles.certIconBg, { backgroundColor: isDark ? 'rgba(217, 119, 6, 0.2)' : '#FEF3C7' }]}>
+                <Ionicons name="ribbon" size={20} color={isDark ? '#FBBF24' : '#D97706'} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.certPromoTitle, { color: colors.text }]}>
@@ -753,9 +753,19 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
           <Ionicons
             name={isAdmin ? 'play-circle' : isEnrolled ? 'play' : isPaidCourse ? 'open-outline' : 'flash'}
             size={18}
-            color={!isEnrolled && isPaidCourse ? '#102F53' : '#FFFFFF'}
+            color={isAdmin ? '#FFFFFF' : !isEnrolled && isPaidCourse ? '#102F53' : colors.onPrimary}
           />
-          <Text style={[styles.enrollCTAText, !isEnrolled && isPaidCourse ? { color: '#102F53', fontWeight: '800' } : null]} numberOfLines={1} ellipsizeMode="tail">
+          <Text
+            style={[
+              styles.enrollCTAText,
+              {
+                color: isAdmin ? '#FFFFFF' : !isEnrolled && isPaidCourse ? '#102F53' : colors.onPrimary,
+                fontWeight: !isEnrolled && isPaidCourse ? '800' : '700',
+              },
+            ]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
             {isAdmin
               ? (isBangla ? 'কোর্স ভিডিও দেখুন' : 'Play Course (Admin)')
               : isEnrolled
@@ -1011,8 +1021,8 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                   disabled={isSubmittingReview}
                   activeOpacity={0.88}
                 >
-                  <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
-                  <Text style={styles.submitReviewBtnText}>
+                  <Ionicons name="checkmark-circle" size={18} color={colors.onPrimary} />
+                  <Text style={[styles.submitReviewBtnText, { color: colors.onPrimary }]}>
                     {isBangla ? 'রিভিউ সাবমিট করুন' : 'Submit Review'}
                   </Text>
                 </TouchableOpacity>

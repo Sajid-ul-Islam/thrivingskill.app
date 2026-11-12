@@ -259,12 +259,12 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
                       style={[styles.nextBtn, { backgroundColor: colors.primary }]}
                       onPress={() => setCurrentIndex((prev) => prev + 1)}
                     >
-                      <Text style={styles.nextBtnText}>Next Question</Text>
-                      <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+                      <Text style={[styles.nextBtnText, { color: colors.onPrimary }]}>Next Question</Text>
+                      <Ionicons name="arrow-forward" size={16} color={colors.onPrimary} />
                     </TouchableOpacity>
                   ) : (
                     <TouchableOpacity
-                      style={[styles.nextBtn, { backgroundColor: '#10B981' }]}
+                      style={[styles.nextBtn, { backgroundColor: '#047857' }]}
                       onPress={handleSubmit}
                     >
                       <Ionicons name="checkmark-done" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
@@ -339,11 +339,11 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
                       style={[styles.retryBtn, { backgroundColor: colors.primary }]}
                       onPress={resetQuiz}
                     >
-                      <Ionicons name="refresh" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
-                      <Text style={styles.retryBtnText}>Retake Quiz</Text>
+                      <Ionicons name="refresh" size={18} color={colors.onPrimary} style={{ marginRight: 6 }} />
+                      <Text style={[styles.retryBtnText, { color: colors.onPrimary }]}>Retake Quiz</Text>
                     </TouchableOpacity>
                   ) : (
-                    <TouchableOpacity style={[styles.retryBtn, { backgroundColor: '#10B981' }]} onPress={onClose}>
+                    <TouchableOpacity style={[styles.retryBtn, { backgroundColor: '#047857' }]} onPress={onClose}>
                       <Ionicons name="ribbon" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
                       <Text style={styles.retryBtnText}>{t('claimCertificate')}</Text>
                     </TouchableOpacity>

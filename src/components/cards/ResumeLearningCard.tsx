@@ -59,7 +59,7 @@ export const ResumeLearningCard: React.FC<ResumeLearningCardProps> = ({
           <View style={styles.thumbWrapper}>
             <Image source={{ uri: course.thumbnail }} style={styles.thumbnail} />
             <View style={[styles.thumbPlayIcon, { backgroundColor: colors.primary }]}>
-              <Ionicons name="play" size={10} color="#FFFFFF" />
+              <Ionicons name="play" size={10} color={colors.onPrimary} />
             </View>
           </View>
 
@@ -91,9 +91,9 @@ export const ResumeLearningCard: React.FC<ResumeLearningCardProps> = ({
           accessibilityRole="button"
           accessibilityLabel={`Resume lesson for ${course.title}`}
         >
-          <Ionicons name="play-circle" size={18} color="#FFFFFF" />
-          <Text style={styles.resumeBtnText}>Resume Lesson</Text>
-          <Ionicons name="arrow-forward" size={14} color="#FFFFFF" style={{ marginLeft: 'auto' }} />
+          <Ionicons name="play-circle" size={18} color={colors.onPrimary} />
+          <Text style={[styles.resumeBtnText, { color: colors.onPrimary }]}>Resume Lesson</Text>
+          <Ionicons name="arrow-forward" size={14} color={colors.onPrimary} style={{ marginLeft: 'auto' }} />
         </SpringPressable>
       </View>
     </View>

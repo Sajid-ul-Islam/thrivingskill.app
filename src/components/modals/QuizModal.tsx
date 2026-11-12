@@ -134,7 +134,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({ visible, questions, onClos
                     style={[styles.doneBtn, { backgroundColor: colors.primary }]}
                     onPress={onClose}
                   >
-                    <Text style={styles.doneText}>Continue Course</Text>
+                    <Text style={[styles.doneText, { color: colors.onPrimary }]}>Continue Course</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -203,7 +203,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({ visible, questions, onClos
                           <Text
                             style={[
                               styles.optionLetter,
-                              { color: isSelected ? '#FFFFFF' : colors.text },
+                              { color: isSelected ? colors.onPrimary : colors.text },
                             ]}
                           >
                             {String.fromCharCode(65 + idx)}
@@ -281,7 +281,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({ visible, questions, onClos
                       <Text
                         style={[
                           styles.actionBtnText,
-                          { color: selectedOption !== null ? '#FFFFFF' : colors.textMuted },
+                          { color: selectedOption !== null ? colors.onPrimary : colors.textMuted },
                         ]}
                       >
                         Check Answer
@@ -292,7 +292,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({ visible, questions, onClos
                       style={[styles.primaryActionBtn, { backgroundColor: colors.primary }]}
                       onPress={handleNext}
                     >
-                      <Text style={styles.actionBtnText}>
+                      <Text style={[styles.actionBtnText, { color: colors.onPrimary }]}>
                         {currentIndex < questions.length - 1 ? 'Next Question →' : 'See Results'}
                       </Text>
                     </TouchableOpacity>

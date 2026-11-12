@@ -248,8 +248,8 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               style={styles.navItem}
               onPress={() => handleNav(() => onNavigateTab('Courses'))}
             >
-              <View style={[styles.navIconBg, { backgroundColor: '#EEF2FF' }]}>
-                <Ionicons name="book-outline" size={18} color="#4F46E5" />
+              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(79, 70, 229, 0.18)' : '#EEF2FF' }]}>
+                <Ionicons name="book-outline" size={18} color={isDark ? '#818CF8' : '#4F46E5'} />
               </View>
               <Text style={[styles.navLabel, { color: colors.text }]}>All Courses & Bundles</Text>
               <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
@@ -259,7 +259,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               style={styles.navItem}
               onPress={() => handleNav(() => onOpenYouTube?.())}
             >
-              <View style={[styles.navIconBg, { backgroundColor: '#FEF2F2' }]}>
+              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.18)' : '#FEF2F2' }]}>
                 <Ionicons name="logo-youtube" size={18} color="#EF4444" />
               </View>
               <Text style={[styles.navLabel, { color: colors.text }]}>YouTube Masterclasses</Text>
@@ -270,7 +270,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               style={styles.navItem}
               onPress={() => handleNav(() => onNavigateTab('Workshops'))}
             >
-              <View style={[styles.navIconBg, { backgroundColor: '#FFFBEB' }]}>
+              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.18)' : '#FFFBEB' }]}>
                 <Ionicons name="calendar-outline" size={18} color="#F59E0B" />
               </View>
               <Text style={[styles.navLabel, { color: colors.text }]}>Live Summits & Workshops</Text>
@@ -281,8 +281,8 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               style={styles.navItem}
               onPress={() => handleNav(() => onOpenAssessment?.())}
             >
-              <View style={[styles.navIconBg, { backgroundColor: '#F5F3FF' }]}>
-                <Ionicons name="analytics-outline" size={18} color="#8B5CF6" />
+              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.18)' : '#F5F3FF' }]}>
+                <Ionicons name="analytics-outline" size={18} color={isDark ? '#A78BFA' : '#8B5CF6'} />
               </View>
               <Text style={[styles.navLabel, { color: colors.text }]}>Skill Assessment Center</Text>
               <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
@@ -292,8 +292,8 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               style={styles.navItem}
               onPress={() => handleNav(() => onNavigateTab('MyLearning'))}
             >
-              <View style={[styles.navIconBg, { backgroundColor: '#ECFDF5' }]}>
-                <Ionicons name="ribbon-outline" size={18} color="#059669" />
+              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(5, 150, 105, 0.18)' : '#ECFDF5' }]}>
+                <Ionicons name="ribbon-outline" size={18} color={isDark ? '#34D399' : '#059669'} />
               </View>
               <Text style={[styles.navLabel, { color: colors.text }]}>
                 {isBangla ? 'ডিজিটাল সার্টিফিকেট' : 'Verified Certificates'}
@@ -305,8 +305,8 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               style={styles.navItem}
               onPress={() => handleNav(() => onNavigateTab('MyLearning'))}
             >
-              <View style={[styles.navIconBg, { backgroundColor: '#FEF3C7' }]}>
-                <Ionicons name="time-outline" size={18} color="#D97706" />
+              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(217, 119, 6, 0.18)' : '#FEF3C7' }]}>
+                <Ionicons name="time-outline" size={18} color={isDark ? '#FBBF24' : '#D97706'} />
               </View>
               <Text style={[styles.navLabel, { color: colors.text }]}>
                 {isBangla ? 'ওয়াচ হিস্ট্রি ও প্রোগ্রেস' : 'Watch History & Progress'}
@@ -530,8 +530,8 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
                     setAuthModalVisible(true);
                   }}
                 >
-                  <Ionicons name="log-in-outline" size={18} color="#FFFFFF" />
-                  <Text style={[styles.sessionBtnText, { color: '#FFFFFF' }]}>
+                  <Ionicons name="log-in-outline" size={18} color={colors.onPrimary} />
+                  <Text style={[styles.sessionBtnText, { color: colors.onPrimary }]}>
                     {isBangla ? 'লগইন / সাইন আপ' : 'Sign In / Register'}
                   </Text>
                 </TouchableOpacity>

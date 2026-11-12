@@ -24,9 +24,14 @@ export const lightColors = {
   border: '#E2E8F0',
   borderSubtle: '#F1F5F9',
   text: '#0F172A',
-  textMuted: '#64748B',
-  textLight: '#94A3B8',
+  textMuted: '#475569',
+  textLight: '#64748B',
   textInverse: '#FFFFFF',
+  onPrimary: '#FFFFFF',
+  onSecondary: '#FFFFFF',
+  onAccent: '#FFFFFF',
+  onDanger: '#FFFFFF',
+  onGold: '#102F53',
   cardShadow: 'rgba(16, 47, 83, 0.08)',
   badgeBackground: '#E8EEF5',
   badgeText: '#102F53',
@@ -34,7 +39,7 @@ export const lightColors = {
   tabBarBg: '#FFFFFF',
   tabBarBorder: '#E2E8F0',
   tabActive: '#102F53',
-  tabInactive: '#94A3B8',
+  tabInactive: '#64748B',
 };
 
 export const darkColors = {
@@ -63,9 +68,14 @@ export const darkColors = {
   border: '#22365A',
   borderSubtle: '#182844',
   text: '#F8FAFC',
-  textMuted: '#94A3B8',
-  textLight: '#64748B',
+  textMuted: '#CBD5E1',
+  textLight: '#94A3B8',
   textInverse: '#0F172A',
+  onPrimary: '#0F172A',
+  onSecondary: '#0F172A',
+  onAccent: '#0F172A',
+  onDanger: '#0F172A',
+  onGold: '#102F53',
   cardShadow: 'rgba(0, 0, 0, 0.5)',
   badgeBackground: '#1B2E4E',
   badgeText: '#93C5FD',
@@ -73,7 +83,7 @@ export const darkColors = {
   tabBarBg: '#0B1322',
   tabBarBorder: '#1B2B4A',
   tabActive: '#38BDF8',
-  tabInactive: '#64748B',
+  tabInactive: '#94A3B8',
 };
 
 export type ThemeColors = typeof lightColors;

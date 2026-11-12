@@ -147,12 +147,12 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                   <Ionicons
                     name={tab.icon as any}
                     size={14}
-                    color={isActive ? '#FFFFFF' : colors.textMuted}
+                    color={isActive ? colors.onPrimary : colors.textMuted}
                   />
                   <Text
                     style={[
                       styles.tabLabel,
-                      { color: isActive ? '#FFFFFF' : colors.text },
+                      { color: isActive ? colors.onPrimary : colors.text },
                     ]}
                   >
                     {tab.label}
@@ -243,8 +243,8 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
 
               {/* Pillar 1 */}
               <View style={[styles.pillarCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
-                <View style={[styles.pillarIconBg, { backgroundColor: '#EEF2FF' }]}>
-                  <Ionicons name="laptop-outline" size={22} color="#4F46E5" />
+                <View style={[styles.pillarIconBg, { backgroundColor: isDark ? 'rgba(79, 70, 229, 0.18)' : '#EEF2FF' }]}>
+                  <Ionicons name="laptop-outline" size={22} color={isDark ? '#818CF8' : '#4F46E5'} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.pillarTitle, { color: colors.text }]}>
@@ -261,8 +261,8 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
 
               {/* Pillar 2 */}
               <View style={[styles.pillarCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
-                <View style={[styles.pillarIconBg, { backgroundColor: '#ECFDF5' }]}>
-                  <Ionicons name="school-outline" size={22} color="#059669" />
+                <View style={[styles.pillarIconBg, { backgroundColor: isDark ? 'rgba(5, 150, 105, 0.18)' : '#ECFDF5' }]}>
+                  <Ionicons name="school-outline" size={22} color={isDark ? '#34D399' : '#059669'} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.pillarTitle, { color: colors.text }]}>
@@ -647,7 +647,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                     />
                     {leader.isFounder ? (
                       <View style={styles.founderStarBadge}>
-                        <Ionicons name="star" size={10} color="#FFFFFF" />
+                        <Ionicons name="star" size={10} color="#102F53" />
                       </View>
                     ) : (
                       <View style={styles.verifiedCheckDot}>
@@ -729,8 +729,8 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
 
                 {/* Hotline Phone */}
                 <TouchableOpacity style={styles.contactRow} onPress={handleCall}>
-                  <View style={[styles.contactIconBg, { backgroundColor: '#EFF6FF' }]}>
-                    <Ionicons name="call" size={18} color="#2563EB" />
+                  <View style={[styles.contactIconBg, { backgroundColor: isDark ? 'rgba(37, 99, 235, 0.18)' : '#EFF6FF' }]}>
+                    <Ionicons name="call" size={18} color={isDark ? '#60A5FA' : '#2563EB'} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.contactLabel, { color: colors.textMuted }]}>
@@ -743,7 +743,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
 
                 {/* WhatsApp */}
                 <TouchableOpacity style={styles.contactRow} onPress={handleWhatsApp}>
-                  <View style={[styles.contactIconBg, { backgroundColor: '#ECFDF5' }]}>
+                  <View style={[styles.contactIconBg, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.18)' : '#ECFDF5' }]}>
                     <Ionicons name="logo-whatsapp" size={18} color="#10B981" />
                   </View>
                   <View style={{ flex: 1 }}>
@@ -1133,7 +1133,7 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#FFB606',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
