@@ -111,7 +111,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
 
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetX = e.nativeEvent.contentOffset.x;
-    const index = Math.round(offsetX / CARD_WIDTH);
+    const index = Math.round(offsetX / (cardWidth + 12));
     if (index !== activeIndex && index >= 0 && index < SLIDES.length) {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setActiveIndex(index);
@@ -120,7 +120,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
 
   const renderItem = ({ item }: { item: CarouselSlide }) => {
     return (
-      <SpringPressable onPress={() => onSelectSlide(item)} activeScale={0.98} style={[styles.slideCard, { width: CARD_WIDTH }]}>
+      <SpringPressable onPress={() => onSelectSlide(item)} activeScale={0.98} style={[styles.slideCard, { width: cardWidth }]}>
         <LinearGradient
           colors={item.gradientColors}
           start={{ x: 0, y: 0 }}

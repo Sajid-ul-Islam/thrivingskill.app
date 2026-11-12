@@ -1,8 +1,9 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import {
   Pressable,
   Animated,
   StyleProp,
+  StyleSheet,
   ViewStyle,
   PressableProps,
   GestureResponderEvent,
@@ -17,9 +18,42 @@ export interface SpringPressableProps extends Omit<PressableProps, 'style'> {
   tension?: number;
 }
 
+const OUTER_LAYOUT_KEYS = new Set<keyof ViewStyle>([
+  'flex',
+  'flexGrow',
+  'flexShrink',
+  'flexBasis',
+  'alignSelf',
+  'width',
+  'minWidth',
+  'maxWidth',
+  'height',
+  'minHeight',
+  'maxHeight',
+  'aspectRatio',
+  'margin',
+  'marginTop',
+  'marginBottom',
+  'marginLeft',
+  'marginRight',
+  'marginHorizontal',
+  'marginVertical',
+  'marginStart',
+  'marginEnd',
+  'position',
+  'top',
+  'bottom',
+  'left',
+  'right',
+  'start',
+  'end',
+  'zIndex',
+]);
+
 /**
  * High-performance tactile pressable with native-driven spring scale and optional opacity.
- * Provides micro-interaction feedback on touch.
+ * Splits outer flex/positioning layout onto Pressable and visual/inner styles onto Animated.View
+ * so flex: 1, absolute positioning, and card padding never collapse or clip children.
  */
 export const SpringPressable: React.FC<SpringPressableProps> = ({
   children,
@@ -35,6 +69,47 @@ export const SpringPressable: React.FC<SpringPressableProps> = ({
 }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const opacityAnim = useRef(new Animated.Value(1)).current;
+
+  const { outerStyle, innerStyle } = useMemo(() => {
+    const flat = StyleSheet.flatten(style) || {};
+    const outer: Record<string, any> = {};
+    const inner: Record<string, any> = {};
+
+    Object.entries(flat).forEach(([key, val]) => {
+      if (val === undefined) return;
+      if (OUTER_LAYOUT_KEYS.has(key as keyof ViewStyle)) {
+        outer[key] = val;
+      } else {
+        inner[key] = val;
+      }
+    });
+
+    if (
+      outer.width !== undefined ||
+      outer.flex !== undefined ||
+      outer.flexGrow !== undefined ||
+      outer.alignSelf === 'stretch'
+    ) {
+      inner.width = '100%';
+    }
+
+    if (
+      outer.height !== undefined ||
+      outer.flex !== undefined ||
+      outer.flexGrow !== undefined
+    ) {
+      inner.flexGrow = 1;
+    }
+
+    if (inner.position === undefined) {
+      inner.position = 'relative';
+    }
+
+    return {
+      outerStyle: outer as ViewStyle,
+      innerStyle: inner as ViewStyle,
+    };
+  }, [style]);
 
   const handlePressIn = (event: GestureResponderEvent) => {
     if (!disabled) {
@@ -79,13 +154,14 @@ export const SpringPressable: React.FC<SpringPressableProps> = ({
   return (
     <Pressable
       {...rest}
+      style={outerStyle}
       disabled={disabled}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
     >
       <Animated.View
         style={[
-          style,
+          innerStyle,
           {
             transform: [{ scale: scaleAnim }],
             opacity: opacityAnim,

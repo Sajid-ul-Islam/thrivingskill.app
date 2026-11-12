@@ -136,6 +136,25 @@ check('Simulated Viewport Widths (320px, 360px, 390px, 412px, 428px) never overf
   }
 });
 
+// 9. SpringPressable splits outer layout/positioning from inner visual styles
+check('SpringPressable forwards flex/width/position to outer Pressable cleanly', () => {
+  const spCode = fs.readFileSync('src/components/common/SpringPressable.tsx', 'utf8');
+  assert(spCode.includes('OUTER_LAYOUT_KEYS'), 'SpringPressable missing OUTER_LAYOUT_KEYS separation');
+  assert(spCode.includes('style={outerStyle}'), 'SpringPressable outer Pressable must receive outerStyle');
+  assert(spCode.includes('inner.flexGrow = 1'), 'SpringPressable inner Animated.View must use flexGrow: 1 instead of flex: 1');
+});
+
+// 10. QuickActionDock badge spacing & HeroCarousel dynamic cardWidth
+check('QuickActionDock miniBadge has zIndex clearance above iconBox and HeroCarousel uses dynamic cardWidth', () => {
+  const qdCode = fs.readFileSync('src/components/common/QuickActionDock.tsx', 'utf8');
+  assert(qdCode.includes('paddingTop: 24'), 'QuickActionDock actionItem must reserve top clearance for miniBadge');
+  assert(qdCode.includes('zIndex: 10'), 'QuickActionDock miniBadge must render above iconBox');
+
+  const hcCode = fs.readFileSync('src/components/common/HeroCarousel.tsx', 'utf8');
+  assert(hcCode.includes('width: cardWidth'), 'HeroCarousel renderItem must use dynamic cardWidth');
+  assert(!hcCode.includes('offsetX / CARD_WIDTH'), 'HeroCarousel handleScroll must use dynamic cardWidth');
+});
+
 console.log('\n====================================================');
 console.log(`TOTAL AUDIT CHECKS: ${passCount + failCount} | PASSED: ${passCount} | FAILED: ${failCount}`);
 console.log('====================================================');

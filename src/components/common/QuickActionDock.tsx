@@ -88,24 +88,6 @@ export const QuickActionDock: React.FC<QuickActionDockProps> = ({
             onPress={act.onPress}
             activeScale={0.94}
           >
-            {act.badgeText && (
-              <View
-                style={[
-                  styles.miniBadge,
-                  {
-                    backgroundColor:
-                      act.id === 'live'
-                        ? '#DC2626'
-                        : act.id === 'copilot'
-                        ? '#4F46E5'
-                        : '#047857',
-                  },
-                ]}
-              >
-                <Text style={styles.miniBadgeText}>{act.badgeText}</Text>
-              </View>
-            )}
-
             <View
               style={[
                 styles.iconBox,
@@ -115,12 +97,30 @@ export const QuickActionDock: React.FC<QuickActionDockProps> = ({
               <Ionicons name={act.icon as any} size={20} color={act.color} />
             </View>
 
-            <Text style={[styles.label, { color: colors.text }]} numberOfLines={1}>
+            <Text style={[styles.label, { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
               {act.label}
             </Text>
-            <Text style={[styles.sublabel, { color: colors.textMuted }]} numberOfLines={1}>
+            <Text style={[styles.sublabel, { color: colors.textMuted }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
               {act.sublabel}
             </Text>
+
+            {act.badgeText && (
+              <View
+                style={[
+                  styles.miniBadge,
+                  {
+                    backgroundColor:
+                      act.id === 'live'
+                        ? '#DC2626'
+                        : act.id === 'courses'
+                        ? '#4F46E5'
+                        : '#047857',
+                  },
+                ]}
+              >
+                <Text style={styles.miniBadgeText}>{act.badgeText}</Text>
+              </View>
+            )}
           </SpringPressable>
         ))}
       </View>
@@ -140,8 +140,9 @@ const styles = StyleSheet.create({
   },
   actionItem: {
     flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 6,
+    paddingTop: 24,
+    paddingBottom: 12,
+    paddingHorizontal: 4,
     borderRadius: 16,
     borderWidth: 1,
     alignItems: 'center',
@@ -157,20 +158,24 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 6,
     right: 6,
+    zIndex: 10,
+    elevation: 4,
     paddingHorizontal: 5,
-    paddingVertical: 1.5,
+    paddingVertical: 2,
     borderRadius: 8,
   },
   miniBadgeText: {
     color: '#FFFFFF',
     fontSize: 8,
+    lineHeight: 10,
+    includeFontPadding: false,
     fontWeight: '800',
     textTransform: 'uppercase',
   },
   iconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
