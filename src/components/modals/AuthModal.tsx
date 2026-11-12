@@ -16,8 +16,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useFeedback } from '../../context/FeedbackContext';
+import { triggerHaptic } from '../../utils/haptics';
 import { Env } from '../../config/env';
 import { AuthService } from '../../services/api/authService';
+import { shape } from '../../theme/shapes';
+import { MIN_TOUCH_TARGET } from '../../theme/typography';
 
 interface AuthModalProps {
   visible: boolean;
@@ -29,6 +33,7 @@ type AuthMode = 'login' | 'register' | 'forgot_password';
 export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const { showToast } = useFeedback();
   const {
     login,
             register,
@@ -37,18 +42,88 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
   } = useAuth();
 
   const [mode, setMode] = useState<AuthMode>('login');
+  const [regStep, setRegStep] = useState<1 | 2>(1);
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [regPhone, setRegPhone] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [isResetLoading, setIsResetLoading] = useState(false);
 
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const nameError =
+    mode === 'register' && touched.name && name.trim().length < 2
+      ? 'Please enter your full name (at least 2 characters).'
+      : null;
+  const phoneError =
+    mode === 'register' &&
+    touched.regPhone &&
+    regPhone.trim().length > 0 &&
+    regPhone.replace(/\D/g, '').length < 10
+      ? 'Please enter a valid 11-digit mobile number (e.g. 01712345678).'
+      : null;
+  const usernameError =
+    touched.username &&
+    username.trim().length > 0 &&
+    mode === 'register' &&
+    !emailRegex.test(username.trim())
+      ? 'Please enter a valid email address.'
+      : touched.username && username.trim().length === 0
+      ? mode === 'login'
+        ? 'Email or username is required.'
+        : 'Email address is required.'
+      : null;
+  const passwordError =
+    touched.password && password.length > 0 && mode === 'register' && password.length < 6
+      ? 'Password must be at least 6 characters.'
+      : touched.password && password.length === 0
+      ? 'Password is required.'
+      : null;
+
+  const passwordStrength =
+    password.length === 0
+      ? null
+      : password.length < 6
+      ? { label: 'Too short (min 6 chars)', color: colors.danger, pct: 25 }
+      : password.length < 10
+      ? { label: 'Good password', color: colors.brandGold, pct: 65 }
+      : { label: 'Strong password', color: isDark ? '#34D399' : '#047857', pct: 100 };
+
+  const handleNextRegisterStep = () => {
+    setTouched((prev) => ({ ...prev, name: true, regPhone: true }));
+    if (name.trim().length < 2) {
+      setErrorMessage('Please provide your full name.');
+      triggerHaptic('warning');
+      return;
+    }
+    if (regPhone.trim().length > 0 && regPhone.replace(/\D/g, '').length < 10) {
+      setErrorMessage('Please enter a valid phone number or leave it blank.');
+      triggerHaptic('warning');
+      return;
+    }
+    setErrorMessage(null);
+    triggerHaptic('selection');
+    setRegStep(2);
+  };
+
   const handleLogin = async () => {
+    setTouched({ name: true, regPhone: true, username: true, password: true });
     if (!username.trim() || !password.trim()) {
       setErrorMessage('Please enter both username/email and password.');
+      triggerHaptic('warning');
+      return;
+    }
+    if (mode === 'register' && !emailRegex.test(username.trim())) {
+      setErrorMessage('Please enter a valid email address.');
+      triggerHaptic('warning');
+      return;
+    }
+    if (mode === 'register' && password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters.');
+      triggerHaptic('warning');
       return;
     }
 
@@ -59,15 +134,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
           setErrorMessage('Please provide your full name.');
           return;
         }
-        const generatedUser = name.trim().toLowerCase().replace(/[^a-z0-9]/g, '_') + '_' + Math.floor(Math.random() * 9000 + 1000);
+        const asciiSlug = name
+          .trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '_')
+          .replace(/^_+|_+$/g, '');
+        const generatedUser = `${asciiSlug || 'learner'}_${Math.floor(Math.random() * 9000 + 1000)}`;
         await register(generatedUser, username.trim(), password, regPhone.trim() || undefined);
+        showToast({ message: 'Account created! Welcome to Thriving Skills.', type: 'success' });
       } else {
         await login(username.trim(), password);
+        showToast({ message: 'Signed in successfully!', type: 'success' });
       }
       setUsername('');
       setPassword('');
       setName('');
       setRegPhone('');
+      setRegStep(1);
+      setTouched({});
       onClose();
     } catch (err: any) {
       const code = String(err?.code || err?.data?.code || '');
@@ -199,6 +283,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                   ]}
                   onPress={() => {
                     setMode('login');
+                    setRegStep(1);
+                    setTouched({});
                     setErrorMessage(null);
                     setInfoMessage(null);
                   }}
@@ -223,6 +309,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                   ]}
                   onPress={() => {
                     setMode('register');
+                    setRegStep(1);
+                    setTouched({});
                     setErrorMessage(null);
                     setInfoMessage(null);
                   }}
@@ -237,6 +325,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                     Register
                   </Text>
                 </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Progressive Disclosure Step Indicator for Registration */}
+            {mode === 'register' && (
+              <View style={styles.regStepBar}>
+                <View style={styles.regStepMeta}>
+                  <Text style={[styles.regStepLabel, { color: colors.primary }]}>
+                    Step {regStep} of 2: {regStep === 1 ? 'Your Details' : 'Account Security'}
+                  </Text>
+                  <Text style={[styles.regStepHint, { color: colors.textMuted }]}>
+                    {regStep === 1 ? '50%' : '100%'}
+                  </Text>
+                </View>
+                <View style={[styles.regStepTrack, { backgroundColor: colors.surfaceSubtle }]}>
+                  <View
+                    style={[
+                      styles.regStepFill,
+                      { backgroundColor: colors.primary, width: regStep === 1 ? '50%' : '100%' },
+                    ]}
+                  />
+                </View>
               </View>
             )}
 
@@ -257,10 +367,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
               <View
                 accessibilityRole="alert"
                 accessibilityLiveRegion="polite"
-                style={[styles.infoBox, { backgroundColor: '#10B98115', borderColor: '#10B981' }]}
+                style={[
+                  styles.infoBox,
+                  {
+                    backgroundColor: isDark ? 'rgba(52, 211, 153, 0.14)' : '#ECFDF5',
+                    borderColor: isDark ? '#34D399' : '#047857',
+                  },
+                ]}
               >
-                <Ionicons name="checkmark-circle" size={18} color="#10B981" />
-                <Text style={[styles.infoText, { color: '#10B981' }]}>{infoMessage}</Text>
+                <Ionicons name="checkmark-circle" size={18} color={isDark ? '#34D399' : '#047857'} />
+                <Text style={[styles.infoText, { color: isDark ? '#A7F3D0' : '#065F46' }]}>
+                  {infoMessage}
+                </Text>
               </View>
             ) : null}
 
@@ -302,7 +420,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                   <TouchableOpacity
                     style={[
                       styles.submitButton,
-                      { backgroundColor: colors.accent },
+                      { backgroundColor: colors.primary },
                     ]}
                     onPress={handleResetPassword}
                     disabled={isResetLoading}
@@ -311,13 +429,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                     accessibilityLabel="Send Password Reset Link"
                   >
                     {isResetLoading ? (
-                      <ActivityIndicator color={colors.onAccent} size="small" />
+                      <ActivityIndicator color={colors.onPrimary} size="small" />
                     ) : (
                       <>
-                        <Text style={[styles.submitButtonText, { color: colors.onAccent }]}>
+                        <Text style={[styles.submitButtonText, { color: colors.onPrimary }]}>
                           Send Password Reset Link
                         </Text>
-                        <Ionicons name="mail-unread-outline" size={18} color={colors.onAccent} style={{ marginLeft: 6 }} />
+                        <Ionicons name="mail-unread-outline" size={18} color={colors.onPrimary} style={{ marginLeft: 6 }} />
                       </>
                     )}
                   </TouchableOpacity>
@@ -333,88 +451,134 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                     accessibilityRole="button"
                     accessibilityLabel="Back to Sign In"
                   >
-                    <Ionicons name="arrow-back" size={16} color={colors.accent} />
-                    <Text style={[styles.backToLoginText, { color: colors.accent }]}>
+                    <Ionicons name="arrow-back" size={16} color={colors.primary} />
+                    <Text style={[styles.backToLoginText, { color: colors.primary }]}>
                       Back to Sign In
                     </Text>
                   </TouchableOpacity>
                 </>
+              ) : mode === 'register' && regStep === 1 ? (
+                <>
+                  <View style={styles.inputGroup}>
+                    <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Full Name *</Text>
+                    <View
+                      style={[
+                        styles.inputWrapper,
+                        {
+                          backgroundColor: colors.surfaceSubtle,
+                          borderColor: nameError ? colors.danger : colors.border,
+                        },
+                      ]}
+                    >
+                      <Ionicons name="person-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                      <TextInput
+                        style={[styles.input, { color: colors.text }]}
+                        placeholder="e.g. Sajid Ul Islam"
+                        placeholderTextColor={colors.textLight}
+                        value={name}
+                        onChangeText={(t) => {
+                          setName(t);
+                          if (errorMessage) setErrorMessage(null);
+                        }}
+                        onBlur={() => setTouched((p) => ({ ...p, name: true }))}
+                        autoComplete="name"
+                        textContentType="name"
+                      />
+                    </View>
+                    {nameError ? (
+                      <Text style={[styles.inlineFieldError, { color: colors.danger }]}>{nameError}</Text>
+                    ) : null}
+                  </View>
+
+                  <View style={styles.inputGroup}>
+                    <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Phone Number (মোবাইল নম্বর)</Text>
+                    <View
+                      style={[
+                        styles.inputWrapper,
+                        {
+                          backgroundColor: colors.surfaceSubtle,
+                          borderColor: phoneError ? colors.danger : colors.border,
+                        },
+                      ]}
+                    >
+                      <Ionicons name="call-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                      <TextInput
+                        style={[styles.input, { color: colors.text }]}
+                        placeholder="e.g. 01712345678"
+                        placeholderTextColor={colors.textLight}
+                        value={regPhone}
+                        onChangeText={(t) => {
+                          setRegPhone(t);
+                          if (errorMessage) setErrorMessage(null);
+                        }}
+                        onBlur={() => setTouched((p) => ({ ...p, regPhone: true }))}
+                        keyboardType="phone-pad"
+                        autoComplete="tel"
+                        textContentType="telephoneNumber"
+                      />
+                    </View>
+                    {phoneError ? (
+                      <Text style={[styles.inlineFieldError, { color: colors.danger }]}>{phoneError}</Text>
+                    ) : null}
+                  </View>
+
+                  <TouchableOpacity
+                    style={[styles.submitButton, { backgroundColor: colors.primary }]}
+                    onPress={handleNextRegisterStep}
+                    activeOpacity={0.88}
+                    accessibilityRole="button"
+                    accessibilityLabel="Continue to credentials"
+                  >
+                    <Text style={[styles.submitButtonText, { color: colors.onPrimary }]}>
+                      Continue to Credentials
+                    </Text>
+                    <Ionicons name="arrow-forward" size={18} color={colors.onPrimary} style={{ marginLeft: 6 }} />
+                  </TouchableOpacity>
+                </>
               ) : (
                 <>
-                  {mode === 'register' && (
-                    <>
-                      <View style={styles.inputGroup}>
-                        <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Full Name</Text>
-                        <View
-                          style={[
-                            styles.inputWrapper,
-                            { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
-                          ]}
-                        >
-                          <Ionicons name="person-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
-                          <TextInput
-                            style={[styles.input, { color: colors.text }]}
-                            placeholder="e.g. Sajid Ul Islam"
-                            placeholderTextColor={colors.textMuted + '80'}
-                            value={name}
-                            onChangeText={(t) => {
-                              setName(t);
-                              if (errorMessage) setErrorMessage(null);
-                            }}
-                            autoComplete="name"
-                            textContentType="name"
-                          />
-                        </View>
-                      </View>
-
-                      <View style={styles.inputGroup}>
-                        <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Phone Number (মোবাইল নম্বর)</Text>
-                        <View
-                          style={[
-                            styles.inputWrapper,
-                            { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
-                          ]}
-                        >
-                          <Ionicons name="call-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
-                          <TextInput
-                            style={[styles.input, { color: colors.text }]}
-                            placeholder="e.g. 01712345678"
-                            placeholderTextColor={colors.textMuted + '80'}
-                            value={regPhone}
-                            onChangeText={(t) => {
-                              setRegPhone(t);
-                              if (errorMessage) setErrorMessage(null);
-                            }}
-                            keyboardType="phone-pad"
-                            autoComplete="tel"
-                            textContentType="telephoneNumber"
-                          />
-                        </View>
-                      </View>
-                    </>
+                  {mode === 'register' && regStep === 2 && (
+                    <TouchableOpacity
+                      style={[styles.backStepBtn, { borderColor: colors.border, backgroundColor: colors.surfaceSubtle }]}
+                      onPress={() => {
+                        setRegStep(1);
+                        setErrorMessage(null);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Back to personal details"
+                    >
+                      <Ionicons name="arrow-back" size={16} color={colors.text} />
+                      <Text style={[styles.backStepBtnText, { color: colors.text }]} numberOfLines={1}>
+                        {name.trim() ? `Name: ${name.trim()} (Edit)` : 'Back to Step 1'}
+                      </Text>
+                    </TouchableOpacity>
                   )}
 
                   {/* Email / Username Input */}
                   <View style={styles.inputGroup}>
                     <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
-                      {mode === 'login' ? 'Email or Username' : 'Email Address'}
+                      {mode === 'login' ? 'Email or Username' : 'Email Address *'}
                     </Text>
                     <View
                       style={[
                         styles.inputWrapper,
-                        { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                        {
+                          backgroundColor: colors.surfaceSubtle,
+                          borderColor: usernameError ? colors.danger : colors.border,
+                        },
                       ]}
                     >
                       <Ionicons name="mail-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
                       <TextInput
                         style={[styles.input, { color: colors.text }]}
                         placeholder={mode === 'login' ? 'e.g. user@thrivingskill.com' : 'e.g. name@domain.com'}
-                        placeholderTextColor={colors.textMuted + '80'}
+                        placeholderTextColor={colors.textLight}
                         value={username}
                         onChangeText={(t) => {
                           setUsername(t);
                           if (errorMessage) setErrorMessage(null);
                         }}
+                        onBlur={() => setTouched((p) => ({ ...p, username: true }))}
                         autoCapitalize="none"
                         autoCorrect={false}
                         keyboardType="email-address"
@@ -422,15 +586,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                         textContentType="username"
                       />
                     </View>
+                    {usernameError ? (
+                      <Text style={[styles.inlineFieldError, { color: colors.danger }]}>{usernameError}</Text>
+                    ) : null}
                   </View>
 
                   {/* Password Input */}
                   <View style={styles.inputGroup}>
-                    <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Password</Text>
+                    <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
+                      {mode === 'login' ? 'Password' : 'Password *'}
+                    </Text>
                     <View
                       style={[
                         styles.inputWrapper,
-                        { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                        {
+                          backgroundColor: colors.surfaceSubtle,
+                          borderColor: passwordError ? colors.danger : colors.border,
+                        },
                       ]}
                     >
                       <Ionicons
@@ -441,13 +613,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                       />
                       <TextInput
                         style={[styles.input, { color: colors.text }]}
-                        placeholder={mode === 'login' ? 'Enter your password' : 'Create a secure password'}
-                        placeholderTextColor={colors.textMuted + '80'}
+                        placeholder={mode === 'login' ? 'Enter your password' : 'Min 6 characters'}
+                        placeholderTextColor={colors.textLight}
                         value={password}
                         onChangeText={(t) => {
                           setPassword(t);
                           if (errorMessage) setErrorMessage(null);
                         }}
+                        onBlur={() => setTouched((p) => ({ ...p, password: true }))}
                         secureTextEntry={!showPassword}
                         autoCapitalize="none"
                         autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
@@ -461,11 +634,29 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                       >
                         <Ionicons
                           name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                          size={18}
+                          size={20}
                           color={colors.textMuted}
                         />
                       </TouchableOpacity>
                     </View>
+                    {passwordError ? (
+                      <Text style={[styles.inlineFieldError, { color: colors.danger }]}>{passwordError}</Text>
+                    ) : null}
+                    {mode === 'register' && passwordStrength ? (
+                      <View style={styles.strengthWrap}>
+                        <View style={[styles.strengthTrack, { backgroundColor: colors.surfaceSubtle }]}>
+                          <View
+                            style={[
+                              styles.strengthFill,
+                              { backgroundColor: passwordStrength.color, width: `${passwordStrength.pct}%` },
+                            ]}
+                          />
+                        </View>
+                        <Text style={[styles.strengthLabel, { color: passwordStrength.color }]}>
+                          {passwordStrength.label}
+                        </Text>
+                      </View>
+                    ) : null}
                   </View>
 
                   {/* Forgot Password Touchable Option */}
@@ -481,7 +672,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                         accessibilityRole="button"
                         accessibilityLabel="Forgot Password?"
                       >
-                        <Text style={[styles.forgotPasswordText, { color: colors.accent }]}>
+                        <Text style={[styles.forgotPasswordText, { color: colors.primary }]}>
                           Forgot Password?
                         </Text>
                       </TouchableOpacity>
@@ -492,7 +683,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                   <TouchableOpacity
                     style={[
                       styles.submitButton,
-                      { backgroundColor: colors.accent },
+                      { backgroundColor: colors.primary },
                     ]}
                     onPress={handleLogin}
                     disabled={isLoading}
@@ -500,13 +691,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                     accessibilityRole="button"
                   >
                     {isLoading ? (
-                      <ActivityIndicator color={colors.onAccent} size="small" />
+                      <ActivityIndicator color={colors.onPrimary} size="small" />
                     ) : (
                       <>
-                        <Text style={[styles.submitButtonText, { color: colors.onAccent }]}>
+                        <Text style={[styles.submitButtonText, { color: colors.onPrimary }]}>
                           {mode === 'login' ? 'Sign In with Credentials' : 'Create Free Account'}
                         </Text>
-                        <Ionicons name="arrow-forward" size={18} color={colors.onAccent} style={{ marginLeft: 6 }} />
+                        <Ionicons name="arrow-forward" size={18} color={colors.onPrimary} style={{ marginLeft: 6 }} />
                       </>
                     )}
                   </TouchableOpacity>
@@ -523,6 +714,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                 ]}
                 onPress={handleGuest}
                 activeOpacity={0.75}
+                accessibilityRole="button"
               >
                 <Ionicons name="compass-outline" size={18} color={colors.text} style={{ marginRight: 8 }} />
                 <Text style={[styles.guestButtonText, { color: colors.text }]}>Explore as Guest</Text>
@@ -530,7 +722,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
             )}
 
             <Text style={[styles.disclaimerText, { color: colors.textMuted }]}>
-              Protected by TLS encryption. Connected to ' + Env.SITE_URL.replace(/^https?:\/\//, '') + ' official LMS.
+              Protected by TLS encryption. Connected to {Env.SITE_URL.replace(/^https?:\/\//, '')} official LMS.
             </Text>
           </ScrollView>
         </View>
@@ -566,11 +758,11 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: 'absolute',
-    top: 16,
-    right: 20,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    top: 12,
+    right: 14,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 10,
@@ -625,6 +817,8 @@ const styles = StyleSheet.create({
   },
   tabSwitchItem: {
     flex: 1,
+    minHeight: MIN_TOUCH_TARGET,
+    justifyContent: 'center',
     paddingVertical: 8,
     alignItems: 'center',
     borderRadius: 10,
@@ -682,7 +876,75 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   eyeButton: {
-    padding: 6,
+    minWidth: MIN_TOUCH_TARGET,
+    minHeight: MIN_TOUCH_TARGET,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: -8,
+  },
+  regStepBar: {
+    width: '100%',
+    marginBottom: 14,
+  },
+  regStepMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  regStepLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  regStepHint: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  regStepTrack: {
+    height: 5,
+    borderRadius: shape.extraSmall,
+    overflow: 'hidden',
+  },
+  regStepFill: {
+    height: '100%',
+    borderRadius: shape.extraSmall,
+  },
+  backStepBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: MIN_TOUCH_TARGET,
+    paddingHorizontal: 12,
+    borderRadius: shape.small,
+    borderWidth: 1,
+    marginBottom: 12,
+    gap: 8,
+  },
+  backStepBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    flex: 1,
+  },
+  inlineFieldError: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 4,
+    marginLeft: 2,
+  },
+  strengthWrap: {
+    marginTop: 6,
+    gap: 4,
+  },
+  strengthTrack: {
+    height: 4,
+    borderRadius: shape.extraSmall,
+    overflow: 'hidden',
+  },
+  strengthFill: {
+    height: '100%',
+    borderRadius: shape.extraSmall,
+  },
+  strengthLabel: {
+    fontSize: 11,
+    fontWeight: '700',
   },
   submitButton: {
     flexDirection: 'row',

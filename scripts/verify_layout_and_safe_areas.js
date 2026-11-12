@@ -126,6 +126,12 @@ check('Admin access gated to server roles in production and real deleteAccount w
   const subModalCode = fs.readFileSync('src/components/modals/SubscriptionModal.tsx', 'utf8');
   assert(!subModalCode.includes('handleUpgrade'), 'SubscriptionModal must not allow unverified free tier switching');
   assert(!subModalCode.includes('৳'), 'SubscriptionModal must not display prices in Reader-App mode');
+
+  assert(!authCode.includes("un.includes('admin')"), 'AuthContext must not grant admin via substring username match');
+  assert(!authCode.includes("email.includes('admin')"), 'AuthContext must not grant admin via substring email match');
+
+  const quizCode = fs.readFileSync('src/components/modals/QuizModal.tsx', 'utf8');
+  assert(!quizCode.includes('score + (selectedOption'), 'QuizModal must not double-count final answer score');
 });
 
 // 8. Mathematical simulation across viewport widths (320px to 430px)

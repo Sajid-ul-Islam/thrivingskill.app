@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SpringPressable } from '../common';
 import { SkillsSummit } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
+import { useLearning } from '../../context/LearningContext';
 
 interface SummitCardProps {
   summit: SkillsSummit;
@@ -11,11 +12,16 @@ interface SummitCardProps {
 
 export const SummitCard: React.FC<SummitCardProps> = ({ summit }) => {
   const { colors } = useTheme();
+  const { rsvpForWorkshop, isRsvpd } = useLearning();
+  const reserved = isRsvpd(summit.id);
 
   const handleRegister = () => {
+    rsvpForWorkshop(summit.id);
     Alert.alert(
       `${summit.title} 🎟️`,
-      `Theme: ${summit.theme}\n\nRegistration confirmed! Details and live session links have been sent to your email.`
+      reserved
+        ? 'Your summit seat reservation is already saved on this device.'
+        : 'Seat reservation saved to your device schedule!'
     );
   };
 
@@ -60,14 +66,19 @@ export const SummitCard: React.FC<SummitCardProps> = ({ summit }) => {
           </View>
 
           <SpringPressable
-            style={[styles.rsvpBtn, { backgroundColor: colors.primary }]}
+            style={[
+              styles.rsvpBtn,
+              { backgroundColor: reserved ? colors.surfaceSubtle : colors.primary, borderWidth: reserved ? 1 : 0, borderColor: colors.primary },
+            ]}
             onPress={handleRegister}
             activeScale={0.96}
             accessibilityRole="button"
-            accessibilityLabel={`RSVP Free for ${summit.title}`}
+            accessibilityLabel={reserved ? `Reserved for ${summit.title}` : `RSVP Free for ${summit.title}`}
           >
-            <Text style={[styles.rsvpBtnText, { color: colors.onPrimary }]}>RSVP Free</Text>
-            <Ionicons name="arrow-forward" size={13} color={colors.onPrimary} />
+            <Text style={[styles.rsvpBtnText, { color: reserved ? colors.primary : colors.onPrimary }]}>
+              {reserved ? 'Reserved ✓' : 'RSVP Free'}
+            </Text>
+            <Ionicons name={reserved ? 'checkmark-circle' : 'arrow-forward'} size={13} color={reserved ? colors.primary : colors.onPrimary} />
           </SpringPressable>
         </View>
       </View>

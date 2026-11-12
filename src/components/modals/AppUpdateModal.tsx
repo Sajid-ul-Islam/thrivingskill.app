@@ -11,7 +11,11 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
+import { useFeedback } from '../../context/FeedbackContext';
 import { AppUpdateService } from '../../services/appUpdateService';
+import { triggerHaptic } from '../../utils/haptics';
+import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
+import { shape } from '../../theme/shapes';
 
 interface AppUpdateModalProps {
   visible: boolean;
@@ -20,6 +24,7 @@ interface AppUpdateModalProps {
 
 export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose }) => {
   const { colors, isDark } = useTheme();
+  const { showToast } = useFeedback();
   const insets = useSafeAreaInsets();
   const [isChecking, setIsChecking] = useState(false);
   const [updateReady, setUpdateReady] = useState(false);
@@ -28,6 +33,7 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
   const info = AppUpdateService.getUpdateInfo();
 
   const handleCheck = async () => {
+    triggerHaptic('light');
     setIsChecking(true);
     setStatusMessage(null);
 
@@ -36,11 +42,15 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
     setStatusMessage(result.message);
 
     if (result.isDownloaded) {
+      triggerHaptic('success');
       setUpdateReady(true);
+    } else {
+      showToast({ message: result.message, type: 'info' });
     }
   };
 
   const handleRestart = async () => {
+    triggerHaptic('medium');
     try {
       await AppUpdateService.reloadApp();
     } catch {
@@ -59,13 +69,24 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
           },
         ]}
       >
-        <View style={[styles.card, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+        <View
+          style={[styles.card, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
+          accessibilityViewIsModal={true}
+        >
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.iconCircle}>
               <Ionicons name="cloud-download-outline" size={24} color={colors.primary} />
             </View>
-            <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
+            <TouchableOpacity
+              style={[styles.closeBtn, { backgroundColor: colors.surfaceSubtle }]}
+              onPress={() => {
+                triggerHaptic('light');
+                onClose();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Close In-App Updates dialog"
+            >
               <Ionicons name="close" size={20} color={colors.text} />
             </TouchableOpacity>
           </View>
@@ -111,23 +132,23 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
                 styles.messageBox,
                 {
                   backgroundColor: updateReady
-                    ? 'rgba(16, 185, 129, 0.1)'
+                    ? colors.successLight
                     : isDark
                     ? '#1E293B'
                     : '#EFF6FF',
-                  borderColor: updateReady ? '#10B981' : colors.primary,
+                  borderColor: updateReady ? colors.success : colors.primary,
                 },
               ]}
             >
               <Ionicons
                 name={updateReady ? 'checkmark-circle' : 'information-circle'}
                 size={16}
-                color={updateReady ? '#10B981' : colors.primary}
+                color={updateReady ? colors.success : colors.primary}
               />
               <Text
                 style={[
                   styles.messageText,
-                  { color: updateReady ? '#10B981' : colors.text },
+                  { color: updateReady ? colors.success : colors.text },
                 ]}
               >
                 {statusMessage}
@@ -138,17 +159,21 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
           {/* Action Buttons */}
           {updateReady ? (
             <TouchableOpacity
-              style={[styles.actionBtn, { backgroundColor: '#10B981' }]}
+              style={[styles.actionBtn, { backgroundColor: colors.success }]}
               onPress={handleRestart}
+              accessibilityRole="button"
+              accessibilityLabel="Restart and apply update"
             >
-              <Ionicons name="refresh" size={18} color="#FFFFFF" />
-              <Text style={styles.actionBtnText}>Restart & Apply Update</Text>
+              <Ionicons name="refresh" size={18} color={colors.onSuccess} />
+              <Text style={[styles.actionBtnText, { color: colors.onSuccess }]}>Restart & Apply Update</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
               style={[styles.actionBtn, { backgroundColor: colors.primary }]}
               onPress={handleCheck}
               disabled={isChecking}
+              accessibilityRole="button"
+              accessibilityLabel="Check for app updates"
             >
               {isChecking ? (
                 <ActivityIndicator size="small" color={colors.onPrimary} />
@@ -177,7 +202,7 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 400,
-    borderRadius: 20,
+    borderRadius: shape.largeIncreased,
     borderWidth: 1,
     padding: 22,
     shadowColor: '#000',
@@ -193,28 +218,30 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    borderRadius: shape.full,
     backgroundColor: 'rgba(16, 47, 83, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeBtn: {
-    padding: 4,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    borderRadius: shape.full,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
-    fontSize: 18,
-    fontWeight: '800',
+    ...typography.h3,
     marginBottom: 4,
   },
   subtitle: {
-    fontSize: 12.5,
-    lineHeight: 18,
+    ...typography.caption,
     marginBottom: 16,
   },
   infoBox: {
-    borderRadius: 14,
+    borderRadius: shape.large,
     padding: 12,
     gap: 10,
     marginBottom: 16,

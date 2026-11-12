@@ -1,5 +1,6 @@
 import { HttpClient } from './httpClient';
 import { Endpoints } from './endpoints';
+import { Env } from '../../config/env';
 import { WpUser } from '../../types';
 
 export interface TokenResponse {
@@ -35,14 +36,16 @@ export class AuthService {
       // Fallback if user profile endpoint is restricted
     }
 
-    const roles: string[] = userProfile?.roles || (
-      username.toLowerCase().includes('admin') ? ['administrator'] : ['subscriber']
-    );
+    const roles: string[] = Array.isArray(userProfile?.roles) && userProfile.roles.length > 0
+      ? userProfile.roles
+      : ['subscriber'];
+
+    const siteHost = Env.SITE_URL.replace(/^https?:\/\//i, '').split('/')[0] || 'thrivingskill.com';
 
     return {
       id: userProfile?.id || data.user_id || 'wp-user',
       username: userProfile?.slug || userProfile?.name || username.trim(),
-      email: userProfile?.email || data.user_email || `${username}@staging.thrivingskill.com`,
+      email: userProfile?.email || data.user_email || `${username.trim()}@${siteHost}`,
       displayName: userProfile?.name || data.user_display_name || username.trim(),
       avatar: userProfile?.avatar_urls?.['96'] || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200',
       token,

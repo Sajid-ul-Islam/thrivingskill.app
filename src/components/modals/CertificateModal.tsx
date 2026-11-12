@@ -10,11 +10,16 @@ import {
   Share,
   Linking,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Certificate } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
+import { useFeedback } from '../../context/FeedbackContext';
+import { triggerHaptic } from '../../utils/haptics';
+import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
+import { shape } from '../../theme/shapes';
 
 interface CertificateModalProps {
   visible: boolean;
@@ -28,6 +33,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
   onClose,
 }) => {
   const { colors, isDark } = useTheme();
+  const { showToast } = useFeedback();
   const insets = useSafeAreaInsets();
   const pdfTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -75,9 +81,25 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
     });
   };
 
-  const handleCopyLink = () => {
-    setCopied(true);
-    copyTimerRef.current = setTimeout(() => setCopied(false), 2500);
+  const handleCopyLink = async () => {
+    triggerHaptic('selection');
+    try {
+      if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(certificate.verificationUrl);
+      } else {
+        await Share.share({
+          message: certificate.verificationUrl,
+          title: `Verify ${certificate.courseTitle} Certificate`,
+        });
+      }
+      setCopied(true);
+      triggerHaptic('success');
+      showToast({ message: 'Credential verification link copied', type: 'success' });
+      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = setTimeout(() => setCopied(false), 2500);
+    } catch {
+      Alert.alert('Verification Link', certificate.verificationUrl);
+    }
   };
 
   const handleAddToLinkedIn = () => {
@@ -336,11 +358,14 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   topBarTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    ...typography.h4,
   },
   closeBtn: {
-    padding: 4,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    borderRadius: shape.full,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollContainer: {
     padding: 16,

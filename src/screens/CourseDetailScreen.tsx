@@ -12,6 +12,7 @@ import {
   TextInput,
   AppState,
   AppStateStatus,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,13 +21,17 @@ import { useLearning } from '../context/LearningContext';
 import { useAuth } from '../context/AuthContext';
 import { Header } from '../components/Header';
 import { CurriculumAccordion } from '../components/CurriculumAccordion';
-import { AnimatedTabContent, SpringPressable, CircularProgressRing } from '../components/common';
+import { AnimatedTabContent, SpringPressable, CircularProgressRing, StateView } from '../components/common';
 import { PaymentModal } from '../components/PaymentModal';
 import { CourseQnATab } from '../components/CourseQnATab';
 import { MandatoryReviewModal } from '../components/MandatoryReviewModal';
 import { useLanguage } from '../context/LanguageContext';
 import { useYouTube } from '../context/YouTubeContext';
+import { useFeedback } from '../context/FeedbackContext';
 import { findRelatedVideoForCourse } from '../services/youtubeService';
+import { CoursesService } from '../services/api/coursesService';
+import { Env } from '../config/env';
+import { MIN_TOUCH_TARGET } from '../theme/typography';
 import { Lesson } from '../types';
 
 interface CourseDetailScreenProps {
@@ -43,6 +48,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { t, isBangla } = useLanguage();
+  const { showToast } = useFeedback();
   const {
     getCourseById,
     loadCourseDetail,
@@ -58,7 +64,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     recordCategoryInteraction,
     refreshCourses,
   } = useLearning();
-  const { user, isAdmin } = useAuth();
+  const { user, isAuthenticated, isAdmin } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'curriculum' | 'qna' | 'instructor' | 'reviews'>('curriculum');
   const [loadingDetail, setLoadingDetail] = useState(false);
@@ -90,8 +96,24 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         <Header showBack onBack={onBack} title="Course Details" />
-        <View style={styles.notFoundCenter}>
-          <Text style={{ color: colors.text }}>Course not found.</Text>
+        <View style={[styles.notFoundCenter, { paddingHorizontal: 20 }]}>
+          {loadingDetail ? (
+            <StateView
+              mode="loading"
+              title="Loading course details…"
+              message="Fetching curriculum, mentor info, and preview lectures."
+            />
+          ) : (
+            <StateView
+              mode="error"
+              title="Course not found"
+              message="We couldn't load this course right now. Please try again or return to the catalog."
+              primaryActionLabel="Retry"
+              onPrimaryAction={() => loadCourseDetail(courseId).catch(() => {})}
+              secondaryActionLabel="Go Back"
+              onSecondaryAction={onBack}
+            />
+          )}
         </View>
       </View>
     );
@@ -165,6 +187,9 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
         return;
       }
       enrollInCourse(course.id);
+      if (isAuthenticated) {
+        CoursesService.enrollCourse(course.id).catch(() => {});
+      }
       Alert.alert(
         'Enrolled Successfully! 🎉',
         `You have been enrolled in "${course.title}". Let's start the first lesson!`,
@@ -225,11 +250,22 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
         rightAction={
           <TouchableOpacity
             style={[styles.headerBookmark, { backgroundColor: colors.surfaceSubtle }]}
-            onPress={() => toggleBookmark(course.id)}
+            onPress={() => {
+              const wasBookmarked = bookmarked;
+              toggleBookmark(course.id);
+              showToast({
+                message: wasBookmarked ? 'Removed from Saved' : 'Saved course to My Hub',
+                type: wasBookmarked ? 'info' : 'success',
+                actionLabel: wasBookmarked ? 'Undo' : undefined,
+                onAction: wasBookmarked ? () => toggleBookmark(course.id) : undefined,
+              });
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={bookmarked ? 'Remove bookmark' : 'Save course bookmark'}
           >
             <Ionicons
               name={bookmarked ? 'bookmark' : 'bookmark-outline'}
-              size={18}
+              size={20}
               color={bookmarked ? colors.primary : colors.text}
             />
           </TouchableOpacity>
@@ -890,10 +926,17 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                 <TouchableOpacity
                   style={[styles.certShareBtn, { backgroundColor: '#0A66C2' }]}
                   onPress={() => {
-                    Alert.alert(
-                      'LinkedIn Credential 🔗',
-                      `Verified credential for "${course.title}" is ready to be added to your LinkedIn Licenses & Certifications profile!`
-                    );
+                    const now = new Date();
+                    const certId = `TSL-CERT-${course.id}-2026`;
+                    const verifyUrl = `${Env.SITE_URL.replace(/\/+$/, '')}/verify/${certId}`;
+                    const linkedinUrl = `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${encodeURIComponent(
+                      course.title
+                    )}&organizationName=${encodeURIComponent('Thriving Skills')}&issueYear=${now.getFullYear()}&issueMonth=${
+                      now.getMonth() + 1
+                    }&certUrl=${encodeURIComponent(verifyUrl)}&certId=${encodeURIComponent(certId)}`;
+                    Linking.openURL(linkedinUrl).catch(() => {
+                      Alert.alert('LinkedIn Credential 🔗', `Visit ${verifyUrl} to verify or share credential #${certId}.`);
+                    });
                   }}
                 >
                   <Ionicons name="logo-linkedin" size={16} color="#FFFFFF" />
@@ -1045,9 +1088,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerBookmark: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1223,6 +1266,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   tabItem: {
+    minHeight: MIN_TOUCH_TARGET,
+    justifyContent: 'center',
     paddingVertical: 10,
     marginRight: 16,
   },

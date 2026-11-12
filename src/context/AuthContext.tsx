@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WpUser } from '../types';
 import { UserProfile, UserService } from '../services/api/userService';
 import { HttpClient } from '../services/api/httpClient';
+import { CacheManager } from '../services/cache/cacheManager';
 import {
   loginWpUser,
   registerWpUser,
@@ -18,38 +19,23 @@ const AUTH_TOKEN_STORAGE_KEY = '@thrivingskill_auth_token';
 const AUTH_ADMIN_BYPASS_KEY = '@thrivingskill_admin_bypass';
 
 /**
- * Robust administrator check for WordPress users, roles, and administrative bypass.
+ * Strict administrator check based only on verified WordPress server roles.
  */
 export function isUserAdmin(user: UserProfile | WpUser | null | undefined): boolean {
   if (!user) return false;
+  const adminRoles = new Set(['administrator', 'admin', 'editor', 'instructor']);
   if (Array.isArray(user.roles)) {
     if (
       user.roles.some(
-        (r) =>
-          typeof r === 'string' &&
-          (r.toLowerCase().includes('admin') ||
-            r.toLowerCase() === 'administrator' ||
-            r.toLowerCase() === 'editor' ||
-            r.toLowerCase() === 'instructor')
+        (r) => typeof r === 'string' && adminRoles.has(r.toLowerCase().trim())
       )
     ) {
       return true;
     }
   }
   if (typeof (user as any).role === 'string') {
-    const r = (user as any).role.toLowerCase();
-    if (r.includes('admin') || r === 'editor' || r === 'instructor') return true;
-  }
-  const un = (user.username || '').toLowerCase();
-  const email = (user.email || '').toLowerCase();
-  if (
-    un === 'admin' ||
-    un.includes('admin') ||
-    email.includes('admin') ||
-    email === 'info@thrivingskill.com' ||
-    email.endsWith('@thrivingskill.com')
-  ) {
-    return true;
+    const r = (user as any).role.toLowerCase().trim();
+    if (adminRoles.has(r)) return true;
   }
   return false;
 }
@@ -108,10 +94,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setToken(savedToken);
           setIsGuest(false);
 
-          // Verify token in background
-          validateWpToken(savedToken).then((isValid) => {
+          // Verify token in background and invalidate expired sessions
+          validateWpToken(savedToken).then(async (isValid) => {
             if (!isValid) {
-              console.log('Stored token has expired or is invalid.');
+              setUser(null);
+              setToken(null);
+              setIsGuest(true);
+              HttpClient.setAuthToken(null);
+              try {
+                await Promise.all([
+                  AsyncStorage.removeItem(AUTH_USER_STORAGE_KEY),
+                  AsyncStorage.removeItem(AUTH_TOKEN_STORAGE_KEY),
+                ]);
+              } catch {}
             }
           });
         } else {
@@ -217,6 +212,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await Promise.all([
         AsyncStorage.removeItem(AUTH_USER_STORAGE_KEY),
         AsyncStorage.removeItem(AUTH_TOKEN_STORAGE_KEY),
+        CacheManager.clearAll(),
       ]);
     } catch {}
   };
@@ -225,10 +221,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user || !token) {
       throw new Error('You must be signed in to delete your account.');
     }
-    await UserService.deleteAccount(user.id, password);
+    const uid = user.id;
+    await UserService.deleteAccount(uid, password);
     setIsAdminBypass(false);
     try {
-      await AsyncStorage.removeItem(AUTH_ADMIN_BYPASS_KEY);
+      const allKeys = await AsyncStorage.getAllKeys();
+      const userScopedKeys = allKeys.filter((k) => k.includes(`_u_${uid}`));
+      await Promise.all([
+        AsyncStorage.removeItem(AUTH_ADMIN_BYPASS_KEY),
+        userScopedKeys.length > 0 ? AsyncStorage.multiRemove(userScopedKeys) : Promise.resolve(),
+      ]);
     } catch {}
     await logout();
   };

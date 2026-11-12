@@ -16,6 +16,9 @@ export const lightColors = {
   brandNavySubtle: 'rgba(16, 47, 83, 0.08)',
   danger: '#DC2626',
   dangerLight: '#FEE2E2',
+  success: '#047857',
+  successLight: '#ECFDF5',
+  onSuccess: '#FFFFFF',
   background: '#F8FAFC',
   surface: '#FFFFFF',
   surfaceCard: '#FFFFFF',
@@ -60,6 +63,9 @@ export const darkColors = {
   brandNavySubtle: 'rgba(56, 189, 248, 0.15)',
   danger: '#F87171',
   dangerLight: '#7F1D1D',
+  success: '#34D399',
+  successLight: 'rgba(16, 185, 129, 0.16)',
+  onSuccess: '#0F172A',
   background: '#070D18', // Deep Navy Black
   surface: '#0F192C', // Navy Surface
   surfaceCard: '#14223B', // Navy Card

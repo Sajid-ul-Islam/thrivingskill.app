@@ -14,6 +14,9 @@ import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useGamification } from '../../context/GamificationContext';
 import { LessonsService } from '../../services/api/lessonsService';
+import { triggerHaptic } from '../../utils/haptics';
+import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
+import { shape } from '../../theme/shapes';
 
 export interface QuizItem {
   id: string;
@@ -80,6 +83,15 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
   const [timeLeft, setTimeLeft] = useState(120); // 2 minutes
 
   useEffect(() => {
+    if (visible) {
+      setCurrentIndex(0);
+      setSelectedAnswers({});
+      setIsSubmitted(false);
+      setTimeLeft(120);
+    }
+  }, [visible, quizId]);
+
+  useEffect(() => {
     if (visible && !isSubmitted) {
       const interval = setInterval(() => {
         setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
@@ -90,6 +102,7 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
 
   const handleSelectOption = (optionIndex: number) => {
     if (isSubmitted) return;
+    triggerHaptic('selection');
     setSelectedAnswers((prev) => ({
       ...prev,
       [currentIndex]: optionIndex,
@@ -97,6 +110,7 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
   };
 
   const calculateScore = () => {
+    if (!questions || questions.length === 0) return 0;
     let correct = 0;
     questions.forEach((q, idx) => {
       if (selectedAnswers[idx] === q.correctIndex) {
@@ -107,6 +121,7 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
   };
 
   const handleSubmit = () => {
+    if (isSubmitted) return;
     setIsSubmitted(true);
     const score = calculateScore();
     if (score >= 70) {
@@ -126,6 +141,12 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
     }
   };
 
+  useEffect(() => {
+    if (visible && !isSubmitted && timeLeft === 0) {
+      handleSubmit();
+    }
+  }, [visible, isSubmitted, timeLeft]);
+
   const resetQuiz = () => {
     setCurrentIndex(0);
     setSelectedAnswers({});
@@ -133,7 +154,9 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
     setTimeLeft(120);
   };
 
-  const currentQ = questions[currentIndex];
+  if (!questions || questions.length === 0) return null;
+
+  const currentQ = questions[currentIndex] || questions[0];
   const score = isSubmitted ? calculateScore() : 0;
   const passed = score >= 70;
 
@@ -172,8 +195,16 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
               </View>
             )}
 
-            <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-              <Ionicons name="close" size={22} color={colors.textMuted} />
+            <TouchableOpacity
+              style={[styles.closeBtn, { backgroundColor: colors.surfaceSubtle }]}
+              onPress={() => {
+                triggerHaptic('light');
+                onClose();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Close Quiz"
+            >
+              <Ionicons name="close" size={20} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
 
@@ -381,11 +412,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   quizTitle: {
-    fontSize: 17,
-    fontWeight: '800',
+    ...typography.h4,
   },
   courseSubtitle: {
-    fontSize: 12,
+    ...typography.caption,
     marginTop: 2,
   },
   timerBadge: {
@@ -393,7 +423,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 12,
+    borderRadius: shape.medium,
     gap: 4,
     marginRight: 10,
   },
@@ -402,7 +432,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   closeBtn: {
-    padding: 4,
+    width: MIN_TOUCH_TARGET,
+    height: MIN_TOUCH_TARGET,
+    borderRadius: shape.full,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scroll: {
     paddingBottom: 24,

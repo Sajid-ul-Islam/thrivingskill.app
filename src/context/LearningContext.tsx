@@ -2,7 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Env } from '../config/env';
 import { Course, UserProgress, Certificate, Note, CategoryId, Workshop, Category, WpPost, Review } from '../types';
-import { COURSES as INITIAL_COURSES, INITIAL_CERTIFICATES, WORKSHOPS, CATEGORIES as INITIAL_CATEGORIES } from '../data/mockData';
+import { COURSES as INITIAL_COURSES, WORKSHOPS, CATEGORIES as INITIAL_CATEGORIES } from '../data/mockData';
+import { useAuth } from './AuthContext';
 import {
   fetchWpCourses,
   fetchWpCategories,
@@ -17,12 +18,14 @@ const WORKSHOPS_STORAGE_KEY = '@thriving_skill_rsvps';
 const AFFINITIES_STORAGE_KEY = '@thriving_skill_affinities';
 const SEARCH_HISTORY_STORAGE_KEY = '@thriving_skill_searches';
 const REVIEWS_STORAGE_KEY = '@thriving_skill_reviewed_courses';
+const CERTIFICATES_STORAGE_KEY = '@thriving_skill_certificates';
 
 interface LearningContextType {
   courses: Course[];
   categories: Category[];
   blogPosts: WpPost[];
   isLoadingCourses: boolean;
+  coursesError: string | null;
   userProgress: Record<string, UserProgress>;
   bookmarks: string[];
   certificates: Certificate[];
@@ -40,12 +43,14 @@ interface LearningContextType {
   isBookmarked: (courseId: string) => boolean;
   addNote: (courseId: string, lessonId: string, text: string, timestamp?: string) => void;
   deleteNote: (noteId: string) => void;
+  restoreNote: (note: Note) => void;
   getNotesForLesson: (courseId: string, lessonId: string) => Note[];
   getCourseProgressPercentage: (courseId: string) => number;
   recordWatchPosition: (courseId: string, lessonId: string, seconds: number) => void;
   getWatchPosition: (courseId: string, lessonId: string) => number;
   addCourseReview: (courseId: string, review: Omit<Review, 'id' | 'date'>) => void;
   rsvpForWorkshop: (workshopId: string) => void;
+  toggleWorkshopRsvp: (workshopId: string) => boolean;
   isRsvpd: (workshopId: string) => boolean;
   getCourseById: (courseId: string) => Course | undefined;
   getWorkshopById: (workshopId: string) => Workshop | undefined;
@@ -71,56 +76,33 @@ interface LearningContextType {
 const LearningContext = createContext<LearningContextType>({} as LearningContextType);
 
 export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  const userScope = user?.id ? `_u_${user.id}` : '_guest';
+
   const [courses, setCourses] = useState<Course[]>(INITIAL_COURSES);
   const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
   const [blogPosts, setBlogPosts] = useState<WpPost[]>([]);
   const [isLoadingCourses, setIsLoadingCourses] = useState<boolean>(false);
+  const [coursesError, setCoursesError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<CategoryId>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // Initial user progress for rich instant interactive demo
-  const [userProgress, setUserProgress] = useState<Record<string, UserProgress>>({
-    '86355': {
-      courseId: '86355',
-      enrolledDate: '2026-08-15',
-      completedLessonIds: ['86356'],
-      lastAccessedLessonId: '86357',
-      isCompleted: false,
-    },
-    'course-1': {
-      courseId: 'course-1',
-      enrolledDate: '2026-08-10',
-      completedLessonIds: ['l1', 'l2'],
-      lastAccessedLessonId: 'l3',
-      isCompleted: false,
-    },
-  });
-
-  const [bookmarks, setBookmarks] = useState<string[]>(['86335', '85330']);
-  const [certificates, setCertificates] = useState<Certificate[]>(INITIAL_CERTIFICATES);
-  const [notes, setNotes] = useState<Note[]>([
-    {
-      id: 'note-1',
-      courseId: '86355',
-      lessonId: '86356',
-      timestamp: '01:15',
-      text: 'Emotional Intelligence consists of Self-Awareness, Self-Regulation, Motivation, Empathy, and Social Skills.',
-      createdAt: '2026-08-16',
-    },
-  ]);
-  const [rsvpWorkshops, setRsvpWorkshops] = useState<string[]>(['ws-1']);
+  // Clean user-scoped learning state (no hardcoded fake demo enrollments/badges on fresh install)
+  const [userProgress, setUserProgress] = useState<Record<string, UserProgress>>({});
+  const [bookmarks, setBookmarks] = useState<string[]>([]);
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [rsvpWorkshops, setRsvpWorkshops] = useState<string[]>([]);
 
   // Behavior tracking & mandatory reviews state
-  const [categoryAffinities, setCategoryAffinities] = useState<Record<string, number>>({
-    'generative-ai': 4,
-    'excel-data': 3,
-  });
-  const [searchKeywordsHistory, setSearchKeywordsHistory] = useState<string[]>(['ai', 'excel']);
+  const [categoryAffinities, setCategoryAffinities] = useState<Record<string, number>>({});
+  const [searchKeywordsHistory, setSearchKeywordsHistory] = useState<string[]>([]);
   const [reviewedCourseIds, setReviewedCourseIds] = useState<string[]>([]);
 
   // Fetch live courses, categories, and blog posts from WordPress
   const loadWordPressData = useCallback(async (forceRefresh: boolean = false) => {
     setIsLoadingCourses(true);
+    setCoursesError(null);
     try {
       const [wpCourses, wpCategories, wpPosts] = await Promise.allSettled([
         fetchWpCourses({ perPage: 40, forceRefresh }),
@@ -130,6 +112,8 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       if (wpCourses.status === 'fulfilled' && wpCourses.value.length > 0) {
         setCourses(wpCourses.value);
+      } else if (wpCourses.status === 'rejected') {
+        setCoursesError(wpCourses.reason?.message || 'Unable to sync latest courses.');
       }
       if (wpCategories.status === 'fulfilled' && wpCategories.value.length > 0) {
         setCategories(wpCategories.value);
@@ -137,15 +121,26 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (wpPosts.status === 'fulfilled' && wpPosts.value.length > 0) {
         setBlogPosts(wpPosts.value);
       }
-    } catch (err) {
+    } catch (err: any) {
+      setCoursesError(err?.message || 'Unable to connect to Thriving Skills.');
       console.warn('Error fetching WordPress backend data:', err);
     } finally {
       setIsLoadingCourses(false);
     }
   }, []);
 
-  // On mount: load local storage + fetch live WP data
+  // Hydrate scoped user learning state whenever signed-in account changes
   useEffect(() => {
+    let active = true;
+    setUserProgress({});
+    setBookmarks([]);
+    setCertificates([]);
+    setNotes([]);
+    setRsvpWorkshops([]);
+    setCategoryAffinities({});
+    setSearchKeywordsHistory([]);
+    setReviewedCourseIds([]);
+
     (async () => {
       try {
         const [
@@ -156,16 +151,19 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           savedAffinities,
           savedSearches,
           savedReviews,
+          savedCertificates,
         ] = await Promise.all([
-          AsyncStorage.getItem(PROGRESS_STORAGE_KEY),
-          AsyncStorage.getItem(BOOKMARKS_STORAGE_KEY),
-          AsyncStorage.getItem(NOTES_STORAGE_KEY),
-          AsyncStorage.getItem(WORKSHOPS_STORAGE_KEY),
-          AsyncStorage.getItem(AFFINITIES_STORAGE_KEY),
-          AsyncStorage.getItem(SEARCH_HISTORY_STORAGE_KEY),
-          AsyncStorage.getItem(REVIEWS_STORAGE_KEY),
+          AsyncStorage.getItem(`${PROGRESS_STORAGE_KEY}${userScope}`),
+          AsyncStorage.getItem(`${BOOKMARKS_STORAGE_KEY}${userScope}`),
+          AsyncStorage.getItem(`${NOTES_STORAGE_KEY}${userScope}`),
+          AsyncStorage.getItem(`${WORKSHOPS_STORAGE_KEY}${userScope}`),
+          AsyncStorage.getItem(`${AFFINITIES_STORAGE_KEY}${userScope}`),
+          AsyncStorage.getItem(`${SEARCH_HISTORY_STORAGE_KEY}${userScope}`),
+          AsyncStorage.getItem(`${REVIEWS_STORAGE_KEY}${userScope}`),
+          AsyncStorage.getItem(`${CERTIFICATES_STORAGE_KEY}${userScope}`),
         ]);
 
+        if (!active) return;
         if (savedProgress) setUserProgress(JSON.parse(savedProgress));
         if (savedBookmarks) setBookmarks(JSON.parse(savedBookmarks));
         if (savedNotes) setNotes(JSON.parse(savedNotes));
@@ -173,13 +171,20 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (savedAffinities) setCategoryAffinities(JSON.parse(savedAffinities));
         if (savedSearches) setSearchKeywordsHistory(JSON.parse(savedSearches));
         if (savedReviews) setReviewedCourseIds(JSON.parse(savedReviews));
+        if (savedCertificates) setCertificates(JSON.parse(savedCertificates));
       } catch {
         // Safe fallback
       }
-
-      // Fetch live data from WordPress backend
-      loadWordPressData();
     })();
+
+    return () => {
+      active = false;
+    };
+  }, [userScope]);
+
+  // Fetch live WordPress catalog once on mount
+  useEffect(() => {
+    loadWordPressData();
   }, [loadWordPressData]);
 
   const refreshCourses = async () => {
@@ -209,7 +214,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const saveState = async (key: string, data: any) => {
     try {
-      await AsyncStorage.setItem(key, JSON.stringify(data));
+      await AsyncStorage.setItem(`${key}${userScope}`, JSON.stringify(data));
     } catch {}
   };
 
@@ -260,13 +265,17 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         id: `cert-${Date.now()}`,
         courseId: course.id,
         courseTitle: course.title,
-        studentName: 'Executive Graduate',
+        studentName: user?.displayName || user?.name || user?.username || 'Executive Graduate',
         issueDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
         credentialId: certId,
         instructorName: course.instructor.name,
         verificationUrl: `${Env.SITE_URL}/verify/${certId}`,
       };
-      setCertificates((prev) => [newCert, ...prev]);
+      setCertificates((prev) => {
+        const nextCerts = [newCert, ...prev];
+        saveState(CERTIFICATES_STORAGE_KEY, nextCerts);
+        return nextCerts;
+      });
     }
 
     const updated = {
@@ -340,6 +349,13 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     saveState(NOTES_STORAGE_KEY, updated);
   };
 
+  const restoreNote = (note: Note) => {
+    if (notes.some((n) => n.id === note.id)) return;
+    const updated = [note, ...notes];
+    setNotes(updated);
+    saveState(NOTES_STORAGE_KEY, updated);
+  };
+
   const getNotesForLesson = (courseId: string, lessonId: string) => {
     return notes.filter((n) => n.courseId === courseId && n.lessonId === lessonId);
   };
@@ -388,6 +404,16 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const updated = [...rsvpWorkshops, workshopId];
     setRsvpWorkshops(updated);
     saveState(WORKSHOPS_STORAGE_KEY, updated);
+  };
+
+  const toggleWorkshopRsvp = (workshopId: string): boolean => {
+    const exists = rsvpWorkshops.includes(workshopId);
+    const updated = exists
+      ? rsvpWorkshops.filter((id) => id !== workshopId)
+      : [...rsvpWorkshops, workshopId];
+    setRsvpWorkshops(updated);
+    saveState(WORKSHOPS_STORAGE_KEY, updated);
+    return !exists;
   };
 
   const isRsvpd = (workshopId: string) => rsvpWorkshops.includes(workshopId);
@@ -473,7 +499,11 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         instructorName: course.instructor?.name || 'Thriving Skills Instructor',
         verificationUrl: `${Env.SITE_URL}/verify/${certId}`,
       };
-      setCertificates((prev) => [cert!, ...prev]);
+      setCertificates((prev) => {
+        const nextCerts = [cert!, ...prev];
+        saveState(CERTIFICATES_STORAGE_KEY, nextCerts);
+        return nextCerts;
+      });
     } else if (certId) {
       cert = certificates.find((c) => c.credentialId === certId || c.courseId === courseId) || null;
     }
@@ -572,6 +602,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         categories,
         blogPosts,
         isLoadingCourses,
+        coursesError,
         userProgress,
         bookmarks,
         certificates,
@@ -589,12 +620,14 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         isBookmarked,
         addNote,
         deleteNote,
+        restoreNote,
         getNotesForLesson,
         getCourseProgressPercentage,
         recordWatchPosition,
         getWatchPosition,
         addCourseReview,
         rsvpForWorkshop,
+        toggleWorkshopRsvp,
         isRsvpd,
         getCourseById,
         getWorkshopById,

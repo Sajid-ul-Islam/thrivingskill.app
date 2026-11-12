@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,9 +21,24 @@ export const QuizModal: React.FC<QuizModalProps> = ({ visible, questions, onClos
   const [score, setScore] = useState<number>(0);
   const [quizFinished, setQuizFinished] = useState<boolean>(false);
 
+  const handleReset = () => {
+    setCurrentIndex(0);
+    setSelectedOption(null);
+    setIsSubmitted(false);
+    setScore(0);
+    setQuizFinished(false);
+  };
+
+  useEffect(() => {
+    if (visible) {
+      handleReset();
+    }
+  }, [visible, questions]);
+
   if (!questions || questions.length === 0) return null;
 
   const currentQ = questions[currentIndex];
+  if (!currentQ) return null;
 
   const handleSelectOption = (index: number) => {
     if (isSubmitted) return;
@@ -45,18 +60,10 @@ export const QuizModal: React.FC<QuizModalProps> = ({ visible, questions, onClos
       setIsSubmitted(false);
     } else {
       setQuizFinished(true);
-      if (score + (selectedOption === currentQ.correctAnswerIndex ? 1 : 0) >= Math.ceil(questions.length * 0.7)) {
+      if (score >= Math.ceil(questions.length * 0.7)) {
         onPass();
       }
     }
-  };
-
-  const handleReset = () => {
-    setCurrentIndex(0);
-    setSelectedOption(null);
-    setIsSubmitted(false);
-    setScore(0);
-    setQuizFinished(false);
   };
 
   return (
@@ -338,7 +345,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   closeBtn: {
-    padding: 4,
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   content: {
     padding: 20,

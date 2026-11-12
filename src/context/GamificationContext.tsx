@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from './AuthContext';
 
 const GAMIFICATION_STORAGE_KEY = '@thriving_skill_gamification';
 
@@ -22,8 +23,7 @@ const DEFAULT_BADGES: AchievementBadge[] = [
     description: 'Enrolled in your first professional course',
     icon: 'flag',
     color: '#059669',
-    isUnlocked: true,
-    unlockedAt: '2026-08-15',
+    isUnlocked: false,
   },
   {
     id: 'streak_champ',
@@ -32,8 +32,7 @@ const DEFAULT_BADGES: AchievementBadge[] = [
     description: 'Maintained a 3-day active learning streak',
     icon: 'flame',
     color: '#F59E0B',
-    isUnlocked: true,
-    unlockedAt: '2026-08-18',
+    isUnlocked: false,
   },
   {
     id: 'ai_pioneer',
@@ -42,8 +41,7 @@ const DEFAULT_BADGES: AchievementBadge[] = [
     description: 'Completed a Generative AI masterclass lecture',
     icon: 'sparkles',
     color: '#8B5CF6',
-    isUnlocked: true,
-    unlockedAt: '2026-08-20',
+    isUnlocked: false,
   },
   {
     id: 'data_wizard',
@@ -70,8 +68,7 @@ const DEFAULT_BADGES: AchievementBadge[] = [
     description: 'Earned an accredited Thriving Skills completion certificate',
     icon: 'ribbon',
     color: '#2563EB',
-    isUnlocked: true,
-    unlockedAt: '2026-08-22',
+    isUnlocked: false,
   },
 ];
 
@@ -105,21 +102,27 @@ interface GamificationContextType extends GamificationState {
 const GamificationContext = createContext<GamificationContextType>({} as GamificationContextType);
 
 export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  const scopedStorageKey = `${GAMIFICATION_STORAGE_KEY}${user?.id ? `_u_${user.id}` : '_guest'}`;
   const [celebration, setCelebration] = useState<CelebrationEvent | null>(null);
-  const [state, setState] = useState<GamificationState>({
-    streakDays: 4,
+  const getInitialState = (): GamificationState => ({
+    streakDays: 0,
     lastActiveDate: new Date().toISOString().split('T')[0],
-    dailyMinutesSpent: 11,
+    dailyMinutesSpent: 0,
     dailyGoalMinutes: 15,
-    badges: DEFAULT_BADGES,
-    xp: 350,
+    badges: DEFAULT_BADGES.map((b) => ({ ...b, isUnlocked: false, unlockedAt: undefined })),
+    xp: 0,
   });
+  const [state, setState] = useState<GamificationState>(getInitialState);
 
   useEffect(() => {
+    let active = true;
+    setState(getInitialState());
+
     (async () => {
       try {
-        const stored = await AsyncStorage.getItem(GAMIFICATION_STORAGE_KEY);
-        if (stored) {
+        const stored = await AsyncStorage.getItem(scopedStorageKey);
+        if (stored && active) {
           const parsed = JSON.parse(stored);
           const today = new Date().toISOString().split('T')[0];
 
@@ -132,7 +135,7 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           setState((prev) => ({
             ...prev,
             ...parsed,
-            xp: parsed.xp ?? 350,
+            xp: parsed.xp ?? 0,
             badges: prev.badges.map((b) => {
               const savedBadge = parsed.badges?.find((sb: any) => sb.id === b.id);
               return savedBadge ? { ...b, ...savedBadge } : b;
@@ -141,12 +144,16 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
       } catch {}
     })();
-  }, []);
+
+    return () => {
+      active = false;
+    };
+  }, [scopedStorageKey]);
 
   const saveState = async (newState: GamificationState) => {
     setState(newState);
     try {
-      await AsyncStorage.setItem(GAMIFICATION_STORAGE_KEY, JSON.stringify(newState));
+      await AsyncStorage.setItem(scopedStorageKey, JSON.stringify(newState));
     } catch {}
   };
 

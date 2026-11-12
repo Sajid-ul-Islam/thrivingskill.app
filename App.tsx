@@ -12,6 +12,9 @@ import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { LanguageProvider, useLanguage } from './src/context/LanguageContext';
 import { GamificationProvider, useGamification } from './src/context/GamificationContext';
 import { YouTubeProvider, useYouTube } from './src/context/YouTubeContext';
+import { FeedbackProvider, useFeedback } from './src/context/FeedbackContext';
+import { NetworkProvider } from './src/context/NetworkContext';
+import { triggerHaptic } from './src/utils/haptics';
 import { RootTab, ActiveScreen } from './src/types';
 
 import { HomeScreen } from './src/screens/HomeScreen';
@@ -33,7 +36,7 @@ import { YouTubePlayerModal } from './src/components/YouTubePlayerModal';
 import { UniversalSearchModal } from './src/components/UniversalSearchModal';
 import { BrandDrawer } from './src/components/BrandDrawer';
 import { AppUpdateModal } from './src/components/AppUpdateModal';
-import { ScreenTransition, CelebrationToast } from './src/components/common';
+import { ScreenTransition, CelebrationToast, ActionToast } from './src/components/common';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -48,6 +51,7 @@ const MainAppContent: React.FC = () => {
   const { isAuthModalVisible, setAuthModalVisible } = useAuth();
   const { celebration, clearCelebration } = useGamification();
   const { activeVideo, playerMode, closePlayer, minimizePlayer, playVideo } = useYouTube();
+  const { currentToast, dismissToast } = useFeedback();
 
   const [activeTab, setActiveTab] = useState<RootTab>('Home');
   const [activeScreen, setActiveScreen] = useState<ActiveScreen>({
@@ -67,6 +71,9 @@ const MainAppContent: React.FC = () => {
   const inProgressCount = Object.values(userProgress).filter((p) => !p.isCompleted).length;
 
   const navigateToTab = (tab: RootTab) => {
+    if (tab !== activeTab || activeScreen.name !== 'MainTabs') {
+      triggerHaptic('selection');
+    }
     setActiveTab(tab);
     setActiveScreen({ name: 'MainTabs', tab });
   };
@@ -296,9 +303,10 @@ const MainAppContent: React.FC = () => {
                 <View
                   style={[
                     styles.tabPillIndicator,
-                    isActive && {
-                      backgroundColor: isDark ? 'rgba(56, 189, 248, 0.16)' : colors.primaryLight,
-                    },
+                    Platform.OS === 'android' &&
+                      isActive && {
+                        backgroundColor: isDark ? 'rgba(56, 189, 248, 0.16)' : colors.primaryLight,
+                      },
                   ]}
                 >
                   <Ionicons
@@ -409,6 +417,17 @@ const MainAppContent: React.FC = () => {
 
       {/* Global Milestone & Lesson Completion Celebration HUD */}
       <CelebrationToast data={celebration} onDismiss={clearCelebration} />
+
+      {/* Global Immediate Action Feedback & Undo Toast */}
+      <ActionToast
+        toast={currentToast}
+        onDismiss={dismissToast}
+        bottomOffset={
+          activeScreen.name === 'MainTabs'
+            ? 74 + Math.max(insets.bottom, Platform.OS === 'ios' ? 12 : 8)
+            : Math.max(insets.bottom, 16) + 12
+        }
+      />
     </SafeAreaView>
   );
 };
@@ -418,17 +437,21 @@ export default function App() {
     <SafeAreaProvider>
       <ThemeProvider>
         <LanguageProvider>
-          <GamificationProvider>
-            <AuthProvider>
-              <SaaSProvider>
-                <LearningProvider>
-                  <YouTubeProvider>
-                    <MainAppContent />
-                  </YouTubeProvider>
-                </LearningProvider>
-              </SaaSProvider>
-            </AuthProvider>
-          </GamificationProvider>
+          <NetworkProvider>
+            <FeedbackProvider>
+              <AuthProvider>
+                <GamificationProvider>
+                  <SaaSProvider>
+                    <LearningProvider>
+                      <YouTubeProvider>
+                        <MainAppContent />
+                      </YouTubeProvider>
+                    </LearningProvider>
+                  </SaaSProvider>
+                </GamificationProvider>
+              </AuthProvider>
+            </FeedbackProvider>
+          </NetworkProvider>
         </LanguageProvider>
       </ThemeProvider>
     </SafeAreaProvider>
