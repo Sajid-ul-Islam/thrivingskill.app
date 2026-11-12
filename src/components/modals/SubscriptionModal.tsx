@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -6,42 +6,29 @@ import {
   Modal,
   TouchableOpacity,
   ScrollView,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useSaaS, SAAS_PLAN_FEATURES } from '../../context/SaaSContext';
-import { SubscriptionTier } from '../../types';
+import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface SubscriptionModalProps {
   visible: boolean;
   onClose: () => void;
 }
 
+/**
+ * Companion / Reader-App compliant Account Membership & Feature Overview modal.
+ * Displays synced membership tier and capabilities without prices or unverified upgrades.
+ */
 export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, onClose }) => {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const { subscriptionTier, billingInterval, setSubscriptionTier, setBillingInterval } = useSaaS();
-  const [selectedTier, setSelectedTier] = useState<SubscriptionTier>(subscriptionTier);
-  const [currency, setCurrency] = useState<'BDT' | 'USD'>('BDT');
-
-  const isAnnual = billingInterval === 'annual';
-
-  const handleUpgrade = (tier: SubscriptionTier) => {
-    setSubscriptionTier(tier);
-    Alert.alert(
-      'Plan Updated Successfully! 🚀',
-      `You are now on the ${
-        tier === 'starter'
-          ? 'Starter (Free)'
-          : tier === 'pro'
-          ? 'Pro Executive'
-          : 'Enterprise Scale'
-      } plan (${isAnnual ? 'Billed Annually' : 'Billed Monthly'}). All courses and AI tools are immediately unlocked.`,
-      [{ text: 'Continue', onPress: onClose }]
-    );
-  };
+  const { isBangla } = useLanguage();
+  const { subscriptionTier } = useSaaS();
+  const { user, isAuthenticated, setAuthModalVisible } = useAuth();
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -52,10 +39,12 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
             <View style={styles.headerTitleCol}>
               <View style={styles.titleRow}>
                 <Ionicons name="sparkles" size={20} color="#F59E0B" />
-                <Text style={[styles.headerTitle, { color: colors.text }]}>স্মার্ট লার্নিং সাবস্ক্রিপশন</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]}>
+                  {isBangla ? 'মেম্বারশিপ ও লার্নিং অ্যাক্সেস' : 'Membership & Learning Access'}
+                </Text>
               </View>
               <Text style={[styles.headerSub, { color: colors.textMuted }]}>
-                Thriving Skills Course & Service Subscription
+                {isBangla ? 'আপনার অ্যাকাউন্টের সাথে সিঙ্ক করা সুবিধা' : 'Synced Thriving Skills Account Capabilities'}
               </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
@@ -63,106 +52,70 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 20) + 40 }]}>
-            {/* Currency & Interval Controls */}
-            <View style={styles.controlsRow}>
-              {/* Currency Toggle */}
-              <View style={[styles.currencyWrapper, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
-                <TouchableOpacity
-                  style={[styles.currencyBtn, currency === 'BDT' && { backgroundColor: colors.primary }]}
-                  onPress={() => setCurrency('BDT')}
-                >
-                  <Text style={[styles.currencyText, { color: currency === 'BDT' ? colors.onPrimary : colors.textMuted }]}>
-                    ৳ BDT
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.currencyBtn, currency === 'USD' && { backgroundColor: colors.primary }]}
-                  onPress={() => setCurrency('USD')}
-                >
-                  <Text style={[styles.currencyText, { color: currency === 'USD' ? colors.onPrimary : colors.textMuted }]}>
-                    $ USD
-                  </Text>
-                </TouchableOpacity>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 20) + 40 }]}
+          >
+            {/* Current Account Sync Status Banner */}
+            <View style={[styles.statusBanner, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.statusLabel, { color: colors.textMuted }]}>
+                  {isBangla ? 'বর্তমান অ্যাকাউন্ট স্ট্যাটাস' : 'ACTIVE ACCOUNT STATUS'}
+                </Text>
+                <Text style={[styles.statusValue, { color: colors.text }]}>
+                  {subscriptionTier === 'enterprise'
+                    ? 'Enterprise Team Workspace'
+                    : subscriptionTier === 'pro'
+                    ? 'Pro Executive Member'
+                    : 'Starter Member'}
+                </Text>
+                <Text style={[styles.statusMeta, { color: colors.textMuted }]}>
+                  {isAuthenticated
+                    ? `${user?.email || user?.username} • Synced`
+                    : isBangla
+                    ? 'অ্যাকাউন্ট সুবিধা সিঙ্ক করতে সাইন ইন করুন'
+                    : 'Sign in with your Thriving Skills account to sync your library'}
+                </Text>
               </View>
-
-              {/* Billing Interval Switcher */}
-              <View style={[styles.billingToggleWrapper, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+              {!isAuthenticated && (
                 <TouchableOpacity
-                  style={[
-                    styles.billingToggleBtn,
-                    !isAnnual && { backgroundColor: colors.primary },
-                  ]}
-                  onPress={() => setBillingInterval('monthly')}
+                  style={[styles.syncSignInBtn, { backgroundColor: colors.primary }]}
+                  onPress={() => {
+                    onClose();
+                    setAuthModalVisible(true);
+                  }}
                 >
-                  <Text style={[styles.billingToggleText, { color: !isAnnual ? colors.onPrimary : colors.textMuted }]}>
-                    Monthly
+                  <Ionicons name="log-in-outline" size={16} color={colors.onPrimary} />
+                  <Text style={[styles.syncSignInText, { color: colors.onPrimary }]}>
+                    {isBangla ? 'সাইন ইন' : 'Sign In'}
                   </Text>
                 </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.billingToggleBtn,
-                    isAnnual && { backgroundColor: colors.primary },
-                  ]}
-                  onPress={() => setBillingInterval('annual')}
-                >
-                  <Text style={[styles.billingToggleText, { color: isAnnual ? colors.onPrimary : colors.textMuted }]}>
-                    Annual
-                  </Text>
-                  <View style={styles.discountPill}>
-                    <Text style={styles.discountText}>-20%</Text>
-                  </View>
-                </TouchableOpacity>
-              </View>
+              )}
             </View>
 
-            {/* Plans Grid */}
+            {/* Membership Tiers Overview (Informational Reader-App View — No Pricing / No Direct Purchase) */}
             <View style={styles.plansContainer}>
-              {/* Starter Plan */}
+              {/* Starter Tier */}
               <View
                 style={[
                   styles.planCard,
-                  { backgroundColor: colors.surfaceCard, borderColor: selectedTier === 'starter' ? colors.primary : colors.border },
-                  selectedTier === 'starter' && styles.activePlanCard,
+                  {
+                    backgroundColor: colors.surfaceCard,
+                    borderColor: subscriptionTier === 'starter' ? colors.primary : colors.border,
+                  },
+                  subscriptionTier === 'starter' && styles.activePlanCard,
                 ]}
               >
                 <View style={styles.planHeader}>
-                  <Text style={[styles.planName, { color: colors.text }]}>Starter Free</Text>
+                  <Text style={[styles.planName, { color: colors.text }]}>Starter Member</Text>
                   <Text style={[styles.planDescription, { color: colors.textMuted }]}>
-                    এক্সক্লুসিভ ফ্রি কোর্স ও ইন্ট্রোডাক্টরি লেকচার ট্রায়াল।
+                    এক্সক্লুসিভ ফ্রি কোর্স ও ইন্ট্রোডাক্টরি লেকচার অ্যাক্সেস।
                   </Text>
-                  <View style={styles.priceContainer}>
-                    <Text style={[styles.planPrice, { color: colors.text }]}>
-                      {currency === 'BDT' ? '৳০' : '$0'}
-                    </Text>
-                    <Text style={[styles.planPeriod, { color: colors.textMuted }]}>/ চিরদিনের জন্য ফ্রি</Text>
-                  </View>
                 </View>
 
-                <TouchableOpacity
-                  style={[
-                    styles.planCTA,
-                    subscriptionTier === 'starter'
-                      ? { backgroundColor: colors.surfaceSubtle }
-                      : { backgroundColor: colors.surfaceSubtle, borderColor: colors.border, borderWidth: 1 },
-                  ]}
-                  onPress={() => handleUpgrade('starter')}
-                  disabled={subscriptionTier === 'starter'}
-                >
-                  <Text
-                    style={[
-                      styles.planCTAText,
-                      { color: subscriptionTier === 'starter' ? colors.textMuted : colors.text },
-                    ]}
-                  >
-                    {subscriptionTier === 'starter' ? 'Current Plan' : 'Downgrade to Starter'}
-                  </Text>
-                </TouchableOpacity>
-
                 <View style={styles.featuresList}>
-                  <Text style={[styles.featuresHeading, { color: colors.textMuted }]}>সুবিধাসমূহ:</Text>
-                  {['৩টি প্রিভিউ লেকচার প্রতি কোর্সে', 'কমিউনিটি ডিসকাশন প্ল্যাটফর্ম', 'কোর্সের বেসিক সিলেবাস ওভারভিউ'].map((feat, idx) => (
+                  <Text style={[styles.featuresHeading, { color: colors.textMuted }]}>অন্তর্ভুক্ত সুবিধাসমূহ:</Text>
+                  {['বিনামূল্যে কোর্স ও প্রিভিউ লেকচার', 'কমিউনিটি ডিসকাশন ও কুইজ প্র্যাকটিস', 'কোর্স সিলেবাস ও প্রোগ্রেস ট্র্যাকিং'].map((feat, idx) => (
                     <View key={idx} style={styles.featureItem}>
                       <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
                       <Text style={[styles.featureText, { color: colors.text }]}>{feat}</Text>
@@ -171,7 +124,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                 </View>
               </View>
 
-              {/* Pro Executive Plan */}
+              {/* Pro Executive Tier */}
               <View
                 style={[
                   styles.planCard,
@@ -184,51 +137,23 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
               >
                 <View style={styles.popularBadge}>
                   <Ionicons name="flash" size={12} color="#FFFFFF" />
-                  <Text style={styles.popularBadgeText}>সেরা অফার • প্রফেশনালস চয়েস</Text>
+                  <Text style={styles.popularBadgeText}>FULL LIBRARY • PRO EXECUTIVE</Text>
                 </View>
 
                 <View style={styles.planHeader}>
-                  <Text style={[styles.planName, { color: '#FFFFFF' }]}>Pro Executive Annual</Text>
+                  <Text style={[styles.planName, { color: '#FFFFFF' }]}>Pro Executive</Text>
                   <Text style={[styles.planDescription, { color: '#D1FAE5' }]}>
-                    ৩০০+ প্রিমিয়াম কোর্স, এআই কো-পাইলট এবং ভেরিফাইড সার্টিফিকেটে আনলিমিটেড অ্যাক্সেস।
+                    এনরোল করা সকল মাস্টারক্লাস, এআই কো-পাইলট এবং ভেরিফাইড সার্টিফিকেট অ্যাক্সেস।
                   </Text>
-                  <View style={styles.priceContainer}>
-                    <Text style={[styles.planPrice, { color: '#FFFFFF' }]}>
-                      {currency === 'BDT'
-                        ? isAnnual
-                          ? '৳২,৯০০'
-                          : '৳২৯০'
-                        : isAnnual
-                        ? '$290'
-                        : '$29'}
-                    </Text>
-                    <Text style={[styles.planPeriod, { color: '#A7F3D0' }]}>
-                      {isAnnual ? '/ year (৳২৪১/মাস)' : '/ month'}
-                    </Text>
-                  </View>
                 </View>
 
-                <TouchableOpacity
-                  style={[
-                    styles.planCTA,
-                    { backgroundColor: '#047857' },
-                  ]}
-                  onPress={() => handleUpgrade('pro')}
-                >
-                  <Text style={[styles.planCTAText, { color: '#FFFFFF', fontWeight: '800' }]}>
-                    {subscriptionTier === 'pro' ? 'Current Active Plan' : 'সাবস্ক্রিপশন নিন (Upgrade)'}
-                  </Text>
-                </TouchableOpacity>
-
                 <View style={styles.featuresList}>
-                  <Text style={[styles.featuresHeading, { color: '#A7F3D0' }]}>প্রো মেম্বারশিপের সুবিধাসমূহ:</Text>
+                  <Text style={[styles.featuresHeading, { color: '#A7F3D0' }]}>প্রো মেম্বারশিপ সুবিধাসমূহ:</Text>
                   {[
-                    '৩০০+ সকল রেকর্ডেড মাস্টারক্লাস আনলকড',
-                    'এক্সিকিউটিভ AI কো-পাইলট (সলিউশন প্রম্পট জেনারেটর)',
-                    'প্রতিটি কোর্সে ইন্ডাস্ট্রি ভেরিফাইড সার্টিফিকেট ও LinkedIn ব্যাজ',
-                    'সাপ্তাহিক লাইভ ট্রেনিং ও সামিটে ফ্রি সিট',
-                    'অফলাইন ভিডিও ডাউনলোড (মোবাইল অ্যাপ)',
-                    'ডাউনলোডযোগ্য এক্সেল ও ফিন্যান্সিয়াল মডেল ফাইল',
+                    'সকল এনরোলকৃত মাস্টারক্লাস ও লেসন',
+                    'এক্সিকিউটিভ AI কো-পাইলট',
+                    'ভেরিফাইড সার্টিফিকেট ও LinkedIn ব্যাজ',
+                    'সাপ্তাহিক লাইভ ওয়ার্কশপ ও সামিট অ্যাক্সেস',
                   ].map((feat, idx) => (
                     <View key={idx} style={styles.featureItem}>
                       <Ionicons name="checkmark-circle" size={16} color="#34D399" />
@@ -238,11 +163,14 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                 </View>
               </View>
 
-              {/* Enterprise Team Plan */}
+              {/* Enterprise Team Tier */}
               <View
                 style={[
                   styles.planCard,
-                  { backgroundColor: colors.surfaceCard, borderColor: colors.secondary },
+                  {
+                    backgroundColor: colors.surfaceCard,
+                    borderColor: subscriptionTier === 'enterprise' ? colors.secondary : colors.border,
+                  },
                 ]}
               >
                 <View style={[styles.enterpriseBadge, { backgroundColor: colors.secondaryLight }]}>
@@ -255,41 +183,14 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                   <Text style={[styles.planDescription, { color: colors.textMuted }]}>
                     অর্গানাইজেশনের টিম আপস্কিলিং, সিট অ্যালোকেশন ও স্কিল গ্যাপ অ্যানালিটিক্স।
                   </Text>
-                  <View style={styles.priceContainer}>
-                    <Text style={[styles.planPrice, { color: colors.text }]}>
-                      {currency === 'BDT'
-                        ? isAnnual
-                          ? '৳৬,৫০০'
-                          : '৳৭৯০'
-                        : isAnnual
-                        ? '$65'
-                        : '$79'}
-                    </Text>
-                    <Text style={[styles.planPeriod, { color: colors.textMuted }]}>
-                      / seat / mo
-                    </Text>
-                  </View>
                 </View>
-
-                <TouchableOpacity
-                  style={[
-                    styles.planCTA,
-                    { backgroundColor: colors.secondary },
-                  ]}
-                  onPress={() => handleUpgrade('enterprise')}
-                >
-                  <Text style={[styles.planCTAText, { color: colors.onSecondary }]}>
-                    {subscriptionTier === 'enterprise' ? 'Current Enterprise Plan' : 'টিম লাইসেন্স নিন'}
-                  </Text>
-                </TouchableOpacity>
 
                 <View style={styles.featuresList}>
                   <Text style={[styles.featuresHeading, { color: colors.textMuted }]}>এন্টারপ্রাইজ সুবিধা:</Text>
                   {[
-                    '১০ থেকে ৫০০+ টিম সিট ম্যানেজমেন্ট পোর্টাল',
-                    'ডিপার্টমেন্টাল স্কিল গ্যাপ রাডার ও কমপ্লায়েন্স রিপোর্ট (CSV)',
-                    'ম্যানেজার কোর্স অ্যাসাইনমেন্ট ও ডেডলাইন ট্র্যাকিং',
-                    'কাস্টম LMS ইন্টিগ্রেশন ও ডেডিকেটেড অ্যাকাউন্ট ম্যানেজার',
+                    'টিম সিট ম্যানেজমেন্ট ও প্রোগ্রেস ট্র্যাকিং',
+                    'ডিপার্টমেন্টাল স্কিল গ্যাপ অ্যানালিটিক্স',
+                    'ডেডিকেটেড এলএমএস সাপোর্ট ও রিপোর্টিং',
                   ].map((feat, idx) => (
                     <View key={idx} style={styles.featureItem}>
                       <Ionicons name="checkmark-circle" size={16} color={colors.secondary} />
@@ -302,7 +203,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
 
             {/* Feature Comparison Matrix Table */}
             <View style={[styles.matrixCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
-              <Text style={[styles.matrixTitle, { color: colors.text }]}>প্ল্যান ফিচার তুলনা (Feature Matrix)</Text>
+              <Text style={[styles.matrixTitle, { color: colors.text }]}>মেম্বারশিপ ফিচার তুলনা (Feature Matrix)</Text>
               <View style={[styles.matrixHeaderRow, { borderBottomColor: colors.borderSubtle }]}>
                 <Text style={[styles.matrixColHeading, { flex: 2, color: colors.textMuted }]}>Feature</Text>
                 <Text style={[styles.matrixColHeading, { flex: 1, textAlign: 'center', color: colors.textMuted }]}>Starter</Text>
@@ -314,7 +215,6 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                 <View key={item.id} style={[styles.matrixRow, { borderBottomColor: colors.borderSubtle }]}>
                   <Text style={[styles.matrixItemTitle, { flex: 2, color: colors.text }]}>{item.title}</Text>
 
-                  {/* Starter */}
                   <View style={{ flex: 1, alignItems: 'center' }}>
                     {typeof item.starter === 'string' ? (
                       <Text style={[styles.matrixValText, { color: colors.textMuted }]}>{item.starter}</Text>
@@ -325,7 +225,6 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                     )}
                   </View>
 
-                  {/* Pro */}
                   <View style={{ flex: 1, alignItems: 'center' }}>
                     {typeof item.pro === 'string' ? (
                       <Text style={[styles.matrixValText, { color: colors.primary, fontWeight: '700' }]}>{item.pro}</Text>
@@ -336,7 +235,6 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                     )}
                   </View>
 
-                  {/* Enterprise */}
                   <View style={{ flex: 1, alignItems: 'center' }}>
                     {typeof item.enterprise === 'string' ? (
                       <Text style={[styles.matrixValText, { color: colors.secondary, fontWeight: '700' }]}>{item.enterprise}</Text>
@@ -394,63 +292,49 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   closeBtn: {
-    padding: 6,
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   scrollContent: {
     padding: 16,
     paddingBottom: 40,
   },
-  controlsRow: {
+  statusBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 16,
-    gap: 10,
-  },
-  currencyWrapper: {
-    flexDirection: 'row',
-    borderRadius: 10,
-    padding: 3,
+    borderRadius: 16,
     borderWidth: 1,
+    padding: 14,
+    marginBottom: 14,
+    gap: 12,
   },
-  currencyBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 7,
+  statusLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.6,
   },
-  currencyText: {
-    fontSize: 12,
-    fontWeight: '700',
+  statusValue: {
+    fontSize: 16,
+    fontWeight: '800',
+    marginTop: 2,
   },
-  billingToggleWrapper: {
-    flex: 1,
-    flexDirection: 'row',
-    borderRadius: 10,
-    padding: 3,
-    borderWidth: 1,
+  statusMeta: {
+    fontSize: 11,
+    marginTop: 2,
   },
-  billingToggleBtn: {
-    flex: 1,
+  syncSignInBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 6,
-    borderRadius: 7,
-    gap: 4,
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
   },
-  billingToggleText: {
+  syncSignInText: {
     fontSize: 12,
-    fontWeight: '700',
-  },
-  discountPill: {
-    backgroundColor: '#FFB606',
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    borderRadius: 4,
-  },
-  discountText: {
-    color: '#102F53',
-    fontSize: 8,
     fontWeight: '800',
   },
   plansContainer: {
@@ -502,7 +386,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   planHeader: {
-    marginBottom: 14,
+    marginBottom: 12,
   },
   planName: {
     fontSize: 19,
@@ -512,29 +396,6 @@ const styles = StyleSheet.create({
   planDescription: {
     fontSize: 12,
     lineHeight: 16,
-    marginBottom: 10,
-  },
-  priceContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 4,
-  },
-  planPrice: {
-    fontSize: 26,
-    fontWeight: '800',
-  },
-  planPeriod: {
-    fontSize: 12,
-  },
-  planCTA: {
-    paddingVertical: 12,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  planCTAText: {
-    fontSize: 13,
-    fontWeight: '700',
   },
   featuresList: {
     gap: 8,

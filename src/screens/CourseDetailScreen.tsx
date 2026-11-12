@@ -682,25 +682,13 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
             <View style={styles.priceRow}>
               <Text style={[styles.bottomPrice, { color: colors.primary }]} numberOfLines={1}>
                 {isPaidCourse
-                  ? (course.priceBdt ? `৳${course.priceBdt.toLocaleString()}` : `${course.price.toFixed(2)}`)
-                  : (isBangla ? 'বিনামূল্যে' : 'Free')}
+                  ? (isBangla ? 'সদস্য অ্যাক্সেস' : 'Member Access')
+                  : (isBangla ? 'বিনামূল্যে' : 'Free Course')}
               </Text>
-              {(course.originalPriceBdt || course.originalPrice) && (
-                <Text style={[styles.bottomOriginalPrice, { color: colors.textMuted }]} numberOfLines={1}>
-                  {course.originalPriceBdt
-                    ? `৳${course.originalPriceBdt.toLocaleString()}`
-                    : `$${course.originalPrice.toFixed(2)}`}
-                </Text>
-              )}
-              {discountPercent > 0 && (
-                <View style={styles.detailDiscountTag}>
-                  <Text style={styles.detailDiscountText}>{discountPercent}% OFF</Text>
-                </View>
-              )}
             </View>
             <Text style={[styles.bottomPriceLabel, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
-            {isBangla ? 'লাইফটাইম অ্যাক্সেস • সার্টিফিকেট' : 'Lifetime Access • Certificate'}
-          </Text>
+              {isBangla ? 'লাইফটাইম অ্যাক্সেস • সার্টিফিকেট' : 'Lifetime Access • Certificate'}
+            </Text>
           </View>
         ) : (
           <View style={styles.bottomPriceCol}>
@@ -746,12 +734,12 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
             isEnrolled
               ? (isBangla ? 'লেসনে যান' : 'Resume Course')
               : isPaidCourse
-              ? (isBangla ? 'ওয়েবসাইটে ভর্তি হন (বিকাশ / নগদ)' : 'Enroll via Web (bKash / Nagad)')
+              ? (isBangla ? 'অ্যাকাউন্ট অ্যাক্সেস সিঙ্ক করুন' : 'Sync Member Access')
               : (isBangla ? 'বিনামূল্যে ভর্তি হন' : 'Enroll for Free')
           }
         >
           <Ionicons
-            name={isAdmin ? 'play-circle' : isEnrolled ? 'play' : isPaidCourse ? 'open-outline' : 'flash'}
+            name={isAdmin ? 'play-circle' : isEnrolled ? 'play' : isPaidCourse ? 'sync' : 'flash'}
             size={18}
             color={isAdmin ? '#FFFFFF' : !isEnrolled && isPaidCourse ? '#102F53' : colors.onPrimary}
           />
@@ -771,7 +759,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
               : isEnrolled
               ? (isBangla ? 'লেসনে যান' : 'Resume Course')
               : isPaidCourse
-              ? (isBangla ? 'ওয়েবসাইটে ভর্তি হন' : 'Enroll via Web')
+              ? (isBangla ? 'অ্যাক্সেস সিঙ্ক করুন' : 'Sync Access')
               : (isBangla ? 'বিনামূল্যে ভর্তি হন' : 'Enroll for Free')}
           </Text>
         </SpringPressable>

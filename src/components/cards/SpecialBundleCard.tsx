@@ -34,10 +34,10 @@ export const SpecialBundleCard: React.FC<SpecialBundleCardProps> = ({ bundle, on
         <View style={styles.badgeRow}>
           <View style={styles.bundleBadge}>
             <Ionicons name="cube" size={12} color="#102F53" />
-            <Text style={styles.bundleBadgeText}>SPECIAL BUNDLE</Text>
+            <Text style={styles.bundleBadgeText}>CAREER TRACK</Text>
           </View>
           <View style={styles.discountBadge}>
-            <Text style={styles.discountText}>SAVE 60%</Text>
+            <Text style={styles.discountText}>MULTI-COURSE</Text>
           </View>
         </View>
       </View>
@@ -78,11 +78,8 @@ export const SpecialBundleCard: React.FC<SpecialBundleCardProps> = ({ bundle, on
           </View>
 
           <View style={styles.priceCol}>
-            <Text style={[styles.origPrice, { color: colors.textLight }]}>
-              ৳{bundle.originalPriceBdt.toLocaleString()}
-            </Text>
-            <Text style={[styles.price, { color: colors.primary }]}>
-              ৳{bundle.priceBdt.toLocaleString()}
+            <Text style={[styles.price, { color: colors.primary, fontSize: 12 }]}>
+              Member Track
             </Text>
           </View>
         </View>

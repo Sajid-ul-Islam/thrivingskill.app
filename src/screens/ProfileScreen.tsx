@@ -456,10 +456,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   <Ionicons name="card-outline" size={20} color="#F59E0B" />
                   <View style={{ marginLeft: 6 }}>
                     <Text style={[styles.settingLabel, { color: colors.text }]}>
-                      {isBangla ? 'পেমেন্ট ও অর্ডার ম্যানেজমেন্ট' : 'Payments & Orders'}
+                      {isBangla ? 'এনরোলমেন্ট ও অর্ডার ম্যানেজমেন্ট' : 'Orders & Enrollment Management'}
                     </Text>
                     <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                      {isBangla ? 'bKash/Nagad/Rocket অর্ডার ও ট্রানজ্যাকশন' : 'Review orders & payment transactions'}
+                      {isBangla ? 'অর্ডার স্ট্যাটাস ও এনরোলমেন্ট রিভিউ করুন' : 'Review LearnPress enrollment records'}
                     </Text>
                   </View>
                 </View>
@@ -487,9 +487,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </View>
         )}
 
-        {/* SaaS Subscription & Membership Card */}
+        {/* Account Membership Card */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>স্মার্ট লার্নিং সাবস্ক্রিপশন ও বিলিং</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+            {isBangla ? 'অ্যাকাউন্ট মেম্বারশিপ ও অ্যাক্সেস' : 'ACCOUNT MEMBERSHIP & ACCESS'}
+          </Text>
           <View
             style={[
               styles.subscriptionCard,
@@ -503,24 +505,23 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   {subscriptionTier === 'enterprise'
                     ? 'ENTERPRISE SCALE'
                     : subscriptionTier === 'pro'
-                    ? 'PRO EXECUTIVE ANNUAL'
-                    : 'STARTER FREE'}
+                    ? 'PRO EXECUTIVE'
+                    : 'STARTER MEMBER'}
                 </Text>
               </View>
-              <Text style={[styles.billingCycleText, { color: colors.textMuted }]}>
-                {billingInterval === 'annual' ? 'Billed Annually (-20%)' : 'Billed Monthly'}
-              </Text>
             </View>
 
             <Text style={[styles.planTitle, { color: colors.text }]}>
               {subscriptionTier === 'enterprise'
-                ? 'Apex Corp Team License (25 Seats Active)'
+                ? 'Enterprise Team Workspace'
                 : subscriptionTier === 'pro'
                 ? '৩০০+ কোর্স, AI Copilot ও সার্টিফিকেট আনলকড'
-                : 'Free Limited Access Plan'}
+                : 'Synced Account Access'}
             </Text>
             <Text style={[styles.planExpiry, { color: colors.textMuted }]}>
-              Next billing date: September 15, 2026 • Auto-renew active
+              {isBangla
+                ? 'আপনার ওয়েব অ্যাকাউন্টের সাথে স্বয়ংক্রিয়ভাবে সিঙ্ক করা'
+                : 'Synced automatically with your Thriving Skills account'}
             </Text>
 
             <View style={styles.subActionRow}>
@@ -528,17 +529,19 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 style={[styles.managePlanBtn, { backgroundColor: colors.primary }]}
                 onPress={onOpenSubscription}
               >
-                <Ionicons name="card-outline" size={16} color={colors.onPrimary} />
-                <Text style={[styles.managePlanText, { color: colors.onPrimary }]}>Change / Upgrade Plan</Text>
+                <Ionicons name="shield-checkmark-outline" size={16} color={colors.onPrimary} />
+                <Text style={[styles.managePlanText, { color: colors.onPrimary }]}>
+                  {isBangla ? 'মেম্বারশিপ তথ্য' : 'Membership Details'}
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.invoiceBtn, { borderColor: colors.border, backgroundColor: colors.surfaceSubtle }]}
                 onPress={() => setPaymentHistoryModalVisible(true)}
               >
-                <Ionicons name="receipt-outline" size={16} color={colors.text} />
+                <Ionicons name="library-outline" size={16} color={colors.text} />
                 <Text style={[styles.invoiceBtnText, { color: colors.text }]}>
-                  {isBangla ? 'পেমেন্ট ও ইনভয়েস' : 'Invoices'}
+                  {isBangla ? 'এনরোলমেন্ট' : 'Enrollments'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -792,19 +795,19 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </TouchableOpacity>
 
-            {/* Payment History & Invoices (Section 15 & 26) */}
+            {/* Enrolled Courses & Library History */}
             <TouchableOpacity
               style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
               onPress={() => setPaymentHistoryModalVisible(true)}
             >
               <View style={styles.settingLeft}>
-                <Ionicons name="receipt-outline" size={20} color="#10B981" />
+                <Ionicons name="library-outline" size={20} color="#10B981" />
                 <View style={{ marginLeft: 6 }}>
                   <Text style={[styles.settingLabel, { color: colors.text }]}>
-                    {isBangla ? 'পেমেন্ট ও ইনভয়েস হিস্ট্রি' : 'Payment History & Invoices'}
+                    {isBangla ? 'এনরোলমেন্ট রেকর্ড' : 'Enrollment Records'}
                   </Text>
                   <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                    {isBangla ? 'সকল পেমেন্ট রশিদ ও সাবস্ক্রিপশন রেকর্ড' : 'All transaction receipts & VAT invoices'}
+                    {isBangla ? 'আপনার সিঙ্ক করা সকল কোর্স তালিকা' : 'Your synced LearnPress course library'}
                   </Text>
                 </View>
               </View>
@@ -1313,10 +1316,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             <View style={styles.modalHeader}>
               <View>
                 <Text style={[styles.modalTitle, { color: colors.text }]}>
-                  {isBangla ? 'পেমেন্ট হিস্ট্রি ও ইনভয়েস' : 'Payment History & Invoices'}
+                  {isBangla ? 'এনরোলমেন্ট লাইব্রেরি' : 'Enrolled Course Records'}
                 </Text>
                 <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
-                  {isBangla ? 'সকল লেনদেন ও অফিশিয়াল ভ্যাট চালান' : 'Official VAT receipts & transaction history'}
+                  {isBangla ? 'আপনার অ্যাকাউন্টের সিঙ্ক করা কোর্স তালিকা' : 'Courses synced with your Thriving Skills account'}
                 </Text>
               </View>
               <TouchableOpacity onPress={() => setPaymentHistoryModalVisible(false)} style={styles.modalCloseBtn}>
@@ -1327,14 +1330,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 8, gap: 12, paddingBottom: Math.max(insets.bottom, 16) }}>
               {enrolledOrderCourses.length === 0 ? (
                 <View style={[styles.invoiceItemCard, { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderSubtle, alignItems: 'center', paddingVertical: 20 }]}>
-                  <Ionicons name="receipt-outline" size={28} color={colors.textMuted} />
+                  <Ionicons name="library-outline" size={28} color={colors.textMuted} />
                   <Text style={[styles.invoiceItemTitle, { color: colors.text, textAlign: 'center' }]}>
                     {isBangla ? 'কোনো সক্রিয় কোর্স এনরোলমেন্ট পাওয়া যায়নি' : 'No Active Course Records Yet'}
                   </Text>
                   <Text style={[styles.invoiceGateway, { color: colors.textMuted, textAlign: 'center' }]}>
                     {isBangla
-                      ? 'আপনার অফিসিয়াল অর্ডার ও ভ্যাট রশিদ ওয়েব পোর্টালে সংরক্ষিত থাকে।'
-                      : 'Official billing records and VAT invoices are hosted securely on your web account.'}
+                      ? 'আপনার থ্রাইভিং স্কিলস অ্যাকাউন্টে সাইন ইন করলে আপনার এনরোল করা কোর্সগুলো এখানে প্রদর্শিত হবে।'
+                      : 'Sign in with your Thriving Skills account to view courses synced to your member library.'}
                   </Text>
                 </View>
               ) : (
@@ -1366,19 +1369,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   );
                 })
               )}
-
-              <TouchableOpacity
-                style={[styles.saveBtn, { backgroundColor: colors.primary, flex: 0, marginTop: 4, paddingHorizontal: 16 }]}
-                onPress={() => {
-                  const ordersUrl = `${Env.SITE_URL.replace(/\/+$/, '')}/my-account/orders/`;
-                  Linking.openURL(ordersUrl).catch(() => {});
-                }}
-              >
-                <Ionicons name="open-outline" size={16} color={colors.onPrimary} style={{ flexShrink: 0 }} />
-                <Text style={[styles.saveBtnText, { color: colors.onPrimary, flexShrink: 1 }]} numberOfLines={2}>
-                  {isBangla ? 'ওয়েবসাইটে অফিশিয়াল ইনভয়েস দেখুন' : 'View Official Web Orders & Invoices'}
-                </Text>
-              </TouchableOpacity>
             </ScrollView>
           </View>
         </View>

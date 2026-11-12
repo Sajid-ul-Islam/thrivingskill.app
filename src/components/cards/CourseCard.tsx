@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Course } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { useLearning } from '../../context/LearningContext';
+import { useFeedback } from '../../context/FeedbackContext';
 
 interface CourseCardProps {
   course: Course;
@@ -15,20 +16,26 @@ interface CourseCardProps {
 export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizontal = false }) => {
   const { colors } = useTheme();
   const { isBookmarked, toggleBookmark, getCourseProgressPercentage, userProgress } = useLearning();
+  const { showToast } = useFeedback();
 
   const bookmarked = isBookmarked(course.id);
+
+  const handleToggleBookmark = () => {
+    const wasBookmarked = bookmarked;
+    toggleBookmark(course.id);
+    showToast({
+      message: wasBookmarked
+        ? `Removed "${course.title}" from Saved`
+        : `Saved "${course.title}" to My Hub`,
+      type: wasBookmarked ? 'info' : 'success',
+      actionLabel: wasBookmarked ? 'Undo' : undefined,
+      onAction: wasBookmarked ? () => toggleBookmark(course.id) : undefined,
+    });
+  };
   const isEnrolled = !!userProgress[course.id];
   const progressPercent = getCourseProgressPercentage(course.id);
 
-  const displayPrice = course.priceBdt ? `৳${course.priceBdt.toLocaleString()}` : `$${course.price.toFixed(2)}`;
-  const displayOrigPrice = course.originalPriceBdt ? `৳${course.originalPriceBdt.toLocaleString()}` : `$${course.originalPrice.toFixed(2)}`;
-
-  const discountPercent =
-    course.originalPriceBdt && course.priceBdt && course.originalPriceBdt > course.priceBdt
-      ? Math.round(((course.originalPriceBdt - course.priceBdt) / course.originalPriceBdt) * 100)
-      : course.originalPrice && course.price && course.originalPrice > course.price
-      ? Math.round(((course.originalPrice - course.price) / course.originalPrice) * 100)
-      : 0;
+  const isFreeCourse = (!course.price || course.price === 0) && (!course.priceBdt || course.priceBdt === 0);
 
   if (horizontal) {
     return (
@@ -93,17 +100,16 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
               </View>
             ) : (
               <View style={styles.priceRow}>
-                <Text style={[styles.currentPrice, { color: colors.primary }]} numberOfLines={1}>
-                  {displayPrice}
-                </Text>
-                <Text style={[styles.originalPrice, { color: colors.textMuted }]} numberOfLines={1}>
-                  {displayOrigPrice}
-                </Text>
-                {discountPercent > 0 && (
-                  <View style={styles.discountBadge}>
-                    <Text style={styles.discountBadgeText}>{discountPercent}% OFF</Text>
-                  </View>
-                )}
+                <View style={[styles.certBadge, { backgroundColor: isFreeCourse ? colors.badgeBackground : colors.surfaceSubtle }]}>
+                  <Ionicons
+                    name={isFreeCourse ? 'sparkles-outline' : 'lock-closed-outline'}
+                    size={12}
+                    color={isFreeCourse ? colors.badgeText : colors.primary}
+                  />
+                  <Text style={[styles.certText, { color: isFreeCourse ? colors.badgeText : colors.primary, fontWeight: '700' }]}>
+                    {isFreeCourse ? 'Free Course' : 'Member Course'}
+                  </Text>
+                </View>
               </View>
             )}
           </View>
@@ -111,7 +117,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
 
         <SpringPressable
           style={[styles.bookmarkBtn, { backgroundColor: colors.surfaceSubtle }]}
-          onPress={() => toggleBookmark(course.id)}
+          onPress={handleToggleBookmark}
           activeOpacity={0.7}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           accessibilityRole="button"
@@ -198,17 +204,9 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
           ) : (
             <View style={styles.cardFooter}>
               <View style={styles.priceRow}>
-                <Text style={[styles.currentPrice, { color: colors.primary }]}>
-                  {displayPrice}
+                <Text style={[styles.currentPrice, { color: colors.primary, fontSize: 12 }]}>
+                  {isFreeCourse ? 'Free Access' : 'Member Access'}
                 </Text>
-                <Text style={[styles.originalPrice, { color: colors.textMuted }]}>
-                  {displayOrigPrice}
-                </Text>
-                {discountPercent > 0 && (
-                  <View style={styles.discountBadge}>
-                    <Text style={styles.discountBadgeText}>{discountPercent}% OFF</Text>
-                  </View>
-                )}
               </View>
               <View style={[styles.certBadge, { backgroundColor: colors.surfaceSubtle }]}>
                 <Ionicons name="ribbon-outline" size={13} color={colors.primary} />
@@ -220,8 +218,8 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
       </SpringPressable>
 
       <SpringPressable
-        style={[styles.floatingBookmark, { backgroundColor: 'rgba(0,0,0,0.6)' }]}
-        onPress={() => toggleBookmark(course.id)}
+        style={[styles.floatingBookmark, { backgroundColor: 'rgba(0,0,0,0.72)' }]}
+        onPress={handleToggleBookmark}
         activeOpacity={0.7}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         accessibilityRole="button"
@@ -230,7 +228,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
         <Ionicons
           name={bookmarked ? 'bookmark' : 'bookmark-outline'}
           size={16}
-          color={bookmarked ? colors.primary : '#FFFFFF'}
+          color={bookmarked ? '#FFB606' : '#FFFFFF'}
         />
       </SpringPressable>
     </View>

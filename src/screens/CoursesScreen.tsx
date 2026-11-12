@@ -18,9 +18,12 @@ import { CategoryPills } from '../components/CategoryPills';
 import { CourseCard } from '../components/CourseCard';
 import { SpecialBundleCard } from '../components/SpecialBundleCard';
 import { CourseCardSkeleton } from '../components/SkeletonLoader';
+import { StateView } from '../components/common';
 import { SPECIAL_BUNDLES } from '../data/mockData';
 import { useAutoScroll } from '../hooks/useAutoScroll';
+import { triggerHaptic } from '../utils/haptics';
 import { shape } from '../theme/shapes';
+import { MIN_TOUCH_TARGET } from '../theme/typography';
 
 interface CoursesScreenProps {
   onNavigateToCourse: (courseId: string) => void;
@@ -45,6 +48,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     courses,
     categories,
     isLoadingCourses,
+    coursesError,
     refreshCourses,
     selectedCategory,
     setSelectedCategory,
@@ -98,13 +102,13 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     return b.enrolledCount - a.enrolledCount; // popular
   });
 
-  const handleBundlePress = (bundleTitle: string, priceBdt: number) => {
+  const handleBundlePress = (bundleTitle: string) => {
     Alert.alert(
-      `${bundleTitle} 🎁`,
-      `Special Bundle Price: ৳${priceBdt.toLocaleString()} BDT\n\nIncludes complete curriculum, practice files, and verified digital certificates. Enroll now?`,
+      `${bundleTitle}`,
+      'Includes complete multi-course curriculum, practice files, and verified digital certificates. View your synced membership status or browse individual courses in this track.',
       [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Enroll in Bundle', onPress: onOpenSubscription },
+        { text: 'Close', style: 'cancel' },
+        { text: 'Membership Status', onPress: onOpenSubscription },
       ]
     );
   };
@@ -190,6 +194,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                     },
                   ]}
                   onPress={() => {
+                    triggerHaptic('selection');
                     levelsAutoScroll.pauseTemporarily(3000);
                     setSelectedLevel(lvl);
                   }}
@@ -200,7 +205,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                   <Text
                     style={[
                       styles.levelText,
-                      { color: selectedLevel === lvl ? '#FFFFFF' : colors.textMuted },
+                      { color: selectedLevel === lvl ? colors.onSecondary : colors.textMuted },
                     ]}
                   >
                     {lvl}
@@ -277,7 +282,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                         { color: selectedPriceFilter === pf ? colors.onPrimary : colors.textMuted },
                       ]}
                     >
-                      {pf === 'all' ? 'All' : pf === 'free' ? 'Free' : 'Paid'}
+                      {pf === 'all' ? 'All' : pf === 'free' ? 'Free' : 'Members'}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -286,7 +291,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               <TouchableOpacity
                 style={[styles.sortBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
                 onPress={() => {
-                  const order: SortOption[] = ['popular', 'newest', 'rating', 'price-low', 'price-high'];
+                  const order: SortOption[] = ['popular', 'newest', 'rating'];
                   const nextIdx = (order.indexOf(selectedSort) + 1) % order.length;
                   setSelectedSort(order[nextIdx]);
                 }}
@@ -300,11 +305,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                     ? 'Popular'
                     : selectedSort === 'newest'
                     ? 'Newest'
-                    : selectedSort === 'rating'
-                    ? 'Top Rated'
-                    : selectedSort === 'price-low'
-                    ? 'Price: Low'
-                    : 'Price: High'}
+                    : 'Top Rated'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -319,12 +320,20 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               <CourseCardSkeleton horizontal={viewMode === 'list'} />
               <CourseCardSkeleton horizontal={viewMode === 'list'} />
             </>
+          ) : coursesError && courses.length === 0 ? (
+            <StateView
+              mode="error"
+              title="Could not load catalog"
+              message={coursesError}
+              primaryActionLabel="Retry"
+              onPrimaryAction={refreshCourses}
+            />
           ) : isBundleView ? (
             SPECIAL_BUNDLES.map((bundle) => (
               <SpecialBundleCard
                 key={bundle.id}
                 bundle={bundle}
-                onPress={() => handleBundlePress(bundle.title, bundle.priceBdt)}
+                onPress={() => handleBundlePress(bundle.title)}
               />
             ))
           ) : filtered.length === 0 ? (
@@ -432,8 +441,8 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   viewToggleBtn: {
-    width: 32,
-    height: 32,
+    width: 38,
+    height: 38,
     borderRadius: shape.small,
     alignItems: 'center',
     justifyContent: 'center',
@@ -513,8 +522,10 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   suggestionChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    minHeight: MIN_TOUCH_TARGET,
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: shape.full,
     borderWidth: 1,
   },
@@ -523,6 +534,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   resetBtn: {
+    minHeight: MIN_TOUCH_TARGET,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,

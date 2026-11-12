@@ -145,9 +145,9 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
                 Your learner account and course credentials are strictly for your personal, non-commercial use. Account sharing, unauthorized screen recording, ripping, or distributing proprietary training material without written corporate authorization is strictly prohibited.
               </Text>
 
-              <Text style={[styles.sectionHeading, { color: colors.text }]}>3. Payment & Gateway Processing</Text>
+              <Text style={[styles.sectionHeading, { color: colors.text }]}>3. Account Access & Sync</Text>
               <Text style={[styles.bodyText, { color: colors.textMuted }]}>
-                Course enrollment and subscription fees are collected through secure SSLCommerz and authorized international payment gateways with your full consent. Please verify applicable discount vouchers before completing transactions. As per company policy, digital educational access is granted instantly upon checkout.
+                Access to course materials inside the mobile application is synchronized with your registered Thriving Skills account and active LearnPress enrollments. Free courses can be started directly within the app.
               </Text>
 
               <Text style={[styles.sectionHeading, { color: colors.text }]}>4. User Code of Conduct</Text>

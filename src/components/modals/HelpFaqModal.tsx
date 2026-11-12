@@ -34,32 +34,32 @@ const FAQ_DATA: FaqItem[] = [
   {
     id: 'pay-1',
     category: 'payment',
-    question: 'How do I enroll in paid courses using bKash, Nagad, or Cards?',
-    banglaQuestion: 'বিকাশ, নগদ বা কার্ডের মাধ্যমে পেইড কোর্সে কীভাবে ভর্তি হব?',
+    question: 'How do I access my enrolled courses inside the mobile app?',
+    banglaQuestion: 'মোবাইল অ্যাপে আমার এনরোল করা কোর্সগুলো কীভাবে দেখব?',
     answer:
-      'Select your course and tap "Enroll via Web". You will be securely directed to our official web checkout bridge supporting bKash, Nagad, Rocket, and SSLCommerz. Once completed, return to the app and your course will automatically sync and unlock!',
+      'Sign in using your Thriving Skills account from the Profile tab or top menu. Once signed in, your enrolled courses and learning progress synchronize automatically in the My Learning hub.',
     banglaAnswer:
-      'কোর্সটি সিলেক্ট করে "ওয়েবসাইটে ভর্তি হন" বাটনে চাপুন। আমাদের সুরক্ষিত অফিসিয়াল চেকআউটে গিয়ে বিকাশ, নগদ, রকেট অথবা কার্ড দিয়ে পেমেন্ট সম্পন্ন করে অ্যাপে ফিরলে কোর্সটি স্বয়ংক্রিয়ভাবে আনলক হয়ে যাবে।',
+      'প্রোফাইল ট্যাব বা উপরের মেনু থেকে আপনার থ্রাইভিং স্কিলস অ্যাকাউন্ট দিয়ে সাইন ইন করুন। সাইন ইন করার পর আপনার এনরোল করা সকল কোর্স এবং অগ্রগতি স্বয়ংক্রিয়ভাবে অ্যাপে সিঙ্ক হয়ে যাবে।',
   },
   {
     id: 'pay-2',
     category: 'payment',
-    question: 'Can I pay with credit/debit cards or international methods?',
-    banglaQuestion: 'আমি কি ক্রেডিট/ডেবিট কার্ড বা বিদেশি পেমেন্ট মেথডে পেমেন্ট করতে পারব?',
+    question: 'What should I do if an enrolled course still shows as locked?',
+    banglaQuestion: 'এনরোল করা কোর্স লক দেখালে কী করব?',
     answer:
-      'Yes! Choose the "Cards / NetBanking" option powered by SSLCommerz or Stripe to pay with Visa, Mastercard, AMEX, or international credit cards.',
+      'Verify you are signed in with the exact account email or username associated with your enrollment, then tap "Sync Access" on the course page to refresh your LearnPress status.',
     banglaAnswer:
-      'হ্যাঁ! ভিসা, মাস্টারকার্ড, অ্যামেক্স অথবা আন্তর্জাতিক কার্ডের মাধ্যমে পেমেন্ট করতে "Cards / NetBanking" অপশনটি সিলেক্ট করুন।',
+      'আপনার এনরোলমেন্ট থাকা সঠিক ইমেইল বা ইউজারনেম দিয়ে সাইন ইন করেছেন কিনা নিশ্চিত হয়ে কোর্স পেজে "অ্যাক্সেস সিঙ্ক করুন" বাটনে চাপুন।',
   },
   {
     id: 'pay-3',
     category: 'payment',
-    question: 'Where can I find my invoice and transaction receipt?',
-    banglaQuestion: 'আমার পেমেন্ট রসিদ এবং ইনভয়েস কোথায় পাব?',
+    question: 'Where can I view my active course enrollments?',
+    banglaQuestion: 'আমার এনরোল করা কোর্সের তালিকা কোথায় দেখব?',
     answer:
-      'Go to the Profile tab and tap "Invoice" or "Payment History". You can download official PDF receipts containing your Transaction ID, date, and VAT breakdown.',
+      'Open the "My Learning" tab for active courses or open Profile → Enrollment Records to inspect all synced courses on your account.',
     banglaAnswer:
-      'প্রোফাইল ট্যাবে গিয়ে "ইনভয়েস" বা "পেমেন্ট হিস্ট্রি"-তে ট্যাপ করুন। সেখান থেকে আপনার ট্রানজ্যাকশন আইডি ও তারিখসহ অফিসিয়াল পিডিএফ রসিদ ডাউনলোড করতে পারবেন।',
+      'আপনার সকল সক্রিয় কোর্স দেখতে "আমার কোর্স" ট্যাবে যান অথবা প্রোফাইল → এনরোলমেন্ট রেকর্ড থেকে আপনার সিঙ্ক করা কোর্সের তালিকা দেখুন।',
   },
   {
     id: 'acc-1',
@@ -230,7 +230,7 @@ export const HelpFaqModal: React.FC<HelpFaqModalProps> = ({ visible, onClose }) 
             <Ionicons name="search" size={18} color={colors.textMuted} />
             <TextInput
               style={[styles.searchInput, { color: colors.text }]}
-              placeholder={isBangla ? 'প্রশ্ন খুঁজুন (যেমন: বিকাশ, সার্টিফিকেট)...' : 'Search FAQ (e.g. bKash, certificate)...'}
+              placeholder={isBangla ? 'প্রশ্ন খুঁজুন (যেমন: এনরোলমেন্ট, সার্টিফিকেট)...' : 'Search FAQ (e.g. sync, certificate)...'}
               placeholderTextColor={colors.textMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}

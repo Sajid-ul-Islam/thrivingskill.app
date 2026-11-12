@@ -633,12 +633,12 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
             </View>
 
             <Text style={styles.lockedTitle}>
-              {isBangla ? 'কোর্সটি কেনা হয়নি' : 'Course Not Purchased'}
+              {isBangla ? 'সদস্যদের জন্য সংরক্ষিত লেসন' : 'Enrolled Member Access'}
             </Text>
             <Text style={styles.lockedSub}>
               {isBangla
-                ? 'এই প্রিমিয়াম পাঠের ভিডিও দেখতে সম্পূর্ণ কোর্সে ভর্তি হন। আজীবন অ্যাক্সেস, রিসোর্স এবং ভেরিফাইড সার্টিফিকেট অন্তর্ভুক্ত।'
-                : 'This premium lesson video requires course enrollment. Purchase this course to get full lifetime access to all lectures, downloadable resources, and verified credentials.'}
+                ? 'এই লেসনের সম্পূর্ণ ভিডিও দেখতে অনুগ্রহ করে আপনার এনরোল করা থ্রাইভিং স্কিলস অ্যাকাউন্ট দিয়ে সাইন ইন করে অ্যাক্সেস সিঙ্ক করুন।'
+                : 'Sign in with an enrolled Thriving Skills account and sync your library to access all lectures, downloadable resources, and certificates.'}
             </Text>
 
             <View style={styles.lockedActionsCol}>
@@ -647,11 +647,11 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                 onPress={() => setPaymentModalVisible(true)}
                 activeOpacity={0.88}
                 accessibilityRole="button"
-                accessibilityLabel="Purchase or enroll in course"
+                accessibilityLabel="Sync account enrollment access"
               >
-                <Ionicons name="card" size={16} color="#102F53" />
+                <Ionicons name="sync" size={16} color="#102F53" />
                 <Text style={styles.lockedPurchaseBtnText}>
-                  {isBangla ? 'কোর্সটি কিনুন / ভর্তি হন' : 'Purchase Course / Enroll'}
+                  {isBangla ? 'অ্যাকাউন্ট অ্যাক্সেস সিঙ্ক করুন' : 'Sync Account Access'}
                 </Text>
               </TouchableOpacity>
 
@@ -1106,8 +1106,10 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                         onSelectLesson(courseId, item.lesson.id);
                       } else {
                         Alert.alert(
-                          'Course Not Purchased',
-                          'This lesson is part of the complete course. Please enroll or purchase the course to unlock full access.'
+                          isBangla ? 'সদস্যদের জন্য সংরক্ষিত' : 'Enrolled Members Only',
+                          isBangla
+                            ? 'এই লেসনটি শুধুমাত্র কোর্সে এনরোল করা শিক্ষার্থীদের জন্য। আপনার অ্যাকাউন্ট এনরোল করা থাকলে উপরে থেকে অ্যাক্সেস সিঙ্ক করুন।'
+                            : 'This lesson is part of your Thriving Skills member library. Sign in with an enrolled account and sync access from the player above.'
                         );
                       }
                     }}
