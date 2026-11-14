@@ -592,7 +592,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 {isBangla ? 'জনপ্রিয় কোর্সসমূহ' : 'Popular Masterclasses'}
               </Text>
               <Text style={[typography.bodySmall, styles.sectionSubtitle, { color: colors.textMuted }]} numberOfLines={2}>
-                Executive Masterclasses in Generative AI, Excel & Finance
+                {isBangla
+                  ? 'জেনারেটিভ এআই, এক্সেল ও ফাইন্যান্সের এক্সিকিউটিভ মাস্টারক্লাস'
+                  : 'Executive Masterclasses in Generative AI, Excel & Finance'}
               </Text>
             </View>
             <TouchableOpacity
@@ -600,8 +602,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               style={[styles.seeAllTouch, { flexShrink: 0 }]}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
+              accessibilityLabel={
+                isBangla
+                  ? `সব কোর্স দেখুন, সর্বমোট ${courses.length} টি`
+                  : `View all courses, total ${courses.length}`
+              }
             >
-              <Text style={[styles.seeAllText, { color: colors.primary }]}>View All ({courses.length})</Text>
+              <Text style={[styles.seeAllText, { color: colors.primary }]}>
+                {isBangla ? 'সব দেখুন' : 'View All'} ({courses.length}) →
+              </Text>
             </TouchableOpacity>
           </View>
 

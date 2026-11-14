@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { useLearning } from '../../context/LearningContext';
 import { useYouTube } from '../../context/YouTubeContext';
 import { SKILLS_SUMMITS } from '../../data/mockData';
@@ -45,6 +46,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
   onSelectWorkshop,
 }) => {
   const { colors, isDark } = useTheme();
+  const { isBangla } = useLanguage();
   const { courses, recordCategoryInteraction, recordSearchKeyword } = useLearning();
   const { videos } = useYouTube();
 
@@ -52,10 +54,10 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
   const [activeFilter, setActiveFilter] = useState<SearchFilterType>('all');
 
   const filterTabs: { id: SearchFilterType; label: string; icon: string }[] = [
-    { id: 'all', label: 'All', icon: 'apps-outline' },
-    { id: 'courses', label: 'Courses', icon: 'school-outline' },
-    { id: 'youtube', label: 'YouTube', icon: 'logo-youtube' },
-    { id: 'workshops', label: 'Workshops', icon: 'videocam-outline' },
+    { id: 'all', label: isBangla ? 'সব' : 'All', icon: 'apps-outline' },
+    { id: 'courses', label: isBangla ? 'কোর্স' : 'Courses', icon: 'school-outline' },
+    { id: 'youtube', label: isBangla ? 'ইউটিউব' : 'YouTube', icon: 'logo-youtube' },
+    { id: 'workshops', label: isBangla ? 'ওয়ার্কশপ' : 'Workshops', icon: 'videocam-outline' },
   ];
 
   const searchResults = useMemo(() => {
@@ -154,7 +156,11 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
             <Ionicons name="search" size={18} color={colors.textMuted} />
             <TextInput
               style={[styles.searchInput, { color: colors.text }]}
-              placeholder="Search courses, YouTube masterclasses, summits..."
+              placeholder={
+                isBangla
+                  ? 'কোর্স, ইউটিউব মাস্টারক্লাস, সামিট সার্চ করুন...'
+                  : 'Search courses, YouTube masterclasses, summits...'
+              }
               placeholderTextColor={colors.textMuted}
               value={query}
               onChangeText={setQuery}
@@ -172,7 +178,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 }}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 accessibilityRole="button"
-                accessibilityLabel="Clear search query"
+                accessibilityLabel={isBangla ? 'সার্চ মুছুন' : 'Clear search query'}
               >
                 <Ionicons name="close-circle" size={18} color={colors.textMuted} />
               </TouchableOpacity>
@@ -186,9 +192,11 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
             }}
             style={styles.cancelBtn}
             accessibilityRole="button"
-            accessibilityLabel="Cancel search"
+            accessibilityLabel={isBangla ? 'সার্চ বাতিল করুন' : 'Cancel search'}
           >
-            <Text style={[styles.cancelBtnText, { color: colors.primary }]}>Cancel</Text>
+            <Text style={[styles.cancelBtnText, { color: colors.primary }]}>
+              {isBangla ? 'বাতিল' : 'Cancel'}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -208,7 +216,11 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 ]}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: isSelected }}
-                accessibilityLabel={`Filter results by ${tab.label}`}
+                accessibilityLabel={
+                  isBangla
+                    ? `${tab.label} ফিল্টার`
+                    : `Filter results by ${tab.label}`
+                }
                 onPress={() => {
                   triggerHaptic('selection');
                   setActiveFilter(tab.id);
@@ -245,7 +257,9 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
           ListHeaderComponent={
             query.trim().length > 0 ? (
               <Text style={[styles.resultsCountText, { color: colors.textMuted }]}>
-                {searchResults.length} {searchResults.length === 1 ? 'match' : 'matches'} found
+                {isBangla
+                  ? `${searchResults.length} টি ফলাফল পাওয়া গেছে`
+                  : `${searchResults.length} ${searchResults.length === 1 ? 'match' : 'matches'} found`}
               </Text>
             ) : undefined
           }
@@ -302,10 +316,10 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                       ]}
                     >
                       {item.type === 'course'
-                        ? 'ACCREDITED COURSE'
+                        ? (isBangla ? 'অ্যাক্রেডিটেড কোর্স' : 'ACCREDITED COURSE')
                         : item.type === 'youtube'
-                        ? 'YOUTUBE MASTERCLASS'
-                        : 'LIVE SUMMIT'}
+                        ? (isBangla ? 'ইউটিউব মাস্টারক্লাস' : 'YOUTUBE MASTERCLASS')
+                        : (isBangla ? 'লাইভ সামিট' : 'LIVE SUMMIT')}
                     </Text>
                   </View>
                 </View>
@@ -331,24 +345,40 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 />
               </View>
               <Text style={[styles.emptyTitle, { color: colors.text }]}>
-                {query.trim() ? 'No results found' : 'Trending Business & AI Skills'}
+                {query.trim()
+                  ? (isBangla ? 'কোনো ফলাফল পাওয়া যায়নি' : 'No results found')
+                  : (isBangla ? 'জনপ্রিয় বিজনেস ও এআই স্কিলস' : 'Trending Business & AI Skills')}
               </Text>
               <Text style={[styles.emptySub, { color: colors.textMuted }]}>
                 {query.trim()
-                  ? `No content matching "${query}". Try searching for Agentic AI, Power BI, or Finance.`
-                  : 'Tap any high-demand skill below to discover accredited masterclasses:'}
+                  ? (isBangla
+                      ? `"${query}" এর সাথে মিলে এমন কিছু পাওয়া যায়নি। Agentic AI, Power BI বা Finance লিখে সার্চ করুন।`
+                      : `No content matching "${query}". Try searching for Agentic AI, Power BI, or Finance.`)
+                  : (isBangla
+                      ? 'জনপ্রিয় মাস্টারক্লাসগুলো দেখতে নিচের স্কিলে ট্যাপ করুন:'
+                      : 'Tap any high-demand skill below to discover accredited masterclasses:')}
               </Text>
 
               {!query.trim() && (
                 <View style={styles.trendingPillsGrid}>
-                  {[
-                    { label: '🤖 Agentic AI & Workflows', q: 'agentic' },
-                    { label: '💼 AI for Business Leaders', q: 'ai' },
-                    { label: '📊 Power BI & Storytelling', q: 'power bi' },
-                    { label: '📈 Financial Modeling & DCF', q: 'financial' },
-                    { label: '🌱 ESG & Sustainable Strategy', q: 'esg' },
-                    { label: '🚀 Growth & Performance', q: 'marketing' },
-                  ].map((item, idx) => (
+                  {(isBangla
+                    ? [
+                        { label: '🤖 এজেন্টিক এআই ও অটোমেশন', q: 'agentic' },
+                        { label: '💼 বিজনেস লিডারদের জন্য এআই', q: 'ai' },
+                        { label: '📊 পাওয়ার বিআই ও ডেটা স্টোরিটেলিং', q: 'power bi' },
+                        { label: '📈 ফাইন্যান্সিয়াল মডেলিং ও ডিসিএফ', q: 'financial' },
+                        { label: '🌱 ইএসজি ও সাসটেইনেবল স্ট্র্যাটেজি', q: 'esg' },
+                        { label: '🚀 গ্রোথ ও পারফরম্যান্স মার্কেটিং', q: 'marketing' },
+                      ]
+                    : [
+                        { label: '🤖 Agentic AI & Workflows', q: 'agentic' },
+                        { label: '💼 AI for Business Leaders', q: 'ai' },
+                        { label: '📊 Power BI & Storytelling', q: 'power bi' },
+                        { label: '📈 Financial Modeling & DCF', q: 'financial' },
+                        { label: '🌱 ESG & Sustainable Strategy', q: 'esg' },
+                        { label: '🚀 Growth & Performance', q: 'marketing' },
+                      ]
+                  ).map((item, idx) => (
                     <TouchableOpacity
                       key={idx}
                       style={[
@@ -359,6 +389,12 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                         },
                       ]}
                       onPress={() => setQuery(item.q)}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        isBangla
+                          ? `${item.label} টপিক সার্চ করুন`
+                          : `Search for ${item.label}`
+                      }
                     >
                       <Text style={[styles.trendingModalPillText, { color: colors.text }]}>
                         {item.label}
@@ -538,6 +574,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   trendingModalPill: {
+    minHeight: MIN_TOUCH_TARGET,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',

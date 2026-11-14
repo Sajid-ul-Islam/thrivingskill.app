@@ -95,22 +95,30 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
   if (!course) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Header showBack onBack={onBack} title="Course Details" />
+        <Header showBack onBack={onBack} title={isBangla ? 'কোর্সের বিবরণ' : 'Course Details'} />
         <View style={[styles.notFoundCenter, { paddingHorizontal: 20 }]}>
           {loadingDetail ? (
             <StateView
               mode="loading"
-              title="Loading course details…"
-              message="Fetching curriculum, mentor info, and preview lectures."
+              title={isBangla ? 'কোর্সের বিবরণ লোড হচ্ছে…' : 'Loading course details…'}
+              message={
+                isBangla
+                  ? 'কারিকুলাম, মেন্টর তথ্য ও প্রিভিউ লেকচার আনা হচ্ছে।'
+                  : 'Fetching curriculum, mentor info, and preview lectures.'
+              }
             />
           ) : (
             <StateView
               mode="error"
-              title="Course not found"
-              message="We couldn't load this course right now. Please try again or return to the catalog."
-              primaryActionLabel="Retry"
+              title={isBangla ? 'কোর্স পাওয়া যায়নি' : 'Course not found'}
+              message={
+                isBangla
+                  ? 'এই মুহূর্তে কোর্সটি লোড করা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন বা ক্যাটালগে ফিরে যান।'
+                  : "We couldn't load this course right now. Please try again or return to the catalog."
+              }
+              primaryActionLabel={isBangla ? 'আবার চেষ্টা করুন' : 'Retry'}
               onPrimaryAction={() => loadCourseDetail(courseId).catch(() => {})}
-              secondaryActionLabel="Go Back"
+              secondaryActionLabel={isBangla ? 'ফিরে যান' : 'Go Back'}
               onSecondaryAction={onBack}
             />
           )}
@@ -191,8 +199,10 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
         CoursesService.enrollCourse(course.id).catch(() => {});
       }
       Alert.alert(
-        'Enrolled Successfully! 🎉',
-        `You have been enrolled in "${course.title}". Let's start the first lesson!`,
+        isBangla ? 'সফলভাবে ভর্তি সম্পন্ন হয়েছে! 🎉' : 'Enrolled Successfully! 🎉',
+        isBangla
+          ? `আপনি সফলভাবে "${course.title}" কোর্সে যুক্ত হয়েছেন। চলুন প্রথম লেকচার শুরু করি!`
+          : `You have been enrolled in "${course.title}". Let's start the first lesson!`,
         [
           {
             text: isBangla ? 'শেখা শুরু করুন' : 'Start Learning',
@@ -218,7 +228,10 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
 
   const handleSubmitReview = () => {
     if (!reviewComment.trim()) {
-      Alert.alert('Review Required', 'Please share your feedback or experience with this course.');
+      Alert.alert(
+        isBangla ? 'রিভিউ আবশ্যক' : 'Review Required',
+        isBangla ? 'অনুগ্রহ করে এই কোর্স সম্পর্কে আপনার মতামত লিখুন।' : 'Please share your feedback or experience with this course.'
+      );
       return;
     }
     setIsSubmittingReview(true);
@@ -236,8 +249,10 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     setWriteReviewModalVisible(false);
     setReviewComment('');
     Alert.alert(
-      'Review Submitted! 🌟',
-      'Thank you for your rating and review. Your feedback helps fellow executives make informed learning decisions.'
+      isBangla ? 'রিভিউ জমা দেওয়া হয়েছে! 🌟' : 'Review Submitted! 🌟',
+      isBangla
+        ? 'আপনার রেটিং এবং মতামতের জন্য ধন্যবাদ। এটি অন্য শিক্ষার্থীদের সঠিক সিদ্ধান্ত নিতে সহায়তা করবে।'
+        : 'Thank you for your rating and review. Your feedback helps fellow executives make informed learning decisions.'
     );
   };
 
@@ -246,7 +261,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
       <Header
         showBack
         onBack={onBack}
-        title="Course Overview"
+        title={isBangla ? 'কোর্স বিবরণ' : 'Course Overview'}
         rightAction={
           <TouchableOpacity
             style={[styles.headerBookmark, { backgroundColor: colors.surfaceSubtle }]}
@@ -254,14 +269,16 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
               const wasBookmarked = bookmarked;
               toggleBookmark(course.id);
               showToast({
-                message: wasBookmarked ? 'Removed from Saved' : 'Saved course to My Hub',
+                message: wasBookmarked
+                  ? (isBangla ? 'সংরক্ষিত তালিকা থেকে সরানো হয়েছে' : 'Removed from Saved')
+                  : (isBangla ? 'কোর্সটি সংরক্ষণ করা হয়েছে' : 'Saved course to My Hub'),
                 type: wasBookmarked ? 'info' : 'success',
-                actionLabel: wasBookmarked ? 'Undo' : undefined,
+                actionLabel: wasBookmarked ? (isBangla ? 'পূর্বাবস্থায়' : 'Undo') : undefined,
                 onAction: wasBookmarked ? () => toggleBookmark(course.id) : undefined,
               });
             }}
             accessibilityRole="button"
-            accessibilityLabel={bookmarked ? 'Remove bookmark' : 'Save course bookmark'}
+            accessibilityLabel={bookmarked ? (isBangla ? 'বুকমার্ক সরান' : 'Remove bookmark') : (isBangla ? 'কোর্স বুকমার্ক করুন' : 'Save course bookmark')}
           >
             <Ionicons
               name={bookmarked ? 'bookmark' : 'bookmark-outline'}
@@ -344,7 +361,9 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
               <View style={styles.trailerBadgeRow}>
                 <View style={styles.trailerBadge}>
                   <Ionicons name="logo-youtube" size={12} color="#FF0000" />
-                  <Text style={styles.trailerBadgeText}>FREE COURSE TRAILER</Text>
+                  <Text style={styles.trailerBadgeText}>
+                    {isBangla ? 'ফ্রি কোর্স ট্রেইলার' : 'FREE COURSE TRAILER'}
+                  </Text>
                 </View>
                 {trailerVideo.duration ? (
                   <Text style={[styles.trailerDuration, { color: colors.textMuted }]}>
@@ -356,7 +375,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                 {trailerVideo.title}
               </Text>
               <Text style={[styles.trailerPrompt, { color: colors.primary }]}>
-                Watch free mentor overview →
+                {isBangla ? 'মেন্টরের পরিচিতি ভিডিও দেখুন →' : 'Watch free mentor overview →'}
               </Text>
             </View>
           </TouchableOpacity>
@@ -384,7 +403,9 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
               <Text style={[styles.statValue, { color: colors.text }]} numberOfLines={1}>
                 {course.enrolledCount.toLocaleString()}
               </Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]} numberOfLines={1}>Enrolled</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]} numberOfLines={1}>
+                {isBangla ? 'এনরোল্ড' : 'Enrolled'}
+              </Text>
             </View>
 
             <View style={[styles.statDivider, { backgroundColor: colors.borderSubtle }]} />
@@ -394,14 +415,16 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
               <Text style={[styles.statValue, { color: colors.text }]} numberOfLines={1}>
                 {course.durationHours}h
               </Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]} numberOfLines={1}>Total</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]} numberOfLines={1}>
+                {isBangla ? 'মোট' : 'Total'}
+              </Text>
             </View>
           </View>
 
           {/* Highlights */}
           <View style={[styles.highlightsCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
             <Text style={[styles.highlightsHeading, { color: colors.text }]}>
-              What You'll Master
+              {isBangla ? 'যা যা শিখবেন' : "What You'll Master"}
             </Text>
             <View style={styles.highlightsList}>
               {course.highlights.map((item, idx) => (
@@ -418,7 +441,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
               <Ionicons name="shield-checkmark" size={15} color={colors.primary} />
               <Text style={[styles.trustStripTitle, { color: colors.primary }]}>
-                TRUSTED BY TOP ACADEMIC & ENTERPRISE PARTNERS
+                {isBangla ? 'শীর্ষ অ্যাকাডেমিক ও কর্পোরেট পার্টনারদের আস্থা' : 'TRUSTED BY TOP ACADEMIC & ENTERPRISE PARTNERS'}
               </Text>
             </View>
 
@@ -440,15 +463,21 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
             <View style={styles.trustFeaturesRow}>
               <View style={styles.trustFeatureItem}>
                 <Ionicons name="infinite-outline" size={13} color={colors.secondary} />
-                <Text style={[styles.trustFeatureText, { color: colors.textMuted }]}>Lifetime Access</Text>
+                <Text style={[styles.trustFeatureText, { color: colors.textMuted }]}>
+                  {isBangla ? 'আজীবন অ্যাক্সেস' : 'Lifetime Access'}
+                </Text>
               </View>
               <View style={styles.trustFeatureItem}>
                 <Ionicons name="phone-portrait-outline" size={13} color={colors.primary} />
-                <Text style={[styles.trustFeatureText, { color: colors.textMuted }]}>Mobile & Web</Text>
+                <Text style={[styles.trustFeatureText, { color: colors.textMuted }]}>
+                  {isBangla ? 'মোবাইল ও ওয়েব' : 'Mobile & Web'}
+                </Text>
               </View>
               <View style={styles.trustFeatureItem}>
                 <Ionicons name="ribbon-outline" size={13} color="#10B981" />
-                <Text style={[styles.trustFeatureText, { color: colors.textMuted }]}>Verified Credential</Text>
+                <Text style={[styles.trustFeatureText, { color: colors.textMuted }]}>
+                  {isBangla ? 'ভেরিফাইড সার্টিফিকেট' : 'Verified Credential'}
+                </Text>
               </View>
             </View>
           </View>
@@ -461,10 +490,12 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.certPromoTitle, { color: colors.text }]}>
-                  Official Certificate Included
+                  {isBangla ? 'অফিসিয়াল সার্টিফিকেট অন্তর্ভুক্ত' : 'Official Certificate Included'}
                 </Text>
                 <Text style={[styles.certPromoSub, { color: colors.textMuted }]}>
-                  Verified digital credential directly shareable to LinkedIn.
+                  {isBangla
+                    ? 'ভেরিফাইড ডিজিটাল ক্রেডেনশিয়াল যা সরাসরি লিঙ্কডইনে শেয়ারযোগ্য।'
+                    : 'Verified digital credential directly shareable to LinkedIn.'}
                 </Text>
               </View>
             </View>
@@ -491,7 +522,9 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                 }
               }}
               accessibilityRole="button"
-              accessibilityLabel="Certificate preview or review to unlock"
+              accessibilityLabel={
+                isBangla ? 'সার্টিফিকেট প্রিভিউ অথবা আনলক করতে রিভিউ' : 'Certificate preview or review to unlock'
+              }
             >
               <Ionicons
                 name={
@@ -533,12 +566,22 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
           </View>
 
           {/* Navigation Tabs (Curriculum / Q&A / Instructor / Reviews) */}
-          <View style={[styles.tabsBar, { borderBottomColor: colors.border }]}>
+          <View style={[styles.tabsBar, { borderBottomColor: colors.border }]} accessibilityRole="tablist">
             {[
-              { id: 'curriculum', label: `Curriculum (${course.modules.length})` },
-              { id: 'qna', label: 'Q&A Forum' },
-              { id: 'instructor', label: 'Instructor' },
-              { id: 'reviews', label: `Reviews (${course.reviews.length})` },
+              {
+                id: 'curriculum',
+                label: isBangla
+                  ? `কারিকুলাম (${course.modules.length})`
+                  : `Curriculum (${course.modules.length})`,
+              },
+              { id: 'qna', label: isBangla ? 'প্রশ্নোত্তর ফোরাম' : 'Q&A Forum' },
+              { id: 'instructor', label: isBangla ? 'মেন্টর' : 'Instructor' },
+              {
+                id: 'reviews',
+                label: isBangla
+                  ? `রিভিউ (${course.reviews.length})`
+                  : `Reviews (${course.reviews.length})`,
+              },
             ].map((tab) => {
               const isActive = activeTab === tab.id;
               return (
@@ -549,6 +592,9 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                     isActive && { borderBottomColor: colors.primary, borderBottomWidth: 2 },
                   ]}
                   onPress={() => setActiveTab(tab.id as any)}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: isActive }}
+                  accessibilityLabel={tab.label}
                 >
                   <Text
                     style={[
@@ -706,11 +752,11 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
               <Ionicons name="shield-checkmark" size={14} color="#D97706" />
               <Text style={[styles.bottomPriceLabel, { color: '#D97706', fontWeight: '800' }]}>
-                ADMIN ACCESS
+                {isBangla ? 'অ্যাডমিন অ্যাক্সেস' : 'ADMIN ACCESS'}
               </Text>
             </View>
             <Text style={[styles.enrolledStatus, { color: colors.textMuted }]}>
-              All course videos unlocked
+              {isBangla ? 'সকল লেকচার আনলক করা হয়েছে' : 'All course videos unlocked'}
             </Text>
           </View>
         ) : !isEnrolled ? (
@@ -739,10 +785,12 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
               />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.bottomPriceLabel, { color: colors.primary, fontWeight: '700' }]} numberOfLines={1}>
-                  Enrolled ({progressPercent}%)
+                  {isBangla ? `এনরোল্ড (${progressPercent}%)` : `Enrolled (${progressPercent}%)`}
                 </Text>
-                <Text style={[styles.enrolledStatus, { color: colors.textMuted }]} numberOfLines={1}>
-                  {userProgress[course.id]?.isCompleted ? 'Completed 🎓' : 'In Progress ⏳'}
+                <Text style={[styles.enrolledStatus, { color: colors.textMuted }]}>
+                  {userProgress[course.id]?.isCompleted
+                    ? (isBangla ? 'সম্পন্ন 🎓' : 'Completed 🎓')
+                    : (isBangla ? 'চলমান ⏳' : 'In Progress ⏳')}
                 </Text>
               </View>
             </View>

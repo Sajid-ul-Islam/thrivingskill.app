@@ -10,6 +10,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
+import { useGamification } from '../context/GamificationContext';
 import { useLearning } from '../context/LearningContext';
 import { Header } from '../components/Header';
 import { CertificateModal } from '../components/CertificateModal';
@@ -41,6 +43,8 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
   onOpenDrawer,
 }) => {
   const { colors, isDark } = useTheme();
+  const { isBangla } = useLanguage();
+  const { streakDays } = useGamification();
   const insets = useSafeAreaInsets();
   const { savedVideos, playVideo } = useYouTube();
   const {
@@ -76,7 +80,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
         lesson: targetLesson,
         watchSec,
         progressPercent: percent,
-        dateWatched: 'Today',
+        dateWatched: isBangla ? 'আজ' : 'Today',
       };
     })
     .filter((h) => !!h.lesson);
@@ -91,8 +95,8 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
-        title="My Learning Hub"
-        subtitle="Skill Progression & Portfolio"
+        title={isBangla ? 'আমার লার্নিং হাব' : 'My Learning Hub'}
+        subtitle={isBangla ? 'স্কিল প্রগ্রেস ও পোর্টফোলিও' : 'Skill Progression & Portfolio'}
         onOpenSubscription={onOpenSubscription}
         onOpenNotifications={onOpenNotifications}
         onOpenYouTube={onOpenYouTube}
@@ -113,7 +117,9 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                 <Ionicons name="book" size={18} color={colors.primary} />
               </View>
               <Text style={[styles.statNumber, { color: colors.text }]}>{enrolledList.length}</Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Enrolled</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+                {isBangla ? 'এনরোল্ড' : 'Enrolled'}
+              </Text>
             </View>
 
             <View style={[styles.statDivider, { backgroundColor: colors.borderSubtle }]} />
@@ -123,7 +129,9 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                 <Ionicons name="time" size={18} color={colors.secondary} />
               </View>
               <Text style={[styles.statNumber, { color: colors.text }]}>{totalHoursLearned}h</Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Time Spent</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+                {isBangla ? 'মোট সময়' : 'Time Spent'}
+              </Text>
             </View>
 
             <View style={[styles.statDivider, { backgroundColor: colors.borderSubtle }]} />
@@ -133,7 +141,9 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                 <Ionicons name="ribbon" size={18} color={colors.accent} />
               </View>
               <Text style={[styles.statNumber, { color: colors.text }]}>{certificates.length}</Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Certificates</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+                {isBangla ? 'সার্টিফিকেট' : 'Certificates'}
+              </Text>
             </View>
           </View>
         </View>
@@ -154,14 +164,20 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
           <View style={styles.streakContent}>
             <View style={styles.streakHeaderRow}>
               <Text style={[styles.streakTitle, { color: colors.text }]}>
-                5-Day Study Streak
+                {streakDays > 0
+                  ? (isBangla ? `${streakDays} দিনের স্টাডি স্ট্রিক` : `${streakDays}-Day Study Streak`)
+                  : (isBangla ? 'আজই স্টাডি স্ট্রিক শুরু করুন' : 'Start Your Study Streak Today')}
               </Text>
               <View style={styles.streakRankBadge}>
-                <Text style={styles.streakRankText}>Top 5%</Text>
+                <Text style={styles.streakRankText}>
+                  {isBangla ? 'শীর্ষ ৫%' : 'Top 5%'}
+                </Text>
               </View>
             </View>
             <Text style={[styles.streakSub, { color: colors.textMuted }]}>
-              {totalHoursLearned}h learned • Complete 1 lesson today to keep your streak alive!
+              {isBangla
+                ? `${totalHoursLearned} ঘণ্টা সম্পন্ন • স্ট্রিক সচল রাখতে আজ অন্তত ১টি লেসন শেষ করুন!`
+                : `${totalHoursLearned}h learned • Complete 1 lesson today to keep your streak alive!`}
             </Text>
           </View>
         </View>
@@ -172,13 +188,14 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
           showsHorizontalScrollIndicator={false}
           style={[styles.tabsBarScroll, { borderBottomColor: colors.border }]}
           contentContainerStyle={styles.tabsBar}
+          accessibilityRole="tablist"
         >
           {[
-            { id: 'in-progress', label: `In Progress (${inProgressList.length})` },
-            { id: 'history', label: `History (${historyList.length})` },
-            { id: 'completed', label: `Completed (${completedList.length})` },
-            { id: 'certificates', label: `Certificates (${certificates.length})` },
-            { id: 'saved', label: `Saved (${savedList.length + savedVideos.length})` },
+            { id: 'in-progress', label: `${isBangla ? 'চলমান' : 'In Progress'} (${inProgressList.length})` },
+            { id: 'history', label: `${isBangla ? 'হিস্ট্রি' : 'History'} (${historyList.length})` },
+            { id: 'completed', label: `${isBangla ? 'সম্পন্ন' : 'Completed'} (${completedList.length})` },
+            { id: 'certificates', label: `${isBangla ? 'সার্টিফিকেট' : 'Certificates'} (${certificates.length})` },
+            { id: 'saved', label: `${isBangla ? 'সংরক্ষিত' : 'Saved'} (${savedList.length + savedVideos.length})` },
           ].map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -191,6 +208,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                 onPress={() => setActiveTab(tab.id as TabMode)}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: isActive }}
+                accessibilityLabel={isBangla ? `${tab.label} ট্যাব` : `${tab.label} tab`}
               >
                 <Text
                   style={[
@@ -217,9 +235,13 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                 <StateView
                   mode="empty"
                   icon="school-outline"
-                  title="No courses in progress"
-                  message="Explore our top-rated executive masterclasses and start learning!"
-                  primaryActionLabel="Explore Catalog"
+                  title={isBangla ? 'চলমান কোনো কোর্স নেই' : 'No courses in progress'}
+                  message={
+                    isBangla
+                      ? 'আমাদের শীর্ষ এক্সিকিউটিভ মাস্টারক্লাসগুলো দেখুন এবং নতুন স্কিল অর্জন শুরু করুন!'
+                      : 'Explore our top-rated executive masterclasses and start learning!'
+                  }
+                  primaryActionLabel={isBangla ? 'ক্যাটালগ দেখুন' : 'Explore Catalog'}
                   onPrimaryAction={onBrowseCourses}
                 />
               ) : (
@@ -278,9 +300,15 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                               { borderColor: colors.border, backgroundColor: colors.surfaceSubtle },
                             ]}
                             onPress={() => onNavigateToCourse(course.id)}
+                            accessibilityRole="button"
+                            accessibilityLabel={
+                              isBangla
+                                ? `${course.title} এর সিলেবাস দেখুন`
+                                : `View syllabus for ${course.title}`
+                            }
                           >
                             <Text style={[styles.syllabusBtnText, { color: colors.text }]}>
-                              Syllabus
+                              {isBangla ? 'সিলেবাস' : 'Syllabus'}
                             </Text>
                           </TouchableOpacity>
 
@@ -289,10 +317,16 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                             onPress={() => onNavigateToLesson(course.id, targetLessonId)}
                             activeScale={0.96}
                             accessibilityRole="button"
-                            accessibilityLabel={`Resume lecture for ${course.title}`}
+                            accessibilityLabel={
+                              isBangla
+                                ? `${course.title} এর লেকচার চালিয়ে যান`
+                                : `Resume lecture for ${course.title}`
+                            }
                           >
                             <Ionicons name="play" size={14} color={colors.onPrimary} />
-                            <Text style={[styles.resumeBtnText, { color: colors.onPrimary }]}>Resume Lecture</Text>
+                            <Text style={[styles.resumeBtnText, { color: colors.onPrimary }]}>
+                              {isBangla ? 'চালিয়ে যান' : 'Resume Lecture'}
+                            </Text>
                           </SpringPressable>
                         </View>
                       </View>
@@ -309,9 +343,13 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                 <StateView
                   mode="empty"
                   icon="time-outline"
-                  title="No watch history yet"
-                  message="Start watching course lectures and masterclasses to track your viewing history."
-                  primaryActionLabel="Browse Courses"
+                  title={isBangla ? 'এখনো কোনো হিস্ট্রি নেই' : 'No watch history yet'}
+                  message={
+                    isBangla
+                      ? 'আপনার দেখার ইতিহাস ট্র্যাক করতে কোর্সের লেকচার এবং মাস্টারক্লাস দেখা শুরু করুন।'
+                      : 'Start watching course lectures and masterclasses to track your viewing history.'
+                  }
+                  primaryActionLabel={isBangla ? 'কোর্স ব্রাউজ করুন' : 'Browse Courses'}
                   onPrimaryAction={onBrowseCourses}
                 />
               ) : (
@@ -333,7 +371,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                           </Text>
                         </View>
                         <Text style={{ fontSize: 11, color: colors.primary, fontWeight: '700' }}>
-                          {item.progressPercent}% Watched
+                          {item.progressPercent}% {isBangla ? 'সম্পন্ন' : 'Watched'}
                         </Text>
                       </View>
 
@@ -342,7 +380,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                       </Text>
 
                       <Text style={{ fontSize: 12, color: colors.textMuted, marginBottom: 8 }} numberOfLines={1}>
-                        Last Lesson: {item.lesson?.title || 'Course Lecture'}
+                        {isBangla ? 'সর্বশেষ লেসন: ' : 'Last Lesson: '}{item.lesson?.title || (isBangla ? 'কোর্স লেকচার' : 'Course Lecture')}
                       </Text>
 
                       <View style={styles.progressRow}>
@@ -362,10 +400,16 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                       <TouchableOpacity
                         style={[styles.resumeBtn, { backgroundColor: colors.primary, marginTop: 10 }]}
                         onPress={() => onNavigateToLesson(item.course.id, item.lesson?.id || '')}
+                        accessibilityRole="button"
+                        accessibilityLabel={
+                          isBangla
+                            ? `${item.course.title} চালিয়ে যান`
+                            : `Resume ${item.course.title}`
+                        }
                       >
                         <Ionicons name="play" size={14} color={colors.onPrimary} />
                         <Text style={[styles.resumeBtnText, { color: colors.onPrimary }]}>
-                          Resume ({Math.floor(item.watchSec / 60)}m {item.watchSec % 60}s)
+                          {isBangla ? 'চালিয়ে যান' : 'Resume'} ({Math.floor(item.watchSec / 60)}m {item.watchSec % 60}s)
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -381,9 +425,13 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                 <StateView
                   mode="empty"
                   icon="trophy-outline"
-                  title="No completed courses yet"
-                  message="Complete all modules and pass quizzes to earn industry-verified certificates."
-                  primaryActionLabel="Explore Catalog"
+                  title={isBangla ? 'এখনো কোনো কোর্স সম্পন্ন হয়নি' : 'No completed courses yet'}
+                  message={
+                    isBangla
+                      ? 'ভেরিফাইড ডিজিটাল সার্টিফিকেট অর্জন করতে সব মডিউল শেষ করুন ও কুইজ দিন।'
+                      : 'Complete all modules and pass quizzes to earn industry-verified certificates.'
+                  }
+                  primaryActionLabel={isBangla ? 'ক্যাটালগ দেখুন' : 'Explore Catalog'}
                   onPrimaryAction={onBrowseCourses}
                 />
               ) : (
@@ -400,7 +448,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                       <View style={[styles.completedBadge, { backgroundColor: colors.primaryLight }]}>
                         <Ionicons name="checkmark-circle" size={14} color={colors.primary} />
                         <Text style={[styles.completedBadgeText, { color: colors.primary }]}>
-                          Completed
+                          {isBangla ? 'সম্পন্ন' : 'Completed'}
                         </Text>
                       </View>
                       <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
@@ -417,10 +465,15 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                           if (cert) setSelectedCert(cert);
                         }}
                         accessibilityRole="button"
+                        accessibilityLabel={
+                          isBangla
+                            ? `${course.title} এর ডিজিটাল সার্টিফিকেট দেখুন`
+                            : `View digital certificate for ${course.title}`
+                        }
                       >
                         <Ionicons name="ribbon" size={16} color={colors.primary} />
                         <Text style={[styles.viewCertText, { color: colors.primary }]}>
-                          View Digital Certificate
+                          {isBangla ? 'ডিজিটাল সার্টিফিকেট দেখুন' : 'View Digital Certificate'}
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -436,9 +489,13 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                 <StateView
                   mode="empty"
                   icon="ribbon-outline"
-                  title="No certificates issued"
-                  message="Finish your active courses to unlock shareable credentials."
-                  primaryActionLabel="Explore Courses"
+                  title={isBangla ? 'কোনো সার্টিফিকেট ইস্যু হয়নি' : 'No certificates issued'}
+                  message={
+                    isBangla
+                      ? 'শেয়ারেবল ক্রেডেনশিয়াল আনলক করতে আপনার সক্রিয় কোর্সগুলো সম্পন্ন করুন।'
+                      : 'Finish your active courses to unlock shareable credentials.'
+                  }
+                  primaryActionLabel={isBangla ? 'কোর্স এক্সপ্লোর করুন' : 'Explore Courses'}
                   onPrimaryAction={onBrowseCourses}
                 />
               ) : (
@@ -456,7 +513,11 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                     onPress={() => setSelectedCert(cert)}
                     activeOpacity={0.85}
                     accessibilityRole="button"
-                    accessibilityLabel={`View verified digital certificate for ${cert.courseTitle}`}
+                    accessibilityLabel={
+                      isBangla
+                        ? `${cert.courseTitle} এর ভেরিফাইড সার্টিফিকেট দেখুন`
+                        : `View verified digital certificate for ${cert.courseTitle}`
+                    }
                   >
                     <View style={[styles.certIconBadge, { backgroundColor: isDark ? 'rgba(217, 119, 6, 0.2)' : '#FEF3C7' }]}>
                       <Ionicons name="ribbon" size={26} color={isDark ? '#FBBF24' : '#D97706'} />
@@ -465,13 +526,15 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                     <View style={styles.certCol}>
                       <View style={styles.verifiedTag}>
                         <Ionicons name="checkmark-circle" size={11} color={isDark ? '#34D399' : '#047857'} />
-                        <Text style={[styles.verifiedTagText, { color: isDark ? '#34D399' : '#047857' }]}>VERIFIED CREDENTIAL</Text>
+                        <Text style={[styles.verifiedTagText, { color: isDark ? '#34D399' : '#047857' }]}>
+                          {isBangla ? 'ভেরিফাইড ক্রেডেনশিয়াল' : 'VERIFIED CREDENTIAL'}
+                        </Text>
                       </View>
                       <Text style={[styles.certItemTitle, { color: colors.text }]} numberOfLines={2}>
                         {cert.courseTitle}
                       </Text>
                       <Text style={[styles.certItemMeta, { color: colors.textMuted }]}>
-                        Issued {cert.issueDate} • ID: {cert.credentialId}
+                        {isBangla ? 'ইস্যুর তারিখ ' : 'Issued '}{cert.issueDate} • ID: {cert.credentialId}
                       </Text>
                     </View>
 
@@ -487,9 +550,13 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
               {savedList.length === 0 && savedVideos.length === 0 ? (
                 <View style={styles.emptyContainer}>
                   <Ionicons name="bookmark-outline" size={48} color={colors.textLight} />
-                  <Text style={[styles.emptyTitle, { color: colors.text }]}>No saved items yet</Text>
+                  <Text style={[styles.emptyTitle, { color: colors.text }]}>
+                    {isBangla ? 'কোনো সংরক্ষিত আইটেম নেই' : 'No saved items yet'}
+                  </Text>
                   <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
-                    Bookmark courses from the catalog or masterclasses from our YouTube channel to watch later.
+                    {isBangla
+                      ? 'পরে দেখার জন্য ক্যাটালগ থেকে কোর্স অথবা আমাদের ইউটিউব চ্যানেল থেকে মাস্টারক্লাস বুকমার্ক করুন।'
+                      : 'Bookmark courses from the catalog or masterclasses from our YouTube channel to watch later.'}
                   </Text>
                   {onOpenYouTube && (
                     <TouchableOpacity
@@ -504,10 +571,16 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                         marginTop: 14,
                       }}
                       onPress={onOpenYouTube}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        isBangla
+                          ? 'ইউটিউব মাস্টারক্লাস ব্রাউজ করুন'
+                          : 'Browse YouTube Masterclasses'
+                      }
                     >
                       <Ionicons name="logo-youtube" size={16} color="#FFFFFF" />
                       <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 13 }}>
-                        Browse YouTube Masterclasses
+                        {isBangla ? 'ইউটিউব মাস্টারক্লাস ব্রাউজ করুন' : 'Browse YouTube Masterclasses'}
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -520,7 +593,9 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
                         <Ionicons name="logo-youtube" size={18} color="#FF0000" />
                         <Text style={[styles.sectionHeading, { color: colors.text }]}>
-                          Saved YouTube Masterclasses ({savedVideos.length})
+                          {isBangla
+                            ? `সংরক্ষিত ইউটিউব মাস্টারক্লাস (${savedVideos.length})`
+                            : `Saved YouTube Masterclasses (${savedVideos.length})`}
                         </Text>
                       </View>
                       {savedVideos.map((vid) => (
@@ -540,7 +615,9 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
                         <Ionicons name="school-outline" size={18} color={colors.primary} />
                         <Text style={[styles.sectionHeading, { color: colors.text }]}>
-                          Saved Accredited Courses ({savedList.length})
+                          {isBangla
+                            ? `সংরক্ষিত অ্যাক্রেডিটেড কোর্স (${savedList.length})`
+                            : `Saved Accredited Courses (${savedList.length})`}
                         </Text>
                       </View>
                       {savedList.map((course) => (
@@ -552,6 +629,12 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                           ]}
                           onPress={() => onNavigateToCourse(course.id)}
                           activeOpacity={0.85}
+                          accessibilityRole="button"
+                          accessibilityLabel={
+                            isBangla
+                              ? `${course.title} কোর্সের বিস্তারিত দেখুন`
+                              : `View details for ${course.title}`
+                          }
                         >
                           <Image source={{ uri: course.thumbnail }} style={styles.savedThumb} />
                           <View style={styles.savedInfo}>
