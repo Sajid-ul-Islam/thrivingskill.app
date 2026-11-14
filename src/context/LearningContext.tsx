@@ -188,7 +188,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [loadWordPressData]);
 
   const refreshCourses = async () => {
-    await loadWordPressData();
+    await loadWordPressData(true);
   };
 
   const loadCourseDetail = async (courseId: string): Promise<Course> => {
@@ -260,7 +260,8 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     // Certificate is ONLY generated if the course is completed AND the user has submitted a review (CR-02)
     if (isCompleted && userHasReviewed && !certId) {
-      certId = `TS-2026-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+      const randSuffix = Math.random().toString(36).substring(2, 8).toUpperCase().padEnd(6, '0');
+      certId = `TS-2026-${randSuffix}`;
       const newCert: Certificate = {
         id: `cert-${Date.now()}`,
         courseId: course.id,
@@ -488,7 +489,8 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     let cert: Certificate | null = null;
 
     if (!certId && course) {
-      certId = `TS-2026-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+      const randSuffix = Math.random().toString(36).substring(2, 8).toUpperCase().padEnd(6, '0');
+      certId = `TS-2026-${randSuffix}`;
       cert = {
         id: `cert-${Date.now()}`,
         courseId: course.id,

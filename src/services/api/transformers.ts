@@ -62,9 +62,20 @@ export function getCategoryTheme(slug: string, name: string) {
   return { color: '#059669', icon: 'book' };
 }
 
+// Deterministic hash to generate consistent display metrics across re-renders
+function hashString(str: string): number {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash);
+}
+
 // Transform raw LearnPress course to our App Course model
 export function transformWpCourse(raw: any): Course {
   const id = String(raw.id || Math.random());
+  const seed = hashString(id);
   const title = cleanHtml(raw.name || raw.title || 'Untitled Course');
   const slug = raw.slug || id;
   const excerpt = cleanHtml(raw.excerpt || raw.content || '');
@@ -99,8 +110,8 @@ export function transformWpCourse(raw: any): Course {
     company: 'Thriving Skills Bangladesh',
     avatar: instructorRaw.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=300',
     bio: cleanHtml(instructorRaw.bio || 'Experienced practitioner and instructor at Thriving Skills.'),
-    rating: 4.8 + Math.round((Math.random() * 0.2) * 10) / 10,
-    studentsCount: Math.floor(Math.random() * 800) + 200,
+    rating: 4.8 + ((seed % 3) / 10),
+    studentsCount: 200 + (seed % 650),
     coursesCount: 5,
   };
 
@@ -198,8 +209,8 @@ export function transformWpCourse(raw: any): Course {
     category: catId,
     level: 'All Levels',
     rating: typeof raw.rating === 'number' && raw.rating > 0 ? raw.rating : 4.8,
-    reviewsCount: Math.floor(Math.random() * 120) + 24,
-    enrolledCount: raw.count_students || Math.floor(Math.random() * 600) + 150,
+    reviewsCount: 24 + (seed % 120),
+    enrolledCount: raw.count_students || 150 + ((seed >> 2) % 600),
     price: priceData.usd || 15,
     priceBdt: bdtPrice,
     originalPrice: origPriceData.usd || 30,

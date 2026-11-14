@@ -16,6 +16,7 @@ import { FeedbackProvider, useFeedback } from './src/context/FeedbackContext';
 import { NetworkProvider } from './src/context/NetworkContext';
 import { triggerHaptic } from './src/utils/haptics';
 import { RootTab, ActiveScreen } from './src/types';
+import { useNavigationStack } from './src/hooks';
 
 import { HomeScreen } from './src/screens/HomeScreen';
 import { CoursesScreen } from './src/screens/CoursesScreen';
@@ -53,11 +54,18 @@ const MainAppContent: React.FC = () => {
   const { activeVideo, playerMode, closePlayer, minimizePlayer, playVideo } = useYouTube();
   const { currentToast, dismissToast } = useFeedback();
 
-  const [activeTab, setActiveTab] = useState<RootTab>('Home');
-  const [activeScreen, setActiveScreen] = useState<ActiveScreen>({
-    name: 'MainTabs',
-    tab: 'Home',
-  });
+  // Type-Safe Navigation Stack Architecture
+  const {
+    currentScreen: activeScreen,
+    activeTab,
+    canGoBack,
+    push,
+    pop: navigateBack,
+    navigateToTab,
+    navigateToCourse,
+    navigateToLesson,
+    resetToTabs: navigateBackToTabs,
+  } = useNavigationStack({ initialTab: 'Home' });
 
   // Global Modals State
   const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);
@@ -70,31 +78,15 @@ const MainAppContent: React.FC = () => {
 
   const inProgressCount = Object.values(userProgress).filter((p) => !p.isCompleted).length;
 
-  const navigateToTab = (tab: RootTab) => {
-    if (tab !== activeTab || activeScreen.name !== 'MainTabs') {
-      triggerHaptic('selection');
-    }
-    setActiveTab(tab);
-    setActiveScreen({ name: 'MainTabs', tab });
-  };
-
-  const navigateToCourse = (courseId: string) => {
-    setActiveScreen({ name: 'CourseDetail', courseId });
-  };
-
-  const navigateToLesson = (courseId: string, lessonId: string) => {
-    setActiveScreen({ name: 'LessonPlayer', courseId, lessonId });
-  };
-
-  const navigateBackToTabs = () => {
-    setActiveScreen({ name: 'MainTabs', tab: activeTab });
-  };
-
   // Android Hardware Back Button Hook (prevents accidental app exit)
   useEffect(() => {
     const onHardwareBack = () => {
       if (brandDrawerVisible) {
         setBrandDrawerVisible(false);
+        return true;
+      }
+      if (isAuthModalVisible) {
+        setAuthModalVisible(false);
         return true;
       }
       if (searchModalVisible) {
@@ -125,8 +117,8 @@ const MainAppContent: React.FC = () => {
         minimizePlayer();
         return true;
       }
-      if (activeScreen.name !== 'MainTabs') {
-        navigateBackToTabs();
+      if (canGoBack) {
+        navigateBack();
         return true;
       }
       return false;
@@ -136,6 +128,7 @@ const MainAppContent: React.FC = () => {
     return () => sub.remove();
   }, [
     brandDrawerVisible,
+    isAuthModalVisible,
     searchModalVisible,
     updateModalVisible,
     subscriptionModalVisible,
@@ -143,7 +136,8 @@ const MainAppContent: React.FC = () => {
     assessmentModalVisible,
     corporateModalVisible,
     playerMode,
-    activeScreen.name,
+    canGoBack,
+    navigateBack,
   ]);
 
   const tabItems: {
@@ -175,7 +169,7 @@ const MainAppContent: React.FC = () => {
           <ScreenTransition key={`detail-${activeScreen.courseId}`} direction="horizontal">
             <CourseDetailScreen
               courseId={activeScreen.courseId}
-              onBack={navigateBackToTabs}
+              onBack={navigateBack}
               onNavigateToLesson={navigateToLesson}
             />
           </ScreenTransition>
@@ -184,14 +178,14 @@ const MainAppContent: React.FC = () => {
             <LessonPlayerScreen
               courseId={activeScreen.courseId}
               lessonId={activeScreen.lessonId}
-              onBack={navigateBackToTabs}
+              onBack={navigateBack}
               onSelectLesson={navigateToLesson}
             />
           </ScreenTransition>
         ) : activeScreen.name === 'YouTubeVideos' ? (
           <ScreenTransition key="yt-videos" direction="horizontal">
             <YouTubeVideosScreen
-              onBack={navigateBackToTabs}
+              onBack={navigateBack}
               onNavigateToCourse={navigateToCourse}
             />
           </ScreenTransition>
@@ -207,7 +201,7 @@ const MainAppContent: React.FC = () => {
                   onOpenSubscription={() => setSubscriptionModalVisible(true)}
                   onOpenNotifications={() => setNotificationModalVisible(true)}
                   onOpenAssessment={() => setAssessmentModalVisible(true)}
-                  onOpenYouTube={() => setActiveScreen({ name: 'YouTubeVideos' })}
+                  onOpenYouTube={() => push({ name: 'YouTubeVideos' })}
                   onOpenSearch={() => setSearchModalVisible(true)}
                   onOpenDrawer={() => setBrandDrawerVisible(true)}
                 />
@@ -231,7 +225,7 @@ const MainAppContent: React.FC = () => {
                   onBrowseCourses={() => navigateToTab('Courses')}
                   onOpenSubscription={() => setSubscriptionModalVisible(true)}
                   onOpenNotifications={() => setNotificationModalVisible(true)}
-                  onOpenYouTube={() => setActiveScreen({ name: 'YouTubeVideos' })}
+                  onOpenYouTube={() => push({ name: 'YouTubeVideos' })}
                   onOpenDrawer={() => setBrandDrawerVisible(true)}
                 />
               </ScreenTransition>
@@ -343,7 +337,7 @@ const MainAppContent: React.FC = () => {
         visible={brandDrawerVisible}
         onClose={() => setBrandDrawerVisible(false)}
         onNavigateTab={navigateToTab}
-        onOpenYouTube={() => setActiveScreen({ name: 'YouTubeVideos' })}
+        onOpenYouTube={() => push({ name: 'YouTubeVideos' })}
         onOpenAssessment={() => setAssessmentModalVisible(true)}
         onOpenSubscription={() => setSubscriptionModalVisible(true)}
         onOpenUpdate={() => setUpdateModalVisible(true)}

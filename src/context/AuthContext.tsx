@@ -92,6 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const parsedUser: UserProfile = JSON.parse(savedUser);
           setUser(parsedUser);
           setToken(savedToken);
+          HttpClient.setAuthToken(savedToken);
           setIsGuest(false);
 
           // Verify token in background and invalidate expired sessions
@@ -140,14 +141,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const saveUserSession = async (loggedInUser: WpUser | UserProfile) => {
     setUser(loggedInUser as UserProfile);
-    setToken(loggedInUser.token || null);
+    const userToken = loggedInUser.token || null;
+    setToken(userToken);
+    HttpClient.setAuthToken(userToken);
     setIsGuest(false);
     setAuthModalVisible(false);
 
     await Promise.all([
       AsyncStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(loggedInUser)),
-      loggedInUser.token
-        ? AsyncStorage.setItem(AUTH_TOKEN_STORAGE_KEY, loggedInUser.token)
+      userToken
+        ? AsyncStorage.setItem(AUTH_TOKEN_STORAGE_KEY, userToken)
         : Promise.resolve(),
     ]);
   };

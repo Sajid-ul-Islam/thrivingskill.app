@@ -66,7 +66,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const { badges } = useGamification();
   const { showToast } = useFeedback();
   const { courses, userProgress, certificates } = useLearning();
-  const { user, isAuthenticated, isAdmin, logout, deleteAccount, setAuthModalVisible, updateUserProfile } = useAuth();
+  const { user, isAuthenticated, logout, deleteAccount, setAuthModalVisible, updateUserProfile } = useAuth();
+  const isAdmin = Array.isArray(user?.roles) && user.roles.includes('administrator');
   const {
     subscriptionTier,
     billingInterval,

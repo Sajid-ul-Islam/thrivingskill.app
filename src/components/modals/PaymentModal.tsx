@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Modal,
   View,
@@ -46,61 +46,149 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const { showToast } = useFeedback();
   const { userProgress, enrollInCourse, refreshCourses, loadCourseDetail } = useLearning();
 
+  const MAX_SYNC_ATTEMPTS = 4;
+  const RETRY_DELAYS_MS = [0, 1500, 2500, 4000];
+
   const [isSyncing, setIsSyncing] = useState(false);
+  const [syncAttempt, setSyncAttempt] = useState<number>(0);
+  const [syncStatusMsg, setSyncStatusMsg] = useState<string>('');
+
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMountedRef = useRef<boolean>(true);
+  const isCancelledRef = useRef<boolean>(false);
+
   const syncStep = isSyncing || (isAuthenticated && userProgress[course?.id || '']) ? 2 : isAuthenticated ? 2 : 1;
 
   useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleClose = useCallback(() => {
+    isCancelledRef.current = true;
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    setIsSyncing(false);
+    setSyncAttempt(0);
+    setSyncStatusMsg('');
+    onClose();
+  }, [onClose]);
+
+  useEffect(() => {
     if (visible) {
+      isCancelledRef.current = false;
       setIsSyncing(false);
+      setSyncAttempt(0);
+      setSyncStatusMsg('');
+    } else {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
     }
   }, [visible, course?.id]);
 
-  // Verify real enrollment against WordPress / LearnPress backend
+  // Resilient LearnPress Order Webhook Polling & Member Access Sync
   const performEnrollmentSync = useCallback(async () => {
     if (!course) return;
 
     if (!isAuthenticated || !user?.id) {
-      onClose();
+      handleClose();
       setAuthModalVisible(true);
       return;
     }
 
     if (userProgress[course.id]) {
       onSuccess(course.id);
-      onClose();
+      handleClose();
       return;
     }
 
     setIsSyncing(true);
+    isCancelledRef.current = false;
+    let backendVerified = false;
 
     try {
-      await refreshCourses();
-
-      let backendVerified = false;
-      try {
-        const updatedCourse = await loadCourseDetail(course.id);
-        if ((updatedCourse as any)?.enrolled || (updatedCourse as any)?.isEnrolled) {
-          backendVerified = true;
+      for (let attempt = 1; attempt <= MAX_SYNC_ATTEMPTS; attempt++) {
+        if (!isMountedRef.current || isCancelledRef.current) {
+          return;
         }
-      } catch {
-        // Ignore detail fetch glitch and try enrollment handshake below
+
+        setSyncAttempt(attempt);
+        const attemptMsg = isBangla
+          ? `অ্যাকাউন্ট ভেরিফিকেশন চলছে... (চেষ্টা ${attempt}/${MAX_SYNC_ATTEMPTS})`
+          : `Verifying LearnPress order status... (${attempt}/${MAX_SYNC_ATTEMPTS})`;
+        setSyncStatusMsg(attemptMsg);
+
+        // Exponential backoff delay for subsequent attempts to allow webhook to settle
+        if (attempt > 1) {
+          const delay = RETRY_DELAYS_MS[attempt - 1] || 2000;
+          await new Promise<void>((resolve) => {
+            timeoutRef.current = setTimeout(() => {
+              timeoutRef.current = null;
+              resolve();
+            }, delay);
+          });
+
+          if (!isMountedRef.current || isCancelledRef.current) {
+            return;
+          }
+        }
+
+        try {
+          await refreshCourses();
+
+          try {
+            const updatedCourse = await loadCourseDetail(course.id);
+            if ((updatedCourse as any)?.enrolled || (updatedCourse as any)?.isEnrolled) {
+              backendVerified = true;
+              break;
+            }
+          } catch {
+            // Continue to enrollment handshake attempt below
+          }
+
+          if (!backendVerified) {
+            try {
+              const enrollRes = await CoursesService.enrollCourse(course.id);
+              if (enrollRes && (enrollRes.success || (enrollRes as any).code === 'already_enrolled')) {
+                backendVerified = true;
+                break;
+              }
+            } catch (e: any) {
+              const msg = (e?.message || '').toLowerCase();
+              if (msg.includes('already') || msg.includes('enrolled')) {
+                backendVerified = true;
+                break;
+              }
+            }
+          }
+
+          if (backendVerified || userProgress[course.id]) {
+            break;
+          }
+        } catch (err) {
+          if (attempt === MAX_SYNC_ATTEMPTS) {
+            throw err;
+          }
+        }
       }
 
-      if (!backendVerified) {
-        try {
-          const enrollRes = await CoursesService.enrollCourse(course.id);
-          if (enrollRes && (enrollRes.success || (enrollRes as any).code === 'already_enrolled')) {
-            backendVerified = true;
-          }
-        } catch (e: any) {
-          const msg = (e?.message || '').toLowerCase();
-          if (msg.includes('already') || msg.includes('enrolled')) {
-            backendVerified = true;
-          }
-        }
+      if (!isMountedRef.current || isCancelledRef.current) {
+        return;
       }
 
       setIsSyncing(false);
+      setSyncAttempt(0);
+      setSyncStatusMsg('');
 
       if (backendVerified || userProgress[course.id]) {
         enrollInCourse(course.id);
@@ -114,7 +202,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               text: isBangla ? 'শেখা শুরু করুন' : 'Start Learning',
               onPress: () => {
                 onSuccess(course.id);
-                onClose();
+                handleClose();
               },
             },
           ]
@@ -125,11 +213,28 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       Alert.alert(
         isBangla ? 'এনরোলমেন্ট পাওয়া যায়নি' : 'Enrollment Not Found',
         isBangla
-          ? 'এই অ্যাকাউন্টে কোর্সটির সক্রিয় এনরোলমেন্ট পাওয়া যায়নি। সঠিক থ্রাইভিং স্কিলস অ্যাকাউন্ট দিয়ে সাইন ইন করেছেন কিনা নিশ্চিত করুন।'
-          : 'No active enrollment for this course was found on your signed-in Thriving Skills account. Please verify you are signed in with the right account.'
+          ? 'এই অ্যাকাউন্টে কোর্সটির সক্রিয় এনরোলমেন্ট পাওয়া যায়নি। আপনি যদি সম্প্রতি ওয়েবসাইটে অর্ডার সম্পন্ন করে থাকেন, তবে কয়েক সেকেন্ড অপেক্ষা করে পুনরায় চেষ্টা করুন।'
+          : 'No active enrollment for this course was found on your signed-in Thriving Skills account. If you recently completed an order on our website, server order processing may take a moment.',
+        [
+          {
+            text: isBangla ? 'বাতিল' : 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: isBangla ? 'পুনরায় চেষ্টা করুন' : 'Retry Sync',
+            onPress: () => {
+              performEnrollmentSync();
+            },
+          },
+        ]
       );
     } catch {
+      if (!isMountedRef.current || isCancelledRef.current) {
+        return;
+      }
       setIsSyncing(false);
+      setSyncAttempt(0);
+      setSyncStatusMsg('');
       Alert.alert(
         isBangla ? 'সংযোগ ত্রুটি' : 'Sync Error',
         isBangla
@@ -146,8 +251,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     loadCourseDetail,
     enrollInCourse,
     onSuccess,
-    onClose,
+    handleClose,
     setAuthModalVisible,
+    showToast,
     t,
     isBangla,
   ]);
@@ -155,9 +261,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   if (!course) return null;
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
       <View style={styles.backdrop}>
-        <TouchableOpacity style={styles.overlayClose} activeOpacity={1} onPress={onClose} />
+        <TouchableOpacity style={styles.overlayClose} activeOpacity={1} onPress={handleClose} />
         <View
           style={[
             styles.modalCard,
@@ -173,7 +279,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
           <TouchableOpacity
             style={[styles.closeBtn, { backgroundColor: isDark ? '#27272A' : '#F4F4F5' }]}
-            onPress={onClose}
+            onPress={handleClose}
             accessibilityRole="button"
             accessibilityLabel="Close access sync modal"
           >
@@ -273,7 +379,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <>
                   <ActivityIndicator color={colors.onPrimary} size="small" style={{ marginRight: 8 }} />
                   <Text style={[styles.primaryBtnText, { color: colors.onPrimary }]}>
-                    {t('syncingEnrollment')}
+                    {syncStatusMsg || t('syncingEnrollment')}
                   </Text>
                 </>
               ) : (
