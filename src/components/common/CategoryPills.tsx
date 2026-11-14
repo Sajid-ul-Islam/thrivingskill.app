@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { ScrollView, Text, TouchableOpacity, StyleSheet, View } from 'react-native';
+import React, { useRef, useCallback, useEffect } from 'react';
+import { ScrollView, Text, TouchableOpacity, StyleSheet, View, LayoutChangeEvent } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Category, CategoryId } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
@@ -30,17 +30,42 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({
   const { isBangla } = useLanguage();
   const list: Category[] = categories && categories.length > 0 ? categories : DEFAULT_CATEGORIES;
 
-  const { scrollViewRef, scrollProps, pauseTemporarily } = useAutoScroll({
+  const pillLayoutsRef = useRef<Record<string, { x: number; width: number }>>({});
+  const containerWidthRef = useRef<number>(0);
+
+  const { scrollViewRef, scrollProps, pauseTemporarily, isReduceMotion } = useAutoScroll({
     enabled: autoScroll,
     speed: 0.55,
     pauseAtEdgeMs: 1500,
     resumeDelayMs: 2800,
   });
 
+  // Smoothly center the selected pill in the viewport when tapped
+  const centerPill = useCallback(
+    (catId: CategoryId) => {
+      const layout = pillLayoutsRef.current[catId];
+      if (layout && containerWidthRef.current > 0 && scrollViewRef.current) {
+        const targetX = Math.max(0, layout.x - containerWidthRef.current / 2 + layout.width / 2);
+        scrollViewRef.current.scrollTo({ x: targetX, animated: !isReduceMotion });
+      }
+    },
+    [isReduceMotion, scrollViewRef]
+  );
+
+  useEffect(() => {
+    centerPill(selectedId);
+  }, [selectedId, centerPill]);
+
   const handlePressCategory = (catId: CategoryId) => {
     triggerHaptic('selection');
     pauseTemporarily(3500);
     onSelect(catId);
+    centerPill(catId);
+  };
+
+  const handleScrollViewLayout = (e: LayoutChangeEvent) => {
+    containerWidthRef.current = e.nativeEvent.layout.width;
+    scrollProps.onLayout(e);
   };
 
   return (
@@ -51,6 +76,7 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({
       contentContainerStyle={styles.container}
       accessibilityRole="tablist"
       {...scrollProps}
+      onLayout={handleScrollViewLayout}
     >
       {list.map((cat) => {
         const isSelected = selectedId === cat.id;
@@ -71,6 +97,12 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({
               },
               isSelected && [styles.selectedPillShadow, { shadowColor: colors.primary }],
             ]}
+            onLayout={(e) => {
+              pillLayoutsRef.current[cat.id] = {
+                x: e.nativeEvent.layout.x,
+                width: e.nativeEvent.layout.width,
+              };
+            }}
             onPress={() => handlePressCategory(cat.id)}
             activeOpacity={0.75}
             accessibilityRole="tab"

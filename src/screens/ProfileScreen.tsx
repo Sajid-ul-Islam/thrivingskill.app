@@ -1894,13 +1894,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       <Modal
         visible={deleteAccountModalVisible}
         transparent
+        statusBarTranslucent={true}
         animationType="slide"
         onRequestClose={() => {
           if (!isDeletingAccount) setDeleteAccountModalVisible(false);
         }}
       >
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalBackdrop}
         >
           <View

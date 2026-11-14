@@ -95,10 +95,10 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={handleDismiss}>
+    <Modal visible={visible} animationType="slide" transparent statusBarTranslucent={true} onRequestClose={handleDismiss}>
       <KeyboardAvoidingView
         style={styles.overlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={[styles.modalCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border, paddingBottom: Math.max(insets.bottom, 16) + 16 }]}>
           <ScrollView

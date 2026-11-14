@@ -102,6 +102,12 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     return b.enrolledCount - a.enrolledCount; // popular
   });
 
+  const hasActiveFilters =
+    selectedCategory !== 'all' ||
+    selectedLevel !== 'All' ||
+    selectedPriceFilter !== 'all' ||
+    searchQuery.trim().length > 0;
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
@@ -327,6 +333,85 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
           </View>
         </View>
 
+        {/* Active Filter Dismiss Chips */}
+        {hasActiveFilters && (
+          <View style={styles.activeFilterChipsRow}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.activeFilterChipsScroll}
+            >
+              {searchQuery.trim().length > 0 && (
+                <TouchableOpacity
+                  style={[styles.activeFilterChip, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                  onPress={() => setSearchQuery('')}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Clear search: ${searchQuery}`}
+                >
+                  <Text style={[styles.activeFilterChipText, { color: colors.text }]}>
+                    "{searchQuery}"
+                  </Text>
+                  <Ionicons name="close-circle" size={14} color={colors.textMuted} />
+                </TouchableOpacity>
+              )}
+              {selectedCategory !== 'all' && (
+                <TouchableOpacity
+                  style={[styles.activeFilterChip, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                  onPress={() => setSelectedCategory('all')}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear category filter"
+                >
+                  <Text style={[styles.activeFilterChipText, { color: colors.text }]}>
+                    {categories.find((c) => c.id === selectedCategory)?.name || selectedCategory}
+                  </Text>
+                  <Ionicons name="close-circle" size={14} color={colors.textMuted} />
+                </TouchableOpacity>
+              )}
+              {selectedLevel !== 'All' && (
+                <TouchableOpacity
+                  style={[styles.activeFilterChip, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                  onPress={() => setSelectedLevel('All')}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear level filter"
+                >
+                  <Text style={[styles.activeFilterChipText, { color: colors.text }]}>
+                    {selectedLevel}
+                  </Text>
+                  <Ionicons name="close-circle" size={14} color={colors.textMuted} />
+                </TouchableOpacity>
+              )}
+              {selectedPriceFilter !== 'all' && (
+                <TouchableOpacity
+                  style={[styles.activeFilterChip, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                  onPress={() => setSelectedPriceFilter('all')}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear price filter"
+                >
+                  <Text style={[styles.activeFilterChipText, { color: colors.text }]}>
+                    {selectedPriceFilter === 'free' ? 'Free' : 'Members'}
+                  </Text>
+                  <Ionicons name="close-circle" size={14} color={colors.textMuted} />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                style={styles.clearAllFiltersBtn}
+                onPress={() => {
+                  setSearchQuery('');
+                  setSelectedCategory('all');
+                  setSelectedLevel('All');
+                  setSelectedPriceFilter('all');
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Clear all active filters"
+              >
+                <Text style={[styles.clearAllFiltersText, { color: colors.primary }]}>
+                  {isBangla ? 'সব মুছুন' : 'Clear all'}
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        )}
+
         {/* Content Rendering: Real Courses */}
         <View style={styles.coursesContainer}>
           {isLoadingCourses && courses.length === 0 ? (
@@ -519,6 +604,39 @@ const styles = StyleSheet.create({
   priceFilterBtnText: {
     fontSize: 11,
     fontWeight: '700',
+  },
+  activeFilterChipsRow: {
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  activeFilterChipsScroll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 2,
+  },
+  activeFilterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: shape.full,
+    borderWidth: 1,
+  },
+  activeFilterChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  clearAllFiltersBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    justifyContent: 'center',
+  },
+  clearAllFiltersText: {
+    fontSize: 12,
+    fontWeight: '700',
+    textDecorationLine: 'underline',
   },
   coursesContainer: {
     paddingHorizontal: 16,

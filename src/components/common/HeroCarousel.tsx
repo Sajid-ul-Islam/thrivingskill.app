@@ -15,6 +15,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
+import { shape } from '../../theme/shapes';
 
 export interface CarouselSlide {
   id: string;
@@ -77,6 +78,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
   const cardWidth = Math.max(280, screenWidth - 32);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isReduceMotion, setIsReduceMotion] = useState(false);
+  const [isManualPaused, setIsManualPaused] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -102,7 +104,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
 
   const startAutoScroll = () => {
     stopAutoScroll();
-    if (isReduceMotion) return; // Suppress auto movement if user requested reduced motion
+    if (isReduceMotion || isManualPaused) return; // Suppress auto movement if user requested reduced motion or manually paused
     timerRef.current = setInterval(() => {
       setActiveIndex((prev) => {
         const nextIndex = (prev + 1) % SLIDES.length;
@@ -127,11 +129,24 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
     }
   };
 
+  const toggleManualPause = () => {
+    setIsManualPaused((prev) => {
+      const next = !prev;
+      if (next) {
+        stopAutoScroll();
+      } else {
+        startAutoScroll();
+      }
+      return next;
+    });
+  };
+
   const handleUserTouchStart = () => {
     stopAutoScroll();
   };
 
   const handleUserTouchEnd = () => {
+    if (isManualPaused) return;
     // Generous 7-second cooldown after user touch before gently resuming
     if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
     restartTimerRef.current = setTimeout(() => {
@@ -142,7 +157,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
   useEffect(() => {
     startAutoScroll();
     return () => stopAutoScroll();
-  }, [isReduceMotion]);
+  }, [isReduceMotion, isManualPaused]);
 
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetX = e.nativeEvent.contentOffset.x;
@@ -192,9 +207,24 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
             <View style={styles.ctaBtn}>
               <Text style={styles.ctaText}>{item.ctaText}</Text>
             </View>
-            <Text style={styles.slideCounter}>
-              {activeIndex + 1}/{SLIDES.length}
-            </Text>
+            <View style={styles.slideCounterGroup}>
+              <TouchableOpacity
+                onPress={toggleManualPause}
+                style={styles.pauseBtn}
+                accessibilityRole="button"
+                accessibilityLabel={isManualPaused ? 'Play slide carousel' : 'Pause slide carousel'}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons
+                  name={isManualPaused ? 'play' : 'pause'}
+                  size={11}
+                  color="#FFFFFF"
+                />
+              </TouchableOpacity>
+              <Text style={styles.slideCounter}>
+                {activeIndex + 1}/{SLIDES.length}
+              </Text>
+            </View>
           </View>
         </LinearGradient>
       </SpringPressable>
@@ -355,8 +385,25 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
   },
+  slideCounterGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(0, 0, 0, 0.28)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: shape.full,
+  },
+  pauseBtn: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+  },
   slideCounter: {
-    color: 'rgba(255, 255, 255, 0.6)',
+    color: 'rgba(255, 255, 255, 0.8)',
     fontSize: 11,
     fontWeight: '700',
   },

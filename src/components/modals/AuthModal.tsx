@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -11,6 +11,7 @@ import {
   Platform,
   ScrollView,
   Alert,
+  Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -52,6 +53,43 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [isResetLoading, setIsResetLoading] = useState(false);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  const scrollViewRef = useRef<React.ElementRef<typeof ScrollView>>(null);
+  const nameInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
+  const phoneInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
+  const usernameInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
+  const passwordInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
+  const forgotEmailInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        setIsKeyboardVisible(true);
+        setKeyboardHeight(e.endCoordinates.height);
+      }
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => {
+        setIsKeyboardVisible(false);
+        setKeyboardHeight(0);
+      }
+    );
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  const scrollToInput = (yOffset: number) => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({ y: yOffset, animated: true });
+    }, 100);
+  };
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const nameError =
@@ -225,13 +263,40 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      statusBarTranslucent={true}
+      onRequestClose={onClose}
+    >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.backdrop}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-        <TouchableOpacity style={styles.outsideOverlay} activeOpacity={1} onPress={onClose} />
-        <View style={[styles.modalCard, { backgroundColor: colors.surface, borderColor: colors.border, paddingBottom: Math.max(insets.bottom, 20) + 12 }]} accessibilityViewIsModal={true}>
+        <TouchableOpacity
+          style={styles.outsideOverlay}
+          activeOpacity={1}
+          onPress={() => {
+            Keyboard.dismiss();
+            onClose();
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Close dialog"
+        />
+        <View
+          style={[
+            styles.modalCard,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.border,
+              paddingBottom: isKeyboardVisible ? 12 : Math.max(insets.bottom, 20) + 12,
+              maxHeight: isKeyboardVisible ? '98%' : '92%',
+            },
+          ]}
+          accessibilityViewIsModal={true}
+        >
           {/* Drag Handle */}
           <View style={[styles.handleBar, { backgroundColor: colors.border }]} />
 
@@ -245,31 +310,54 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
             <Ionicons name="close" size={20} color={colors.textMuted} />
           </TouchableOpacity>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-            {/* Brand Logo & Pill */}
-            <View style={styles.brandContainer}>
-              <View style={[styles.brandIconWrap, { backgroundColor: '#102F53' }]}>
-                <Ionicons name="school" size={26} color="#FFB606" />
+          <ScrollView
+            ref={scrollViewRef}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            contentContainerStyle={[
+              styles.scrollContent,
+              isKeyboardVisible && { paddingBottom: Math.max(keyboardHeight, 140) },
+            ]}
+            style={styles.scrollView}
+          >
+            {/* Brand Logo & Pill - Gracefully hidden during keyboard entry so inputs remain front and center */}
+            {!isKeyboardVisible && (
+              <View style={styles.brandContainer}>
+                <View style={[styles.brandIconWrap, { backgroundColor: '#102F53' }]}>
+                  <Ionicons name="school" size={26} color="#FFB606" />
+                </View>
+                <Text style={[styles.brandBadgeText, { color: colors.text }]}>
+                  THRIVING <Text style={{ color: colors.accent }}>SKILLS</Text>
+                </Text>
               </View>
-              <Text style={[styles.brandBadgeText, { color: colors.text }]}>
-                THRIVING <Text style={{ color: colors.accent }}>SKILLS</Text>
-              </Text>
-            </View>
+            )}
 
-            <Text style={[styles.title, { color: colors.text }]}>
+            <Text
+              style={[
+                styles.title,
+                {
+                  color: colors.text,
+                  marginTop: isKeyboardVisible ? 2 : 0,
+                  marginBottom: isKeyboardVisible ? 8 : 6,
+                },
+              ]}
+            >
               {mode === 'login'
                 ? 'Welcome Back, Professional'
                 : mode === 'register'
                 ? 'Create Your Free Account'
                 : 'Reset Your Password'}
             </Text>
-            <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-              {mode === 'login'
-                ? 'Sign in to access your masterclasses, certificates, and learning track.'
-                : mode === 'register'
-                ? 'Join 50,000+ executives and learners across Bangladesh.'
-                : 'Enter your username or email address and we will email you a link to reset your password.'}
-            </Text>
+            {!isKeyboardVisible && (
+              <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+                {mode === 'login'
+                  ? 'Sign in to access your masterclasses, certificates, and learning track.'
+                  : mode === 'register'
+                  ? 'Join 50,000+ executives and learners across Bangladesh.'
+                  : 'Enter your username or email address and we will email you a link to reset your password.'}
+              </Text>
+            )}
 
             {/* Mode Switch Tabs: Email / Mobile OTP / Register */}
             {mode !== 'forgot_password' && (
@@ -399,6 +487,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                     >
                       <Ionicons name="mail-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
                       <TextInput
+                        ref={forgotEmailInputRef}
                         style={[styles.input, { color: colors.text }]}
                         placeholder="e.g. user@thrivingskill.com or username"
                         placeholderTextColor={colors.textMuted + '80'}
@@ -407,9 +496,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                           setUsername(t);
                           if (errorMessage) setErrorMessage(null);
                         }}
+                        onFocus={() => scrollToInput(20)}
                         autoCapitalize="none"
                         autoCorrect={false}
                         keyboardType="email-address"
+                        returnKeyType="done"
+                        onSubmitEditing={handleResetPassword}
                         autoComplete="email"
                         textContentType="username"
                       />
@@ -472,6 +564,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                     >
                       <Ionicons name="person-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
                       <TextInput
+                        ref={nameInputRef}
                         style={[styles.input, { color: colors.text }]}
                         placeholder="e.g. Sajid Ul Islam"
                         placeholderTextColor={colors.textLight}
@@ -480,7 +573,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                           setName(t);
                           if (errorMessage) setErrorMessage(null);
                         }}
+                        onFocus={() => scrollToInput(20)}
                         onBlur={() => setTouched((p) => ({ ...p, name: true }))}
+                        returnKeyType="next"
+                        onSubmitEditing={() => phoneInputRef.current?.focus()}
                         autoComplete="name"
                         textContentType="name"
                       />
@@ -503,6 +599,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                     >
                       <Ionicons name="call-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
                       <TextInput
+                        ref={phoneInputRef}
                         style={[styles.input, { color: colors.text }]}
                         placeholder="e.g. 01712345678"
                         placeholderTextColor={colors.textLight}
@@ -511,8 +608,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                           setRegPhone(t);
                           if (errorMessage) setErrorMessage(null);
                         }}
+                        onFocus={() => scrollToInput(80)}
                         onBlur={() => setTouched((p) => ({ ...p, regPhone: true }))}
                         keyboardType="phone-pad"
+                        returnKeyType="done"
+                        onSubmitEditing={handleNextRegisterStep}
                         autoComplete="tel"
                         textContentType="telephoneNumber"
                       />
@@ -570,6 +670,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                     >
                       <Ionicons name="mail-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
                       <TextInput
+                        ref={usernameInputRef}
                         style={[styles.input, { color: colors.text }]}
                         placeholder={mode === 'login' ? 'e.g. user@thrivingskill.com' : 'e.g. name@domain.com'}
                         placeholderTextColor={colors.textLight}
@@ -578,10 +679,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                           setUsername(t);
                           if (errorMessage) setErrorMessage(null);
                         }}
+                        onFocus={() => scrollToInput(40)}
                         onBlur={() => setTouched((p) => ({ ...p, username: true }))}
                         autoCapitalize="none"
                         autoCorrect={false}
                         keyboardType="email-address"
+                        returnKeyType="next"
+                        onSubmitEditing={() => passwordInputRef.current?.focus()}
                         autoComplete="email"
                         textContentType="username"
                       />
@@ -612,6 +716,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                         style={styles.inputIcon}
                       />
                       <TextInput
+                        ref={passwordInputRef}
                         style={[styles.input, { color: colors.text }]}
                         placeholder={mode === 'login' ? 'Enter your password' : 'Min 6 characters'}
                         placeholderTextColor={colors.textLight}
@@ -620,9 +725,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                           setPassword(t);
                           if (errorMessage) setErrorMessage(null);
                         }}
+                        onFocus={() => scrollToInput(100)}
                         onBlur={() => setTouched((p) => ({ ...p, password: true }))}
                         secureTextEntry={!showPassword}
                         autoCapitalize="none"
+                        returnKeyType="done"
+                        onSubmitEditing={handleLogin}
                         autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                         textContentType={mode === 'login' ? 'password' : 'newPassword'}
                       />
@@ -738,7 +846,11 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   outsideOverlay: {
-    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   modalCard: {
     borderTopLeftRadius: 28,
@@ -748,6 +860,11 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: Platform.OS === 'ios' ? 36 : 24,
     maxHeight: '92%',
+    flexShrink: 1,
+  },
+  scrollView: {
+    width: '100%',
+    flexShrink: 1,
   },
   handleBar: {
     width: 44,
