@@ -1,5 +1,4 @@
-import { Course, CourseModule, Lesson, Category, WpUser, WpPost, CategoryId } from '../types';
-import { COURSES as FALLBACK_COURSES, CATEGORIES as INITIAL_CATEGORIES } from '../data/mockData';
+import { Course, CourseModule, Lesson, Category, WpUser, WpPost, CategoryId, Workshop } from '../types';
 import { Env } from '../config/env';
 import { CoursesService } from './api/coursesService';
 import { PostsService } from './api/postsService';
@@ -54,6 +53,13 @@ export async function fetchWpCourseDetail(courseId: string | number): Promise<Co
  */
 export async function fetchWpCategories(): Promise<Category[]> {
   return CoursesService.getCategories();
+}
+
+/**
+ * Fetch authentic live workshops and masterclasses using CoursesService
+ */
+export async function fetchWpLiveWorkshops(): Promise<Workshop[]> {
+  return CoursesService.getLiveWorkshops();
 }
 
 /**

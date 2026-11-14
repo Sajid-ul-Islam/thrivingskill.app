@@ -2,13 +2,13 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Env } from '../config/env';
 import { Course, UserProgress, Certificate, Note, CategoryId, Workshop, Category, WpPost, Review } from '../types';
-import { COURSES as INITIAL_COURSES, WORKSHOPS, CATEGORIES as INITIAL_CATEGORIES } from '../data/mockData';
 import { useAuth } from './AuthContext';
 import {
   fetchWpCourses,
   fetchWpCategories,
   fetchWpPosts,
   fetchWpCourseDetail,
+  fetchWpLiveWorkshops,
 } from '../services/wordpressApi';
 
 const PROGRESS_STORAGE_KEY = '@thriving_skill_progress';
@@ -23,6 +23,7 @@ const CERTIFICATES_STORAGE_KEY = '@thriving_skill_certificates';
 interface LearningContextType {
   courses: Course[];
   categories: Category[];
+  workshops: Workshop[];
   blogPosts: WpPost[];
   isLoadingCourses: boolean;
   coursesError: string | null;
@@ -79,10 +80,21 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const { user } = useAuth();
   const userScope = user?.id ? `_u_${user.id}` : '_guest';
 
-  const [courses, setCourses] = useState<Course[]>(INITIAL_COURSES);
-  const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [categories, setCategories] = useState<Category[]>([
+    {
+      id: 'all',
+      name: 'All Courses',
+      banglaName: 'সব কোর্স',
+      icon: 'grid',
+      count: 0,
+      color: '#059669',
+      slug: 'all',
+    },
+  ]);
+  const [workshops, setWorkshops] = useState<Workshop[]>([]);
   const [blogPosts, setBlogPosts] = useState<WpPost[]>([]);
-  const [isLoadingCourses, setIsLoadingCourses] = useState<boolean>(false);
+  const [isLoadingCourses, setIsLoadingCourses] = useState<boolean>(true);
   const [coursesError, setCoursesError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<CategoryId>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -99,14 +111,15 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [searchKeywordsHistory, setSearchKeywordsHistory] = useState<string[]>([]);
   const [reviewedCourseIds, setReviewedCourseIds] = useState<string[]>([]);
 
-  // Fetch live courses, categories, and blog posts from WordPress
+  // Fetch live courses, categories, workshops, and blog posts from WordPress
   const loadWordPressData = useCallback(async (forceRefresh: boolean = false) => {
     setIsLoadingCourses(true);
     setCoursesError(null);
     try {
-      const [wpCourses, wpCategories, wpPosts] = await Promise.allSettled([
+      const [wpCourses, wpCategories, wpWorkshops, wpPosts] = await Promise.allSettled([
         fetchWpCourses({ perPage: 40, forceRefresh }),
         fetchWpCategories(),
+        fetchWpLiveWorkshops(),
         fetchWpPosts({ perPage: 6 }),
       ]);
 
@@ -117,6 +130,9 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
       if (wpCategories.status === 'fulfilled' && wpCategories.value.length > 0) {
         setCategories(wpCategories.value);
+      }
+      if (wpWorkshops.status === 'fulfilled' && wpWorkshops.value.length > 0) {
+        setWorkshops(wpWorkshops.value);
       }
       if (wpPosts.status === 'fulfilled' && wpPosts.value.length > 0) {
         setBlogPosts(wpPosts.value);
@@ -420,7 +436,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const isRsvpd = (workshopId: string) => rsvpWorkshops.includes(workshopId);
 
   const getCourseById = (courseId: string) => courses.find((c) => c.id === courseId);
-  const getWorkshopById = (workshopId: string) => WORKSHOPS.find((w) => w.id === workshopId);
+  const getWorkshopById = (workshopId: string) => workshops.find((w) => w.id === workshopId);
 
   const recordCategoryInteraction = (categoryId: string) => {
     if (!categoryId || categoryId === 'all') return;
@@ -602,6 +618,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       value={{
         courses,
         categories,
+        workshops,
         blogPosts,
         isLoadingCourses,
         coursesError,

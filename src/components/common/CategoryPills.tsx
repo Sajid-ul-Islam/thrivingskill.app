@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { ScrollView, Text, TouchableOpacity, StyleSheet, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { CATEGORIES } from '../../data/mockData';
 import { Category, CategoryId } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAutoScroll } from '../../hooks/useAutoScroll';
+import { triggerHaptic } from '../../utils/haptics';
+import { MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
 
 interface CategoryPillsProps {
@@ -15,15 +16,19 @@ interface CategoryPillsProps {
   autoScroll?: boolean;
 }
 
+const DEFAULT_CATEGORIES: Category[] = [
+  { id: 'all', name: 'All Courses', banglaName: 'সব কোর্স', icon: 'grid', count: 0, color: '#059669', slug: 'all' },
+];
+
 export const CategoryPills: React.FC<CategoryPillsProps> = ({
   selectedId,
   onSelect,
   categories,
-  autoScroll = true,
+  autoScroll = false, // User-controlled scrolling preferred by default to avoid cognitive distraction
 }) => {
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
-  const list: Category[] = categories && categories.length > 0 ? categories : CATEGORIES;
+  const list: Category[] = categories && categories.length > 0 ? categories : DEFAULT_CATEGORIES;
 
   const { scrollViewRef, scrollProps, pauseTemporarily } = useAutoScroll({
     enabled: autoScroll,
@@ -33,6 +38,7 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({
   });
 
   const handlePressCategory = (catId: CategoryId) => {
+    triggerHaptic('selection');
     pauseTemporarily(3500);
     onSelect(catId);
   };
@@ -43,6 +49,7 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.container}
+      accessibilityRole="tablist"
       {...scrollProps}
     >
       {list.map((cat) => {
@@ -66,10 +73,13 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({
             ]}
             onPress={() => handlePressCategory(cat.id)}
             activeOpacity={0.75}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: isSelected }}
+            accessibilityLabel={`${displayName}, ${cat.count ? `${cat.count} courses` : ''}`}
             hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
           >
             <Ionicons
-              name={cat.icon as any}
+              name={(cat.icon as any) || 'book-outline'}
               size={15}
               color={isSelected ? colors.onPrimary : colors.primary}
               style={styles.icon}
@@ -85,7 +95,7 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({
             >
               {displayName}
             </Text>
-            {cat.id !== 'all' && (
+            {cat.id !== 'all' && typeof cat.count === 'number' && cat.count > 0 && (
               <View
                 style={[
                   styles.countBadge,
@@ -118,21 +128,23 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 8,
     gap: 8,
+    alignItems: 'center',
   },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingVertical: 9,
+    minHeight: MIN_TOUCH_TARGET,
     borderRadius: shape.full,
     borderWidth: 1,
   },
   selectedPillShadow: {
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
+    shadowOpacity: 0.18,
+    shadowRadius: 4,
     elevation: 3,
   },
   icon: {
@@ -140,15 +152,19 @@ const styles = StyleSheet.create({
   },
   pillText: {
     fontSize: 13,
+    letterSpacing: -0.2,
   },
   countBadge: {
     marginLeft: 6,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: shape.full,
+    minWidth: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   countText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
   },
 });

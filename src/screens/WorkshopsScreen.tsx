@@ -1,18 +1,19 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useLearning } from '../context/LearningContext';
 import { useFeedback } from '../context/FeedbackContext';
 import { Header } from '../components/Header';
 import { LiveWorkshopCard } from '../components/LiveWorkshopCard';
 import { SummitCard } from '../components/SummitCard';
-import { StateView } from '../components/common';
-import { WORKSHOPS, SKILLS_SUMMITS } from '../data/mockData';
+import { StateView, CourseCardSkeleton } from '../components/common';
 import { triggerHaptic } from '../utils/haptics';
 import { typography, MIN_TOUCH_TARGET } from '../theme/typography';
 import { shape } from '../theme/shapes';
+import { Workshop } from '../types';
 
 interface WorkshopsScreenProps {
   onOpenSubscription?: () => void;
@@ -31,33 +32,52 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
   const { isBangla } = useLanguage();
   const { showToast } = useFeedback();
   const insets = useSafeAreaInsets();
+  const { workshops, isLoadingCourses, coursesError, refreshCourses } = useLearning();
+
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [refreshing, setRefreshing] = useState(false);
-  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    return () => {
-      if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
-    };
-  }, []);
-
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setRefreshing(true);
     triggerHaptic('light');
-    if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
-    refreshTimerRef.current = setTimeout(() => {
-      setRefreshing(false);
+    try {
+      await refreshCourses();
       showToast({
         message: isBangla ? 'লাইভ ইভেন্ট তালিকা আপডেট হয়েছে' : 'Live events schedule refreshed',
         type: 'info',
       });
-    }, 450);
+    } catch {
+      showToast({
+        message: isBangla ? 'ইভেন্ট রিফ্রেশ করতে সমস্যা হয়েছে' : 'Failed to refresh events',
+        type: 'error',
+      });
+    } finally {
+      setRefreshing(false);
+    }
   };
 
-  const hasVisibleEvents =
-    (activeTab === 'all' && WORKSHOPS.length + SKILLS_SUMMITS.length > 0) ||
-    (activeTab === 'live-classes' && WORKSHOPS.length > 0) ||
-    (activeTab === 'summits' && SKILLS_SUMMITS.length > 0);
+  // Partition real live courses between cohort workshops and summits
+  const summits = workshops.filter(
+    (w) =>
+      w.title.toLowerCase().includes('summit') ||
+      w.category === '4ir_skills_summit' ||
+      w.category === 'blockchain-summit'
+  );
+  const liveClasses = workshops.filter(
+    (w) =>
+      !w.title.toLowerCase().includes('summit') &&
+      w.category !== '4ir_skills_summit' &&
+      w.category !== 'blockchain-summit'
+  );
+
+  const displayedWorkshops: Workshop[] =
+    activeTab === 'all'
+      ? workshops
+      : activeTab === 'live-classes'
+      ? liveClasses
+      : summits;
+
+  const hasVisibleEvents = displayedWorkshops.length > 0;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -72,7 +92,11 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
+          <RefreshControl
+            refreshing={refreshing || (isLoadingCourses && workshops.length > 0)}
+            onRefresh={handleRefresh}
+            tintColor={colors.primary}
+          />
         }
         contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}
       >
@@ -98,22 +122,22 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
           </View>
         </View>
 
-        {/* Tab Pills (Hick's Law: 3 focused filters) */}
+        {/* Tab Pills (Hick's Law: 3 focused filters, stationary and user-controlled) */}
         <View style={styles.filterRow} accessibilityRole="tablist">
           {[
             {
               id: 'all' as TabType,
               label: isBangla
-                ? `সকল ইভেন্ট (${WORKSHOPS.length + SKILLS_SUMMITS.length})`
-                : `All Events (${WORKSHOPS.length + SKILLS_SUMMITS.length})`,
+                ? `সকল ইভেন্ট (${workshops.length})`
+                : `All Events (${workshops.length})`,
             },
             {
               id: 'live-classes' as TabType,
-              label: isBangla ? `লাইভ ক্লাস (${WORKSHOPS.length})` : `Live Classes (${WORKSHOPS.length})`,
+              label: isBangla ? `লাইভ ক্লাস (${liveClasses.length})` : `Live Classes (${liveClasses.length})`,
             },
             {
               id: 'summits' as TabType,
-              label: isBangla ? `স্কিল সামিট (${SKILLS_SUMMITS.length})` : `Skills Summits (${SKILLS_SUMMITS.length})`,
+              label: isBangla ? `স্কিল সামিট (${summits.length})` : `Skills Summits (${summits.length})`,
             },
           ].map((tab) => {
             const isActive = activeTab === tab.id;
@@ -151,44 +175,58 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
           })}
         </View>
 
-        {!hasVisibleEvents && (
+        {/* Loading Skeletons */}
+        {isLoadingCourses && workshops.length === 0 && (
+          <View style={styles.listContainer}>
+            <CourseCardSkeleton />
+            <CourseCardSkeleton />
+          </View>
+        )}
+
+        {/* Error State */}
+        {!isLoadingCourses && coursesError && workshops.length === 0 && (
           <View style={styles.listContainer}>
             <StateView
-              mode="empty"
-              title={isBangla ? 'এই ক্যাটাগরিতে কোনো ইভেন্ট নেই' : 'No events in this filter'}
-              message={isBangla ? 'সকল আসন্ন লাইভ সেশন দেখতে ফিল্টার পরিবর্তন করুন।' : 'Switch back to All Events to view upcoming workshops.'}
-              primaryActionLabel={isBangla ? 'সকল ইভেন্ট দেখুন' : 'Show All Events'}
-              onPrimaryAction={() => setActiveTab('all')}
+              mode="error"
+              title={isBangla ? 'লাইভ ইভেন্ট লোড করা যায়নি' : 'Could not load live events'}
+              message={coursesError}
+              primaryActionLabel={isBangla ? 'আবার চেষ্টা করুন' : 'Retry'}
+              onPrimaryAction={handleRefresh}
             />
           </View>
         )}
 
-        {/* Live Cohort Classes */}
-        {(activeTab === 'all' || activeTab === 'live-classes') && (
+        {/* Empty State */}
+        {!isLoadingCourses && !coursesError && !hasVisibleEvents && (
           <View style={styles.listContainer}>
-            <Text style={[styles.sectionHeaderTitle, { color: colors.text }]}>
-              {isBangla ? 'সাপ্তাহিক লাইভ মাস্টারক্লাস' : 'Weekly Live Masterclasses'}
-            </Text>
-            {WORKSHOPS.map((workshop) => (
-              <LiveWorkshopCard
-                key={workshop.id}
-                workshop={workshop}
-              />
-            ))}
+            <StateView
+              mode="empty"
+              title={
+                activeTab === 'summits'
+                  ? (isBangla ? 'বর্তমানে কোনো সামিট নির্ধারিত নেই' : 'No summits currently scheduled')
+                  : (isBangla ? 'এই ক্যাটাগরিতে কোনো লাইভ ইভেন্ট নেই' : 'No upcoming events in this category')
+              }
+              message={
+                activeTab === 'summits'
+                  ? (isBangla
+                      ? 'বাংলাদেশ স্কিল সামিটের পরবর্তী রাউন্ডের রেজিস্ট্রেশন শীঘ্রই শুরু হবে।'
+                      : 'Registrations for the next Bangladesh Skills Summit will open soon.')
+                  : (isBangla
+                      ? 'সকল আসন্ন লাইভ মাস্টারক্লাস দেখতে "সকল ইভেন্ট" ট্যাবে সুইচ করুন।'
+                      : 'Switch back to All Events to view scheduled masterclasses.')
+              }
+              primaryActionLabel={activeTab !== 'all' ? (isBangla ? 'সকল ইভেন্ট দেখুন' : 'Show All Events') : undefined}
+              onPrimaryAction={activeTab !== 'all' ? () => setActiveTab('all') : undefined}
+            />
           </View>
         )}
 
-        {/* National Skills Summits */}
-        {(activeTab === 'all' || activeTab === 'summits') && (
-          <View style={styles.listContainer}>
-            <Text style={[styles.sectionHeaderTitle, { color: colors.text }]}>
-              {isBangla ? 'ন্যাশনাল স্কিল সামিট ও 4IR কনফারেন্স' : 'National Skills Summits & 4IR Conferences'}
-            </Text>
-            {SKILLS_SUMMITS.map((summit) => (
-              <SummitCard key={summit.id} summit={summit} />
-            ))}
+        {/* Render Real Workshops */}
+        {displayedWorkshops.map((workshop) => (
+          <View key={workshop.id} style={styles.cardWrapper}>
+            <LiveWorkshopCard workshop={workshop} />
           </View>
-        )}
+        ))}
       </ScrollView>
     </View>
   );
@@ -199,21 +237,22 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   banner: {
-    margin: 16,
-    borderRadius: shape.large,
-    borderWidth: 1,
-    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
+    padding: 16,
+    borderRadius: shape.large,
+    borderWidth: 1,
+    marginBottom: 16,
     gap: 14,
   },
   bannerIconBg: {
     width: 48,
     height: 48,
-    borderRadius: shape.full,
+    borderRadius: shape.medium,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -221,37 +260,36 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   bannerTitle: {
-    ...typography.h5,
-    fontWeight: '800',
+    ...typography.h3,
+    fontSize: 16,
     marginBottom: 4,
   },
   bannerSub: {
     ...typography.caption,
+    lineHeight: 18,
   },
   filterRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 16,
     gap: 8,
     marginBottom: 16,
   },
   filterPill: {
-    minHeight: MIN_TOUCH_TARGET,
-    justifyContent: 'center',
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingVertical: 9,
+    minHeight: MIN_TOUCH_TARGET,
     borderRadius: shape.full,
     borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   filterPillText: {
-    ...typography.caption,
+    fontSize: 13,
   },
   listContainer: {
-    paddingHorizontal: 16,
-    marginBottom: 14,
+    marginTop: 8,
+    gap: 16,
   },
-  sectionHeaderTitle: {
-    ...typography.h4,
-    marginBottom: 12,
+  cardWrapper: {
+    marginBottom: 16,
   },
 });

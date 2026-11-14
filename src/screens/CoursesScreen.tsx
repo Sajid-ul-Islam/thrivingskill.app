@@ -17,11 +17,8 @@ import { useLearning } from '../context/LearningContext';
 import { Header } from '../components/Header';
 import { CategoryPills } from '../components/CategoryPills';
 import { CourseCard } from '../components/CourseCard';
-import { SpecialBundleCard } from '../components/SpecialBundleCard';
 import { CourseCardSkeleton } from '../components/SkeletonLoader';
 import { StateView } from '../components/common';
-import { SPECIAL_BUNDLES } from '../data/mockData';
-import { useAutoScroll } from '../hooks/useAutoScroll';
 import { triggerHaptic } from '../utils/haptics';
 import { shape } from '../theme/shapes';
 import { MIN_TOUCH_TARGET } from '../theme/typography';
@@ -63,12 +60,6 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   const [selectedSort, setSelectedSort] = useState<SortOption>('popular');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  const levelsAutoScroll = useAutoScroll({
-    speed: 0.40,
-    pauseAtEdgeMs: 1500,
-    resumeDelayMs: 2500,
-  });
-
   const levelLabels: Record<LevelFilter, { en: string; bn: string }> = {
     All: { en: 'All', bn: 'সব' },
     Beginner: { en: 'Beginner', bn: 'বিগিনার' },
@@ -77,11 +68,11 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   };
 
   // Filtering & Sorting
-  const isBundleView = selectedCategory === 'career-track';
-
   let filtered = courses.filter((course) => {
     const matchesCategory =
-      selectedCategory === 'all' || course.category === selectedCategory;
+      selectedCategory === 'all' ||
+      course.category === selectedCategory ||
+      (selectedCategory === 'career-track' && (course.title.toLowerCase().includes('bundle') || course.slug.toLowerCase().includes('bundle')));
     const matchesLevel =
       selectedLevel === 'All' ||
       course.level === selectedLevel ||
@@ -110,19 +101,6 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     if (selectedSort === 'price-high') return priceB - priceA;
     return b.enrolledCount - a.enrolledCount; // popular
   });
-
-  const handleBundlePress = (bundleTitle: string) => {
-    Alert.alert(
-      `${bundleTitle}`,
-      isBangla
-        ? 'সম্পূর্ণ মাল্টি-কোর্স কারিকুলাম, প্র্যাকটিস ফাইল এবং ভেরিফাইড ডিজিটাল সার্টিফিকেট অন্তর্ভুক্ত। আপনার মেম্বারশিপ স্ট্যাটাস দেখুন অথবা কোর্সগুলো ব্রাউজ করুন।'
-        : 'Includes complete multi-course curriculum, practice files, and verified digital certificates. View your synced membership status or browse individual courses in this track.',
-      [
-        { text: isBangla ? 'বন্ধ করুন' : 'Close', style: 'cancel' },
-        { text: isBangla ? 'মেম্বারশিপ স্ট্যাটাস' : 'Membership Status', onPress: onOpenSubscription },
-      ]
-    );
-  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -183,15 +161,13 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
         />
 
         {/* Filters and View Mode Controls */}
-        {!isBundleView && (
-          <View style={styles.filterRow}>
-            {/* Level selector */}
+        <View style={styles.filterRow}>
+            {/* Level selector (user-controlled static scroll) */}
             <ScrollView
-              ref={levelsAutoScroll.scrollViewRef}
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.levelsScroll}
-              {...levelsAutoScroll.scrollProps}
+              accessibilityRole="tablist"
             >
               {(['All', 'Beginner', 'Intermediate', 'Advanced'] as LevelFilter[]).map((lvl) => {
                 const isSelected = selectedLevel === lvl;
@@ -208,7 +184,6 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                     ]}
                     onPress={() => {
                       triggerHaptic('selection');
-                      levelsAutoScroll.pauseTemporarily(3000);
                       setSelectedLevel(lvl);
                     }}
                     accessibilityRole="tab"
@@ -273,97 +248,86 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               </TouchableOpacity>
             </View>
           </View>
-        )}
 
         {/* Result Header & Filters */}
         <View style={styles.resultMetaRow}>
           <Text style={[styles.resultCount, { color: colors.textMuted }]}>
-            {isBundleView ? (
-              isBangla ? (
-                <>দেখাচ্ছে <Text style={{ color: colors.text, fontWeight: '700' }}>{SPECIAL_BUNDLES.length}</Text> টি বান্ডেল</>
-              ) : (
-                <>Showing <Text style={{ color: colors.text, fontWeight: '700' }}>{SPECIAL_BUNDLES.length}</Text> Bundles</>
-              )
+            {isBangla ? (
+              <>দেখাচ্ছে <Text style={{ color: colors.text, fontWeight: '700' }}>{filtered.length}</Text> টি কোর্স</>
             ) : (
-              isBangla ? (
-                <>দেখাচ্ছে <Text style={{ color: colors.text, fontWeight: '700' }}>{filtered.length}</Text> টি কোর্স</>
-              ) : (
-                <>Showing <Text style={{ color: colors.text, fontWeight: '700' }}>{filtered.length}</Text> courses</>
-              )
+              <>Showing <Text style={{ color: colors.text, fontWeight: '700' }}>{filtered.length}</Text> courses</>
             )}
           </Text>
 
-          {!isBundleView && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              {/* Free / Paid / All Segmented Pills (Section 5 Spec) */}
-              <View style={[styles.priceFilterGroup, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]} accessibilityRole="tablist">
-                {(['all', 'free', 'paid'] as PriceFilter[]).map((pf) => {
-                  const isSelected = selectedPriceFilter === pf;
-                  const pfLabel =
-                    pf === 'all'
-                      ? (isBangla ? 'সকল' : 'All')
-                      : pf === 'free'
-                      ? (isBangla ? 'ফ্রি' : 'Free')
-                      : (isBangla ? 'মেম্বারস' : 'Members');
-                  return (
-                    <TouchableOpacity
-                      key={pf}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            {/* Free / Paid / All Segmented Pills (Section 5 Spec) */}
+            <View style={[styles.priceFilterGroup, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]} accessibilityRole="tablist">
+              {(['all', 'free', 'paid'] as PriceFilter[]).map((pf) => {
+                const isSelected = selectedPriceFilter === pf;
+                const pfLabel =
+                  pf === 'all'
+                    ? (isBangla ? 'সকল' : 'All')
+                    : pf === 'free'
+                    ? (isBangla ? 'ফ্রি' : 'Free')
+                    : (isBangla ? 'মেম্বারস' : 'Members');
+                return (
+                  <TouchableOpacity
+                    key={pf}
+                    style={[
+                      styles.priceFilterBtn,
+                      isSelected && { backgroundColor: colors.primary },
+                    ]}
+                    onPress={() => setSelectedPriceFilter(pf)}
+                    hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+                    accessibilityRole="tab"
+                    accessibilityState={{ selected: isSelected }}
+                    accessibilityLabel={
+                      isBangla
+                        ? `${pfLabel} কোর্স ফিল্টার`
+                        : `Filter by ${pfLabel} courses`
+                    }
+                  >
+                    <Text
                       style={[
-                        styles.priceFilterBtn,
-                        isSelected && { backgroundColor: colors.primary },
+                        styles.priceFilterBtnText,
+                        { color: isSelected ? colors.onPrimary : colors.textMuted },
                       ]}
-                      onPress={() => setSelectedPriceFilter(pf)}
-                      hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
-                      accessibilityRole="tab"
-                      accessibilityState={{ selected: isSelected }}
-                      accessibilityLabel={
-                        isBangla
-                          ? `${pfLabel} কোর্স ফিল্টার`
-                          : `Filter by ${pfLabel} courses`
-                      }
                     >
-                      <Text
-                        style={[
-                          styles.priceFilterBtnText,
-                          { color: isSelected ? colors.onPrimary : colors.textMuted },
-                        ]}
-                      >
-                        {pfLabel}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-
-              <TouchableOpacity
-                style={[styles.sortBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
-                onPress={() => {
-                  const order: SortOption[] = ['popular', 'newest', 'rating'];
-                  const nextIdx = (order.indexOf(selectedSort) + 1) % order.length;
-                  setSelectedSort(order[nextIdx]);
-                }}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  isBangla
-                    ? `সাজান: ${selectedSort === 'popular' ? 'জনপ্রিয়' : selectedSort === 'newest' ? 'নতুন' : 'সেরা রেটিং'}`
-                    : `Sort courses by ${selectedSort}`
-                }
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <Ionicons name="swap-vertical" size={13} color={colors.primary} />
-                <Text style={[styles.sortBtnText, { color: colors.text }]}>
-                  {selectedSort === 'popular'
-                    ? (isBangla ? 'জনপ্রিয়' : 'Popular')
-                    : selectedSort === 'newest'
-                    ? (isBangla ? 'নতুন' : 'Newest')
-                    : (isBangla ? 'সেরা রেটিং' : 'Top Rated')}
-                </Text>
-              </TouchableOpacity>
+                      {pfLabel}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
-          )}
+
+            <TouchableOpacity
+              style={[styles.sortBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+              onPress={() => {
+                const order: SortOption[] = ['popular', 'newest', 'rating'];
+                const nextIdx = (order.indexOf(selectedSort) + 1) % order.length;
+                setSelectedSort(order[nextIdx]);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={
+                isBangla
+                  ? `সাজান: ${selectedSort === 'popular' ? 'জনপ্রিয়' : selectedSort === 'newest' ? 'নতুন' : 'সেরা রেটিং'}`
+                  : `Sort courses by ${selectedSort}`
+              }
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons name="swap-vertical" size={13} color={colors.primary} />
+              <Text style={[styles.sortBtnText, { color: colors.text }]}>
+                {selectedSort === 'popular'
+                  ? (isBangla ? 'জনপ্রিয়' : 'Popular')
+                  : selectedSort === 'newest'
+                  ? (isBangla ? 'নতুন' : 'Newest')
+                  : (isBangla ? 'সেরা রেটিং' : 'Top Rated')}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Content Rendering: Bundles or Courses */}
+        {/* Content Rendering: Real Courses */}
         <View style={styles.coursesContainer}>
           {isLoadingCourses && courses.length === 0 ? (
             <>
@@ -379,14 +343,6 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               primaryActionLabel={isBangla ? 'আবার চেষ্টা করুন' : 'Retry'}
               onPrimaryAction={refreshCourses}
             />
-          ) : isBundleView ? (
-            SPECIAL_BUNDLES.map((bundle) => (
-              <SpecialBundleCard
-                key={bundle.id}
-                bundle={bundle}
-                onPress={() => handleBundlePress(bundle.title)}
-              />
-            ))
           ) : filtered.length === 0 ? (
             <View style={styles.emptyContainer}>
               <View style={[styles.emptyIconCircle, { backgroundColor: colors.surfaceSubtle }]}>

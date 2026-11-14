@@ -20,7 +20,6 @@ import { useYouTube } from '../context/YouTubeContext';
 import { YouTubeCard } from '../components/YouTubeCard';
 import { StateView } from '../components/common';
 import { YouTubeVideo, YOUTUBE_CHANNEL } from '../data/youtubeVideos';
-import { useAutoScroll } from '../hooks/useAutoScroll';
 import { shape } from '../theme/shapes';
 import { MIN_TOUCH_TARGET } from '../theme/typography';
 
@@ -47,12 +46,6 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<VideoCategory>('all');
   const [viewMode, setViewMode] = useState<'card' | 'horizontal'>('card');
-
-  const topicPillsAutoScroll = useAutoScroll({
-    speed: 0.45,
-    pauseAtEdgeMs: 1500,
-    resumeDelayMs: 2500,
-  });
 
   const categories: { id: VideoCategory; label: string; icon: string; count?: number }[] = [
     { id: 'all', label: `${isBangla ? 'সব' : 'All'} (${videos.length})`, icon: 'apps-outline' },
@@ -209,15 +202,13 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
         </TouchableOpacity>
       </View>
 
-      {/* Category Pills */}
+      {/* Category Pills (user-controlled static scroll) */}
       <View style={styles.pillsContainer}>
         <ScrollView
-          ref={topicPillsAutoScroll.scrollViewRef}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.pillsScroll}
           accessibilityRole="tablist"
-          {...topicPillsAutoScroll.scrollProps}
         >
           {categories.map((cat) => {
             const isSelected = selectedCategory === cat.id;
@@ -231,10 +222,7 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
                     borderColor: isSelected ? colors.primary : colors.border,
                   },
                 ]}
-                onPress={() => {
-                  topicPillsAutoScroll.pauseTemporarily(3000);
-                  setSelectedCategory(cat.id);
-                }}
+                onPress={() => setSelectedCategory(cat.id)}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: isSelected }}
                 accessibilityLabel={isBangla ? `${cat.label} ক্যাটাগরি` : `Filter by ${cat.label}`}

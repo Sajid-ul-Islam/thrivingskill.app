@@ -38,39 +38,12 @@ const INITIAL_TEAM_MEMBERS: TeamMember[] = [];
 
 const INITIAL_NOTIFICATIONS: SaaSNotification[] = [
   {
-    id: 'notif-1',
-    title: 'New Team Course Assigned 🎯',
-    message: 'Apex Corp Admin assigned you "Generative AI for Business Leaders". Target completion: Sep 15, 2026.',
-    type: 'assignment',
-    timestamp: '10m ago',
-    isRead: false,
-    actionRoute: { tab: 'Courses', courseId: 'course-1' },
-  },
-  {
-    id: 'notif-2',
-    title: 'Live Workshop Reminder 📅',
-    message: 'Your registered masterclass "AI Agents for Operations" starts in 48 hours.',
-    type: 'workshop',
-    timestamp: '2h ago',
-    isRead: false,
-    actionRoute: { tab: 'Workshops' },
-  },
-  {
-    id: 'notif-3',
-    title: 'Verified Credential Issued 🏆',
-    message: 'Your certificate for "Generative AI for Business Leaders" is ready and published to your wallet.',
-    type: 'certificate',
-    timestamp: '1d ago',
-    isRead: true,
-    actionRoute: { tab: 'MyLearning' },
-  },
-  {
-    id: 'notif-4',
-    title: 'New Masterclasses Available ⚡',
-    message: 'New executive workshops and courses are now available in your course catalog.',
+    id: 'notif-welcome',
+    title: 'Welcome to Thriving Skills 🎓',
+    message: 'Explore executive masterclasses, live training sessions, and verifiable certifications.',
     type: 'ai',
-    timestamp: '3d ago',
-    isRead: true,
+    timestamp: 'Just now',
+    isRead: false,
     actionRoute: { tab: 'Courses' },
   },
 ];
@@ -79,7 +52,7 @@ const INITIAL_COPILOT_MESSAGES: CopilotMessage[] = [
   {
     id: 'copilot-init',
     sender: 'assistant',
-    text: 'Hello Alex! I am your Executive AI Skill Copilot. I can help you analyze financial models, craft enterprise AI prompts, diagnose organizational skill gaps, or practice high-stakes boardroom negotiations. How can I assist your executive workflow today?',
+    text: 'Hello! I am your Executive AI Skill Copilot. I can help you analyze financial models, craft enterprise AI prompts, diagnose organizational skill gaps, or practice high-stakes boardroom negotiations. How can I assist your workflow today?',
     timestamp: 'Just now',
     suggestedActions: [
       'Audit my DCF model assumptions',
@@ -123,20 +96,7 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(INITIAL_TEAM_MEMBERS);
   const [notifications, setNotifications] = useState<SaaSNotification[]>(INITIAL_NOTIFICATIONS);
   const [copilotMessages, setCopilotMessages] = useState<CopilotMessage[]>(INITIAL_COPILOT_MESSAGES);
-  const [assessmentResult, setAssessmentResult] = useState<SkillAssessmentResult | null>({
-    completedAt: '2026-08-18',
-    overallScore: 84,
-    domainScores: [
-      { domain: 'Generative AI & Tech', score: 90, maxScore: 100 },
-      { domain: 'Financial Strategy', score: 85, maxScore: 100 },
-      { domain: 'Data Analytics & BI', score: 75, maxScore: 100 },
-      { domain: 'People Analytics & HR', score: 80, maxScore: 100 },
-      { domain: 'Executive Communication', score: 90, maxScore: 100 },
-    ],
-    levelName: 'Executive Strategist (Level IV)',
-    recommendedCourseIds: ['course-1', 'course-2', 'course-3'],
-    keyInsight: 'Strong executive communication and AI adoption potential. Recommended focus on Data Analytics & Python to complete end-to-end automation.',
-  });
+  const [assessmentResult, setAssessmentResult] = useState<SkillAssessmentResult | null>(null);
 
   const copilotTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 

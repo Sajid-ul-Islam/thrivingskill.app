@@ -1,10 +1,21 @@
-import { useRef, useEffect, useCallback } from 'react';
-import { ScrollView, NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent } from 'react-native';
+import { useRef, useEffect, useCallback, useState } from 'react';
+import {
+  ScrollView,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+  LayoutChangeEvent,
+  AccessibilityInfo,
+} from 'react-native';
 
 export interface UseAutoScrollOptions {
-  /** Whether auto-scroll is actively enabled (default: true) */
+  /**
+   * Whether auto-scroll is actively enabled.
+   * Defaults to false: interactive controls (tags, filters, pills) should always
+   * prefer natural user-controlled scrolling to prevent cognitive distraction
+   * and missed taps (Fitts's Law).
+   */
   enabled?: boolean;
-  /** Pixels to advance per tick. E.g. 0.45 - 0.55 gives gentle gliding at ~15-18px/s (default: 0.5) */
+  /** Pixels to advance per tick. (default: 0.5) */
   speed?: number;
   /** Tick frequency in milliseconds. 30ms gives ~33 FPS fluid motion (default: 30) */
   intervalMs?: number;
@@ -20,6 +31,7 @@ export interface UseAutoScrollReturn {
   scrollViewRef: React.RefObject<any>;
   pauseTemporarily: (ms?: number) => void;
   resume: () => void;
+  isReduceMotion: boolean;
   scrollProps: {
     onScroll: (e: NativeSyntheticEvent<NativeScrollEvent>) => void;
     onScrollBeginDrag: () => void;
@@ -33,13 +45,15 @@ export interface UseAutoScrollReturn {
 
 export const useAutoScroll = (options: UseAutoScrollOptions = {}): UseAutoScrollReturn => {
   const {
-    enabled = true,
+    enabled = false,
     speed = 0.5,
     intervalMs = 30,
     pauseAtEdgeMs = 1500,
     resumeDelayMs = 2800,
     loopMode = 'reverse',
   } = options;
+
+  const [isReduceMotion, setIsReduceMotion] = useState<boolean>(false);
 
   const scrollViewRef = useRef<any>(null);
   const scrollPosRef = useRef<number>(0);
@@ -52,9 +66,33 @@ export const useAutoScroll = (options: UseAutoScrollOptions = {}): UseAutoScroll
 
   const pauseTicks = Math.max(1, Math.round(pauseAtEdgeMs / intervalMs));
 
-  // Ticker for smooth linear motion
+  // Detect and observe system reduced-motion preference (WCAG 2.2 Criterion 2.3.3)
   useEffect(() => {
-    if (!enabled) return;
+    let mounted = true;
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then((reduce) => {
+        if (mounted) setIsReduceMotion(Boolean(reduce));
+      })
+      .catch(() => {});
+
+    const subscription = AccessibilityInfo.addEventListener?.(
+      'reduceMotionChanged',
+      (reduce) => {
+        if (mounted) setIsReduceMotion(Boolean(reduce));
+      }
+    );
+
+    return () => {
+      mounted = false;
+      if (subscription && typeof subscription.remove === 'function') {
+        subscription.remove();
+      }
+    };
+  }, []);
+
+  // Ticker for smooth linear motion (suppressed if reduced motion is preferred or disabled)
+  useEffect(() => {
+    if (!enabled || isReduceMotion) return;
 
     const interval = setInterval(() => {
       if (isUserInteractingRef.current) return;
@@ -100,7 +138,7 @@ export const useAutoScroll = (options: UseAutoScrollOptions = {}): UseAutoScroll
         clearTimeout(resumeTimeoutRef.current);
       }
     };
-  }, [enabled, speed, intervalMs, pauseTicks, loopMode]);
+  }, [enabled, isReduceMotion, speed, intervalMs, pauseTicks, loopMode]);
 
   // Pause temporarily on interaction (e.g. card/pill tap)
   const pauseTemporarily = useCallback((ms: number = 3500) => {
@@ -157,6 +195,7 @@ export const useAutoScroll = (options: UseAutoScrollOptions = {}): UseAutoScroll
     scrollViewRef,
     pauseTemporarily,
     resume,
+    isReduceMotion,
     scrollProps: {
       onScroll: handleScroll,
       onScrollBeginDrag: handleScrollBeginDrag,

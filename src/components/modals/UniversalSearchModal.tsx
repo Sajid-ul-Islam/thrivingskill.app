@@ -16,7 +16,6 @@ import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useLearning } from '../../context/LearningContext';
 import { useYouTube } from '../../context/YouTubeContext';
-import { SKILLS_SUMMITS } from '../../data/mockData';
 import { Course } from '../../types';
 import { YouTubeVideo } from '../../data/youtubeVideos';
 import { triggerHaptic } from '../../utils/haptics';
@@ -47,7 +46,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
-  const { courses, recordCategoryInteraction, recordSearchKeyword } = useLearning();
+  const { courses, workshops, recordCategoryInteraction, recordSearchKeyword } = useLearning();
   const { videos } = useYouTube();
 
   const [query, setQuery] = useState('');
@@ -103,28 +102,28 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
       });
     }
 
-    // Search Summits / Workshops
+    // Search Real Live Workshops & Masterclasses
     if (activeFilter === 'all' || activeFilter === 'workshops') {
-      SKILLS_SUMMITS.forEach((s) => {
+      workshops.forEach((w) => {
         if (
-          s.title.toLowerCase().includes(trimmed) ||
-          s.theme.toLowerCase().includes(trimmed) ||
-          s.description.toLowerCase().includes(trimmed)
+          w.title.toLowerCase().includes(trimmed) ||
+          w.description.toLowerCase().includes(trimmed) ||
+          w.speaker.name.toLowerCase().includes(trimmed)
         ) {
           results.push({
             type: 'workshop',
-            id: `summit-${s.id}`,
-            data: s,
-            title: s.title,
-            subtitle: `${s.date} • ${s.theme}`,
-            thumbnail: s.bannerImage,
+            id: `workshop-${w.id}`,
+            data: w,
+            title: w.title,
+            subtitle: `${w.speaker.name} • ${w.duration} • ${w.date}`,
+            thumbnail: w.thumbnail,
           });
         }
       });
     }
 
     return results;
-  }, [query, activeFilter, courses, videos]);
+  }, [query, activeFilter, courses, workshops, videos]);
 
   const handleSelectItem = (item: UnifiedSearchResult) => {
     onClose();

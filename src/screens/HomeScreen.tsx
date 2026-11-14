@@ -170,14 +170,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     if (slide.actionType === 'summit') {
       onNavigateTab('Workshops');
     } else if (slide.actionType === 'trailer') {
-      const aiCourse = courses.find((c) => c.id === 'course-ai-productivity');
+      const aiCourse = courses.find((c) =>
+        c.id === slide.targetId ||
+        c.category === 'generative-ai' ||
+        c.category === 'agentic-ai' ||
+        c.title.toLowerCase().includes('ai')
+      );
       if (aiCourse) {
         onNavigateToCourse(aiCourse.id);
       } else {
         onNavigateTab('Courses');
       }
     } else if (slide.actionType === 'course') {
-      const excelCourse = courses.find((c) => c.id === 'course-excel-dashboards');
+      const excelCourse = courses.find((c) =>
+        c.id === slide.targetId ||
+        c.category === 'excel' ||
+        c.category === 'excel-data' ||
+        c.title.toLowerCase().includes('excel')
+      );
       if (excelCourse) {
         onNavigateToCourse(excelCourse.id);
       } else {

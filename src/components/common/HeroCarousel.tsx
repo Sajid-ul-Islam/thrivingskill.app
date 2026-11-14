@@ -10,6 +10,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   useWindowDimensions,
+  AccessibilityInfo,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -75,11 +76,33 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
   const { width: screenWidth } = useWindowDimensions();
   const cardWidth = Math.max(280, screenWidth - 32);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isReduceMotion, setIsReduceMotion] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Observe accessibility reduced motion setting
+  useEffect(() => {
+    let mounted = true;
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then((reduce) => {
+        if (mounted) setIsReduceMotion(Boolean(reduce));
+      })
+      .catch(() => {});
+
+    const sub = AccessibilityInfo.addEventListener?.('reduceMotionChanged', (reduce) => {
+      if (mounted) setIsReduceMotion(Boolean(reduce));
+    });
+
+    return () => {
+      mounted = false;
+      if (sub && typeof sub.remove === 'function') sub.remove();
+    };
+  }, []);
 
   const startAutoScroll = () => {
     stopAutoScroll();
+    if (isReduceMotion) return; // Suppress auto movement if user requested reduced motion
     timerRef.current = setInterval(() => {
       setActiveIndex((prev) => {
         const nextIndex = (prev + 1) % SLIDES.length;
@@ -90,7 +113,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
         });
         return nextIndex;
       });
-    }, 5000);
+    }, 6000);
   };
 
   const stopAutoScroll = () => {
@@ -98,12 +121,28 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+    if (restartTimerRef.current) {
+      clearTimeout(restartTimerRef.current);
+      restartTimerRef.current = null;
+    }
+  };
+
+  const handleUserTouchStart = () => {
+    stopAutoScroll();
+  };
+
+  const handleUserTouchEnd = () => {
+    // Generous 7-second cooldown after user touch before gently resuming
+    if (restartTimerRef.current) clearTimeout(restartTimerRef.current);
+    restartTimerRef.current = setTimeout(() => {
+      startAutoScroll();
+    }, 7000);
   };
 
   useEffect(() => {
     startAutoScroll();
     return () => stopAutoScroll();
-  }, []);
+  }, [isReduceMotion]);
 
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetX = e.nativeEvent.contentOffset.x;
@@ -174,8 +213,10 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
         showsHorizontalScrollIndicator={false}
         onScroll={handleScroll}
         scrollEventThrottle={16}
-        onTouchStart={stopAutoScroll}
-        onTouchEnd={startAutoScroll}
+        onTouchStart={handleUserTouchStart}
+        onTouchEnd={handleUserTouchEnd}
+        onScrollBeginDrag={handleUserTouchStart}
+        onScrollEndDrag={handleUserTouchEnd}
         contentContainerStyle={styles.listContent}
         snapToInterval={cardWidth + 12}
         decelerationRate="fast"
