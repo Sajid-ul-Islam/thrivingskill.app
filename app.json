@@ -7,11 +7,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#102F53"
-    },
     "ios": {
       "bundleIdentifier": "com.thrivingskill.app",
       "supportsTablet": true
