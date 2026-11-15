@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { Env } from '../../config/env';
 import { useLanguage } from '../../context/LanguageContext';
+import { useLearning } from '../../context/LearningContext';
 import { triggerHaptic } from '../../utils/haptics';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
@@ -49,6 +50,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
+  const { siteBranding } = useLearning();
   const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<AboutTabKey>(initialTab);
   const [legalModalVisible, setLegalModalVisible] = useState(false);
@@ -108,7 +110,9 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                 Thriving<Text style={{ color: colors.primary }}>Skills</Text> Limited
               </Text>
               <Text style={[styles.companySubtitle, { color: colors.textMuted }]}>
-                {isBangla ? 'দক্ষ জাতি গঠনে মানুষের ক্ষমতায়ন' : 'Empowering People, Building a Skilled Nation'}
+                {isBangla
+                  ? (siteBranding?.taglineBn || 'দক্ষ জাতি গঠনে মানুষের ক্ষমতায়ন')
+                  : (siteBranding?.tagline || 'Empowering People, Building a Skilled Nation')}
               </Text>
             </View>
             <TouchableOpacity

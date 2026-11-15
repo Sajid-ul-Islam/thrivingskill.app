@@ -18,6 +18,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useSaaS } from '../../context/SaaSContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
+import { useLearning } from '../../context/LearningContext';
 import { AboutTSLModal, AboutTabKey } from '../modals/AboutTSLModal';
 import { LegalPolicyModal, LegalTabKey } from '../modals/LegalPolicyModal';
 import { HelpFaqModal } from '../modals/HelpFaqModal';
@@ -51,6 +52,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
   const { activeWorkspace, switchWorkspace, workspaces, subscriptionTier } = useSaaS();
   const { language, setLanguage, isBangla } = useLanguage();
   const { user, isAuthenticated, logout, setAuthModalVisible } = useAuth();
+  const { siteBranding } = useLearning();
   const insets = useSafeAreaInsets();
   const [aboutModalVisible, setAboutModalVisible] = useState(false);
   const [aboutInitialTab, setAboutInitialTab] = useState<AboutTabKey>('overview');
@@ -175,8 +177,10 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
                 <Text style={[styles.brandTitle, { color: colors.text }]}>
                   Thriving<Text style={{ color: colors.primary }}>Skills</Text>
                 </Text>
-                <Text style={[styles.brandSlogan, { color: colors.textMuted }]}>
-                  Upskill. Elevate. Thrive.
+                <Text style={[styles.brandSlogan, { color: colors.textMuted }]} numberOfLines={1}>
+                  {isBangla
+                    ? (siteBranding?.taglineBn || 'দক্ষ জাতি গঠনে মানুষের ক্ষমতায়ন')
+                    : (siteBranding?.tagline || 'Empowering People, Building a Skilled Nation')}
                 </Text>
               </View>
             </View>

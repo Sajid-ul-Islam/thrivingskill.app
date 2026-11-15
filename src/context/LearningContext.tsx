@@ -6,6 +6,13 @@ import { useAuth } from './AuthContext';
 import { Endpoints } from '../services/api/endpoints';
 import { SyncQueueManager } from '../services/offline/syncQueue';
 import {
+  BrandingService,
+  SiteBrandingInfo,
+  DynamicCarouselSlide,
+  DEFAULT_SITE_BRANDING,
+  DEFAULT_CURATED_SLIDES,
+} from '../services/api/brandingService';
+import {
   fetchWpCourses,
   fetchWpCategories,
   fetchWpPosts,
@@ -79,6 +86,12 @@ interface LearningContextType {
   pendingSyncCount: number;
   isSyncingOffline: boolean;
   syncOfflineData: (force?: boolean) => Promise<{ processed: number; succeeded: number; failed: number }>;
+
+  // Dynamic Site Branding & Banners
+  siteBranding: SiteBrandingInfo;
+  banners: DynamicCarouselSlide[];
+  isBrandingLoading: boolean;
+  refreshBranding: (forceRefresh?: boolean) => Promise<void>;
 }
 
 const LearningContext = createContext<LearningContextType>({} as LearningContextType);
@@ -121,6 +134,31 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Local-First Outbox Sync State
   const [pendingSyncCount, setPendingSyncCount] = useState<number>(0);
   const [isSyncingOffline, setIsSyncingOffline] = useState<boolean>(false);
+
+  // Dynamic Site Branding & Hero Banners State
+  const [siteBranding, setSiteBranding] = useState<SiteBrandingInfo>(DEFAULT_SITE_BRANDING);
+  const [banners, setBanners] = useState<DynamicCarouselSlide[]>(DEFAULT_CURATED_SLIDES);
+  const [isBrandingLoading, setIsBrandingLoading] = useState<boolean>(false);
+
+  const refreshBranding = useCallback(async (forceRefresh: boolean = false) => {
+    try {
+      setIsBrandingLoading(true);
+      const [brandingInfo, bannerSlides] = await Promise.all([
+        BrandingService.getSiteBranding(forceRefresh),
+        BrandingService.getDynamicBanners(forceRefresh),
+      ]);
+      setSiteBranding(brandingInfo);
+      if (bannerSlides && bannerSlides.length > 0) {
+        setBanners(bannerSlides);
+      }
+    } catch (err) {
+      if (Env.DEBUG_API) {
+        console.warn('[LearningContext] Failed to refresh branding:', err);
+      }
+    } finally {
+      setIsBrandingLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     const unsub = SyncQueueManager.subscribe((count, isSyncing) => {
@@ -222,13 +260,14 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
   }, [userScope]);
 
-  // Fetch live WordPress catalog once on mount
+  // Fetch live WordPress catalog and branding on mount
   useEffect(() => {
     loadWordPressData();
-  }, [loadWordPressData]);
+    refreshBranding(false);
+  }, [loadWordPressData, refreshBranding]);
 
   const refreshCourses = async () => {
-    await loadWordPressData(true);
+    await Promise.all([loadWordPressData(true), refreshBranding(true)]);
   };
 
   const loadCourseDetail = async (courseId: string): Promise<Course> => {
@@ -694,6 +733,10 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         pendingSyncCount,
         isSyncingOffline,
         syncOfflineData,
+        siteBranding,
+        banners,
+        isBrandingLoading,
+        refreshBranding,
       }}
     >
       {children}

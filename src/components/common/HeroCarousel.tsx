@@ -3,6 +3,7 @@ import { SpringPressable } from './SpringPressable';
 import {
   View,
   Text,
+  Image,
   LayoutAnimation,
   StyleSheet,
   TouchableOpacity,
@@ -25,11 +26,14 @@ export interface CarouselSlide {
   subtitle: string;
   ctaText: string;
   gradientColors: [string, string, ...string[]];
-  actionType: 'summit' | 'course' | 'trailer' | 'subscription';
+  actionType: 'summit' | 'course' | 'trailer' | 'subscription' | 'bundle';
   targetId?: string;
+  imageUrl?: string;
+  linkUrl?: string;
 }
 
 interface HeroCarouselProps {
+  slides?: CarouselSlide[];
   onSelectSlide: (slide: CarouselSlide) => void;
   onOpenSubscription?: () => void;
 }
@@ -71,14 +75,19 @@ const SLIDES: CarouselSlide[] = [
 ];
 
 export const HeroCarousel: React.FC<HeroCarouselProps> = ({
+  slides: propSlides,
   onSelectSlide,
 }) => {
   const { colors, isDark } = useTheme();
   const { width: screenWidth } = useWindowDimensions();
   const cardWidth = Math.max(280, screenWidth - 32);
+  const slides = propSlides && propSlides.length > 0 ? propSlides : SLIDES;
+
   const [activeIndex, setActiveIndex] = useState(0);
   const [isReduceMotion, setIsReduceMotion] = useState(false);
   const [isManualPaused, setIsManualPaused] = useState(false);
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+
   const flatListRef = useRef<FlatList>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -104,10 +113,10 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
 
   const startAutoScroll = () => {
     stopAutoScroll();
-    if (isReduceMotion || isManualPaused) return; // Suppress auto movement if user requested reduced motion or manually paused
+    if (isReduceMotion || isManualPaused || slides.length <= 1) return; // Suppress auto movement if user requested reduced motion, manually paused, or single slide
     timerRef.current = setInterval(() => {
       setActiveIndex((prev) => {
-        const nextIndex = (prev + 1) % SLIDES.length;
+        const nextIndex = (prev + 1) % slides.length;
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
         flatListRef.current?.scrollToOffset({
           offset: nextIndex * (cardWidth + 12),
@@ -157,22 +166,38 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
   useEffect(() => {
     startAutoScroll();
     return () => stopAutoScroll();
-  }, [isReduceMotion, isManualPaused]);
+  }, [isReduceMotion, isManualPaused, slides.length]);
 
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetX = e.nativeEvent.contentOffset.x;
     const index = Math.round(offsetX / (cardWidth + 12));
-    if (index !== activeIndex && index >= 0 && index < SLIDES.length) {
+    if (index !== activeIndex && index >= 0 && index < slides.length) {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setActiveIndex(index);
     }
   };
 
   const renderItem = ({ item }: { item: CarouselSlide }) => {
+    const hasImage = Boolean(item.imageUrl && !imageErrors[item.id]);
+
     return (
       <SpringPressable onPress={() => onSelectSlide(item)} activeScale={0.98} style={[styles.slideCard, { width: cardWidth }]}>
+        {/* Remote Server Banner Image with onError fallback */}
+        {hasImage && (
+          <Image
+            source={{ uri: item.imageUrl }}
+            style={StyleSheet.absoluteFill}
+            resizeMode="cover"
+            onError={() => setImageErrors((prev) => ({ ...prev, [item.id]: true }))}
+          />
+        )}
+
         <LinearGradient
-          colors={item.gradientColors}
+          colors={
+            hasImage
+              ? ['rgba(16, 47, 83, 0.75)', 'rgba(15, 23, 42, 0.94)']
+              : item.gradientColors
+          }
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.gradient}
@@ -224,7 +249,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
                 />
               </TouchableOpacity>
               <Text style={styles.slideCounter}>
-                {activeIndex + 1}/{SLIDES.length}
+                {activeIndex + 1}/{slides.length}
               </Text>
             </View>
           </View>
@@ -237,7 +262,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
     <View style={styles.container}>
       <FlatList
         ref={flatListRef}
-        data={SLIDES}
+        data={slides}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         horizontal
@@ -256,7 +281,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
 
       {/* Pagination Dots */}
       <View style={styles.paginationRow}>
-        {SLIDES.map((_, i) => {
+        {slides.map((_, i) => {
           const isActive = i === activeIndex;
           return (
             <View

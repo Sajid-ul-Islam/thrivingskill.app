@@ -78,6 +78,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     recordCategoryInteraction,
     recordSearchKeyword,
     getRecommendedCourses,
+    banners,
+    siteBranding,
   } = useLearning();
 
   const {
@@ -190,6 +192,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       );
       if (excelCourse) {
         onNavigateToCourse(excelCourse.id);
+      } else {
+        onNavigateTab('Courses');
+      }
+    } else if (slide.actionType === 'bundle') {
+      const bundleCourse = courses.find((c) =>
+        (slide.targetId && c.id.toLowerCase() === slide.targetId.toLowerCase()) ||
+        c.title.toLowerCase().includes(slide.title.toLowerCase())
+      );
+      if (bundleCourse) {
+        onNavigateToCourse(bundleCourse.id);
       } else {
         onNavigateTab('Courses');
       }
@@ -510,6 +522,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
         {/* 3. High-Impact Swipeable Hero Carousel */}
         <HeroCarousel
+          slides={banners}
           onSelectSlide={handleSelectSlide}
           onOpenSubscription={onOpenSubscription}
         />

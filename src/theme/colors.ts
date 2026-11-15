@@ -16,8 +16,8 @@ export const lightColors = {
   brandNavySubtle: 'rgba(16, 47, 83, 0.08)',
   danger: '#DC2626',
   dangerLight: '#FEE2E2',
-  success: '#047857',
-  successLight: '#ECFDF5',
+  success: '#10B981',
+  successLight: 'rgba(16, 185, 129, 0.16)',
   onSuccess: '#FFFFFF',
   background: '#F8FAFC',
   surface: '#FFFFFF',
@@ -46,50 +46,50 @@ export const lightColors = {
 };
 
 export const darkColors = {
-  primary: '#3B82F6', // High-contrast crisp Brand Cobalt on OLED black
-  primaryDark: '#1D4ED8',
-  primaryLight: '#18181B',
+  primary: '#38BDF8', // Cyan/Sky highlight on deep navy
+  primaryDark: '#102F53',
+  primaryLight: '#0F223D',
   primaryGradientStart: '#102F53',
   primaryGradientEnd: '#E34234',
-  secondary: '#60A5FA', // Secondary accent
-  secondaryLight: '#18181B',
-  accent: '#EF4444', // Clean vibrant red CTA
+  secondary: '#60A5FA', // Slate blue
+  secondaryLight: '#1E293B',
+  accent: '#FF5A4B', // Brand Red Light for dark mode
   accentLight: '#450A0A',
   brandNavy: '#102F53',
   brandRed: '#E34234',
-  brandGold: '#FFB606', // Official Sunshine Gold - stunning contrast against deep black
-  brandGoldLight: '#3D2B00',
-  brandGoldSubtle: 'rgba(255, 182, 6, 0.16)',
-  brandNavySubtle: 'rgba(59, 130, 246, 0.15)',
-  danger: '#EF4444',
-  dangerLight: '#450A0A',
-  success: '#10B981',
-  successLight: 'rgba(16, 185, 129, 0.16)',
-  onSuccess: '#FFFFFF',
-  background: '#000000', // Pure True OLED Deep Black
-  surface: '#0A0A0A', // Subtle neutral elevation
-  surfaceCard: '#121212', // Material/Apple OLED standard card surface
-  surfaceSubtle: '#1A1A1A', // Clean neutral input/chip surface
-  surfaceElevated: '#222222', // Elevated sheets and popovers
-  border: '#262626', // Hairline neutral border
-  borderSubtle: '#181818',
-  text: '#FFFFFF', // Pure sharp white
-  textMuted: '#A1A1AA', // Clean zinc secondary text
-  textLight: '#71717A', // Clean subtle tertiary text
-  textInverse: '#000000',
-  onPrimary: '#FFFFFF', // White text on primary buttons
-  onSecondary: '#FFFFFF',
-  onAccent: '#FFFFFF',
-  onDanger: '#FFFFFF',
+  brandGold: '#FFB606',
+  brandGoldLight: '#78350F',
+  brandGoldSubtle: 'rgba(255, 182, 6, 0.20)',
+  brandNavySubtle: 'rgba(56, 189, 248, 0.15)',
+  danger: '#F87171',
+  dangerLight: '#7F1D1D',
+  success: '#34D399',
+  successLight: 'rgba(52, 211, 153, 0.16)',
+  onSuccess: '#0F172A',
+  background: '#070D18', // Deep Navy Black
+  surface: '#0F192C', // Navy Surface
+  surfaceCard: '#14223B', // Navy Card
+  surfaceSubtle: '#1B2B4A',
+  surfaceElevated: '#203459',
+  border: '#22365A',
+  borderSubtle: '#182844',
+  text: '#F8FAFC',
+  textMuted: '#CBD5E1',
+  textLight: '#94A3B8',
+  textInverse: '#0F172A',
+  onPrimary: '#0F172A',
+  onSecondary: '#0F172A',
+  onAccent: '#0F172A',
+  onDanger: '#0F172A',
   onGold: '#102F53',
-  cardShadow: 'rgba(0, 0, 0, 0.8)',
-  badgeBackground: '#1C1C1E',
-  badgeText: '#FFB606', // High prestige gold badge text on black
+  cardShadow: 'rgba(0, 0, 0, 0.5)',
+  badgeBackground: '#1B2E4E',
+  badgeText: '#93C5FD',
   starColor: '#FFB606',
-  tabBarBg: '#000000', // True black bottom bar
-  tabBarBorder: '#1A1A1A',
-  tabActive: '#FFB606', // Sunshine Gold active tab indicator
-  tabInactive: '#71717A',
+  tabBarBg: '#0B1322',
+  tabBarBorder: '#1B2B4A',
+  tabActive: '#38BDF8',
+  tabInactive: '#94A3B8',
 };
 
 export type ThemeColors = typeof lightColors;

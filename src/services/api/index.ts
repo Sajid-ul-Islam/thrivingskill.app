@@ -5,6 +5,7 @@ import { CoursesService } from './coursesService';
 import { LessonsService } from './lessonsService';
 import { PostsService } from './postsService';
 import { UserService } from './userService';
+import { BrandingService } from './brandingService';
 import { CacheManager } from '../cache/cacheManager';
 
 export const Api = {
@@ -13,6 +14,7 @@ export const Api = {
   lessons: LessonsService,
   posts: PostsService,
   user: UserService,
+  branding: BrandingService,
   http: HttpClient,
   cache: CacheManager,
   endpoints: Endpoints,
@@ -27,6 +29,7 @@ export {
   LessonsService,
   PostsService,
   UserService,
+  BrandingService,
   CacheManager,
 };
 
