@@ -1599,10 +1599,12 @@ const styles = StyleSheet.create({
   },
   loginActionsRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
     marginBottom: 8,
     marginTop: -4,
+    gap: 8,
   },
   forgotPasswordTouch: {
     minHeight: 44,
