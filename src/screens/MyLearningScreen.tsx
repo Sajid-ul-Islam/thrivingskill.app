@@ -18,7 +18,8 @@ import { CertificateModal } from '../components/CertificateModal';
 import { YouTubeCard } from '../components/YouTubeCard';
 import { AnimatedTabContent, CircularProgressRing, SpringPressable, StateView } from '../components/common';
 import { useYouTube } from '../context/YouTubeContext';
-import { Certificate } from '../types';
+import { Certificate, Course, LearnPressCourseFilter } from '../types';
+import { LearnPressStatsGrid } from '../components/cards/LearnPressStatsGrid';
 import { MIN_TOUCH_TARGET } from '../theme/typography';
 
 interface MyLearningScreenProps {
@@ -31,7 +32,7 @@ interface MyLearningScreenProps {
   onOpenDrawer?: () => void;
 }
 
-type TabMode = 'in-progress' | 'history' | 'completed' | 'certificates' | 'saved';
+type TabMode = 'all' | 'in-progress' | 'finished' | 'passed' | 'failed' | 'certificates' | 'history' | 'saved';
 
 export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
   onNavigateToCourse,
@@ -58,11 +59,33 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
   const [activeTab, setActiveTab] = useState<TabMode>('in-progress');
   const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
 
-  // Enrolled courses
+  const getCourseStatus = (courseId: string): 'in-progress' | 'finished' | 'passed' | 'failed' => {
+    const prog = userProgress[courseId];
+    if (!prog) return 'in-progress';
+    if (prog.status === 'failed' || prog.grade === 'failed') return 'failed';
+    if (prog.status === 'passed' || prog.grade === 'passed' || prog.isCompleted) return 'passed';
+    if (prog.status === 'finished') return 'finished';
+    return 'in-progress';
+  };
+
+  // Enrolled courses categorized according to live LearnPress
   const enrolledList = courses.filter((c) => !!userProgress[c.id]);
-  const inProgressList = enrolledList.filter((c) => !userProgress[c.id].isCompleted);
-  const completedList = enrolledList.filter((c) => userProgress[c.id].isCompleted);
+  const inProgressList = enrolledList.filter((c) => getCourseStatus(c.id) === 'in-progress');
+  const finishedList = enrolledList.filter((c) => {
+    const st = getCourseStatus(c.id);
+    return st === 'finished' || st === 'passed' || st === 'failed';
+  });
+  const passedList = enrolledList.filter((c) => getCourseStatus(c.id) === 'passed');
+  const failedList = enrolledList.filter((c) => getCourseStatus(c.id) === 'failed');
   const savedList = courses.filter((c) => bookmarks.includes(c.id));
+
+  const lpStats = {
+    enrolledCount: enrolledList.length,
+    inProgressCount: inProgressList.length,
+    finishedCount: finishedList.length,
+    passedCount: passedList.length,
+    failedCount: failedList.length,
+  };
 
   // Build rich watch history list (Section 19 Spec)
   const historyList = enrolledList
@@ -92,6 +115,206 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
   );
   const totalHoursLearned = (totalCompletedLessons * 0.35).toFixed(1);
 
+  const renderCourseList = (list: Course[], emptyTitle: string, emptyMessage: string) => {
+    if (list.length === 0) {
+      return (
+        <StateView
+          mode="empty"
+          icon="school-outline"
+          title={emptyTitle}
+          message={emptyMessage}
+          primaryActionLabel={isBangla ? 'ক্যাটালগ দেখুন' : 'Explore Catalog'}
+          onPrimaryAction={onBrowseCourses}
+        />
+      );
+    }
+
+    return (
+      <>
+        {list.map((course) => {
+          const percent = getCourseProgressPercentage(course.id);
+          const progress = userProgress[course.id];
+          const targetLessonId =
+            progress?.lastAccessedLessonId || course.modules[0]?.lessons[0]?.id || '';
+          const courseStatus = getCourseStatus(course.id);
+          const cert = certificates.find((c) => c.courseId === course.id);
+
+          const badgeConfig = {
+            passed: {
+              label: isBangla ? 'উত্তীর্ণ' : 'PASSED',
+              bg: isDark ? 'rgba(22, 163, 74, 0.25)' : '#DCFCE7',
+              color: isDark ? '#4ADE80' : '#15803D',
+              icon: 'checkmark-circle' as const,
+            },
+            failed: {
+              label: isBangla ? 'অনুত্তীর্ণ' : 'FAILED',
+              bg: isDark ? 'rgba(239, 68, 68, 0.25)' : '#FEE2E2',
+              color: isDark ? '#F87171' : '#B91C1C',
+              icon: 'close-circle' as const,
+            },
+            finished: {
+              label: isBangla ? 'সম্পন্ন' : 'FINISHED',
+              bg: isDark ? 'rgba(79, 70, 229, 0.25)' : '#EEF2FF',
+              color: isDark ? '#818CF8' : '#4338CA',
+              icon: 'ribbon' as const,
+            },
+            'in-progress': {
+              label: isBangla ? 'চলমান' : 'IN PROGRESS',
+              bg: isDark ? 'rgba(147, 51, 234, 0.25)' : '#F5EEFD',
+              color: isDark ? '#C084FC' : '#7E22CE',
+              icon: 'time' as const,
+            },
+          }[courseStatus];
+
+          return (
+            <View
+              key={course.id}
+              style={[
+                styles.learningCard,
+                {
+                  backgroundColor: colors.surfaceCard,
+                  borderColor:
+                    courseStatus === 'failed'
+                      ? '#EF4444'
+                      : courseStatus === 'passed'
+                      ? '#16A34A'
+                      : colors.border,
+                },
+              ]}
+            >
+              <View style={{ position: 'relative' }}>
+                <Image source={{ uri: course.thumbnail }} style={styles.cardImage} />
+                <View style={[styles.statusPill, { backgroundColor: badgeConfig.bg }]}>
+                  <Ionicons name={badgeConfig.icon} size={10} color={badgeConfig.color} />
+                  <Text style={[styles.statusPillText, { color: badgeConfig.color }]}>
+                    {badgeConfig.label}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.cardBody}>
+                <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                  <Text style={[styles.cardTitle, { color: colors.text, flex: 1 }]} numberOfLines={2}>
+                    {course.title}
+                  </Text>
+                  <CircularProgressRing
+                    progress={courseStatus === 'passed' ? 100 : percent}
+                    size={38}
+                    strokeWidth={3.5}
+                    progressColor={
+                      courseStatus === 'passed'
+                        ? '#16A34A'
+                        : courseStatus === 'failed'
+                        ? '#EF4444'
+                        : colors.primary
+                    }
+                    trackColor={colors.surfaceSubtle}
+                    textSize={10}
+                  />
+                </View>
+                <Text style={[styles.cardInstructor, { color: colors.textMuted }]}>
+                  {course.instructor.name}
+                </Text>
+
+                {/* Progress */}
+                <View style={styles.progressRow}>
+                  <View style={[styles.progressTrack, { backgroundColor: colors.surfaceSubtle }]}>
+                    <View
+                      style={[
+                        styles.progressFill,
+                        {
+                          backgroundColor:
+                            courseStatus === 'passed'
+                              ? '#16A34A'
+                              : courseStatus === 'failed'
+                              ? '#EF4444'
+                              : colors.primary,
+                          width: `${courseStatus === 'passed' ? 100 : percent}%`,
+                        },
+                      ]}
+                    />
+                  </View>
+                  <Text
+                    style={[
+                      styles.progressText,
+                      {
+                        color:
+                          courseStatus === 'passed'
+                            ? '#16A34A'
+                            : courseStatus === 'failed'
+                            ? '#EF4444'
+                            : colors.primary,
+                      },
+                    ]}
+                  >
+                    {courseStatus === 'passed' ? '100%' : `${percent}%`}
+                  </Text>
+                </View>
+
+                <View style={styles.cardActions}>
+                  <TouchableOpacity
+                    style={[
+                      styles.syllabusBtn,
+                      { borderColor: colors.border, backgroundColor: colors.surfaceSubtle },
+                    ]}
+                    onPress={() => onNavigateToCourse(course.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      isBangla
+                        ? `${course.title} এর সিলেবাস দেখুন`
+                        : `View syllabus for ${course.title}`
+                    }
+                  >
+                    <Text style={[styles.syllabusBtnText, { color: colors.text }]}>
+                      {isBangla ? 'সিলেবাস' : 'Syllabus'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {courseStatus === 'passed' && cert ? (
+                    <SpringPressable
+                      style={[styles.resumeBtn, { backgroundColor: colors.brandGold }]}
+                      onPress={() => setSelectedCert(cert)}
+                      activeScale={0.96}
+                      accessibilityRole="button"
+                    >
+                      <Ionicons name="ribbon" size={14} color="#102F53" />
+                      <Text style={[styles.resumeBtnText, { color: '#102F53' }]}>
+                        {isBangla ? 'সনদপত্র দেখুন' : 'Certificate'}
+                      </Text>
+                    </SpringPressable>
+                  ) : courseStatus === 'failed' ? (
+                    <SpringPressable
+                      style={[styles.resumeBtn, { backgroundColor: '#EF4444' }]}
+                      onPress={() => onNavigateToLesson(course.id, targetLessonId)}
+                      activeScale={0.96}
+                      accessibilityRole="button"
+                    >
+                      <Ionicons name="refresh" size={14} color="#FFFFFF" />
+                      <Text style={[styles.resumeBtnText, { color: '#FFFFFF' }]}>
+                        {isBangla ? 'পুনরায় শুরু করুন' : 'Retake'}
+                      </Text>
+                    </SpringPressable>
+                  ) : (
+                    <SpringPressable
+                      style={[styles.resumeBtn, { backgroundColor: colors.primary }]}
+                      onPress={() => onNavigateToLesson(course.id, targetLessonId)}
+                      activeScale={0.96}
+                      accessibilityRole="button"
+                    >
+                      <Ionicons name="play" size={14} color={colors.onPrimary} />
+                      <Text style={[styles.resumeBtnText, { color: colors.onPrimary }]}>
+                        {isBangla ? 'চালিয়ে যান' : 'Resume'}
+                      </Text>
+                    </SpringPressable>
+                  )}
+                </View>
+              </View>
+            </View>
+          );
+        })}
+      </>
+    );
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
@@ -104,49 +327,19 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
       />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}>
-        {/* Stats Dashboard Card */}
-        <View
-          style={[
-            styles.statsCard,
-            { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-          ]}
-        >
-          <View style={styles.statsRow}>
-            <View style={styles.statBox}>
-              <View style={[styles.statIconBg, { backgroundColor: colors.primaryLight }]}>
-                <Ionicons name="book" size={18} color={colors.primary} />
-              </View>
-              <Text style={[styles.statNumber, { color: colors.text }]}>{enrolledList.length}</Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                {isBangla ? 'এনরোল্ড' : 'Enrolled'}
-              </Text>
-            </View>
-
-            <View style={[styles.statDivider, { backgroundColor: colors.borderSubtle }]} />
-
-            <View style={styles.statBox}>
-              <View style={[styles.statIconBg, { backgroundColor: colors.secondaryLight }]}>
-                <Ionicons name="time" size={18} color={colors.secondary} />
-              </View>
-              <Text style={[styles.statNumber, { color: colors.text }]}>{totalHoursLearned}h</Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                {isBangla ? 'মোট সময়' : 'Time Spent'}
-              </Text>
-            </View>
-
-            <View style={[styles.statDivider, { backgroundColor: colors.borderSubtle }]} />
-
-            <View style={styles.statBox}>
-              <View style={[styles.statIconBg, { backgroundColor: colors.accentLight }]}>
-                <Ionicons name="ribbon" size={18} color={colors.accent} />
-              </View>
-              <Text style={[styles.statNumber, { color: colors.text }]}>{certificates.length}</Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                {isBangla ? 'সার্টিফিকেট' : 'Certificates'}
-              </Text>
-            </View>
-          </View>
-        </View>
+        {/* Authentic LearnPress 5 KPI Cards matching thrivingskill.com */}
+        <LearnPressStatsGrid
+          stats={lpStats}
+          activeFilter={
+            (['all', 'in-progress', 'finished', 'passed', 'failed'].includes(activeTab)
+              ? activeTab
+              : 'all') as LearnPressCourseFilter
+          }
+          onSelectFilter={(filter) => setActiveTab(filter as TabMode)}
+          colors={colors}
+          isBangla={isBangla}
+          isDark={isDark}
+        />
 
         {/* Daily Study Streak Banner */}
         <View
@@ -191,10 +384,13 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
           accessibilityRole="tablist"
         >
           {[
+            { id: 'all', label: `${isBangla ? 'সকল' : 'All'} (${enrolledList.length})` },
             { id: 'in-progress', label: `${isBangla ? 'চলমান' : 'In Progress'} (${inProgressList.length})` },
-            { id: 'history', label: `${isBangla ? 'হিস্ট্রি' : 'History'} (${historyList.length})` },
-            { id: 'completed', label: `${isBangla ? 'সম্পন্ন' : 'Completed'} (${completedList.length})` },
+            { id: 'finished', label: `${isBangla ? 'সম্পন্ন' : 'Finished'} (${finishedList.length})` },
+            { id: 'passed', label: `${isBangla ? 'উত্তীর্ণ' : 'Passed'} (${passedList.length})` },
+            { id: 'failed', label: `${isBangla ? 'অনুত্তীর্ণ' : 'Failed'} (${failedList.length})` },
             { id: 'certificates', label: `${isBangla ? 'সার্টিফিকেট' : 'Certificates'} (${certificates.length})` },
+            { id: 'history', label: `${isBangla ? 'হিস্ট্রি' : 'History'} (${historyList.length})` },
             { id: 'saved', label: `${isBangla ? 'সংরক্ষিত' : 'Saved'} (${savedList.length + savedVideos.length})` },
           ].map((tab) => {
             const isActive = activeTab === tab.id;
@@ -229,112 +425,54 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
         {/* Tab Content */}
         <View style={styles.tabContent}>
           <AnimatedTabContent tabKey={activeTab}>
+          {activeTab === 'all' && (
+            renderCourseList(
+              enrolledList,
+              isBangla ? 'কোনো কোর্স এনরোল করা নেই' : 'No enrolled courses',
+              isBangla
+                ? 'আমাদের শীর্ষ এক্সিকিউটিভ মাস্টারক্লাসগুলো দেখুন এবং নতুন স্কিল অর্জন শুরু করুন!'
+                : 'Explore our top-rated executive masterclasses and start learning!'
+            )
+          )}
+
           {activeTab === 'in-progress' && (
-            <>
-              {inProgressList.length === 0 ? (
-                <StateView
-                  mode="empty"
-                  icon="school-outline"
-                  title={isBangla ? 'চলমান কোনো কোর্স নেই' : 'No courses in progress'}
-                  message={
-                    isBangla
-                      ? 'আমাদের শীর্ষ এক্সিকিউটিভ মাস্টারক্লাসগুলো দেখুন এবং নতুন স্কিল অর্জন শুরু করুন!'
-                      : 'Explore our top-rated executive masterclasses and start learning!'
-                  }
-                  primaryActionLabel={isBangla ? 'ক্যাটালগ দেখুন' : 'Explore Catalog'}
-                  onPrimaryAction={onBrowseCourses}
-                />
-              ) : (
-                inProgressList.map((course) => {
-                  const percent = getCourseProgressPercentage(course.id);
-                  const progress = userProgress[course.id];
-                  const targetLessonId =
-                    progress?.lastAccessedLessonId || course.modules[0]?.lessons[0]?.id || '';
+            renderCourseList(
+              inProgressList,
+              isBangla ? 'চলমান কোনো কোর্স নেই' : 'No courses in progress',
+              isBangla
+                ? 'আমাদের শীর্ষ এক্সিকিউটিভ মাস্টারক্লাসগুলো দেখুন এবং নতুন স্কিল অর্জন শুরু করুন!'
+                : 'Explore our top-rated executive masterclasses and start learning!'
+            )
+          )}
 
-                  return (
-                    <View
-                      key={course.id}
-                      style={[
-                        styles.learningCard,
-                        { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-                      ]}
-                    >
-                      <Image source={{ uri: course.thumbnail }} style={styles.cardImage} />
-                      <View style={styles.cardBody}>
-                        <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-                          <Text style={[styles.cardTitle, { color: colors.text, flex: 1 }]} numberOfLines={2}>
-                            {course.title}
-                          </Text>
-                          <CircularProgressRing
-                            progress={percent}
-                            size={38}
-                            strokeWidth={3.5}
-                            progressColor={colors.primary}
-                            trackColor={colors.surfaceSubtle}
-                            textSize={10}
-                          />
-                        </View>
-                        <Text style={[styles.cardInstructor, { color: colors.textMuted }]}>
-                          {course.instructor.name}
-                        </Text>
+          {activeTab === 'finished' && (
+            renderCourseList(
+              finishedList,
+              isBangla ? 'এখনো কোনো কোর্স সম্পন্ন হয়নি' : 'No finished courses yet',
+              isBangla
+                ? 'কোর্স শেষ করে সার্টিফিকেট অর্জন করতে সিলেবাস সম্পন্ন করুন।'
+                : 'Complete syllabus modules to finish courses and earn verified certificates.'
+            )
+          )}
 
-                        {/* Progress */}
-                        <View style={styles.progressRow}>
-                          <View style={[styles.progressTrack, { backgroundColor: colors.surfaceSubtle }]}>
-                            <View
-                              style={[
-                                styles.progressFill,
-                                { backgroundColor: colors.primary, width: `${percent}%` },
-                              ]}
-                            />
-                          </View>
-                          <Text style={[styles.progressText, { color: colors.primary }]}>
-                            {percent}%
-                          </Text>
-                        </View>
+          {activeTab === 'passed' && (
+            renderCourseList(
+              passedList,
+              isBangla ? 'এখনো কোনো কোর্স উত্তীর্ণ হয়নি' : 'No passed courses yet',
+              isBangla
+                ? 'কোর্সের চূড়ান্ত কুইজ ও লেকচার সম্পন্ন করে পাসিং গ্রেড অর্জন করুন।'
+                : 'Achieve passing grade by completing final course quizzes and lectures.'
+            )
+          )}
 
-                        <View style={styles.cardActions}>
-                          <TouchableOpacity
-                            style={[
-                              styles.syllabusBtn,
-                              { borderColor: colors.border, backgroundColor: colors.surfaceSubtle },
-                            ]}
-                            onPress={() => onNavigateToCourse(course.id)}
-                            accessibilityRole="button"
-                            accessibilityLabel={
-                              isBangla
-                                ? `${course.title} এর সিলেবাস দেখুন`
-                                : `View syllabus for ${course.title}`
-                            }
-                          >
-                            <Text style={[styles.syllabusBtnText, { color: colors.text }]}>
-                              {isBangla ? 'সিলেবাস' : 'Syllabus'}
-                            </Text>
-                          </TouchableOpacity>
-
-                          <SpringPressable
-                            style={[styles.resumeBtn, { backgroundColor: colors.primary }]}
-                            onPress={() => onNavigateToLesson(course.id, targetLessonId)}
-                            activeScale={0.96}
-                            accessibilityRole="button"
-                            accessibilityLabel={
-                              isBangla
-                                ? `${course.title} এর লেকচার চালিয়ে যান`
-                                : `Resume lecture for ${course.title}`
-                            }
-                          >
-                            <Ionicons name="play" size={14} color={colors.onPrimary} />
-                            <Text style={[styles.resumeBtnText, { color: colors.onPrimary }]}>
-                              {isBangla ? 'চালিয়ে যান' : 'Resume Lecture'}
-                            </Text>
-                          </SpringPressable>
-                        </View>
-                      </View>
-                    </View>
-                  );
-                })
-              )}
-            </>
+          {activeTab === 'failed' && (
+            renderCourseList(
+              failedList,
+              isBangla ? 'কোনো অনুত্তীর্ণ কোর্স নেই (চমৎকার!)' : 'No failed courses (Great job!)',
+              isBangla
+                ? 'আপনার কোনো ফেইল্ড কোর্স রেকর্ড নেই। আপনার শেখা অব্যাহত রাখুন!'
+                : 'You have no failed course records. Keep up the high standard!'
+            )
           )}
 
           {activeTab === 'history' && (
@@ -410,70 +548,6 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                         <Ionicons name="play" size={14} color={colors.onPrimary} />
                         <Text style={[styles.resumeBtnText, { color: colors.onPrimary }]}>
                           {isBangla ? 'চালিয়ে যান' : 'Resume'} ({Math.floor(item.watchSec / 60)}m {item.watchSec % 60}s)
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                ))
-              )}
-            </>
-          )}
-
-          {activeTab === 'completed' && (
-            <>
-              {completedList.length === 0 ? (
-                <StateView
-                  mode="empty"
-                  icon="trophy-outline"
-                  title={isBangla ? 'এখনো কোনো কোর্স সম্পন্ন হয়নি' : 'No completed courses yet'}
-                  message={
-                    isBangla
-                      ? 'ভেরিফাইড ডিজিটাল সার্টিফিকেট অর্জন করতে সব মডিউল শেষ করুন ও কুইজ দিন।'
-                      : 'Complete all modules and pass quizzes to earn industry-verified certificates.'
-                  }
-                  primaryActionLabel={isBangla ? 'ক্যাটালগ দেখুন' : 'Explore Catalog'}
-                  onPrimaryAction={onBrowseCourses}
-                />
-              ) : (
-                completedList.map((course) => (
-                  <View
-                    key={course.id}
-                    style={[
-                      styles.learningCard,
-                      { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-                    ]}
-                  >
-                    <Image source={{ uri: course.thumbnail }} style={styles.cardImage} />
-                    <View style={styles.cardBody}>
-                      <View style={[styles.completedBadge, { backgroundColor: colors.primaryLight }]}>
-                        <Ionicons name="checkmark-circle" size={14} color={colors.primary} />
-                        <Text style={[styles.completedBadgeText, { color: colors.primary }]}>
-                          {isBangla ? 'সম্পন্ন' : 'Completed'}
-                        </Text>
-                      </View>
-                      <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
-                        {course.title}
-                      </Text>
-                      <Text style={[styles.cardInstructor, { color: colors.textMuted }]}>
-                        {course.instructor.name}
-                      </Text>
-
-                      <TouchableOpacity
-                        style={[styles.viewCertBtn, { backgroundColor: colors.primaryLight }]}
-                        onPress={() => {
-                          const cert = certificates.find((c) => c.courseId === course.id);
-                          if (cert) setSelectedCert(cert);
-                        }}
-                        accessibilityRole="button"
-                        accessibilityLabel={
-                          isBangla
-                            ? `${course.title} এর ডিজিটাল সার্টিফিকেট দেখুন`
-                            : `View digital certificate for ${course.title}`
-                        }
-                      >
-                        <Ionicons name="ribbon" size={16} color={colors.primary} />
-                        <Text style={[styles.viewCertText, { color: colors.primary }]}>
-                          {isBangla ? 'ডিজিটাল সার্টিফিকেট দেখুন' : 'View Digital Certificate'}
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -834,6 +908,21 @@ const styles = StyleSheet.create({
   cardActions: {
     flexDirection: 'row',
     gap: 10,
+  },
+  statusPill: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    gap: 4,
+  },
+  statusPillText: {
+    fontSize: 10,
+    fontWeight: '800',
   },
   syllabusBtn: {
     minHeight: MIN_TOUCH_TARGET,

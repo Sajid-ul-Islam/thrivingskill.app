@@ -4,3 +4,4 @@ export * from './ResumeLearningCard';
 export * from './SpecialBundleCard';
 export * from './SummitCard';
 export * from './YouTubeCard';
+export * from './LearnPressStatsGrid';

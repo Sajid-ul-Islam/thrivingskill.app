@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Svg, { Circle, G, Text as SvgText, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemeColors } from '../../theme/colors';
+import { LearnPressCourseFilter } from '../../types';
 
 interface WeeklyDayActivity {
   day: string;
@@ -21,8 +22,8 @@ interface ProfileLearningAnalyticsProps {
   weeklyActivity?: WeeklyDayActivity[];
   colors: ThemeColors;
   isBangla: boolean;
-  onSelectTab?: (tab: 'in-progress' | 'graduated' | 'all') => void;
-  activeCourseTab?: 'in-progress' | 'graduated' | 'all';
+  onSelectTab?: (tab: LearnPressCourseFilter) => void;
+  activeCourseTab?: LearnPressCourseFilter;
 }
 
 const DEFAULT_WEEKLY_ACTIVITY: WeeklyDayActivity[] = [
@@ -163,13 +164,15 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
           <TouchableOpacity
             style={[
               styles.legendRow,
-              activeCourseTab === 'graduated' && { backgroundColor: colors.brandGoldSubtle || 'rgba(255,182,6,0.12)' },
+              (activeCourseTab === 'passed' || activeCourseTab === 'finished') && {
+                backgroundColor: colors.brandGoldSubtle || 'rgba(255,182,6,0.12)',
+              },
             ]}
-            onPress={() => onSelectTab && onSelectTab('graduated')}
+            onPress={() => onSelectTab && onSelectTab('passed')}
           >
             <View style={[styles.legendDot, { backgroundColor: colors.brandGold }]} />
             <Text style={[styles.legendLabel, { color: colors.textMuted }]}>
-              {isBangla ? 'উত্তীর্ণ কোর্স' : 'Graduated'}:
+              {isBangla ? 'উত্তীর্ণ কোর্স' : 'Passed / Finished'}:
             </Text>
             <Text style={[styles.legendValue, { color: colors.brandGold, fontWeight: '800' }]}>
               {completedCount}
@@ -266,14 +269,17 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
           style={[
             styles.kpiCard,
             { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderSubtle },
-            activeCourseTab === 'graduated' && { borderColor: colors.brandGold, borderWidth: 1.5 },
+            (activeCourseTab === 'passed' || activeCourseTab === 'finished') && {
+              borderColor: colors.brandGold,
+              borderWidth: 1.5,
+            },
           ]}
-          onPress={() => onSelectTab && onSelectTab('graduated')}
+          onPress={() => onSelectTab && onSelectTab('passed')}
         >
           <Ionicons name="school" size={17} color={colors.brandGold} />
           <Text style={[styles.kpiNumber, { color: colors.brandGold }]}>{completedCount}</Text>
           <Text style={[styles.kpiLabel, { color: colors.textMuted }]}>
-            {isBangla ? 'উত্তীর্ণ' : 'Graduated'}
+            {isBangla ? 'উত্তীর্ণ' : 'Passed'}
           </Text>
         </TouchableOpacity>
 

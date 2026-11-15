@@ -40,7 +40,8 @@ import { StorageManagerModal } from '../components/modals/StorageManagerModal';
 import { SpacedRepetitionModal } from '../components/modals/SpacedRepetitionModal';
 import { OfflineStudyDeckModal } from '../components/modals/OfflineStudyDeckModal';
 import { LocalSearchModal } from '../components/modals/LocalSearchModal';
-import { Course, Certificate } from '../types';
+import { Course, Certificate, LearnPressCourseFilter } from '../types';
+import { LearnPressStatsGrid } from '../components/cards/LearnPressStatsGrid';
 import { UserService } from '../services/api/userService';
 import { CacheManager } from '../services/cache/cacheManager';
 import { Env } from '../config/env';
@@ -80,7 +81,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
   const [biometricEnabled, setBiometricEnabled] = useState(true);
   const [profileSection, setProfileSection] = useState<'learning' | 'settings'>('learning');
-  const [portfolioTab, setPortfolioTab] = useState<'in-progress' | 'graduated' | 'all'>('in-progress');
+  const [portfolioTab, setPortfolioTab] = useState<LearnPressCourseFilter>('all');
   const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
   const [updateModalVisible, setUpdateModalVisible] = useState(false);
   const [aboutModalVisible, setAboutModalVisible] = useState(false);
@@ -331,10 +332,37 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     }
   };
 
-  const enrolledCount = Object.keys(userProgress).length;
-  const completedCount = Object.values(userProgress).filter((p) => p.isCompleted).length;
-  const inProgressCourses = courses.filter((c) => userProgress[c.id] && !userProgress[c.id].isCompleted);
-  const graduatedCourses = courses.filter((c) => userProgress[c.id]?.isCompleted);
+  const getCourseStatus = (courseId: string): 'in-progress' | 'finished' | 'passed' | 'failed' => {
+    const prog = userProgress[courseId];
+    if (!prog) return 'in-progress';
+    if (prog.status === 'failed' || prog.grade === 'failed') return 'failed';
+    if (prog.status === 'passed' || prog.grade === 'passed' || prog.isCompleted) return 'passed';
+    if (prog.status === 'finished') return 'finished';
+    return 'in-progress';
+  };
+
+  const enrolledOrderCourses = Object.keys(userProgress)
+    .map((id) => courses.find((c) => c.id === id))
+    .filter((c): c is Course => Boolean(c));
+
+  const inProgressCourses = enrolledOrderCourses.filter((c) => getCourseStatus(c.id) === 'in-progress');
+  const finishedCourses = enrolledOrderCourses.filter((c) => {
+    const st = getCourseStatus(c.id);
+    return st === 'finished' || st === 'passed' || st === 'failed';
+  });
+  const passedCourses = enrolledOrderCourses.filter((c) => getCourseStatus(c.id) === 'passed');
+  const failedCourses = enrolledOrderCourses.filter((c) => getCourseStatus(c.id) === 'failed');
+
+  const lpStats = {
+    enrolledCount: enrolledOrderCourses.length,
+    inProgressCount: inProgressCourses.length,
+    finishedCount: finishedCourses.length,
+    passedCount: passedCourses.length,
+    failedCount: failedCourses.length,
+  };
+
+  const enrolledCount = enrolledOrderCourses.length;
+  const completedCount = finishedCourses.length;
   const totalCompletedLessons = Object.values(userProgress).reduce(
     (acc, p) => acc + p.completedLessonIds.length,
     0
@@ -342,9 +370,16 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const totalHoursLearned = (totalCompletedLessons * 0.35).toFixed(1);
   const completionRate = enrolledCount > 0 ? Math.round((completedCount / enrolledCount) * 100) : 0;
 
-  const enrolledOrderCourses = Object.keys(userProgress)
-    .map((id) => courses.find((c) => c.id === id))
-    .filter((c): c is Course => Boolean(c));
+  const displayedCourses =
+    portfolioTab === 'in-progress'
+      ? inProgressCourses
+      : portfolioTab === 'finished'
+      ? finishedCourses
+      : portfolioTab === 'passed'
+      ? passedCourses
+      : portfolioTab === 'failed'
+      ? failedCourses
+      : enrolledOrderCourses;
 
   const handleConfirmDeleteAccount = async () => {
     if (!deletePass.trim()) {
@@ -605,50 +640,16 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 </TouchableOpacity>
               </View>
 
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.portfolioTabs}
-              >
-                {[
-                  { id: 'in-progress', label: `${isBangla ? 'চলমান' : 'In Progress'} (${inProgressCourses.length})` },
-                  { id: 'graduated', label: `${isBangla ? 'সম্পন্ন' : 'Graduated'} (${graduatedCourses.length})` },
-                  { id: 'all', label: `${isBangla ? 'সকল' : 'All'} (${enrolledOrderCourses.length})` },
-                ].map((tabItem) => {
-                  const active = portfolioTab === tabItem.id;
-                  return (
-                    <TouchableOpacity
-                      key={tabItem.id}
-                      style={[
-                        styles.portfolioTabPill,
-                        {
-                          backgroundColor: active ? colors.primary : colors.surfaceCard,
-                          borderColor: active ? colors.primary : colors.border,
-                        },
-                      ]}
-                      onPress={() => setPortfolioTab(tabItem.id as any)}
-                      accessibilityRole="tab"
-                      accessibilityState={{ selected: active }}
-                    >
-                      <Text
-                        style={[
-                          styles.portfolioTabPillText,
-                          { color: active ? colors.onPrimary : colors.text },
-                        ]}
-                      >
-                        {tabItem.label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
+              <LearnPressStatsGrid
+                stats={lpStats}
+                activeFilter={portfolioTab}
+                onSelectFilter={(filter) => setPortfolioTab(filter)}
+                colors={colors}
+                isBangla={isBangla}
+                isDark={isDark}
+              />
 
-              {(portfolioTab === 'in-progress'
-                ? inProgressCourses
-                : portfolioTab === 'graduated'
-                ? graduatedCourses
-                : enrolledOrderCourses
-              ).length === 0 ? (
+              {displayedCourses.length === 0 ? (
                 <View
                   style={[
                     styles.emptyCourseCard,
@@ -657,13 +658,25 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 >
                   <Ionicons name="school-outline" size={32} color={colors.textMuted} />
                   <Text style={[styles.emptyCourseTitle, { color: colors.text }]}>
-                    {portfolioTab === 'graduated'
+                    {portfolioTab === 'passed'
+                      ? isBangla
+                        ? 'এখনো কোনো কোর্স উত্তীর্ণ হয়নি'
+                        : 'No passed courses yet'
+                      : portfolioTab === 'failed'
+                      ? isBangla
+                        ? 'কোনো অনুত্তীর্ণ কোর্স নেই (চমৎকার!)'
+                        : 'No failed courses (Great job!)'
+                      : portfolioTab === 'finished'
                       ? isBangla
                         ? 'এখনো কোনো কোর্স সম্পন্ন হয়নি'
-                        : 'No graduated courses yet'
+                        : 'No finished courses yet'
+                      : portfolioTab === 'in-progress'
+                      ? isBangla
+                        ? 'চলমান কোনো কোর্স নেই'
+                        : 'No courses in progress'
                       : isBangla
                       ? 'কোনো কোর্স এনরোল করা নেই'
-                      : 'No courses in this view'}
+                      : 'No enrolled courses'}
                   </Text>
                   <Text style={[styles.emptyCourseSub, { color: colors.textMuted }]}>
                     {isBangla
@@ -680,40 +693,68 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   </TouchableOpacity>
                 </View>
               ) : (
-                (portfolioTab === 'in-progress'
-                  ? inProgressCourses
-                  : portfolioTab === 'graduated'
-                  ? graduatedCourses
-                  : enrolledOrderCourses
-                ).map((course) => {
+                displayedCourses.map((course) => {
                   const prog = userProgress[course.id];
-                  const isGraduated = Boolean(prog?.isCompleted);
+                  const courseStatus = getCourseStatus(course.id);
+                  const isGraduated = courseStatus === 'passed' || courseStatus === 'finished';
                   const totalLessons = course.modules.reduce((acc, m) => acc + m.lessons.length, 0);
                   const completedCountForCourse = prog?.completedLessonIds.length || 0;
                   const pct = totalLessons > 0 ? Math.round((completedCountForCourse / totalLessons) * 100) : 0;
                   const targetLessonId = prog?.lastAccessedLessonId || course.modules[0]?.lessons[0]?.id || '';
                   const cert = certificates.find((c) => c.courseId === course.id);
 
+                  // Status badge configurations matching real LearnPress
+                  const badgeConfig = {
+                    passed: {
+                      label: isBangla ? 'উত্তীর্ণ' : 'PASSED',
+                      bg: isDark ? 'rgba(22, 163, 74, 0.25)' : '#DCFCE7',
+                      color: isDark ? '#4ADE80' : '#15803D',
+                      icon: 'checkmark-circle' as const,
+                    },
+                    failed: {
+                      label: isBangla ? 'অনুত্তীর্ণ' : 'FAILED',
+                      bg: isDark ? 'rgba(239, 68, 68, 0.25)' : '#FEE2E2',
+                      color: isDark ? '#F87171' : '#B91C1C',
+                      icon: 'close-circle' as const,
+                    },
+                    finished: {
+                      label: isBangla ? 'সম্পন্ন' : 'FINISHED',
+                      bg: isDark ? 'rgba(79, 70, 229, 0.25)' : '#EEF2FF',
+                      color: isDark ? '#818CF8' : '#4338CA',
+                      icon: 'ribbon' as const,
+                    },
+                    'in-progress': {
+                      label: isBangla ? 'চলমান' : 'IN PROGRESS',
+                      bg: isDark ? 'rgba(147, 51, 234, 0.25)' : '#F5EEFD',
+                      color: isDark ? '#C084FC' : '#7E22CE',
+                      icon: 'time' as const,
+                    },
+                  }[courseStatus];
+
                   return (
                     <View
                       key={course.id}
                       style={[
                         styles.profileCourseCard,
-                        isGraduated && styles.graduatedCourseCard,
                         {
                           backgroundColor: colors.surfaceCard,
-                          borderColor: isGraduated ? colors.brandGold : colors.border,
+                          borderColor:
+                            courseStatus === 'failed'
+                              ? '#EF4444'
+                              : courseStatus === 'passed'
+                              ? '#16A34A'
+                              : colors.border,
                         },
                       ]}
                     >
                       <View style={styles.graduatedThumbContainer}>
                         <Image source={{ uri: course.thumbnail }} style={styles.courseThumb} />
-                        {isGraduated && (
-                          <View style={[styles.graduatedCapPill, { backgroundColor: colors.brandGold }]}>
-                            <Ionicons name="ribbon" size={10} color="#102F53" />
-                            <Text style={styles.graduatedCapText}>GRADUATED</Text>
-                          </View>
-                        )}
+                        <View style={[styles.graduatedCapPill, { backgroundColor: badgeConfig.bg }]}>
+                          <Ionicons name={badgeConfig.icon} size={10} color={badgeConfig.color} />
+                          <Text style={[styles.graduatedCapText, { color: badgeConfig.color }]}>
+                            {badgeConfig.label}
+                          </Text>
+                        </View>
                       </View>
                       <View style={styles.courseDetails}>
                         <View style={styles.courseHeaderBadgeRow}>
@@ -722,8 +763,20 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                               {course.level}
                             </Text>
                           </View>
-                          <Text style={[styles.coursePercentText, { color: isGraduated ? (isDark ? '#FBBF24' : '#B45309') : colors.primary }]}>
-                            {isGraduated ? '100% Mastery' : `${pct}%`}
+                          <Text
+                            style={[
+                              styles.coursePercentText,
+                              {
+                                color:
+                                  courseStatus === 'passed'
+                                    ? '#16A34A'
+                                    : courseStatus === 'failed'
+                                    ? '#EF4444'
+                                    : colors.primary,
+                              },
+                            ]}
+                          >
+                            {courseStatus === 'passed' ? '100% Mastery' : `${pct}%`}
                           </Text>
                         </View>
                         <Text style={[styles.courseCardTitle, { color: colors.text }]} numberOfLines={2}>
@@ -735,14 +788,19 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                               style={[
                                 styles.courseProgressFill,
                                 {
-                                  backgroundColor: isGraduated ? colors.brandGold : colors.primary,
+                                  backgroundColor:
+                                    courseStatus === 'passed'
+                                      ? '#16A34A'
+                                      : courseStatus === 'failed'
+                                      ? '#EF4444'
+                                      : colors.primary,
                                   width: `${Math.max(pct, isGraduated ? 100 : 8)}%`,
                                 },
                               ]}
                             />
                           </View>
                         </View>
-                        {isGraduated && cert ? (
+                        {courseStatus === 'passed' && cert ? (
                           <TouchableOpacity
                             style={[styles.certificateActionBtn, { backgroundColor: colors.brandGold }]}
                             onPress={() => setSelectedCert(cert)}
@@ -750,6 +808,22 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                             <Ionicons name="ribbon" size={14} color="#102F53" />
                             <Text style={styles.certificateActionBtnText}>
                               {isBangla ? 'সনদপত্র দেখুন' : 'View Certificate'}
+                            </Text>
+                          </TouchableOpacity>
+                        ) : courseStatus === 'failed' ? (
+                          <TouchableOpacity
+                            style={[styles.continueBtn, { backgroundColor: '#EF4444' }]}
+                            onPress={() => {
+                              if (targetLessonId && onNavigateToLesson) {
+                                onNavigateToLesson(course.id, targetLessonId);
+                              } else {
+                                onNavigateToCourse?.(course.id);
+                              }
+                            }}
+                          >
+                            <Ionicons name="refresh" size={13} color="#FFFFFF" />
+                            <Text style={[styles.continueBtnText, { color: '#FFFFFF' }]}>
+                              {isBangla ? 'পুনরায় শুরু করুন' : 'Retake Course'}
                             </Text>
                           </TouchableOpacity>
                         ) : (

@@ -208,6 +208,9 @@ export interface Note {
   createdAt: string;
 }
 
+export type LearnPressCourseFilter = 'all' | 'in-progress' | 'finished' | 'passed' | 'failed';
+export type CourseEvaluationStatus = 'enrolled' | 'in-progress' | 'finished' | 'passed' | 'failed';
+
 export interface UserProgress {
   courseId: string;
   enrolledDate: string;
@@ -220,6 +223,9 @@ export interface UserProgress {
   certificateId?: string;
   assignedByManager?: boolean;
   dueDate?: string;
+  status?: CourseEvaluationStatus;
+  grade?: 'passed' | 'failed' | 'in-progress';
+  passingGradePercent?: number;
 }
 
 // -------------------------------------------------------------
