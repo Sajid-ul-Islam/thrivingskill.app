@@ -825,12 +825,12 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
             isEnrolled
               ? (isBangla ? 'লেসনে যান' : 'Resume Course')
               : isPaidCourse
-              ? (isBangla ? 'অ্যাকাউন্ট অ্যাক্সেস সিঙ্ক করুন' : 'Sync Member Access')
+              ? (isBangla ? 'এখনই ভর্তি হন' : 'Enroll Now')
               : (isBangla ? 'বিনামূল্যে ভর্তি হন' : 'Enroll for Free')
           }
         >
           <Ionicons
-            name={isAdmin ? 'play-circle' : isEnrolled ? 'play' : isPaidCourse ? 'sync' : 'flash'}
+            name={isAdmin ? 'play-circle' : isEnrolled ? 'play' : isPaidCourse ? 'card-outline' : 'flash'}
             size={18}
             color={isAdmin ? '#FFFFFF' : !isEnrolled && isPaidCourse ? '#102F53' : colors.onPrimary}
           />
@@ -850,7 +850,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
               : isEnrolled
               ? (isBangla ? 'লেসনে যান' : 'Resume Course')
               : isPaidCourse
-              ? (isBangla ? 'অ্যাক্সেস সিঙ্ক করুন' : 'Sync Access')
+              ? (isBangla ? 'এখনই ভর্তি হন' : 'Enroll Now')
               : (isBangla ? 'বিনামূল্যে ভর্তি হন' : 'Enroll for Free')}
           </Text>
         </SpringPressable>
