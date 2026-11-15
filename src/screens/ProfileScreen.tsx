@@ -37,6 +37,8 @@ import { BlogModal } from '../components/BlogModal';
 import { ProfileLearningAnalytics } from '../components/ProfileLearningAnalytics';
 import { CertificateModal } from '../components/CertificateModal';
 import { StorageManagerModal } from '../components/modals/StorageManagerModal';
+import { SpacedRepetitionModal } from '../components/modals/SpacedRepetitionModal';
+import { OfflineStudyDeckModal } from '../components/modals/OfflineStudyDeckModal';
 import { Course, Certificate } from '../types';
 import { UserService } from '../services/api/userService';
 import { CacheManager } from '../services/cache/cacheManager';
@@ -87,6 +89,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [helpFaqModalVisible, setHelpFaqModalVisible] = useState(false);
   const [blogModalVisible, setBlogModalVisible] = useState(false);
   const [storageModalVisible, setStorageModalVisible] = useState(false);
+  const [flashcardsModalVisible, setFlashcardsModalVisible] = useState(false);
+  const [offlineDeckModalVisible, setOfflineDeckModalVisible] = useState(false);
   const [editProfileModalVisible, setEditProfileModalVisible] = useState(false);
   const [changePasswordModalVisible, setChangePasswordModalVisible] = useState(false);
   const [paymentHistoryModalVisible, setPaymentHistoryModalVisible] = useState(false);
@@ -1008,6 +1012,71 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </ScrollView>
         </View>
 
+        {/* Study & Recall Suite (Phase 2 R&D) */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+            {isBangla ? 'স্মৃতি ও অফলাইন শিক্ষা টুলস' : 'LEARNING & MEMORY SUITE'}
+          </Text>
+          <View
+            style={[
+              styles.cardGroup,
+              { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+            ]}
+          >
+            {/* Active Recall Flashcards (SM-2) */}
+            <TouchableOpacity
+              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
+              onPress={() => {
+                triggerHaptic('light');
+                setFlashcardsModalVisible(true);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={isBangla ? 'অ্যাক্টিভ রিকল ফ্ল্যাশকার্ড খুলুন' : 'Open Active Recall Flashcards'}
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="sparkles" size={20} color={colors.primary} />
+                <View style={{ marginLeft: 6 }}>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>
+                    {isBangla ? 'অ্যাক্টিভ রিকল ফ্ল্যাশকার্ড (SM-2)' : 'Active Recall Flashcards'}
+                  </Text>
+                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
+                    {isBangla ? 'বৈজ্ঞানিক স্পেসড রিপিটেশন পদ্ধতি' : 'SuperMemo-2 spaced repetition memory engine'}
+                  </Text>
+                </View>
+              </View>
+              <View style={[styles.langPill, { backgroundColor: isDark ? '#1E293B' : '#FEF3C7' }]}>
+                <Text style={[styles.langPillText, { color: colors.brandGold }]}>
+                  {isBangla ? 'স্মৃতি পরীক্ষা' : 'Review Deck'}
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Offline Study Deck */}
+            <TouchableOpacity
+              style={[styles.settingRow, { borderBottomWidth: 0 }]}
+              onPress={() => {
+                triggerHaptic('light');
+                setOfflineDeckModalVisible(true);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={isBangla ? 'অফলাইন স্টাডি ডেক খুলুন' : 'Open Offline Study Deck'}
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="cloud-offline" size={20} color="#10B981" />
+                <View style={{ marginLeft: 6 }}>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>
+                    {isBangla ? 'অফলাইন স্টাডি ডেক' : 'Offline Study Deck'}
+                  </Text>
+                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
+                    {isBangla ? 'ইন্টারনেট ছাড়াই লেকচার ও নোটস পড়ুন' : 'Read saved lectures & takeaways without internet'}
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* Preferences & Settings */}
         {/* Experience & Playback (Miller's Law: <= 5 items per Gestalt group) */}
         <View style={styles.section}>
@@ -1703,6 +1772,19 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       <StorageManagerModal
         visible={storageModalVisible}
         onClose={() => setStorageModalVisible(false)}
+      />
+
+      {/* Active Recall Spaced Repetition Modal (Phase 2) */}
+      <SpacedRepetitionModal
+        visible={flashcardsModalVisible}
+        onClose={() => setFlashcardsModalVisible(false)}
+      />
+
+      {/* Offline Study Deck Modal (Phase 2) */}
+      <OfflineStudyDeckModal
+        visible={offlineDeckModalVisible}
+        onClose={() => setOfflineDeckModalVisible(false)}
+        onOpenLessonInPlayer={onNavigateToLesson}
       />
 
       {/* Edit Profile Modal (Section 25 Spec) */}

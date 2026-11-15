@@ -29,8 +29,10 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useGamification } from '../context/GamificationContext';
 import { useFeedback } from '../context/FeedbackContext';
+import { triggerHaptic } from '../utils/haptics';
 import { resolveLessonVideoData } from '../data/lessonVideosRegistry';
 import { OfflineManager } from '../services/offline/offlineManager';
+import { SpacedRepetitionModal } from '../components/modals/SpacedRepetitionModal';
 import { LessonsService, LessonDetail } from '../services/api/lessonsService';
 import { MIN_TOUCH_TARGET } from '../theme/typography';
 import { Lesson, Certificate } from '../types';
@@ -87,6 +89,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const [currentPositionSeconds, setCurrentPositionSeconds] = useState<number>(0);
   const [lessonDetail, setLessonDetail] = useState<LessonDetail | null>(null);
   const [isLoadingVideo, setIsLoadingVideo] = useState<boolean>(true);
+  const [isFlashcardsVisible, setIsFlashcardsVisible] = useState<boolean>(false);
 
   const currentPosRef = useRef<number>(currentPositionSeconds);
   currentPosRef.current = currentPositionSeconds;
@@ -282,14 +285,14 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         type: 'info',
         actionLabel: 'Undo',
         onAction: () => {
-          OfflineManager.saveLessonOffline(course.id, currentLesson).then(() => {
+          OfflineManager.saveLessonOffline(course.id, currentLesson, undefined, course.title).then(() => {
             setIsDownloaded(true);
             showToast({ message: 'Restored offline lesson', type: 'success' });
           });
         },
       });
     } else {
-      await OfflineManager.saveLessonOffline(course.id, currentLesson);
+      await OfflineManager.saveLessonOffline(course.id, currentLesson, undefined, course.title);
       setIsDownloaded(true);
       showToast({
         message: 'Lesson saved for offline studying',
@@ -971,6 +974,21 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
             <TouchableOpacity
               style={[
                 styles.offlineBtn,
+                { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+              ]}
+              onPress={() => {
+                triggerHaptic('light');
+                setIsFlashcardsVisible(true);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Study active recall flashcards for this course"
+            >
+              <Ionicons name="sparkles" size={16} color={colors.brandGold} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.offlineBtn,
                 { backgroundColor: isDownloaded ? colors.primary + '20' : colors.surfaceSubtle, borderColor: colors.border },
               ]}
               onPress={handleToggleOffline}
@@ -1398,6 +1416,13 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
             isBangla ? 'কোর্সের সকল ভিডিও এখন আনলক করা হয়েছে।' : 'All course videos are now unlocked.'
           );
         }}
+      />
+
+      {/* Active Recall Spaced Repetition Modal */}
+      <SpacedRepetitionModal
+        visible={isFlashcardsVisible}
+        onClose={() => setIsFlashcardsVisible(false)}
+        course={course}
       />
     </View>
   );
