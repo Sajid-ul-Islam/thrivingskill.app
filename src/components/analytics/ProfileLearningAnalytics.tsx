@@ -19,6 +19,7 @@ interface ProfileLearningAnalyticsProps {
   totalHours: string;
   certificatesCount: number;
   completionRate: number;
+  streakDays?: number;
   weeklyActivity?: WeeklyDayActivity[];
   colors: ThemeColors;
   isBangla: boolean;
@@ -43,6 +44,7 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
   totalHours,
   certificatesCount,
   completionRate,
+  streakDays = 5,
   weeklyActivity = DEFAULT_WEEKLY_ACTIVITY,
   colors,
   isBangla,
@@ -69,11 +71,11 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
           <View style={[styles.titleIconBg, { backgroundColor: colors.brandGoldSubtle || 'rgba(255, 182, 6, 0.15)' }]}>
             <Ionicons name="pie-chart" size={17} color={colors.brandGold || '#FFB606'} />
           </View>
-          <View>
-            <Text style={[styles.title, { color: colors.text }]}>
+          <View style={styles.titleTextWrap}>
+            <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
               {isBangla ? 'লার্নিং অ্যানালিটিক্স ও দক্ষতা চার্ট' : 'Learning Analytics & Progress'}
             </Text>
-            <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+            <Text style={[styles.subtitle, { color: colors.textMuted }]} numberOfLines={2}>
               {isBangla ? 'আপনার কোর্স সমাপ্তি ও অধ্যয়নের গতিবিধি' : 'Track course completions & study momentum'}
             </Text>
           </View>
@@ -82,7 +84,9 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
         <View style={[styles.streakBadge, { backgroundColor: 'rgba(225, 29, 72, 0.1)' }]}>
           <Ionicons name="flame" size={14} color="#E11D48" />
           <Text style={styles.streakText}>
-            {isBangla ? '৫ দিন স্ট্রিক' : '5-Day Streak'}
+            {streakDays > 0
+              ? (isBangla ? `${streakDays} দিন স্ট্রিক` : `${streakDays}-Day Streak`)
+              : (isBangla ? 'স্ট্রিক শুরু' : 'New Streak')}
           </Text>
         </View>
       </View>
@@ -317,14 +321,17 @@ const styles = StyleSheet.create({
   },
   headerRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     marginBottom: 16,
+    gap: 8,
   },
   titleWithIcon: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     flex: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   titleIconBg: {
     width: 34,
@@ -333,22 +340,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
+    flexShrink: 0,
+    marginTop: 2,
+  },
+  titleTextWrap: {
+    flex: 1,
+    minWidth: 0,
+    justifyContent: 'center',
   },
   title: {
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: -0.2,
+    lineHeight: 18,
   },
   subtitle: {
     fontSize: 11,
     marginTop: 2,
+    lineHeight: 15,
   },
   streakBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 5,
     borderRadius: 20,
+    flexShrink: 0,
+    alignSelf: 'flex-start',
+    marginTop: 2,
   },
   streakText: {
     fontSize: 11,
