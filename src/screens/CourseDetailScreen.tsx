@@ -440,7 +440,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
           <View style={[styles.trustStripCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
               <Ionicons name="shield-checkmark" size={15} color={colors.primary} />
-              <Text style={[styles.trustStripTitle, { color: colors.primary }]}>
+              <Text style={[styles.trustStripTitle, { color: colors.primary, flex: 1 }]} numberOfLines={2}>
                 {isBangla ? 'শীর্ষ অ্যাকাডেমিক ও কর্পোরেট পার্টনারদের আস্থা' : 'TRUSTED BY TOP ACADEMIC & ENTERPRISE PARTNERS'}
               </Text>
             </View>
@@ -463,19 +463,19 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
             <View style={styles.trustFeaturesRow}>
               <View style={styles.trustFeatureItem}>
                 <Ionicons name="infinite-outline" size={13} color={colors.secondary} />
-                <Text style={[styles.trustFeatureText, { color: colors.textMuted }]}>
+                <Text style={[styles.trustFeatureText, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
                   {isBangla ? 'আজীবন অ্যাক্সেস' : 'Lifetime Access'}
                 </Text>
               </View>
               <View style={styles.trustFeatureItem}>
                 <Ionicons name="phone-portrait-outline" size={13} color={colors.primary} />
-                <Text style={[styles.trustFeatureText, { color: colors.textMuted }]}>
+                <Text style={[styles.trustFeatureText, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
                   {isBangla ? 'মোবাইল ও ওয়েব' : 'Mobile & Web'}
                 </Text>
               </View>
               <View style={styles.trustFeatureItem}>
                 <Ionicons name="ribbon-outline" size={13} color="#10B981" />
-                <Text style={[styles.trustFeatureText, { color: colors.textMuted }]}>
+                <Text style={[styles.trustFeatureText, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
                   {isBangla ? 'ভেরিফাইড সার্টিফিকেট' : 'Verified Credential'}
                 </Text>
               </View>
@@ -1533,6 +1533,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(150, 150, 150, 0.2)',
     paddingTop: 8,
@@ -1541,10 +1543,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    flexShrink: 1,
+    minWidth: 80,
   },
   trustFeatureText: {
     fontSize: 11,
     fontWeight: '500',
+    flexShrink: 1,
   },
   // Certificate Card Promo
   certPromoCard: {

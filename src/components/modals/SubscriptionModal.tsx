@@ -131,7 +131,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                   <Text style={[styles.featuresHeading, { color: colors.textMuted }]}>অন্তর্ভুক্ত সুবিধাসমূহ:</Text>
                   {['বিনামূল্যে কোর্স ও প্রিভিউ লেকচার', 'কমিউনিটি ডিসকাশন ও কুইজ প্র্যাকটিস', 'কোর্স সিলেবাস ও প্রোগ্রেস ট্র্যাকিং'].map((feat, idx) => (
                     <View key={idx} style={styles.featureItem}>
-                      <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
+                      <Ionicons name="checkmark-circle" size={16} color={colors.primary} style={styles.featureIcon} />
                       <Text style={[styles.featureText, { color: colors.text }]}>{feat}</Text>
                     </View>
                   ))}
@@ -170,7 +170,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                     'সাপ্তাহিক লাইভ ওয়ার্কশপ ও সামিট অ্যাক্সেস',
                   ].map((feat, idx) => (
                     <View key={idx} style={styles.featureItem}>
-                      <Ionicons name="checkmark-circle" size={16} color="#34D399" />
+                      <Ionicons name="checkmark-circle" size={16} color="#34D399" style={styles.featureIcon} />
                       <Text style={[styles.featureText, { color: '#FFFFFF' }]}>{feat}</Text>
                     </View>
                   ))}
@@ -207,7 +207,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                     'ডেডিকেটেড এলএমএস সাপোর্ট ও রিপোর্টিং',
                   ].map((feat, idx) => (
                     <View key={idx} style={styles.featureItem}>
-                      <Ionicons name="checkmark-circle" size={16} color={colors.secondary} />
+                      <Ionicons name="checkmark-circle" size={16} color={colors.secondary} style={styles.featureIcon} />
                       <Text style={[styles.featureText, { color: colors.text }]}>{feat}</Text>
                     </View>
                   ))}
@@ -218,48 +218,60 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
             {/* Feature Comparison Matrix Table */}
             <View style={[styles.matrixCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
               <Text style={[styles.matrixTitle, { color: colors.text }]}>মেম্বারশিপ ফিচার তুলনা (Feature Matrix)</Text>
-              <View style={[styles.matrixHeaderRow, { borderBottomColor: colors.borderSubtle }]}>
-                <Text style={[styles.matrixColHeading, { flex: 2, color: colors.textMuted }]}>Feature</Text>
-                <Text style={[styles.matrixColHeading, { flex: 1, textAlign: 'center', color: colors.textMuted }]}>Starter</Text>
-                <Text style={[styles.matrixColHeading, { flex: 1, textAlign: 'center', color: colors.primary }]}>Pro</Text>
-                <Text style={[styles.matrixColHeading, { flex: 1, textAlign: 'center', color: colors.secondary }]}>Enterprise</Text>
-              </View>
-
-              {SAAS_PLAN_FEATURES.map((item) => (
-                <View key={item.id} style={[styles.matrixRow, { borderBottomColor: colors.borderSubtle }]}>
-                  <Text style={[styles.matrixItemTitle, { flex: 2, color: colors.text }]}>{item.title}</Text>
-
-                  <View style={{ flex: 1, alignItems: 'center' }}>
-                    {typeof item.starter === 'string' ? (
-                      <Text style={[styles.matrixValText, { color: colors.textMuted }]}>{item.starter}</Text>
-                    ) : item.starter ? (
-                      <Ionicons name="checkmark" size={16} color={colors.primary} />
-                    ) : (
-                      <Ionicons name="close" size={16} color={colors.textLight} />
-                    )}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <View style={{ minWidth: 470 }}>
+                  <View style={[styles.matrixHeaderRow, { borderBottomColor: colors.borderSubtle }]}>
+                    <Text style={[styles.matrixColHeading, { width: 170, color: colors.textMuted }]}>Feature</Text>
+                    <Text style={[styles.matrixColHeading, { width: 90, textAlign: 'center', color: colors.textMuted }]}>Starter</Text>
+                    <Text style={[styles.matrixColHeading, { width: 105, textAlign: 'center', color: colors.primary }]}>Pro</Text>
+                    <Text style={[styles.matrixColHeading, { width: 105, textAlign: 'center', color: colors.secondary }]}>Enterprise</Text>
                   </View>
 
-                  <View style={{ flex: 1, alignItems: 'center' }}>
-                    {typeof item.pro === 'string' ? (
-                      <Text style={[styles.matrixValText, { color: colors.primary, fontWeight: '700' }]}>{item.pro}</Text>
-                    ) : item.pro ? (
-                      <Ionicons name="checkmark" size={16} color={colors.primary} />
-                    ) : (
-                      <Ionicons name="close" size={16} color={colors.textLight} />
-                    )}
-                  </View>
+                  {SAAS_PLAN_FEATURES.map((item) => (
+                    <View key={item.id} style={[styles.matrixRow, { borderBottomColor: colors.borderSubtle }]}>
+                      <Text style={[styles.matrixItemTitle, { width: 170, color: colors.text }]} numberOfLines={2}>
+                        {item.title}
+                      </Text>
 
-                  <View style={{ flex: 1, alignItems: 'center' }}>
-                    {typeof item.enterprise === 'string' ? (
-                      <Text style={[styles.matrixValText, { color: colors.secondary, fontWeight: '700' }]}>{item.enterprise}</Text>
-                    ) : item.enterprise ? (
-                      <Ionicons name="checkmark" size={16} color={colors.secondary} />
-                    ) : (
-                      <Ionicons name="close" size={16} color={colors.textLight} />
-                    )}
-                  </View>
+                      <View style={{ width: 90, alignItems: 'center', justifyContent: 'center' }}>
+                        {typeof item.starter === 'string' ? (
+                          <Text style={[styles.matrixValText, { color: colors.textMuted }]} numberOfLines={2}>
+                            {item.starter}
+                          </Text>
+                        ) : item.starter ? (
+                          <Ionicons name="checkmark" size={16} color={colors.primary} />
+                        ) : (
+                          <Ionicons name="close" size={16} color={colors.textLight} />
+                        )}
+                      </View>
+
+                      <View style={{ width: 105, alignItems: 'center', justifyContent: 'center' }}>
+                        {typeof item.pro === 'string' ? (
+                          <Text style={[styles.matrixValText, { color: colors.primary, fontWeight: '700' }]} numberOfLines={2}>
+                            {item.pro}
+                          </Text>
+                        ) : item.pro ? (
+                          <Ionicons name="checkmark" size={16} color={colors.primary} />
+                        ) : (
+                          <Ionicons name="close" size={16} color={colors.textLight} />
+                        )}
+                      </View>
+
+                      <View style={{ width: 105, alignItems: 'center', justifyContent: 'center' }}>
+                        {typeof item.enterprise === 'string' ? (
+                          <Text style={[styles.matrixValText, { color: colors.secondary, fontWeight: '700' }]} numberOfLines={2}>
+                            {item.enterprise}
+                          </Text>
+                        ) : item.enterprise ? (
+                          <Ionicons name="checkmark" size={16} color={colors.secondary} />
+                        ) : (
+                          <Ionicons name="close" size={16} color={colors.textLight} />
+                        )}
+                      </View>
+                    </View>
+                  ))}
                 </View>
-              ))}
+              </ScrollView>
             </View>
           </ScrollView>
         </View>
@@ -423,13 +435,18 @@ const styles = StyleSheet.create({
   },
   featureItem: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: 8,
+  },
+  featureIcon: {
+    marginTop: 2,
+    flexShrink: 0,
   },
   featureText: {
     fontSize: 12,
-    lineHeight: 16,
+    lineHeight: 18,
     flex: 1,
+    flexShrink: 1,
   },
   matrixCard: {
     marginTop: 24,

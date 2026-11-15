@@ -431,10 +431,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 <Image source={{ uri: activeCourse.thumbnail }} style={styles.resumeThumb} />
                 <View style={styles.resumeInfo}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-                    <View style={[styles.miniPill, { backgroundColor: colors.primaryLight }]}>
+                    <View style={[styles.miniPill, { backgroundColor: colors.primaryLight, flexShrink: 0 }]}>
                       <Text style={[styles.miniPillText, { color: colors.primary }]}>IN PROGRESS</Text>
                     </View>
-                    <Text style={[styles.resumeInstructor, { color: colors.textMuted }]} numberOfLines={1}>
+                    <Text style={[styles.resumeInstructor, { color: colors.textMuted, flex: 1 }]} numberOfLines={1} ellipsizeMode="tail">
                       • {activeCourse.instructor.name}
                     </Text>
                   </View>
@@ -485,10 +485,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 </View>
                 <View style={styles.resumeInfo}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-                    <View style={[styles.miniPill, { backgroundColor: 'rgba(255, 0, 0, 0.1)' }]}>
+                    <View style={[styles.miniPill, { backgroundColor: 'rgba(255, 0, 0, 0.1)', flexShrink: 0 }]}>
                       <Text style={[styles.miniPillText, { color: '#FF0000' }]}>MASTERCLASS</Text>
                     </View>
-                    <Text style={[styles.resumeInstructor, { color: colors.textMuted }]}>
+                    <Text style={[styles.resumeInstructor, { color: colors.textMuted, flex: 1 }]} numberOfLines={1} ellipsizeMode="tail">
                       • @ThrivingSkills
                     </Text>
                   </View>
@@ -1001,7 +1001,7 @@ const styles = StyleSheet.create({
   },
   resumeInstructor: {
     fontSize: 12,
-    marginBottom: 6,
+    marginBottom: 0,
   },
   resumeProgressRow: {
     flexDirection: 'row',

@@ -56,12 +56,20 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
           accessibilityRole="button"
           accessibilityLabel={`${course.title} by ${course.instructor?.name || "Thriving Skills"}`}
         >
-          <Image source={{ uri: course.thumbnail }} style={styles.horizontalThumb} />
-          {course.badge && (
-            <View style={[styles.badgeTag, { backgroundColor: colors.badgeBackground }]}>
-              <Text style={[styles.badgeText, { color: colors.badgeText }]}>{course.badge}</Text>
-            </View>
-          )}
+          <View style={styles.horizontalThumbWrapper}>
+            <Image source={{ uri: course.thumbnail }} style={styles.horizontalThumb} />
+            {course.badge && (
+              <View style={[styles.horizontalBadgeTag, { backgroundColor: colors.badgeBackground }]}>
+                <Text
+                  style={[styles.horizontalBadgeText, { color: colors.badgeText }]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {course.badge}
+                </Text>
+              </View>
+            )}
+          </View>
           <View style={styles.horizontalContent}>
             <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
               {course.title}
@@ -154,7 +162,13 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
           <Image source={{ uri: course.thumbnail }} style={styles.thumbnail} />
           {course.badge && (
             <View style={[styles.badgeTag, { backgroundColor: colors.badgeBackground }]}>
-              <Text style={[styles.badgeText, { color: colors.badgeText }]}>{course.badge}</Text>
+              <Text
+                style={[styles.badgeText, { color: colors.badgeText }]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {course.badge}
+              </Text>
             </View>
           )}
         </View>
@@ -261,6 +275,7 @@ const styles = StyleSheet.create({
     top: 10,
     left: 10,
     zIndex: 8,
+    maxWidth: '68%',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
@@ -423,16 +438,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 10,
   },
-  horizontalThumb: {
+  horizontalThumbWrapper: {
+    position: 'relative',
     width: 100,
     height: 90,
     borderRadius: 10,
+    overflow: 'hidden',
+  },
+  horizontalThumb: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 10,
     resizeMode: 'cover',
+  },
+  horizontalBadgeTag: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    zIndex: 8,
+    maxWidth: 88,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  horizontalBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+    textTransform: 'uppercase',
   },
   horizontalContent: {
     flex: 1,
     marginLeft: 12,
     justifyContent: 'center',
+    paddingRight: 32, // Ensures title & text never collide with bookmark button
   },
   bookmarkBtn: {
     position: 'absolute',

@@ -185,7 +185,9 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
           <View style={styles.badgeRow}>
             <View style={styles.badge}>
               <Ionicons name={item.badgeIcon as any} size={11} color="#FBBF24" />
-              <Text style={styles.badgeText}>{item.badge}</Text>
+              <Text style={styles.badgeText} numberOfLines={1} ellipsizeMode="tail">
+                {item.badge}
+              </Text>
             </View>
 
             <View style={styles.verifiedChip}>
@@ -328,6 +330,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 9,
     paddingVertical: 4,
     borderRadius: 12,
+    flexShrink: 1,
+    marginRight: 8,
   },
   badgeText: {
     color: '#FFFFFF',
