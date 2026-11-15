@@ -407,10 +407,10 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
                     </Text>
 
                     <View style={styles.cardFooter}>
-                      <Text style={[styles.authorSmall, { color: colors.textMuted }]}>
+                      <Text style={[styles.authorSmall, { color: colors.textMuted }]} numberOfLines={1}>
                         By {article.author}
                       </Text>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, flexShrink: 0 }}>
                         <Text style={[styles.readTimeText, { color: colors.primary }]}>
                           Read Article
                         </Text>
@@ -554,9 +554,13 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: 'rgba(0,0,0,0.05)',
     paddingTop: 8,
+    gap: 8,
   },
   authorSmall: {
     fontSize: 11,
+    flex: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   readTimeText: {
     fontSize: 12,
