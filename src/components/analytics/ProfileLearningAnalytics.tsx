@@ -560,6 +560,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+    gap: 8,
   },
   activityTitle: {
     fontSize: 13,
@@ -579,6 +580,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     gap: 5,
+    flexShrink: 0,
   },
   tooltipDot: {
     width: 6,
