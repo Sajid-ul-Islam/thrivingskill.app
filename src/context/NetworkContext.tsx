@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { AppState, AppStateStatus, Platform } from 'react-native';
 import { HttpClient } from '../services/api/httpClient';
 import { Env } from '../config/env';
+import { SyncQueueManager } from '../services/offline/syncQueue';
 
 interface NetworkContextType {
   isOffline: boolean;
@@ -33,6 +34,10 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (!isMountedRef.current) return;
       setIsOffline(!online);
       setLastErrorMessage(online ? null : errorMsg || null);
+      if (online) {
+        // Silently drain offline mutation queue when network recovers
+        SyncQueueManager.processQueue().catch(() => {});
+      }
     });
 
     return () => {

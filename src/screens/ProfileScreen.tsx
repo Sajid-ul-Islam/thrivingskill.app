@@ -36,6 +36,7 @@ import { HelpFaqModal } from '../components/HelpFaqModal';
 import { BlogModal } from '../components/BlogModal';
 import { ProfileLearningAnalytics } from '../components/ProfileLearningAnalytics';
 import { CertificateModal } from '../components/CertificateModal';
+import { StorageManagerModal } from '../components/modals/StorageManagerModal';
 import { Course, Certificate } from '../types';
 import { UserService } from '../services/api/userService';
 import { CacheManager } from '../services/cache/cacheManager';
@@ -65,7 +66,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const { language, toggleLanguage, isBangla, t } = useLanguage();
   const { badges } = useGamification();
   const { showToast } = useFeedback();
-  const { courses, userProgress, certificates } = useLearning();
+  const { courses, userProgress, certificates, pendingSyncCount } = useLearning();
   const { user, isAuthenticated, logout, deleteAccount, setAuthModalVisible, updateUserProfile } = useAuth();
   const isAdmin = Array.isArray(user?.roles) && user.roles.includes('administrator');
   const {
@@ -85,6 +86,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [legalInitialTab, setLegalInitialTab] = useState<LegalTabKey>('terms');
   const [helpFaqModalVisible, setHelpFaqModalVisible] = useState(false);
   const [blogModalVisible, setBlogModalVisible] = useState(false);
+  const [storageModalVisible, setStorageModalVisible] = useState(false);
   const [editProfileModalVisible, setEditProfileModalVisible] = useState(false);
   const [changePasswordModalVisible, setChangePasswordModalVisible] = useState(false);
   const [paymentHistoryModalVisible, setPaymentHistoryModalVisible] = useState(false);
@@ -1384,7 +1386,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
             {/* Thriving Skills Blog & Articles */}
             <TouchableOpacity
-              style={[styles.settingRow, { borderBottomWidth: 0 }]}
+              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
               onPress={() => {
                 triggerHaptic('light');
                 setBlogModalVisible(true);
@@ -1404,6 +1406,38 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 </View>
               </View>
               <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            </TouchableOpacity>
+
+            {/* Storage & Offline Sync (Phase 1) */}
+            <TouchableOpacity
+              style={[styles.settingRow, { borderBottomWidth: 0 }]}
+              onPress={() => {
+                triggerHaptic('light');
+                setStorageModalVisible(true);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={isBangla ? 'লোকাল স্টোরেজ ও অফলাইন সিঙ্ক' : 'Local Storage and Offline Sync'}
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="server-outline" size={20} color={colors.primary} />
+                <View style={{ marginLeft: 6 }}>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>
+                    {isBangla ? 'স্টোরেজ ও অফলাইন সিঙ্ক' : 'Storage & Offline Sync'}
+                  </Text>
+                  <Text style={[styles.settingSubtext, { color: pendingSyncCount > 0 ? colors.brandGold : colors.textMuted }]}>
+                    {pendingSyncCount > 0
+                      ? (isBangla ? `${pendingSyncCount}টি অ্যাকশন অফলাইনে অপেক্ষারত` : `${pendingSyncCount} offline actions pending sync`)
+                      : (isBangla ? 'ক্যাশ ম্যানেজমেন্ট ও ডাটা সেভার' : 'Cache, downloads & data saver')}
+                  </Text>
+                </View>
+              </View>
+              {pendingSyncCount > 0 ? (
+                <View style={{ backgroundColor: colors.brandGold, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 }}>
+                  <Text style={{ color: '#000', fontSize: 11, fontWeight: '800' }}>{pendingSyncCount}</Text>
+                </View>
+              ) : (
+                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -1663,6 +1697,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       <BlogModal
         visible={blogModalVisible}
         onClose={() => setBlogModalVisible(false)}
+      />
+
+      {/* Local Storage & Offline Sync Modal (Phase 1) */}
+      <StorageManagerModal
+        visible={storageModalVisible}
+        onClose={() => setStorageModalVisible(false)}
       />
 
       {/* Edit Profile Modal (Section 25 Spec) */}

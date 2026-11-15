@@ -3,6 +3,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Env } from '../config/env';
 import { Course, UserProgress, Certificate, Note, CategoryId, Workshop, Category, WpPost, Review } from '../types';
 import { useAuth } from './AuthContext';
+import { Endpoints } from '../services/api/endpoints';
+import { SyncQueueManager } from '../services/offline/syncQueue';
 import {
   fetchWpCourses,
   fetchWpCategories,
@@ -72,6 +74,11 @@ interface LearningContextType {
     userName?: string,
     userRole?: string
   ) => Certificate | null;
+
+  // Local-First Outbox Sync (Phase 1)
+  pendingSyncCount: number;
+  isSyncingOffline: boolean;
+  syncOfflineData: (force?: boolean) => Promise<{ processed: number; succeeded: number; failed: number }>;
 }
 
 const LearningContext = createContext<LearningContextType>({} as LearningContextType);
@@ -111,6 +118,22 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [searchKeywordsHistory, setSearchKeywordsHistory] = useState<string[]>([]);
   const [reviewedCourseIds, setReviewedCourseIds] = useState<string[]>([]);
 
+  // Local-First Outbox Sync State
+  const [pendingSyncCount, setPendingSyncCount] = useState<number>(0);
+  const [isSyncingOffline, setIsSyncingOffline] = useState<boolean>(false);
+
+  useEffect(() => {
+    const unsub = SyncQueueManager.subscribe((count, isSyncing) => {
+      setPendingSyncCount(count);
+      setIsSyncingOffline(isSyncing);
+    });
+    return unsub;
+  }, []);
+
+  const syncOfflineData = useCallback(async (force?: boolean) => {
+    return SyncQueueManager.processQueue(force);
+  }, []);
+
   // Fetch live courses, categories, workshops, and blog posts from WordPress
   const loadWordPressData = useCallback(async (forceRefresh: boolean = false) => {
     setIsLoadingCourses(true);
@@ -148,6 +171,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Hydrate scoped user learning state whenever signed-in account changes
   useEffect(() => {
     let active = true;
+    SyncQueueManager.setUserScope(userScope);
     setUserProgress({});
     setBookmarks([]);
     setCertificates([]);
@@ -250,6 +274,11 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
     setUserProgress(updated);
     saveState(PROGRESS_STORAGE_KEY, updated);
+
+    // Queue enrollment mutation for offline-first sync with LearnPress
+    SyncQueueManager.enqueue('ENROLL_COURSE', Endpoints.LEARNPRESS.COURSE_ENROLL, { id: courseId }).then(() => {
+      SyncQueueManager.processQueue().catch(() => {});
+    });
   };
 
   const markLessonCompleted = (courseId: string, lessonId: string) => {
@@ -310,6 +339,11 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     setUserProgress(updated);
     saveState(PROGRESS_STORAGE_KEY, updated);
+
+    // Queue lesson completion mutation for offline-first sync with LearnPress
+    SyncQueueManager.enqueue('COMPLETE_LESSON', Endpoints.LEARNPRESS.LESSON_FINISH, { id: lessonId, course_id: courseId }).then(() => {
+      SyncQueueManager.processQueue().catch(() => {});
+    });
   };
 
   const toggleBookmark = (courseId: string) => {
@@ -657,6 +691,9 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         hasReviewedCourse,
         isCertificateUnlocked,
         submitMandatoryCourseReview,
+        pendingSyncCount,
+        isSyncingOffline,
+        syncOfflineData,
       }}
     >
       {children}

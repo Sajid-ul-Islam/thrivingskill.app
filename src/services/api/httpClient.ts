@@ -235,6 +235,14 @@ export class HttpClient {
     });
   }
 
+  static patch<T = any>(endpoint: string, body?: any, options?: Omit<RequestOptions, 'body' | 'method'>): Promise<T> {
+    return this.request<T>(endpoint, {
+      ...options,
+      method: 'PATCH',
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  }
+
   static delete<T = any>(endpoint: string, options?: Omit<RequestOptions, 'method'>): Promise<T> {
     return this.request<T>(endpoint, { ...options, method: 'DELETE' });
   }
