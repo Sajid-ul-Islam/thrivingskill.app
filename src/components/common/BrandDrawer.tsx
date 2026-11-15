@@ -506,7 +506,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
 
             <TouchableOpacity
               style={styles.actionRow}
-              onPress={() => Linking.openURL('https://wa.me/8801312100288')}
+              onPress={() => Linking.openURL('https://wa.me/8801312100288').catch(() => {})}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <Ionicons name="logo-whatsapp" size={18} color="#25D366" />
@@ -517,7 +517,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
 
             <TouchableOpacity
               style={styles.actionRow}
-              onPress={() => Linking.openURL('https://m.me/thrivingskills')}
+              onPress={() => Linking.openURL('https://m.me/thrivingskills').catch(() => {})}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <Ionicons name="logo-facebook" size={18} color="#0084FF" />

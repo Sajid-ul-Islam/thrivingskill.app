@@ -110,7 +110,7 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
   }, [videos, savedVideos, searchQuery, selectedCategory]);
 
   const handleOpenChannel = () => {
-    Linking.openURL(YOUTUBE_CHANNEL.url);
+    Linking.openURL(YOUTUBE_CHANNEL.url).catch(() => {});
   };
 
   const handlePlay = (vid: YouTubeVideo) => {

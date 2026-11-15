@@ -61,8 +61,12 @@ export async function openWhatsAppChat(inquiryType: CrmInquiryType = 'general', 
     await Linking.openURL(webUrl);
     return true;
   } catch {
-    await Linking.openURL(webUrl);
-    return true;
+    try {
+      await Linking.openURL(webUrl);
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 
@@ -80,8 +84,12 @@ export async function openFacebookMessenger(): Promise<boolean> {
     await Linking.openURL(CRM_CHANNELS.facebookPage);
     return true;
   } catch {
-    await Linking.openURL(CRM_CHANNELS.facebookPage);
-    return true;
+    try {
+      await Linking.openURL(CRM_CHANNELS.facebookPage);
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 
@@ -99,8 +107,12 @@ export async function openFacebookPage(): Promise<boolean> {
     await Linking.openURL(CRM_CHANNELS.facebookPage);
     return true;
   } catch {
-    await Linking.openURL(CRM_CHANNELS.facebookPage);
-    return true;
+    try {
+      await Linking.openURL(CRM_CHANNELS.facebookPage);
+      return true;
+    } catch {
+      return false;
+    }
   }
 }
 

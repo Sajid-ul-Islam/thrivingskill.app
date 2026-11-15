@@ -356,11 +356,11 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
               {/* Read on Website Link */}
               <TouchableOpacity
                 style={[styles.webLinkBtn, { borderColor: colors.primary }]}
-                onPress={() => Linking.openURL('https://thrivingskill.com/blog')}
+                onPress={() => Linking.openURL('https://thrivingskill.com/blog').catch(() => {})}
               >
                 <Ionicons name="open-outline" size={16} color={colors.primary} />
                 <Text style={[styles.webLinkText, { color: colors.primary }]}>
-                  Read More on ' + Env.SITE_URL.replace(/^https?:\/\//, '') + '/blog
+                  {`Read More on ${Env.SITE_URL.replace(/^https?:\/\//, '')}/blog`}
                 </Text>
               </TouchableOpacity>
             </View>

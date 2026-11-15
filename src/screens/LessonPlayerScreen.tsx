@@ -132,8 +132,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
 
   // Flatten lessons list for next/prev navigation
   const allLessons: { moduleTitle: string; lesson: Lesson }[] = [];
-  course?.modules.forEach((mod) => {
-    mod.lessons.forEach((l) => {
+  course?.modules?.forEach((mod) => {
+    mod.lessons?.forEach((l) => {
       allLessons.push({ moduleTitle: mod.title, lesson: l });
     });
   });
@@ -645,7 +645,9 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
 </html>`;
   };
 
-  const previewLesson = course.modules[0]?.lessons.find((l) => l.isFreePreview);
+  const previewLesson =
+    course?.modules?.flatMap((m) => m.lessons || []).find((l) => l.isFreePreview) ||
+    course?.modules?.[0]?.lessons?.[0];
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -656,7 +658,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         <Header
           showBack
           onBack={onBack}
-          title={course.title}
+          title={course?.title || 'Course Player'}
           subtitle={currentItem?.moduleTitle}
           rightAction={
             <TouchableOpacity
@@ -1160,7 +1162,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
 
                 <View style={styles.curriculumList}>
                   {allLessons.map((item) => {
-                    const isSelected = item.lesson.id === currentLesson.id;
+                    const isSelected = item.lesson.id === currentLesson?.id;
                     const isCompleted = progress?.completedLessonIds.includes(item.lesson.id);
                     const itemAccessible = isAdmin || isEnrolled || Boolean(item.lesson.isFreePreview);
 

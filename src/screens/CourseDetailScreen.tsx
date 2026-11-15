@@ -185,7 +185,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     if (isAdmin) {
       const targetLessonId =
         userProgress[course.id]?.lastAccessedLessonId ||
-        course.modules[0]?.lessons[0]?.id ||
+        course.modules?.[0]?.lessons?.[0]?.id ||
         '';
       if (targetLessonId) {
         onNavigateToLesson(course.id, targetLessonId);
@@ -210,7 +210,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
           {
             text: isBangla ? 'শেখা শুরু করুন' : 'Start Learning',
             onPress: () => {
-              const firstLessonId = course.modules[0]?.lessons[0]?.id;
+              const firstLessonId = course.modules?.[0]?.lessons?.[0]?.id;
               if (firstLessonId) onNavigateToLesson(course.id, firstLessonId);
             },
           },
@@ -219,7 +219,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     } else {
       const targetLessonId =
         userProgress[course.id]?.lastAccessedLessonId ||
-        course.modules[0]?.lessons[0]?.id ||
+        course.modules?.[0]?.lessons?.[0]?.id ||
         '';
       onNavigateToLesson(course.id, targetLessonId);
     }
@@ -313,7 +313,9 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                 playVideo(trailerVideo, 'modal');
                 return;
               }
-              const previewLesson = course.modules[0]?.lessons.find((l) => l.isFreePreview);
+              const previewLesson =
+                course.modules?.flatMap((m) => m.lessons || []).find((l) => l.isFreePreview) ||
+                course.modules?.[0]?.lessons?.[0];
               if (previewLesson) {
                 onNavigateToLesson(course.id, previewLesson.id);
               } else {
@@ -814,7 +816,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                 ? `হ্যালো থ্রাইভিং স্কিলস, আমি "${course.title}" কোর্স সম্পর্কে জানতে চাই।`
                 : `Hello Thriving Skills, I have an inquiry about "${course.title}".`;
               const encoded = encodeURIComponent(msg);
-              Linking.openURL(`https://wa.me/8801312100288?text=${encoded}`);
+              Linking.openURL(`https://wa.me/8801312100288?text=${encoded}`).catch(() => {});
             }}
             accessibilityRole="button"
             accessibilityLabel={`Ask on WhatsApp about ${course.title}`}
@@ -891,7 +893,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
         onClose={() => setPaymentModalVisible(false)}
         onSuccess={(cId) => {
           enrollInCourse(cId);
-          const firstLessonId = course.modules[0]?.lessons[0]?.id;
+          const firstLessonId = course.modules?.[0]?.lessons?.[0]?.id;
           if (firstLessonId) onNavigateToLesson(course.id, firstLessonId);
         }}
       />

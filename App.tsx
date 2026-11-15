@@ -228,6 +228,7 @@ const MainAppContent: React.FC = () => {
                   onOpenSubscription={() => setSubscriptionModalVisible(true)}
                   onOpenNotifications={() => setNotificationModalVisible(true)}
                   onOpenDrawer={() => setBrandDrawerVisible(true)}
+                  onOpenSupport={() => setSupportModalVisible(true)}
                 />
               </ScreenTransition>
             )}
@@ -241,6 +242,7 @@ const MainAppContent: React.FC = () => {
                   onOpenNotifications={() => setNotificationModalVisible(true)}
                   onOpenYouTube={() => push({ name: 'YouTubeVideos' })}
                   onOpenDrawer={() => setBrandDrawerVisible(true)}
+                  onOpenSupport={() => setSupportModalVisible(true)}
                 />
               </ScreenTransition>
             )}
@@ -264,6 +266,7 @@ const MainAppContent: React.FC = () => {
                   onNavigateToCourse={navigateToCourse}
                   onNavigateToLesson={navigateToLesson}
                   onOpenDrawer={() => setBrandDrawerVisible(true)}
+                  onOpenSupport={() => setSupportModalVisible(true)}
                 />
               </ScreenTransition>
             )}

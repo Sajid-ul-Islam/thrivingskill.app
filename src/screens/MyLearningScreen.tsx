@@ -30,6 +30,7 @@ interface MyLearningScreenProps {
   onOpenNotifications?: () => void;
   onOpenYouTube?: () => void;
   onOpenDrawer?: () => void;
+  onOpenSupport?: () => void;
 }
 
 type TabMode = 'all' | 'in-progress' | 'finished' | 'passed' | 'failed' | 'certificates' | 'history' | 'saved';
@@ -42,6 +43,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
   onOpenNotifications,
   onOpenYouTube,
   onOpenDrawer,
+  onOpenSupport,
 }) => {
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
@@ -324,6 +326,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
         onOpenNotifications={onOpenNotifications}
         onOpenYouTube={onOpenYouTube}
         onOpenDrawer={onOpenDrawer}
+        onOpenSupport={onOpenSupport}
       />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}>

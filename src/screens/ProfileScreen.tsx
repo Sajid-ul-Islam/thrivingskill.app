@@ -54,6 +54,7 @@ interface ProfileScreenProps {
   onNavigateToCourse?: (courseId: string) => void;
   onNavigateToLesson?: (courseId: string, lessonId: string) => void;
   onOpenDrawer?: () => void;
+  onOpenSupport?: () => void;
 }
 
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({
@@ -64,6 +65,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   onNavigateToCourse,
   onNavigateToLesson,
   onOpenDrawer,
+  onOpenSupport,
 }) => {
   const { colors, isDark, toggleTheme } = useTheme();
   const insets = useSafeAreaInsets();
@@ -421,6 +423,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         onOpenSubscription={onOpenSubscription}
         onOpenNotifications={onOpenNotifications}
         onOpenDrawer={onOpenDrawer}
+        onOpenSupport={onOpenSupport}
       />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}>
@@ -869,7 +872,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             >
               <TouchableOpacity
                 style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-                onPress={() => Linking.openURL(Env.WP_ADMIN_URL)}
+                onPress={() => Linking.openURL(Env.WP_ADMIN_URL).catch(() => {})}
               >
                 <View style={styles.settingLeft}>
                   <Ionicons name="speedometer-outline" size={20} color="#EC4899" />
@@ -887,7 +890,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
               <TouchableOpacity
                 style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-                onPress={() => Linking.openURL(`${Env.SITE_URL}/wp-admin/edit.php?post_type=lp_course`)}
+                onPress={() => Linking.openURL(`${Env.SITE_URL}/wp-admin/edit.php?post_type=lp_course`).catch(() => {})}
               >
                 <View style={styles.settingLeft}>
                   <Ionicons name="book-outline" size={20} color="#3B82F6" />
@@ -905,7 +908,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
               <TouchableOpacity
                 style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-                onPress={() => Linking.openURL(`${Env.SITE_URL}/wp-admin/users.php`)}
+                onPress={() => Linking.openURL(`${Env.SITE_URL}/wp-admin/users.php`).catch(() => {})}
               >
                 <View style={styles.settingLeft}>
                   <Ionicons name="people-outline" size={20} color="#10B981" />
@@ -923,7 +926,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
               <TouchableOpacity
                 style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-                onPress={() => Linking.openURL(`${Env.SITE_URL}/wp-admin/edit.php?post_type=lp_order`)}
+                onPress={() => Linking.openURL(`${Env.SITE_URL}/wp-admin/edit.php?post_type=lp_order`).catch(() => {})}
               >
                 <View style={styles.settingLeft}>
                   <Ionicons name="card-outline" size={20} color="#F59E0B" />
@@ -941,7 +944,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
               <TouchableOpacity
                 style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-                onPress={() => Linking.openURL(`${Env.SITE_URL}/wp-admin/admin.php?page=learnpress-statistics`)}
+                onPress={() => Linking.openURL(`${Env.SITE_URL}/wp-admin/admin.php?page=learnpress-statistics`).catch(() => {})}
               >
                 <View style={styles.settingLeft}>
                   <Ionicons name="analytics-outline" size={20} color="#8B5CF6" />
@@ -1435,7 +1438,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             {isAdmin && (
               <TouchableOpacity
                 style={[styles.settingRow, { borderBottomWidth: 0 }]}
-                onPress={() => Linking.openURL(Env.WP_ADMIN_URL)}
+                onPress={() => Linking.openURL(Env.WP_ADMIN_URL).catch(() => {})}
                 accessibilityRole="button"
                 accessibilityLabel={isBangla ? 'ওয়ার্ডপ্রেস অ্যাডমিন পোর্টাল খুলুন' : 'Open WordPress Admin Portal'}
               >
@@ -2193,7 +2196,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   </Text>
                   <TouchableOpacity
                     style={[styles.secondaryActionBtn, { borderColor: colors.primary, backgroundColor: colors.primaryLight }]}
-                    onPress={() => Linking.openURL('https://gravatar.com')}
+                    onPress={() => Linking.openURL('https://gravatar.com').catch(() => {})}
                   >
                     <Ionicons name="image-outline" size={16} color={colors.primary} />
                     <Text style={[styles.secondaryActionText, { color: colors.primary }]}>

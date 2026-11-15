@@ -98,11 +98,11 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
   };
 
   const handleOpenYouTube = () => {
-    Linking.openURL(currentVideo.url);
+    Linking.openURL(currentVideo.url).catch(() => {});
   };
 
   const handleOpenChannel = () => {
-    Linking.openURL(YOUTUBE_CHANNEL.url);
+    Linking.openURL(YOUTUBE_CHANNEL.url).catch(() => {});
   };
 
   const handleSelectRelated = (v: YouTubeVideo) => {

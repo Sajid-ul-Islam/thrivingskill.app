@@ -28,6 +28,7 @@ interface CoursesScreenProps {
   onOpenSubscription?: () => void;
   onOpenNotifications?: () => void;
   onOpenDrawer?: () => void;
+  onOpenSupport?: () => void;
 }
 
 type LevelFilter = 'All' | 'Beginner' | 'Intermediate' | 'Advanced';
@@ -39,6 +40,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   onOpenSubscription,
   onOpenNotifications,
   onOpenDrawer,
+  onOpenSupport,
 }) => {
   const { colors } = useTheme();
   const { isBangla } = useLanguage();
@@ -116,6 +118,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
         onOpenSubscription={onOpenSubscription}
         onOpenNotifications={onOpenNotifications}
         onOpenDrawer={onOpenDrawer}
+        onOpenSupport={onOpenSupport}
       />
 
       <ScrollView

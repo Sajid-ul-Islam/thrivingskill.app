@@ -117,6 +117,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const resetKeyInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
   const newPasswordInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
   const confirmPasswordInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
+  const scrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Sync initial props
   useEffect(() => {
@@ -174,11 +175,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     return () => {
       showSub.remove();
       hideSub.remove();
+      if (scrollTimerRef.current) {
+        clearTimeout(scrollTimerRef.current);
+      }
     };
   }, []);
 
   const scrollToInput = (yOffset: number) => {
-    setTimeout(() => {
+    if (scrollTimerRef.current) {
+      clearTimeout(scrollTimerRef.current);
+    }
+    scrollTimerRef.current = setTimeout(() => {
       scrollViewRef.current?.scrollTo({ y: yOffset, animated: true });
     }, 100);
   };
