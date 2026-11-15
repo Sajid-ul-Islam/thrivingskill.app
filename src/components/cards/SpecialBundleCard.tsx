@@ -190,6 +190,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: 10,
     borderTopWidth: 1,
+    gap: 8,
   },
   statsCol: {
     flex: 1,
