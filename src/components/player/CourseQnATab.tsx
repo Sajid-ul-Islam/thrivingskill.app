@@ -142,9 +142,9 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
     <View style={styles.container}>
       {/* Top Action Header */}
       <View style={styles.headerRow}>
-        <View>
-          <Text style={[styles.heading, { color: colors.text }]}>Discussion & Q&A</Text>
-          <Text style={[styles.subheading, { color: colors.textMuted }]}>
+        <View style={styles.headerTitleCol}>
+          <Text style={[styles.heading, { color: colors.text }]} numberOfLines={1}>Discussion & Q&A</Text>
+          <Text style={[styles.subheading, { color: colors.textMuted }]} numberOfLines={1}>
             {questions.length} questions answered by instructors
           </Text>
         </View>
@@ -338,6 +338,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 16,
+    gap: 10,
+  },
+  headerTitleCol: {
+    flex: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   heading: {
     fontSize: 18,
@@ -354,6 +360,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 10,
     elevation: 2,
+    flexShrink: 0,
   },
   askBtnText: {
     color: '#FFFFFF',
@@ -377,15 +384,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 10,
+    gap: 8,
   },
   authorAvatar: {
     width: 38,
     height: 38,
     borderRadius: 19,
     marginRight: 10,
+    flexShrink: 0,
   },
   authorMeta: {
     flex: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   authorName: {
     fontSize: 14,
@@ -403,6 +414,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     gap: 4,
+    flexShrink: 0,
   },
   upvoteText: {
     fontSize: 12,
@@ -424,21 +436,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
+    gap: 8,
   },
   instructorAvatar: {
     width: 32,
     height: 32,
     borderRadius: 16,
     marginRight: 8,
+    flexShrink: 0,
   },
   verifiedRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    flex: 1,
+    minWidth: 0,
   },
   instructorName: {
     fontSize: 13,
     fontWeight: '700',
+    flexShrink: 1,
   },
   verifiedBadge: {
     flexDirection: 'row',
@@ -448,6 +465,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 6,
     gap: 3,
+    flexShrink: 0,
   },
   verifiedBadgeText: {
     color: '#047857',

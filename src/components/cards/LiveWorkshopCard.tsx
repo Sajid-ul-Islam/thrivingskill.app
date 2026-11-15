@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SpringPressable } from '../common';
 import { Workshop } from '../../types';
@@ -38,6 +38,22 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop }) 
     });
   };
 
+  const handleJoinLive = async () => {
+    const targetUrl = workshop.joinUrl || 'https://thrivingskill.com/live-room';
+    try {
+      showToast({
+        message: isBangla ? 'লাইভ সেশনে যুক্ত করা হচ্ছে...' : 'Entering live classroom...',
+        type: 'info',
+      });
+      await Linking.openURL(targetUrl);
+    } catch {
+      showToast({
+        message: isBangla ? 'লাইভ লিংক খোলা যায়নি' : 'Unable to launch live class URL',
+        type: 'error',
+      });
+    }
+  };
+
   return (
     <View
       style={[
@@ -52,26 +68,39 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop }) 
       <View style={styles.imageWrapper}>
         <Image source={{ uri: workshop.thumbnail }} style={styles.thumbnail} />
         <View style={styles.badgeRow}>
-          <View style={styles.liveBadge}>
-            <View style={styles.pulseDot} />
-            <Text style={styles.liveText} numberOfLines={1}>UPCOMING WORKSHOP</Text>
-          </View>
-
-          <View
-            style={[
-              styles.seatsBadge,
-              workshop.seatsLeft <= 5 && { backgroundColor: '#DC2626' },
-            ]}
-          >
-            <Ionicons
-              name={workshop.seatsLeft <= 5 ? 'flame' : 'people'}
-              size={12}
-              color="#FFFFFF"
-            />
-            <Text style={styles.seatsText} numberOfLines={1}>
-              {workshop.seatsLeft <= 5 ? `Only ${workshop.seatsLeft} seats left!` : `${workshop.seatsLeft} seats left`}
+          <View style={[styles.liveBadge, workshop.isLive && styles.liveBadgeActive]}>
+            <View style={[styles.pulseDot, workshop.isLive && styles.pulseDotLive]} />
+            <Text style={styles.liveText} numberOfLines={1}>
+              {workshop.isLive
+                ? (isBangla ? 'সরাসরি লাইভ' : '🔴 LIVE BROADCASTING')
+                : (isBangla ? 'আসন্ন ওয়ার্কশপ' : 'UPCOMING WORKSHOP')}
             </Text>
           </View>
+
+          {workshop.isLive && (workshop.liveViewerCount ?? 0) > 0 ? (
+            <View style={styles.viewersBadge}>
+              <Ionicons name="eye" size={12} color="#FFFFFF" />
+              <Text style={styles.seatsText} numberOfLines={1}>
+                {workshop.liveViewerCount} {isBangla ? 'জন লাইভে' : 'Watching'}
+              </Text>
+            </View>
+          ) : (
+            <View
+              style={[
+                styles.seatsBadge,
+                workshop.seatsLeft <= 5 && { backgroundColor: '#DC2626' },
+              ]}
+            >
+              <Ionicons
+                name={workshop.seatsLeft <= 5 ? 'flame' : 'people'}
+                size={12}
+                color="#FFFFFF"
+              />
+              <Text style={styles.seatsText} numberOfLines={1}>
+                {workshop.seatsLeft <= 5 ? `Only ${workshop.seatsLeft} seats left!` : `${workshop.seatsLeft} seats left`}
+              </Text>
+            </View>
+          )}
         </View>
       </View>
 
@@ -116,33 +145,48 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop }) 
             </Text>
           </View>
 
-          <SpringPressable
-            style={[
-              styles.rsvpBtn,
-              {
-                backgroundColor: registered ? colors.primaryLight : colors.primary,
-              },
-            ]}
-            onPress={handleToggleRsvp}
-            activeScale={0.96}
-            accessibilityRole="button"
-            accessibilityState={{ selected: registered }}
-            accessibilityLabel={registered ? `Cancel reservation for ${workshop.title}` : `Reserve seat for ${workshop.title}`}
-          >
-            <Ionicons
-              name={registered ? 'checkmark-circle' : 'ticket-outline'}
-              size={16}
-              color={registered ? colors.primary : colors.onPrimary}
-            />
-            <Text
-              style={[
-                styles.rsvpText,
-                { color: registered ? colors.primary : colors.onPrimary },
-              ]}
+          {workshop.isLive ? (
+            <SpringPressable
+              style={[styles.rsvpBtn, styles.joinLiveBtn]}
+              onPress={handleJoinLive}
+              activeScale={0.96}
+              accessibilityRole="button"
+              accessibilityLabel={`Join live broadcast for ${workshop.title}`}
             >
-              {registered ? 'Seat Reserved' : 'Reserve Seat'}
-            </Text>
-          </SpringPressable>
+              <Ionicons name="radio" size={16} color="#FFFFFF" />
+              <Text style={styles.joinLiveText}>
+                {isBangla ? 'লাইভে যোগ দিন' : 'Join Live Class'}
+              </Text>
+            </SpringPressable>
+          ) : (
+            <SpringPressable
+              style={[
+                styles.rsvpBtn,
+                {
+                  backgroundColor: registered ? colors.primaryLight : colors.primary,
+                },
+              ]}
+              onPress={handleToggleRsvp}
+              activeScale={0.96}
+              accessibilityRole="button"
+              accessibilityState={{ selected: registered }}
+              accessibilityLabel={registered ? `Cancel reservation for ${workshop.title}` : `Reserve seat for ${workshop.title}`}
+            >
+              <Ionicons
+                name={registered ? 'checkmark-circle' : 'ticket-outline'}
+                size={16}
+                color={registered ? colors.primary : colors.onPrimary}
+              />
+              <Text
+                style={[
+                  styles.rsvpText,
+                  { color: registered ? colors.primary : colors.onPrimary },
+                ]}
+              >
+                {registered ? 'Seat Reserved' : 'Reserve Seat'}
+              </Text>
+            </SpringPressable>
+          )}
         </View>
       </View>
     </View>
@@ -298,5 +342,39 @@ const styles = StyleSheet.create({
   rsvpText: {
     fontSize: 13,
     fontWeight: '700',
+  },
+  joinLiveBtn: {
+    backgroundColor: '#DC2626',
+    elevation: 3,
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.35,
+    shadowRadius: 4,
+  },
+  joinLiveText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+  liveBadgeActive: {
+    backgroundColor: '#DC2626',
+    paddingHorizontal: 10,
+  },
+  pulseDotLive: {
+    backgroundColor: '#FFFFFF',
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+  },
+  viewersBadge: {
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    gap: 4,
+    flexShrink: 0,
   },
 });

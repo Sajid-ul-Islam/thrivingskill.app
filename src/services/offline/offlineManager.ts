@@ -21,6 +21,8 @@ export interface OfflineLessonData {
   content: string;
   takeaways?: string[];
   resources?: OfflineResource[];
+  quality?: string;
+  fileSize?: string;
 }
 
 export class OfflineManager {
@@ -33,7 +35,8 @@ export class OfflineManager {
     content?: string,
     courseTitle?: string,
     takeaways?: string[],
-    resources?: OfflineResource[]
+    resources?: OfflineResource[],
+    quality?: string
   ): Promise<void> {
     const offlineData: OfflineLessonData = {
       lessonId: lesson.id,
@@ -50,6 +53,8 @@ export class OfflineManager {
         'Step-by-step implementation notes.'
       ],
       resources: resources || [],
+      quality: quality || '720p HD',
+      fileSize: quality === '1080p' ? '~140 MB' : quality === '360p' ? '~25 MB' : '~65 MB',
     };
 
     await AsyncStorage.setItem(

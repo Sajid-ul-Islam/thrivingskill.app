@@ -2675,6 +2675,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 4,
+    gap: 8,
   },
   tierTag: {
     flexDirection: 'row',
@@ -2683,6 +2684,7 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 6,
     gap: 4,
+    flexShrink: 0,
   },
   tierTagText: {
     fontSize: 10,
@@ -2815,11 +2817,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
+    gap: 12,
   },
   settingLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    minWidth: 0,
     paddingRight: 8,
     gap: 12,
   },

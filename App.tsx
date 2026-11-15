@@ -37,6 +37,7 @@ import { YouTubePlayerModal } from './src/components/YouTubePlayerModal';
 import { UniversalSearchModal } from './src/components/UniversalSearchModal';
 import { BrandDrawer } from './src/components/BrandDrawer';
 import { AppUpdateModal } from './src/components/AppUpdateModal';
+import { SupportContactModal } from './src/components/modals/SupportContactModal';
 import { ScreenTransition, CelebrationToast, ActionToast } from './src/components/common';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -47,7 +48,7 @@ const MainAppContent: React.FC = () => {
   const { colors, isDark } = useTheme();
   const { t } = useLanguage();
   const insets = useSafeAreaInsets();
-  const { userProgress } = useLearning();
+  const { userProgress, hasActiveLiveWorkshop } = useLearning();
   const { activeWorkspace, unreadNotificationsCount } = useSaaS();
   const { isAuthModalVisible, setAuthModalVisible } = useAuth();
   const { celebration, clearCelebration } = useGamification();
@@ -75,6 +76,7 @@ const MainAppContent: React.FC = () => {
   const [searchModalVisible, setSearchModalVisible] = useState(false);
   const [brandDrawerVisible, setBrandDrawerVisible] = useState(false);
   const [updateModalVisible, setUpdateModalVisible] = useState(false);
+  const [supportModalVisible, setSupportModalVisible] = useState(false);
 
   const inProgressCount = Object.values(userProgress).filter((p) => !p.isCompleted).length;
 
@@ -95,6 +97,10 @@ const MainAppContent: React.FC = () => {
       }
       if (updateModalVisible) {
         setUpdateModalVisible(false);
+        return true;
+      }
+      if (supportModalVisible) {
+        setSupportModalVisible(false);
         return true;
       }
       if (subscriptionModalVisible) {
@@ -146,6 +152,7 @@ const MainAppContent: React.FC = () => {
     icon: string;
     iconOutline: string;
     badgeCount?: number;
+    isLiveBadge?: boolean;
   }[] = [
     { id: 'Home', label: t('tabHome'), icon: 'home', iconOutline: 'home-outline' },
     { id: 'Courses', label: t('tabCourses'), icon: 'compass', iconOutline: 'compass-outline' },
@@ -156,7 +163,13 @@ const MainAppContent: React.FC = () => {
       iconOutline: 'book-outline',
       badgeCount: inProgressCount,
     },
-    { id: 'Workshops', label: t('tabLiveClass'), icon: 'videocam', iconOutline: 'videocam-outline' },
+    {
+      id: 'Workshops',
+      label: t('tabLiveClass'),
+      icon: 'videocam',
+      iconOutline: 'videocam-outline',
+      isLiveBadge: hasActiveLiveWorkshop,
+    },
     { id: 'Profile', label: t('tabProfile'), icon: 'person', iconOutline: 'person-outline' },
   ];
 
@@ -204,6 +217,7 @@ const MainAppContent: React.FC = () => {
                   onOpenYouTube={() => push({ name: 'YouTubeVideos' })}
                   onOpenSearch={() => setSearchModalVisible(true)}
                   onOpenDrawer={() => setBrandDrawerVisible(true)}
+                  onOpenSupport={() => setSupportModalVisible(true)}
                 />
               </ScreenTransition>
             )}
@@ -236,6 +250,7 @@ const MainAppContent: React.FC = () => {
                   onOpenSubscription={() => setSubscriptionModalVisible(true)}
                   onOpenNotifications={() => setNotificationModalVisible(true)}
                   onOpenDrawer={() => setBrandDrawerVisible(true)}
+                  onOpenSupport={() => setSupportModalVisible(true)}
                 />
               </ScreenTransition>
             )}
@@ -308,7 +323,12 @@ const MainAppContent: React.FC = () => {
                     size={21}
                     color={isActive ? colors.tabActive : colors.tabInactive}
                   />
-                  {tab.badgeCount && tab.badgeCount > 0 ? (
+                  {tab.isLiveBadge ? (
+                    <View style={styles.tabLivePill}>
+                      <View style={styles.tabLiveDot} />
+                      <Text style={styles.tabLiveText}>LIVE</Text>
+                    </View>
+                  ) : tab.badgeCount && tab.badgeCount > 0 ? (
                     <View style={[styles.tabBadge, { backgroundColor: colors.accent }]}>
                       <Text style={[styles.tabBadgeText, { color: colors.onAccent }]}>{tab.badgeCount}</Text>
                     </View>
@@ -341,6 +361,13 @@ const MainAppContent: React.FC = () => {
         onOpenAssessment={() => setAssessmentModalVisible(true)}
         onOpenSubscription={() => setSubscriptionModalVisible(true)}
         onOpenUpdate={() => setUpdateModalVisible(true)}
+        onOpenSupport={() => setSupportModalVisible(true)}
+      />
+
+      {/* Official CRM & Helpdesk Support Modal */}
+      <SupportContactModal
+        visible={supportModalVisible}
+        onClose={() => setSupportModalVisible(false)}
       />
 
       {/* Global In-App Update Modal */}
@@ -506,6 +533,34 @@ const styles = StyleSheet.create({
     lineHeight: 10,
     includeFontPadding: false,
     fontWeight: '800',
+  },
+  tabLivePill: {
+    position: 'absolute',
+    top: -2,
+    right: 4,
+    zIndex: 10,
+    elevation: 3,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#DC2626',
+    borderRadius: shape.full,
+    paddingHorizontal: 5,
+    paddingVertical: 1.5,
+    gap: 3,
+  },
+  tabLiveDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#FFFFFF',
+  },
+  tabLiveText: {
+    color: '#FFFFFF',
+    fontSize: 7.5,
+    fontWeight: '900',
+    lineHeight: 9,
+    includeFontPadding: false,
+    letterSpacing: 0.4,
   },
   tabButtonLabel: {
     fontSize: 10.5,

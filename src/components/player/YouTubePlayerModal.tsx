@@ -716,6 +716,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 2,
+    gap: 8,
   },
   badgePill: {
     flexDirection: 'row',
@@ -725,6 +726,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: shape.extraSmall,
+    flexShrink: 1,
   },
   badgePillText: {
     fontSize: 10,
@@ -735,6 +737,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     color: '#059669',
+    flexShrink: 0,
   },
   coursePromoTitle: {
     fontSize: 15,

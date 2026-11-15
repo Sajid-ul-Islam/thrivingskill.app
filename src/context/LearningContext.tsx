@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Env } from '../config/env';
 import { Course, UserProgress, Certificate, Note, CategoryId, Workshop, Category, WpPost, Review } from '../types';
+import { WORKSHOPS } from '../data/mockData';
 import { useAuth } from './AuthContext';
 import { Endpoints } from '../services/api/endpoints';
 import { SyncQueueManager } from '../services/offline/syncQueue';
@@ -33,6 +34,7 @@ interface LearningContextType {
   courses: Course[];
   categories: Category[];
   workshops: Workshop[];
+  hasActiveLiveWorkshop: boolean;
   blogPosts: WpPost[];
   isLoadingCourses: boolean;
   coursesError: string | null;
@@ -112,7 +114,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       slug: 'all',
     },
   ]);
-  const [workshops, setWorkshops] = useState<Workshop[]>([]);
+  const [workshops, setWorkshops] = useState<Workshop[]>(WORKSHOPS);
   const [blogPosts, setBlogPosts] = useState<WpPost[]>([]);
   const [isLoadingCourses, setIsLoadingCourses] = useState<boolean>(true);
   const [coursesError, setCoursesError] = useState<string | null>(null);
@@ -194,6 +196,8 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
       if (wpWorkshops.status === 'fulfilled' && wpWorkshops.value.length > 0) {
         setWorkshops(wpWorkshops.value);
+      } else {
+        setWorkshops(WORKSHOPS);
       }
       if (wpPosts.status === 'fulfilled' && wpPosts.value.length > 0) {
         setBlogPosts(wpPosts.value);
@@ -686,12 +690,15 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return { courses: recommended, rationale, rationaleBn };
   };
 
+  const hasActiveLiveWorkshop = workshops.some((w) => !!w.isLive);
+
   return (
     <LearningContext.Provider
       value={{
         courses,
         categories,
         workshops,
+        hasActiveLiveWorkshop,
         blogPosts,
         isLoadingCourses,
         coursesError,

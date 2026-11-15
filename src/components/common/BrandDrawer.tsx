@@ -35,6 +35,7 @@ interface BrandDrawerProps {
   onOpenAssessment?: () => void;
   onOpenSubscription?: () => void;
   onOpenUpdate?: () => void;
+  onOpenSupport?: () => void;
 }
 
 export const BrandDrawer: React.FC<BrandDrawerProps> = ({
@@ -45,6 +46,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
   onOpenAssessment,
   onOpenSubscription,
   onOpenUpdate,
+  onOpenSupport,
 }) => {
   const { width: windowWidth } = useWindowDimensions();
   const drawerWidth = Math.min(windowWidth * 0.82, 340);
@@ -512,6 +514,35 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               </View>
               <Text style={{ fontSize: 11, fontWeight: '700', color: '#25D366' }}>Active</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={() => Linking.openURL('https://m.me/thrivingskills')}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Ionicons name="logo-facebook" size={18} color="#0084FF" />
+                <Text style={[styles.actionLabel, { color: colors.text }]}>Facebook Messenger</Text>
+              </View>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: '#0084FF' }}>@thrivingskills</Text>
+            </TouchableOpacity>
+
+            {onOpenSupport && (
+              <TouchableOpacity
+                style={styles.actionRow}
+                onPress={() => {
+                  onClose();
+                  onOpenSupport();
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <Ionicons name="headset" size={18} color={colors.primary} />
+                  <Text style={[styles.actionLabel, { color: colors.text }]}>
+                    {isBangla ? 'সিআরএম সাপোর্ট ডেস্ক' : 'Official CRM Helpdesk'}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+              </TouchableOpacity>
+            )}
 
             {/* Section 6: User Authentication & Logout */}
             <View style={[styles.divider, { backgroundColor: colors.border }]} />

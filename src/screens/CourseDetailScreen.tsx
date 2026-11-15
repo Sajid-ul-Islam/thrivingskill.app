@@ -888,13 +888,14 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
           <View style={[styles.certModalCard, { backgroundColor: isDark ? '#1C1D22' : '#FFFDF9' }]}>
             {/* Modal Header */}
             <View style={styles.certModalHeader}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Ionicons name="shield-checkmark" size={18} color="#D97706" />
-                <Text style={[styles.certModalTitle, { color: colors.text }]}>Official Certificate Preview</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 0, marginRight: 8 }}>
+                <Ionicons name="shield-checkmark" size={18} color="#D97706" style={{ flexShrink: 0 }} />
+                <Text style={[styles.certModalTitle, { color: colors.text, flex: 1 }]} numberOfLines={1}>Official Certificate Preview</Text>
               </View>
               <TouchableOpacity
                 onPress={() => setCertPreviewVisible(false)}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={{ flexShrink: 0 }}
               >
                 <Ionicons name="close" size={20} color={colors.textMuted} />
               </TouchableOpacity>
@@ -1020,15 +1021,16 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
         <View style={styles.reviewModalOverlay}>
           <View style={[styles.reviewModalCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
             <View style={styles.reviewModalHeader}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Ionicons name="star" size={20} color="#F59E0B" />
-                <Text style={[styles.reviewModalTitle, { color: colors.text }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0, marginRight: 8 }}>
+                <Ionicons name="star" size={20} color="#F59E0B" style={{ flexShrink: 0 }} />
+                <Text style={[styles.reviewModalTitle, { color: colors.text, flex: 1 }]} numberOfLines={1}>
                   {isBangla ? 'কোর্স রেটিং ও রিভিউ' : 'Rate & Review Course'}
                 </Text>
               </View>
               <TouchableOpacity
                 onPress={() => setWriteReviewModalVisible(false)}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={{ flexShrink: 0 }}
               >
                 <Ionicons name="close" size={20} color={colors.textMuted} />
               </TouchableOpacity>
@@ -1227,11 +1229,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 2,
+    gap: 8,
   },
   trailerBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    flexShrink: 1,
+    minWidth: 0,
+    marginRight: 6,
   },
   trailerBadgeText: {
     fontSize: 9,
@@ -1242,6 +1248,7 @@ const styles = StyleSheet.create({
   trailerDuration: {
     fontSize: 10,
     fontWeight: '600',
+    flexShrink: 0,
   },
   trailerTitle: {
     fontSize: 13,
@@ -1628,6 +1635,7 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(150, 150, 150, 0.2)',
+    gap: 8,
   },
   certModalTitle: {
     fontSize: 15,
@@ -1834,6 +1842,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 12,
+    gap: 8,
   },
   reviewModalTitle: {
     fontSize: 17,

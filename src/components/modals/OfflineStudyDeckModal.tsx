@@ -396,6 +396,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+    gap: 8,
   },
   downloadBadge: {
     flexDirection: 'row',
@@ -404,6 +405,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
+    flexShrink: 0,
   },
   downloadBadgeText: {
     fontSize: 11,
@@ -411,6 +413,7 @@ const styles = StyleSheet.create({
   },
   durationText: {
     fontSize: 12,
+    flexShrink: 0,
   },
   readerTitle: {
     fontSize: 20,

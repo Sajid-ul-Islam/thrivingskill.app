@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
@@ -19,6 +19,7 @@ interface WorkshopsScreenProps {
   onOpenSubscription?: () => void;
   onOpenNotifications?: () => void;
   onOpenDrawer?: () => void;
+  onOpenSupport?: () => void;
 }
 
 type TabType = 'all' | 'summits' | 'live-classes';
@@ -27,8 +28,9 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
   onOpenSubscription,
   onOpenNotifications,
   onOpenDrawer,
+  onOpenSupport,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
   const { showToast } = useFeedback();
   const insets = useSafeAreaInsets();
@@ -78,6 +80,7 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
       : summits;
 
   const hasVisibleEvents = displayedWorkshops.length > 0;
+  const liveWorkshopNow = workshops.find((w) => !!w.isLive);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -87,6 +90,7 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
         onOpenSubscription={onOpenSubscription}
         onOpenNotifications={onOpenNotifications}
         onOpenDrawer={onOpenDrawer}
+        onOpenSupport={onOpenSupport}
       />
 
       <ScrollView
@@ -100,6 +104,81 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
         }
         contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}
       >
+        {/* Real-Time Live Broadcast Hero Card */}
+        {liveWorkshopNow && (
+          <View
+            style={[
+              styles.liveHeroCard,
+              { backgroundColor: isDark ? '#1F1315' : '#FEF2F2', borderColor: '#DC2626' },
+            ]}
+          >
+            <View style={styles.liveHeroHeader}>
+              <View style={styles.liveBadgeRow}>
+                <View style={styles.livePulseDot} />
+                <Text style={styles.liveBadgeText}>
+                  {isBangla ? 'এখন সরাসরি সম্প্রচার চলছে' : '🔴 STREAMING LIVE NOW'}
+                </Text>
+              </View>
+              {liveWorkshopNow.liveViewerCount && (
+                <View style={styles.liveViewersTag}>
+                  <Ionicons name="eye" size={12} color="#DC2626" />
+                  <Text style={styles.liveViewersText}>
+                    {liveWorkshopNow.liveViewerCount} {isBangla ? 'জন লাইভে' : 'Watching'}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            <Text style={[styles.liveHeroTitle, { color: colors.text }]} numberOfLines={2}>
+              {liveWorkshopNow.title}
+            </Text>
+
+            <Text style={[styles.liveHeroSubtitle, { color: colors.textMuted }]} numberOfLines={2}>
+              {liveWorkshopNow.description}
+            </Text>
+
+            <View style={styles.liveHeroMetaRow}>
+              <View style={styles.liveMetaItem}>
+                <Ionicons name="person-circle-outline" size={15} color={colors.primary} />
+                <Text style={[styles.liveMetaText, { color: colors.text }]}>
+                  {liveWorkshopNow.speaker.name}
+                </Text>
+              </View>
+              <View style={styles.liveMetaItem}>
+                <Ionicons name="time-outline" size={15} color={colors.primary} />
+                <Text style={[styles.liveMetaText, { color: colors.text }]}>
+                  {liveWorkshopNow.time}
+                </Text>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={styles.liveHeroEnterBtn}
+              onPress={async () => {
+                triggerHaptic('medium');
+                const url = liveWorkshopNow.joinUrl || 'https://thrivingskill.com/live-room';
+                try {
+                  showToast({
+                    message: isBangla ? 'লাইভ ক্লাসরুমে যুক্ত করা হচ্ছে...' : 'Entering live classroom...',
+                    type: 'info',
+                  });
+                  await Linking.openURL(url);
+                } catch {
+                  showToast({ message: 'Unable to open live link', type: 'error' });
+                }
+              }}
+              activeOpacity={0.88}
+              accessibilityRole="button"
+              accessibilityLabel={`Enter live classroom for ${liveWorkshopNow.title}`}
+            >
+              <Ionicons name="radio" size={17} color="#FFFFFF" />
+              <Text style={styles.liveHeroEnterBtnText}>
+                {isBangla ? 'সরাসরি লাইভ ক্লাসরুমে প্রবেশ করুন' : 'Enter Live Classroom'}
+              </Text>
+              <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        )}
         {/* Banner */}
         <View
           style={[
@@ -239,6 +318,107 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 16,
     paddingTop: 16,
+  },
+  liveHeroCard: {
+    padding: 16,
+    borderRadius: shape.large,
+    borderWidth: 1.5,
+    marginBottom: 16,
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  liveHeroHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    gap: 8,
+  },
+  liveBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#DC2626',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    gap: 6,
+  },
+  livePulseDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#FFFFFF',
+  },
+  liveBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.4,
+  },
+  liveViewersTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(220, 38, 38, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  liveViewersText: {
+    color: '#DC2626',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  liveHeroTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    lineHeight: 22,
+    marginBottom: 4,
+  },
+  liveHeroSubtitle: {
+    fontSize: 12.5,
+    lineHeight: 17,
+    marginBottom: 12,
+  },
+  liveHeroMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    marginBottom: 14,
+  },
+  liveMetaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  liveMetaText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  liveHeroEnterBtn: {
+    minHeight: MIN_TOUCH_TARGET,
+    backgroundColor: '#DC2626',
+    borderRadius: shape.medium,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 8,
+    elevation: 2,
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  liveHeroEnterBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13.5,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
   banner: {
     flexDirection: 'row',

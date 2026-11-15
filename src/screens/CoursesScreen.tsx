@@ -540,6 +540,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     marginVertical: 6,
+    gap: 8,
   },
   levelsScroll: {
     gap: 6,
@@ -558,6 +559,7 @@ const styles = StyleSheet.create({
   viewToggleGroup: {
     flexDirection: 'row',
     gap: 4,
+    flexShrink: 0,
   },
   viewToggleBtn: {
     width: MIN_TOUCH_TARGET,

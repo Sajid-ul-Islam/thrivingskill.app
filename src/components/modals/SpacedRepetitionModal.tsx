@@ -126,12 +126,12 @@ export const SpacedRepetitionModal: React.FC<SpacedRepetitionModalProps> = ({
         >
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Ionicons name="sparkles" size={18} color={colors.primary} style={{ marginRight: 6 }} />
-                <Text style={[styles.headerTitle, { color: colors.text }]}>Spaced Repetition Recall</Text>
+                <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>Spaced Repetition Recall</Text>
               </View>
-              <Text style={[styles.headerSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
+              <Text style={[styles.headerSubtitle, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
                 {course ? course.title : 'Active Recall & Memory Retention'}
               </Text>
             </View>
@@ -314,9 +314,11 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
+    gap: 8,
   },
   headerTitle: {
     fontSize: 17,
@@ -332,6 +334,7 @@ const styles = StyleSheet.create({
     borderRadius: MIN_TOUCH_TARGET / 2,
     justifyContent: 'center',
     alignItems: 'center',
+    flexShrink: 0,
   },
   centerContainer: {
     flex: 1,
@@ -413,11 +416,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 8,
   },
   sideBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,
+    flexShrink: 0,
   },
   sideBadgeText: {
     fontSize: 11,

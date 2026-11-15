@@ -120,6 +120,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 10,
+    gap: 8,
   },
   statusBadge: {
     flexDirection: 'row',
@@ -128,6 +129,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3.5,
     borderRadius: 10,
+    flexShrink: 0,
   },
   pulseDot: {
     width: 6,
@@ -142,6 +144,7 @@ const styles = StyleSheet.create({
   progressRatio: {
     fontSize: 11,
     fontWeight: '700',
+    flexShrink: 0,
   },
   mainRow: {
     flexDirection: 'row',
@@ -171,6 +174,7 @@ const styles = StyleSheet.create({
   },
   infoCol: {
     flex: 1,
+    minWidth: 0,
   },
   courseTitle: {
     fontSize: 14,

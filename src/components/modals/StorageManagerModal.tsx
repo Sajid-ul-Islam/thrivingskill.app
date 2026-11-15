@@ -218,9 +218,9 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({ visibl
         >
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.headerTitle, { color: colors.text }]}>Local Storage & Sync</Text>
-              <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>
+            <View style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
+              <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>Local Storage & Sync</Text>
+              <Text style={[styles.headerSubtitle, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
                 Offline mutation queue, local cache & data economy
               </Text>
             </View>
@@ -511,6 +511,7 @@ const styles = StyleSheet.create({
     borderRadius: MIN_TOUCH_TARGET / 2,
     justifyContent: 'center',
     alignItems: 'center',
+    flexShrink: 0,
   },
   scrollContent: {
     padding: 16,
@@ -544,16 +545,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginTop: 10,
+    gap: 8,
   },
   metricLeft: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
     marginRight: 8,
+    flexShrink: 0,
   },
   metricLabel: {
     fontSize: 13,
@@ -561,6 +567,7 @@ const styles = StyleSheet.create({
   metricValue: {
     fontSize: 13,
     fontWeight: '600',
+    flexShrink: 0,
   },
   totalRow: {
     flexDirection: 'row',
@@ -569,14 +576,19 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 10,
     borderTopWidth: 1,
+    gap: 8,
   },
   totalLabel: {
     fontSize: 14,
     fontWeight: '700',
+    flex: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   totalValue: {
     fontSize: 15,
     fontWeight: '800',
+    flexShrink: 0,
   },
   syncBadge: {
     paddingHorizontal: 8,
@@ -621,6 +633,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 12,
   },
   actionRow: {
     flexDirection: 'row',

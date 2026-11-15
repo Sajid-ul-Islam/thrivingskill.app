@@ -136,8 +136,8 @@ export const NotesModal: React.FC<NotesModalProps> = ({
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
             <View style={styles.headerLeft}>
-              <Ionicons name="document-text" size={20} color={colors.primary} />
-              <Text style={[styles.headerTitle, { color: colors.text }]}>Study Notes</Text>
+              <Ionicons name="document-text" size={20} color={colors.primary} style={{ flexShrink: 0 }} />
+              <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>Study Notes</Text>
             </View>
             <View style={styles.headerRight}>
               {lessonNotes.length > 0 && (
@@ -288,20 +288,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
+    gap: 12,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flex: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   headerTitle: {
     fontSize: 17,
     fontWeight: '700',
+    flex: 1,
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    flexShrink: 0,
   },
   exportBtn: {
     flexDirection: 'row',
@@ -394,6 +400,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+    gap: 8,
   },
   timeTag: {
     flexDirection: 'row',
@@ -403,12 +410,14 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 6,
     gap: 4,
+    flexShrink: 0,
   },
   deleteNoteBtn: {
     minWidth: MIN_TOUCH_TARGET,
     minHeight: MIN_TOUCH_TARGET,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   timeText: {
     fontSize: 11,

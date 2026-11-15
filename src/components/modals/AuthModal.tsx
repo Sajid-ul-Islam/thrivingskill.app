@@ -523,7 +523,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               {(mode === 'register' || mode === 'set_password') && (
                 <View style={styles.regStepBar}>
                   <View style={styles.regStepMeta}>
-                    <Text style={[styles.regStepLabel, { color: colors.primary }]}>
+                    <Text style={[styles.regStepLabel, { color: colors.primary }]} numberOfLines={1} ellipsizeMode="tail">
                       Step {regStep} of 2: {regStep === 1 ? 'Official Registration' : 'Set Password'}
                     </Text>
                     <Text style={[styles.regStepHint, { color: colors.textMuted }]}>
@@ -1514,16 +1514,22 @@ const styles = StyleSheet.create({
   },
   regStepMeta: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 6,
+    gap: 8,
   },
   regStepLabel: {
     fontSize: 12,
     fontWeight: '700',
+    flex: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   regStepHint: {
     fontSize: 12,
     fontWeight: '600',
+    flexShrink: 0,
   },
   regStepTrack: {
     height: 5,

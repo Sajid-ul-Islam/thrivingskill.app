@@ -578,6 +578,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderBottomWidth: 1,
+    gap: 12,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -585,12 +586,14 @@ const styles = StyleSheet.create({
     gap: 10,
     flex: 1,
     minWidth: 0,
+    marginRight: 8,
   },
   closeBtn: {
     minWidth: MIN_TOUCH_TARGET,
     minHeight: MIN_TOUCH_TARGET,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   stepperContainer: {
     paddingHorizontal: 20,

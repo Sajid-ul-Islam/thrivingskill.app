@@ -346,6 +346,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 8,
   },
   badge: {
     flexDirection: 'row',
@@ -372,6 +373,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 10,
+    flexShrink: 0,
   },
   verifiedChipText: {
     color: '#E5E7EB',

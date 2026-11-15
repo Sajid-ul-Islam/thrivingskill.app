@@ -69,7 +69,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
           >
             {/* Current Account Sync Status Banner */}
             <View style={[styles.statusBanner, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
-              <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
                 <Text style={[styles.statusLabel, { color: colors.textMuted }]}>
                   {isBangla ? 'বর্তমান অ্যাকাউন্ট স্ট্যাটাস' : 'ACTIVE ACCOUNT STATUS'}
                 </Text>
@@ -300,9 +300,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
+    gap: 10,
   },
   headerTitleCol: {
     flex: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   titleRow: {
     flexDirection: 'row',
@@ -322,6 +325,7 @@ const styles = StyleSheet.create({
     minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   scrollContent: {
     padding: 16,
@@ -359,6 +363,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: shape.medium,
+    flexShrink: 0,
   },
   syncSignInText: {
     fontSize: 12,

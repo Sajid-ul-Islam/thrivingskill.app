@@ -86,8 +86,8 @@ export const QuizModal: React.FC<QuizModalProps> = ({ visible, questions, onClos
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
             <View style={styles.headerLeft}>
-              <Ionicons name="help-circle" size={22} color={colors.secondary} />
-              <Text style={[styles.headerTitle, { color: colors.text }]}>Knowledge Check</Text>
+              <Ionicons name="help-circle" size={22} color={colors.secondary} style={{ flexShrink: 0 }} />
+              <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>Knowledge Check</Text>
             </View>
             <TouchableOpacity
               onPress={() => {
@@ -346,20 +346,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
+    gap: 12,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flex: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   headerTitle: {
     ...typography.h4,
+    flex: 1,
   },
   closeBtn: {
     minWidth: MIN_TOUCH_TARGET,
     minHeight: MIN_TOUCH_TARGET,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   content: {
     padding: 20,
@@ -369,16 +375,21 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+    gap: 8,
   },
   progressText: {
     fontSize: 12,
     fontWeight: '600',
     textTransform: 'uppercase',
+    flex: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   scoreTag: {
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
+    flexShrink: 0,
   },
   scoreText: {
     fontSize: 12,

@@ -74,8 +74,8 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
             <View style={styles.headerTitleRow}>
-              <Ionicons name="notifications" size={20} color={colors.primary} />
-              <Text style={[styles.headerTitle, { color: colors.text }]}>Notifications</Text>
+              <Ionicons name="notifications" size={20} color={colors.primary} style={{ flexShrink: 0 }} />
+              <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>Notifications</Text>
             </View>
 
             <View style={styles.headerRight}>
@@ -227,19 +227,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderBottomWidth: 1,
+    gap: 10,
   },
   headerTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flex: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   headerTitle: {
     ...typography.h3,
+    flex: 1,
   },
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flexShrink: 0,
   },
   markAllBtn: {
     minHeight: MIN_TOUCH_TARGET,

@@ -180,6 +180,9 @@ export interface Workshop {
   seatsLeft: number;
   totalSeats: number;
   isLive?: boolean;
+  liveViewerCount?: number;
+  joinUrl?: string;
+  streamType?: 'zoom' | 'youtube' | 'meet' | 'teams';
   category: CategoryId;
   thumbnail: string;
   price: number;

@@ -18,6 +18,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { triggerHaptic } from '../../utils/haptics';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
+import { openWhatsAppChat, openFacebookMessenger, openCallHelpline, CRM_CHANNELS } from '../../config/crm';
 
 export interface HelpFaqModalProps {
   visible: boolean;
@@ -207,11 +208,11 @@ export const HelpFaqModal: React.FC<HelpFaqModalProps> = ({ visible, onClose }) 
             <View style={[styles.iconWrap, { backgroundColor: colors.primaryLight }]}>
               <Ionicons name="help-buoy" size={22} color={colors.primary} />
             </View>
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={[styles.headerTitle, { color: colors.text }]}>
+            <View style={{ flex: 1, marginLeft: 10, minWidth: 0, marginRight: 8 }}>
+              <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
                 {isBangla ? 'হেল্প ও এফএকিউ সেন্টার' : 'Help & FAQ Center'}
               </Text>
-              <Text style={[styles.headerSub, { color: colors.textMuted }]}>
+              <Text style={[styles.headerSub, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
                 {isBangla ? 'আপনার সকল প্রশ্নের দ্রুত সমাধান' : 'Frequently Asked Questions & Support'}
               </Text>
             </View>
@@ -358,18 +359,32 @@ export const HelpFaqModal: React.FC<HelpFaqModalProps> = ({ visible, onClose }) 
             <View style={styles.contactRow}>
               <TouchableOpacity
                 style={[styles.contactBtn, { backgroundColor: '#25D366' }]}
-                onPress={() => Linking.openURL('https://wa.me/8801312100288')}
+                onPress={() => openWhatsAppChat('general', isBangla)}
+                accessibilityRole="button"
+                accessibilityLabel="Chat on WhatsApp with Thriving Skills"
               >
                 <Ionicons name="logo-whatsapp" size={16} color="#FFFFFF" />
-                <Text style={styles.contactBtnText}>WhatsApp Chat</Text>
+                <Text style={styles.contactBtnText}>WhatsApp</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.contactBtn, { backgroundColor: '#0084FF' }]}
+                onPress={openFacebookMessenger}
+                accessibilityRole="button"
+                accessibilityLabel="Chat on Facebook Messenger"
+              >
+                <Ionicons name="logo-facebook" size={16} color="#FFFFFF" />
+                <Text style={styles.contactBtnText}>Messenger</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.contactBtn, { backgroundColor: colors.primary }]}
-                onPress={() => Linking.openURL('tel:01312100288')}
+                onPress={openCallHelpline}
+                accessibilityRole="button"
+                accessibilityLabel={`Call helpline at ${CRM_CHANNELS.phoneDisplay}`}
               >
                 <Ionicons name="call" size={16} color={colors.onPrimary} />
-                <Text style={[styles.contactBtnText, { color: colors.onPrimary }]}>01312100288</Text>
+                <Text style={[styles.contactBtnText, { color: colors.onPrimary }]}>{CRM_CHANNELS.phoneDisplay}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -399,6 +414,7 @@ const styles = StyleSheet.create({
     borderRadius: shape.medium,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   headerTitle: {
     ...typography.h4,
@@ -413,6 +429,7 @@ const styles = StyleSheet.create({
     borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   searchBar: {
     flexDirection: 'row',

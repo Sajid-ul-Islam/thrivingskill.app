@@ -43,6 +43,7 @@ interface HomeScreenProps {
   onOpenYouTube?: () => void;
   onOpenSearch?: () => void;
   onOpenDrawer?: () => void;
+  onOpenSupport?: () => void;
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
@@ -56,6 +57,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onOpenYouTube,
   onOpenSearch,
   onOpenDrawer,
+  onOpenSupport,
 }) => {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
@@ -219,6 +221,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         onOpenYouTube={onOpenYouTube}
         onOpenSearch={onOpenSearch}
         onOpenDrawer={onOpenDrawer}
+        onOpenSupport={onOpenSupport}
         onOpenOfflineContent={() => onNavigateTab('MyLearning')}
       />
 
@@ -448,9 +451,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {(activeCourse || lastWatchedVideo) && (
           <View style={[styles.section, { marginTop: 6, marginBottom: 4 }]}>
             <View style={styles.sectionHeader}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 0, marginRight: 8 }}>
                 <Ionicons name="play-circle" size={18} color={colors.primary} />
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                <Text style={[styles.sectionTitle, { color: colors.text }]} numberOfLines={1}>
                   {isBangla ? 'চালিয়ে যান' : 'Continue Learning'}
                 </Text>
               </View>
@@ -888,6 +891,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 2,
     elevation: 1,
+    flexShrink: 0,
   },
   momentumItem: {
     flexDirection: 'row',
@@ -956,6 +960,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 12,
+    gap: 8,
   },
   sectionTitle: {
     fontSize: 17,
@@ -970,6 +975,7 @@ const styles = StyleSheet.create({
     minWidth: MIN_TOUCH_TARGET,
     justifyContent: 'center',
     alignItems: 'flex-end',
+    flexShrink: 0,
   },
   seeAllText: {
     fontSize: 12,

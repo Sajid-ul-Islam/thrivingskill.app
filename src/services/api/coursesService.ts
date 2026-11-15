@@ -197,6 +197,7 @@ export class CoursesService {
           price: course.price,
           priceBdt: course.priceBdt,
           isProFree: true,
+          joinUrl: `https://thrivingskill.com/courses/${course.id}`,
         };
       });
 

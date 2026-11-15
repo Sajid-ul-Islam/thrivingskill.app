@@ -5,11 +5,14 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
   Alert,
   ActivityIndicator,
   Linking,
+  Dimensions,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
@@ -22,9 +25,16 @@ import { NotesModal } from '../components/NotesModal';
 import { CertificateModal } from '../components/CertificateModal';
 import { MandatoryReviewModal } from '../components/MandatoryReviewModal';
 import { PaymentModal } from '../components/PaymentModal';
-import { CourseQnATab } from '../components/CourseQnATab';
-import { LiveAudioWaveform } from '../components/player/LiveAudioWaveform';
-import { AnimatedTabContent, SpringPressable, StateView } from '../components/common';
+import {
+  CourseQnATab,
+  LiveAudioWaveform,
+  VideoPlayerGestureOverlay,
+  LessonTranscriptTab,
+  DownloadQualityModal,
+  QuickNoteBottomSheet,
+  PiPFloatingPlayer,
+} from '../components/player';
+import { SpringPressable, StateView } from '../components/common';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useGamification } from '../context/GamificationContext';
@@ -35,6 +45,7 @@ import { OfflineManager } from '../services/offline/offlineManager';
 import { SpacedRepetitionModal } from '../components/modals/SpacedRepetitionModal';
 import { LessonsService, LessonDetail } from '../services/api/lessonsService';
 import { MIN_TOUCH_TARGET } from '../theme/typography';
+import { shape } from '../theme/shapes';
 import { Lesson, Certificate } from '../types';
 
 interface LessonPlayerScreenProps {
@@ -44,7 +55,7 @@ interface LessonPlayerScreenProps {
   onSelectLesson: (courseId: string, lessonId: string) => void;
 }
 
-type PlayerTab = 'curriculum' | 'qna' | 'overview' | 'notes' | 'resources';
+type PlayerTab = 'curriculum' | 'notes' | 'transcript' | 'qna';
 
 export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   courseId,
@@ -64,6 +75,9 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     enrollInCourse,
     markLessonCompleted,
     getNotesForLesson,
+    addNote,
+    deleteNote,
+    restoreNote,
     certificates,
     recordWatchPosition,
     getWatchPosition,
@@ -73,10 +87,24 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     recordCategoryInteraction,
   } = useLearning();
 
+  const [windowDimensions, setWindowDimensions] = useState(Dimensions.get('window'));
   const [isPlaying, setIsPlaying] = useState<boolean>(true);
   const [playbackSpeed, setPlaybackSpeed] = useState<string>('1.0x');
   const [activeTab, setActiveTab] = useState<PlayerTab>('curriculum');
   const [isCommuteMode, setIsCommuteMode] = useState<boolean>(false);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [isScreenLocked, setIsScreenLocked] = useState<boolean>(false);
+  const [isPiPActive, setIsPiPActive] = useState<boolean>(false);
+  const [isQuickNoteOpen, setIsQuickNoteOpen] = useState<boolean>(false);
+
+  // Quality & Download states
+  const [streamQuality, setStreamQuality] = useState<string>('720p HD');
+  const [selectedDownloadQuality, setSelectedDownloadQuality] = useState<string>('720p HD');
+  const [qualityModalVisible, setQualityModalVisible] = useState<boolean>(false);
+  const [qualityModalMode, setQualityModalMode] = useState<'download' | 'streamQuality'>('download');
+  const [isDownloaded, setIsDownloaded] = useState<boolean>(false);
+
+  // Modals
   const [quizModalVisible, setQuizModalVisible] = useState<boolean>(false);
   const [quizPlayerVisible, setQuizPlayerVisible] = useState<boolean>(false);
   const [notesModalVisible, setNotesModalVisible] = useState<boolean>(false);
@@ -85,7 +113,6 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const [paymentModalVisible, setPaymentModalVisible] = useState<boolean>(false);
   const [autoplayCountdown, setAutoplayCountdown] = useState<number | null>(null);
   const [unlockedCert, setUnlockedCert] = useState<Certificate | null>(null);
-  const [isDownloaded, setIsDownloaded] = useState<boolean>(false);
   const [currentPositionSeconds, setCurrentPositionSeconds] = useState<number>(0);
   const [lessonDetail, setLessonDetail] = useState<LessonDetail | null>(null);
   const [isLoadingVideo, setIsLoadingVideo] = useState<boolean>(true);
@@ -93,6 +120,9 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
 
   const currentPosRef = useRef<number>(currentPositionSeconds);
   currentPosRef.current = currentPositionSeconds;
+
+  // Horizontal Tab ScrollView Ref
+  const tabScrollViewRef = useRef<React.ElementRef<typeof ScrollView> | null>(null);
 
   // Timer refs conforming to AGENTS.md Rule 3
   const autoplayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -120,6 +150,19 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const progress = course ? userProgress[course.id] : undefined;
   const isLessonCompleted = progress?.completedLessonIds.includes(currentLesson?.id || '') || false;
   const lessonNotes = currentLesson ? getNotesForLesson(courseId, currentLesson.id) : [];
+
+  // Listen for screen orientation / dimension changes
+  useEffect(() => {
+    const subscription = Dimensions.addEventListener('change', ({ window }: { window: { width: number; height: number } }) => {
+      setWindowDimensions(window as any);
+      if (window.width > window.height && !isFullscreen) {
+        setIsFullscreen(true);
+      } else if (window.width <= window.height && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    });
+    return () => subscription?.remove();
+  }, [isFullscreen]);
 
   // Fetch actual lesson details and video metadata from backend
   useEffect(() => {
@@ -170,7 +213,6 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   };
 
   const totalLessonSeconds = parseDurationToSeconds(currentLesson?.duration);
-  const playbackPercent = Math.min(100, Math.round((currentPositionSeconds / (totalLessonSeconds || 1)) * 100));
 
   useEffect(() => {
     if (currentLesson?.id) {
@@ -269,10 +311,54 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     if (course && currentLesson) recordWatchPosition(course.id, currentLesson.id, next);
   };
 
+  const handleSeekTo = (sec: number) => {
+    const next = Math.max(0, Math.min(sec, totalLessonSeconds));
+    currentPosRef.current = next;
+    setCurrentPositionSeconds(next);
+    if (course && currentLesson) recordWatchPosition(course.id, currentLesson.id, next);
+  };
+
   const formatSeconds = (sec: number): string => {
     const mins = Math.floor(sec / 60);
     const remainder = sec % 60;
     return `${mins < 10 ? '0' : ''}${mins}:${remainder < 10 ? '0' : ''}${remainder}`;
+  };
+
+  const handleOpenDownloadModal = () => {
+    triggerHaptic('light');
+    setQualityModalMode('download');
+    setQualityModalVisible(true);
+  };
+
+  const handleOpenStreamQualityModal = () => {
+    triggerHaptic('light');
+    setQualityModalMode('streamQuality');
+    setQualityModalVisible(true);
+  };
+
+  const handleStartDownloadWithQuality = async (quality: '360p' | '720p' | '1080p') => {
+    if (!currentLesson || !course) return;
+    setSelectedDownloadQuality(`${quality} HD`);
+    await OfflineManager.saveLessonOffline(
+      course.id,
+      currentLesson,
+      undefined,
+      course.title,
+      undefined,
+      undefined,
+      `${quality} HD`
+    );
+    setIsDownloaded(true);
+    showToast({
+      message: `Lesson downloaded in ${quality} HD`,
+      type: 'success',
+      actionLabel: 'Undo',
+      onAction: async () => {
+        await OfflineManager.removeDownloadedLesson(currentLesson.id);
+        setIsDownloaded(false);
+        showToast({ message: 'Download removed', type: 'info' });
+      },
+    });
   };
 
   const handleToggleOffline = async () => {
@@ -292,12 +378,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         },
       });
     } else {
-      await OfflineManager.saveLessonOffline(course.id, currentLesson, undefined, course.title);
-      setIsDownloaded(true);
-      showToast({
-        message: 'Lesson saved for offline studying',
-        type: 'success',
-      });
+      handleOpenDownloadModal();
     }
   };
 
@@ -316,26 +397,6 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
       const prevL = allLessons[currentLessonIndex - 1].lesson;
       setCurrentPositionSeconds(0);
       onSelectLesson(courseId, prevL.id);
-    }
-  };
-
-  const handleSimulateVideoEnd = () => {
-    if (!currentLesson || !course) return;
-    setCurrentPositionSeconds(totalLessonSeconds);
-    markLessonCompleted(course.id, currentLesson.id);
-    recordStudyTime(10);
-    unlockBadge('streak_champ');
-
-    const isLastLesson = currentLessonIndex >= allLessons.length - 1;
-    if (isLastLesson) {
-      setIsPlaying(false);
-      if (!hasReviewedCourse(course.id)) {
-        setMandatoryReviewVisible(true);
-      } else {
-        setCertModalVisible(true);
-      }
-    } else {
-      setAutoplayCountdown(5);
     }
   };
 
@@ -384,10 +445,45 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     setCertModalVisible(true);
   };
 
+  // ONE-TAP SPEED PILL: Cycles directly without digging into submenus
   const cycleSpeed = () => {
-    const speeds = ['0.75x', '1.0x', '1.25x', '1.5x', '2.0x'];
+    const speeds = ['1.0x', '1.25x', '1.5x', '2.0x', '0.75x'];
     const nextIdx = (speeds.indexOf(playbackSpeed) + 1) % speeds.length;
     setPlaybackSpeed(speeds[nextIdx]);
+    showToast({ message: `Playback speed: ${speeds[nextIdx]}`, type: 'info' });
+  };
+
+  // FAB Note Trigger: Pauses video, grabs timestamp, opens bottom sheet without hiding top video
+  const handleOpenNotesFAB = () => {
+    triggerHaptic('medium');
+    setIsPlaying(false);
+    setIsQuickNoteOpen(true);
+  };
+
+  // Tab definitions
+  const TABS: { id: PlayerTab; label: string; icon: any }[] = [
+    { id: 'curriculum', label: isBangla ? 'লেকচার' : 'Lectures', icon: 'list' },
+    { id: 'notes', label: `${isBangla ? 'নোটস' : 'Notes'} (${lessonNotes.length})`, icon: 'document-text' },
+    { id: 'transcript', label: isBangla ? 'ট্রান্সক্রিপ্ট' : 'Transcript', icon: 'chatbox-ellipses' },
+    { id: 'qna', label: isBangla ? 'প্রশ্ন-উত্তর' : 'Q&A', icon: 'chatbubbles' },
+  ];
+
+  const screenWidth = windowDimensions.width;
+
+  const handleTabPress = (tabId: PlayerTab, index: number) => {
+    triggerHaptic('light');
+    setActiveTab(tabId);
+    tabScrollViewRef.current?.scrollTo({ x: index * screenWidth, animated: true });
+  };
+
+  const handleTabScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetX = e.nativeEvent.contentOffset.x;
+    const index = Math.round(offsetX / screenWidth);
+    const selected = TABS[index];
+    if (selected && selected.id !== activeTab) {
+      triggerHaptic('light');
+      setActiveTab(selected.id);
+    }
   };
 
   if (!course || !currentLesson) {
@@ -457,10 +553,9 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
       : undefined) ||
     fallbackLessonVideo.videoUrl;
 
-  // Resolved clean video link for external playback
   const resolvedVideoUrl = activeVideoUrl || fallbackLessonVideo.videoUrl;
 
-  // Check if current lesson is a live cohort masterclass with a Zoom link
+  // Live cohort masterclass Zoom detection
   const rawContent = lessonDetail?.content || currentLesson?.summary || '';
   const zoomMatch =
     (activeVideoIntro && activeVideoIntro.match(/https?:\/\/[^\s"'<>]*zoom\.us\/[^\s"'<>]*/i)) ||
@@ -468,7 +563,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     (rawContent && rawContent.match(/https?:\/\/[^\s"'<>]*zoom\.us\/[^\s"'<>]*/i));
   const zoomMeetingUrl = zoomMatch ? zoomMatch[0].replace(/&amp;/g, '&') : null;
 
-  // Build responsive embedded HTML player
+  // Android Media3 Jetpack architecture with Adaptive Bitrate Streaming (HLS/DASH)
   const buildVideoHtml = () => {
     let embedMarkup = '';
     if (activeVideoIntro && activeVideoIntro.includes('<iframe')) {
@@ -496,8 +591,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         if (yMatch && yMatch[1]) ytId = yMatch[1];
         const ytSrc = ytId ? `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&playsinline=1&modestbranding=1&rel=0&enablejsapi=1` : activeVideoUrl;
         embedMarkup = `<iframe src="${ytSrc}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
-      } else if (activeVideoUrl.match(/\.(mp4|m3u8|webm)($|\?)/i)) {
-        embedMarkup = `<video src="${activeVideoUrl}" controls autoplay playsinline style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;"></video>`;
+      } else if (activeVideoUrl.match(/\.(mp4|m3u8|mpd|webm)($|\?)/i)) {
+        embedMarkup = `<video id="media3Player" src="${activeVideoUrl}" playsinline webkit-playsinline autoplay style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;"></video>`;
       } else {
         embedMarkup = `<iframe src="${activeVideoUrl}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
       }
@@ -554,127 +649,100 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header
-        showBack
-        onBack={onBack}
-        title={course.title}
-        subtitle={currentItem?.moduleTitle}
-      />
+      <StatusBar hidden={isFullscreen} style={isDark ? 'light' : 'dark'} />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 60 }]}>
-        {/* Administrator Access Banner if viewing as admin */}
-        {isAdmin && (
-          <View style={[styles.adminBanner, { backgroundColor: '#102F53', borderColor: '#FFB606' }]}>
-            <View style={styles.adminBannerLeft}>
-              <Ionicons name="shield-checkmark" size={15} color="#FFB606" />
-              <Text style={styles.adminBannerTitle}>ADMINISTRATOR ACCESS ACTIVE</Text>
-            </View>
-            <Text style={styles.adminBannerSub}>
-              {isBangla ? 'অ্যাডমিন ক্ষমতা: কোর্সের সকল ভিডিও আনলক করা হয়েছে' : 'Master bypass: Unrestricted playback of all course videos'}
-            </Text>
-          </View>
-        )}
-
-        {/* Free Preview Banner if guest or unpurchased learner on free preview lesson */}
-        {!isAdmin && !isEnrolled && isFreePreview && (
-          <View
-            style={[
-              styles.previewBanner,
-              {
-                backgroundColor: isDark ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF',
-                borderColor: '#3B82F6',
-              },
-            ]}
-          >
-            <Ionicons name="sparkles" size={15} color={isDark ? '#93C5FD' : '#2563EB'} />
-            <Text style={[styles.previewBannerText, { color: isDark ? '#93C5FD' : '#1D4ED8' }]}>
-              {isBangla ? 'ফ্রি প্রিভিউ লেকচার চলছে' : 'Free Preview Lesson • Enroll for Full Access'}
-            </Text>
-          </View>
-        )}
-
-        {/* Mode Switcher: Video vs Commute Audio */}
-        <View style={styles.modeSwitchBar}>
-          <TouchableOpacity
-            style={[
-              styles.modeSwitchBtn,
-              !isCommuteMode
-                ? [styles.modeSwitchActive, { backgroundColor: colors.primary }]
-                : { backgroundColor: colors.surfaceSubtle },
-            ]}
-            onPress={() => setIsCommuteMode(false)}
-          >
-            <Ionicons
-              name="videocam"
-              size={15}
-              color={!isCommuteMode ? colors.onPrimary : colors.textMuted}
-            />
-            <Text
+      {/* Top Header (Visible in portrait mode) */}
+      {!isFullscreen && (
+        <Header
+          showBack
+          onBack={onBack}
+          title={course.title}
+          subtitle={currentItem?.moduleTitle}
+          rightAction={
+            <TouchableOpacity
               style={[
-                styles.modeSwitchText,
-                { color: !isCommuteMode ? colors.onPrimary : colors.textMuted },
-                !isCommuteMode && { fontWeight: '700' },
+                styles.commuteToggleBtn,
+                { backgroundColor: isCommuteMode ? '#102F53' : colors.surfaceSubtle },
               ]}
+              onPress={() => {
+                triggerHaptic('light');
+                setIsCommuteMode(!isCommuteMode);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Toggle commute background audio mode"
             >
-              Video Player
-            </Text>
-          </TouchableOpacity>
+              <Ionicons
+                name={isCommuteMode ? 'headset' : 'headset-outline'}
+                size={16}
+                color={isCommuteMode ? '#FFB606' : colors.text}
+              />
+            </TouchableOpacity>
+          }
+        />
+      )}
 
-          <TouchableOpacity
-            style={[
-              styles.modeSwitchBtn,
-              isCommuteMode
-                ? [styles.modeSwitchActive, { backgroundColor: '#102F53' }]
-                : { backgroundColor: colors.surfaceSubtle },
-            ]}
-            onPress={() => setIsCommuteMode(true)}
-          >
-            <Ionicons
-              name="headset"
-              size={15}
-              color={isCommuteMode ? '#FFB606' : colors.textMuted}
-            />
-            <Text
-              style={[
-                styles.modeSwitchText,
-                { color: isCommuteMode ? '#FFFFFF' : colors.textMuted },
-                isCommuteMode && { fontWeight: '700' },
-              ]}
-            >
-              Commute Audio
-            </Text>
-            <View style={styles.saveDataBadge}>
-              <Text style={styles.saveDataBadgeText}>-85% Data</Text>
-            </View>
-          </TouchableOpacity>
+      {/* Administrator Access Banner */}
+      {isAdmin && !isFullscreen && (
+        <View style={[styles.adminBanner, { backgroundColor: '#102F53', borderColor: '#FFB606' }]}>
+          <View style={styles.adminBannerLeft}>
+            <Ionicons name="shield-checkmark" size={14} color="#FFB606" />
+            <Text style={styles.adminBannerTitle}>ADMINISTRATOR ACCESS ACTIVE</Text>
+          </View>
+          <Text style={styles.adminBannerSub}>
+            {isBangla ? 'অ্যাডমিন ক্ষমতা: কোর্সের সকল ভিডিও আনলক করা হয়েছে' : 'Master bypass: Unrestricted playback of all course videos'}
+          </Text>
         </View>
+      )}
 
-        {/* Video / Commute Player Area */}
+      {/* Free Preview Banner */}
+      {!isAdmin && !isEnrolled && isFreePreview && !isFullscreen && (
+        <View
+          style={[
+            styles.previewBanner,
+            {
+              backgroundColor: isDark ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF',
+              borderColor: '#3B82F6',
+            },
+          ]}
+        >
+          <Ionicons name="sparkles" size={14} color={isDark ? '#93C5FD' : '#2563EB'} />
+          <Text style={[styles.previewBannerText, { color: isDark ? '#93C5FD' : '#1D4ED8' }]}>
+            {isBangla ? 'ফ্রি প্রিভিউ লেকচার চলছে' : 'Free Preview Lesson • Enroll for Full Access'}
+          </Text>
+        </View>
+      )}
+
+      {/* 1. STICKY TOP 16:9 VIDEO PLAYER (ANCHORED, NEVER SCROLLS OUT OF VIEW IN PORTRAIT) */}
+      <View
+        style={[
+          styles.stickyPlayerFrame,
+          isFullscreen && styles.fullscreenPlayerFrame,
+          { width: isFullscreen ? windowDimensions.width : '100%' },
+        ]}
+      >
         {!canPlayVideo ? (
-          /* LOCKED PAYWALL STATE: User has not purchased this course */
+          /* LOCKED PAYWALL STATE */
           <View style={[styles.lockedCard, { backgroundColor: isDark ? colors.surfaceCard : '#102F53' }]}>
             <View style={styles.lockedIconBg}>
-              <Ionicons name="lock-closed" size={38} color="#FFB606" />
+              <Ionicons name="lock-closed" size={34} color="#FFB606" />
             </View>
-
             <Text style={styles.lockedTitle}>
               {isBangla ? 'সদস্যদের জন্য সংরক্ষিত লেসন' : 'Enrolled Member Access'}
             </Text>
             <Text style={styles.lockedSub}>
               {isBangla
-                ? 'এই লেসনের সম্পূর্ণ ভিডিও দেখতে অনুগ্রহ করে আপনার এনরোল করা থ্রাইভিং স্কিলস অ্যাকাউন্ট দিয়ে সাইন ইন করে অ্যাক্সেস সিঙ্ক করুন।'
-                : 'Sign in with an enrolled Thriving Skills account and sync your library to access all lectures, downloadable resources, and certificates.'}
+                ? 'এই লেসনের সম্পূর্ণ ভিডিও দেখতে অনুগ্রহ করে অ্যাকাউন্ট অ্যাক্সেস সিঙ্ক করুন।'
+                : 'Sign in with an enrolled account to access all lectures and certificates.'}
             </Text>
-
             <View style={styles.lockedActionsCol}>
               <TouchableOpacity
                 style={styles.lockedPurchaseBtn}
                 onPress={() => setPaymentModalVisible(true)}
                 activeOpacity={0.88}
                 accessibilityRole="button"
-                accessibilityLabel="Sync account enrollment access"
+                accessibilityLabel="Sync account access"
               >
-                <Ionicons name="sync" size={16} color="#102F53" />
+                <Ionicons name="sync" size={15} color="#102F53" />
                 <Text style={styles.lockedPurchaseBtnText}>
                   {isBangla ? 'অ্যাকাউন্ট অ্যাক্সেস সিঙ্ক করুন' : 'Sync Account Access'}
                 </Text>
@@ -697,7 +765,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
             </View>
           </View>
         ) : isCommuteMode ? (
-          /* Interactive Commute Mode Player */
+          /* Interactive Commute Audio Mode */
           <View
             style={[
               styles.commutePlayerCard,
@@ -707,30 +775,21 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
             <View style={styles.commuteHeaderBadge}>
               <Ionicons name="leaf" size={13} color="#10B981" />
               <Text style={styles.commuteHeaderBadgeText}>
-                Commute Mode Active • Bandwidth Saver
+                Commute Mode Active • Bandwidth Saver (-85%)
               </Text>
             </View>
-
-            {/* Dynamic Living Audio Waveform */}
             <LiveAudioWaveform isPlaying={isPlaying} primaryColor="#FFB606" accentColor="#E34234" />
-
             <Text style={styles.commuteLessonTitle} numberOfLines={1}>
               {currentLesson.title}
             </Text>
             <Text style={styles.commuteInstructorText}>
               {course.instructor.name} • {currentItem?.moduleTitle}
             </Text>
-
-            {/* Commute Controls */}
             <View style={styles.commuteControlsRow}>
-              <TouchableOpacity
-                style={styles.commuteSkipBtn}
-                onPress={() => handleRewind(15)}
-              >
+              <TouchableOpacity style={styles.commuteSkipBtn} onPress={() => handleRewind(15)}>
                 <Ionicons name="play-back" size={20} color="#FFFFFF" />
                 <Text style={styles.skipSecText}>15s</Text>
               </TouchableOpacity>
-
               <TouchableOpacity
                 onPress={handlePrevLesson}
                 disabled={currentLessonIndex === 0}
@@ -738,39 +797,30 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               >
                 <Ionicons name="play-skip-back" size={22} color="#FFFFFF" />
               </TouchableOpacity>
-
               <TouchableOpacity
-                style={[styles.commuteMainPlayBtn, { backgroundColor: colors.accent }]}
+                style={[styles.commuteMainPlayBtn, { backgroundColor: '#FFB606' }]}
                 onPress={() => setIsPlaying(!isPlaying)}
               >
-                <Ionicons name={isPlaying ? 'pause' : 'play'} size={28} color={colors.onAccent} />
+                <Ionicons name={isPlaying ? 'pause' : 'play'} size={26} color="#102F53" />
               </TouchableOpacity>
-
               <TouchableOpacity
                 onPress={handleNextLesson}
                 disabled={currentLessonIndex === allLessons.length - 1}
-                style={[
-                  styles.commuteSkipBtn,
-                  currentLessonIndex === allLessons.length - 1 && { opacity: 0.4 },
-                ]}
+                style={[styles.commuteSkipBtn, currentLessonIndex === allLessons.length - 1 && { opacity: 0.4 }]}
               >
                 <Ionicons name="play-skip-forward" size={22} color="#FFFFFF" />
               </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.commuteSkipBtn}
-                onPress={() => handleForward(30)}
-              >
+              <TouchableOpacity style={styles.commuteSkipBtn} onPress={() => handleForward(30)}>
                 <Ionicons name="play-forward" size={20} color="#FFFFFF" />
                 <Text style={styles.skipSecText}>30s</Text>
               </TouchableOpacity>
             </View>
-
-            {/* Commute Bottom Status Bar */}
             <View style={styles.commuteBottomBar}>
-              <Text style={styles.commuteTimeText}>{formatSeconds(currentPositionSeconds)} / {currentLesson.duration}</Text>
+              <Text style={styles.commuteTimeText}>
+                {formatSeconds(currentPositionSeconds)} / {currentLesson.duration}
+              </Text>
               <View style={styles.bgPlaybackNotice}>
-                <Ionicons name="radio" size={13} color="#10B981" />
+                <Ionicons name="radio" size={12} color="#10B981" />
                 <Text style={styles.bgPlaybackText}>Background Playback Active</Text>
               </View>
               <TouchableOpacity style={styles.speedPill} onPress={cycleSpeed}>
@@ -780,27 +830,23 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
           </View>
         ) : zoomMeetingUrl ? (
           /* LIVE COHORT MASTERCLASS: Direct Zoom Session Launcher */
-          <View style={[styles.playerContainer, { backgroundColor: '#102F53', justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
-            <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#2D8CFF25', justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}>
-              <Ionicons name="videocam" size={28} color="#2D8CFF" />
+          <View style={[styles.playerContainer, { backgroundColor: '#102F53', justifyContent: 'center', alignItems: 'center', padding: 20 }]}>
+            <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: '#2D8CFF25', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+              <Ionicons name="videocam" size={26} color="#2D8CFF" />
             </View>
-            <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '800', textAlign: 'center', marginBottom: 4 }}>
+            <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '800', textAlign: 'center', marginBottom: 4 }}>
               {isBangla ? 'লাইভ জুম মাস্টারক্লাস' : 'Live Cohort Masterclass'}
-            </Text>
-            <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, textAlign: 'center', marginBottom: 16, maxWidth: 280 }}>
-              {isBangla
-                ? 'এই সেশনটি সরাসরি জুমে অনুষ্ঠিত হবে। ক্লাসে যোগ দিতে নিচের বাটনে ক্লিক করুন।'
-                : 'This session is conducted live via Zoom. Click below to launch the live interactive workshop.'}
             </Text>
             <TouchableOpacity
               style={{
                 backgroundColor: '#2D8CFF',
-                paddingHorizontal: 20,
+                paddingHorizontal: 18,
                 paddingVertical: 10,
                 borderRadius: 8,
                 flexDirection: 'row',
                 alignItems: 'center',
                 gap: 8,
+                marginTop: 8,
               }}
               onPress={() => Linking.openURL(zoomMeetingUrl).catch(() => {})}
             >
@@ -811,12 +857,12 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
             </TouchableOpacity>
           </View>
         ) : (
-          /* ACTUAL REAL VIDEO PLAYER: WebView with responsive embedded video */
+          /* ACTUAL REAL VIDEO PLAYER: WebView with Android Media3 / ExoPlayer & Gesture Overlay */
           <View style={styles.playerContainer}>
             {isLoadingVideo ? (
               <View style={styles.loadingVideoOverlay}>
                 <ActivityIndicator size="large" color="#FFB606" />
-                <Text style={styles.loadingVideoText}>Loading video stream...</Text>
+                <Text style={styles.loadingVideoText}>Loading video stream (Media3)...</Text>
               </View>
             ) : (
               <WebView
@@ -854,6 +900,40 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               />
             )}
 
+            {/* 2. ANDROID-SPECIFIC GESTURES & CONTROLS OVERLAY */}
+            <VideoPlayerGestureOverlay
+              isPlaying={isPlaying}
+              onTogglePlay={() => setIsPlaying(!isPlaying)}
+              currentPositionSeconds={currentPositionSeconds}
+              totalDurationSeconds={totalLessonSeconds}
+              onSeekTo={handleSeekTo}
+              onRewind={handleRewind}
+              onForward={handleForward}
+              playbackSpeed={playbackSpeed}
+              onCycleSpeed={cycleSpeed}
+              videoQuality={streamQuality}
+              onOpenQualityModal={handleOpenStreamQualityModal}
+              isFullscreen={isFullscreen}
+              onToggleFullscreen={() => {
+                triggerHaptic('medium');
+                setIsFullscreen(!isFullscreen);
+              }}
+              onTriggerPiP={() => {
+                triggerHaptic('light');
+                setIsPiPActive(true);
+              }}
+              title={currentLesson.title}
+              subtitle={currentItem?.moduleTitle}
+              isLocked={isScreenLocked}
+              onToggleLock={() => {
+                setIsScreenLocked(!isScreenLocked);
+                showToast({
+                  message: !isScreenLocked ? 'Screen Locked' : 'Screen Unlocked',
+                  type: 'info',
+                });
+              }}
+            />
+
             {/* Continuous Auto-Play Next Video Countdown Overlay */}
             {autoplayCountdown !== null && (
               <View style={styles.autoplayCountdownOverlay}>
@@ -866,9 +946,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                     },
                   ]}
                 >
-                  <View
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}
-                  >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                     <Ionicons name="play-forward-circle" size={18} color="#6366F1" />
                     <Text style={styles.autoplayBadgeText}>
                       {isBangla ? 'স্বয়ংক্রিয় পরবর্তী পাঠ শুরু হচ্ছে' : 'CONTINUOUS AUTO-PLAY'}
@@ -908,442 +986,440 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
             )}
           </View>
         )}
+      </View>
 
-        {/* Fast Action Scrub / Sim bar under player */}
-        {canPlayVideo && (
-          <View style={[styles.playbackToolbar, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
-            <View style={styles.playbackLeftControls}>
-              <TouchableOpacity onPress={() => handleRewind(10)} style={styles.toolBtn}>
-                <Ionicons name="play-back" size={18} color={colors.text} />
-                <Text style={[styles.toolBtnText, { color: colors.textMuted }]}>10s</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handlePrevLesson} disabled={currentLessonIndex === 0} style={[styles.toolBtn, currentLessonIndex === 0 && { opacity: 0.3 }]}>
-                <Ionicons name="play-skip-back" size={18} color={colors.text} />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleNextLesson} disabled={currentLessonIndex === allLessons.length - 1} style={[styles.toolBtn, currentLessonIndex === allLessons.length - 1 && { opacity: 0.3 }]}>
-                <Ionicons name="play-skip-forward" size={18} color={colors.text} />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => handleForward(10)} style={styles.toolBtn}>
-                <Ionicons name="play-forward" size={18} color={colors.text} />
-                <Text style={[styles.toolBtnText, { color: colors.textMuted }]}>10s</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.playbackRightControls}>
-              {resolvedVideoUrl && (
-                <TouchableOpacity
-                  style={[styles.speedPill, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border, borderWidth: 1 }]}
-                  onPress={() => Linking.openURL(resolvedVideoUrl).catch(() => {})}
-                  accessibilityRole="button"
-                  accessibilityLabel="Open video externally"
-                >
-                  <Ionicons name="open-outline" size={16} color={colors.text} />
-                  <Text style={[styles.speedPillText, { color: colors.text }]}>Open</Text>
-                </TouchableOpacity>
-              )}
-
-              <TouchableOpacity style={styles.speedPill} onPress={cycleSpeed}>
-                <Text style={styles.speedPillText}>{playbackSpeed}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.speedPill, { backgroundColor: '#E11D4822', borderColor: '#E11D48', borderWidth: 1 }]}
-                onPress={handleSimulateVideoEnd}
-              >
-                <Ionicons name="checkmark-done" size={16} color={colors.danger} />
-                <Text style={[styles.speedPillText, { color: colors.danger }]}>
-                  {isBangla ? 'শেষ' : 'Finish'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {/* Lesson Title & Completion CTA */}
-        <View style={styles.lessonHeaderCard}>
-          <View style={styles.titleCol}>
-            <Text style={[styles.lessonTitle, { color: colors.text }]}>
-              {currentLesson.title}
-            </Text>
-            <Text style={[styles.lessonInstructor, { color: colors.textMuted }]}>
-              {course.instructor.name} • {course.instructor.company}
-            </Text>
-          </View>
-
-          <View style={styles.actionRowRight}>
-            <TouchableOpacity
-              style={[
-                styles.offlineBtn,
-                { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
-              ]}
-              onPress={() => {
-                triggerHaptic('light');
-                setIsFlashcardsVisible(true);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Study active recall flashcards for this course"
-            >
-              <Ionicons name="sparkles" size={16} color={colors.brandGold} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.offlineBtn,
-                { backgroundColor: isDownloaded ? colors.primary + '20' : colors.surfaceSubtle, borderColor: colors.border },
-              ]}
-              onPress={handleToggleOffline}
-              accessibilityRole="button"
-              accessibilityLabel={isDownloaded ? "Remove downloaded lesson" : "Download lesson for offline studying"}
-            >
-              <Ionicons
-                name={isDownloaded ? 'cloud-done' : 'cloud-download-outline'}
-                size={16}
-                color={isDownloaded ? colors.primary : colors.textMuted}
-              />
-            </TouchableOpacity>
-
-            <SpringPressable
-              style={[
-                styles.completeBtn,
-                {
-                  backgroundColor: isLessonCompleted ? colors.primaryLight : colors.primary,
-                },
-              ]}
-              onPress={handleMarkComplete}
-              activeScale={0.96}
-              accessibilityRole="button"
-              accessibilityLabel={isLessonCompleted ? "Lesson already completed" : "Mark lesson as complete"}
-            >
-              <Ionicons
-                name={isLessonCompleted ? 'checkmark-circle' : 'checkmark'}
-                size={16}
-                color={isLessonCompleted ? colors.primary : colors.onPrimary}
-              />
-              <Text
-                style={[
-                  styles.completeBtnText,
-                  { color: isLessonCompleted ? colors.primary : colors.onPrimary },
-                ]}
-              >
-                {isLessonCompleted ? t('lessonCompleted') : t('markComplete')}
+      {/* LOWER TABBED LEARNING AREA (LOWER 60-65% OF SCREEN, VISIBLE IN PORTRAIT) */}
+      {!isFullscreen && (
+        <View style={styles.lowerLearningArea}>
+          {/* Quick Info & Action Header */}
+          <View style={[styles.lessonHeaderCard, { borderBottomColor: colors.border }]}>
+            <View style={styles.titleCol}>
+              <Text style={[styles.lessonTitle, { color: colors.text }]} numberOfLines={1}>
+                {currentLesson.title}
               </Text>
-            </SpringPressable>
-          </View>
-        </View>
-
-        {/* Course Completion & Certificate Banner */}
-        {isCourseCompleted && (
-          <View
-            style={[
-              styles.completionBanner,
-              {
-                backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : '#ECFDF5',
-                borderColor: '#10B981',
-              },
-            ]}
-          >
-            <View style={styles.completionIconWrap}>
-              <Ionicons name="trophy" size={26} color="#F59E0B" />
-            </View>
-            <View style={styles.completionContent}>
-              <View style={styles.completionHeaderRow}>
-                <Text style={[styles.completionTitle, { color: isDark ? '#A7F3D0' : '#065F46' }]} numberOfLines={1} ellipsizeMode="tail">
-                  Course Completed! 🎓
-                </Text>
-                <View style={styles.completionXpBadge}>
-                  <Text style={styles.completionXpText}>+150 XP</Text>
-                </View>
-              </View>
-              <Text style={[styles.completionSub, { color: isDark ? '#D1FAE5' : '#047857' }]}>
-                Congratulations! You've mastered all lectures. Your verified certificate is ready.
+              <Text style={[styles.lessonInstructor, { color: colors.textMuted }]}>
+                {course.instructor.name} • {currentLesson.duration}
               </Text>
+            </View>
+
+            <View style={styles.actionRowRight}>
+              {/* Spaced repetition flashcards */}
               <TouchableOpacity
-                style={styles.claimCertCTA}
-                onPress={() => setCertModalVisible(true)}
-                activeOpacity={0.85}
+                style={[styles.headerActionBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                onPress={() => {
+                  triggerHaptic('light');
+                  setIsFlashcardsVisible(true);
+                }}
                 accessibilityRole="button"
-                accessibilityLabel="View verified digital certificate"
+                accessibilityLabel="Study active recall flashcards"
               >
-                <Ionicons name="ribbon" size={15} color="#FFFFFF" />
-                <Text style={styles.claimCertCTAText}>View Digital Certificate</Text>
+                <Ionicons name="sparkles" size={16} color={colors.brandGold} />
               </TouchableOpacity>
-            </View>
-          </View>
-        )}
 
-        {/* Interactive Lesson Navigation & Tools Tab Strip */}
-        <View style={[styles.tabsStrip, { borderBottomColor: colors.border }]}>
-          {[
-            { id: 'curriculum', label: 'Playlist', icon: 'list' },
-            { id: 'qna', label: 'Q&A', icon: 'chatbubbles' },
-            { id: 'overview', label: 'Overview', icon: 'information-circle' },
-            { id: 'notes', label: `Notes (${lessonNotes.length})`, icon: 'document-text' },
-            { id: 'resources', label: 'Files', icon: 'download' },
-          ].map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
+              {/* Offline download quality trigger */}
               <TouchableOpacity
-                key={tab.id}
                 style={[
-                  styles.tabButton,
-                  isActive && { borderBottomColor: colors.primary, borderBottomWidth: 2 },
+                  styles.headerActionBtn,
+                  {
+                    backgroundColor: isDownloaded ? colors.primary + '20' : colors.surfaceSubtle,
+                    borderColor: isDownloaded ? colors.primary : colors.border,
+                  },
                 ]}
-                onPress={() => setActiveTab(tab.id as PlayerTab)}
+                onPress={handleToggleOffline}
+                accessibilityRole="button"
+                accessibilityLabel={isDownloaded ? "Manage downloaded lesson" : "Download lesson with quality options"}
               >
                 <Ionicons
-                  name={tab.icon as any}
+                  name={isDownloaded ? 'cloud-done' : 'cloud-download-outline'}
+                  size={16}
+                  color={isDownloaded ? colors.primary : colors.textMuted}
+                />
+              </TouchableOpacity>
+
+              {/* Mark Complete Button */}
+              <SpringPressable
+                style={[
+                  styles.completeBtn,
+                  {
+                    backgroundColor: isLessonCompleted ? colors.primaryLight : colors.primary,
+                  },
+                ]}
+                onPress={handleMarkComplete}
+                activeScale={0.96}
+                accessibilityRole="button"
+                accessibilityLabel={isLessonCompleted ? "Lesson already completed" : "Mark lesson as complete"}
+              >
+                <Ionicons
+                  name={isLessonCompleted ? 'checkmark-circle' : 'checkmark'}
                   size={15}
-                  color={isActive ? colors.primary : colors.textMuted}
+                  color={isLessonCompleted ? colors.primary : colors.onPrimary}
                 />
                 <Text
                   style={[
-                    styles.tabButtonText,
-                    {
-                      color: isActive ? colors.primary : colors.textMuted,
-                      fontWeight: isActive ? '700' : '500',
-                    },
+                    styles.completeBtnText,
+                    { color: isLessonCompleted ? colors.primary : colors.onPrimary },
                   ]}
                 >
-                  {tab.label}
+                  {isLessonCompleted ? t('lessonCompleted') : t('markComplete')}
                 </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        {/* Tab Content Panels */}
-        <View style={styles.tabPanel}>
-          <AnimatedTabContent tabKey={activeTab}>
-          {activeTab === 'qna' && (
-            <View style={{ paddingVertical: 4 }}>
-              <CourseQnATab
-                courseId={course.id}
-                currentLessonTitle={currentLesson.title}
-              />
+              </SpringPressable>
             </View>
-          )}
+          </View>
 
-          {activeTab === 'curriculum' && (
-            <View style={styles.curriculumList}>
-              {allLessons.map((item, idx) => {
-                const isSelected = item.lesson.id === currentLesson.id;
-                const isCompleted = progress?.completedLessonIds.includes(item.lesson.id);
-                const itemAccessible = isAdmin || isEnrolled || Boolean(item.lesson.isFreePreview);
-
-                return (
-                  <TouchableOpacity
-                    key={item.lesson.id}
+          {/* SWIPEABLE BOTTOM TABS STRIP */}
+          <View style={[styles.tabsStrip, { borderBottomColor: colors.border }]}>
+            {TABS.map((tab, idx) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <TouchableOpacity
+                  key={tab.id}
+                  style={[
+                    styles.tabButton,
+                    isActive && { borderBottomColor: colors.primary, borderBottomWidth: 2 },
+                  ]}
+                  onPress={() => handleTabPress(tab.id, idx)}
+                  accessibilityRole="tab"
+                  accessibilityLabel={tab.label}
+                >
+                  <Ionicons
+                    name={tab.icon}
+                    size={15}
+                    color={isActive ? colors.primary : colors.textMuted}
+                  />
+                  <Text
                     style={[
-                      styles.playlistRow,
-                      isSelected && {
-                        backgroundColor: colors.surfaceSubtle,
-                        borderColor: colors.primary,
+                      styles.tabButtonText,
+                      {
+                        color: isActive ? colors.primary : colors.textMuted,
+                        fontWeight: isActive ? '700' : '500',
                       },
-                      { borderColor: colors.border },
                     ]}
-                    onPress={() => {
-                      if (itemAccessible) {
-                        onSelectLesson(courseId, item.lesson.id);
-                      } else {
-                        Alert.alert(
-                          isBangla ? 'সদস্যদের জন্য সংরক্ষিত' : 'Enrolled Members Only',
-                          isBangla
-                            ? 'এই লেসনটি শুধুমাত্র কোর্সে এনরোল করা শিক্ষার্থীদের জন্য। আপনার অ্যাকাউন্ট এনরোল করা থাকলে উপরে থেকে অ্যাক্সেস সিঙ্ক করুন।'
-                            : 'This lesson is part of your Thriving Skills member library. Sign in with an enrolled account and sync access from the player above.'
-                        );
-                      }
-                    }}
-                    activeOpacity={0.7}
                   >
+                    {tab.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* HORIZONTAL SWIPEABLE PAGING SCROLLVIEW */}
+          <ScrollView
+            ref={tabScrollViewRef}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={handleTabScrollEnd}
+            style={styles.horizontalPagingScroll}
+          >
+            {/* TAB 1: LECTURES (Curriculum Playlist) */}
+            <View style={{ width: screenWidth }}>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={[styles.tabContentScroll, { paddingBottom: Math.max(insets.bottom, 16) + 80 }]}
+                nestedScrollEnabled
+              >
+                {/* Course Completion Banner */}
+                {isCourseCompleted && (
+                  <View
+                    style={[
+                      styles.completionBanner,
+                      {
+                        backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : '#ECFDF5',
+                        borderColor: '#10B981',
+                      },
+                    ]}
+                  >
+                    <View style={styles.completionIconWrap}>
+                      <Ionicons name="trophy" size={24} color="#F59E0B" />
+                    </View>
+                    <View style={styles.completionContent}>
+                      <View style={styles.completionHeaderRow}>
+                        <Text style={[styles.completionTitle, { color: isDark ? '#A7F3D0' : '#065F46' }]} numberOfLines={1}>
+                          Course Completed! 🎓
+                        </Text>
+                        <View style={styles.completionXpBadge}>
+                          <Text style={styles.completionXpText}>+150 XP</Text>
+                        </View>
+                      </View>
+                      <Text style={[styles.completionSub, { color: isDark ? '#D1FAE5' : '#047857' }]}>
+                        Congratulations! You've mastered all lectures. Your verified certificate is ready.
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.claimCertCTA}
+                        onPress={() => setCertModalVisible(true)}
+                        activeOpacity={0.85}
+                        accessibilityRole="button"
+                        accessibilityLabel="View verified digital certificate"
+                      >
+                        <Ionicons name="ribbon" size={14} color="#FFFFFF" />
+                        <Text style={styles.claimCertCTAText}>View Digital Certificate</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+
+                <View style={styles.curriculumList}>
+                  {allLessons.map((item) => {
+                    const isSelected = item.lesson.id === currentLesson.id;
+                    const isCompleted = progress?.completedLessonIds.includes(item.lesson.id);
+                    const itemAccessible = isAdmin || isEnrolled || Boolean(item.lesson.isFreePreview);
+
+                    return (
+                      <TouchableOpacity
+                        key={item.lesson.id}
+                        style={[
+                          styles.playlistRow,
+                          isSelected && {
+                            backgroundColor: colors.surfaceSubtle,
+                            borderColor: colors.primary,
+                          },
+                          { borderColor: colors.border },
+                        ]}
+                        onPress={() => {
+                          if (itemAccessible) {
+                            onSelectLesson(courseId, item.lesson.id);
+                          } else {
+                            Alert.alert(
+                              isBangla ? 'সদস্যদের জন্য সংরক্ষিত' : 'Enrolled Members Only',
+                              isBangla
+                                ? 'এই লেসনটি শুধুমাত্র কোর্সে এনরোল করা শিক্ষার্থীদের জন্য।'
+                                : 'This lesson is part of your Thriving Skills library. Sign in with an enrolled account to unlock.'
+                            );
+                          }
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <View
+                          style={[
+                            styles.playlistIconBg,
+                            {
+                              backgroundColor: isCompleted
+                                ? colors.primaryLight
+                                : isSelected
+                                ? colors.primary
+                                : colors.surfaceSubtle,
+                            },
+                          ]}
+                        >
+                          {isCompleted ? (
+                            <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
+                          ) : isSelected ? (
+                            <Ionicons name="play" size={14} color={colors.onPrimary} />
+                          ) : itemAccessible ? (
+                            <Ionicons name="play-outline" size={14} color={colors.textMuted} />
+                          ) : (
+                            <Ionicons name="lock-closed" size={14} color={colors.textMuted} />
+                          )}
+                        </View>
+
+                        <View style={styles.playlistInfo}>
+                          <Text
+                            style={[
+                              styles.playlistTitle,
+                              {
+                                color: isSelected ? colors.primary : itemAccessible ? colors.text : colors.textMuted,
+                                fontWeight: isSelected ? '700' : '500',
+                              },
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {item.lesson.title}
+                          </Text>
+                          <Text style={[styles.playlistDuration, { color: colors.textLight }]}>
+                            {item.lesson.duration}
+                          </Text>
+                        </View>
+
+                        {item.lesson.isFreePreview && !isEnrolled && !isAdmin && (
+                          <View style={[styles.previewBadge, { backgroundColor: colors.secondaryLight }]}>
+                            <Text style={[styles.previewText, { color: colors.secondary }]}>Preview</Text>
+                          </View>
+                        )}
+
+                        {item.lesson.quiz && (
+                          <TouchableOpacity
+                            style={[styles.quizPill, { backgroundColor: colors.secondaryLight }]}
+                            onPress={() => setQuizModalVisible(true)}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            accessibilityRole="button"
+                            accessibilityLabel="Open quiz"
+                          >
+                            <Ionicons name="help-circle" size={13} color={colors.secondary} />
+                            <Text style={[styles.quizPillText, { color: colors.secondary }]}>Quiz</Text>
+                          </TouchableOpacity>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </ScrollView>
+            </View>
+
+            {/* TAB 2: NOTES (Timestamped lecture notes) */}
+            <View style={{ width: screenWidth }}>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={[styles.tabContentScroll, { paddingBottom: Math.max(insets.bottom, 16) + 80 }]}
+                nestedScrollEnabled
+              >
+                <View style={styles.notesHeader}>
+                  <View style={styles.notesTitleCol}>
+                    <Text style={[styles.notesTitle, { color: colors.text }]}>
+                      Lecture Notes ({lessonNotes.length})
+                    </Text>
+                    <Text style={[styles.notesSub, { color: colors.textMuted }]}>
+                      Timestamped bookmarks & insights
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={[styles.takeNoteBtn, { backgroundColor: colors.primary }]}
+                    onPress={handleOpenNotesFAB}
+                    accessibilityRole="button"
+                    accessibilityLabel="New Note"
+                  >
+                    <Ionicons name="add" size={15} color={colors.onPrimary} />
+                    <Text style={[styles.takeNoteText, { color: colors.onPrimary }]}>New Note</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {lessonNotes.length === 0 ? (
+                  <View style={styles.emptyNotesBox}>
+                    <Ionicons name="document-text-outline" size={36} color={colors.textLight} />
+                    <Text style={[styles.emptyNotesText, { color: colors.textMuted }]}>
+                      No notes yet. Tap "+ Note" below to bookmark key moments at any timestamp!
+                    </Text>
+                  </View>
+                ) : (
+                  lessonNotes.map((n) => (
                     <View
+                      key={n.id}
                       style={[
-                        styles.playlistIconBg,
-                        {
-                          backgroundColor: isCompleted
-                            ? colors.primaryLight
-                            : isSelected
-                            ? colors.primary
-                            : itemAccessible
-                            ? colors.surfaceSubtle
-                            : colors.surfaceSubtle,
-                        },
+                        styles.noteCard,
+                        { backgroundColor: colors.surfaceCard, borderColor: colors.border },
                       ]}
                     >
-                      {isCompleted ? (
-                        <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
-                      ) : isSelected ? (
-                        <Ionicons name="play" size={14} color={colors.onPrimary} />
-                      ) : itemAccessible ? (
-                        <Ionicons name="play-outline" size={14} color={colors.textMuted} />
-                      ) : (
-                        <Ionicons name="lock-closed" size={14} color={colors.textMuted} />
-                      )}
-                    </View>
-
-                    <View style={styles.playlistInfo}>
-                      <Text
-                        style={[
-                          styles.playlistTitle,
-                          {
-                            color: isSelected ? colors.primary : itemAccessible ? colors.text : colors.textMuted,
-                            fontWeight: isSelected ? '700' : '500',
-                          },
-                        ]}
-                        numberOfLines={1}
-                      >
-                        {item.lesson.title}
-                      </Text>
-                      <Text style={[styles.playlistDuration, { color: colors.textLight }]}>
-                        {item.lesson.duration}
-                      </Text>
-                    </View>
-
-                    {item.lesson.isFreePreview && !isEnrolled && !isAdmin && (
-                      <View style={[styles.previewBadge, { backgroundColor: colors.secondaryLight }]}>
-                        <Text style={[styles.previewText, { color: colors.secondary }]}>Preview</Text>
+                      <View style={styles.noteTopRow}>
+                        <TouchableOpacity
+                          style={[styles.noteTimestampPill, { backgroundColor: '#FFB60620' }]}
+                          onPress={() => {
+                            triggerHaptic('light');
+                            const sec = n.timestamp.includes(':')
+                              ? n.timestamp.split(':').reduce((acc, time) => 60 * acc + +time, 0)
+                              : 0;
+                            handleSeekTo(sec);
+                            showToast({ message: `Jumped to ${n.timestamp}`, type: 'info' });
+                          }}
+                        >
+                          <Ionicons name="time-outline" size={12} color="#102F53" />
+                          <Text style={styles.noteTimestampText}>{n.timestamp}</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => {
+                            triggerHaptic('warning');
+                            deleteNote(n.id);
+                            showToast({
+                              message: 'Note deleted',
+                              type: 'info',
+                              actionLabel: 'Undo',
+                              onAction: () => {
+                                restoreNote(n);
+                                showToast({ message: 'Note restored', type: 'success' });
+                              },
+                            });
+                          }}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          accessibilityRole="button"
+                          accessibilityLabel="Delete note"
+                        >
+                          <Ionicons name="trash-outline" size={15} color={colors.textLight} />
+                        </TouchableOpacity>
                       </View>
-                    )}
-
-                    {isAdmin && (
-                      <View style={[styles.adminPlaylistBadge, { backgroundColor: '#FFB60620' }]}>
-                        <Ionicons name="shield-checkmark" size={10} color="#FFB606" />
-                        <Text style={styles.adminPlaylistText}>Admin</Text>
-                      </View>
-                    )}
-
-                    {item.lesson.quiz && (
-                      <TouchableOpacity
-                        style={[styles.quizPill, { backgroundColor: colors.secondaryLight }]}
-                        onPress={() => setQuizModalVisible(true)}
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        accessibilityRole="button"
-                        accessibilityLabel="Open quiz"
-                      >
-                        <Ionicons name="help-circle" size={13} color={colors.secondary} />
-                        <Text style={[styles.quizPillText, { color: colors.secondary }]}>Quiz</Text>
-                      </TouchableOpacity>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
+                      <Text style={[styles.noteBody, { color: colors.text }]}>{n.text}</Text>
+                    </View>
+                  ))
+                )}
+              </ScrollView>
             </View>
-          )}
 
-          {activeTab === 'overview' && (
-            <View style={styles.overviewContainer}>
-              <Text style={[styles.overviewHeading, { color: colors.text }]}>
-                Lesson Description
-              </Text>
-              <Text style={[styles.overviewText, { color: colors.textMuted }]}>
-                {lessonDetail?.content || currentLesson.summary ||
-                  'In this lecture, you will explore core operational frameworks and practical workflows designed for maximum business productivity.'}
-              </Text>
+            {/* TAB 3: TRANSCRIPT (Synchronized interactive transcript) */}
+            <View style={{ width: screenWidth, flex: 1, paddingHorizontal: 14 }}>
+              <LessonTranscriptTab
+                currentPositionSeconds={currentPositionSeconds}
+                lessonTitle={currentLesson.title}
+                instructorName={course.instructor.name}
+                lessonSummary={lessonDetail?.content || currentLesson.summary}
+                durationSeconds={totalLessonSeconds}
+                onSeekTo={handleSeekTo}
+              />
+            </View>
 
-              <View
-                style={[
-                  styles.quizCallout,
-                  { backgroundColor: colors.surfaceCard, borderColor: colors.secondary },
-                ]}
+            {/* TAB 4: Q&A (Discussion & Questions answered by instructors) */}
+            <View style={{ width: screenWidth }}>
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={[styles.tabContentScroll, { paddingBottom: Math.max(insets.bottom, 16) + 80 }]}
+                nestedScrollEnabled
               >
-                <View style={styles.quizCalloutLeft}>
-                  <Ionicons name="school" size={24} color={colors.secondary} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.quizCalloutTitle, { color: colors.text }]}>
-                      Knowledge Check
-                    </Text>
-                    <Text style={[styles.quizCalloutSub, { color: colors.textMuted }]} numberOfLines={1}>
-                      Test your retention on this lecture to earn +25 XP.
-                    </Text>
-                  </View>
-                </View>
-                <TouchableOpacity
-                  style={[styles.startQuizBtn, { backgroundColor: colors.secondary }]}
-                  onPress={() => setQuizPlayerVisible(true)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Take knowledge check quiz"
-                >
-                  <Text style={[styles.startQuizText, { color: colors.onSecondary }]}>Take Quiz</Text>
-                </TouchableOpacity>
-              </View>
+                <CourseQnATab
+                  courseId={course.id}
+                  currentLessonTitle={currentLesson.title}
+                />
+              </ScrollView>
             </View>
-          )}
+          </ScrollView>
 
-          {activeTab === 'notes' && (
-            <View style={styles.notesTab}>
-              <View style={styles.notesHeader}>
-                <Text style={[styles.notesTitle, { color: colors.text }]}>
-                  Your Notes for this Lecture
-                </Text>
-                <TouchableOpacity
-                  style={[styles.takeNoteBtn, { backgroundColor: colors.primary }]}
-                  onPress={() => setNotesModalVisible(true)}
-                >
-                  <Ionicons name="add" size={16} color={colors.onPrimary} />
-                  <Text style={[styles.takeNoteText, { color: colors.onPrimary }]}>New Note</Text>
-                </TouchableOpacity>
-              </View>
+          {/* FLOATING ACTION BUTTON (FAB) FOR NOTES (BOTTOM RIGHT) */}
+          <TouchableOpacity
+            style={styles.notesFAB}
+            onPress={handleOpenNotesFAB}
+            activeOpacity={0.88}
+            accessibilityRole="button"
+            accessibilityLabel="Add Note at current video timestamp"
+          >
+            <Ionicons name="create" size={18} color="#102F53" />
+            <Text style={styles.notesFABText}>+ Note</Text>
+          </TouchableOpacity>
 
-              {lessonNotes.length === 0 ? (
-                <View style={styles.emptyNotesBox}>
-                  <Ionicons name="document-text-outline" size={36} color={colors.textLight} />
-                  <Text style={[styles.emptyNotesText, { color: colors.textMuted }]}>
-                    No notes yet. Tap "New Note" to capture key insights at any timestamp!
-                  </Text>
-                </View>
-              ) : (
-                lessonNotes.map((n) => (
-                  <View
-                    key={n.id}
-                    style={[
-                      styles.noteCard,
-                      { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-                    ]}
-                  >
-                    <Text style={[styles.noteTimestamp, { color: colors.primary }]}>
-                      Timestamp: {n.timestamp}
-                    </Text>
-                    <Text style={[styles.noteBody, { color: colors.text }]}>{n.text}</Text>
-                  </View>
-                ))
-              )}
-            </View>
-          )}
-
-          {activeTab === 'resources' && (
-            <View style={styles.resourcesTab}>
-              {[
-                { name: 'Executive_AI_Prompt_Playbook.pdf', size: '2.4 MB', type: 'PDF' },
-                { name: 'Financial_Model_Template_v3.xlsx', size: '1.8 MB', type: 'Excel' },
-                { name: 'People_Analytics_Framework.docx', size: '850 KB', type: 'Doc' },
-              ].map((res, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.resourceRow,
-                    { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-                  ]}
-                  onPress={() => Alert.alert('Downloading Resource', `Downloading ${res.name}...`)}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.fileIconBg, { backgroundColor: colors.primaryLight }]}>
-                    <Ionicons name="document-attach" size={18} color={colors.primary} />
-                  </View>
-                  <View style={styles.fileMeta}>
-                    <Text style={[styles.fileName, { color: colors.text }]} numberOfLines={1}>
-                      {res.name}
-                    </Text>
-                    <Text style={[styles.fileSize, { color: colors.textMuted }]}>
-                      {res.type} • {res.size}
-                    </Text>
-                  </View>
-                  <Ionicons name="download-outline" size={20} color={colors.primary} />
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-          </AnimatedTabContent>
+          {/* COMPACT BOTTOM SHEET NOTE EDITOR (DOES NOT COVER TOP VIDEO FRAME) */}
+          <QuickNoteBottomSheet
+            visible={isQuickNoteOpen}
+            timestamp={formatSeconds(currentPositionSeconds)}
+            lessonTitle={currentLesson.title}
+            onSaveNote={(text, ts) => {
+              addNote(course.id, currentLesson.id, text, ts);
+              showToast({ message: `Note saved at ${ts}`, type: 'success' });
+            }}
+            onClose={() => setIsQuickNoteOpen(false)}
+          />
         </View>
-      </ScrollView>
+      )}
+
+      {/* PICTURE-IN-PICTURE (PiP) FLOATING MINI-PLAYER */}
+      <PiPFloatingPlayer
+        visible={isPiPActive}
+        isPlaying={isPlaying}
+        onTogglePlay={() => setIsPlaying(!isPlaying)}
+        onMaximize={() => setIsPiPActive(false)}
+        onClose={() => setIsPiPActive(false)}
+        title={currentLesson.title}
+        currentTimeFormatted={formatSeconds(currentPositionSeconds)}
+      />
+
+      {/* STREAMING & OFFLINE QUALITY MODAL */}
+      <DownloadQualityModal
+        visible={qualityModalVisible}
+        mode={qualityModalMode}
+        currentQuality={qualityModalMode === 'download' ? selectedDownloadQuality : streamQuality}
+        lessonTitle={currentLesson.title}
+        onClose={() => setQualityModalVisible(false)}
+        onSelectStreamQuality={(q) => {
+          setStreamQuality(q);
+          showToast({ message: `Streaming quality set to ${q}`, type: 'info' });
+        }}
+        onStartDownload={(q) => {
+          handleStartDownloadWithQuality(q);
+        }}
+      />
 
       {/* Quiz Modal */}
       {currentLesson.quiz && (
@@ -1358,7 +1434,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         />
       )}
 
-      {/* Interactive Assessment Quiz Player Modal */}
+      {/* Assessment Quiz Player Modal */}
       <QuizPlayerModal
         visible={quizPlayerVisible}
         courseTitle={course.title}
@@ -1377,17 +1453,13 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         lessonId={currentLesson.id}
         currentPositionSeconds={currentPositionSeconds}
         onSeekTo={(sec) => {
-          setCurrentPositionSeconds(sec);
-          if (course && currentLesson) recordWatchPosition(course.id, currentLesson.id, sec);
+          handleSeekTo(sec);
           setNotesModalVisible(false);
-          const mins = Math.floor(sec / 60);
-          const secs = (sec % 60).toString().padStart(2, '0');
-          Alert.alert('Jumped to Video Bookmark ⏱️', `Player seeked to ${mins}:${secs}`);
         }}
         onClose={() => setNotesModalVisible(false)}
       />
 
-      {/* Mandatory Course Review Modal before Certificate Unlock */}
+      {/* Mandatory Course Review Modal */}
       <MandatoryReviewModal
         visible={mandatoryReviewVisible}
         courseTitle={course.title}
@@ -1403,7 +1475,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         onClose={() => setCertModalVisible(false)}
       />
 
-      {/* In-Player Payment Modal for Unlocked Access */}
+      {/* Payment Modal */}
       <PaymentModal
         visible={paymentModalVisible}
         course={course}
@@ -1418,7 +1490,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         }}
       />
 
-      {/* Active Recall Spaced Repetition Modal */}
+      {/* Spaced Repetition Modal */}
       <SpacedRepetitionModal
         visible={isFlashcardsVisible}
         onClose={() => setIsFlashcardsVisible(false)}
@@ -1432,17 +1504,21 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollContent: {
-    paddingBottom: 40,
-  },
   centerContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  commuteToggleBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   adminBanner: {
     flexDirection: 'column',
-    paddingVertical: 8,
+    paddingVertical: 6,
     paddingHorizontal: 14,
     borderBottomWidth: 1,
     gap: 2,
@@ -1453,65 +1529,42 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   adminBannerTitle: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '800',
     color: '#FFB606',
     letterSpacing: 0.5,
   },
   adminBannerSub: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#F8FAFC',
   },
   previewBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingVertical: 6,
+    paddingVertical: 5,
     paddingHorizontal: 14,
     borderBottomWidth: 1,
   },
   previewBannerText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#2563EB',
   },
-  modeSwitchBar: {
-    flexDirection: 'row',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    gap: 8,
+  stickyPlayerFrame: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    backgroundColor: '#000000',
+    position: 'relative',
+    zIndex: 10,
   },
-  modeSwitchBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    borderRadius: 8,
-    gap: 6,
-  },
-  modeSwitchActive: {
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  modeSwitchText: {
-    fontSize: 12,
-  },
-  saveDataBadge: {
-    backgroundColor: '#047857',
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    borderRadius: 4,
-  },
-  saveDataBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 9,
-    fontWeight: '700',
+  fullscreenPlayerFrame: {
+    ...StyleSheet.absoluteFill,
+    height: '100%',
+    zIndex: 9999,
   },
   playerContainer: {
-    height: 225,
+    width: '100%',
+    height: '100%',
     backgroundColor: '#000000',
     position: 'relative',
   },
@@ -1521,7 +1574,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
   },
   loadingVideoOverlay: {
-    flex: 1,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
@@ -1533,50 +1586,50 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   lockedCard: {
-    height: 240,
-    padding: 20,
+    flex: 1,
+    padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 6,
   },
   lockedIconBg: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     backgroundColor: 'rgba(255, 182, 6, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   lockedTitle: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '800',
     color: '#FFFFFF',
     textAlign: 'center',
   },
   lockedSub: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#94A3B8',
     textAlign: 'center',
-    lineHeight: 16,
+    lineHeight: 15,
     paddingHorizontal: 12,
   },
   lockedActionsCol: {
     flexDirection: 'row',
-    gap: 10,
-    marginTop: 8,
+    gap: 8,
+    marginTop: 6,
   },
   lockedPurchaseBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     backgroundColor: '#FFB606',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
     borderRadius: 8,
   },
   lockedPurchaseBtnText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '800',
     color: '#102F53',
   },
@@ -1586,12 +1639,12 @@ const styles = StyleSheet.create({
     gap: 6,
     borderWidth: 1,
     borderColor: '#FFB606',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 8,
   },
   lockedPreviewBtnText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
     color: '#FFB606',
   },
@@ -1610,53 +1663,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#102F53',
   },
-  playbackToolbar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderBottomWidth: 1,
-    flexWrap: 'nowrap',
-  },
-  playbackLeftControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flexShrink: 0,
-  },
-  toolBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    paddingVertical: 4,
-    paddingHorizontal: 2,
-  },
-  toolBtnText: {
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  playbackRightControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    flexShrink: 0,
-  },
-  speedPill: {
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    backgroundColor: 'rgba(0,0,0,0.06)',
-    borderRadius: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-  },
-  speedPillText: {
-    fontSize: 10,
-    fontWeight: '700',
-  },
   commutePlayerCard: {
-    padding: 16,
+    flex: 1,
+    padding: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1664,42 +1673,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   commuteHeaderBadgeText: {
     color: '#10B981',
     fontSize: 11,
     fontWeight: '700',
   },
-  waveformContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 60,
-    gap: 4,
-    marginBottom: 12,
-  },
-  waveBar: {
-    width: 4,
-    borderRadius: 2,
-  },
   commuteLessonTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
     color: '#FFFFFF',
     marginBottom: 2,
   },
   commuteInstructorText: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#94A3B8',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   commuteControlsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 20,
-    marginBottom: 16,
+    gap: 16,
+    marginBottom: 10,
   },
   commuteSkipBtn: {
     alignItems: 'center',
@@ -1708,13 +1705,13 @@ const styles = StyleSheet.create({
   },
   skipSecText: {
     color: '#94A3B8',
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '600',
   },
   commuteMainPlayBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1723,73 +1720,85 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     width: '100%',
-    paddingTop: 8,
+    paddingTop: 6,
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.1)',
+    gap: 8,
   },
   commuteTimeText: {
     color: '#FFFFFF',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600',
+    flexShrink: 0,
   },
   bgPlaybackNotice: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    flexShrink: 1,
   },
   bgPlaybackText: {
     color: '#10B981',
     fontSize: 10,
   },
+  speedPill: {
+    backgroundColor: '#FFB606',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    flexShrink: 0,
+  },
+  speedPillText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#102F53',
+  },
   autoplayCountdownOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(0,0,0,0.7)',
     padding: 16,
+    zIndex: 50,
   },
   autoplayCard: {
     width: '90%',
-    padding: 16,
+    padding: 14,
     borderRadius: 12,
     borderWidth: 1,
     alignItems: 'center',
   },
   autoplayBadgeText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '800',
     color: '#6366F1',
   },
   autoplayCountdownSec: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: '900',
     color: '#6366F1',
-    marginVertical: 4,
+    marginVertical: 2,
   },
   autoplayNextTitle: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
-    marginBottom: 12,
+    marginBottom: 10,
     textAlign: 'center',
   },
   autoplayActionsRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
   },
   autoplayCancelBtn: {
     minHeight: MIN_TOUCH_TARGET,
     justifyContent: 'center',
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
     borderWidth: 1,
   },
   autoplayCancelText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
   },
   autoplayPlayNowBtn: {
@@ -1799,125 +1808,65 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 4,
     backgroundColor: '#6366F1',
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
   },
   autoplayPlayNowText: {
     color: '#FFFFFF',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
+  },
+  lowerLearningArea: {
+    flex: 1,
+    position: 'relative',
   },
   lessonHeaderCard: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 10,
-    padding: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    gap: 8,
   },
   titleCol: {
     flex: 1,
-    minWidth: 160,
-    marginRight: 4,
+    minWidth: 0,
+    marginRight: 6,
   },
   lessonTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '800',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   lessonInstructor: {
-    fontSize: 12,
+    fontSize: 11,
   },
   actionRowRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
+    flexShrink: 0,
   },
-  offlineBtn: {
-    width: MIN_TOUCH_TARGET,
-    height: MIN_TOUCH_TARGET,
-    borderRadius: 22,
+  headerActionBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   completeBtn: {
-    minHeight: MIN_TOUCH_TARGET,
+    minHeight: 36,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderRadius: 8,
+    gap: 4,
+    paddingHorizontal: 10,
+    borderRadius: shape.small,
   },
   completeBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  completionBanner: {
-    marginHorizontal: 14,
-    marginBottom: 12,
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 12,
-  },
-  completionIconWrap: {
-    marginTop: 2,
-  },
-  completionContent: {
-    flex: 1,
-  },
-  completionHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-    gap: 8,
-  },
-  completionTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    flex: 1,
-    minWidth: 0,
-    marginRight: 8,
-  },
-  completionXpBadge: {
-    backgroundColor: '#047857',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    flexShrink: 0,
-  },
-  completionXpText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    lineHeight: 12,
-    includeFontPadding: false,
-    fontWeight: '800',
-  },
-  completionSub: {
-    fontSize: 12,
-    lineHeight: 16,
-    marginBottom: 10,
-  },
-  claimCertCTA: {
-    minHeight: MIN_TOUCH_TARGET,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: '#047857',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-  },
-  claimCertCTAText: {
-    color: '#FFFFFF',
     fontSize: 11,
     fontWeight: '700',
   },
@@ -1933,13 +1882,77 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    paddingVertical: 10,
+    paddingVertical: 8,
   },
   tabButtonText: {
     fontSize: 11,
   },
-  tabPanel: {
-    padding: 14,
+  horizontalPagingScroll: {
+    flex: 1,
+  },
+  tabContentScroll: {
+    paddingHorizontal: 14,
+    paddingTop: 12,
+  },
+  completionBanner: {
+    marginBottom: 12,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 10,
+  },
+  completionIconWrap: {
+    marginTop: 2,
+  },
+  completionContent: {
+    flex: 1,
+  },
+  completionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+    gap: 8,
+  },
+  completionTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    flex: 1,
+    minWidth: 0,
+  },
+  completionXpBadge: {
+    backgroundColor: '#047857',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  completionXpText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  completionSub: {
+    fontSize: 11,
+    lineHeight: 15,
+    marginBottom: 8,
+  },
+  claimCertCTA: {
+    minHeight: 32,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#047857',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+  claimCertCTAText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
   },
   curriculumList: {
     gap: 8,
@@ -1948,7 +1961,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
-    borderRadius: 8,
+    borderRadius: shape.medium,
     borderWidth: 1,
     gap: 10,
   },
@@ -1958,13 +1971,11 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  playlistIndex: {
-    fontSize: 11,
-    fontWeight: '700',
+    flexShrink: 0,
   },
   playlistInfo: {
     flex: 1,
+    minWidth: 0,
   },
   playlistTitle: {
     fontSize: 13,
@@ -1977,106 +1988,55 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
+    flexShrink: 0,
   },
   previewText: {
     fontSize: 10,
     fontWeight: '700',
-  },
-  adminPlaylistBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    borderWidth: 0.5,
-    borderColor: '#FFB60680',
-  },
-  adminPlaylistText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#FFB606',
   },
   quizPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
     paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingVertical: 3,
     borderRadius: 4,
+    flexShrink: 0,
   },
   quizPillText: {
     fontSize: 10,
     fontWeight: '700',
   },
-  overviewContainer: {
-    gap: 12,
-  },
-  overviewHeading: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  overviewText: {
-    fontSize: 13,
-    lineHeight: 18,
-  },
-  quizCallout: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 14,
-    borderRadius: 10,
-    borderWidth: 1,
-    marginTop: 8,
-    gap: 10,
-  },
-  quizCalloutLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    flex: 1,
-  },
-  quizCalloutTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  quizCalloutSub: {
-    fontSize: 11,
-    marginTop: 2,
-  },
-  startQuizBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 6,
-  },
-  startQuizText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  notesTab: {
-    gap: 12,
-  },
   notesHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 12,
+    gap: 8,
+  },
+  notesTitleCol: {
+    flex: 1,
+    minWidth: 0,
   },
   notesTitle: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
+  },
+  notesSub: {
+    fontSize: 11,
+    marginTop: 2,
   },
   takeNoteBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 6,
+    borderRadius: shape.small,
+    minHeight: MIN_TOUCH_TARGET,
   },
   takeNoteText: {
-    color: '#FFFFFF',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
   },
   emptyNotesBox: {
@@ -2092,45 +2052,57 @@ const styles = StyleSheet.create({
   },
   noteCard: {
     padding: 12,
-    borderRadius: 8,
+    borderRadius: shape.medium,
     borderWidth: 1,
-    gap: 4,
+    marginBottom: 8,
+    gap: 6,
   },
-  noteTimestamp: {
+  noteTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  noteTimestampPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    gap: 4,
+    flexShrink: 0,
+  },
+  noteTimestampText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '800',
+    color: '#102F53',
   },
   noteBody: {
     fontSize: 13,
     lineHeight: 18,
   },
-  resourcesTab: {
-    gap: 8,
-  },
-  resourceRow: {
+  notesFAB: {
+    position: 'absolute',
+    bottom: 20,
+    right: 18,
+    backgroundColor: '#FFB606',
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 24,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    gap: 6,
+    zIndex: 80,
+    minHeight: MIN_TOUCH_TARGET,
   },
-  fileIconBg: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  fileMeta: {
-    flex: 1,
-  },
-  fileName: {
+  notesFABText: {
     fontSize: 12,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  fileSize: {
-    fontSize: 10,
+    fontWeight: '800',
+    color: '#102F53',
   },
 });

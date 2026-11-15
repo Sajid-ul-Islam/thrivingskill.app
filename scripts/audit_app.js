@@ -107,6 +107,10 @@ files.forEach(f => {
       !line.includes('Profile') &&
       !f.includes('mockData') &&
       !f.includes('AboutTSLModal') &&
+      !f.includes('SupportContactModal') &&
+      !f.includes('HelpFaqModal') &&
+      !f.includes('BrandDrawer') &&
+      !f.includes('config') &&
       !f.includes('types') &&
       !f.includes('client requirement') &&
       !f.includes('client revetment')

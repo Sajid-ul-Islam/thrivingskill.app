@@ -179,8 +179,8 @@ export const SkillAssessmentModal: React.FC<SkillAssessmentModalProps> = ({
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
             <View style={styles.headerLeft}>
-              <Ionicons name="analytics" size={20} color={colors.primary} />
-              <Text style={[styles.headerTitle, { color: colors.text }]}>
+              <Ionicons name="analytics" size={20} color={colors.primary} style={{ flexShrink: 0 }} />
+              <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
                 Executive Skill Diagnostic
               </Text>
             </View>
@@ -386,21 +386,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
+    gap: 12,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flex: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   headerTitle: {
     fontSize: 17,
     fontWeight: '700',
+    flex: 1,
   },
   closeBtn: {
     minWidth: MIN_TOUCH_TARGET,
     minHeight: MIN_TOUCH_TARGET,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   scrollContent: {
     padding: 20,
@@ -413,10 +419,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+    gap: 8,
   },
   progressStepText: {
     fontSize: 12,
     fontWeight: '700',
+    flex: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   domainBadge: {
     fontSize: 10,
@@ -424,6 +434,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
+    flexShrink: 0,
   },
   progressTrack: {
     height: 6,

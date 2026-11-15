@@ -146,8 +146,8 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
           {/* Top Bar */}
           <View style={[styles.topBar, { borderBottomColor: colors.border }]}>
             <View style={styles.topBarLeft}>
-              <Ionicons name="ribbon" size={20} color={colors.accent} />
-              <Text style={[styles.topBarTitle, { color: colors.text }]}>Verified Certificate</Text>
+              <Ionicons name="ribbon" size={20} color={colors.accent} style={{ flexShrink: 0 }} />
+              <Text style={[styles.topBarTitle, { color: colors.text }]} numberOfLines={1}>Verified Certificate</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn} accessibilityRole="button" accessibilityLabel="Close certificate dialog">
               <Ionicons name="close" size={22} color={colors.textMuted} />
@@ -351,14 +351,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
+    gap: 10,
   },
   topBarLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flex: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   topBarTitle: {
     ...typography.h4,
+    flex: 1,
   },
   closeBtn: {
     width: MIN_TOUCH_TARGET,
@@ -366,6 +371,7 @@ const styles = StyleSheet.create({
     borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   scrollContainer: {
     padding: 16,

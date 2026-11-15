@@ -3,3 +3,8 @@ export * from './CourseQnATab';
 export * from './YouTubeMiniPlayer';
 export * from './YouTubePlayerModal';
 export * from './LiveAudioWaveform';
+export * from './VideoPlayerGestureOverlay';
+export * from './LessonTranscriptTab';
+export * from './DownloadQualityModal';
+export * from './QuickNoteBottomSheet';
+export * from './PiPFloatingPlayer';

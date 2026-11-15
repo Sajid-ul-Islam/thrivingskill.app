@@ -120,7 +120,9 @@ const styles = StyleSheet.create({
     left: 10,
     right: 10,
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 8,
   },
   bundleBadge: {
     flexDirection: 'row',
@@ -130,6 +132,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: shape.extraSmall,
     gap: 4,
+    flexShrink: 0,
   },
   bundleBadgeText: {
     color: '#102F53',
@@ -142,6 +145,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: shape.extraSmall,
+    flexShrink: 0,
   },
   discountText: {
     color: '#FFFFFF',

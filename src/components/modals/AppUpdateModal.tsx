@@ -250,19 +250,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 8,
   },
   infoLabel: {
     fontSize: 12,
     fontWeight: '600',
+    flex: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   infoVal: {
     fontSize: 12,
     fontWeight: '700',
+    flexShrink: 0,
   },
   statusPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    flexShrink: 0,
   },
   dot: {
     width: 7,

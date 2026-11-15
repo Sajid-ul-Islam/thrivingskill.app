@@ -222,13 +222,13 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
               </View>
             )}
 
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={[styles.headerTitle, { color: colors.text }]}>
+            <View style={{ flex: 1, marginLeft: 10, minWidth: 0, marginRight: 8 }}>
+              <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
                 {activeArticle
                   ? isBangla ? 'নিবন্ধ পাঠ' : 'Article Reader'
                   : isBangla ? 'থ্রাইভিং স্কিলস ব্লগ ও আর্টিকেল' : 'Thriving Skills Blog'}
               </Text>
-              <Text style={[styles.headerSub, { color: colors.textMuted }]}>
+              <Text style={[styles.headerSub, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
                 {activeArticle
                   ? activeArticle.categoryLabel
                   : isBangla ? 'কর্পোরেট ইনসাইটস ও স্কিল ডেভেলপমেন্ট' : 'Executive Insights, Tech & Leadership'}
@@ -390,7 +390,7 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
                   <Image source={{ uri: article.imageUrl }} style={styles.cardThumb} />
                   <View style={styles.cardContent}>
                     <View style={styles.cardBadgeRow}>
-                      <Text style={[styles.cardCatText, { color: colors.primary }]}>
+                      <Text style={[styles.cardCatText, { color: colors.primary }]} numberOfLines={1} ellipsizeMode="tail">
                         {article.categoryLabel}
                       </Text>
                       <Text style={[styles.cardDateText, { color: colors.textMuted }]}>
@@ -448,6 +448,7 @@ const styles = StyleSheet.create({
     borderRadius: shape.medium,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   backBtn: {
     width: MIN_TOUCH_TARGET,
@@ -455,6 +456,7 @@ const styles = StyleSheet.create({
     borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   headerTitle: {
     ...typography.h4,
@@ -469,6 +471,7 @@ const styles = StyleSheet.create({
     borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   searchBar: {
     flexDirection: 'row',
@@ -519,14 +522,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 6,
+    gap: 8,
   },
   cardCatText: {
     fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
+    flexShrink: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   cardDateText: {
     fontSize: 11,
+    flexShrink: 0,
   },
   cardTitle: {
     fontSize: 15,

@@ -260,11 +260,13 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 14,
     borderBottomWidth: 1,
+    gap: 8,
   },
   lessonLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    minWidth: 0,
   },
   lessonStatusIcon: {
     width: 26,
@@ -273,9 +275,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
+    flexShrink: 0,
   },
   lessonTextCol: {
     flex: 1,
+    minWidth: 0,
     marginRight: 8,
   },
   lessonTitle: {
@@ -304,6 +308,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
+    flexShrink: 0,
   },
   previewText: {
     fontSize: 11,

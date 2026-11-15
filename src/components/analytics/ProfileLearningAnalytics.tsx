@@ -254,8 +254,8 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
       {/* Weekly Learning Activity Smooth Area Chart */}
       <View style={styles.activitySection}>
         <View style={styles.activityHeader}>
-          <View style={{ flex: 1, paddingRight: 8 }}>
-            <Text style={[styles.activityTitle, { color: colors.text }]}>
+          <View style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
+            <Text style={[styles.activityTitle, { color: colors.text }]} numberOfLines={1}>
               {isBangla ? 'সাপ্তাহিক অধ্যয়নের গতি (Weekly Velocity)' : 'Weekly Study Velocity'}
             </Text>
             <Text style={[styles.activitySubtitle, { color: colors.textMuted }]} numberOfLines={1}>

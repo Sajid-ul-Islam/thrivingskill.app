@@ -31,6 +31,7 @@ interface HeaderProps {
   onOpenUpdate?: () => void;
   onOpenDrawer?: () => void;
   onOpenOfflineContent?: () => void;
+  onOpenSupport?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -42,6 +43,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenNotifications,
   onOpenSearch,
   onOpenOfflineContent,
+  onOpenSupport,
 }) => {
   const { colors } = useTheme();
   const { unreadNotificationsCount } = useSaaS();
@@ -119,6 +121,19 @@ export const Header: React.FC<HeaderProps> = ({
         <View style={styles.rightRow}>
           {rightAction}
 
+          {onOpenSupport && (
+            <TouchableOpacity
+              style={[styles.iconButton, { backgroundColor: colors.surfaceSubtle }]}
+              onPress={onOpenSupport}
+              activeOpacity={0.7}
+              hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+              accessibilityRole="button"
+              accessibilityLabel="Official Support"
+            >
+              <Ionicons name="headset-outline" size={20} color={colors.primary} />
+            </TouchableOpacity>
+          )}
+
           {onOpenSearch && (
             <TouchableOpacity
               style={[styles.iconButton, { backgroundColor: colors.surfaceSubtle }]}
@@ -168,6 +183,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
+    gap: 12,
   },
   leftRow: {
     flexDirection: 'row',

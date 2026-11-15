@@ -14,4 +14,5 @@ export * from './QuizModal';
 export * from './QuizPlayerModal';
 export * from './SkillAssessmentModal';
 export * from './SubscriptionModal';
+export * from './SupportContactModal';
 export * from './UniversalSearchModal';

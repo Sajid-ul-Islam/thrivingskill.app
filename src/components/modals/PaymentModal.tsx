@@ -43,6 +43,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const { userProgress, enrollInCourse, refreshCourses, loadCourseDetail } = useLearning();
 
   const [isSyncing, setIsSyncing] = useState(false);
+  const syncStep = isAuthenticated ? 2 : 1;
 
   useEffect(() => {
     if (visible) {
@@ -186,6 +187,29 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <Text style={[styles.subtitle, { color: colors.textMuted }]}>
                   {isBangla ? 'আপনার থ্রাইভিং স্কিলস অ্যাকাউন্ট থেকে এনরোলমেন্ট সিঙ্ক করুন' : 'Sync enrolled courses with your Thriving Skills account'}
                 </Text>
+              </View>
+            </View>
+
+            {/* 2-Step Member Access Sync Progress Stepper */}
+            <View style={styles.syncStepContainer}>
+              <View style={styles.stepperHeader}>
+                <Text style={[styles.stepLabel, { color: colors.textMuted }]}>
+                  {isBangla ? `ধাপ ${syncStep} এর ২: ${syncStep === 1 ? 'অ্যাকাউন্ট ভেরিফিকেশন' : 'লাইব্রেরি সিঙ্ক'}` : `Step ${syncStep} of 2: ${syncStep === 1 ? 'Account Verification' : 'Library Sync'}`}
+                </Text>
+                <Text style={[styles.stepPercent, { color: colors.primary }]}>
+                  {syncStep === 1 ? '50%' : '100%'}
+                </Text>
+              </View>
+              <View style={[styles.stepperTrack, { backgroundColor: colors.border }]}>
+                <View
+                  style={[
+                    styles.stepperFill,
+                    {
+                      width: syncStep === 1 ? '50%' : '100%',
+                      backgroundColor: colors.primary,
+                    },
+                  ]}
+                />
               </View>
             </View>
 
@@ -349,6 +373,32 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
     fontWeight: '500',
+  },
+  syncStepContainer: {
+    marginBottom: 16,
+  },
+  stepperHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  stepLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  stepPercent: {
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  stepperTrack: {
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  stepperFill: {
+    height: '100%',
+    borderRadius: 2,
   },
   courseSummaryCard: {
     padding: 14,
