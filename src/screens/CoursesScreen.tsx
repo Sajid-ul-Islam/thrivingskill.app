@@ -257,7 +257,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
 
         {/* Result Header & Filters */}
         <View style={styles.resultMetaRow}>
-          <Text style={[styles.resultCount, { color: colors.textMuted }]}>
+          <Text style={[styles.resultCount, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
             {isBangla ? (
               <>দেখাচ্ছে <Text style={{ color: colors.text, fontWeight: '700' }}>{filtered.length}</Text> টি কোর্স</>
             ) : (
@@ -265,7 +265,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
             )}
           </Text>
 
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0 }}>
             {/* Free / Paid / All Segmented Pills (Section 5 Spec) */}
             <View style={[styles.priceFilterGroup, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]} accessibilityRole="tablist">
               {(['all', 'free', 'paid'] as PriceFilter[]).map((pf) => {
@@ -572,9 +572,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     marginVertical: 10,
+    gap: 8,
   },
   resultCount: {
     fontSize: 13,
+    flexShrink: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   sortBtn: {
     flexDirection: 'row',

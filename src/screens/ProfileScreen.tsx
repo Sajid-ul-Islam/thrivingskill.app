@@ -1910,7 +1910,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         >
           <View style={[styles.modalCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border, maxHeight: '92%' }]}>
             <View style={styles.modalHeader}>
-              <View>
+              <View style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
                 <Text style={[styles.modalTitle, { color: colors.text }]}>
                   {isBangla ? 'প্রোফাইল সেটিংস' : 'Profile Settings'}
                 </Text>
@@ -2290,7 +2290,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
             <View style={styles.modalHeader}>
-              <View>
+              <View style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
                 <Text style={[styles.modalTitle, { color: colors.text }]}>
                   {isBangla ? 'পাসওয়ার্ড পরিবর্তন' : 'Change Password'}
                 </Text>
@@ -2415,7 +2415,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border, maxHeight: '85%' }]}>
             <View style={styles.modalHeader}>
-              <View>
+              <View style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
                 <Text style={[styles.modalTitle, { color: colors.text }]}>
                   {isBangla ? 'অর্ডার ও কোর্স রেকর্ড' : 'Orders & Course Records'}
                 </Text>
@@ -2500,7 +2500,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             ]}
           >
             <View style={styles.modalHeader}>
-              <View style={{ flex: 1, paddingRight: 8 }}>
+              <View style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
                 <Text style={[styles.modalTitle, { color: colors.danger }]}>
                   {t('deleteAccountConfirmTitle')}
                 </Text>
@@ -2918,6 +2918,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 16,
+    gap: 8,
   },
   modalTitle: {
     fontSize: 18,
@@ -2926,12 +2927,14 @@ const styles = StyleSheet.create({
   modalSubtitle: {
     fontSize: 12,
     marginTop: 2,
+    lineHeight: 16,
   },
   modalCloseBtn: {
     minWidth: MIN_TOUCH_TARGET,
     minHeight: MIN_TOUCH_TARGET,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   inputLabel: {
     fontSize: 12,
@@ -3003,6 +3006,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
+    flexShrink: 0,
   },
   invoiceStatusText: {
     color: '#10B981',
@@ -3172,11 +3176,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 4,
+    gap: 8,
   },
   courseCategoryTag: {
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 6,
+    flexShrink: 1,
   },
   courseCategoryText: {
     fontSize: 10,
@@ -3185,6 +3191,7 @@ const styles = StyleSheet.create({
   coursePercentText: {
     fontSize: 11,
     fontWeight: '800',
+    flexShrink: 0,
   },
   graduatedBadgePill: {
     flexDirection: 'row',

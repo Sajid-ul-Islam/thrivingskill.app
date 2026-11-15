@@ -15,6 +15,7 @@ import { useLearning } from '../../context/LearningContext';
 import { triggerHaptic } from '../../utils/haptics';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
 import { SkillAssessmentQuestion, SkillAssessmentResult } from '../../types';
+import { SkillRadarChart } from '../analytics/SkillRadarChart';
 
 interface SkillAssessmentModalProps {
   visible: boolean;
@@ -299,6 +300,13 @@ export const SkillAssessmentModal: React.FC<SkillAssessmentModalProps> = ({
                 <Text style={[styles.resultInsightText, { color: colors.textMuted }]}>
                   {result.keyInsight}
                 </Text>
+
+                {/* 5-Axis Spider / Radar Competency Breakdown (EdTech UX Principle 4) */}
+                <SkillRadarChart
+                  data={result.domainScores}
+                  colors={colors}
+                  size={270}
+                />
 
                 {/* Domain Breakdown Bars */}
                 <View style={[styles.domainsBreakdownCard, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>

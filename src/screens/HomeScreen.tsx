@@ -24,7 +24,8 @@ import { CourseCard } from '../components/CourseCard';
 import { HeroCarousel, CarouselSlide } from '../components/HeroCarousel';
 import { QuickActionDock } from '../components/QuickActionDock';
 import { SearchSpotlightBar } from '../components/SearchSpotlightBar';
-import { CourseCardSkeleton, SpringPressable, StateView } from '../components/common';
+import { CourseCardSkeleton, SpringPressable, StateView, CircularProgressRing } from '../components/common';
+import { triggerHaptic } from '../utils/haptics';
 import { useYouTube } from '../context/YouTubeContext';
 import { RootTab } from '../types';
 import { AboutTSLModal, AboutTabKey } from '../components/AboutTSLModal';
@@ -357,7 +358,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </TouchableOpacity>
           </View>
 
-          {/* Subtitle & Daily Progress Bar */}
+          {/* Subtitle & Motivating Radial Daily Goal Ring (EdTech UX Principle 4) */}
           <View style={styles.greetingBottomRow}>
             <View style={{ flex: 1, marginRight: 10 }}>
               <Text style={[styles.greetingSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
@@ -365,23 +366,71 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               </Text>
             </View>
 
-            {/* Mini Goal Track */}
-            <View style={styles.goalTrackContainer}>
-              <View style={[styles.goalProgressBarBg, { backgroundColor: isDark ? colors.border : '#E2E8F0' }]}>
-                <View
-                  style={[
-                    styles.goalProgressBarFill,
-                    {
-                      backgroundColor: colors.primary,
-                      width: `${Math.min(100, Math.round((dailyMinutesSpent / (dailyGoalMinutes || 30)) * 100))}%`,
-                    },
-                  ]}
-                />
+            {/* Radial Progress Ring Goal Widget */}
+            <TouchableOpacity
+              style={[
+                styles.radialGoalBadge,
+                {
+                  backgroundColor: isDark ? colors.surfaceSubtle : '#F8FAFC',
+                  borderColor: colors.border,
+                },
+              ]}
+              activeOpacity={0.85}
+              onPress={() => {
+                triggerHaptic('light');
+                const goalPercent = Math.min(100, Math.round((dailyMinutesSpent / (dailyGoalMinutes || 30)) * 100));
+                Alert.alert(
+                  isBangla ? 'দৈনিক লক্ষ্য ও মোমেন্টাম 🎯' : 'Daily Study Goal 🎯',
+                  `${isBangla ? '• আজকের স্টাডি' : '• Today'}: ${dailyMinutesSpent}m / ${dailyGoalMinutes || 30}m (${goalPercent}% ${isBangla ? 'সম্পন্ন' : 'completed'})\n${isBangla ? '• স্টাডি স্ট্রিক' : '• Study Streak'}: ${streakDays} ${isBangla ? 'দিন' : 'days'} 🔥\n\n${
+                    goalPercent >= 100
+                      ? (isBangla ? 'অভিনন্দন! আজকের লক্ষ্য অর্জিত হয়েছে 🎉' : 'Awesome! You hit today’s learning goal 🎉')
+                      : (isBangla ? `আর মাত্র ${Math.max(0, (dailyGoalMinutes || 30) - dailyMinutesSpent)} মিনিট স্টাডি করলেই আজকের লক্ষ্য সম্পন্ন!` : `Only ${Math.max(0, (dailyGoalMinutes || 30) - dailyMinutesSpent)} minutes left to complete today's goal!`)
+                  }`,
+                  [
+                    { text: isBangla ? 'কোর্স চালিয়ে যান' : 'Continue Course', onPress: () => onNavigateTab('MyLearning') },
+                    { text: isBangla ? 'ঠিক আছে' : 'OK', style: 'cancel' },
+                  ]
+                );
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={`Daily Goal: ${dailyMinutesSpent} of ${dailyGoalMinutes || 30} minutes completed`}
+            >
+              <CircularProgressRing
+                progress={Math.min(100, Math.round((dailyMinutesSpent / (dailyGoalMinutes || 30)) * 100))}
+                size={32}
+                strokeWidth={3}
+                trackColor={isDark ? colors.border : '#E2E8F0'}
+                progressColor={
+                  Math.round((dailyMinutesSpent / (dailyGoalMinutes || 30)) * 100) >= 100
+                    ? '#10B981'
+                    : (colors.brandGold || '#FFB606')
+                }
+                showText={false}
+                centerContent={
+                  <Text
+                    style={[
+                      styles.radialCenterIcon,
+                      {
+                        color:
+                          Math.round((dailyMinutesSpent / (dailyGoalMinutes || 30)) * 100) >= 100
+                            ? '#10B981'
+                            : (colors.brandGold || '#FFB606'),
+                      },
+                    ]}
+                  >
+                    {Math.round((dailyMinutesSpent / (dailyGoalMinutes || 30)) * 100) >= 100 ? '✓' : '⚡'}
+                  </Text>
+                }
+              />
+              <View style={styles.radialGoalTextCol}>
+                <Text style={[styles.radialGoalTitle, { color: colors.text }]}>
+                  {dailyMinutesSpent}/{dailyGoalMinutes || 30}m
+                </Text>
+                <Text style={[styles.radialGoalSub, { color: colors.textMuted }]}>
+                  {isBangla ? 'দৈনিক লক্ষ্য' : 'Daily Goal'}
+                </Text>
               </View>
-              <Text style={[styles.goalTargetText, { color: colors.textMuted }]}>
-                {dailyMinutesSpent}/{dailyGoalMinutes || 30}m
-              </Text>
-            </View>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -870,24 +919,33 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
   },
-  goalTrackContainer: {
+  radialGoalBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 7,
+    minHeight: 40,
   },
-  goalProgressBarBg: {
-    width: 44,
-    height: 5,
-    borderRadius: 3,
-    overflow: 'hidden',
+  radialCenterIcon: {
+    fontSize: 9,
+    fontWeight: '800',
   },
-  goalProgressBarFill: {
-    height: '100%',
-    borderRadius: 3,
+  radialGoalTextCol: {
+    justifyContent: 'center',
   },
-  goalTargetText: {
-    fontSize: 10,
-    fontWeight: '700',
+  radialGoalTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: -0.2,
+    lineHeight: 14,
+  },
+  radialGoalSub: {
+    fontSize: 9,
+    fontWeight: '600',
+    lineHeight: 12,
   },
   section: {
     paddingHorizontal: 16,

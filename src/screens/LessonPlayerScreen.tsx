@@ -1047,7 +1047,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
             </View>
             <View style={styles.completionContent}>
               <View style={styles.completionHeaderRow}>
-                <Text style={[styles.completionTitle, { color: isDark ? '#A7F3D0' : '#065F46' }]}>
+                <Text style={[styles.completionTitle, { color: isDark ? '#A7F3D0' : '#065F46' }]} numberOfLines={1} ellipsizeMode="tail">
                   Course Completed! 🎓
                 </Text>
                 <View style={styles.completionXpBadge}>
@@ -1876,16 +1876,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 4,
+    gap: 8,
   },
   completionTitle: {
     fontSize: 14,
     fontWeight: '800',
+    flex: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   completionXpBadge: {
     backgroundColor: '#047857',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
+    flexShrink: 0,
   },
   completionXpText: {
     color: '#FFFFFF',

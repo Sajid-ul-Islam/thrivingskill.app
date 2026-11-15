@@ -1,9 +1,10 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import Svg, { Circle, G, Text as SvgText, Defs, LinearGradient, Stop } from 'react-native-svg';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
+import Svg, { Circle, G, Text as SvgText, Defs, LinearGradient, Stop, Path, Line, Rect } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { ThemeColors } from '../../theme/colors';
 import { LearnPressCourseFilter } from '../../types';
+import { triggerHaptic } from '../../utils/haptics';
 
 interface WeeklyDayActivity {
   day: string;
@@ -60,8 +61,57 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
   const validRate = Math.min(Math.max(completionRate, 0), 100);
   const strokeDashoffset = circumference - (circumference * validRate) / 100;
 
-  // Maximum hours for weekly bar scaling
+  const { width: windowWidth } = useWindowDimensions();
+  const todayIdx = weeklyActivity.findIndex((d) => d.isToday);
+  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(todayIdx >= 0 ? todayIdx : weeklyActivity.length - 1);
+
+  // Maximum hours for weekly scaling
   const maxHours = Math.max(...weeklyActivity.map((d) => d.hours), 3.5);
+  const totalWeeklyHours = weeklyActivity.reduce((acc, d) => acc + d.hours, 0).toFixed(1);
+
+  // Dynamic dimensions for responsive smooth area chart
+  const chartWidth = Math.max(windowWidth - 64, 280);
+  const chartHeight = 100;
+  const padLeft = 16;
+  const padRight = 16;
+  const padTop = 14;
+  const padBottom = 16;
+  const plotW = chartWidth - padLeft - padRight;
+  const plotH = chartHeight - padTop - padBottom;
+
+  const points = weeklyActivity.map((d, i) => {
+    const x = padLeft + (i / Math.max(weeklyActivity.length - 1, 1)) * plotW;
+    const y = padTop + plotH - (Math.max(d.hours, 0) / maxHours) * plotH;
+    return { x, y, ...d };
+  });
+
+  // Catmull-Rom cubic bezier for ultra-smooth area curves
+  const buildSplinePath = (pts: typeof points) => {
+    if (pts.length === 0) return '';
+    let d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p0 = pts[i === 0 ? 0 : i - 1];
+      const p1 = pts[i];
+      const p2 = pts[i + 1];
+      const p3 = pts[i + 2 < pts.length ? i + 2 : i + 1];
+
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+      d += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+    }
+    return d;
+  };
+
+  const linePath = buildSplinePath(points);
+  const areaBottomY = padTop + plotH;
+  const areaPath = points.length > 0
+    ? `${linePath} L ${points[points.length - 1].x.toFixed(1)} ${areaBottomY.toFixed(1)} L ${points[0].x.toFixed(1)} ${areaBottomY.toFixed(1)} Z`
+    : '';
+
+  const activeDay = weeklyActivity[selectedDayIndex] || weeklyActivity[0];
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
@@ -201,54 +251,141 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
         </View>
       </View>
 
-      {/* Weekly Learning Activity Bar Chart */}
+      {/* Weekly Learning Activity Smooth Area Chart */}
       <View style={styles.activitySection}>
         <View style={styles.activityHeader}>
-          <Text style={[styles.activityTitle, { color: colors.text }]}>
-            {isBangla ? 'সাপ্তাহিক অধ্যয়নের গতি (Weekly Velocity)' : 'Weekly Learning Rhythm'}
-          </Text>
-          <Text style={[styles.activitySummary, { color: colors.primary }]}>
-            {isBangla ? '১২.৮ ঘণ্টা সম্পন্ন' : '12.8 hrs logged'}
-          </Text>
+          <View style={{ flex: 1, paddingRight: 8 }}>
+            <Text style={[styles.activityTitle, { color: colors.text }]}>
+              {isBangla ? 'সাপ্তাহিক অধ্যয়নের গতি (Weekly Velocity)' : 'Weekly Study Velocity'}
+            </Text>
+            <Text style={[styles.activitySubtitle, { color: colors.textMuted }]} numberOfLines={1}>
+              {isBangla
+                ? `${totalWeeklyHours} ঘণ্টা সম্পন্ন • লক্ষ্যমাত্রার শীর্ষে`
+                : `${totalWeeklyHours} hrs logged • Consistent momentum`}
+            </Text>
+          </View>
+
+          {/* Interactive Floating Tooltip Callout */}
+          <View style={[styles.activeTooltipPill, { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderSubtle }]}>
+            <View style={[styles.tooltipDot, { backgroundColor: activeDay.hours >= 2.0 ? colors.brandGold : colors.primary }]} />
+            <Text style={[styles.tooltipText, { color: colors.text }]}>
+              {isBangla ? activeDay.dayBn : activeDay.day}: <Text style={{ fontWeight: '800', color: colors.primary }}>{activeDay.hours}h</Text>
+            </Text>
+          </View>
         </View>
 
-        <View style={styles.barsContainer}>
-          {weeklyActivity.map((item, index) => {
-            const barHeight = Math.max((item.hours / maxHours) * 60, 6);
-            const isHighlighted = item.isToday;
+        {/* Smooth SVG Area Chart */}
+        <View style={styles.areaChartWrap}>
+          <Svg width={chartWidth} height={chartHeight}>
+            <Defs>
+              <LinearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <Stop offset="0%" stopColor={colors.primary} stopOpacity={0.35} />
+                <Stop offset="80%" stopColor={colors.primary} stopOpacity={0.05} />
+                <Stop offset="100%" stopColor={colors.primary} stopOpacity={0.0} />
+              </LinearGradient>
+            </Defs>
 
-            return (
-              <View key={index} style={styles.barColumn}>
-                <Text style={[styles.barHoursText, { color: isHighlighted ? colors.brandGold : colors.textMuted }]}>
-                  {item.hours > 0 ? `${item.hours}h` : '0'}
-                </Text>
+            {/* Subtle Horizontal Reference Grid Lines (0h, 1.5h, 3h) */}
+            {[0, 0.5, 1].map((ratio, gIdx) => {
+              const gridY = padTop + plotH * (1 - ratio);
+              return (
+                <Line
+                  key={gIdx}
+                  x1={padLeft}
+                  y1={gridY}
+                  x2={chartWidth - padRight}
+                  y2={gridY}
+                  stroke={colors.borderSubtle || '#E2E8F0'}
+                  strokeWidth={1}
+                  strokeDasharray="4 4"
+                />
+              );
+            })}
 
-                <View style={[styles.barTrack, { backgroundColor: colors.borderSubtle || '#E2E8F0' }]}>
-                  <View
-                    style={[
-                      styles.barFill,
-                      {
-                        height: barHeight,
-                        backgroundColor: isHighlighted ? colors.brandGold : colors.brandNavy,
-                      },
-                    ]}
+            {/* Area Fill */}
+            {areaPath ? <Path d={areaPath} fill="url(#areaGradient)" /> : null}
+
+            {/* Top Spline Stroke */}
+            {linePath ? (
+              <Path
+                d={linePath}
+                fill="none"
+                stroke={colors.primary}
+                strokeWidth={2.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            ) : null}
+
+            {/* Data Point Vertices */}
+            {points.map((pt, idx) => {
+              const isSelected = idx === selectedDayIndex;
+              const isToday = pt.isToday;
+              return (
+                <G key={idx}>
+                  {isSelected && (
+                    <Circle
+                      cx={pt.x}
+                      cy={pt.y}
+                      r={9}
+                      fill={colors.brandGold}
+                      fillOpacity={0.25}
+                    />
+                  )}
+                  <Circle
+                    cx={pt.x}
+                    cy={pt.y}
+                    r={isSelected ? 5.5 : 3.5}
+                    fill={isToday ? colors.brandGold : isSelected ? colors.primary : colors.surfaceCard}
+                    stroke={isSelected ? colors.brandGold : colors.primary}
+                    strokeWidth={isSelected ? 2.5 : 1.5}
                   />
-                </View>
+                </G>
+              );
+            })}
+          </Svg>
 
-                <Text
+          {/* Interactive Day Touch Target Row (Finger tap: >= 44x44 dp) */}
+          <View style={styles.daysTouchRow}>
+            {weeklyActivity.map((item, idx) => {
+              const isSelected = idx === selectedDayIndex;
+              return (
+                <TouchableOpacity
+                  key={idx}
                   style={[
-                    styles.barDayText,
-                    {
-                      color: isHighlighted ? colors.brandNavy : colors.textMuted,
-                      fontWeight: isHighlighted ? '800' : '500',
+                    styles.dayPillBtn,
+                    isSelected && {
+                      backgroundColor: colors.brandGoldSubtle || 'rgba(255, 182, 6, 0.16)',
+                      borderColor: colors.brandGold,
+                      borderWidth: 1,
                     },
                   ]}
+                  onPress={() => {
+                    triggerHaptic('selection');
+                    setSelectedDayIndex(idx);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${item.day}: ${item.hours} hours logged`}
+                  hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
                 >
-                  {isBangla ? item.dayBn : item.day}
-                </Text>
-              </View>
-            );
-          })}
+                  <Text
+                    style={[
+                      styles.dayPillText,
+                      {
+                        color: isSelected ? (colors.brandGold || '#FFB606') : colors.textMuted,
+                        fontWeight: isSelected || item.isToday ? '800' : '600',
+                      },
+                    ]}
+                  >
+                    {isBangla ? item.dayBn : item.day}
+                  </Text>
+                  {item.isToday && (
+                    <View style={[styles.todayIndicatorDot, { backgroundColor: colors.brandGold }]} />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
       </View>
 
@@ -422,46 +559,63 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   activityTitle: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: -0.2,
   },
-  activitySummary: {
+  activitySubtitle: {
     fontSize: 11,
-    fontWeight: '700',
+    marginTop: 2,
+    fontWeight: '500',
   },
-  barsContainer: {
+  activeTooltipPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 5,
+  },
+  tooltipDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  tooltipText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  areaChartWrap: {
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  daysTouchRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    height: 90,
-    paddingHorizontal: 4,
-  },
-  barColumn: {
-    alignItems: 'center',
-    width: 34,
-  },
-  barHoursText: {
-    fontSize: 9,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  barTrack: {
-    width: 14,
-    height: 60,
-    borderRadius: 7,
-    justifyContent: 'flex-end',
-    overflow: 'hidden',
-  },
-  barFill: {
     width: '100%',
-    borderRadius: 7,
+    marginTop: 4,
+    paddingHorizontal: 8,
   },
-  barDayText: {
-    fontSize: 10,
-    marginTop: 6,
+  dayPillBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    minHeight: 36,
+  },
+  dayPillText: {
+    fontSize: 11,
+  },
+  todayIndicatorDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    marginTop: 2,
   },
   kpiRow: {
     flexDirection: 'row',

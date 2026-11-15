@@ -159,11 +159,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 8,
   },
   attendeesBox: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    flex: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   metaText: {
     fontSize: 12,
@@ -175,6 +179,7 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 8,
     gap: 4,
+    flexShrink: 0,
   },
   rsvpBtnText: {
     color: '#FFFFFF',

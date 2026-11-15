@@ -51,25 +51,27 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop }) 
     >
       <View style={styles.imageWrapper}>
         <Image source={{ uri: workshop.thumbnail }} style={styles.thumbnail} />
-        <View style={styles.liveBadge}>
-          <View style={styles.pulseDot} />
-          <Text style={styles.liveText}>UPCOMING WORKSHOP</Text>
-        </View>
+        <View style={styles.badgeRow}>
+          <View style={styles.liveBadge}>
+            <View style={styles.pulseDot} />
+            <Text style={styles.liveText} numberOfLines={1}>UPCOMING WORKSHOP</Text>
+          </View>
 
-        <View
-          style={[
-            styles.seatsBadge,
-            workshop.seatsLeft <= 5 && { backgroundColor: '#DC2626' },
-          ]}
-        >
-          <Ionicons
-            name={workshop.seatsLeft <= 5 ? 'flame' : 'people'}
-            size={12}
-            color="#FFFFFF"
-          />
-          <Text style={styles.seatsText}>
-            {workshop.seatsLeft <= 5 ? `Only ${workshop.seatsLeft} seats left!` : `${workshop.seatsLeft} seats left`}
-          </Text>
+          <View
+            style={[
+              styles.seatsBadge,
+              workshop.seatsLeft <= 5 && { backgroundColor: '#DC2626' },
+            ]}
+          >
+            <Ionicons
+              name={workshop.seatsLeft <= 5 ? 'flame' : 'people'}
+              size={12}
+              color="#FFFFFF"
+            />
+            <Text style={styles.seatsText} numberOfLines={1}>
+              {workshop.seatsLeft <= 5 ? `Only ${workshop.seatsLeft} seats left!` : `${workshop.seatsLeft} seats left`}
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -105,11 +107,11 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop }) 
         </View>
 
         <View style={styles.footer}>
-          <View>
-            <Text style={[styles.priceLabel, { color: colors.textMuted }]}>
+          <View style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
+            <Text style={[styles.priceLabel, { color: colors.textMuted }]} numberOfLines={1}>
               {isBangla ? 'রেজিস্ট্রেশন ফি' : 'Registration'}
             </Text>
-            <Text style={[styles.priceValue, { color: colors.primary }]}>
+            <Text style={[styles.priceValue, { color: colors.primary }]} numberOfLines={1}>
               {isFree ? (isBangla ? 'বিনামূল্যে' : 'Free') : `৳ ${bdtPrice.toLocaleString()}`}
             </Text>
           </View>
@@ -167,11 +169,18 @@ const styles = StyleSheet.create({
     height: '100%',
     resizeMode: 'cover',
   },
-  liveBadge: {
+  badgeRow: {
     position: 'absolute',
     top: 10,
     left: 10,
+    right: 10,
     zIndex: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 6,
+  },
+  liveBadge: {
     backgroundColor: '#DC2626',
     flexDirection: 'row',
     alignItems: 'center',
@@ -179,6 +188,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 6,
     gap: 6,
+    flexShrink: 1,
   },
   pulseDot: {
     width: 6,
@@ -193,10 +203,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   seatsBadge: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    zIndex: 8,
     backgroundColor: 'rgba(0,0,0,0.65)',
     flexDirection: 'row',
     alignItems: 'center',
@@ -204,6 +210,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 6,
     gap: 4,
+    flexShrink: 0,
   },
   seatsText: {
     fontSize: 11,
@@ -267,6 +274,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(150, 150, 150, 0.2)',
+    gap: 8,
   },
   priceLabel: {
     fontSize: 10,
@@ -285,6 +293,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 10,
     gap: 6,
+    flexShrink: 0,
   },
   rsvpText: {
     fontSize: 13,

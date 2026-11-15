@@ -173,11 +173,11 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
                 style={styles.brandLogo}
                 resizeMode="contain"
               />
-              <View>
-                <Text style={[styles.brandTitle, { color: colors.text }]}>
+              <View style={styles.brandTitleCol}>
+                <Text style={[styles.brandTitle, { color: colors.text }]} numberOfLines={1}>
                   Thriving<Text style={{ color: colors.primary }}>Skills</Text>
                 </Text>
-                <Text style={[styles.brandSlogan, { color: colors.textMuted }]} numberOfLines={1}>
+                <Text style={[styles.brandSlogan, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
                   {isBangla
                     ? (siteBranding?.taglineBn || 'দক্ষ জাতি গঠনে মানুষের ক্ষমতায়ন')
                     : (siteBranding?.tagline || 'Empowering People, Building a Skilled Nation')}
@@ -616,16 +616,26 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 18,
     paddingBottom: 14,
+    gap: 8,
   },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    flex: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   brandLogo: {
     width: 40,
     height: 40,
     borderRadius: 10,
+    flexShrink: 0,
+  },
+  brandTitleCol: {
+    flex: 1,
+    minWidth: 0,
+    justifyContent: 'center',
   },
   brandTitle: {
     fontSize: 18,
@@ -643,6 +653,7 @@ const styles = StyleSheet.create({
     borderRadius: shape.large,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   scrollBody: {
     paddingHorizontal: 16,

@@ -356,7 +356,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
           </View>
           <View style={styles.streakContent}>
             <View style={styles.streakHeaderRow}>
-              <Text style={[styles.streakTitle, { color: colors.text }]}>
+              <Text style={[styles.streakTitle, { color: colors.text }]} numberOfLines={1} ellipsizeMode="tail">
                 {streakDays > 0
                   ? (isBangla ? `${streakDays} দিনের স্টাডি স্ট্রিক` : `${streakDays}-Day Study Streak`)
                   : (isBangla ? 'আজই স্টাডি স্ট্রিক শুরু করুন' : 'Start Your Study Streak Today')}
@@ -501,14 +501,14 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                   >
                     <Image source={{ uri: item.course.thumbnail }} style={styles.cardImage} />
                     <View style={styles.cardBody}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <View style={[styles.completedBadge, { backgroundColor: colors.primaryLight }]}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4, gap: 8 }}>
+                        <View style={[styles.completedBadge, { backgroundColor: colors.primaryLight, flexShrink: 1, minWidth: 0, marginRight: 8 }]}>
                           <Ionicons name="time" size={12} color={colors.primary} />
-                          <Text style={[styles.completedBadgeText, { color: colors.primary }]}>
+                          <Text style={[styles.completedBadgeText, { color: colors.primary }]} numberOfLines={1}>
                             {item.dateWatched}
                           </Text>
                         </View>
-                        <Text style={{ fontSize: 11, color: colors.primary, fontWeight: '700' }}>
+                        <Text style={{ fontSize: 11, color: colors.primary, fontWeight: '700', flexShrink: 0 }}>
                           {item.progressPercent}% {isBangla ? 'সম্পন্ন' : 'Watched'}
                         </Text>
                       </View>
@@ -816,22 +816,28 @@ const styles = StyleSheet.create({
   },
   streakContent: {
     flex: 1,
+    minWidth: 0,
   },
   streakHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 4,
+    gap: 8,
   },
   streakTitle: {
     fontSize: 14,
     fontWeight: '800',
+    flex: 1,
+    minWidth: 0,
+    marginRight: 6,
   },
   streakRankBadge: {
     backgroundColor: '#FFB606',
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 6,
+    flexShrink: 0,
   },
   streakRankText: {
     color: '#102F53',

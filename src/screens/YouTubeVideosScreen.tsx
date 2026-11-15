@@ -142,12 +142,12 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
 
         <View style={styles.headerTitleContainer}>
           <View style={styles.headerLogoRow}>
-            <Ionicons name="logo-youtube" size={22} color="#FF0000" />
-            <Text style={[styles.headerTitle, { color: colors.text }]}>
+            <Ionicons name="logo-youtube" size={20} color="#FF0000" />
+            <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1} ellipsizeMode="tail">
               {isBangla ? 'ইউটিউব শোকেস' : 'YouTube Showcase'}
             </Text>
           </View>
-          <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>{YOUTUBE_CHANNEL.handle}</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">{YOUTUBE_CHANNEL.handle}</Text>
         </View>
 
         <TouchableOpacity
@@ -342,6 +342,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
+    gap: 8,
   },
   backBtn: {
     width: MIN_TOUCH_TARGET,
@@ -349,18 +350,24 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   headerTitleContainer: {
     alignItems: 'center',
+    flex: 1,
+    minWidth: 0,
+    marginHorizontal: 8,
   },
   headerLogoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    maxWidth: '100%',
   },
   headerTitle: {
     fontSize: 16,
     fontWeight: '700',
+    flexShrink: 1,
   },
   headerSubtitle: {
     fontSize: 12,
@@ -372,6 +379,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 14,
     borderRadius: 10,
+    flexShrink: 0,
   },
   subscribeBtnText: {
     color: '#FFFFFF',
