@@ -93,7 +93,25 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [deleteError, setDeleteError] = useState('');
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
-  // Edit Profile Form (Section 25 Spec)
+  // Official Settings Tabs matching thrivingskill.com: General | Avatar | Cover Image | Password | Privacy
+  const [settingsActiveTab, setSettingsActiveTab] = useState<'general' | 'avatar' | 'cover' | 'password' | 'privacy'>('general');
+
+  // General Settings Form (Matching thrivingskill.com live schema)
+  const [firstName, setFirstName] = useState(user?.first_name || '');
+  const [lastName, setLastName] = useState(user?.last_name || '');
+  const [displayName, setDisplayName] = useState(user?.displayName || user?.name || user?.username || '');
+  const [userEmail, setUserEmail] = useState(user?.email || '');
+  const [bioInfo, setBioInfo] = useState(user?.description || '');
+  const [phoneNumber, setPhoneNumber] = useState(user?.phone || '');
+  const [socialFacebook, setSocialFacebook] = useState(user?.social?.facebook || '');
+  const [socialTwitter, setSocialTwitter] = useState(user?.social?.twitter || '');
+  const [socialYoutube, setSocialYoutube] = useState(user?.social?.youtube || '');
+  const [socialLinkedin, setSocialLinkedin] = useState(user?.social?.linkedin || '');
+  const [privacyPublic, setPrivacyPublic] = useState(true);
+  const [privacyCourses, setPrivacyCourses] = useState(true);
+  const [privacyCertificates, setPrivacyCertificates] = useState(true);
+
+  // Backward compatibility state
   const [customName, setCustomName] = useState(user?.name || user?.displayName || user?.username || '');
   const [customPhone, setCustomPhone] = useState(user?.phone || '');
   const [customBio, setCustomBio] = useState(user?.description || '');
@@ -102,6 +120,17 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
   React.useEffect(() => {
     if (user) {
+      setFirstName(user.first_name || '');
+      setLastName(user.last_name || '');
+      setDisplayName(user.displayName || user.name || user.username || '');
+      setUserEmail(user.email || '');
+      setBioInfo(user.description || '');
+      setPhoneNumber(user.phone || '');
+      setSocialFacebook(user.social?.facebook || '');
+      setSocialTwitter(user.social?.twitter || '');
+      setSocialYoutube(user.social?.youtube || '');
+      setSocialLinkedin(user.social?.linkedin || '');
+
       setCustomName(user.name || user.displayName || user.username || '');
       setCustomPhone(user.phone || '');
       setCustomBio(user.description || '');
@@ -143,47 +172,75 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       return;
     }
 
+    if (!displayName.trim()) {
+      Alert.alert(
+        isBangla ? 'প্রয়োজনীয় তথ্য' : 'Required Field',
+        isBangla ? 'ডিসপ্লে নেম দেওয়া বাধ্যতামূলক।' : 'Display name is required.'
+      );
+      return;
+    }
+
     setIsSavingProfile(true);
     try {
       const updatedUser = await UserService.updateProfile({
-        name: customName.trim(),
-        description: customBio.trim(),
-        phone: customPhone.trim(),
+        name: displayName.trim(),
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        nickname: displayName.trim(),
+        description: bioInfo.trim(),
+        phone: phoneNumber.trim(),
+        social: {
+          facebook: socialFacebook.trim(),
+          twitter: socialTwitter.trim(),
+          youtube: socialYoutube.trim(),
+          linkedin: socialLinkedin.trim(),
+        },
       });
 
       await updateUserProfile({
         ...updatedUser,
-        name: customName.trim(),
-        displayName: customName.trim(),
-        description: customBio.trim(),
-        phone: customPhone.trim(),
-        city: customCity.trim(),
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        name: displayName.trim(),
+        displayName: displayName.trim(),
+        description: bioInfo.trim(),
+        phone: phoneNumber.trim(),
+        social: {
+          facebook: socialFacebook.trim(),
+          twitter: socialTwitter.trim(),
+          youtube: socialYoutube.trim(),
+          linkedin: socialLinkedin.trim(),
+        },
       });
 
       setEditProfileModalVisible(false);
-      Alert.alert(
-        isBangla ? 'প্রোফাইল আপডেট হয়েছে! ✅' : 'Profile Updated! ✅',
-        isBangla
-          ? 'আপনার প্রোফাইল তথ্য সফলভাবে সংরক্ষিত ও সিঙ্ক হয়েছে।'
-          : 'Your personal executive details have been saved successfully.'
-      );
+      showToast({
+        message: isBangla ? 'প্রোফাইল সফলভাবে আপডেট হয়েছে! ✅' : 'Profile updated successfully! ✅',
+        type: 'success',
+      });
+      triggerHaptic('success');
     } catch (err: any) {
       console.warn('Profile update remote sync error:', err);
       try {
         await updateUserProfile({
-          name: customName.trim(),
-          displayName: customName.trim(),
-          description: customBio.trim(),
-          phone: customPhone.trim(),
-          city: customCity.trim(),
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          name: displayName.trim(),
+          displayName: displayName.trim(),
+          description: bioInfo.trim(),
+          phone: phoneNumber.trim(),
+          social: {
+            facebook: socialFacebook.trim(),
+            twitter: socialTwitter.trim(),
+            youtube: socialYoutube.trim(),
+            linkedin: socialLinkedin.trim(),
+          },
         });
         setEditProfileModalVisible(false);
-        Alert.alert(
-          isBangla ? 'প্রোফাইল আপডেট হয়েছে! ✅' : 'Profile Updated! ✅',
-          isBangla
-            ? 'আপনার প্রোফাইল তথ্য লোকালি সংরক্ষিত হয়েছে।'
-            : 'Your personal executive details have been saved locally.'
-        );
+        showToast({
+          message: isBangla ? 'প্রোফাইল লোকালি সংরক্ষিত হয়েছে।' : 'Profile details saved locally.',
+          type: 'info',
+        });
       } catch {
         Alert.alert(
           isBangla ? 'ত্রুটি' : 'Error',
@@ -1607,100 +1664,379 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       />
 
       {/* Edit Profile Modal (Section 25 Spec) */}
+      {/* Official Profile Settings Modal (Aligned 1:1 with thrivingskill.com Settings) */}
       <Modal
         visible={editProfileModalVisible}
         transparent
         animationType="slide"
         onRequestClose={() => setEditProfileModalVisible(false)}
       >
-        <View style={styles.modalBackdrop}>
-          <View style={[styles.modalCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.modalBackdrop}
+        >
+          <View style={[styles.modalCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border, maxHeight: '92%' }]}>
             <View style={styles.modalHeader}>
               <View>
                 <Text style={[styles.modalTitle, { color: colors.text }]}>
-                  {isBangla ? 'প্রোফাইল সম্পাদন' : 'Edit Executive Profile'}
+                  {isBangla ? 'প্রোফাইল সেটিংস' : 'Profile Settings'}
                 </Text>
                 <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
-                  {isBangla ? 'আপনার ব্যক্তিগত ও প্রফেশনাল তথ্য আপডেট করুন' : 'Update your personal & corporate bio'}
+                  thrivingskill.com • {isBangla ? 'অফিসিয়াল অ্যাকাউন্ট কন্ট্রোল' : 'Official Account Settings'}
                 </Text>
               </View>
-              <TouchableOpacity onPress={() => setEditProfileModalVisible(false)} style={styles.modalCloseBtn}>
+              <TouchableOpacity
+                onPress={() => setEditProfileModalVisible(false)}
+                style={styles.modalCloseBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Close settings"
+              >
                 <Ionicons name="close" size={20} color={colors.text} />
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={{ maxHeight: 380 }} showsVerticalScrollIndicator={false}>
-              <Text style={[styles.inputLabel, { color: colors.text }]}>
-                {isBangla ? 'পুরো নাম' : 'Full Name'}
-              </Text>
-              <TextInput
-                style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
-                value={customName}
-                onChangeText={setCustomName}
-                placeholder="e.g. Tanvir Ahmed"
-                placeholderTextColor={colors.textMuted}
-              />
-
-              <Text style={[styles.inputLabel, { color: colors.text, marginTop: 12 }]}>
-                {isBangla ? 'ফোন নম্বর' : 'Phone Number'}
-              </Text>
-              <TextInput
-                style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
-                value={customPhone}
-                onChangeText={setCustomPhone}
-                placeholder="+880 1712-000000"
-                placeholderTextColor={colors.textMuted}
-                keyboardType="phone-pad"
-              />
-
-              <Text style={[styles.inputLabel, { color: colors.text, marginTop: 12 }]}>
-                {isBangla ? 'পদবি ও সংক্ষিপ্ত বায়ো' : 'Professional Headline / Bio'}
-              </Text>
-              <TextInput
-                style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border, minHeight: 56, textAlignVertical: 'top' }]}
-                value={customBio}
-                onChangeText={setCustomBio}
-                placeholder="e.g. Senior Business Executive | Continuous Learner"
-                placeholderTextColor={colors.textMuted}
-                multiline
-              />
-
-              <Text style={[styles.inputLabel, { color: colors.text, marginTop: 12 }]}>
-                {isBangla ? 'শহর / ঠিকানা' : 'City / Location'}
-              </Text>
-              <TextInput
-                style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
-                value={customCity}
-                onChangeText={setCustomCity}
-                placeholder="e.g. Gulshan-2, Dhaka"
-                placeholderTextColor={colors.textMuted}
-              />
-            </ScrollView>
-
-            <View style={styles.modalActionRow}>
-              <TouchableOpacity
-                style={[styles.cancelBtn, { borderColor: colors.border }]}
-                onPress={() => setEditProfileModalVisible(false)}
-              >
-                <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>
-                  {isBangla ? 'বাতিল' : 'Cancel'}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.saveBtn, { backgroundColor: colors.primary, opacity: isSavingProfile ? 0.7 : 1 }]}
-                onPress={handleSaveProfile}
-                disabled={isSavingProfile}
-              >
-                <Ionicons name="checkmark-circle-outline" size={16} color={colors.onPrimary} />
-                <Text style={[styles.saveBtnText, { color: colors.onPrimary }]}>
-                  {isSavingProfile
-                    ? (isBangla ? 'সংরক্ষণ হচ্ছে...' : 'Saving...')
-                    : (isBangla ? 'সংরক্ষণ করুন' : 'Save Changes')}
-                </Text>
-              </TouchableOpacity>
+            {/* Subtabs Bar: General | Avatar | Cover Image | Password | Privacy */}
+            <View style={[styles.settingsTabBar, { borderBottomColor: colors.border }]}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.settingsTabScroll}>
+                {[
+                  { id: 'general', label: 'General' },
+                  { id: 'avatar', label: 'Avatar' },
+                  { id: 'cover', label: 'Cover Image' },
+                  { id: 'password', label: 'Password' },
+                  { id: 'privacy', label: 'Privacy' },
+                ].map((tab) => {
+                  const isActive = settingsActiveTab === tab.id;
+                  return (
+                    <TouchableOpacity
+                      key={tab.id}
+                      style={[
+                        styles.settingsTabItem,
+                        isActive && [styles.settingsTabItemActive, { borderBottomColor: colors.primary }],
+                      ]}
+                      onPress={() => {
+                        triggerHaptic('selection');
+                        setSettingsActiveTab(tab.id as any);
+                      }}
+                      accessibilityRole="tab"
+                      accessibilityState={{ selected: isActive }}
+                    >
+                      <Text
+                        style={[
+                          styles.settingsTabText,
+                          { color: isActive ? colors.primary : colors.textMuted },
+                          isActive && { fontWeight: '700' },
+                        ]}
+                      >
+                        {tab.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
             </View>
+
+            <ScrollView style={{ flexShrink: 1 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              {settingsActiveTab === 'general' && (
+                <View style={{ paddingVertical: 10 }}>
+                  {/* First Name & Last Name */}
+                  <View style={styles.twoColRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.inputLabel, { color: colors.text }]}>First name</Text>
+                      <TextInput
+                        style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
+                        value={firstName}
+                        onChangeText={setFirstName}
+                        placeholder="First name"
+                        placeholderTextColor={colors.textMuted}
+                        autoCapitalize="words"
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.inputLabel, { color: colors.text }]}>Last name</Text>
+                      <TextInput
+                        style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
+                        value={lastName}
+                        onChangeText={setLastName}
+                        placeholder="Last name"
+                        placeholderTextColor={colors.textMuted}
+                        autoCapitalize="words"
+                      />
+                    </View>
+                  </View>
+
+                  {/* Display Name* & Email Address* */}
+                  <View style={[styles.twoColRow, { marginTop: 12 }]}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.inputLabel, { color: colors.text }]}>
+                        Display name<Text style={{ color: colors.danger }}>*</Text>
+                      </Text>
+                      <TextInput
+                        style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
+                        value={displayName}
+                        onChangeText={setDisplayName}
+                        placeholder="Display name"
+                        placeholderTextColor={colors.textMuted}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.inputLabel, { color: colors.text }]}>
+                        Email address<Text style={{ color: colors.danger }}>*</Text>
+                      </Text>
+                      <TextInput
+                        style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
+                        value={userEmail}
+                        editable={false}
+                        placeholder="Email address"
+                        placeholderTextColor={colors.textMuted}
+                        keyboardType="email-address"
+                      />
+                    </View>
+                  </View>
+
+                  {/* Biographical Info */}
+                  <View style={{ marginTop: 12 }}>
+                    <Text style={[styles.inputLabel, { color: colors.text }]}>Biographical Info</Text>
+                    <TextInput
+                      style={[
+                        styles.modalInput,
+                        {
+                          backgroundColor: colors.surfaceSubtle,
+                          color: colors.text,
+                          borderColor: colors.border,
+                          minHeight: 74,
+                          textAlignVertical: 'top',
+                        },
+                      ]}
+                      value={bioInfo}
+                      onChangeText={setBioInfo}
+                      placeholder="Share a little biographical information..."
+                      placeholderTextColor={colors.textMuted}
+                      multiline
+                    />
+                    <Text style={[styles.helperText, { color: colors.textMuted }]}>
+                      Share a little biographical information to fill out your profile. This may be shown publicly.
+                    </Text>
+                  </View>
+
+                  {/* Phone Number */}
+                  <View style={{ marginTop: 12 }}>
+                    <Text style={[styles.inputLabel, { color: colors.text }]}>Phone Number</Text>
+                    <TextInput
+                      style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
+                      value={phoneNumber}
+                      onChangeText={setPhoneNumber}
+                      placeholder="Phone Number"
+                      placeholderTextColor={colors.textMuted}
+                      keyboardType="phone-pad"
+                    />
+                  </View>
+
+                  {/* Social Links: Facebook & X Profile */}
+                  <View style={[styles.twoColRow, { marginTop: 12 }]}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.inputLabel, { color: colors.text }]}>Facebook Profile</Text>
+                      <TextInput
+                        style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
+                        value={socialFacebook}
+                        onChangeText={setSocialFacebook}
+                        placeholder="https://"
+                        placeholderTextColor={colors.textMuted}
+                        autoCapitalize="none"
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.inputLabel, { color: colors.text }]}>X Profile</Text>
+                      <TextInput
+                        style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
+                        value={socialTwitter}
+                        onChangeText={setSocialTwitter}
+                        placeholder="https://"
+                        placeholderTextColor={colors.textMuted}
+                        autoCapitalize="none"
+                      />
+                    </View>
+                  </View>
+
+                  {/* Social Links: Youtube Channel & Linkedin Profile */}
+                  <View style={[styles.twoColRow, { marginTop: 12 }]}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.inputLabel, { color: colors.text }]}>Youtube Channel</Text>
+                      <TextInput
+                        style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
+                        value={socialYoutube}
+                        onChangeText={setSocialYoutube}
+                        placeholder="https://"
+                        placeholderTextColor={colors.textMuted}
+                        autoCapitalize="none"
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.inputLabel, { color: colors.text }]}>Linkedin Profile</Text>
+                      <TextInput
+                        style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
+                        value={socialLinkedin}
+                        onChangeText={setSocialLinkedin}
+                        placeholder="https://"
+                        placeholderTextColor={colors.textMuted}
+                        autoCapitalize="none"
+                      />
+                    </View>
+                  </View>
+
+                  {/* Save Changes CTA */}
+                  <TouchableOpacity
+                    style={[styles.saveChangesBtn, { backgroundColor: '#102F53' }]}
+                    onPress={handleSaveProfile}
+                    disabled={isSavingProfile}
+                    activeOpacity={0.88}
+                  >
+                    {isSavingProfile ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <Text style={styles.saveChangesBtnText}>SAVE CHANGES</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {settingsActiveTab === 'avatar' && (
+                <View style={{ paddingVertical: 18, alignItems: 'center' }}>
+                  <View style={[styles.avatarWrapBig, { borderColor: colors.primary }]}>
+                    {user?.avatar ? (
+                      <Image source={{ uri: user.avatar }} style={styles.avatarImgBig} />
+                    ) : (
+                      <Ionicons name="person" size={54} color={colors.primary} />
+                    )}
+                  </View>
+                  <Text style={[styles.avatarNameBig, { color: colors.text }]}>
+                    {displayName || 'Student Profile'}
+                  </Text>
+                  <Text style={[styles.avatarSubBig, { color: colors.textMuted }]}>
+                    Your avatar is synchronized with Gravatar and your official Thriving Skills LMS profile.
+                  </Text>
+                  <TouchableOpacity
+                    style={[styles.secondaryActionBtn, { borderColor: colors.primary, backgroundColor: colors.primaryLight }]}
+                    onPress={() => Linking.openURL('https://gravatar.com')}
+                  >
+                    <Ionicons name="image-outline" size={16} color={colors.primary} />
+                    <Text style={[styles.secondaryActionText, { color: colors.primary }]}>
+                      Update on Gravatar
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {settingsActiveTab === 'cover' && (
+                <View style={{ paddingVertical: 18, alignItems: 'center' }}>
+                  <View style={[styles.coverPreviewCard, { backgroundColor: '#102F53' }]}>
+                    <Ionicons name="school" size={42} color="#FFB606" />
+                    <Text style={styles.coverCardTitle}>THRIVING SKILLS</Text>
+                    <Text style={styles.coverCardSub}>Executive Learning & Career Advancement</Text>
+                  </View>
+                  <Text style={[styles.avatarSubBig, { color: colors.textMuted, marginTop: 14 }]}>
+                    Cover photos appear across your public student profile and verified completion badges.
+                  </Text>
+                </View>
+              )}
+
+              {settingsActiveTab === 'password' && (
+                <View style={{ paddingVertical: 10 }}>
+                  <Text style={[styles.inputLabel, { color: colors.text }]}>Old Password</Text>
+                  <TextInput
+                    style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
+                    value={currentPass}
+                    onChangeText={setCurrentPass}
+                    secureTextEntry
+                    placeholder="Enter current password"
+                    placeholderTextColor={colors.textMuted}
+                  />
+
+                  <Text style={[styles.inputLabel, { color: colors.text, marginTop: 12 }]}>New Password</Text>
+                  <TextInput
+                    style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
+                    value={newPass}
+                    onChangeText={setNewPass}
+                    secureTextEntry
+                    placeholder="Enter new password (min 6 chars)"
+                    placeholderTextColor={colors.textMuted}
+                  />
+
+                  <Text style={[styles.inputLabel, { color: colors.text, marginTop: 12 }]}>Confirm New Password</Text>
+                  <TextInput
+                    style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
+                    value={confirmPass}
+                    onChangeText={setConfirmPass}
+                    secureTextEntry
+                    placeholder="Confirm new password"
+                    placeholderTextColor={colors.textMuted}
+                  />
+
+                  <TouchableOpacity
+                    style={[styles.saveChangesBtn, { backgroundColor: '#102F53', marginTop: 18 }]}
+                    onPress={handleChangePassword}
+                    disabled={isChangingPass}
+                    activeOpacity={0.88}
+                  >
+                    {isChangingPass ? (
+                      <ActivityIndicator size="small" color="#FFFFFF" />
+                    ) : (
+                      <Text style={styles.saveChangesBtnText}>SAVE CHANGES</Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {settingsActiveTab === 'privacy' && (
+                <View style={{ paddingVertical: 12 }}>
+                  <View style={[styles.privacyRow, { borderBottomColor: colors.borderSubtle }]}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.privacyLabel, { color: colors.text }]}>Public Profile</Text>
+                      <Text style={[styles.privacySub, { color: colors.textMuted }]}>
+                        Allow fellow professionals and instructors to view your achievements.
+                      </Text>
+                    </View>
+                    <Switch
+                      value={privacyPublic}
+                      onValueChange={setPrivacyPublic}
+                      trackColor={{ false: '#CBD5E1', true: colors.primary }}
+                      thumbColor="#FFFFFF"
+                    />
+                  </View>
+
+                  <View style={[styles.privacyRow, { borderBottomColor: colors.borderSubtle }]}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.privacyLabel, { color: colors.text }]}>Show Enrolled Courses</Text>
+                      <Text style={[styles.privacySub, { color: colors.textMuted }]}>
+                        Display course progress on your profile.
+                      </Text>
+                    </View>
+                    <Switch
+                      value={privacyCourses}
+                      onValueChange={setPrivacyCourses}
+                      trackColor={{ false: '#CBD5E1', true: colors.primary }}
+                      thumbColor="#FFFFFF"
+                    />
+                  </View>
+
+                  <View style={styles.privacyRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.privacyLabel, { color: colors.text }]}>Show Certificates</Text>
+                      <Text style={[styles.privacySub, { color: colors.textMuted }]}>
+                        Display verified digital certificates on your public portfolio.
+                      </Text>
+                    </View>
+                    <Switch
+                      value={privacyCertificates}
+                      onValueChange={setPrivacyCertificates}
+                      trackColor={{ false: '#CBD5E1', true: colors.primary }}
+                      thumbColor="#FFFFFF"
+                    />
+                  </View>
+                </View>
+              )}
+            </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Change Password Modal (Section 26 Spec) */}
@@ -2733,5 +3069,130 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '700',
+  },
+  settingsTabBar: {
+    borderBottomWidth: 1,
+    marginBottom: 8,
+  },
+  settingsTabScroll: {
+    flexDirection: 'row',
+    gap: 16,
+    paddingHorizontal: 4,
+  },
+  settingsTabItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  settingsTabItemActive: {
+    borderBottomWidth: 2,
+  },
+  settingsTabText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  twoColRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  helperText: {
+    fontSize: 11,
+    marginTop: 4,
+    lineHeight: 15,
+  },
+  saveChangesBtn: {
+    marginTop: 18,
+    height: 44,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#102F53',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  saveChangesBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  avatarWrapBig: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    marginBottom: 10,
+  },
+  avatarImgBig: {
+    width: '100%',
+    height: '100%',
+  },
+  avatarNameBig: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  avatarSubBig: {
+    fontSize: 12,
+    textAlign: 'center',
+    paddingHorizontal: 24,
+    lineHeight: 17,
+  },
+  secondaryActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 14,
+  },
+  secondaryActionText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  coverPreviewCard: {
+    width: '100%',
+    height: 120,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  coverCardTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '900',
+    letterSpacing: 2,
+    marginTop: 6,
+  },
+  coverCardSub: {
+    color: '#FFB606',
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  privacyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+  },
+  privacyLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  privacySub: {
+    fontSize: 12,
+    lineHeight: 16,
   },
 });

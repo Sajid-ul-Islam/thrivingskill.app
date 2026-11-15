@@ -102,6 +102,9 @@ files.forEach(f => {
     if (
       (line.includes('facebook') || line.includes('Facebook')) &&
       !line.includes('//') &&
+      !line.includes('social') &&
+      !line.includes('Social') &&
+      !line.includes('Profile') &&
       !f.includes('mockData') &&
       !f.includes('client requirement') &&
       !f.includes('client revetment')

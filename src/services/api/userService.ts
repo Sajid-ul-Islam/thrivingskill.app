@@ -2,6 +2,8 @@ import { HttpClient } from './httpClient';
 import { Endpoints } from './endpoints';
 import { WpUser } from '../../types';
 
+import { UserSocialLinks } from '../../types';
+
 export interface ProfileUpdatePayload {
   name?: string;
   first_name?: string;
@@ -9,6 +11,7 @@ export interface ProfileUpdatePayload {
   nickname?: string;
   description?: string;
   phone?: string;
+  social?: UserSocialLinks;
 }
 
 export interface ChangePasswordPayload {
@@ -24,6 +27,7 @@ export interface UserProfile extends WpUser {
   nickname?: string;
   description?: string;
   phone?: string;
+  social?: UserSocialLinks;
   city?: string;
   avatar_urls?: Record<string, string>;
 }
@@ -38,16 +42,28 @@ export class UserService {
       if (!data) return null;
 
       let lpAvatar: string | undefined;
+      let lpSocial: UserSocialLinks | undefined;
+      let lpPhone: string | undefined;
+
       if (data.id) {
         try {
           const lpUser = await this.getLearnPressUser(data.id);
-          if (lpUser && lpUser.avatar_url) {
-            lpAvatar = lpUser.avatar_url;
+          if (lpUser) {
+            if (lpUser.avatar_url) lpAvatar = lpUser.avatar_url;
+            if (lpUser.social) lpSocial = lpUser.social;
+            if (lpUser.custom_register) {
+              const values = Object.values(lpUser.custom_register);
+              if (values.length > 0 && typeof values[0] === 'string') {
+                lpPhone = values[0];
+              }
+            }
           }
         } catch {
           // Ignore if LearnPress user details query fails
         }
       }
+
+      const phone = lpPhone || data.meta?.phone || data.meta?.billing_phone || '';
 
       return {
         id: data.id,
@@ -59,6 +75,8 @@ export class UserService {
         last_name: data.last_name,
         nickname: data.nickname,
         description: data.description,
+        phone,
+        social: lpSocial,
         avatar: lpAvatar || data.avatar_urls?.['96'] || data.avatar_urls?.['48'],
         avatar_urls: data.avatar_urls,
         roles: data.roles || ['subscriber'],
@@ -72,7 +90,7 @@ export class UserService {
    * Update user profile via WordPress REST API (/wp/v2/users/me)
    * Resolves Defect DEFECT-M3-01 / test T1.3.5 in scripts/e2e_full_suite.js
    */
-  static async updateProfile(payload: ProfileUpdatePayload): Promise<WpUser> {
+  static async updateProfile(payload: ProfileUpdatePayload): Promise<UserProfile> {
     const body: Record<string, any> = {};
     if (payload.name !== undefined) body.name = payload.name;
     if (payload.first_name !== undefined) body.first_name = payload.first_name;
@@ -80,15 +98,37 @@ export class UserService {
     if (payload.nickname !== undefined) body.nickname = payload.nickname;
     if (payload.description !== undefined) body.description = payload.description;
 
+    const meta: Record<string, any> = {};
+    if (payload.phone !== undefined) {
+      meta.phone = payload.phone;
+      meta.billing_phone = payload.phone;
+    }
+    if (Object.keys(meta).length > 0) {
+      body.meta = meta;
+    }
+
     const data = await HttpClient.post<any>(Endpoints.WORDPRESS.CURRENT_USER, body);
+
+    // Synchronize social profile links to LearnPress if provided
+    let lpSocial = payload.social;
+    if (payload.social && data?.id) {
+      try {
+        await HttpClient.post(`/wp-json/learnpress/v1/users/${data.id}`, {
+          social: payload.social,
+        });
+      } catch {
+        // LearnPress social sync error fallback
+      }
+    }
 
     // LearnPress avatar synchronization
     let lpAvatar: string | undefined;
     if (data?.id) {
       try {
         const lpUser = await this.getLearnPressUser(data.id);
-        if (lpUser && lpUser.avatar_url) {
-          lpAvatar = lpUser.avatar_url;
+        if (lpUser) {
+          if (lpUser.avatar_url) lpAvatar = lpUser.avatar_url;
+          if (lpUser.social && !lpSocial) lpSocial = lpUser.social;
         }
       } catch {
         // LearnPress avatar fetch error ignored
@@ -106,6 +146,7 @@ export class UserService {
       nickname: data.nickname,
       description: data.description,
       phone: payload.phone,
+      social: lpSocial,
       avatar: lpAvatar || data.avatar_urls?.['96'] || data.avatar_urls?.['48'],
       avatar_urls: data.avatar_urls,
       roles: data.roles || ['subscriber'],

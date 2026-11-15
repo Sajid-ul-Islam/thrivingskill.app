@@ -21,15 +21,26 @@ export interface Category {
   slug?: string;
 }
 
+export interface UserSocialLinks {
+  facebook?: string;
+  twitter?: string; // X Profile
+  youtube?: string;
+  linkedin?: string;
+}
+
 export interface WpUser {
   id: number | string;
   username: string;
   email: string;
   displayName: string;
+  first_name?: string;
+  last_name?: string;
+  description?: string;
   phone?: string;
   avatar?: string;
   token?: string;
   roles?: string[];
+  social?: UserSocialLinks;
 }
 
 export interface WpPost {
