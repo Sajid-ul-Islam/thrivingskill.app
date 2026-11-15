@@ -73,6 +73,12 @@ All autonomous agents working on this project MUST strictly adhere to the follow
   - **UX Honeycomb**: Usefulness, Usability, Findability, Credibility (`StateView`, `OfflineBanner`), Desirability, Accessibility, and Value.
   - **Psychological Laws**: Hick's Law (focused choices, 5 bottom tabs), Fitts's Law (`>= 44x44 dp` targets, isolated destructive actions), Jakob's Law (familiar mobile conventions), Miller's Law (`3–7` items per card group/step), and Aesthetic-Usability Effect.
 
+### Rule 7: Single Source of Truth is `https://thrivingskill.com`
+* Follow [the Single Source of Truth rule](.agents/rules/single-source-of-truth.md):
+  - **Live Platform as Authority**: The live website [https://thrivingskill.com](https://thrivingskill.com) is the supreme source of truth for all business rules, authentication flows, registration fields, validation constraints, course curricula, and checkout steps.
+  - **Never Assume or Fabricate Constraints**: Agents must NEVER invent arbitrary input rules, field requirements, or client-side restrictions (e.g., mandatory phone numbers or arbitrary password complexity regex) not present on the live site.
+  - **Empirical Verification Required**: Always probe and verify against `https://thrivingskill.com` before claiming or implementing any rule or flow.
+
 ---
 
 ## 3. Slash Command Reference for Developers & Agents
