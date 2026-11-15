@@ -20,6 +20,7 @@ import {
   SearchDocType,
   SearchResult,
 } from '../../services/search/localSearchEngine';
+import { LiteRtService } from '../../services/ai/liteRtService';
 import { SpacedRepetitionService } from '../../services/study/spacedRepetitionService';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
 
@@ -45,7 +46,22 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
   const [query, setQuery] = useState('');
   const [filterType, setFilterType] = useState<FilterOption>('all');
   const [results, setResults] = useState<SearchResult[]>([]);
+  const [isSemanticActive, setIsSemanticActive] = useState<boolean>(LiteRtService.isSemanticEnabled());
   const inputRef = useRef<React.ElementRef<typeof TextInput>>(null);
+
+  const handleToggleSemantic = async () => {
+    triggerHaptic('selection');
+    const next = !isSemanticActive;
+    setIsSemanticActive(next);
+    await LiteRtService.setSemanticSearchEnabled(next);
+    if (query.trim()) {
+      const res = LocalSearchEngine.search(
+        query.trim(),
+        filterType === 'all' ? undefined : filterType
+      );
+      setResults(res);
+    }
+  };
 
   // Rebuild the local index on modal open or when courses/notes change
   useEffect(() => {
@@ -200,6 +216,37 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
           {/* Filter Chips Bar */}
           <View style={styles.filterBar}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+              <TouchableOpacity
+                onPress={handleToggleSemantic}
+                style={[
+                  styles.filterChip,
+                  {
+                    backgroundColor: isSemanticActive ? (isDark ? '#3B0764' : '#EDE9FE') : colors.surfaceSubtle,
+                    borderColor: isSemanticActive ? '#7C3AED' : colors.border,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                  },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Toggle AI Semantic Search"
+              >
+                <Ionicons
+                  name="sparkles"
+                  size={13}
+                  color={isSemanticActive ? '#7C3AED' : colors.textMuted}
+                  style={{ marginRight: 4 }}
+                />
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    { color: isSemanticActive ? '#7C3AED' : colors.textMuted },
+                    isSemanticActive && { fontWeight: '700' },
+                  ]}
+                >
+                  {isSemanticActive ? 'AI Semantic: ON' : 'AI Semantic: OFF'}
+                </Text>
+              </TouchableOpacity>
+
               {[
                 { id: 'all', label: 'All Results' },
                 { id: 'course', label: 'Courses' },
@@ -276,9 +323,17 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
                     accessibilityLabel={`Open ${res.doc.type}: ${res.doc.title}`}
                   >
                     <View style={styles.resultHeader}>
-                      <View style={[styles.typeBadge, { backgroundColor: color + '20' }]}>
-                        <Ionicons name={icon} size={14} color={color} style={{ marginRight: 4 }} />
-                        <Text style={[styles.typeBadgeText, { color }]}>{res.doc.type.toUpperCase()}</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <View style={[styles.typeBadge, { backgroundColor: color + '20' }]}>
+                          <Ionicons name={icon} size={14} color={color} style={{ marginRight: 4 }} />
+                          <Text style={[styles.typeBadgeText, { color }]}>{res.doc.type.toUpperCase()}</Text>
+                        </View>
+                        {res.isSemanticMatch && (
+                          <View style={[styles.typeBadge, { backgroundColor: '#7C3AED20' }]}>
+                            <Ionicons name="sparkles" size={11} color="#7C3AED" style={{ marginRight: 3 }} />
+                            <Text style={[styles.typeBadgeText, { color: '#7C3AED' }]}>AI SEMANTIC</Text>
+                          </View>
+                        )}
                       </View>
                       {res.doc.badge ? (
                         <Text style={[styles.badgeText, { color: colors.textMuted }]} numberOfLines={1}>

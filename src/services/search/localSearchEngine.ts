@@ -1,5 +1,6 @@
 import { Course, Note, Lesson } from '../../types';
 import { Flashcard } from '../study/spacedRepetitionService';
+import { LiteRtService } from '../ai/liteRtService';
 
 export type SearchDocType = 'course' | 'lesson' | 'note' | 'flashcard';
 
@@ -17,6 +18,9 @@ export interface SearchDocument {
 export interface SearchResult {
   doc: SearchDocument;
   score: number;
+  lexicalScore: number;
+  semanticScore: number;
+  isSemanticMatch: boolean;
   matchedTerms: string[];
   snippet: string;
 }
@@ -27,6 +31,8 @@ export class LocalSearchEngine {
   private static invertedIndex = new Map<string, Map<string, number>>();
   // Title inverted index for weighted scoring (3x)
   private static titleIndex = new Map<string, Map<string, number>>();
+  // LiteRT Dense Vector Embeddings (Phase 4 AI Hybrid Search)
+  private static documentEmbeddings = new Map<string, number[]>();
 
   /**
    * Tokenize text into normalized search terms (supports English & Bengali unicode)
@@ -42,12 +48,12 @@ export class LocalSearchEngine {
   }
 
   /**
-   * Index a single document
+   * Index a single document with both Inverted Index tokens and LiteRT Vector Embeddings
    */
   static indexDocument(doc: SearchDocument): void {
     this.documents.set(doc.id, doc);
 
-    // Index title
+    // 1. Index title
     const titleTokens = this.tokenize(doc.title);
     for (const token of titleTokens) {
       if (!this.titleIndex.has(token)) {
@@ -57,7 +63,7 @@ export class LocalSearchEngine {
       post.set(doc.id, (post.get(doc.id) || 0) + 1);
     }
 
-    // Index body
+    // 2. Index body
     const bodyTokens = this.tokenize(doc.body);
     for (const token of bodyTokens) {
       if (!this.invertedIndex.has(token)) {
@@ -66,15 +72,20 @@ export class LocalSearchEngine {
       const post = this.invertedIndex.get(token)!;
       post.set(doc.id, (post.get(doc.id) || 0) + 1);
     }
+
+    // 3. Generate and index dense vector embedding for LiteRT Semantic Search (Phase 4)
+    const embedding = LiteRtService.generateEmbedding(`${doc.title} ${doc.body}`);
+    this.documentEmbeddings.set(doc.id, embedding);
   }
 
   /**
-   * Remove a document from the index
+   * Remove a document from all indexes
    */
   static removeDocument(docId: string): void {
     this.documents.delete(docId);
     this.titleIndex.forEach((post) => post.delete(docId));
     this.invertedIndex.forEach((post) => post.delete(docId));
+    this.documentEmbeddings.delete(docId);
   }
 
   /**
@@ -84,6 +95,7 @@ export class LocalSearchEngine {
     this.documents.clear();
     this.titleIndex.clear();
     this.invertedIndex.clear();
+    this.documentEmbeddings.clear();
   }
 
   /**
@@ -150,39 +162,41 @@ export class LocalSearchEngine {
   }
 
   /**
-   * Search across the local inverted index with TF-IDF style scoring and multi-field weighting
+   * Hybrid Search: Combines Lexical Inverted Index (BM25/TF-IDF) with
+   * On-Device LiteRT Vector Semantic Similarity.
    */
   static search(query: string, filterType?: SearchDocType): SearchResult[] {
     const queryTokens = this.tokenize(query);
     if (queryTokens.length === 0) return [];
 
-    const scores = new Map<string, { score: number; matched: Set<string> }>();
+    const lexicalScores = new Map<string, { score: number; matched: Set<string> }>();
 
+    // 1. Lexical Matching
     for (const qToken of queryTokens) {
-      // 1. Check Title Index (Weight 3.0x)
+      // Title Matches (3.0x weight)
       this.titleIndex.forEach((postMap, term) => {
         if (term === qToken || term.startsWith(qToken)) {
           const matchBoost = term === qToken ? 1.0 : 0.7;
           postMap.forEach((tf, docId) => {
-            if (!scores.has(docId)) {
-              scores.set(docId, { score: 0, matched: new Set() });
+            if (!lexicalScores.has(docId)) {
+              lexicalScores.set(docId, { score: 0, matched: new Set() });
             }
-            const entry = scores.get(docId)!;
+            const entry = lexicalScores.get(docId)!;
             entry.score += tf * 3.0 * matchBoost;
             entry.matched.add(term);
           });
         }
       });
 
-      // 2. Check Body Index (Weight 1.0x)
+      // Body Matches (1.0x weight)
       this.invertedIndex.forEach((postMap, term) => {
         if (term === qToken || term.startsWith(qToken)) {
           const matchBoost = term === qToken ? 1.0 : 0.6;
           postMap.forEach((tf, docId) => {
-            if (!scores.has(docId)) {
-              scores.set(docId, { score: 0, matched: new Set() });
+            if (!lexicalScores.has(docId)) {
+              lexicalScores.set(docId, { score: 0, matched: new Set() });
             }
-            const entry = scores.get(docId)!;
+            const entry = lexicalScores.get(docId)!;
             entry.score += tf * 1.0 * matchBoost;
             entry.matched.add(term);
           });
@@ -190,15 +204,54 @@ export class LocalSearchEngine {
       });
     }
 
+    // 2. LiteRT On-Device Vector Semantic Similarity (Phase 4)
+    const isSemanticActive = LiteRtService.isSemanticEnabled();
+    const queryEmbedding = isSemanticActive ? LiteRtService.generateEmbedding(query) : null;
+    const semanticScores = new Map<string, number>();
+
+    if (queryEmbedding) {
+      this.documentEmbeddings.forEach((docVec, docId) => {
+        let dot = 0;
+        let normA = 0;
+        let normB = 0;
+        for (let i = 0; i < queryEmbedding.length; i++) {
+          dot += queryEmbedding[i] * docVec[i];
+          normA += queryEmbedding[i] * queryEmbedding[i];
+          normB += docVec[i] * docVec[i];
+        }
+        const denom = Math.sqrt(normA) * Math.sqrt(normB);
+        const similarity = denom > 0 ? dot / denom : 0;
+        if (similarity > 0.25) {
+          semanticScores.set(docId, similarity);
+        }
+      });
+    }
+
+    // 3. Merge Lexical & Semantic Scores
+    const allCandidateIds = new Set<string>([
+      ...Array.from(lexicalScores.keys()),
+      ...Array.from(semanticScores.keys()),
+    ]);
+
     const results: SearchResult[] = [];
 
-    scores.forEach((entry, docId) => {
+    allCandidateIds.forEach((docId) => {
       const doc = this.documents.get(docId);
       if (!doc) return;
       if (filterType && doc.type !== filterType) return;
 
-      // Extract a relevant snippet surrounding matched term
-      const matchedTerms = Array.from(entry.matched);
+      const lexEntry = lexicalScores.get(docId);
+      const lexScore = lexEntry ? lexEntry.score : 0;
+      const semScore = semanticScores.get(docId) || 0;
+
+      // Hybrid combination formula:
+      // Combined = LexicalScore + (SemanticScore * 6.5)
+      const hybridScore = lexScore + semScore * 6.5;
+
+      const matchedTerms = lexEntry ? Array.from(lexEntry.matched) : [];
+      const isSemanticMatch = semScore >= 0.35 && lexScore === 0;
+
+      // Relevant snippet extraction
       let snippet = doc.body.slice(0, 120);
       if (matchedTerms.length > 0) {
         const firstMatchIdx = doc.body.toLowerCase().indexOf(matchedTerms[0]);
@@ -210,13 +263,16 @@ export class LocalSearchEngine {
 
       results.push({
         doc,
-        score: entry.score,
+        score: hybridScore,
+        lexicalScore: lexScore,
+        semanticScore: semScore,
+        isSemanticMatch,
         matchedTerms,
         snippet,
       });
     });
 
-    // Sort by relevance score descending
+    // Sort by hybrid score descending
     results.sort((a, b) => b.score - a.score);
     return results.slice(0, 30);
   }
