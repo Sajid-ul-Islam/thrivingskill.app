@@ -183,26 +183,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }, 100);
   };
 
-  // Password requirements matching thrivingskill.com (min 8 chars, mixed case, numbers)
+  // Password strength meter aligned with WordPress pwsL10n (Very weak, Weak, Medium, Strong)
   const getPasswordStrength = (pass: string) => {
     if (pass.length === 0) return null;
     let score = 0;
-    if (pass.length >= 8) score += 1;
-    if (pass.length >= 12) score += 1;
+    if (pass.length >= 6) score += 1;
+    if (pass.length >= 10) score += 1;
     if (/[a-z]/.test(pass) && /[A-Z]/.test(pass)) score += 1;
     if (/\d/.test(pass)) score += 1;
     if (/[^a-zA-Z0-9]/.test(pass)) score += 1;
 
-    if (pass.length < 8) {
-      return { label: 'Too short (min 8 chars)', color: colors.danger, pct: 25, isValid: false };
+    if (pass.length < 6) {
+      return { label: 'Very weak (min 6 chars)', color: colors.danger, pct: 25, isValid: false };
     }
     if (score <= 2) {
-      return { label: 'Weak (Add numbers & mixed case)', color: colors.brandGold, pct: 50, isValid: true };
+      return { label: 'Weak', color: colors.brandGold, pct: 50, isValid: true };
     }
     if (score <= 4) {
-      return { label: 'Good password', color: isDark ? '#34D399' : '#059669', pct: 80, isValid: true };
+      return { label: 'Medium', color: isDark ? '#34D399' : '#059669', pct: 80, isValid: true };
     }
-    return { label: 'Strong password', color: isDark ? '#34D399' : '#047857', pct: 100, isValid: true };
+    return { label: 'Strong', color: isDark ? '#34D399' : '#047857', pct: 100, isValid: true };
   };
 
   const handlePasteVerificationLink = (text: string) => {
@@ -298,8 +298,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       triggerHaptic('warning');
       return;
     }
-    if (newPassword.length < 8) {
-      setErrorMessage('Password must be at least 8 characters as required by the website.');
+    if (newPassword.length < 6) {
+      setErrorMessage('Password must be at least 6 characters.');
       triggerHaptic('warning');
       return;
     }
@@ -511,7 +511,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     : mode === 'register'
                     ? 'No phone number required. Join 50,000+ professionals across Bangladesh.'
                     : mode === 'set_password'
-                    ? 'Create a secure password matching site requirements (minimum 8 characters).'
+                    ? 'Choose a secure password for your account (minimum 6 characters).'
                     : 'Enter your username or email address and we will email you a password setup link.'}
                 </Text>
               )}
@@ -800,7 +800,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                     {/* New Password Input */}
                     <View style={styles.inputGroup}>
-                      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>New Password * (Min 8 Chars)</Text>
+                      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>New Password * (Min 6 Characters)</Text>
                       <View
                         style={[
                           styles.inputWrapper,
@@ -819,6 +819,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             if (errorMessage) setErrorMessage(null);
                           }}
                           onFocus={() => scrollToInput(140)}
+                          onBlur={() => setTouched((p) => ({ ...p, newPassword: true }))}
                           secureTextEntry={!showNewPassword}
                           autoCapitalize="none"
                           returnKeyType="next"
@@ -859,9 +860,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           })()}
                         </View>
                       )}
-                      {touched.newPassword && newPassword.length > 0 && newPassword.length < 8 && (
+                      {touched.newPassword && newPassword.length > 0 && newPassword.length < 6 && (
                         <Text style={[styles.inlineFieldError, { color: colors.danger }]}>
-                          Password must be at least 8 characters.
+                          Password must be at least 6 characters.
                         </Text>
                       )}
                     </View>
