@@ -134,6 +134,8 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
   const { videos, playVideo } = useYouTube();
   const trailerVideo = findRelatedVideoForCourse(course, videos);
   const isPaidCourse = Boolean((course.priceBdt && course.priceBdt > 0) || (course.price && course.price > 0));
+  const bdtPrice = course.priceBdt || (course.price > 0 ? Math.round(course.price * 120) : 0);
+  const origBdtPrice = course.originalPriceBdt || (course.originalPrice && course.originalPrice > course.price ? Math.round(course.originalPrice * 120) : 0);
 
   useEffect(() => {
     const handleAppStateChange = (nextAppState: AppStateStatus) => {
@@ -762,9 +764,14 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
         ) : !isEnrolled ? (
           <View style={styles.bottomPriceCol}>
             <View style={styles.priceRow}>
+              {origBdtPrice > bdtPrice && (
+                <Text style={[styles.bottomOriginalPrice, { color: colors.textMuted }]}>
+                  ৳ {origBdtPrice.toLocaleString()}
+                </Text>
+              )}
               <Text style={[styles.bottomPrice, { color: colors.primary }]} numberOfLines={1}>
                 {isPaidCourse
-                  ? (isBangla ? 'সদস্য অ্যাক্সেস' : 'Member Access')
+                  ? `৳ ${bdtPrice.toLocaleString()}`
                   : (isBangla ? 'বিনামূল্যে' : 'Free Course')}
               </Text>
             </View>

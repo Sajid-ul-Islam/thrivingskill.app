@@ -600,7 +600,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   style={{ minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' }}
                 >
                   <Text style={[styles.seeAllText, { color: colors.primary }]}>
-                    {isBangla ? 'মাই হাব →' : 'Open Hub →'}
+                    {isBangla ? 'আমার কোর্সসমূহ →' : 'My Courses →'}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -939,7 +939,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               >
                 <Ionicons name="library-outline" size={16} color={colors.text} />
                 <Text style={[styles.invoiceBtnText, { color: colors.text }]}>
-                  {isBangla ? 'এনরোলমেন্ট' : 'Enrollments'}
+                  {isBangla ? 'অর্ডার রেকর্ড' : 'Orders'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1297,16 +1297,16 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 setPaymentHistoryModalVisible(true);
               }}
               accessibilityRole="button"
-              accessibilityLabel={isBangla ? 'এনরোলমেন্ট রেকর্ড দেখুন' : 'View Enrollment Records'}
+              accessibilityLabel={isBangla ? 'অর্ডার ও কোর্স রেকর্ড দেখুন' : 'View Orders and Course Records'}
             >
               <View style={styles.settingLeft}>
-                <Ionicons name="library-outline" size={20} color="#10B981" />
+                <Ionicons name="receipt-outline" size={20} color="#10B981" />
                 <View style={{ marginLeft: 6 }}>
                   <Text style={[styles.settingLabel, { color: colors.text }]}>
-                    {isBangla ? 'এনরোলমেন্ট রেকর্ড' : 'Enrollment Records'}
+                    {isBangla ? 'অর্ডার ও কোর্স রেকর্ড' : 'Orders & Course Records'}
                   </Text>
                   <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
-                    {isBangla ? 'আপনার সিঙ্ক করা সকল কোর্স তালিকা' : 'Your synced LearnPress course library'}
+                    {isBangla ? 'আপনার সিঙ্ক করা সকল LearnPress ও WooCommerce অর্ডার' : 'Your synced LearnPress & WooCommerce orders'}
                   </Text>
                 </View>
               </View>
@@ -2342,10 +2342,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             <View style={styles.modalHeader}>
               <View>
                 <Text style={[styles.modalTitle, { color: colors.text }]}>
-                  {isBangla ? 'এনরোলমেন্ট লাইব্রেরি' : 'Enrolled Course Records'}
+                  {isBangla ? 'অর্ডার ও কোর্স রেকর্ড' : 'Orders & Course Records'}
                 </Text>
                 <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
-                  {isBangla ? 'আপনার অ্যাকাউন্টের সিঙ্ক করা কোর্স তালিকা' : 'Courses synced with your Thriving Skills account'}
+                  {isBangla ? 'আপনার অ্যাকাউন্টের সিঙ্ক করা LearnPress ও WooCommerce অর্ডার' : 'LearnPress & WooCommerce orders synced with your account'}
                 </Text>
               </View>
               <TouchableOpacity onPress={() => setPaymentHistoryModalVisible(false)} style={styles.modalCloseBtn}>

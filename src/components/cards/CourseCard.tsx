@@ -4,6 +4,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Course } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { useLearning } from '../../context/LearningContext';
 import { useFeedback } from '../../context/FeedbackContext';
 
@@ -15,6 +16,7 @@ interface CourseCardProps {
 
 export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizontal = false }) => {
   const { colors } = useTheme();
+  const { isBangla } = useLanguage();
   const { isBookmarked, toggleBookmark, getCourseProgressPercentage, userProgress } = useLearning();
   const { showToast } = useFeedback();
 
@@ -25,16 +27,18 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
     toggleBookmark(course.id);
     showToast({
       message: wasBookmarked
-        ? `Removed "${course.title}" from Saved`
-        : `Saved "${course.title}" to My Hub`,
+        ? (isBangla ? `"${course.title}" সংরক্ষিত তালিকা থেকে মুছে ফেলা হয়েছে` : `Removed "${course.title}" from Saved`)
+        : (isBangla ? `"${course.title}" আমার কোর্সসমূহে সংরক্ষিত হয়েছে` : `Saved "${course.title}" to My Courses`),
       type: wasBookmarked ? 'info' : 'success',
-      actionLabel: wasBookmarked ? 'Undo' : undefined,
+      actionLabel: wasBookmarked ? (isBangla ? 'বাতিল' : 'Undo') : undefined,
       onAction: wasBookmarked ? () => toggleBookmark(course.id) : undefined,
     });
   };
   const isEnrolled = !!userProgress[course.id];
   const progressPercent = getCourseProgressPercentage(course.id);
 
+  const bdtPrice = course.priceBdt || (course.price > 0 ? Math.round(course.price * 120) : 0);
+  const origBdtPrice = course.originalPriceBdt || (course.originalPrice && course.originalPrice > course.price ? Math.round(course.originalPrice * 120) : 0);
   const isFreeCourse = (!course.price || course.price === 0) && (!course.priceBdt || course.priceBdt === 0);
 
   if (horizontal) {
@@ -108,16 +112,14 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
               </View>
             ) : (
               <View style={styles.priceRow}>
-                <View style={[styles.certBadge, { backgroundColor: isFreeCourse ? colors.badgeBackground : colors.surfaceSubtle }]}>
-                  <Ionicons
-                    name={isFreeCourse ? 'sparkles-outline' : 'lock-closed-outline'}
-                    size={12}
-                    color={isFreeCourse ? colors.badgeText : colors.primary}
-                  />
-                  <Text style={[styles.certText, { color: isFreeCourse ? colors.badgeText : colors.primary, fontWeight: '700' }]}>
-                    {isFreeCourse ? 'Free Course' : 'Member Course'}
+                {origBdtPrice > bdtPrice && (
+                  <Text style={[styles.originalPrice, { color: colors.textMuted }]}>
+                    ৳ {origBdtPrice.toLocaleString()}
                   </Text>
-                </View>
+                )}
+                <Text style={[styles.currentPrice, { color: colors.primary }]}>
+                  {isFreeCourse ? (isBangla ? 'বিনামূল্যে' : 'Free') : `৳ ${bdtPrice.toLocaleString()}`}
+                </Text>
               </View>
             )}
           </View>
@@ -218,8 +220,13 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
           ) : (
             <View style={styles.cardFooter}>
               <View style={styles.priceRow}>
-                <Text style={[styles.currentPrice, { color: colors.primary, fontSize: 12 }]}>
-                  {isFreeCourse ? 'Free Access' : 'Member Access'}
+                {origBdtPrice > bdtPrice && (
+                  <Text style={[styles.originalPrice, { color: colors.textMuted }]}>
+                    ৳ {origBdtPrice.toLocaleString()}
+                  </Text>
+                )}
+                <Text style={[styles.currentPrice, { color: colors.primary }]}>
+                  {isFreeCourse ? (isBangla ? 'বিনামূল্যে' : 'Free') : `৳ ${bdtPrice.toLocaleString()}`}
                 </Text>
               </View>
               <View style={[styles.certBadge, { backgroundColor: colors.surfaceSubtle }]}>

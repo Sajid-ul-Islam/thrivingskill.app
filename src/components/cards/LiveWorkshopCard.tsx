@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SpringPressable } from '../common';
 import { Workshop } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { useLearning } from '../../context/LearningContext';
 import { useFeedback } from '../../context/FeedbackContext';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
@@ -15,9 +16,13 @@ interface LiveWorkshopCardProps {
 
 export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop }) => {
   const { colors } = useTheme();
+  const { isBangla } = useLanguage();
   const { isRsvpd, toggleWorkshopRsvp } = useLearning();
   const { showToast } = useFeedback();
   const registered = isRsvpd(workshop.id);
+
+  const bdtPrice = workshop.priceBdt || (workshop.price > 0 ? Math.round(workshop.price * 120) : 0);
+  const isFree = bdtPrice === 0 && (!workshop.price || workshop.price === 0);
 
   const handleToggleRsvp = () => {
     const nowRegistered = toggleWorkshopRsvp(workshop.id);
@@ -101,9 +106,11 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop }) 
 
         <View style={styles.footer}>
           <View>
-            <Text style={[styles.priceLabel, { color: colors.textMuted }]}>Registration</Text>
+            <Text style={[styles.priceLabel, { color: colors.textMuted }]}>
+              {isBangla ? 'রেজিস্ট্রেশন ফি' : 'Registration'}
+            </Text>
             <Text style={[styles.priceValue, { color: colors.primary }]}>
-              ${workshop.price.toFixed(2)}
+              {isFree ? (isBangla ? 'বিনামূল্যে' : 'Free') : `৳ ${bdtPrice.toLocaleString()}`}
             </Text>
           </View>
 

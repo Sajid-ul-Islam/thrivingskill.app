@@ -148,15 +148,15 @@ const MainAppContent: React.FC = () => {
     badgeCount?: number;
   }[] = [
     { id: 'Home', label: t('tabHome'), icon: 'home', iconOutline: 'home-outline' },
-    { id: 'Courses', label: t('tabExplore'), icon: 'compass', iconOutline: 'compass-outline' },
+    { id: 'Courses', label: t('tabCourses'), icon: 'compass', iconOutline: 'compass-outline' },
     {
       id: 'MyLearning',
-      label: t('tabMyHub'),
+      label: t('tabMyCourses'),
       icon: 'book',
       iconOutline: 'book-outline',
       badgeCount: inProgressCount,
     },
-    { id: 'Workshops', label: t('tabLive'), icon: 'videocam', iconOutline: 'videocam-outline' },
+    { id: 'Workshops', label: t('tabLiveClass'), icon: 'videocam', iconOutline: 'videocam-outline' },
     { id: 'Profile', label: t('tabProfile'), icon: 'person', iconOutline: 'person-outline' },
   ];
 

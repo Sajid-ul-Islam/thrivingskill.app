@@ -54,9 +54,9 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
 
   const filterTabs: { id: SearchFilterType; label: string; icon: string }[] = [
     { id: 'all', label: isBangla ? 'সব' : 'All', icon: 'apps-outline' },
-    { id: 'courses', label: isBangla ? 'কোর্স' : 'Courses', icon: 'school-outline' },
+    { id: 'courses', label: isBangla ? 'কোর্সসমূহ' : 'Courses', icon: 'school-outline' },
     { id: 'youtube', label: isBangla ? 'ইউটিউব' : 'YouTube', icon: 'logo-youtube' },
-    { id: 'workshops', label: isBangla ? 'ওয়ার্কশপ' : 'Workshops', icon: 'videocam-outline' },
+    { id: 'workshops', label: isBangla ? 'লাইভ ক্লাস' : 'Live Class', icon: 'videocam-outline' },
   ];
 
   const searchResults = useMemo(() => {
@@ -157,8 +157,8 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
               style={[styles.searchInput, { color: colors.text }]}
               placeholder={
                 isBangla
-                  ? 'কোর্স, ইউটিউব মাস্টারক্লাস, সামিট সার্চ করুন...'
-                  : 'Search courses, YouTube masterclasses, summits...'
+                  ? 'আজকে আপনি কি শিখতে চান?'
+                  : 'What do you want to learn today?'
               }
               placeholderTextColor={colors.textMuted}
               value={query}

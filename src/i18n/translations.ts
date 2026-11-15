@@ -4,31 +4,34 @@ export const translations = {
   en: {
     // Navigation & Tabs
     tabHome: 'Home',
-    tabExplore: 'Explore',
+    tabExplore: 'Courses',
+    tabCourses: 'Courses',
     tabCopilot: 'AI Assistant',
-    tabMyHub: 'My Hub',
-    tabLive: 'Live',
+    tabMyHub: 'My Courses',
+    tabMyCourses: 'My Courses',
+    tabLive: 'Live Class',
+    tabLiveClass: 'Live Class',
     tabProfile: 'Profile',
     tabTeamHub: 'Team Hub',
 
     // Header & Brand
     brandTagline: 'Empowering People, Building a Skilled Nation',
     heroBanglaSlogan: 'Learn and Build Your Career',
-    headerSearchPlaceholder: 'Search 370+ courses, Generative AI, Excel...',
+    headerSearchPlaceholder: 'What do you want to learn today?',
     switchLanguage: 'বাংলা',
 
     // Home & Catalog
     continueLearning: 'Continue Learning',
     resumeCourse: 'Resume Lesson',
-    featuredCourses: 'Featured & Trending Courses',
+    featuredCourses: 'Popular Courses',
     allCourses: 'All Courses',
     viewAll: 'View All',
-    careerBundles: 'Special Career Bundles',
-    careerBundlesSubtitle: 'Complete upskilling packages at discounted bundle rates',
+    careerBundles: 'Bundle Courses',
+    careerBundlesSubtitle: 'Multi-course career tracks at discounted package rates',
     careerInsights: 'Career Insights & Articles',
     careerInsightsSubtitle: 'Live publications from Thriving Skills Editorial',
     readOnWeb: 'Read Article →',
-    nationalSummits: 'National Skills Summits',
+    nationalSummits: 'Skills Summits',
     learnerReviews: 'Learner Experiences',
 
     // Gamification & Streaks
@@ -141,31 +144,34 @@ export const translations = {
   bn: {
     // Navigation & Tabs
     tabHome: 'হোম',
-    tabExplore: 'এক্সপ্লোর',
+    tabExplore: 'কোর্সসমূহ',
+    tabCourses: 'কোর্সসমূহ',
     tabCopilot: 'এআই অ্যাসিস্ট্যান্ট',
-    tabMyHub: 'আমার কোর্স',
-    tabLive: 'লাইভ ট্রেনিং',
+    tabMyHub: 'আমার কোর্সসমূহ',
+    tabMyCourses: 'আমার কোর্সসমূহ',
+    tabLive: 'লাইভ ক্লাস',
+    tabLiveClass: 'লাইভ ক্লাস',
     tabProfile: 'প্রোফাইল',
     tabTeamHub: 'টিম হাব',
 
     // Header & Brand
     brandTagline: 'দক্ষ মানবসম্পদ গঠনে অগ্রণী প্ল্যাটফর্ম',
     heroBanglaSlogan: 'শিখুন এবং গড়ুন নিজের ক্যারিয়ার',
-    headerSearchPlaceholder: '৩৭০+ কোর্স, AI, এক্সেল বা স্কিল সার্চ করুন...',
+    headerSearchPlaceholder: 'আজকে আপনি কি শিখতে চান?',
     switchLanguage: 'English',
 
     // Home & Catalog
     continueLearning: 'শেখা চালিয়ে যান',
     resumeCourse: 'লেসনে ফিরে যান',
-    featuredCourses: 'জনপ্রিয় ও ট্রেন্ডিং কোর্সসমূহ',
+    featuredCourses: 'আমাদের জনপ্রিয় কোর্সসমূহ',
     allCourses: 'সব কোর্স',
     viewAll: 'সব দেখুন',
-    careerBundles: 'স্পেশাল ক্যারিয়ার বান্ডেল',
+    careerBundles: 'স্পেশাল বান্ডেল কোর্স',
     careerBundlesSubtitle: 'সাশ্রয়ী প্যাকেজে ক্যারিয়ার উপযোগী কমপ্লিট স্কিল',
     careerInsights: 'ক্যারিয়ার পরামর্শ ও ব্লগ',
     careerInsightsSubtitle: 'থ্রাইভিং স্কিলস এর নিয়মিত গবেষণা ও দিকনির্দেশনা',
     readOnWeb: 'সম্পূর্ণ পড়ুন →',
-    nationalSummits: 'জাতীয় স্কিলস সামিট',
+    nationalSummits: 'স্কিল সামিট',
     learnerReviews: 'শিক্ষার্থীদের অভিজ্ঞতা',
 
     // Gamification & Streaks

@@ -642,7 +642,11 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                               {course.title}
                             </Text>
                             <Text style={[styles.savedPrice, { color: colors.primary }]}>
-                              ${course.price.toFixed(2)}
+                              {course.priceBdt && course.priceBdt > 0
+                                ? `৳ ${course.priceBdt.toLocaleString()}`
+                                : course.price > 0
+                                ? `৳ ${Math.round(course.price * 120).toLocaleString()}`
+                                : (isBangla ? 'বিনামূল্যে' : 'Free')}
                             </Text>
                           </View>
                           <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />

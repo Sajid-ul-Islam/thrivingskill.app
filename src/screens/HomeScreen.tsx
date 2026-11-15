@@ -401,7 +401,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   accessibilityRole="button"
                 >
                   <Text style={[styles.seeAllText, { color: colors.primary }]}>
-                    {isBangla ? 'মাই হাব →' : 'My Hub →'}
+                    {isBangla ? 'আমার কোর্সসমূহ →' : 'My Courses →'}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -599,12 +599,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <View style={styles.sectionHeader}>
             <View style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
               <Text style={[typography.h3, styles.sectionTitle, { color: colors.text }]}>
-                {isBangla ? 'জনপ্রিয় কোর্সসমূহ' : 'Popular Masterclasses'}
+                {isBangla ? 'আমাদের জনপ্রিয় কোর্সসমূহ' : 'Popular Courses'}
               </Text>
               <Text style={[typography.bodySmall, styles.sectionSubtitle, { color: colors.textMuted }]} numberOfLines={2}>
                 {isBangla
-                  ? 'জেনারেটিভ এআই, এক্সেল ও ফাইন্যান্সের এক্সিকিউটিভ মাস্টারক্লাস'
-                  : 'Executive Masterclasses in Generative AI, Excel & Finance'}
+                  ? 'জেনারেটিভ এআই, এক্সেল ও বিজনেসের সেরা স্কিল কোর্সসমূহ'
+                  : 'Top courses in Generative AI, Excel, Finance & Business'}
               </Text>
             </View>
             <TouchableOpacity

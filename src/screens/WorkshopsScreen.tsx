@@ -82,8 +82,8 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
-        title={isBangla ? 'লাইভ মাস্টারক্লাস ও সামিট' : 'Live Masterclasses & Summits'}
-        subtitle={isBangla ? 'সাপ্তাহিক লাইভ ট্রেনিং ও ন্যাশনাল স্কিল সামিট' : 'Weekly executive sessions & skill summits'}
+        title={isBangla ? 'লাইভ ক্লাস ও সামিট' : 'Live Class & Summits'}
+        subtitle={isBangla ? 'সরাসরি লাইভ ক্লাস ও ন্যাশনাল স্কিল সামিট' : 'Upcoming live sessions & skill summits'}
         onOpenSubscription={onOpenSubscription}
         onOpenNotifications={onOpenNotifications}
         onOpenDrawer={onOpenDrawer}
@@ -133,11 +133,11 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
             },
             {
               id: 'live-classes' as TabType,
-              label: isBangla ? `লাইভ ক্লাস (${liveClasses.length})` : `Live Classes (${liveClasses.length})`,
+              label: isBangla ? `লাইভ ক্লাস (${liveClasses.length})` : `Live Class (${liveClasses.length})`,
             },
             {
               id: 'summits' as TabType,
-              label: isBangla ? `স্কিল সামিট (${summits.length})` : `Skills Summits (${summits.length})`,
+              label: isBangla ? `সামিট (${summits.length})` : `Summit (${summits.length})`,
             },
           ].map((tab) => {
             const isActive = activeTab === tab.id;

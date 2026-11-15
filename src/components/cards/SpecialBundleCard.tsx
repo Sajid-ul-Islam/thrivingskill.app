@@ -78,8 +78,13 @@ export const SpecialBundleCard: React.FC<SpecialBundleCardProps> = ({ bundle, on
           </View>
 
           <View style={styles.priceCol}>
-            <Text style={[styles.price, { color: colors.primary, fontSize: 12 }]}>
-              Member Track
+            {bundle.originalPriceBdt && bundle.originalPriceBdt > bundle.priceBdt ? (
+              <Text style={[styles.origPrice, { color: colors.textMuted }]}>
+                ৳ {bundle.originalPriceBdt.toLocaleString()}
+              </Text>
+            ) : null}
+            <Text style={[styles.price, { color: colors.primary }]}>
+              ৳ {bundle.priceBdt.toLocaleString()}
             </Text>
           </View>
         </View>

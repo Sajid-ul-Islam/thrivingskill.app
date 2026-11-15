@@ -250,7 +250,9 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(79, 70, 229, 0.18)' : '#EEF2FF' }]}>
                 <Ionicons name="book-outline" size={18} color={isDark ? '#818CF8' : '#4F46E5'} />
               </View>
-              <Text style={[styles.navLabel, { color: colors.text }]}>All Courses & Bundles</Text>
+              <Text style={[styles.navLabel, { color: colors.text }]}>
+                {isBangla ? 'কোর্স ও বান্ডেলসমূহ' : 'Courses & Bundles'}
+              </Text>
               <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
             </TouchableOpacity>
 
@@ -272,7 +274,9 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.18)' : '#FFFBEB' }]}>
                 <Ionicons name="calendar-outline" size={18} color="#F59E0B" />
               </View>
-              <Text style={[styles.navLabel, { color: colors.text }]}>Live Summits & Workshops</Text>
+              <Text style={[styles.navLabel, { color: colors.text }]}>
+                {isBangla ? 'লাইভ ক্লাস ও সামিট' : 'Live Class & Summits'}
+              </Text>
               <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
             </TouchableOpacity>
 
@@ -358,7 +362,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
                 <Ionicons name="cloud-download-outline" size={18} color="#10B981" />
                 <Text style={[styles.actionLabel, { color: colors.text }]}>Check OTA Updates</Text>
               </View>
-              <Text style={{ fontSize: 11, color: colors.textMuted }}>v1.0.0</Text>
+              <Text style={{ fontSize: 11, color: colors.textMuted }}>v1.4.0</Text>
             </TouchableOpacity>
 
             <View style={[styles.divider, { backgroundColor: colors.border }]} />

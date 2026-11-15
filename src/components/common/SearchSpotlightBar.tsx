@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { shape } from '../../theme/shapes';
 
 interface SearchSpotlightBarProps {
@@ -22,6 +23,7 @@ export const SearchSpotlightBar: React.FC<SearchSpotlightBarProps> = ({
   onSelectTag,
 }) => {
   const { colors, isDark } = useTheme();
+  const { isBangla } = useLanguage();
 
   return (
     <View style={styles.container}>
@@ -39,7 +41,7 @@ export const SearchSpotlightBar: React.FC<SearchSpotlightBarProps> = ({
       >
         <Ionicons name="search" size={18} color={colors.primary} />
         <Text style={[styles.placeholderText, { color: colors.textMuted }]} numberOfLines={1}>
-          Search courses, instructors, masterclasses...
+          {isBangla ? 'আজকে আপনি কি শিখতে চান?' : 'What do you want to learn today?'}
         </Text>
         <View style={[styles.cmdKChip, { backgroundColor: colors.surfaceSubtle }]}>
           <Ionicons name="sparkles" size={12} color={colors.primary} />
