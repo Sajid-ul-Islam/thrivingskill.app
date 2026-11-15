@@ -267,10 +267,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       );
       return;
     }
-    if (newPass.length < 6) {
+    if (newPass.length < 12) {
       Alert.alert(
         isBangla ? 'নিরাপত্তা বার্তা' : 'Security Notice',
-        isBangla ? 'নতুন পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।' : 'New password must be at least 6 characters.'
+        isBangla
+          ? 'ওয়েবসাইটের নির্দেশিকা অনুসারে পাসওয়ার্ড কমপক্ষে ১২ অক্ষরের হতে হবে।'
+          : 'The password should be at least twelve characters long as required by the website.'
       );
       return;
     }
@@ -1951,15 +1953,23 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                     placeholderTextColor={colors.textMuted}
                   />
 
-                  <Text style={[styles.inputLabel, { color: colors.text, marginTop: 12 }]}>New Password</Text>
+                  <Text style={[styles.inputLabel, { color: colors.text, marginTop: 12 }]}>New Password * (Min 12 Chars)</Text>
                   <TextInput
                     style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
                     value={newPass}
                     onChangeText={setNewPass}
                     secureTextEntry
-                    placeholder="Enter new password (min 6 chars)"
+                    placeholder="Enter new password (min 12 chars)"
                     placeholderTextColor={colors.textMuted}
                   />
+                  {/* Official Password Hint from thrivingskill.com / WordPress */}
+                  <View style={[styles.siteHintBox, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+                    <Ionicons name="information-circle" size={16} color={colors.primary} style={{ marginTop: 1 }} />
+                    <Text style={[styles.siteHintText, { color: colors.textMuted }]}>
+                      <Text style={{ fontWeight: '700', color: colors.text }}>Hint: </Text>
+                      The password should be at least twelve characters long. To make it stronger, use upper and lower case letters, numbers, and symbols like ! " ? $ % ^ & ).
+                    </Text>
+                  </View>
 
                   <Text style={[styles.inputLabel, { color: colors.text, marginTop: 12 }]}>Confirm New Password</Text>
                   <TextInput
@@ -2079,7 +2089,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
               <View>
                 <Text style={[styles.inputLabel, { color: colors.text }]}>
-                  {isBangla ? 'নতুন পাসওয়ার্ড' : 'New Password (min 6 chars)'}
+                  {isBangla ? 'নতুন পাসওয়ার্ড (কমপক্ষে ১২ অক্ষর)' : 'New Password (min 12 chars)'}
                 </Text>
                 <TextInput
                   style={[
@@ -2087,20 +2097,28 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                     {
                       backgroundColor: colors.surfaceSubtle,
                       color: colors.text,
-                      borderColor: newPass.length > 0 && newPass.length < 6 ? colors.danger : colors.border,
+                      borderColor: newPass.length > 0 && newPass.length < 12 ? colors.danger : colors.border,
                     },
                   ]}
                   value={newPass}
                   onChangeText={setNewPass}
                   secureTextEntry
-                  placeholder="••••••••"
+                  placeholder="••••••••••••"
                   placeholderTextColor={colors.textMuted}
                 />
-                {newPass.length > 0 && newPass.length < 6 && (
+                {newPass.length > 0 && newPass.length < 12 && (
                   <Text style={{ fontSize: 11, color: colors.danger, marginTop: 4, fontWeight: '600' }}>
-                    {isBangla ? 'নতুন পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।' : 'Password must be at least 6 characters.'}
+                    {isBangla ? 'পাসওয়ার্ড কমপক্ষে ১২ অক্ষরের হতে হবে।' : 'Password should be at least 12 characters long.'}
                   </Text>
                 )}
+                {/* Official Password Hint from thrivingskill.com / WordPress */}
+                <View style={[styles.siteHintBox, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border, marginTop: 8 }]}>
+                  <Ionicons name="information-circle" size={16} color={colors.primary} style={{ marginTop: 1 }} />
+                  <Text style={[styles.siteHintText, { color: colors.textMuted }]}>
+                    <Text style={{ fontWeight: '700', color: colors.text }}>Hint: </Text>
+                    The password should be at least twelve characters long. To make it stronger, use upper and lower case letters, numbers, and symbols like ! " ? $ % ^ & ).
+                  </Text>
+                </View>
               </View>
 
               <View>
@@ -3194,5 +3212,19 @@ const styles = StyleSheet.create({
   privacySub: {
     fontSize: 12,
     lineHeight: 16,
+  },
+  siteHintBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    borderRadius: 10,
+    borderWidth: 1,
+    padding: 10,
+    marginTop: 8,
+    gap: 8,
+  },
+  siteHintText: {
+    fontSize: 12,
+    lineHeight: 17,
+    flex: 1,
   },
 });

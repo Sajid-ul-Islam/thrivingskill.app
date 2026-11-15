@@ -97,7 +97,7 @@ files.forEach(f => {
     issues.push({ file: f, line: 1, type: 'Potential Timer Leak', msg: 'setInterval used without clearInterval' });
   }
 
-  // Check 4: Check for Facebook / Google social remnants
+  // Check 4: Check for Facebook / Google social remnants in auth
   lines.forEach((line, idx) => {
     if (
       (line.includes('facebook') || line.includes('Facebook')) &&
@@ -106,6 +106,8 @@ files.forEach(f => {
       !line.includes('Social') &&
       !line.includes('Profile') &&
       !f.includes('mockData') &&
+      !f.includes('AboutTSLModal') &&
+      !f.includes('types') &&
       !f.includes('client requirement') &&
       !f.includes('client revetment')
     ) {

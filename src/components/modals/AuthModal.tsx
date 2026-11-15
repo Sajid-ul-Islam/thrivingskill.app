@@ -183,23 +183,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }, 100);
   };
 
-  // Password strength meter aligned with WordPress pwsL10n (Very weak, Weak, Medium, Strong)
+  // Password strength meter aligned with WordPress pwsL10n and official site policy (at least 12 characters)
   const getPasswordStrength = (pass: string) => {
     if (pass.length === 0) return null;
     let score = 0;
-    if (pass.length >= 6) score += 1;
-    if (pass.length >= 10) score += 1;
+    if (pass.length >= 8) score += 1;
+    if (pass.length >= 12) score += 1;
+    if (pass.length >= 16) score += 1;
     if (/[a-z]/.test(pass) && /[A-Z]/.test(pass)) score += 1;
     if (/\d/.test(pass)) score += 1;
     if (/[^a-zA-Z0-9]/.test(pass)) score += 1;
 
-    if (pass.length < 6) {
-      return { label: 'Very weak (min 6 chars)', color: colors.danger, pct: 25, isValid: false };
+    if (pass.length < 12) {
+      return {
+        label: `Weak (${pass.length}/12 chars - at least 12 required)`,
+        color: colors.brandGold,
+        pct: Math.min(Math.round((pass.length / 12) * 60), 60),
+        isValid: false,
+      };
     }
-    if (score <= 2) {
-      return { label: 'Weak', color: colors.brandGold, pct: 50, isValid: true };
-    }
-    if (score <= 4) {
+    if (score <= 3) {
       return { label: 'Medium', color: isDark ? '#34D399' : '#059669', pct: 80, isValid: true };
     }
     return { label: 'Strong', color: isDark ? '#34D399' : '#047857', pct: 100, isValid: true };
@@ -298,8 +301,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       triggerHaptic('warning');
       return;
     }
-    if (newPassword.length < 6) {
-      setErrorMessage('Password must be at least 6 characters.');
+    if (newPassword.length < 12) {
+      setErrorMessage('The password should be at least twelve characters long as required by the website.');
       triggerHaptic('warning');
       return;
     }
@@ -511,7 +514,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     : mode === 'register'
                     ? 'No phone number required. Join 50,000+ professionals across Bangladesh.'
                     : mode === 'set_password'
-                    ? 'Choose a secure password for your account (minimum 6 characters).'
+                    ? 'The password should be at least twelve characters long as required by thrivingskill.com.'
                     : 'Enter your username or email address and we will email you a password setup link.'}
                 </Text>
               )}
@@ -800,7 +803,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                     {/* New Password Input */}
                     <View style={styles.inputGroup}>
-                      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>New Password * (Min 6 Characters)</Text>
+                      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>New Password * (Min 12 Characters)</Text>
                       <View
                         style={[
                           styles.inputWrapper,
@@ -860,11 +863,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           })()}
                         </View>
                       )}
-                      {touched.newPassword && newPassword.length > 0 && newPassword.length < 6 && (
+                      {touched.newPassword && newPassword.length > 0 && newPassword.length < 12 && (
                         <Text style={[styles.inlineFieldError, { color: colors.danger }]}>
-                          Password must be at least 6 characters.
+                          The password should be at least 12 characters long.
                         </Text>
                       )}
+
+                      {/* Official Password Hint from thrivingskill.com / WordPress */}
+                      <View style={[styles.siteHintBox, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+                        <Ionicons name="information-circle" size={16} color={colors.primary} style={{ marginTop: 1 }} />
+                        <Text style={[styles.siteHintText, { color: colors.textMuted }]}>
+                          <Text style={{ fontWeight: '700', color: colors.text }}>Hint: </Text>
+                          The password should be at least twelve characters long. To make it stronger, use upper and lower case letters, numbers, and symbols like ! " ? $ % ^ & ).
+                        </Text>
+                      </View>
                     </View>
 
                     {/* Confirm Password Input */}
@@ -1521,6 +1533,20 @@ const styles = StyleSheet.create({
   regStepFill: {
     height: '100%',
     borderRadius: shape.extraSmall,
+  },
+  siteHintBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    borderRadius: 10,
+    borderWidth: 1,
+    padding: 10,
+    marginTop: 8,
+    gap: 8,
+  },
+  siteHintText: {
+    fontSize: 12,
+    lineHeight: 17,
+    flex: 1,
   },
   inlineFieldError: {
     fontSize: 12,
