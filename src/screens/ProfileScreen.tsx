@@ -39,6 +39,7 @@ import { CertificateModal } from '../components/CertificateModal';
 import { StorageManagerModal } from '../components/modals/StorageManagerModal';
 import { SpacedRepetitionModal } from '../components/modals/SpacedRepetitionModal';
 import { OfflineStudyDeckModal } from '../components/modals/OfflineStudyDeckModal';
+import { LocalSearchModal } from '../components/modals/LocalSearchModal';
 import { Course, Certificate } from '../types';
 import { UserService } from '../services/api/userService';
 import { CacheManager } from '../services/cache/cacheManager';
@@ -91,6 +92,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [storageModalVisible, setStorageModalVisible] = useState(false);
   const [flashcardsModalVisible, setFlashcardsModalVisible] = useState(false);
   const [offlineDeckModalVisible, setOfflineDeckModalVisible] = useState(false);
+  const [localSearchModalVisible, setLocalSearchModalVisible] = useState(false);
   const [editProfileModalVisible, setEditProfileModalVisible] = useState(false);
   const [changePasswordModalVisible, setChangePasswordModalVisible] = useState(false);
   const [paymentHistoryModalVisible, setPaymentHistoryModalVisible] = useState(false);
@@ -1053,7 +1055,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
             {/* Offline Study Deck */}
             <TouchableOpacity
-              style={[styles.settingRow, { borderBottomWidth: 0 }]}
+              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
               onPress={() => {
                 triggerHaptic('light');
                 setOfflineDeckModalVisible(true);
@@ -1069,6 +1071,30 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   </Text>
                   <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
                     {isBangla ? 'ইন্টারনেট ছাড়াই লেকচার ও নোটস পড়ুন' : 'Read saved lectures & takeaways without internet'}
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            </TouchableOpacity>
+
+            {/* On-Device Fast Search (Phase 3 FTS) */}
+            <TouchableOpacity
+              style={[styles.settingRow, { borderBottomWidth: 0 }]}
+              onPress={() => {
+                triggerHaptic('light');
+                setLocalSearchModalVisible(true);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={isBangla ? 'অন-ডিভাইস ফাস্ট সার্চ খুলুন' : 'Open On-Device Fast Search'}
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="search" size={20} color="#3B82F6" />
+                <View style={{ marginLeft: 6 }}>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>
+                    {isBangla ? 'অন-ডিভাইস ফাস্ট সার্চ (FTS)' : 'On-Device Fast Search (FTS)'}
+                  </Text>
+                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
+                    {isBangla ? 'কোর্স, লেকচার ও নোটস নিমেষে সার্চ করুন' : 'Instant inverted index search across offline content'}
                   </Text>
                 </View>
               </View>
@@ -1785,6 +1811,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         visible={offlineDeckModalVisible}
         onClose={() => setOfflineDeckModalVisible(false)}
         onOpenLessonInPlayer={onNavigateToLesson}
+      />
+
+      {/* On-Device Local Search Modal (Phase 3) */}
+      <LocalSearchModal
+        visible={localSearchModalVisible}
+        onClose={() => setLocalSearchModalVisible(false)}
+        onSelectCourse={onNavigateToCourse}
+        onSelectLesson={onNavigateToLesson}
       />
 
       {/* Edit Profile Modal (Section 25 Spec) */}
