@@ -118,6 +118,35 @@ export class AuthService {
   }
 
   /**
+   * Complete password reset or new user password setup via WordPress action=resetpass
+   */
+  static async confirmPasswordReset(login: string, key: string, newPassword: string): Promise<boolean> {
+    const data = new URLSearchParams({
+      action: 'resetpass',
+      rp_key: key.trim(),
+      rp_login: login.trim(),
+      pass1: newPassword,
+      pass2: newPassword,
+    }).toString();
+
+    const response = await fetch(`${Env.SITE_URL}/login/?action=resetpass`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android; Mobile)',
+      },
+      body: data,
+    });
+
+    const redirectUrl = response.url || '';
+    if (redirectUrl.includes('error=invalidkey') || redirectUrl.includes('error=expiredkey')) {
+      throw new Error('This password reset link is invalid or has expired. Please request a new link.');
+    }
+
+    return true;
+  }
+
+  /**
    * Send 6-digit SMS OTP to Bangladeshi mobile number (CR-04)
    */
   static async sendPhoneOtp(phone: string): Promise<{ success: boolean; message: string; testOtp?: string }> {

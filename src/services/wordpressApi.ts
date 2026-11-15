@@ -109,3 +109,10 @@ export async function sendWpPhoneOtp(phone: string): Promise<{ success: boolean;
 export async function verifyWpPhoneOtp(phone: string, otp: string, fullName?: string): Promise<WpUser> {
   return AuthService.verifyPhoneOtp(phone, otp, fullName);
 }
+
+/**
+ * Confirm password reset via WordPress action=resetpass
+ */
+export async function confirmWpPasswordReset(login: string, key: string, newPassword: string): Promise<boolean> {
+  return AuthService.confirmPasswordReset(login, key, newPassword);
+}

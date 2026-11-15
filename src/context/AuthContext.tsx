@@ -10,6 +10,7 @@ import {
   validateWpToken,
   sendWpPhoneOtp,
   verifyWpPhoneOtp,
+  confirmWpPasswordReset,
 } from '../services/wordpressApi';
 
 export type { UserProfile };
@@ -57,6 +58,7 @@ interface AuthContextType {
   loginWithPhone: (phone: string, otp: string, fullName?: string) => Promise<void>;
   sendPhoneOtp: (phone: string) => Promise<{ success: boolean; message: string; testOtp?: string }>;
   register: (username: string, email: string, password: string, phone?: string) => Promise<void>;
+  confirmPasswordReset: (login: string, key: string, newPassword: string) => Promise<void>;
   updateUserProfile: (updates: Partial<UserProfile>) => Promise<void>;
   logout: () => Promise<void>;
   deleteAccount: (password: string) => Promise<void>;
@@ -206,6 +208,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const confirmPasswordReset = async (loginParam: string, key: string, newPassword: string) => {
+    setIsLoading(true);
+    try {
+      await confirmWpPasswordReset(loginParam, key, newPassword);
+      // Immediately log in user with verified credentials
+      await login(loginParam, newPassword);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = async () => {
     setUser(null);
     setToken(null);
@@ -260,6 +273,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loginWithPhone,
         sendPhoneOtp,
         register,
+        confirmPasswordReset,
         updateUserProfile,
         logout,
         deleteAccount,

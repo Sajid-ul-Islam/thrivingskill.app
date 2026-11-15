@@ -22,9 +22,14 @@
       "softwareKeyboardLayoutMode": "resize",
       "permissions": [
         "INTERNET",
+        "ACCESS_NETWORK_STATE",
+        "INTERNET",
         "ACCESS_NETWORK_STATE"
       ],
       "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.SYSTEM_ALERT_WINDOW",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE"
@@ -34,7 +39,28 @@
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "https",
+              "host": "thrivingskill.com",
+              "pathPrefix": "/login"
+            },
+            {
+              "scheme": "https",
+              "host": "www.thrivingskill.com",
+              "pathPrefix": "/login"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "androidStatusBar": {
       "barStyle": "light-content",
@@ -53,6 +79,12 @@
         "projectId": "0b66cee6-c1a5-4c67-b12a-08f8f4356787"
       }
     },
-    "owner": "sajid.islam"
+    "owner": "sajid.islam",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/0b66cee6-c1a5-4c67-b12a-08f8f4356787"
+    }
   }
 }
