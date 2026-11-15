@@ -45,7 +45,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenOfflineContent,
   onOpenSupport,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { unreadNotificationsCount } = useSaaS();
   const { refreshCourses } = useLearning();
   const insets = useSafeAreaInsets();
@@ -123,14 +123,21 @@ export const Header: React.FC<HeaderProps> = ({
 
           {onOpenSupport && (
             <TouchableOpacity
-              style={[styles.iconButton, { backgroundColor: colors.surfaceSubtle }]}
+              style={[
+                styles.iconButton,
+                styles.whatsappHeaderBtn,
+                {
+                  backgroundColor: isDark ? 'rgba(37, 211, 102, 0.16)' : '#E7F9EE',
+                  borderColor: isDark ? 'rgba(37, 211, 102, 0.4)' : '#A7F3D0',
+                },
+              ]}
               onPress={onOpenSupport}
               activeOpacity={0.7}
               hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
               accessibilityRole="button"
-              accessibilityLabel="Official Support"
+              accessibilityLabel="Official WhatsApp & Messenger Support"
             >
-              <Ionicons name="headset-outline" size={20} color={colors.primary} />
+              <Ionicons name="logo-whatsapp" size={19} color="#25D366" />
             </TouchableOpacity>
           )}
 
@@ -261,5 +268,8 @@ const styles = StyleSheet.create({
     lineHeight: 11,
     includeFontPadding: false,
     fontWeight: '800',
+  },
+  whatsappHeaderBtn: {
+    borderWidth: 1,
   },
 });

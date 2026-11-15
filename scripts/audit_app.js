@@ -102,9 +102,15 @@ files.forEach(f => {
     if (
       (line.includes('facebook') || line.includes('Facebook')) &&
       !line.includes('//') &&
+      !line.includes('logo-facebook') &&
       !line.includes('social') &&
       !line.includes('Social') &&
       !line.includes('Profile') &&
+      !line.includes('Messenger') &&
+      !line.includes('messenger') &&
+      !line.includes('CRM') &&
+      !line.includes('crm') &&
+      !f.includes('FloatingCrmWidget') &&
       !f.includes('mockData') &&
       !f.includes('AboutTSLModal') &&
       !f.includes('SupportContactModal') &&

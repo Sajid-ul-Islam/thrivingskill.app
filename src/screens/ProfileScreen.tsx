@@ -1498,6 +1498,50 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               { backgroundColor: colors.surfaceCard, borderColor: colors.border },
             ]}
           >
+            {/* WhatsApp Live Support */}
+            <TouchableOpacity
+              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
+              onPress={() => {
+                triggerHaptic('light');
+                Linking.openURL('https://wa.me/8801312100288').catch(() => {});
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Chat on WhatsApp 01312-100288"
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="logo-whatsapp" size={20} color="#25D366" />
+                <View style={{ marginLeft: 6 }}>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>WhatsApp Live Support</Text>
+                  <Text style={[styles.settingSubtext, { color: '#25D366', fontWeight: '700' }]}>
+                    01312-100288 • Instant Response
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            </TouchableOpacity>
+
+            {/* Facebook Messenger */}
+            <TouchableOpacity
+              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
+              onPress={() => {
+                triggerHaptic('light');
+                Linking.openURL('https://m.me/thrivingskills').catch(() => {});
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Chat on Facebook Messenger"
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="logo-facebook" size={20} color="#0084FF" />
+                <View style={{ marginLeft: 6 }}>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>Facebook Messenger</Text>
+                  <Text style={[styles.settingSubtext, { color: '#0084FF', fontWeight: '700' }]}>
+                    @thrivingskills • Community CRM
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            </TouchableOpacity>
+
             <TouchableOpacity
               style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
               onPress={() => {

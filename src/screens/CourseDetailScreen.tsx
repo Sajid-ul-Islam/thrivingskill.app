@@ -32,6 +32,7 @@ import { findRelatedVideoForCourse } from '../services/youtubeService';
 import { CoursesService } from '../services/api/coursesService';
 import { Env } from '../config/env';
 import { MIN_TOUCH_TARGET } from '../theme/typography';
+import { triggerHaptic } from '../utils/haptics';
 import { Lesson } from '../types';
 
 interface CourseDetailScreenProps {
@@ -804,6 +805,24 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
           </View>
         )}
 
+        {!isEnrolled && (
+          <TouchableOpacity
+            style={styles.whatsappDirectBtn}
+            onPress={async () => {
+              triggerHaptic('light');
+              const msg = isBangla
+                ? `হ্যালো থ্রাইভিং স্কিলস, আমি "${course.title}" কোর্স সম্পর্কে জানতে চাই।`
+                : `Hello Thriving Skills, I have an inquiry about "${course.title}".`;
+              const encoded = encodeURIComponent(msg);
+              Linking.openURL(`https://wa.me/8801312100288?text=${encoded}`);
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={`Ask on WhatsApp about ${course.title}`}
+          >
+            <Ionicons name="logo-whatsapp" size={22} color="#FFFFFF" />
+          </TouchableOpacity>
+        )}
+
         <SpringPressable
           activeScale={0.96}
           style={[
@@ -1494,6 +1513,20 @@ const styles = StyleSheet.create({
   enrolledStatus: {
     fontSize: 12.5,
     fontWeight: '600',
+  },
+  whatsappDirectBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#25D366',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 6,
+    elevation: 2,
+    shadowColor: '#25D366',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
   },
   enrollCTAButton: {
     flexDirection: 'row',

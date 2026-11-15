@@ -38,7 +38,7 @@ import { UniversalSearchModal } from './src/components/UniversalSearchModal';
 import { BrandDrawer } from './src/components/BrandDrawer';
 import { AppUpdateModal } from './src/components/AppUpdateModal';
 import { SupportContactModal } from './src/components/modals/SupportContactModal';
-import { ScreenTransition, CelebrationToast, ActionToast } from './src/components/common';
+import { ScreenTransition, CelebrationToast, ActionToast, FloatingCrmWidget } from './src/components/common';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -435,6 +435,17 @@ const MainAppContent: React.FC = () => {
           navigateToTab('Workshops');
         }}
       />
+
+      {/* Omnipresent Floating WhatsApp & Messenger CRM Widget */}
+      {activeScreen.name === 'MainTabs' && (
+        <FloatingCrmWidget
+          bottomOffset={
+            (playerMode === 'mini' && activeVideo !== null ? 134 : 68) +
+            Math.max(insets.bottom, Platform.OS === 'ios' ? 12 : 8)
+          }
+          onOpenFullModal={() => setSupportModalVisible(true)}
+        />
+      )}
 
       {/* Global Milestone & Lesson Completion Celebration HUD */}
       <CelebrationToast data={celebration} onDismiss={clearCelebration} />

@@ -14,3 +14,4 @@ export * from './CelebrationToast';
 export * from './ActionToast';
 export * from './OfflineBanner';
 export * from './StateView';
+export * from './FloatingCrmWidget';
