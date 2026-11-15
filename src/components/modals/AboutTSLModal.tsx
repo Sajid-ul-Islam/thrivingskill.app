@@ -532,12 +532,12 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                   style={[styles.summitCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
                 >
                   <View style={styles.summitHeaderRow}>
-                    <View style={[styles.summitIconBg, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' }]}>
+                    <View style={[styles.summitIconBg, { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' }]}>
                       <Ionicons name={summit.icon as any} size={20} color={summit.color} />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.summitTitle, { color: colors.text }]}>{summit.title}</Text>
-                      <View style={[styles.summitBadge, { backgroundColor: isDark ? '#1E293B' : '#EEF2FF' }]}>
+                      <View style={[styles.summitBadge, { backgroundColor: isDark ? colors.surfaceSubtle : '#EEF2FF' }]}>
                         <Text style={[styles.summitBadgeText, { color: summit.color }]}>{summit.badge}</Text>
                       </View>
                     </View>

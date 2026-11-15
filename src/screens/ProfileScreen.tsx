@@ -1046,7 +1046,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   </Text>
                 </View>
               </View>
-              <View style={[styles.langPill, { backgroundColor: isDark ? '#1E293B' : '#FEF3C7' }]}>
+              <View style={[styles.langPill, { backgroundColor: isDark ? colors.surfaceSubtle : '#FEF3C7' }]}>
                 <Text style={[styles.langPillText, { color: colors.brandGold }]}>
                   {isBangla ? 'স্মৃতি পরীক্ষা' : 'Review Deck'}
                 </Text>
@@ -1192,7 +1192,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 </View>
               </View>
               <View style={[styles.langPill, { backgroundColor: 'rgba(59, 130, 246, 0.12)' }]}>
-                <Text style={[styles.langPillText, { color: isDark ? '#60A5FA' : '#1D4ED8', fontWeight: '800' }]}>
+                <Text style={[styles.langPillText, { color: isDark ? colors.primary : '#1D4ED8', fontWeight: '800' }]}>
                   {videoQuality}
                 </Text>
               </View>

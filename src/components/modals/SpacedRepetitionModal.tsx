@@ -137,7 +137,7 @@ export const SpacedRepetitionModal: React.FC<SpacedRepetitionModalProps> = ({
             </View>
             <TouchableOpacity
               onPress={onClose}
-              style={[styles.closeButton, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' }]}
+              style={[styles.closeButton, { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' }]}
               accessibilityRole="button"
               accessibilityLabel="Close Flashcards"
             >
@@ -155,7 +155,7 @@ export const SpacedRepetitionModal: React.FC<SpacedRepetitionModalProps> = ({
             </View>
           ) : isSessionComplete ? (
             <View style={styles.centerContainer}>
-              <View style={[styles.trophyCircle, { backgroundColor: isDark ? '#1E293B' : '#FEF3C7' }]}>
+              <View style={[styles.trophyCircle, { backgroundColor: isDark ? colors.surfaceSubtle : '#FEF3C7' }]}>
                 <Ionicons name="trophy" size={48} color={colors.brandGold} />
               </View>
               <Text style={[styles.completeTitle, { color: colors.text }]}>Session Complete! 🎉</Text>

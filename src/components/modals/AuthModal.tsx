@@ -387,7 +387,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </View>
               <TouchableOpacity
                 onPress={() => setMode('register')}
-                style={[styles.closeButtonCompact, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' }]}
+                style={[styles.closeButtonCompact, { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' }]}
                 accessibilityRole="button"
                 accessibilityLabel="Close registration webview"
               >
@@ -458,7 +458,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
             {/* Close Button */}
             <TouchableOpacity
-              style={[styles.closeButton, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' }]}
+              style={[styles.closeButton, { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' }]}
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Close dialog"

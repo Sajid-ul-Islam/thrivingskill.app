@@ -115,7 +115,7 @@ export const OfflineStudyDeckModal: React.FC<OfflineStudyDeckModalProps> = ({
 
             <TouchableOpacity
               onPress={onClose}
-              style={[styles.closeButton, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' }]}
+              style={[styles.closeButton, { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' }]}
               accessibilityRole="button"
               accessibilityLabel="Close Offline Study Deck"
             >

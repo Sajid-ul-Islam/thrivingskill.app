@@ -652,7 +652,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         {/* Video / Commute Player Area */}
         {!canPlayVideo ? (
           /* LOCKED PAYWALL STATE: User has not purchased this course */
-          <View style={[styles.lockedCard, { backgroundColor: isDark ? '#0F192C' : '#102F53' }]}>
+          <View style={[styles.lockedCard, { backgroundColor: isDark ? colors.surfaceCard : '#102F53' }]}>
             <View style={styles.lockedIconBg}>
               <Ionicons name="lock-closed" size={38} color="#FFB606" />
             </View>
@@ -701,7 +701,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
           <View
             style={[
               styles.commutePlayerCard,
-              { backgroundColor: isDark ? '#0F192C' : '#102F53' },
+              { backgroundColor: isDark ? colors.surfaceCard : '#102F53' },
             ]}
           >
             <View style={styles.commuteHeaderBadge}>

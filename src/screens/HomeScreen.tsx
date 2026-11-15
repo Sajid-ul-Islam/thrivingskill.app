@@ -311,7 +311,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               style={[
                 styles.momentumCapsule,
                 {
-                  backgroundColor: isDark ? 'rgba(30, 41, 59, 0.8)' : '#F8FAFC',
+                  backgroundColor: isDark ? colors.surfaceSubtle : '#F8FAFC',
                   borderColor: colors.border,
                 },
               ]}
@@ -355,7 +355,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
             {/* Mini Goal Track */}
             <View style={styles.goalTrackContainer}>
-              <View style={[styles.goalProgressBarBg, { backgroundColor: isDark ? '#334155' : '#E2E8F0' }]}>
+              <View style={[styles.goalProgressBarBg, { backgroundColor: isDark ? colors.border : '#E2E8F0' }]}>
                 <View
                   style={[
                     styles.goalProgressBarFill,
@@ -1200,7 +1200,7 @@ const styles = StyleSheet.create({
   articleThumb: {
     width: '100%',
     height: 120,
-    backgroundColor: '#1E293B',
+    backgroundColor: '#141414',
   },
   articleThumbPlaceholder: {
     width: '100%',
@@ -1312,7 +1312,7 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: '#334155',
+    backgroundColor: '#262626',
   },
   verifiedDot: {
     position: 'absolute',

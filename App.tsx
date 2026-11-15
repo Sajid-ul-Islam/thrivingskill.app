@@ -286,7 +286,7 @@ const MainAppContent: React.FC = () => {
                 style={styles.tabButton}
                 onPress={() => navigateToTab(tab.id)}
                 android_ripple={{
-                  color: isDark ? 'rgba(56, 189, 248, 0.12)' : 'rgba(16, 47, 83, 0.08)',
+                  color: isDark ? 'rgba(255, 182, 6, 0.12)' : 'rgba(16, 47, 83, 0.08)',
                   borderless: true,
                   radius: 32,
                 }}
@@ -299,14 +299,14 @@ const MainAppContent: React.FC = () => {
                     styles.tabPillIndicator,
                     Platform.OS === 'android' &&
                       isActive && {
-                        backgroundColor: isDark ? 'rgba(56, 189, 248, 0.16)' : colors.primaryLight,
+                        backgroundColor: isDark ? 'rgba(255, 182, 6, 0.14)' : colors.primaryLight,
                       },
                   ]}
                 >
                   <Ionicons
                     name={(isActive ? tab.icon : tab.iconOutline) as any}
                     size={21}
-                    color={isActive ? colors.primary : colors.tabInactive}
+                    color={isActive ? colors.tabActive : colors.tabInactive}
                   />
                   {tab.badgeCount && tab.badgeCount > 0 ? (
                     <View style={[styles.tabBadge, { backgroundColor: colors.accent }]}>
@@ -318,7 +318,7 @@ const MainAppContent: React.FC = () => {
                   style={[
                     styles.tabButtonLabel,
                     {
-                      color: isActive ? colors.primary : colors.tabInactive,
+                      color: isActive ? colors.tabActive : colors.tabInactive,
                       fontWeight: isActive ? '700' : '500',
                     },
                   ]}

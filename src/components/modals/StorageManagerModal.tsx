@@ -226,7 +226,7 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({ visibl
             </View>
             <TouchableOpacity
               onPress={onClose}
-              style={[styles.closeButton, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' }]}
+              style={[styles.closeButton, { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' }]}
               accessibilityRole="button"
               accessibilityLabel="Close Storage Manager"
             >

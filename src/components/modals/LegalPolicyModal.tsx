@@ -80,7 +80,7 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
             </View>
           </View>
           <TouchableOpacity
-            style={[styles.closeBtn, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' }]}
+            style={[styles.closeBtn, { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' }]}
             onPress={onClose}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityLabel="Close Legal Modal"

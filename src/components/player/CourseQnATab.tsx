@@ -167,8 +167,8 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
             style={[
               styles.qnaCard,
               {
-                backgroundColor: isDark ? '#14223B' : '#FFFFFF',
-                borderColor: isDark ? '#22365A' : '#E2E8F0',
+                backgroundColor: colors.surfaceCard,
+                borderColor: colors.border,
               },
             ]}
           >
@@ -188,12 +188,10 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
                   {
                     backgroundColor: item.hasUpvoted
                       ? isDark
-                        ? '#1E3A8A'
+                        ? 'rgba(59, 130, 246, 0.20)'
                         : '#EFF6FF'
-                      : isDark
-                      ? '#1B2B4A'
-                      : '#F1F5F9',
-                    borderColor: item.hasUpvoted ? '#3B82F6' : 'transparent',
+                      : colors.surfaceSubtle,
+                    borderColor: item.hasUpvoted ? colors.primary : 'transparent',
                   },
                 ]}
                 onPress={() => handleToggleUpvote(item.id)}
@@ -223,8 +221,8 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
                 style={[
                   styles.answerContainer,
                   {
-                    backgroundColor: isDark ? '#0F192C' : '#F8FAFC',
-                    borderColor: isDark ? '#1E2F4C' : '#E2E8F0',
+                    backgroundColor: colors.surfaceSubtle,
+                    borderColor: colors.border,
                   },
                 ]}
               >
@@ -248,12 +246,12 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
                     </Text>
                   </View>
                 </View>
-                <Text style={[styles.answerText, { color: isDark ? '#CBD5E1' : '#334155' }]}>
+                <Text style={[styles.answerText, { color: colors.text }]}>
                   {item.answer.answerText}
                 </Text>
               </View>
             ) : (
-              <View style={[styles.pendingAnswerBox, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' }]}>
+              <View style={[styles.pendingAnswerBox, { backgroundColor: colors.surfaceSubtle }]}>
                 <Ionicons name="time-outline" size={14} color={colors.textMuted} />
                 <Text style={[styles.pendingText, { color: colors.textMuted }]}>
                   Instructor review pending. You will receive a notification when answered.
@@ -271,8 +269,8 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
             style={[
               styles.askModalCard,
               {
-                backgroundColor: isDark ? '#14223B' : '#FFFFFF',
-                borderColor: isDark ? '#22365A' : '#E2E8F0',
+                backgroundColor: colors.surfaceElevated,
+                borderColor: colors.border,
               },
             ]}
           >
@@ -296,8 +294,8 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
               style={[
                 styles.questionInput,
                 {
-                  backgroundColor: isDark ? '#0F192C' : '#F8FAFC',
-                  borderColor: isDark ? '#22365A' : '#E2E8F0',
+                  backgroundColor: colors.surfaceSubtle,
+                  borderColor: colors.border,
                   color: colors.text,
                 },
               ]}

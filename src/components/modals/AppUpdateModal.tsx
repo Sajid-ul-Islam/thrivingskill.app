@@ -97,7 +97,7 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
           </Text>
 
           {/* Current Build Metadata */}
-          <View style={[styles.infoBox, { backgroundColor: isDark ? '#0F192C' : '#F8FAFC' }]}>
+          <View style={[styles.infoBox, { backgroundColor: isDark ? colors.surfaceCard : '#F8FAFC' }]}>
             <View style={styles.infoRow}>
               <Text style={[styles.infoLabel, { color: colors.textMuted }]}>App Version</Text>
               <Text style={[styles.infoVal, { color: colors.text }]}>v1.0.0 (Expo SDK 57)</Text>
@@ -134,7 +134,7 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
                   backgroundColor: updateReady
                     ? colors.successLight
                     : isDark
-                    ? '#1E293B'
+                    ? colors.surfaceSubtle
                     : '#EFF6FF',
                   borderColor: updateReady ? colors.success : colors.primary,
                 },
