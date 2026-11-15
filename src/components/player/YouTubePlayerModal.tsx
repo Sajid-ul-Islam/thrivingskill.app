@@ -493,6 +493,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
+    gap: 12,
   },
   headerBtn: {
     width: MIN_TOUCH_TARGET,
@@ -500,11 +501,13 @@ const styles = StyleSheet.create({
     borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   ytBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    flexShrink: 0,
   },
   ytBadgeText: {
     fontSize: 15,

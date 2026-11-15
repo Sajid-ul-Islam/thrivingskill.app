@@ -275,7 +275,7 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
             ]}
           >
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>Ask Course Instructor</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]} numberOfLines={1}>Ask Course Instructor</Text>
               <TouchableOpacity
                 onPress={() => setAskModalVisible(false)}
                 style={[styles.closeBtn, { backgroundColor: colors.surfaceSubtle }]}
@@ -507,10 +507,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 8,
+    gap: 12,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '800',
+    flex: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   closeBtn: {
     width: MIN_TOUCH_TARGET,
@@ -518,6 +522,7 @@ const styles = StyleSheet.create({
     borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   modalHint: {
     fontSize: 12,

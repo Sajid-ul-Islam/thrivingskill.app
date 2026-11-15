@@ -1725,9 +1725,11 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(212, 175, 55, 0.4)',
+    gap: 8,
   },
   certQrBox: {
     alignItems: 'center',
+    flexShrink: 0,
   },
   certVerifyText: {
     fontSize: 7.5,
@@ -1743,6 +1745,7 @@ const styles = StyleSheet.create({
     height: 48,
     justifyContent: 'center',
     backgroundColor: 'rgba(212, 175, 55, 0.1)',
+    flexShrink: 0,
   },
   certSealText: {
     fontSize: 6.5,

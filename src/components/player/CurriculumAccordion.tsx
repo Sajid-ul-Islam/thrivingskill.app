@@ -219,11 +219,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 14,
+    gap: 8,
   },
   moduleHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    minWidth: 0,
     marginRight: 8,
   },
   moduleNumberBadge: {
@@ -233,6 +235,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
+    flexShrink: 0,
   },
   moduleNumberText: {
     fontSize: 13,
@@ -240,6 +243,7 @@ const styles = StyleSheet.create({
   },
   moduleTitleCol: {
     flex: 1,
+    minWidth: 0,
   },
   moduleTitle: {
     fontSize: 14,
