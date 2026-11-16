@@ -144,8 +144,7 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
             },
           ]}
         >
-          {/* Minimize / Down Arrow */}
-          <TouchableOpacity
+          {/* Minimize / Down Arrow */}            <TouchableOpacity
             style={[styles.headerBtn, { backgroundColor: isDark ? '#333' : '#E5E7EB' }]}
             onPress={handleMinimize}
             accessibilityLabel="Minimize player"
@@ -235,7 +234,7 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
                     accessibilityRole="button"
                     accessibilityLabel="Open and play video in YouTube app"
                   >
-                    <Ionicons name="logo-youtube" size={16} color="#FFFFFF" />
+                    <Ionicons name="logo-youtube" size={16} color={colors.textInverse} />
                     <Text style={styles.errorOpenBtnText}>Watch in YouTube App</Text>
                   </TouchableOpacity>
                 </View>
@@ -310,12 +309,12 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
                 <Ionicons
                   name={saved ? 'bookmark' : 'bookmark-outline'}
                   size={16}
-                  color={saved ? '#FFFFFF' : colors.text}
+                  color={saved ? colors.textInverse : colors.text}
                 />
                 <Text
                   style={[
                     styles.saveBtnText,
-                    { color: saved ? '#FFFFFF' : colors.text, fontWeight: saved ? '700' : '600' },
+                    { color: saved ? colors.textInverse : colors.text, fontWeight: saved ? '700' : '600' },
                   ]}
                 >
                   {saved ? 'Saved' : 'Watch Later'}
@@ -339,8 +338,7 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
                 onPress={handleOpenYouTube}
                 accessibilityRole="button"
                 accessibilityLabel="Open in YouTube"
-              >
-                <Ionicons name="logo-youtube" size={16} color="#FFFFFF" />
+              >                  <Ionicons name="logo-youtube" size={16} color={colors.textInverse} />
                 <Text style={styles.openYouTubeText}>YouTube</Text>
               </TouchableOpacity>
             </View>
@@ -426,8 +424,7 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Enroll in full course and syllabus"
               >
-                <Text style={styles.viewCourseBtnText}>Enroll in Full Course & Syllabus</Text>
-                <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
+                <Text style={styles.viewCourseBtnText}>Enroll in Full Course & Syllabus</Text>                  <Ionicons name="arrow-forward" size={14} color={colors.textInverse} />
               </TouchableOpacity>
             </View>
           )}
@@ -439,8 +436,7 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
             accessibilityRole="button"
             accessibilityLabel={`Visit ${YOUTUBE_CHANNEL.name} channel`}
           >
-            <View style={styles.channelAvatar}>
-              <Ionicons name="logo-youtube" size={24} color="#FF0000" />
+            <View style={styles.channelAvatar}>                  <Ionicons name="logo-youtube" size={24} color="#FF0000" />
             </View>
             <View style={styles.channelInfo}>
               <Text style={[styles.channelName, { color: colors.text }]}>{YOUTUBE_CHANNEL.name}</Text>
@@ -478,7 +474,7 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
                       </View>
                     ) : null}
                     <View style={styles.playOverlayMini}>
-                      <Ionicons name="play" size={14} color="#FFFFFF" />
+                      <Ionicons name="play" size={14} color={colors.textInverse} />
                     </View>
                   </View>
 
@@ -607,7 +603,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   errorOpenBtnText: {
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -656,6 +652,15 @@ const styles = StyleSheet.create({
     borderRadius: shape.medium,
     borderWidth: 1,
   },
+  openYouTubeText: {
+    color: colors.textInverse,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  shareBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
   saveBtnText: {
     fontSize: 13,
   },
@@ -683,9 +688,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: shape.medium,
     backgroundColor: '#FF0000',
+    borderColor: colors.brandRed,
+    borderWidth: 1,
   },
   openYouTubeText: {
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -795,13 +802,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#102F53',
+    backgroundColor: colors.primary,
     paddingVertical: 10,
     borderRadius: shape.medium,
     marginTop: 6,
   },
   viewCourseBtnText: {
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -834,13 +841,13 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   subscribeBtn: {
-    backgroundColor: '#102F53',
+    backgroundColor: colors.primary,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: shape.small,
   },
   subscribeText: {
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -891,7 +898,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   durationBadgeText: {
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontSize: 10,
     fontWeight: '700',
   },
@@ -904,8 +911,15 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     backgroundColor: 'rgba(255,0,0,0.85)',
+    borderColor: colors.brandRed,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  durationBadgeText: {
+    color: colors.textInverse,
+    fontSize: 10,
+    fontWeight: '700',
   },
   relatedContent: {
     flex: 1,
