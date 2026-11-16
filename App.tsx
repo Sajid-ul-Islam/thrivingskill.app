@@ -59,6 +59,7 @@ const MainAppContent: React.FC = () => {
   const {
     currentScreen: activeScreen,
     activeTab,
+    direction: navDirection,
     canGoBack,
     push,
     pop: navigateBack,
@@ -179,7 +180,10 @@ const MainAppContent: React.FC = () => {
 
       <View style={styles.screenContainer}>
         {activeScreen.name === 'CourseDetail' ? (
-          <ScreenTransition key={`detail-${activeScreen.courseId}`} direction="horizontal">
+          <ScreenTransition
+            key={`detail-${activeScreen.courseId}`}
+            direction={navDirection === 'backward' ? 'backward' : 'forward'}
+          >
             <CourseDetailScreen
               courseId={activeScreen.courseId}
               onBack={navigateBack}
@@ -187,7 +191,10 @@ const MainAppContent: React.FC = () => {
             />
           </ScreenTransition>
         ) : activeScreen.name === 'LessonPlayer' ? (
-          <ScreenTransition key={`player-${activeScreen.lessonId}`} direction="horizontal">
+          <ScreenTransition
+            key={`player-${activeScreen.lessonId}`}
+            direction={navDirection === 'backward' ? 'backward' : 'forward'}
+          >
             <LessonPlayerScreen
               courseId={activeScreen.courseId}
               lessonId={activeScreen.lessonId}
@@ -196,7 +203,10 @@ const MainAppContent: React.FC = () => {
             />
           </ScreenTransition>
         ) : activeScreen.name === 'YouTubeVideos' ? (
-          <ScreenTransition key="yt-videos" direction="horizontal">
+          <ScreenTransition
+            key="yt-videos"
+            direction={navDirection === 'backward' ? 'backward' : 'forward'}
+          >
             <YouTubeVideosScreen
               onBack={navigateBack}
               onNavigateToCourse={navigateToCourse}
@@ -205,7 +215,7 @@ const MainAppContent: React.FC = () => {
         ) : (
           <>
             {activeTab === 'Home' && (
-              <ScreenTransition key="tab-Home" direction="vertical" duration={180}>
+              <ScreenTransition key="tab-Home" direction="fade" duration={160}>
                 <HomeScreen
                   onNavigateToCourse={navigateToCourse}
                   onNavigateToLesson={navigateToLesson}
@@ -222,7 +232,7 @@ const MainAppContent: React.FC = () => {
               </ScreenTransition>
             )}
             {activeTab === 'Courses' && (
-              <ScreenTransition key="tab-Courses" direction="vertical" duration={180}>
+              <ScreenTransition key="tab-Courses" direction="fade" duration={160}>
                 <CoursesScreen
                   onNavigateToCourse={navigateToCourse}
                   onOpenSubscription={() => setSubscriptionModalVisible(true)}
@@ -233,7 +243,7 @@ const MainAppContent: React.FC = () => {
               </ScreenTransition>
             )}
             {activeTab === 'MyLearning' && (
-              <ScreenTransition key="tab-MyLearning" direction="vertical" duration={180}>
+              <ScreenTransition key="tab-MyLearning" direction="fade" duration={160}>
                 <MyLearningScreen
                   onNavigateToCourse={navigateToCourse}
                   onNavigateToLesson={navigateToLesson}
@@ -247,7 +257,7 @@ const MainAppContent: React.FC = () => {
               </ScreenTransition>
             )}
             {activeTab === 'Workshops' && (
-              <ScreenTransition key="tab-Workshops" direction="vertical" duration={180}>
+              <ScreenTransition key="tab-Workshops" direction="fade" duration={160}>
                 <WorkshopsScreen
                   onOpenSubscription={() => setSubscriptionModalVisible(true)}
                   onOpenNotifications={() => setNotificationModalVisible(true)}
@@ -257,7 +267,7 @@ const MainAppContent: React.FC = () => {
               </ScreenTransition>
             )}
             {activeTab === 'Profile' && (
-              <ScreenTransition key="tab-Profile" direction="vertical" duration={180}>
+              <ScreenTransition key="tab-Profile" direction="fade" duration={160}>
                 <ProfileScreen
                   onOpenCorporateModal={() => setCorporateModalVisible(true)}
                   onOpenSubscription={() => setSubscriptionModalVisible(true)}

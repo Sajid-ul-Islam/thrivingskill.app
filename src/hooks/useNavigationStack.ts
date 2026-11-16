@@ -2,6 +2,8 @@ import { useState, useCallback, useRef } from 'react';
 import { ActiveScreen, RootTab } from '../types';
 import { triggerHaptic } from '../utils/haptics';
 
+export type NavigationDirection = 'forward' | 'backward' | 'fade';
+
 export interface UseNavigationStackOptions {
   initialTab?: RootTab;
   initialScreen?: ActiveScreen;
@@ -12,6 +14,7 @@ export interface NavigationStackResult {
   currentScreen: ActiveScreen;
   activeScreen: ActiveScreen; // Alias for backward compatibility & static checkers
   activeTab: RootTab;
+  direction: NavigationDirection;
   canGoBack: boolean;
   push: (screen: ActiveScreen) => void;
   pop: () => boolean;
@@ -37,6 +40,7 @@ export function useNavigationStack(options: UseNavigationStackOptions = {}): Nav
 
   const [stack, setStack] = useState<ActiveScreen[]>([initialScreen]);
   const [activeTab, setActiveTab] = useState<RootTab>(initialTab);
+  const [direction, setDirection] = useState<NavigationDirection>('forward');
 
   // Ref to guarantee up-to-date stack access in event callbacks
   const stackRef = useRef<ActiveScreen[]>([initialScreen]);
@@ -48,6 +52,7 @@ export function useNavigationStack(options: UseNavigationStackOptions = {}): Nav
    * Push a new screen onto the stack.
    */
   const push = useCallback((screen: ActiveScreen) => {
+    setDirection('forward');
     setStack((prev) => {
       // Avoid duplicate consecutive identical screens
       const top = prev[prev.length - 1];
@@ -82,6 +87,7 @@ export function useNavigationStack(options: UseNavigationStackOptions = {}): Nav
     if (stackRef.current.length <= 1) {
       return false;
     }
+    setDirection('backward');
     setStack((prev) => {
       if (prev.length <= 1) return prev;
       const nextStack = prev.slice(0, prev.length - 1);
@@ -99,6 +105,7 @@ export function useNavigationStack(options: UseNavigationStackOptions = {}): Nav
    * Replace the topmost screen with a new screen (e.g. switching lessons in player).
    */
   const replace = useCallback((screen: ActiveScreen) => {
+    setDirection('forward');
     setStack((prev) => {
       if (prev.length === 0) return [screen];
       const nextStack = [...prev.slice(0, prev.length - 1), screen];
@@ -114,6 +121,7 @@ export function useNavigationStack(options: UseNavigationStackOptions = {}): Nav
    * Reset navigation stack back to the root tabs.
    */
   const resetToTabs = useCallback((tab?: RootTab) => {
+    setDirection('fade');
     setStack((prev) => {
       const targetTab = tab || activeTab;
       setActiveTab(targetTab);
@@ -131,6 +139,7 @@ export function useNavigationStack(options: UseNavigationStackOptions = {}): Nav
     if (tab !== activeTab || !current || current.name !== 'MainTabs') {
       triggerHaptic('selection');
     }
+    setDirection('fade');
     setActiveTab(tab);
     const rootScreen: ActiveScreen = { name: 'MainTabs', tab };
     stackRef.current = [rootScreen];
@@ -165,6 +174,7 @@ export function useNavigationStack(options: UseNavigationStackOptions = {}): Nav
     currentScreen,
     activeScreen: currentScreen,
     activeTab,
+    direction,
     canGoBack,
     push,
     pop,
