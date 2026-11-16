@@ -639,7 +639,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   style={{ minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' }}
                 >
                   <Text style={[styles.seeAllText, { color: colors.primary }]}>
-                    {isBangla ? 'আমার কোর্সসমূহ →' : 'My Courses →'}
+                    {isBangla ? 'আমার লার্নিং হাব →' : 'My Learning Hub →'}
                   </Text>
                 </TouchableOpacity>
               </View>

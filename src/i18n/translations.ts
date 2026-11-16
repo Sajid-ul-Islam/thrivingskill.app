@@ -4,11 +4,11 @@ export const translations = {
   en: {
     // Navigation & Tabs
     tabHome: 'Home',
-    tabExplore: 'Courses',
-    tabCourses: 'Courses',
+    tabExplore: 'All Courses',
+    tabCourses: 'All Courses',
     tabCopilot: 'AI Assistant',
-    tabMyHub: 'My Courses',
-    tabMyCourses: 'My Courses',
+    tabMyHub: 'My Learning',
+    tabMyCourses: 'My Learning',
     tabLive: 'Live Class',
     tabLiveClass: 'Live Class',
     tabProfile: 'Profile',
@@ -144,11 +144,11 @@ export const translations = {
   bn: {
     // Navigation & Tabs
     tabHome: 'হোম',
-    tabExplore: 'কোর্সসমূহ',
-    tabCourses: 'কোর্সসমূহ',
+    tabExplore: 'সকল কোর্স',
+    tabCourses: 'সকল কোর্স',
     tabCopilot: 'এআই অ্যাসিস্ট্যান্ট',
-    tabMyHub: 'আমার কোর্সসমূহ',
-    tabMyCourses: 'আমার কোর্সসমূহ',
+    tabMyHub: 'আমার লার্নিং',
+    tabMyCourses: 'আমার লার্নিং',
     tabLive: 'লাইভ ক্লাস',
     tabLiveClass: 'লাইভ ক্লাস',
     tabProfile: 'প্রোফাইল',

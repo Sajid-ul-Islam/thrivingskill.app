@@ -28,7 +28,7 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizon
     showToast({
       message: wasBookmarked
         ? (isBangla ? `"${course.title}" সংরক্ষিত তালিকা থেকে মুছে ফেলা হয়েছে` : `Removed "${course.title}" from Saved`)
-        : (isBangla ? `"${course.title}" আমার কোর্সসমূহে সংরক্ষিত হয়েছে` : `Saved "${course.title}" to My Courses`),
+        : (isBangla ? `"${course.title}" আমার লার্নিং-এ সংরক্ষিত হয়েছে` : `Saved "${course.title}" to My Learning`),
       type: wasBookmarked ? 'info' : 'success',
       actionLabel: wasBookmarked ? (isBangla ? 'বাতিল' : 'Undo') : undefined,
       onAction: wasBookmarked ? () => toggleBookmark(course.id) : undefined,

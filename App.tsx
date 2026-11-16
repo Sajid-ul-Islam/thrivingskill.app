@@ -346,6 +346,7 @@ const MainAppContent: React.FC = () => {
                     },
                   ]}
                   numberOfLines={1}
+                  ellipsizeMode="tail"
                 >
                   {tab.label}
                 </Text>

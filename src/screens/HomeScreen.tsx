@@ -461,7 +461,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   accessibilityRole="button"
                 >
                   <Text style={[styles.seeAllText, { color: colors.primary }]}>
-                    {isBangla ? 'আমার কোর্সসমূহ →' : 'My Courses →'}
+                    {isBangla ? 'আমার লার্নিং হাব →' : 'My Learning Hub →'}
                   </Text>
                 </TouchableOpacity>
               )}

@@ -257,7 +257,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
                 <Ionicons name="book-outline" size={18} color={isDark ? '#818CF8' : '#4F46E5'} />
               </View>
               <Text style={[styles.navLabel, { color: colors.text }]}>
-                {isBangla ? 'কোর্স ও বান্ডেলসমূহ' : 'Courses & Bundles'}
+                {isBangla ? 'সকল কোর্স ও বান্ডেল' : 'All Courses & Bundles'}
               </Text>
               <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
             </TouchableOpacity>
