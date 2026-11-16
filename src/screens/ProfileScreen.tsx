@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -358,54 +358,51 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     }
   };
 
-  const getCourseStatus = (courseId: string): 'in-progress' | 'finished' | 'passed' | 'failed' => {
+  const getCourseStatus = useCallback((courseId: string): 'in-progress' | 'finished' | 'passed' | 'failed' => {
     const prog = userProgress[courseId];
     if (!prog) return 'in-progress';
     if (prog.status === 'failed' || prog.grade === 'failed') return 'failed';
     if (prog.status === 'passed' || prog.grade === 'passed' || prog.isCompleted) return 'passed';
     if (prog.status === 'finished') return 'finished';
     return 'in-progress';
-  };
+  }, [userProgress]);
 
-  const enrolledOrderCourses = Object.keys(userProgress)
+  const enrolledOrderCourses = useMemo(() => Object.keys(userProgress)
     .map((id) => courses.find((c) => c.id === id))
-    .filter((c): c is Course => Boolean(c));
+    .filter((c): c is Course => Boolean(c)), [userProgress, courses]);
 
-  const inProgressCourses = enrolledOrderCourses.filter((c) => getCourseStatus(c.id) === 'in-progress');
-  const finishedCourses = enrolledOrderCourses.filter((c) => {
+  const inProgressCourses = useMemo(() => enrolledOrderCourses.filter((c) => getCourseStatus(c.id) === 'in-progress'), [enrolledOrderCourses, getCourseStatus]);
+  const finishedCourses = useMemo(() => enrolledOrderCourses.filter((c) => {
     const st = getCourseStatus(c.id);
     return st === 'finished' || st === 'passed' || st === 'failed';
-  });
-  const passedCourses = enrolledOrderCourses.filter((c) => getCourseStatus(c.id) === 'passed');
-  const failedCourses = enrolledOrderCourses.filter((c) => getCourseStatus(c.id) === 'failed');
+  }), [enrolledOrderCourses, getCourseStatus]);
+  const passedCourses = useMemo(() => enrolledOrderCourses.filter((c) => getCourseStatus(c.id) === 'passed'), [enrolledOrderCourses, getCourseStatus]);
+  const failedCourses = useMemo(() => enrolledOrderCourses.filter((c) => getCourseStatus(c.id) === 'failed'), [enrolledOrderCourses, getCourseStatus]);
 
-  const lpStats = {
+  const lpStats = useMemo(() => ({
     enrolledCount: enrolledOrderCourses.length,
     inProgressCount: inProgressCourses.length,
     finishedCount: finishedCourses.length,
     passedCount: passedCourses.length,
     failedCount: failedCourses.length,
-  };
+  }), [enrolledOrderCourses.length, inProgressCourses.length, finishedCourses.length, passedCourses.length, failedCourses.length]);
 
   const enrolledCount = enrolledOrderCourses.length;
   const completedCount = finishedCourses.length;
-  const totalCompletedLessons = Object.values(userProgress).reduce(
+  const totalCompletedLessons = useMemo(() => Object.values(userProgress).reduce(
     (acc, p) => acc + p.completedLessonIds.length,
     0
-  );
-  const totalHoursLearned = (totalCompletedLessons * 0.35).toFixed(1);
-  const completionRate = enrolledCount > 0 ? Math.round((completedCount / enrolledCount) * 100) : 0;
+  ), [userProgress]);
+  const totalHoursLearned = useMemo(() => (totalCompletedLessons * 0.35).toFixed(1), [totalCompletedLessons]);
+  const completionRate = useMemo(() => enrolledCount > 0 ? Math.round((completedCount / enrolledCount) * 100) : 0, [enrolledCount, completedCount]);
 
-  const displayedCourses =
-    portfolioTab === 'in-progress'
-      ? inProgressCourses
-      : portfolioTab === 'finished'
-      ? finishedCourses
-      : portfolioTab === 'passed'
-      ? passedCourses
-      : portfolioTab === 'failed'
-      ? failedCourses
-      : enrolledOrderCourses;
+  const displayedCourses = useMemo(() => {
+    if (portfolioTab === 'in-progress') return inProgressCourses;
+    if (portfolioTab === 'finished') return finishedCourses;
+    if (portfolioTab === 'passed') return passedCourses;
+    if (portfolioTab === 'failed') return failedCourses;
+    return enrolledOrderCourses;
+  }, [portfolioTab, inProgressCourses, finishedCourses, passedCourses, failedCourses, enrolledOrderCourses]);
 
   const handleConfirmDeleteAccount = async () => {
     if (!deletePass.trim()) {
@@ -2106,6 +2103,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                         placeholder="First name"
                         placeholderTextColor={colors.textMuted}
                         autoCapitalize="words"
+                        accessibilityLabel="First name"
                       />
                     </View>
                     <View style={{ flex: 1 }}>
@@ -2117,6 +2115,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                         placeholder="Last name"
                         placeholderTextColor={colors.textMuted}
                         autoCapitalize="words"
+                        accessibilityLabel="Last name"
                       />
                     </View>
                   </View>
@@ -2133,6 +2132,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                         onChangeText={setDisplayName}
                         placeholder="Display name"
                         placeholderTextColor={colors.textMuted}
+                        accessibilityLabel="Display name"
                       />
                     </View>
                     <View style={{ flex: 1 }}>
@@ -2146,6 +2146,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                         placeholder="Email address"
                         placeholderTextColor={colors.textMuted}
                         keyboardType="email-address"
+                        accessibilityLabel="Email address"
                       />
                     </View>
                   </View>
@@ -2169,6 +2170,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                       placeholder="Share a little biographical information..."
                       placeholderTextColor={colors.textMuted}
                       multiline
+                      accessibilityLabel="Biographical Info"
                     />
                     <Text style={[styles.helperText, { color: colors.textMuted }]}>
                       Share a little biographical information to fill out your profile. This may be shown publicly.
@@ -2185,6 +2187,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                       placeholder="Phone Number"
                       placeholderTextColor={colors.textMuted}
                       keyboardType="phone-pad"
+                      accessibilityLabel="Phone Number"
                     />
                   </View>
 
@@ -2199,6 +2202,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                         placeholder="https://"
                         placeholderTextColor={colors.textMuted}
                         autoCapitalize="none"
+                        accessibilityLabel="Facebook Profile URL"
                       />
                     </View>
                     <View style={{ flex: 1 }}>
@@ -2210,6 +2214,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                         placeholder="https://"
                         placeholderTextColor={colors.textMuted}
                         autoCapitalize="none"
+                        accessibilityLabel="X Profile URL"
                       />
                     </View>
                   </View>
@@ -2225,6 +2230,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                         placeholder="https://"
                         placeholderTextColor={colors.textMuted}
                         autoCapitalize="none"
+                        accessibilityLabel="Youtube Channel URL"
                       />
                     </View>
                     <View style={{ flex: 1 }}>
@@ -2236,6 +2242,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                         placeholder="https://"
                         placeholderTextColor={colors.textMuted}
                         autoCapitalize="none"
+                        accessibilityLabel="Linkedin Profile URL"
                       />
                     </View>
                   </View>

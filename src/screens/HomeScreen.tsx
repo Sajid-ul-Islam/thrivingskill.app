@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -95,16 +95,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   } = useLearning();
 
   const {
-    courses: recommendedCourses,
-    rationale: recRationale,
-    rationaleBn: recRationaleBn,
-  } = getRecommendedCourses();
+    courses: rawRecCourses,
+    rationale: rawRecRationale,
+    rationaleBn: rawRecRationaleBn,
+  } = useMemo(() => getRecommendedCourses(), [getRecommendedCourses]);
+  const recommendedCourses = rawRecCourses;
+  const recRationale = rawRecRationale;
+  const recRationaleBn = rawRecRationaleBn;
+
   const { activeWorkspace, subscriptionTier, assessmentResult } = useSaaS();
   const { lastWatchedVideo, playVideo } = useYouTube();
   const { user, isAuthenticated, isGuest, setAuthModalVisible } = useAuth();
 
   // Dynamic Time-aware greeting
-  const getGreetingData = () => {
+  const greetingInfo = useMemo(() => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) {
       return {
@@ -131,12 +135,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         iconColor: '#6366F1',
       };
     }
-  };
-
-  const greetingInfo = getGreetingData();
+  }, [isBangla]);
 
   // Learner Display Name (Extracts actual first name or friendly name)
-  const learnerDisplayName = (() => {
+  const learnerDisplayName = useMemo(() => {
     if (user?.displayName && user.displayName.trim().length > 0) {
       const parts = user.displayName.trim().split(' ');
       return parts[0];
@@ -145,17 +147,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       return user.username;
     }
     return isBangla ? 'লার্নার' : 'Learner';
-  })();
+  }, [user?.displayName, user?.username, isBangla]);
 
   // Find enrolled active course to show "Continue Learning"
-  const enrolledCourseIds = Object.keys(userProgress);
-  const activeCourseId = enrolledCourseIds[0];
-  const activeCourse = courses.find((c) => c.id === activeCourseId);
+  const activeCourse = useMemo(() => {
+    const enrolledCourseIds = Object.keys(userProgress);
+    const activeCourseId = enrolledCourseIds[0];
+    return activeCourseId ? courses.find((c) => c.id === activeCourseId) : undefined;
+  }, [userProgress, courses]);
+
   const activeProgress = activeCourse ? userProgress[activeCourse.id] : undefined;
   const activeProgressPercent = activeCourse ? getCourseProgressPercentage(activeCourse.id) : 0;
 
   // Subtitle / Momentum context
-  const greetingSubtitleText = (() => {
+  const greetingSubtitleText = useMemo(() => {
     if (activeCourse) {
       return isBangla
         ? `চালিয়ে যান: ${activeCourse.title} (${activeProgressPercent}%)`
@@ -167,18 +172,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         : `🔥 ${streakDays}-day streak! Keep up your habit`;
     }
     return isBangla ? 'আজকে আপনি কোন নতুন স্কিল শিখবেন?' : 'What skill will you master today?';
-  })();
+  }, [activeCourse, activeProgressPercent, isBangla, streakDays]);
 
-  // Filter courses
-  const filteredCourses = courses.filter((course) => {
-    const matchesCategory =
-      selectedCategory === 'all' || course.category === selectedCategory;
-    const matchesSearch =
-      !searchQuery ||
-      course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.subtitle.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  // High-performance memoized filtered courses using pre-computed search index
+  const filteredCourses = useMemo(() => {
+    const q = (searchQuery || '').trim().toLowerCase();
+    const cat = selectedCategory;
+    return courses.filter((course) => {
+      const matchesCategory =
+        cat === 'all' || course.category === cat || (course.categorySlugs && course.categorySlugs.includes(cat));
+      if (!matchesCategory) return false;
+      if (!q) return true;
+      if (course._searchIndex) return course._searchIndex.includes(q);
+      return (
+        course.title.toLowerCase().includes(q) ||
+        course.subtitle.toLowerCase().includes(q)
+      );
+    });
+  }, [courses, selectedCategory, searchQuery]);
 
   const handleSelectSlide = (slide: CarouselSlide) => {
     if (slide.actionType === 'summit') {

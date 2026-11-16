@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -80,36 +80,36 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
     }
   };
 
-  const getCourseStatus = (courseId: string): 'in-progress' | 'finished' | 'passed' | 'failed' => {
+  const getCourseStatus = useCallback((courseId: string): 'in-progress' | 'finished' | 'passed' | 'failed' => {
     const prog = userProgress[courseId];
     if (!prog) return 'in-progress';
     if (prog.status === 'failed' || prog.grade === 'failed') return 'failed';
     if (prog.status === 'passed' || prog.grade === 'passed' || prog.isCompleted) return 'passed';
     if (prog.status === 'finished') return 'finished';
     return 'in-progress';
-  };
+  }, [userProgress]);
 
-  // Enrolled courses categorized according to live LearnPress
-  const enrolledList = courses.filter((c) => !!userProgress[c.id]);
-  const inProgressList = enrolledList.filter((c) => getCourseStatus(c.id) === 'in-progress');
-  const finishedList = enrolledList.filter((c) => {
+  // Enrolled courses categorized according to live LearnPress (memoized)
+  const enrolledList = useMemo(() => courses.filter((c) => !!userProgress[c.id]), [courses, userProgress]);
+  const inProgressList = useMemo(() => enrolledList.filter((c) => getCourseStatus(c.id) === 'in-progress'), [enrolledList, getCourseStatus]);
+  const finishedList = useMemo(() => enrolledList.filter((c) => {
     const st = getCourseStatus(c.id);
     return st === 'finished' || st === 'passed' || st === 'failed';
-  });
-  const passedList = enrolledList.filter((c) => getCourseStatus(c.id) === 'passed');
-  const failedList = enrolledList.filter((c) => getCourseStatus(c.id) === 'failed');
-  const savedList = courses.filter((c) => bookmarks.includes(c.id));
+  }), [enrolledList, getCourseStatus]);
+  const passedList = useMemo(() => enrolledList.filter((c) => getCourseStatus(c.id) === 'passed'), [enrolledList, getCourseStatus]);
+  const failedList = useMemo(() => enrolledList.filter((c) => getCourseStatus(c.id) === 'failed'), [enrolledList, getCourseStatus]);
+  const savedList = useMemo(() => courses.filter((c) => bookmarks.includes(c.id)), [courses, bookmarks]);
 
-  const lpStats = {
+  const lpStats = useMemo(() => ({
     enrolledCount: enrolledList.length,
     inProgressCount: inProgressList.length,
     finishedCount: finishedList.length,
     passedCount: passedList.length,
     failedCount: failedList.length,
-  };
+  }), [enrolledList.length, inProgressList.length, finishedList.length, passedList.length, failedList.length]);
 
-  // Build rich watch history list (Section 19 Spec)
-  const historyList = enrolledList
+  // Build rich watch history list (Section 19 Spec) - memoized
+  const historyList = useMemo(() => enrolledList
     .map((course) => {
       const progress = userProgress[course.id];
       const targetLessonId =
@@ -127,14 +127,14 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
         dateWatched: isBangla ? 'আজ' : 'Today',
       };
     })
-    .filter((h) => !!h.lesson);
+    .filter((h) => !!h.lesson), [enrolledList, userProgress, getCourseProgressPercentage, isBangla]);
 
   // Compute total learning stats
-  const totalCompletedLessons = Object.values(userProgress).reduce(
+  const totalCompletedLessons = useMemo(() => Object.values(userProgress).reduce(
     (acc, p) => acc + p.completedLessonIds.length,
     0
-  );
-  const totalHoursLearned = (totalCompletedLessons * 0.35).toFixed(1);
+  ), [userProgress]);
+  const totalHoursLearned = useMemo(() => (totalCompletedLessons * 0.35).toFixed(1), [totalCompletedLessons]);
 
   const renderCourseList = (list: Course[], emptyTitle: string, emptyMessage: string) => {
     if (list.length === 0) {

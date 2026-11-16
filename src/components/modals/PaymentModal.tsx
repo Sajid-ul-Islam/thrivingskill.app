@@ -524,6 +524,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                         }}
                         placeholder="e.g. Tanvir"
                         placeholderTextColor={colors.textMuted}
+                        accessibilityLabel={isBangla ? 'নামের প্রথম অংশ' : 'First name'}
                       />
                     </View>
 
@@ -547,6 +548,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                         }}
                         placeholder="e.g. Ahmed"
                         placeholderTextColor={colors.textMuted}
+                        accessibilityLabel={isBangla ? 'নামের শেষ অংশ' : 'Last name'}
                       />
                     </View>
                   </View>
@@ -573,6 +575,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       placeholder="017XXXXXXXX"
                       placeholderTextColor={colors.textMuted}
                       keyboardType="phone-pad"
+                      accessibilityLabel={isBangla ? 'ফোন নম্বর' : 'Phone number'}
                     />
                   </View>
 
@@ -599,6 +602,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       placeholderTextColor={colors.textMuted}
                       keyboardType="email-address"
                       autoCapitalize="none"
+                      accessibilityLabel={isBangla ? 'ইমেল ঠিকানা' : 'Email address'}
                     />
                   </View>
 
@@ -627,6 +631,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                           placeholder="Password"
                           placeholderTextColor={colors.textMuted}
                           secureTextEntry={!showPassword}
+                          accessibilityLabel={isBangla ? 'পাসওয়ার্ড' : 'Password'}
                         />
                         <TouchableOpacity
                           style={styles.eyeToggle}
@@ -659,10 +664,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       ]}
                       value={orderNotes}
                       onChangeText={setOrderNotes}
-                      placeholder="Notes about your order, e.g. special notes for delivery."
+                      placeholder={isBangla ? 'কোর্স সংক্রান্ত কোনো বিশেষ নির্দেশনা থাকলে লিখুন...' : 'Notes about your order, e.g. special requests'}
                       placeholderTextColor={colors.textMuted}
-                      multiline={true}
+                      multiline
                       numberOfLines={3}
+                      accessibilityLabel={isBangla ? 'অতিরিক্ত তথ্য' : 'Order Notes'}
                     />
                   </View>
 

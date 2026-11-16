@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Linking, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -68,29 +68,29 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
     }
   };
 
-  // Partition real live courses between cohort workshops and summits
-  const summits = workshops.filter(
+  // Partition real live courses between cohort workshops and summits (memoized)
+  const summits = useMemo(() => workshops.filter(
     (w) =>
       w.title.toLowerCase().includes('summit') ||
       w.category === '4ir_skills_summit' ||
       w.category === 'blockchain-summit'
-  );
-  const liveClasses = workshops.filter(
+  ), [workshops]);
+
+  const liveClasses = useMemo(() => workshops.filter(
     (w) =>
       !w.title.toLowerCase().includes('summit') &&
       w.category !== '4ir_skills_summit' &&
       w.category !== 'blockchain-summit'
-  );
+  ), [workshops]);
 
-  const displayedWorkshops: Workshop[] =
-    activeTab === 'all'
-      ? workshops
-      : activeTab === 'live-classes'
-      ? liveClasses
-      : summits;
+  const displayedWorkshops: Workshop[] = useMemo(() => {
+    if (activeTab === 'all') return workshops;
+    if (activeTab === 'live-classes') return liveClasses;
+    return summits;
+  }, [activeTab, workshops, liveClasses, summits]);
 
   const hasVisibleEvents = displayedWorkshops.length > 0;
-  const liveWorkshopNow = workshops.find((w) => !!w.isLive);
+  const liveWorkshopNow = useMemo(() => workshops.find((w) => !!w.isLive), [workshops]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
