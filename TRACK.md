@@ -68,6 +68,7 @@ gantt
 | **Quiz** | `POST` | `/learnpress/v1/quiz/start` | Start Quiz Attempt | ✅ Integrated | Ready |
 | **Quiz** | `POST` | `/learnpress/v1/quiz/finish` | Submit Quiz Answers | ✅ Integrated | Ready |
 | **Posts** | `GET` | `/wp/v2/posts?_embed` | Blog & Editorial News | ✅ Live | Yes |
+| **Checkout** | `GET` / `POST` | `/cart`, `/checkout` | WooCommerce & SSLCommerz Order Placement | ✅ Live / Integrated | Yes |
 | **Users** | `GET` | `/wp/v2/users/me` | Current Profile | ✅ Integrated | Ready |
 
 ---

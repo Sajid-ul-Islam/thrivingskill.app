@@ -113,6 +113,8 @@ export interface Course {
   slug: string;
   subtitle: string;
   category: CategoryId;
+  categorySlugs?: string[];
+  categoryIds?: (number | string)[];
   level: 'Beginner' | 'Intermediate' | 'Advanced' | 'All Levels';
   rating: number;
   reviewsCount: number;

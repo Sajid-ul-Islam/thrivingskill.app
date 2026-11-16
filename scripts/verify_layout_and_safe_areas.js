@@ -119,9 +119,9 @@ check('Admin access gated to server roles in production and real deleteAccount w
   assert(appJson.includes('android.permission.SYSTEM_ALERT_WINDOW'), 'app.json missing blockedPermissions for SYSTEM_ALERT_WINDOW');
 
   const paymentModalCode = fs.readFileSync('src/components/modals/PaymentModal.tsx', 'utf8');
-  assert(!paymentModalCode.includes('/checkout/'), 'PaymentModal must not link to external web checkout URLs');
+  assert(paymentModalCode.includes('firstName') && paymentModalCode.includes('lastName') && paymentModalCode.includes('phone') && paymentModalCode.includes('email'), 'PaymentModal must include authentic billing details fields');
   assert(!paymentModalCode.includes('handleManualOrderVerification'), 'PaymentModal must not allow unverified client-side Order ID unlock');
-  assert(!paymentModalCode.includes('bKash'), 'PaymentModal must not display external payment gateways in Reader-App mode');
+  assert(paymentModalCode.includes('SSLCommerz'), 'PaymentModal must support authentic SSLCommerz gateway information');
 
   const subModalCode = fs.readFileSync('src/components/modals/SubscriptionModal.tsx', 'utf8');
   assert(!subModalCode.includes('handleUpgrade'), 'SubscriptionModal must not allow unverified free tier switching');

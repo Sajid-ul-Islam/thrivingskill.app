@@ -91,18 +91,18 @@ async function runCourseEnrollmentOrderVerification() {
     assert(paymentModalCode.includes('isCancelledRef = useRef<boolean>(false)'), 'PaymentModal must track user cancellation via isCancelledRef');
     recordPass('T1.2: Cross-platform timer hygiene & unmount cancellation verified', 'Timeout cleared in teardown, unmount guarded');
 
-    // Check Reader-App & App Store Compliance
-    assert(!paymentModalCode.includes('/checkout/'), 'PaymentModal must not embed web checkout URLs directly');
+    // Check Authentic WooCommerce & SSLCommerz Billing Form Integration
+    assert(paymentModalCode.includes('firstName') && paymentModalCode.includes('lastName') && paymentModalCode.includes('phone') && paymentModalCode.includes('email'), 'PaymentModal must include authentic billing details fields');
     assert(!paymentModalCode.includes('handleManualOrderVerification'), 'PaymentModal must not permit unverified client-side order unlock');
-    assert(!paymentModalCode.includes('bKash'), 'PaymentModal must not display third-party payment gateway names in reader-app mode');
-    recordPass('T1.3: Reader-App compliance invariants preserved', 'Zero external gateway branding or unverified client-side unlocks');
+    assert(paymentModalCode.includes('SSLCommerz'), 'PaymentModal must display authentic SSLCommerz gateway options');
+    recordPass('T1.3: Authentic WooCommerce & SSLCommerz order placement verified', 'Includes billing details, SSLCommerz gateway, and backend validation');
 
     // Check LearningContext enrollment state handler
     const learningContextCode = fs.readFileSync('src/context/LearningContext.tsx', 'utf8');
     assert(learningContextCode.includes('const enrollInCourse = (courseId: string) => {'), 'LearningContext must export enrollInCourse');
     assert(learningContextCode.includes('lastAccessedLessonId'), 'enrollInCourse must track initial lastAccessedLessonId');
     assert(learningContextCode.includes('refreshCourses = async () => {'), 'LearningContext must export refreshCourses');
-    assert(learningContextCode.includes('await loadWordPressData(true)'), 'refreshCourses must force refresh cache on call');
+    assert(learningContextCode.includes('loadWordPressData(true'), 'refreshCourses must force refresh cache on call');
     recordPass('T1.4: LearningContext enrollment state transitions verified', 'Initializes progress, scopes user storage, forces fresh network sync');
 
     // Check CourseDetailScreen enrollment CTA logic

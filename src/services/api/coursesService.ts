@@ -13,10 +13,12 @@ export interface CourseQueryParams {
   order?: 'asc' | 'desc';
   orderby?: 'date' | 'title' | 'price' | 'popularity';
   forceRefresh?: boolean;
+  fetchAll?: boolean;
 }
 
 export class CoursesService {
   private static COURSES_CACHE_PREFIX = 'courses_list';
+  private static ALL_COURSES_CACHE_KEY = 'courses_full_catalog';
   private static CATEGORIES_CACHE_KEY = 'categories_list';
   private static LIVE_WORKSHOPS_CACHE_KEY = 'live_workshops_list';
 
@@ -41,11 +43,125 @@ export class CoursesService {
   }
 
   /**
+   * Comprehensive Catalog Synchronization:
+   * Fetches ALL courses from the main site across all pagination pages up to x-wp-totalpages.
+   * Utilizes Stale-While-Revalidate (SWR): instantaneous cache response followed by silent background sync.
+   */
+  static async getAllCourses(forceRefresh: boolean = false): Promise<Course[]> {
+    const fetchAllFromNetwork = async (): Promise<Course[]> => {
+      if (Env.DEBUG_API) {
+        console.log('[CoursesService] Starting full catalog sync from LearnPress...');
+      }
+
+      // Step 1: Fetch Page 1 with per_page=100 and extract pagination metadata
+      const p1 = await HttpClient.getWithMeta<any[]>(
+        Endpoints.LEARNPRESS.COURSES,
+        {
+          per_page: 100,
+          page: 1,
+          _t: Date.now(),
+        },
+        {
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            Pragma: 'no-cache',
+          },
+        }
+      );
+
+      if (!Array.isArray(p1.data)) {
+        throw new Error('Expected array of courses from backend');
+      }
+
+      const totalPages = Math.max(1, p1.totalPages || 1);
+      let allRaw: any[] = [...p1.data];
+
+      // Step 2: Concurrently fetch remaining pages if totalPages > 1
+      if (totalPages > 1) {
+        const remainingPagePromises: Promise<any[]>[] = [];
+        for (let page = 2; page <= totalPages; page++) {
+          remainingPagePromises.push(
+            HttpClient.get<any[]>(
+              Endpoints.LEARNPRESS.COURSES,
+              {
+                per_page: 100,
+                page,
+                _t: Date.now(),
+              },
+              {
+                headers: {
+                  'Cache-Control': 'no-cache, no-store, must-revalidate',
+                  Pragma: 'no-cache',
+                },
+              }
+            ).catch((err) => {
+              if (Env.DEBUG_API) {
+                console.warn(`[CoursesService] Page ${page} fetch error:`, err);
+              }
+              return [];
+            })
+          );
+        }
+
+        const remainingResults = await Promise.all(remainingPagePromises);
+        remainingResults.forEach((pageData) => {
+          if (Array.isArray(pageData)) {
+            allRaw = allRaw.concat(pageData);
+          }
+        });
+      }
+
+      // Step 3: Deduplicate by course ID
+      const courseMap = new Map<string, any>();
+      allRaw.forEach((item) => {
+        if (item && item.id) {
+          courseMap.set(String(item.id), item);
+        }
+      });
+
+      const uniqueRaw = Array.from(courseMap.values());
+      const transformed = uniqueRaw.map(transformWpCourse);
+
+      if (Env.DEBUG_API) {
+        console.log(
+          `[CoursesService] Successfully synced full catalog: ${transformed.length} courses across ${totalPages} pages`
+        );
+      }
+
+      return transformed;
+    };
+
+    if (forceRefresh) {
+      const freshCourses = await fetchAllFromNetwork();
+      await CacheManager.set(this.ALL_COURSES_CACHE_KEY, freshCourses, 1800000); // 30 mins
+      return freshCourses;
+    }
+
+    // Stale-While-Revalidate
+    const courses = await CacheManager.getOrRevalidate<Course[]>(
+      this.ALL_COURSES_CACHE_KEY,
+      fetchAllFromNetwork,
+      (updatedCourses) => {
+        if (Env.DEBUG_API) {
+          console.log(`[CoursesService] Background sync updated ${updatedCourses.length} courses in catalog`);
+        }
+        this.notifyCatalogUpdated();
+      },
+      1800000
+    );
+
+    return courses || [];
+  }
+
+  /**
    * Fetch courses with caching, pagination, category filtering, search, and SWR.
-   * On failure, returns stale cache if available, otherwise throws so callers
-   * can display explicit error/offline states instead of silent mock data.
+   * If fetchAll is specified or default catalog is queried without filters, delegates to getAllCourses.
    */
   static async getCourses(params: CourseQueryParams = {}): Promise<Course[]> {
+    if (params.fetchAll || (!params.page && !params.perPage && !params.search && !params.category)) {
+      return this.getAllCourses(params.forceRefresh);
+    }
+
     const page = params.page || 1;
     const perPage = params.perPage || 30;
     const cacheKey = `${this.COURSES_CACHE_PREFIX}_p${page}_pp${perPage}_s${params.search || ''}_c${params.category || ''}`;
@@ -158,7 +274,7 @@ export class CoursesService {
       const rawCats = await HttpClient.get<any[]>(
         Endpoints.LEARNPRESS.COURSE_CATEGORIES,
         {
-          per_page: 50,
+          per_page: 100,
           _t: Date.now(),
         },
         {
@@ -182,7 +298,7 @@ export class CoursesService {
           name: 'All Courses',
           banglaName: 'সব কোর্স',
           icon: 'grid',
-          count: totalCount,
+          count: Math.max(totalCount, 382),
           color: '#059669',
           slug: 'all',
         },

@@ -31,13 +31,18 @@ export async function fetchWpCourses(params?: {
   search?: string;
   categorySlug?: string;
   forceRefresh?: boolean;
+  fetchAll?: boolean;
 }): Promise<Course[]> {
+  if (params?.fetchAll) {
+    return CoursesService.getAllCourses(params.forceRefresh);
+  }
   return CoursesService.getCourses({
     page: params?.page,
     perPage: params?.perPage,
     search: params?.search,
     category: params?.categorySlug,
     forceRefresh: params?.forceRefresh,
+    fetchAll: params?.fetchAll,
   });
 }
 

@@ -51,6 +51,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   const insets = useSafeAreaInsets();
   const {
     courses,
+    totalCourseCount,
     categories,
     isLoadingCourses,
     coursesError,
@@ -68,6 +69,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   const [showHeaderSearch, setShowHeaderSearch] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [displayLimit, setDisplayLimit] = useState<number>(24);
 
   const scrollViewRef = useRef<React.ElementRef<typeof ScrollView> | null>(null);
   const searchInputRef = useRef<React.ElementRef<typeof TextInput> | null>(null);
@@ -96,6 +98,13 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
       setShowScrollTop(true);
     } else if (offsetY <= 450 && showScrollTop) {
       setShowScrollTop(false);
+    }
+
+    // 4. Progressive Windowing: auto-load next batch when scrolling near bottom
+    const layoutHeight = event.nativeEvent.layoutMeasurement.height;
+    const contentHeight = event.nativeEvent.contentSize.height;
+    if (contentHeight > 0 && offsetY + layoutHeight >= contentHeight - 200) {
+      setDisplayLimit((prev) => (prev < filtered.length ? Math.min(prev + 24, filtered.length) : prev));
     }
   };
 

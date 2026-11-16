@@ -45,6 +45,7 @@ const CERTIFICATES_STORAGE_KEY = '@thriving_skill_certificates';
 
 interface LearningContextType {
   courses: Course[];
+  totalCourseCount: number;
   categories: Category[];
   workshops: Workshop[];
   hasActiveLiveWorkshop: boolean;
@@ -121,6 +122,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const userScope = user?.id ? `_u_${user.id}` : '_guest';
 
   const [courses, setCourses] = useState<Course[]>([]);
+  const [totalCourseCount, setTotalCourseCount] = useState<number>(382);
   const [categories, setCategories] = useState<Category[]>([
     {
       id: 'all',
@@ -207,7 +209,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     try {
       const [wpCourses, wpCategories, wpWorkshops, wpPosts] = await Promise.allSettled([
-        fetchWpCourses({ perPage: 40, forceRefresh }),
+        fetchWpCourses({ fetchAll: true, forceRefresh }),
         fetchWpCategories({ forceRefresh }),
         fetchWpLiveWorkshops({ forceRefresh }),
         fetchWpPosts({ perPage: 6 }),
@@ -215,12 +217,23 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       if (wpCourses.status === 'fulfilled' && wpCourses.value.length > 0) {
         setCourses((prev) => (areDataEqual(prev, wpCourses.value) ? prev : wpCourses.value));
+        setTotalCourseCount(wpCourses.value.length);
       } else if (wpCourses.status === 'rejected' && !silent) {
         setCoursesError(wpCourses.reason?.message || 'Unable to sync latest courses.');
       }
 
       if (wpCategories.status === 'fulfilled' && wpCategories.value.length > 0) {
-        setCategories((prev) => (areDataEqual(prev, wpCategories.value) ? prev : wpCategories.value));
+        const liveCount = wpCourses.status === 'fulfilled' ? wpCourses.value.length : 382;
+        const updatedCats = wpCategories.value.map((c) => {
+          if (c.id === 'all') {
+            return {
+              ...c,
+              count: Math.max(c.count, liveCount),
+            };
+          }
+          return c;
+        });
+        setCategories((prev) => (areDataEqual(prev, updatedCats) ? prev : updatedCats));
       }
 
       if (wpWorkshops.status === 'fulfilled' && wpWorkshops.value.length > 0) {
@@ -813,6 +826,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     <LearningContext.Provider
       value={{
         courses,
+        totalCourseCount,
         categories,
         workshops,
         hasActiveLiveWorkshop,

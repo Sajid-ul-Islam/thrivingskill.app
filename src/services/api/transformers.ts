@@ -95,12 +95,54 @@ export function transformWpCourse(raw: any): Course {
     thumbnail = raw.image.src;
   }
 
-  // Categories
-  let catId: CategoryId = 'generative-ai';
+  // Categories & Taxonomy Slugs
+  const categorySlugs: string[] = [];
+  const categoryIds: (string | number)[] = [];
+  let primaryCatSlug = '';
+
   if (Array.isArray(raw.categories) && raw.categories.length > 0) {
-    const primaryCat = raw.categories[0];
-    catId = primaryCat.slug || String(primaryCat.id) || 'generative-ai';
+    raw.categories.forEach((cat: any) => {
+      const slug = cat.slug || String(cat.id || '');
+      if (slug && slug !== 'published') {
+        categorySlugs.push(slug);
+        if (cat.id || cat.term_id) categoryIds.push(cat.id || cat.term_id);
+        if (!primaryCatSlug) primaryCatSlug = slug;
+      }
+    });
   }
+
+  // If no category assigned in LearnPress, infer intelligently from title/slug keywords
+  if (!primaryCatSlug) {
+    const textToCheck = `${title} ${slug} ${excerpt}`.toLowerCase();
+    if (textToCheck.match(/bank|financ|account|tax|vat|audit|cfo|investment/)) {
+      primaryCatSlug = 'finance-accounting-legal';
+    } else if (textToCheck.match(/generative|prompt|gpt|llm|midjourney|claude|copilot|ai /) || textToCheck.includes(' ai')) {
+      primaryCatSlug = 'generative-ai';
+    } else if (textToCheck.match(/excel|spreadsheet|vba|pivot/)) {
+      primaryCatSlug = 'microsoft-excel-courses';
+    } else if (textToCheck.match(/data|python|power bi|tableau|analytics|sql|machine learning|deep learning/)) {
+      primaryCatSlug = 'data_science';
+    } else if (textToCheck.match(/leader|manage|executive|c-suite|supervis/)) {
+      primaryCatSlug = 'leadership-management';
+    } else if (textToCheck.match(/market|sales|branding|seo|digital marketing|ad |copywriting/)) {
+      primaryCatSlug = 'sales-marketing';
+    } else if (textToCheck.match(/supply chain|procurement|logistics|inventory|warehouse|contract/)) {
+      primaryCatSlug = 'supply-chain-management';
+    } else if (textToCheck.match(/hr|human resource|talent|recruit|payroll|kpi/)) {
+      primaryCatSlug = 'human-resource-management';
+    } else if (textToCheck.match(/research|academic|thesis|methodology|paper/)) {
+      primaryCatSlug = 'research-courses';
+    } else if (textToCheck.match(/career|job|interview|resume|cv /)) {
+      primaryCatSlug = 'job-seekers-skills';
+    } else if (textToCheck.match(/4ir|blockchain|iot|robot/)) {
+      primaryCatSlug = '4ir';
+    } else {
+      primaryCatSlug = 'business';
+    }
+    categorySlugs.push(primaryCatSlug);
+  }
+
+  const catId: CategoryId = primaryCatSlug as CategoryId;
 
   // Instructor
   const instructorRaw = raw.instructor || {};
@@ -219,6 +261,8 @@ export function transformWpCourse(raw: any): Course {
     slug,
     subtitle: excerpt.slice(0, 120) || 'Practical skills and industry certification for career growth.',
     category: catId,
+    categorySlugs,
+    categoryIds,
     level: 'All Levels',
     rating: typeof raw.rating === 'number' && raw.rating > 0 ? Number(raw.rating.toFixed(1)) : 0,
     reviewsCount: raw.rating_count || (raw.rating > 0 ? 1 : 0),
