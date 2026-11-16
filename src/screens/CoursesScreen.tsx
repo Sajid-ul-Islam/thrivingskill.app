@@ -129,7 +129,11 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     const matchesCategory =
       selectedCategory === 'all' ||
       course.category === selectedCategory ||
-      (selectedCategory === 'career-track' && (course.title.toLowerCase().includes('bundle') || course.slug.toLowerCase().includes('bundle')));
+      (course.categorySlugs &&
+        (course.categorySlugs.includes(selectedCategory) ||
+          course.categorySlugs.some((s) => s.includes(selectedCategory) || selectedCategory.includes(s)))) ||
+      (selectedCategory === 'career-track' &&
+        (course.title.toLowerCase().includes('bundle') || course.slug.toLowerCase().includes('bundle')));
     const matchesLevel =
       selectedLevel === 'All' ||
       course.level === selectedLevel ||
@@ -165,11 +169,17 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     selectedPriceFilter !== 'all' ||
     searchQuery.trim().length > 0;
 
+  const catalogCount = totalCourseCount || courses.length || 382;
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
         title={isBangla ? 'কোর্স ক্যাটালগ' : 'Thriving Skills Catalog'}
-        subtitle={isBangla ? '৩০০+ প্রিমিয়াম কোর্স ও স্পেশাল বান্ডেল' : '300+ Premium Courses & Special Bundles'}
+        subtitle={
+          isBangla
+            ? `${catalogCount}+ প্রিমিয়াম কোর্স ও স্পেশাল বান্ডেল`
+            : `${catalogCount}+ Premium Courses & Special Bundles`
+        }
         isScrolled={isScrolled}
         showSearch={showHeaderSearch}
         onOpenSearch={handleHeaderSearchPress}
@@ -563,14 +573,38 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               </TouchableOpacity>
             </View>
           ) : (
-            filtered.map((course) => (
-              <CourseCard
-                key={course.id}
-                course={course}
-                horizontal={viewMode === 'list'}
-                onPress={() => onNavigateToCourse(course.id)}
-              />
-            ))
+            <>
+              {filtered.slice(0, displayLimit).map((course) => (
+                <CourseCard
+                  key={course.id}
+                  course={course}
+                  horizontal={viewMode === 'list'}
+                  onPress={() => onNavigateToCourse(course.id)}
+                />
+              ))}
+
+              {displayLimit < filtered.length && (
+                <TouchableOpacity
+                  style={[
+                    styles.loadMoreButton,
+                    { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                  ]}
+                  onPress={() => {
+                    triggerHaptic('light');
+                    setDisplayLimit((prev) => Math.min(prev + 24, filtered.length));
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={isBangla ? 'আরও কোর্স দেখুন' : 'Load more courses'}
+                >
+                  <Ionicons name="chevron-down-circle-outline" size={18} color={colors.primary} />
+                  <Text style={[styles.loadMoreText, { color: colors.primary }]}>
+                    {isBangla
+                      ? `আরও ২৪টি কোর্স দেখুন (${filtered.length - displayLimit}টি বাকি)`
+                      : `Load More Courses (${filtered.length - displayLimit} remaining)`}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </>
           )}
         </View>
       </ScrollView>
@@ -779,5 +813,22 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
+  },
+  loadMoreButton: {
+    minHeight: MIN_TOUCH_TARGET,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: shape.medium,
+    borderWidth: 1,
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  loadMoreText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

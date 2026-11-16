@@ -394,6 +394,29 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 </View>
               </View>
 
+              {/* 2-Step Member Access Sync Progress Stepper */}
+              <View style={[styles.stepperContainer, { backgroundColor: colors.surfaceSubtle }]}>
+                <View style={styles.stepperInfoRow}>
+                  <Text style={[styles.stepperLabel, { color: colors.textMuted }]}>
+                    {isBangla ? `ধাপ ${syncStep}/২: সদস্য অ্যাক্সেস যাচাই` : `Step ${syncStep} of 2: Member Access Sync`}
+                  </Text>
+                  <Text style={[styles.stepperPercent, { color: colors.primary }]}>
+                    {syncStep === 2 ? '100%' : '50%'}
+                  </Text>
+                </View>
+                <View style={[styles.stepperTrack, { backgroundColor: colors.border }]}>
+                  <View
+                    style={[
+                      styles.stepperFill,
+                      {
+                        width: syncStep === 2 ? '100%' : '50%',
+                        backgroundColor: colors.primary,
+                      },
+                    ]}
+                  />
+                </View>
+              </View>
+
               {/* Mode Toggle Tabs */}
               <View style={[styles.tabSelector, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
                 <TouchableOpacity
@@ -1236,5 +1259,33 @@ const styles = StyleSheet.create({
     marginTop: 12,
     fontSize: 13,
     fontWeight: '600',
+  },
+  stepperContainer: {
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  stepperInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  stepperLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  stepperPercent: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  stepperTrack: {
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  stepperFill: {
+    height: '100%',
+    borderRadius: 3,
   },
 });
