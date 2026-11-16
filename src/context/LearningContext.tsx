@@ -34,6 +34,25 @@ function areDataEqual(a: any, b: any): boolean {
   }
 }
 
+function areCoursesEqual(a: Course[], b: Course[]): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  if (a.length !== b.length) return false;
+  if (a.length === 0) return true;
+  if (a[0]?.id !== b[0]?.id || a[a.length - 1]?.id !== b[b.length - 1]?.id) return false;
+  const step = Math.max(1, Math.floor(a.length / 20));
+  for (let i = 0; i < a.length; i += step) {
+    if (
+      a[i]?.id !== b[i]?.id ||
+      a[i]?.priceBdt !== b[i]?.priceBdt ||
+      a[i]?.title !== b[i]?.title
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
 const PROGRESS_STORAGE_KEY = '@thriving_skill_progress';
 const BOOKMARKS_STORAGE_KEY = '@thriving_skill_bookmarks';
 const NOTES_STORAGE_KEY = '@thriving_skill_notes';
@@ -121,22 +140,29 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const { isOffline } = useNetwork();
   const userScope = user?.id ? `_u_${user.id}` : '_guest';
 
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [totalCourseCount, setTotalCourseCount] = useState<number>(382);
+  // Pre-seed available courses from in-memory / persistent cache for 0ms instant display
+  const [courses, setCourses] = useState<Course[]>(() => CoursesService.getCachedCoursesSync());
+  const [totalCourseCount, setTotalCourseCount] = useState<number>(() => {
+    const initial = CoursesService.getCachedCoursesSync();
+    return initial && initial.length > 0 ? initial.length : 382;
+  });
   const [categories, setCategories] = useState<Category[]>([
     {
       id: 'all',
       name: 'All Courses',
       banglaName: 'সব কোর্স',
       icon: 'grid',
-      count: 0,
+      count: 382,
       color: '#059669',
       slug: 'all',
     },
   ]);
   const [workshops, setWorkshops] = useState<Workshop[]>(WORKSHOPS);
   const [blogPosts, setBlogPosts] = useState<WpPost[]>([]);
-  const [isLoadingCourses, setIsLoadingCourses] = useState<boolean>(true);
+  // Only show blocking loader if no cached courses exist at all
+  const [isLoadingCourses, setIsLoadingCourses] = useState<boolean>(() => {
+    return CoursesService.getCachedCoursesSync().length === 0;
+  });
   const [isBackgroundSyncing, setIsBackgroundSyncing] = useState<boolean>(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
   const [coursesError, setCoursesError] = useState<string | null>(null);
@@ -200,11 +226,15 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Fetch live courses, categories, workshops, and blog posts from WordPress with SWR
   const loadWordPressData = useCallback(async (forceRefresh: boolean = false, silent: boolean = false) => {
-    if (!silent) {
-      setIsLoadingCourses(true);
-    } else {
-      setIsBackgroundSyncing(true);
-    }
+    // Only set blocking loading state if we have no cached courses in memory
+    setCourses((current) => {
+      if (current.length === 0 && !silent) {
+        setIsLoadingCourses(true);
+      } else {
+        setIsBackgroundSyncing(true);
+      }
+      return current;
+    });
     setCoursesError(null);
 
     try {
@@ -216,7 +246,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       ]);
 
       if (wpCourses.status === 'fulfilled' && wpCourses.value.length > 0) {
-        setCourses((prev) => (areDataEqual(prev, wpCourses.value) ? prev : wpCourses.value));
+        setCourses((prev) => (areCoursesEqual(prev, wpCourses.value) ? prev : wpCourses.value));
         setTotalCourseCount(wpCourses.value.length);
       } else if (wpCourses.status === 'rejected' && !silent) {
         setCoursesError(wpCourses.reason?.message || 'Unable to sync latest courses.');

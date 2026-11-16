@@ -99,12 +99,14 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
       <KeyboardAvoidingView
         style={styles.overlay}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         <View style={[styles.modalCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border, paddingBottom: Math.max(insets.bottom, 16) + 16 }]}>
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            contentContainerStyle={styles.scrollContent}
           >
             {/* Header / Lock badge */}
             <View style={styles.badgeRow}>

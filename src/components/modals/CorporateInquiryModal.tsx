@@ -123,10 +123,12 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
       visible={visible}
       animationType="slide"
       transparent
+      statusBarTranslucent={true}
       onRequestClose={submitted ? handleResetAndClose : onClose}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         style={styles.overlay}
       >
         <View
@@ -201,7 +203,11 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
             </View>
           )}
 
-          <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
             {submitted ? (
               <View style={styles.successContainer}>
                 <View style={[styles.successIconBg, { backgroundColor: colors.primaryLight }]}>

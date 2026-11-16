@@ -35,6 +35,46 @@ export class CacheManager {
   }
 
   /**
+   * Fast synchronous retrieval from in-memory cache (0ms latency)
+   */
+  static getSync<T>(key: string): T | null {
+    const memoryEntry = this.memoryCache.get(key) as CacheEntry<T> | undefined;
+    if (memoryEntry && memoryEntry.data) {
+      return memoryEntry.data;
+    }
+    return null;
+  }
+
+  /**
+   * Fast structural comparison for cache updates without stringifying entire large arrays
+   */
+  private static areEntriesEqual(a: any, b: any): boolean {
+    if (a === b) return true;
+    if (!a || !b) return false;
+    if (Array.isArray(a) && Array.isArray(b)) {
+      if (a.length !== b.length) return false;
+      if (a.length === 0) return true;
+      if (a[0]?.id !== b[0]?.id || a[a.length - 1]?.id !== b[b.length - 1]?.id) return false;
+      const step = Math.max(1, Math.floor(a.length / 20));
+      for (let i = 0; i < a.length; i += step) {
+        if (
+          a[i]?.id !== b[i]?.id ||
+          a[i]?.priceBdt !== b[i]?.priceBdt ||
+          a[i]?.title !== b[i]?.title
+        ) {
+          return false;
+        }
+      }
+      return true;
+    }
+    try {
+      return JSON.stringify(a) === JSON.stringify(b);
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * Get cache item. Returns data if fresh, or null if expired/missing.
    */
   static async get<T>(key: string, allowStale: boolean = false): Promise<T | null> {
@@ -92,9 +132,7 @@ export class CacheManager {
           try {
             const fresh = await fetcher();
             if (fresh !== undefined && fresh !== null) {
-              const cachedStr = JSON.stringify(cached);
-              const freshStr = JSON.stringify(fresh);
-              if (cachedStr !== freshStr) {
+              if (!this.areEntriesEqual(cached, fresh)) {
                 await this.set(key, fresh, ttl);
                 if (onUpdated) {
                   onUpdated(fresh);

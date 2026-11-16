@@ -12,6 +12,7 @@ import {
   TextInput,
   Linking,
   KeyboardAvoidingView,
+  Keyboard,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
@@ -65,6 +66,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [orderNotes, setOrderNotes] = useState('');
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
   // Checkout Execution State
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
@@ -93,9 +95,19 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   useEffect(() => {
     isMountedRef.current = true;
     isCancelledRef.current = false;
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setIsKeyboardVisible(true)
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setIsKeyboardVisible(false)
+    );
     return () => {
       isMountedRef.current = false;
       isCancelledRef.current = true;
+      showSub.remove();
+      hideSub.remove();
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
@@ -312,10 +324,17 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   if (!course) return null;
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      statusBarTranslucent={true}
+      onRequestClose={onClose}
+    >
       <KeyboardAvoidingView
         style={styles.backdrop}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         <TouchableOpacity style={styles.overlayClose} activeOpacity={1} onPress={onClose} />
         <View
@@ -378,7 +397,15 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               />
             </View>
           ) : (
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              contentContainerStyle={[
+                styles.scroll,
+                isKeyboardVisible && { paddingBottom: 160 },
+              ]}
+            >
               {/* Header Badge */}
               <View style={styles.headerRow}>
                 <View style={[styles.shieldBadge, { backgroundColor: colors.primaryLight }]}>

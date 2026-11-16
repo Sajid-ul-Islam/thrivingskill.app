@@ -4,6 +4,14 @@ import { CacheManager } from '../cache/cacheManager';
 import { Course, Category, CategoryId, Workshop } from '../../types';
 import { transformWpCourse, cleanHtml } from './transformers';
 import { Env } from '../../config/env';
+import { INITIAL_COURSES_SEED } from '../../data/coursesCatalogSeed';
+
+// Eagerly pre-seed in-memory cache with the verified catalog for 0ms startup
+CacheManager.set(
+  'courses_full_catalog',
+  INITIAL_COURSES_SEED,
+  1800000
+).catch(() => {});
 
 export interface CourseQueryParams {
   page?: number;
@@ -40,6 +48,25 @@ export class CoursesService {
         if (Env.DEBUG_API) console.warn('[CoursesService] Catalog listener error:', e);
       }
     });
+  }
+
+  /**
+   * Synchronously retrieve cached courses from memory (0ms latency).
+   * Falls back to verified seed catalog if memory cache has not yet been populated.
+   */
+  static getCachedCoursesSync(): Course[] {
+    const memory = CacheManager.getSync<Course[]>(this.ALL_COURSES_CACHE_KEY);
+    if (memory && memory.length > 0) return memory;
+    return INITIAL_COURSES_SEED;
+  }
+
+  /**
+   * Asynchronously retrieve cached courses from memory or persistent storage.
+   */
+  static async getCachedCourses(): Promise<Course[]> {
+    const cached = await CacheManager.get<Course[]>(this.ALL_COURSES_CACHE_KEY, true);
+    if (cached && cached.length > 0) return cached;
+    return INITIAL_COURSES_SEED;
   }
 
   /**

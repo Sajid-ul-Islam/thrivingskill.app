@@ -118,9 +118,16 @@ export const NotesModal: React.FC<NotesModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent
+      statusBarTranslucent={true}
+      onRequestClose={onClose}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         style={styles.overlay}
       >
         <View
@@ -161,7 +168,11 @@ export const NotesModal: React.FC<NotesModalProps> = ({
             </View>
           </View>
 
-          <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+          >
             {/* Stamp Playhead Tool */}
             <View style={styles.stampBar}>
               <TouchableOpacity

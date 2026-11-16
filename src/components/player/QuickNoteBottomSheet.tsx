@@ -69,7 +69,8 @@ export const QuickNoteBottomSheet: React.FC<QuickNoteBottomSheetProps> = ({
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       style={styles.sheetOverlay}
       pointerEvents="box-none"
     >

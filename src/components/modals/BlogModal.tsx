@@ -188,6 +188,7 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
       visible={visible}
       animationType="slide"
       presentationStyle="pageSheet"
+      statusBarTranslucent={true}
       onRequestClose={() => {
         if (activeArticle) setActiveArticle(null);
         else onClose();

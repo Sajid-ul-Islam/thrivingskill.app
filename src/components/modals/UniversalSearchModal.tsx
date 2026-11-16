@@ -147,7 +147,13 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="fullScreen"
+      statusBarTranslucent={true}
+      onRequestClose={onClose}
+    >
       <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
         {/* Search Header */}
         <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
@@ -253,6 +259,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
           ListHeaderComponent={
             query.trim().length > 0 ? (
               <Text style={[styles.resultsCountText, { color: colors.textMuted }]}>

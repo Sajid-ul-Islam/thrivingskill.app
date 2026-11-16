@@ -1991,10 +1991,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         visible={editProfileModalVisible}
         transparent
         animationType="slide"
+        statusBarTranslucent={true}
         onRequestClose={() => setEditProfileModalVisible(false)}
       >
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
           style={styles.modalBackdrop}
         >
           <View style={[styles.modalCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border, maxHeight: '92%' }]}>
@@ -2057,7 +2059,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               </ScrollView>
             </View>
 
-            <ScrollView style={{ flexShrink: 1 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            <ScrollView
+              style={{ flexShrink: 1 }}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              contentContainerStyle={{ paddingBottom: 24 }}
+            >
               {settingsActiveTab === 'general' && (
                 <View style={{ paddingVertical: 10 }}>
                   {/* First Name & Last Name */}
@@ -2374,10 +2382,21 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         visible={changePasswordModalVisible}
         transparent
         animationType="slide"
+        statusBarTranslucent={true}
         onRequestClose={() => setChangePasswordModalVisible(false)}
       >
-        <View style={styles.modalBackdrop}>
-          <View style={[styles.modalCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+          style={styles.modalBackdrop}
+        >
+          <View style={[styles.modalCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border, maxHeight: '90%' }]}>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              contentContainerStyle={{ paddingBottom: 16 }}
+            >
             <View style={styles.modalHeader}>
               <View style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
                 <Text style={[styles.modalTitle, { color: colors.text }]}>
@@ -2490,8 +2509,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 </Text>
               </TouchableOpacity>
             </View>
+            </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Payment History & Invoices Modal (Section 15 & 26 Spec) */}
@@ -2576,6 +2596,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
           style={styles.modalBackdrop}
         >
           <View

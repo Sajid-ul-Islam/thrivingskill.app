@@ -8,6 +8,9 @@ import {
   Image,
   Modal,
   Alert,
+  Platform,
+  KeyboardAvoidingView,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
@@ -267,9 +270,14 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
         visible={askModalVisible}
         transparent
         animationType="slide"
+        statusBarTranslucent={true}
         onRequestClose={() => setAskModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        >
           <View
             style={[
               styles.askModalCard,
@@ -279,56 +287,63 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
               },
             ]}
           >
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.text }]} numberOfLines={1}>Ask Course Instructor</Text>
-              <TouchableOpacity
-                onPress={() => setAskModalVisible(false)}
-                style={[styles.closeBtn, { backgroundColor: colors.surfaceSubtle }]}
-                accessibilityRole="button"
-                accessibilityLabel="Close Ask Instructor dialog"
-              >
-                <Ionicons name="close" size={20} color={colors.textMuted} />
-              </TouchableOpacity>
-            </View>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              contentContainerStyle={{ paddingBottom: 16 }}
+            >
+              <View style={styles.modalHeader}>
+                <Text style={[styles.modalTitle, { color: colors.text }]} numberOfLines={1}>Ask Course Instructor</Text>
+                <TouchableOpacity
+                  onPress={() => setAskModalVisible(false)}
+                  style={[styles.closeBtn, { backgroundColor: colors.surfaceSubtle }]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close Ask Instructor dialog"
+                >
+                  <Ionicons name="close" size={20} color={colors.textMuted} />
+                </TouchableOpacity>
+              </View>
 
-            <Text style={[styles.modalHint, { color: colors.textMuted }]}>
-              Be specific about what you are trying to solve. You can reference specific formulas, slides, or timestamps.
-            </Text>
+              <Text style={[styles.modalHint, { color: colors.textMuted }]}>
+                Be specific about what you are trying to solve. You can reference specific formulas, slides, or timestamps.
+              </Text>
 
-            <TextInput
-              style={[
-                styles.questionInput,
-                {
-                  backgroundColor: colors.surfaceSubtle,
-                  borderColor: colors.border,
-                  color: colors.text,
-                },
-              ]}
-              placeholder="e.g. In lesson 2, how do we prevent Excel from auto-formatting date strings into serial numbers?"
-              placeholderTextColor={colors.textMuted + '80'}
-              multiline
-              numberOfLines={4}
-              value={newQuestionText}
-              onChangeText={setNewQuestionText}
-            />
+              <TextInput
+                style={[
+                  styles.questionInput,
+                  {
+                    backgroundColor: colors.surfaceSubtle,
+                    borderColor: colors.border,
+                    color: colors.text,
+                  },
+                ]}
+                placeholder="e.g. In lesson 2, how do we prevent Excel from auto-formatting date strings into serial numbers?"
+                placeholderTextColor={colors.textMuted + '80'}
+                multiline
+                numberOfLines={4}
+                value={newQuestionText}
+                onChangeText={setNewQuestionText}
+              />
 
-            <View style={styles.modalActionsRow}>
-              <TouchableOpacity
-                style={[styles.cancelBtn, { borderColor: colors.border }]}
-                onPress={() => setAskModalVisible(false)}
-              >
-                <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>Cancel</Text>
-              </TouchableOpacity>
+              <View style={styles.modalActionsRow}>
+                <TouchableOpacity
+                  style={[styles.cancelBtn, { borderColor: colors.border }]}
+                  onPress={() => setAskModalVisible(false)}
+                >
+                  <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>Cancel</Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.submitQuestionBtn, { backgroundColor: colors.accent }]}
-                onPress={handlePostQuestion}
-              >
-                <Text style={[styles.submitQuestionText, { color: colors.onAccent }]}>Submit Question</Text>
-              </TouchableOpacity>
-            </View>
+                <TouchableOpacity
+                  style={[styles.submitQuestionBtn, { backgroundColor: colors.accent }]}
+                  onPress={handlePostQuestion}
+                >
+                  <Text style={[styles.submitQuestionText, { color: colors.onAccent }]}>Submit Question</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -506,6 +521,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     padding: 22,
     borderTopWidth: 1,
+    maxHeight: '90%',
   },
   modalHeader: {
     flexDirection: 'row',

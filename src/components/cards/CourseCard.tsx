@@ -14,7 +14,7 @@ interface CourseCardProps {
   horizontal?: boolean;
 }
 
-export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress, horizontal = false }) => {
+const CourseCardComponent: React.FC<CourseCardProps> = ({ course, onPress, horizontal = false }) => {
   const { colors } = useTheme();
   const { isBangla } = useLanguage();
   const { isBookmarked, toggleBookmark, getCourseProgressPercentage, userProgress } = useLearning();
@@ -491,4 +491,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+});
+
+export const CourseCard = React.memo<CourseCardProps>(CourseCardComponent, (prev, next) => {
+  return (
+    prev.course.id === next.course.id &&
+    prev.horizontal === next.horizontal &&
+    prev.course.title === next.course.title &&
+    prev.course.priceBdt === next.course.priceBdt &&
+    prev.course.rating === next.course.rating &&
+    prev.course.enrolledCount === next.course.enrolledCount
+  );
 });

@@ -15,6 +15,8 @@ import {
   Linking,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -1085,9 +1087,14 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
         visible={writeReviewModalVisible}
         transparent
         animationType="slide"
+        statusBarTranslucent={true}
         onRequestClose={() => setWriteReviewModalVisible(false)}
       >
-        <View style={styles.reviewModalOverlay}>
+        <KeyboardAvoidingView
+          style={styles.reviewModalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        >
           <View style={[styles.reviewModalCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
             <View style={styles.reviewModalHeader}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 0, marginRight: 8 }}>
@@ -1105,7 +1112,12 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
               </TouchableOpacity>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              contentContainerStyle={{ paddingBottom: 20 }}
+            >
               <Text style={[styles.reviewCourseTitle, { color: colors.text }]}>
                 {course.title}
               </Text>
@@ -1195,7 +1207,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
               </View>
             </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Dynamic Scroll to Top Quick Pill */}

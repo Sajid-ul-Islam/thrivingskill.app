@@ -153,10 +153,17 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      statusBarTranslucent={true}
+      onRequestClose={onClose}
+    >
       <KeyboardAvoidingView
         style={styles.overlay}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         <View
           style={[
@@ -294,6 +301,7 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
           <ScrollView
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
             contentContainerStyle={styles.resultsContent}
           >
             {query.trim().length === 0 ? (

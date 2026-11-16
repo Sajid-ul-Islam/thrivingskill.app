@@ -190,6 +190,7 @@ export const HelpFaqModal: React.FC<HelpFaqModalProps> = ({ visible, onClose }) 
       visible={visible}
       animationType="slide"
       presentationStyle="pageSheet"
+      statusBarTranslucent={true}
       onRequestClose={onClose}
     >
       <View style={[styles.container, { backgroundColor: colors.background }]}>
