@@ -183,10 +183,10 @@ assert(
 );
 
 assert(
-  lps.includes('<AnimatedTabContent tabKey={activeTab}>') &&
-    lps.includes('</AnimatedTabContent>'),
-  'LessonPlayerScreen sub-tab cross-fade',
-  'Overview, Curriculum, Notes, Resources, Q&A wrapped in AnimatedTabContent.'
+  (lps.includes('<AnimatedTabContent tabKey={activeTab}>') && lps.includes('</AnimatedTabContent>')) ||
+    (lps.includes('horizontal') && lps.includes('pagingEnabled')),
+  'LessonPlayerScreen sub-tab paging or cross-fade',
+  'Lectures, Overview, Resources, Notes, Q&A powered by smooth horizontal paging or cross-fade.'
 );
 
 assert(

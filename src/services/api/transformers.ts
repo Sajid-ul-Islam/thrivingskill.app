@@ -1,5 +1,6 @@
 import { Course, CourseModule, CategoryId } from '../../types';
 import { resolveLessonVideoData } from '../../data/lessonVideosRegistry';
+import { getLiveReviewsForCourse } from '../../data/liveReviews';
 
 // Clean HTML tags and HTML entities from WordPress text
 export function cleanHtml(text?: string): string {
@@ -208,9 +209,9 @@ export function transformWpCourse(raw: any): Course {
     subtitle: excerpt.slice(0, 120) || 'Practical skills and industry certification for career growth.',
     category: catId,
     level: 'All Levels',
-    rating: typeof raw.rating === 'number' && raw.rating > 0 ? raw.rating : 4.8,
-    reviewsCount: 24 + (seed % 120),
-    enrolledCount: raw.count_students || 150 + ((seed >> 2) % 600),
+    rating: typeof raw.rating === 'number' && raw.rating > 0 ? Number(raw.rating.toFixed(1)) : 0,
+    reviewsCount: raw.rating_count || (raw.rating > 0 ? 1 : 0),
+    enrolledCount: raw.count_students || 0,
     price: priceData.usd || 15,
     priceBdt: bdtPrice,
     originalPrice: origPriceData.usd || 30,
@@ -232,18 +233,7 @@ export function transformWpCourse(raw: any): Course {
     description,
     prerequisites: ['Basic familiarity with relevant computer/web tools', 'Eagerness to upskill and advance career'],
     modules,
-    reviews: [
-      {
-        id: `rev-${id}-1`,
-        userName: 'Tanvir Hossain',
-        userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200',
-        rating: 5,
-        date: '2 weeks ago',
-        comment: 'Very practical course with clear Bengali explanations and actionable frameworks for everyday corporate work.',
-        userRole: 'Analyst',
-        company: 'Dhaka Tech',
-      },
-    ],
+    reviews: getLiveReviewsForCourse(id),
     skillTrack: title.includes('AI') ? 'Generative AI Career Track' : 'Professional Skills Track',
   };
 }

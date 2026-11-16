@@ -503,7 +503,16 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 { backgroundColor: colors.primaryLight, borderColor: colors.primary },
               ]}
               onPress={() => {
+                if (!isAuthenticated) {
+                  setAuthModalVisible(true);
+                  return;
+                }
                 if (user) {
+                  setFirstName(user.first_name || '');
+                  setLastName(user.last_name || '');
+                  setDisplayName(user.displayName || user.name || user.username || '');
+                  setPhoneNumber(user.phone || '');
+                  setBioInfo(user.description || '');
                   setCustomName(user.name || user.displayName || user.username || '');
                   setCustomPhone(user.phone || '');
                   setCustomBio(user.description || '');

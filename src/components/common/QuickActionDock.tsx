@@ -1,25 +1,27 @@
 import React from 'react';
 import { SpringPressable } from './SpringPressable';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { useSaaS } from '../../context/SaaSContext';
+import { useLanguage } from '../../context/LanguageContext';
 
-interface QuickActionDockProps {
-  onOpenCourses: () => void;
+export interface QuickActionDockProps {
   onOpenAssessment: () => void;
-  onOpenWorkshops: () => void;
-  onOpenMyLearning: () => void;
+  onOpenSubscription: () => void;
+  onOpenYouTube?: () => void;
+  onOpenCorporateModal: () => void;
 }
 
 export const QuickActionDock: React.FC<QuickActionDockProps> = ({
-  onOpenCourses,
   onOpenAssessment,
-  onOpenWorkshops,
-  onOpenMyLearning,
+  onOpenSubscription,
+  onOpenYouTube,
+  onOpenCorporateModal,
 }) => {
   const { colors, isDark } = useTheme();
   const { assessmentResult } = useSaaS();
+  const { isBangla } = useLanguage();
 
   const actions: {
     id: string;
@@ -27,48 +29,58 @@ export const QuickActionDock: React.FC<QuickActionDockProps> = ({
     sublabel: string;
     icon: string;
     badgeText?: string;
+    badgeBgColor?: string;
     color: string;
     bgColor: string;
     onPress: () => void;
   }[] = [
     {
-      id: 'courses',
-      label: 'Explore',
-      sublabel: 'All Courses',
-      icon: 'compass',
-      badgeText: 'New',
-      color: '#6366F1',
-      bgColor: '#EEF2FF',
-      onPress: onOpenCourses,
-    },
-    {
       id: 'diagnostic',
-      label: 'Diagnostic',
-      sublabel: assessmentResult ? `${assessmentResult.overallScore}% Score` : '3-min Quiz',
+      label: isBangla ? 'স্কিল টেস্ট' : 'Diagnostic',
+      sublabel: assessmentResult
+        ? `${assessmentResult.overallScore}% ${isBangla ? 'স্কোর' : 'Score'}`
+        : isBangla
+        ? '৩-মিনিট টেস্ট'
+        : '3-min Quiz',
       icon: 'analytics',
-      badgeText: assessmentResult ? 'Done' : 'Quiz',
+      badgeText: assessmentResult ? (isBangla ? 'সম্পন্ন' : 'DONE') : (isBangla ? 'কুইজ' : 'QUIZ'),
+      badgeBgColor: '#059669',
       color: '#059669',
       bgColor: '#D1FAE5',
       onPress: onOpenAssessment,
     },
     {
-      id: 'live',
-      label: 'Live Events',
-      sublabel: 'Workshops',
-      icon: 'videocam',
-      badgeText: 'Live',
-      color: '#E11D48',
-      bgColor: '#FFE4E6',
-      onPress: onOpenWorkshops,
-    },
-    {
-      id: 'learning',
-      label: 'My Learning',
-      sublabel: 'My Hub',
-      icon: 'book',
+      id: 'subscription',
+      label: isBangla ? 'অল-অ্যাক্সেস' : 'All-Access',
+      sublabel: isBangla ? 'প্রো মেম্বার' : 'Pro Pass',
+      icon: 'ribbon',
+      badgeText: 'PRO',
+      badgeBgColor: '#D97706',
       color: '#D97706',
       bgColor: '#FEF3C7',
-      onPress: onOpenMyLearning,
+      onPress: onOpenSubscription,
+    },
+    {
+      id: 'masterclass',
+      label: isBangla ? 'মাস্টারক্লাস' : 'Masterclass',
+      sublabel: isBangla ? 'ফ্রি ভিডিও' : 'Free Videos',
+      icon: 'logo-youtube',
+      badgeText: 'FREE',
+      badgeBgColor: '#DC2626',
+      color: '#DC2626',
+      bgColor: '#FEE2E2',
+      onPress: () => onOpenYouTube?.(),
+    },
+    {
+      id: 'corporate',
+      label: isBangla ? 'টিম ট্রেনিং' : 'Buy For Team',
+      sublabel: isBangla ? 'কর্পোরেট' : 'Corporate',
+      icon: 'business',
+      badgeText: 'B2B',
+      badgeBgColor: '#2563EB',
+      color: '#2563EB',
+      bgColor: '#DBEAFE',
+      onPress: onOpenCorporateModal,
     },
   ];
 
@@ -87,6 +99,8 @@ export const QuickActionDock: React.FC<QuickActionDockProps> = ({
             ]}
             onPress={act.onPress}
             activeScale={0.94}
+            accessibilityRole="button"
+            accessibilityLabel={`${act.label}, ${act.sublabel}`}
           >
             <View
               style={[
@@ -97,10 +111,20 @@ export const QuickActionDock: React.FC<QuickActionDockProps> = ({
               <Ionicons name={act.icon as any} size={20} color={act.color} />
             </View>
 
-            <Text style={[styles.label, { color: colors.text }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
+            <Text
+              style={[styles.label, { color: colors.text }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.85}
+            >
               {act.label}
             </Text>
-            <Text style={[styles.sublabel, { color: colors.textMuted }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
+            <Text
+              style={[styles.sublabel, { color: colors.textMuted }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.85}
+            >
               {act.sublabel}
             </Text>
 
@@ -108,14 +132,7 @@ export const QuickActionDock: React.FC<QuickActionDockProps> = ({
               <View
                 style={[
                   styles.miniBadge,
-                  {
-                    backgroundColor:
-                      act.id === 'live'
-                        ? '#DC2626'
-                        : act.id === 'courses'
-                        ? '#4F46E5'
-                        : '#047857',
-                  },
+                  { backgroundColor: act.badgeBgColor || act.color },
                 ]}
               >
                 <Text style={styles.miniBadgeText}>{act.badgeText}</Text>
@@ -153,6 +170,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 5,
     elevation: 2,
+    minHeight: 88,
   },
   miniBadge: {
     position: 'absolute',

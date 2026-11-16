@@ -241,17 +241,7 @@ export const COURSES: Course[] = [
         ],
       },
     ],
-    reviews: [
-      {
-        id: 'rev-agentic-1',
-        userName: 'Zubair Ahmed',
-        userAvatar: '',
-        rating: 5,
-        date: '3 days ago',
-        userRole: 'Head of Engineering at Brain Station 23',
-        comment: 'Hands down the most forward-looking curriculum in Bangladesh. The LangGraph multi-agent architecture lessons saved our team months of trial and error.',
-      },
-    ],
+    reviews: [],
   },
   {
     id: 'course-ai-exec-decision',
@@ -415,26 +405,7 @@ export const COURSES: Course[] = [
         ],
       },
     ],
-    reviews: [
-      {
-        id: 'r1',
-        userName: 'Mahmuda Akter',
-        userAvatar: '',
-        rating: 5,
-        date: '1 week ago',
-        userRole: 'Operations Lead at Apex Corp',
-        comment: 'Very Effective and I think I will do much better following your guideline and prompt frameworks.',
-      },
-      {
-        id: 'r2',
-        userName: 'Muhammad Imran Sabuj',
-        userAvatar: '',
-        rating: 5,
-        date: '2 weeks ago',
-        userRole: 'Senior Manager',
-        comment: 'Excellent Presentation! It will help many corporate professionals along with newcomers into the corporate world. Simply great.',
-      },
-    ],
+    reviews: [],
   },
   {
     id: 'course-excel-chatgpt',
@@ -488,17 +459,7 @@ export const COURSES: Course[] = [
         ],
       },
     ],
-    reviews: [
-      {
-        id: 'r-nobel',
-        userName: 'Nobel Haider',
-        userAvatar: '',
-        rating: 5,
-        date: '2 weeks ago',
-        userRole: 'Financial Analyst',
-        comment: 'The trainer is really expert in excel. The content is well organized that very helpful to learn step by step. I especially love the working files shared with the videos.',
-      },
-    ],
+    reviews: [],
   },
   {
     id: 'course-fin-model',
@@ -531,17 +492,7 @@ export const COURSES: Course[] = [
     description: 'The definitive financial modeling curriculum used by corporate finance managers, investment analysts, and business strategists.',
     prerequisites: ['Fundamental accounting knowledge.'],
     modules: [],
-    reviews: [
-      {
-        id: 'r-kazi',
-        userName: 'Kazi Md Siddikul Azam',
-        userAvatar: '',
-        rating: 5,
-        date: '3 weeks ago',
-        userRole: 'CFO / Corporate Controller',
-        comment: 'Just Remarkable! Corporate professionals must go through this modeling track.',
-      },
-    ],
+    reviews: [],
   },
   {
     id: 'course-ai-hr',
@@ -607,13 +558,28 @@ export const COURSES: Course[] = [
     modules: [],
     reviews: [
       {
-        id: 'r-khandker',
-        userName: 'Khandker Moniruzzaman',
-        userAvatar: '',
+        id: 'rev-72481-1',
+        userName: 'Al Amin Akando Antor',
+        date: 'June 14, 2025',
         rating: 5,
-        date: '1 month ago',
-        userRole: 'Managing Director',
-        comment: 'Special thanks to Moinuddin sir for the excellent content and presentation and thanks to Thriving Skills for this platform!',
+        comment:
+          'I recently completed the Real Estate Sales Mastering: Maximize Property Sales course from Thriving Skills, and it was truly a game-changer! As someone aiming to build a successful career in the real estate sector, this course gave me the exact knowledge and structure I needed. The course was well-organized, covering everything from market research, lead generation, and pricing strategies to negotiation techniques and sales closing frameworks.',
+        userRole: 'Real Estate Sales Professional',
+        company: 'Verified Learner',
+        userAvatar:
+          'https://secure.gravatar.com/avatar/41cc0f5b3bfecad88ff3590f49da556c33c37c07359b18db08f56d58e53ceec2?s=500&d=mm&r=g',
+      },
+      {
+        id: 'rev-72481-2',
+        userName: 'Mohammed Mohsin Iqbal',
+        date: 'July 21, 2023',
+        rating: 5,
+        comment:
+          'This is seems very valuable for real estate product sales person, but as related with real estate sector i had completed the course though i am a Civil Engineer graduated from BUET and working as Head of Engineering department of renowned real estate company. Thanks to Trainer Tarik bhai.',
+        userRole: 'Head of Engineering',
+        company: 'BUET Graduate / Renowned Real Estate Firm',
+        userAvatar:
+          'https://secure.gravatar.com/avatar/baf8c228371fa8ebd5903cb91ac3fce43557b49fd16a671c3078d738ffabbe2b?s=500&d=mm&r=g',
       },
     ],
   },
@@ -712,26 +678,7 @@ export const COURSES: Course[] = [
     description: 'Learn the exact sales frameworks that convert cold prospects into high-ticket enterprise contracts.',
     prerequisites: ['None.'],
     modules: [],
-    reviews: [
-      {
-        id: 'r-musfiqur',
-        userName: 'MD. Musfiqur Rahman Bhuiyan',
-        userAvatar: '',
-        rating: 5,
-        date: '2 weeks ago',
-        userRole: 'Head of Commercial Sales',
-        comment: 'Thank you for sharing your vast knowledge of the sales profession. Invaluable for team growth!',
-      },
-      {
-        id: 'r-soumitro',
-        userName: 'Soumitro Sarkar',
-        userAvatar: '',
-        rating: 5,
-        date: '3 weeks ago',
-        userRole: 'Enterprise Account Executive',
-        comment: 'Bridges the future of work with high-value professional training and intelligent enterprise LMS solutions.',
-      },
-    ],
+    reviews: [],
   },
 ];
 
@@ -876,53 +823,75 @@ export const CORPORATE_CLIENTS = [
 
 export const REVIEWS_WALL: Review[] = [
   {
-    id: 'rev-1',
-    userName: 'Nobel Haider',
-    userRole: 'Finance & Accounts Specialist',
-    company: 'Leading RMG Conglomerate',
-    userAvatar: '',
+    id: 'rev-live-1',
+    userName: 'Al Amin Akando Antor',
+    userRole: 'Real Estate Sales Professional',
+    company: 'Verified Learner',
+    userAvatar:
+      'https://secure.gravatar.com/avatar/41cc0f5b3bfecad88ff3590f49da556c33c37c07359b18db08f56d58e53ceec2?s=500&d=mm&r=g',
     rating: 5,
-    date: 'Verified Learner',
-    comment: 'The trainer is really expert in excel. The content is well organized and very helpful to learn step by step. I especially love the working files shared with the videos.',
+    date: 'June 14, 2025',
+    comment:
+      'I recently completed the Real Estate Sales Mastering: Maximize Property Sales course from Thriving Skills, and it was truly a game-changer! As someone aiming to build a successful career in the real estate sector, this course gave me the exact knowledge and structure I needed. The course was well-organized, covering everything from market research, lead generation, and pricing strategies to negotiation techniques and sales closing frameworks.',
   },
   {
-    id: 'rev-2',
-    userName: 'Muhammad Imran Sabuj',
-    userRole: 'Corporate Strategy Lead',
-    company: 'Apex Enterprises',
-    userAvatar: '',
+    id: 'rev-live-2',
+    userName: 'Mohammed Mohsin Iqbal',
+    userRole: 'Head of Engineering',
+    company: 'BUET Graduate / Renowned Real Estate Firm',
+    userAvatar:
+      'https://secure.gravatar.com/avatar/baf8c228371fa8ebd5903cb91ac3fce43557b49fd16a671c3078d738ffabbe2b?s=500&d=mm&r=g',
     rating: 5,
-    date: 'Verified Learner',
-    comment: 'Excellent Presentation! It will help many corporate professionals along with newcomers into the corporate world. Simply great.',
+    date: 'July 21, 2023',
+    comment:
+      'This is seems very valuable for real estate product sales person, but as related with real estate sector i had completed the course though i am a Civil Engineer graduated from BUET and working as Head of Engineering department of renowned real estate company. Thanks to Trainer Tarik bhai.',
   },
   {
-    id: 'rev-3',
-    userName: 'Kazi Md Siddikul Azam',
-    userRole: 'Head of Finance',
-    company: 'Financial Institution',
-    userAvatar: '',
+    id: 'rev-live-3',
+    userName: 'Jahidul Islam',
+    userRole: 'Logistics & Shipping Sales Professional',
+    company: 'Verified Learner',
+    userAvatar:
+      'https://secure.gravatar.com/avatar/0ffb67ebc255fc15b95221592a48be337544bd4a059cd876b62f17887cd1adcd?s=500&d=mm&r=g',
     rating: 5,
-    date: 'Verified Learner',
-    comment: 'Just Remarkable! Corporate professionals must go through Thriving Skills masterclasses.',
+    date: 'April 9, 2025',
+    comment:
+      'For a starter career visionary in Real Estate sector, it is helpful to proceed in Sales rule! Great….. Jahidul Islam A Logistics & Shipping Sales professional. Add on: Focusing on Real Estate sales.',
   },
   {
-    id: 'rev-4',
-    userName: 'Mahmuda Akter',
-    userRole: 'HR Business Partner',
-    company: 'Tech Enterprise',
-    userAvatar: '',
+    id: 'rev-live-4',
+    userName: 'Shayla Ahmed',
+    userRole: 'Executive Participant',
+    company: 'Verified Learner',
+    userAvatar:
+      'https://secure.gravatar.com/avatar/3d66f54d8f2a71466f7533cea1c41e2c587d3603d166e82fcebff61b8e6d8ac2?s=500&d=mm&r=g',
     rating: 5,
-    date: 'Verified Learner',
-    comment: 'Very Effective and I think I will do much better following your guideline and practical templates.',
+    date: 'May 19, 2026',
+    comment:
+      'Art, mindfulness, and beautiful souls. 🎨✨ So much gratitude to the host and instructor for such a meaningful session. Connecting with positive-minded people reminds me how important self-love is. We need more of this! 🌿🙂#Mindfulness #ArtTherapy #SelfLove',
   },
   {
-    id: 'rev-5',
-    userName: 'Khandker Moniruzzaman',
-    userRole: 'Commercial Director',
-    company: 'Infrastructure Development Ltd',
-    userAvatar: '',
+    id: 'rev-live-5',
+    userName: 'Md. Maruf Ibne Hasan',
+    userRole: 'Summit Attendee',
+    company: 'Verified Learner',
+    userAvatar:
+      'https://secure.gravatar.com/avatar/4e32925cc47525c3602abe0d4a5f1e1294c4f082704c085ef9df84fb28b45f66?s=500&d=mm&r=g',
     rating: 5,
-    date: 'Verified Learner',
-    comment: 'Special thanks to Moinuddin sir for the excellent content and presentation and thanks to Thriving Skills for this platform!',
+    date: 'January 6, 2026',
+    comment:
+      'A great course indeed. Bridges the future of work with high-value professional training and intelligent enterprise skills.',
+  },
+  {
+    id: 'rev-live-6',
+    userName: 'Engr. Md. Abdul Mazid Sarker',
+    userRole: 'Continuous Improvement Lead',
+    company: 'Verified Learner',
+    userAvatar:
+      'https://secure.gravatar.com/avatar/5ac520474194482ab0ee61befa8909e312a53347406ed567f23493cd6f055dfa?s=500&d=mm&r=g',
+    rating: 5,
+    date: 'May 24, 2025',
+    comment:
+      'Excellent Course. Very structured and practical insights for operational excellence.',
   },
 ];

@@ -585,12 +585,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           onOpenSubscription={onOpenSubscription}
         />
 
-        {/* 4. Streamlined 4-Action Dock */}
+        {/* 4. Justified Flagship Action Dock (Distinct High-Value Features) */}
         <QuickActionDock
-          onOpenCourses={() => onNavigateTab('Courses')}
           onOpenAssessment={onOpenAssessment}
-          onOpenWorkshops={() => onNavigateTab('Workshops')}
-          onOpenMyLearning={() => onNavigateTab('MyLearning')}
+          onOpenSubscription={onOpenSubscription}
+          onOpenYouTube={onOpenYouTube}
+          onOpenCorporateModal={onOpenCorporateModal}
         />
 
         
