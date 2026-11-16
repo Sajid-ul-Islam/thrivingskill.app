@@ -70,14 +70,14 @@ export async function fetchWpPosts(params?: { page?: number; perPage?: number })
 }
 
 /**
- * Log in user using AuthService
+ * CR-04: Log in user using Native LearnPress JWT Authentication
  */
 export async function loginWpUser(username: string, password: string): Promise<WpUser> {
   return AuthService.login(username, password);
 }
 
 /**
- * Register student account
+ * CR-04: Register student account directly in WordPress / LearnPress
  */
 export async function registerWpUser(userData: {
   username: string;
@@ -90,21 +90,21 @@ export async function registerWpUser(userData: {
 }
 
 /**
- * Validate JWT token using AuthService
+ * CR-04: Validate JWT token using AuthService
  */
 export async function validateWpToken(token: string): Promise<boolean> {
   return AuthService.validateToken(token);
 }
 
 /**
- * Send SMS OTP to phone number (CR-04)
+ * Optional helper: Send SMS OTP to phone number
  */
 export async function sendWpPhoneOtp(phone: string): Promise<{ success: boolean; message: string; testOtp?: string }> {
   return AuthService.sendPhoneOtp(phone);
 }
 
 /**
- * Verify SMS OTP and login/register user (CR-04)
+ * Optional helper: Verify SMS OTP and login/register user
  */
 export async function verifyWpPhoneOtp(phone: string, otp: string, fullName?: string): Promise<WpUser> {
   return AuthService.verifyPhoneOtp(phone, otp, fullName);

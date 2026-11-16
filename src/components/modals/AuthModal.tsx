@@ -27,6 +27,12 @@ import { shape } from '../../theme/shapes';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
 
 /**
+ * CR-04: Official Native LearnPress JWT Authentication Modal for Thriving Skills.
+ * Powers direct JWT token generation (/learnpress/v1/token), registration (/learnpress/v1/token/register),
+ * and native WordPress password recovery matching https://thrivingskill.com directly.
+ */
+
+/**
  * Parses WordPress password reset / account verification links.
  * Handles both web URLs:
  * https://thrivingskill.com/login/?action=rp&key=XYZ&login=USERNAME

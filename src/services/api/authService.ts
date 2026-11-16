@@ -13,7 +13,7 @@ export interface TokenResponse {
 
 export class AuthService {
   /**
-   * Log in user using WordPress credentials via LearnPress JWT token endpoint
+   * CR-04: Log in user using WordPress credentials via Native LearnPress JWT token endpoint
    */
   static async login(username: string, password: string): Promise<WpUser> {
     const data = await HttpClient.post<TokenResponse>(
@@ -76,7 +76,7 @@ export class AuthService {
   }
 
   /**
-   * Register a new student account
+   * CR-04: Register a new student account directly in LearnPress/WordPress
    */
   static async register(userData: {
     username: string;
@@ -147,7 +147,7 @@ export class AuthService {
   }
 
   /**
-   * Send 6-digit SMS OTP to Bangladeshi mobile number (CR-04)
+   * Optional helper: Send 6-digit SMS OTP to Bangladeshi mobile number
    */
   static async sendPhoneOtp(phone: string): Promise<{ success: boolean; message: string; testOtp?: string }> {
     const cleanPhone = phone.trim().replace(/[\s-]/g, '');
