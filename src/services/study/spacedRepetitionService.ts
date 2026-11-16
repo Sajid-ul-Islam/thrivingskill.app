@@ -169,7 +169,7 @@ export class SpacedRepetitionService {
       courseTitle: course.title,
       question: `What are the primary objectives and key skills taught in "${course.title}"?`,
       answer: course.description
-        ? course.description.replace(/<[^>]+>/g, '').slice(0, 220) + '...'
+        ? `${course.description.replace(/<[^>]+>/g, '').slice(0, 220)}...`
         : 'Comprehensive professional mastery, practical workflows, and real-world execution.',
       category: course.category,
       repetitions: 0,

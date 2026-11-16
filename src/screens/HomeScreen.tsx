@@ -67,6 +67,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   const { t, isBangla } = useLanguage();
   const { streakDays, dailyMinutesSpent, dailyGoalMinutes } = useGamification();
+  const dailyTargetMinutes = dailyGoalMinutes && dailyGoalMinutes > 0 ? dailyGoalMinutes : 30;
+  const currentGoalPercent = Math.min(100, Math.round((dailyMinutesSpent / dailyTargetMinutes) * 100));
+  const isGoalAchieved = currentGoalPercent >= 100;
   const {
     courses,
     categories,
@@ -335,7 +338,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               onPress={() => {
                 Alert.alert(
                   isBangla ? 'দৈনিক লার্নিং মোমেন্টাম 🔥' : 'Learning Momentum 🔥',
-                  `${isBangla ? '• টানা স্ট্রিক' : '• Streak'}: ${streakDays} ${isBangla ? 'দিন' : 'Days'}\n${isBangla ? '• আজকের সময়' : '• Today\'s Time'}: ${dailyMinutesSpent}m / ${dailyGoalMinutes || 30}m ${isBangla ? 'লক্ষ্য' : 'Goal'}\n\n${isBangla ? 'প্রতিদিন কোর্স ও ভিডিও দেখে নতুন ব্যাজ অর্জন করুন!' : 'Complete lessons and videos to keep up your daily streak!'}`,
+                  `${isBangla ? '• টানা স্ট্রিক' : '• Streak'}: ${streakDays} ${isBangla ? 'দিন' : 'Days'}\n${isBangla ? '• আজকের সময়' : '• Today\'s Time'}: ${dailyMinutesSpent}m / ${dailyTargetMinutes}m ${isBangla ? 'লক্ষ্য' : 'Goal'}\n\n${isBangla ? 'প্রতিদিন কোর্স ও ভিডিও দেখে নতুন ব্যাজ অর্জন করুন!' : 'Complete lessons and videos to keep up your daily streak!'}`,
                   [
                     {
                       text: isBangla ? 'মাই হাব দেখুন' : 'View My Hub',
@@ -382,13 +385,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               activeOpacity={0.85}
               onPress={() => {
                 triggerHaptic('light');
-                const goalPercent = Math.min(100, Math.round((dailyMinutesSpent / (dailyGoalMinutes || 30)) * 100));
                 Alert.alert(
                   isBangla ? 'দৈনিক লক্ষ্য ও মোমেন্টাম 🎯' : 'Daily Study Goal 🎯',
-                  `${isBangla ? '• আজকের স্টাডি' : '• Today'}: ${dailyMinutesSpent}m / ${dailyGoalMinutes || 30}m (${goalPercent}% ${isBangla ? 'সম্পন্ন' : 'completed'})\n${isBangla ? '• স্টাডি স্ট্রিক' : '• Study Streak'}: ${streakDays} ${isBangla ? 'দিন' : 'days'} 🔥\n\n${
-                    goalPercent >= 100
+                  `${isBangla ? '• আজকের স্টাডি' : '• Today'}: ${dailyMinutesSpent}m / ${dailyTargetMinutes}m (${currentGoalPercent}% ${isBangla ? 'সম্পন্ন' : 'completed'})\n${isBangla ? '• স্টাডি স্ট্রিক' : '• Study Streak'}: ${streakDays} ${isBangla ? 'দিন' : 'days'} 🔥\n\n${
+                    isGoalAchieved
                       ? (isBangla ? 'অভিনন্দন! আজকের লক্ষ্য অর্জিত হয়েছে 🎉' : 'Awesome! You hit today’s learning goal 🎉')
-                      : (isBangla ? `আর মাত্র ${Math.max(0, (dailyGoalMinutes || 30) - dailyMinutesSpent)} মিনিট স্টাডি করলেই আজকের লক্ষ্য সম্পন্ন!` : `Only ${Math.max(0, (dailyGoalMinutes || 30) - dailyMinutesSpent)} minutes left to complete today's goal!`)
+                      : (isBangla ? `আর মাত্র ${Math.max(0, dailyTargetMinutes - dailyMinutesSpent)} মিনিট স্টাডি করলেই আজকের লক্ষ্য সম্পন্ন!` : `Only ${Math.max(0, dailyTargetMinutes - dailyMinutesSpent)} minutes left to complete today's goal!`)
                   }`,
                   [
                     { text: isBangla ? 'কোর্স চালিয়ে যান' : 'Continue Course', onPress: () => onNavigateTab('MyLearning') },
@@ -397,38 +399,31 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 );
               }}
               accessibilityRole="button"
-              accessibilityLabel={`Daily Goal: ${dailyMinutesSpent} of ${dailyGoalMinutes || 30} minutes completed`}
+              accessibilityLabel={`Daily Goal: ${dailyMinutesSpent} of ${dailyTargetMinutes} minutes completed`}
             >
               <CircularProgressRing
-                progress={Math.min(100, Math.round((dailyMinutesSpent / (dailyGoalMinutes || 30)) * 100))}
+                progress={currentGoalPercent}
                 size={32}
                 strokeWidth={3}
                 trackColor={isDark ? colors.border : '#E2E8F0'}
-                progressColor={
-                  Math.round((dailyMinutesSpent / (dailyGoalMinutes || 30)) * 100) >= 100
-                    ? '#10B981'
-                    : (colors.brandGold || '#FFB606')
-                }
+                progressColor={isGoalAchieved ? '#10B981' : (colors.brandGold || '#FFB606')}
                 showText={false}
                 centerContent={
                   <Text
                     style={[
                       styles.radialCenterIcon,
                       {
-                        color:
-                          Math.round((dailyMinutesSpent / (dailyGoalMinutes || 30)) * 100) >= 100
-                            ? '#10B981'
-                            : (colors.brandGold || '#FFB606'),
+                        color: isGoalAchieved ? '#10B981' : (colors.brandGold || '#FFB606'),
                       },
                     ]}
                   >
-                    {Math.round((dailyMinutesSpent / (dailyGoalMinutes || 30)) * 100) >= 100 ? '✓' : '⚡'}
+                    {isGoalAchieved ? '✓' : '⚡'}
                   </Text>
                 }
               />
               <View style={styles.radialGoalTextCol}>
                 <Text style={[styles.radialGoalTitle, { color: colors.text }]}>
-                  {dailyMinutesSpent}/{dailyGoalMinutes || 30}m
+                  {dailyMinutesSpent}/{dailyTargetMinutes}m
                 </Text>
                 <Text style={[styles.radialGoalSub, { color: colors.textMuted }]}>
                   {isBangla ? 'দৈনিক লক্ষ্য' : 'Daily Goal'}

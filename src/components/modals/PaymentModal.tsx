@@ -240,8 +240,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               style={[
                 styles.noticeBox,
                 {
-                  backgroundColor: isDark ? colors.primaryLight : '#102F53' + '0C',
-                  borderColor: colors.primary + '35',
+                  backgroundColor: colors.primaryLight,
+                  borderColor: isDark ? 'rgba(56, 189, 248, 0.25)' : 'rgba(16, 47, 83, 0.18)',
                 },
               ]}
             >

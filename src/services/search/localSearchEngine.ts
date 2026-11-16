@@ -136,11 +136,12 @@ export class LocalSearchEngine {
 
     // 2. Index Personal Notes
     for (const n of notes) {
+      const safeNoteText = typeof n.text === 'string' ? n.text : '';
       this.indexDocument({
         id: `note_${n.id}`,
         type: 'note',
-        title: `Note: ${n.text.slice(0, 40)}...`,
-        body: `${n.text} ${n.timestamp || ''}`,
+        title: safeNoteText ? `Note: ${safeNoteText.slice(0, 40)}...` : 'Personal Note',
+        body: `${safeNoteText} ${n.timestamp || ''}`.trim(),
         badge: n.timestamp ? `At ${n.timestamp}` : 'Personal Note',
         courseId: n.courseId,
         lessonId: n.lessonId,

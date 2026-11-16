@@ -701,10 +701,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   const prog = userProgress[course.id];
                   const courseStatus = getCourseStatus(course.id);
                   const isGraduated = courseStatus === 'passed' || courseStatus === 'finished';
-                  const totalLessons = course.modules.reduce((acc, m) => acc + m.lessons.length, 0);
+                  const totalLessons = course.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0) || 0;
                   const completedCountForCourse = prog?.completedLessonIds.length || 0;
-                  const pct = totalLessons > 0 ? Math.round((completedCountForCourse / totalLessons) * 100) : 0;
-                  const targetLessonId = prog?.lastAccessedLessonId || course.modules[0]?.lessons[0]?.id || '';
+                  const pct = totalLessons > 0 ? Math.min(100, Math.round((completedCountForCourse / totalLessons) * 100)) : 0;
+                  const targetLessonId = prog?.lastAccessedLessonId || course.modules?.[0]?.lessons?.[0]?.id || '';
                   const cert = certificates.find((c) => c.courseId === course.id);
 
                   // Status badge configurations matching real LearnPress

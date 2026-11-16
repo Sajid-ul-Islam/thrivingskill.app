@@ -135,7 +135,9 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
   const liveTransformed: BlogPostItem[] = (blogPosts || []).map((p) => ({
     id: p.id,
     title: p.title,
-    excerpt: cleanHtml(p.excerpt).substring(0, 160) + '...',
+    excerpt: cleanHtml(p.excerpt || '').length > 160
+      ? `${cleanHtml(p.excerpt || '').slice(0, 160)}...`
+      : cleanHtml(p.excerpt || '') || 'Practical insights and frameworks from industry experts.',
     content: cleanHtml(p.content),
     category: 'live',
     categoryLabel: 'WordPress CMS',
@@ -275,6 +277,7 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
                 contentContainerStyle={styles.categoryScroll}
               >
                 {categories.map((cat) => {
@@ -367,7 +370,11 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
           </ScrollView>
         ) : (
           /* Articles List */
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContent}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.listContent}
+          >
             {filteredArticles.length === 0 ? (
               <View style={styles.emptyState}>
                 <Ionicons name="newspaper-outline" size={44} color={colors.textMuted} />

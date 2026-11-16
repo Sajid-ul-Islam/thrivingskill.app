@@ -127,7 +127,7 @@ export const SkillAssessmentModal: React.FC<SkillAssessmentModalProps> = ({
       });
     });
 
-    const overall = Math.round(totalScore / totalQuestions);
+    const overall = totalQuestions > 0 ? Math.round(totalScore / totalQuestions) : 0;
 
     let levelName = 'Emerging Practitioner (Level I)';
     if (overall >= 85) levelName = 'Executive Strategist (Level IV)';
@@ -213,7 +213,7 @@ export const SkillAssessmentModal: React.FC<SkillAssessmentModalProps> = ({
                         styles.progressFill,
                         {
                           backgroundColor: colors.primary,
-                          width: `${((currentIndex + 1) / totalQuestions) * 100}%`,
+                          width: `${totalQuestions > 0 ? Math.min(100, Math.round(((currentIndex + 1) / totalQuestions) * 100)) : 0}%`,
                         },
                       ]}
                     />

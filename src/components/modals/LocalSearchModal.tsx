@@ -195,6 +195,7 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
                 <TouchableOpacity
                   onPress={() => handleSearch('', filterType)}
                   style={styles.clearBtn}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   accessibilityRole="button"
                   accessibilityLabel="Clear search input"
                 >
@@ -215,7 +216,12 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
 
           {/* Filter Chips Bar */}
           <View style={styles.filterBar}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.filterScroll}
+            >
               <TouchableOpacity
                 onPress={handleToggleSemantic}
                 style={[

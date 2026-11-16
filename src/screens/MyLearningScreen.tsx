@@ -94,10 +94,10 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
     .map((course) => {
       const progress = userProgress[course.id];
       const targetLessonId =
-        progress?.lastAccessedLessonId || course.modules[0]?.lessons[0]?.id || '';
+        progress?.lastAccessedLessonId || course.modules?.[0]?.lessons?.[0]?.id || '';
       const targetLesson =
-        course.modules.flatMap((m) => m.lessons).find((l) => l.id === targetLessonId) ||
-        course.modules[0]?.lessons[0];
+        course.modules?.flatMap((m) => m.lessons || []).find((l) => l.id === targetLessonId) ||
+        course.modules?.[0]?.lessons?.[0];
       const watchSec = progress?.lastWatchPositionSeconds?.[targetLessonId] || 120;
       const percent = getCourseProgressPercentage(course.id);
       return {
@@ -640,10 +640,12 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                       style={{
                         flexDirection: 'row',
                         alignItems: 'center',
+                        justifyContent: 'center',
                         gap: 6,
                         backgroundColor: '#FF0000',
                         paddingHorizontal: 16,
                         paddingVertical: 10,
+                        minHeight: MIN_TOUCH_TARGET,
                         borderRadius: 10,
                         marginTop: 14,
                       }}

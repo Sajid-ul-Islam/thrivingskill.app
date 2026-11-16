@@ -161,7 +161,7 @@ export const NotesModal: React.FC<NotesModalProps> = ({
             </View>
           </View>
 
-          <ScrollView contentContainerStyle={styles.scrollContent}>
+          <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
             {/* Stamp Playhead Tool */}
             <View style={styles.stampBar}>
               <TouchableOpacity

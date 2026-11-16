@@ -170,7 +170,8 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
 
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetX = e.nativeEvent.contentOffset.x;
-    const index = Math.round(offsetX / (cardWidth + 12));
+    const denom = cardWidth + 12;
+    const index = denom > 0 ? Math.round(offsetX / denom) : 0;
     if (index !== activeIndex && index >= 0 && index < slides.length) {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setActiveIndex(index);
@@ -240,7 +241,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
                 style={styles.pauseBtn}
                 accessibilityRole="button"
                 accessibilityLabel={isManualPaused ? 'Play slide carousel' : 'Pause slide carousel'}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               >
                 <Ionicons
                   name={isManualPaused ? 'play' : 'pause'}

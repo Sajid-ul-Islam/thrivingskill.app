@@ -138,7 +138,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({ visible, questions, onClos
                 </Text>
                 <Text style={[styles.resultSubtitle, { color: colors.textMuted }]}>
                   You answered {score} out of {questions.length} questions correctly (
-                  {Math.round((score / questions.length) * 100)}%).
+                  {questions.length > 0 ? Math.round((score / questions.length) * 100) : 0}%).
                 </Text>
 
                 <View style={styles.resultActions}>

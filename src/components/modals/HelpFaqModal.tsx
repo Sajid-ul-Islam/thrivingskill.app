@@ -255,6 +255,7 @@ export const HelpFaqModal: React.FC<HelpFaqModalProps> = ({ visible, onClose }) 
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
             contentContainerStyle={styles.categoryScroll}
           >
             {categories.map((cat) => {
@@ -291,7 +292,11 @@ export const HelpFaqModal: React.FC<HelpFaqModalProps> = ({ visible, onClose }) 
         </View>
 
         {/* FAQ Accordion List */}
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
           {filteredFaqs.length === 0 ? (
             <View style={styles.emptyState}>
               <Ionicons name="search-outline" size={44} color={colors.textMuted} />

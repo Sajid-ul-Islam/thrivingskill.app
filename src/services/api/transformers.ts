@@ -218,7 +218,7 @@ export function transformWpCourse(raw: any): Course {
     thumbnail,
     badge,
     durationHours: Math.max(3, Math.round(lecturesCount * 0.4)),
-    lecturesCount: Math.max(modules.reduce((acc, m) => acc + m.lessons.length, 0), 6),
+    lecturesCount: Math.max(modules.reduce((acc, m) => acc + (m.lessons?.length || 0), 0), 6),
     certificateIncluded: true,
     language: 'Bangla & English',
     lastUpdated: raw.date_modified ? raw.date_modified.split('T')[0] : '2026-08',

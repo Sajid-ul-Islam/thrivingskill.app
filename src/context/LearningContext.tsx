@@ -246,14 +246,30 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         ]);
 
         if (!active) return;
-        if (savedProgress) setUserProgress(JSON.parse(savedProgress));
-        if (savedBookmarks) setBookmarks(JSON.parse(savedBookmarks));
-        if (savedNotes) setNotes(JSON.parse(savedNotes));
-        if (savedWorkshops) setRsvpWorkshops(JSON.parse(savedWorkshops));
-        if (savedAffinities) setCategoryAffinities(JSON.parse(savedAffinities));
-        if (savedSearches) setSearchKeywordsHistory(JSON.parse(savedSearches));
-        if (savedReviews) setReviewedCourseIds(JSON.parse(savedReviews));
-        if (savedCertificates) setCertificates(JSON.parse(savedCertificates));
+        if (savedProgress) {
+          try { setUserProgress(JSON.parse(savedProgress)); } catch {}
+        }
+        if (savedBookmarks) {
+          try { setBookmarks(JSON.parse(savedBookmarks)); } catch {}
+        }
+        if (savedNotes) {
+          try { setNotes(JSON.parse(savedNotes)); } catch {}
+        }
+        if (savedWorkshops) {
+          try { setRsvpWorkshops(JSON.parse(savedWorkshops)); } catch {}
+        }
+        if (savedAffinities) {
+          try { setCategoryAffinities(JSON.parse(savedAffinities)); } catch {}
+        }
+        if (savedSearches) {
+          try { setSearchKeywordsHistory(JSON.parse(savedSearches)); } catch {}
+        }
+        if (savedReviews) {
+          try { setReviewedCourseIds(JSON.parse(savedReviews)); } catch {}
+        }
+        if (savedCertificates) {
+          try { setCertificates(JSON.parse(savedCertificates)); } catch {}
+        }
       } catch {
         // Safe fallback
       }
@@ -340,7 +356,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       ? current.completedLessonIds
       : [...current.completedLessonIds, lessonId];
 
-    const totalLessons = course.modules.reduce((acc, m) => acc + m.lessons.length, 0);
+    const totalLessons = course.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0) || 0;
     const isCompleted = totalLessons > 0 && newCompleted.length >= totalLessons;
 
     const userHasReviewed = reviewedCourseIds.includes(courseId) || !!current.hasReviewed;
@@ -357,7 +373,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         studentName: user?.displayName || user?.name || user?.username || 'Executive Graduate',
         issueDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
         credentialId: certId,
-        instructorName: course.instructor.name,
+        instructorName: course.instructor?.name || 'Course Instructor',
         verificationUrl: `${Env.SITE_URL}/verify/${certId}`,
       };
       setCertificates((prev) => {
@@ -460,10 +476,10 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const progress = userProgress[courseId];
     if (!progress) return 0;
 
-    const totalLessons = course.modules.reduce((acc, m) => acc + m.lessons.length, 0);
+    const totalLessons = course.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0) || 0;
     if (totalLessons === 0) return 0;
 
-    return Math.round((progress.completedLessonIds.length / totalLessons) * 100);
+    return Math.min(100, Math.round((progress.completedLessonIds.length / totalLessons) * 100));
   };
 
   const recordWatchPosition = (courseId: string, lessonId: string, seconds: number) => {

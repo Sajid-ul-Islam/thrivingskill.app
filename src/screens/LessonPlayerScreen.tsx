@@ -1023,7 +1023,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                 style={[
                   styles.headerActionBtn,
                   {
-                    backgroundColor: isDownloaded ? colors.primary + '20' : colors.surfaceSubtle,
+                    backgroundColor: isDownloaded ? colors.primaryLight : colors.surfaceSubtle,
                     borderColor: isDownloaded ? colors.primary : colors.border,
                   },
                 ]}

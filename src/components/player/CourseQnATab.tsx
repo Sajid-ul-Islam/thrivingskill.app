@@ -263,7 +263,12 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
       </View>
 
       {/* Ask Question Modal */}
-      <Modal visible={askModalVisible} transparent animationType="slide">
+      <Modal
+        visible={askModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setAskModalVisible(false)}
+      >
         <View style={styles.modalOverlay}>
           <View
             style={[
