@@ -320,14 +320,75 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
   }, [userScope]);
 
-  // Fetch live WordPress catalog and branding on mount
+  // 1. Initial live catalog fetch on mount
   useEffect(() => {
-    loadWordPressData();
+    loadWordPressData(false, false);
     refreshBranding(false);
   }, [loadWordPressData, refreshBranding]);
 
+  // 2. Real-time background sync when app comes into the foreground (AppState: active)
+  useEffect(() => {
+    const handleAppStateChange = (nextState: AppStateStatus) => {
+      if (nextState === 'active') {
+        if (Env.DEBUG_API) {
+          console.log('[LearningContext] App returned to active. Silently syncing with thrivingskill.com...');
+        }
+        loadWordPressData(true, true);
+        refreshBranding(true);
+      }
+    };
+
+    const sub = AppState.addEventListener('change', handleAppStateChange);
+    return () => {
+      sub.remove();
+    };
+  }, [loadWordPressData, refreshBranding]);
+
+  // 3. Re-synchronize when device recovers internet connectivity
+  useEffect(() => {
+    if (prevOfflineRef.current && !isOffline) {
+      if (Env.DEBUG_API) {
+        console.log('[LearningContext] Connectivity recovered. Synchronizing catalog...');
+      }
+      loadWordPressData(true, true);
+      refreshBranding(true);
+    }
+    prevOfflineRef.current = isOffline;
+  }, [isOffline, loadWordPressData, refreshBranding]);
+
+  // 4. Periodic background sync heartbeat (every 90s while app is in foreground)
+  // Cross-Platform Timer Hygiene: Stored in useRef and cleared on unmount
+  useEffect(() => {
+    heartbeatTimerRef.current = setInterval(() => {
+      if (AppState.currentState === 'active' && !isOffline) {
+        if (Env.DEBUG_API) {
+          console.log('[LearningContext] Background heartbeat poll: checking thrivingskill.com...');
+        }
+        loadWordPressData(true, true);
+      }
+    }, 90000);
+
+    return () => {
+      if (heartbeatTimerRef.current) {
+        clearInterval(heartbeatTimerRef.current);
+        heartbeatTimerRef.current = null;
+      }
+    };
+  }, [isOffline, loadWordPressData]);
+
+  // 5. Subscribe to CoursesService live catalog updates (SWR events)
+  useEffect(() => {
+    const unsubscribe = CoursesService.subscribeCatalogUpdates(() => {
+      if (Env.DEBUG_API) {
+        console.log('[LearningContext] Received catalog update notification, revalidating state...');
+      }
+      loadWordPressData(false, true);
+    });
+    return unsubscribe;
+  }, [loadWordPressData]);
+
   const refreshCourses = async () => {
-    await Promise.all([loadWordPressData(true), refreshBranding(true)]);
+    await Promise.all([loadWordPressData(true, false), refreshBranding(true)]);
   };
 
   const loadCourseDetail = async (courseId: string): Promise<Course> => {
@@ -800,6 +861,8 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         banners,
         isBrandingLoading,
         refreshBranding,
+        lastSyncedAt,
+        isBackgroundSyncing,
       }}
     >
       {children}
