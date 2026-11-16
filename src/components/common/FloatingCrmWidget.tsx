@@ -17,7 +17,6 @@ import {
   CRM_CHANNELS,
   openWhatsAppChat,
   openFacebookMessenger,
-  openCallHelpline,
   CrmInquiryType,
 } from '../../config/crm';
 import { shape } from '../../theme/shapes';
@@ -103,12 +102,6 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
     await openFacebookMessenger();
   };
 
-  const handleCall = async () => {
-    triggerHaptic('light');
-    closeMenu();
-    await openCallHelpline();
-  };
-
   const handleMore = () => {
     closeMenu();
     if (onOpenFullModal) {
@@ -192,36 +185,7 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
             <Ionicons name="chevron-forward" size={16} color="#FFFFFF" />
           </TouchableOpacity>
 
-          {/* 3. Direct Phone Call */}
-          <TouchableOpacity
-            style={[
-              styles.menuItem,
-              {
-                backgroundColor: isDark ? colors.surfaceCard : '#FFFFFF',
-                borderWidth: 1,
-                borderColor: colors.border,
-              },
-            ]}
-            onPress={handleCall}
-            activeOpacity={0.88}
-            accessibilityRole="button"
-            accessibilityLabel={`Call helpline at ${CRM_CHANNELS.phoneDisplay}`}
-          >
-            <View style={[styles.menuIconBg, { backgroundColor: colors.primaryLight }]}>
-              <Ionicons name="call" size={18} color={colors.primary} />
-            </View>
-            <View style={styles.menuTextCol}>
-              <Text style={[styles.menuTitle, { color: colors.text }]}>
-                {isBangla ? 'সরাসরি হেল্পলাইন কল' : 'Direct Helpline'}
-              </Text>
-              <Text style={[styles.menuSubtitle, { color: colors.primary, fontWeight: '700' }]}>
-                {CRM_CHANNELS.phoneDisplay}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-          </TouchableOpacity>
-
-          {/* 4. More Options / Full Sheet Trigger */}
+          {/* 3. More Options / Full Sheet Trigger */}
           {onOpenFullModal && (
             <TouchableOpacity
               style={[styles.moreItem, { backgroundColor: colors.surfaceSubtle }]}
