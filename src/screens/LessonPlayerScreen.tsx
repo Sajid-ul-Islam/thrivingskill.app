@@ -107,6 +107,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   // Modals
   const [quizModalVisible, setQuizModalVisible] = useState<boolean>(false);
   const [quizPlayerVisible, setQuizPlayerVisible] = useState<boolean>(false);
+  const [selectedQuizLesson, setSelectedQuizLesson] = useState<Lesson | null>(null);
   const [notesModalVisible, setNotesModalVisible] = useState<boolean>(false);
   const [certModalVisible, setCertModalVisible] = useState<boolean>(false);
   const [mandatoryReviewVisible, setMandatoryReviewVisible] = useState<boolean>(false);
@@ -766,6 +767,58 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               )}
             </View>
           </View>
+        ) : currentLesson.type === 'quiz' ? (
+          /* DEDICATED QUIZ HERO FRAME */
+          <View style={[styles.quizHeroCard, { backgroundColor: isDark ? colors.surfaceCard : '#102F53' }]}>
+            <View style={styles.quizHeroBadge}>
+              <Ionicons name="help-circle" size={32} color="#FFB606" />
+            </View>
+            <Text style={styles.quizHeroTitle} numberOfLines={1}>
+              {currentLesson.title}
+            </Text>
+            <Text style={styles.quizHeroSub}>
+              {isLessonCompleted
+                ? isBangla
+                  ? 'কুইজ সম্পন্ন • জ্ঞান অর্জন সফলভাবে যাচাই করা হয়েছে'
+                  : 'Quiz Passed • Knowledge Milestone Achieved'
+                : isBangla
+                ? 'অধ্যায়ভিত্তিক মূল্যায়ন পরীক্ষা • পাস মার্ক ৭০%'
+                : 'Chapter Assessment Quiz • 70% to Pass'}
+            </Text>
+            <TouchableOpacity
+              style={[
+                styles.quizHeroBtn,
+                { backgroundColor: isLessonCompleted ? '#059669' : '#FFB606' },
+              ]}
+              onPress={() => {
+                setSelectedQuizLesson(currentLesson);
+                setQuizPlayerVisible(true);
+              }}
+              activeOpacity={0.88}
+              accessibilityRole="button"
+              accessibilityLabel="Open Chapter Quiz"
+            >
+              <Ionicons
+                name={isLessonCompleted ? 'refresh' : 'play'}
+                size={16}
+                color={isLessonCompleted ? '#FFFFFF' : '#102F53'}
+              />
+              <Text
+                style={[
+                  styles.quizHeroBtnText,
+                  { color: isLessonCompleted ? '#FFFFFF' : '#102F53' },
+                ]}
+              >
+                {isLessonCompleted
+                  ? isBangla
+                    ? 'পুনরায় পরীক্ষা দিন'
+                    : 'Retake Chapter Quiz'
+                  : isBangla
+                  ? 'কুইজ শুরু করুন'
+                  : 'Start Chapter Quiz'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         ) : isCommuteMode ? (
           /* Interactive Commute Audio Mode */
           <View
@@ -1238,10 +1291,13 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                           </View>
                         )}
 
-                        {item.lesson.quiz && (
+                        {(item.lesson.quiz || item.lesson.type === 'quiz') && (
                           <TouchableOpacity
                             style={[styles.quizPill, { backgroundColor: colors.secondaryLight }]}
-                            onPress={() => setQuizModalVisible(true)}
+                            onPress={() => {
+                              setSelectedQuizLesson(item.lesson);
+                              setQuizPlayerVisible(true);
+                            }}
                             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                             accessibilityRole="button"
                             accessibilityLabel="Open quiz"
@@ -1440,11 +1496,34 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
       <QuizPlayerModal
         visible={quizPlayerVisible}
         courseTitle={course.title}
-        quizId={currentLesson.id}
-        onClose={() => setQuizPlayerVisible(false)}
+        courseCategory={course.category}
+        quizId={selectedQuizLesson?.quizId || selectedQuizLesson?.id || currentLesson.quizId || currentLesson.id}
+        questions={selectedQuizLesson?.quiz ? selectedQuizLesson.quiz.map((q) => ({
+          id: q.id,
+          question: q.question,
+          options: q.options,
+          correctIndex: q.correctAnswerIndex,
+          explanation: q.explanation,
+        })) : currentLesson.quiz ? currentLesson.quiz.map((q) => ({
+          id: q.id,
+          question: q.question,
+          options: q.options,
+          correctIndex: q.correctAnswerIndex,
+          explanation: q.explanation,
+        })) : undefined}
+        onClose={() => {
+          setQuizPlayerVisible(false);
+          setSelectedQuizLesson(null);
+        }}
         onPassed={() => {
-          markLessonCompleted(course.id, currentLesson.id);
-          Alert.alert('Quiz Passed! 🎓', 'Chapter completed and progress saved.');
+          const targetLessonId = selectedQuizLesson?.id || currentLesson.id;
+          markLessonCompleted(course.id, targetLessonId);
+          Alert.alert(
+            isBangla ? 'কুইজ সম্পন্ন! 🏆' : 'Quiz Passed! 🏆',
+            isBangla
+              ? 'অধ্যায় সফলভাবে সম্পন্ন হয়েছে এবং অগ্রগতি সংরক্ষিত হয়েছে।'
+              : 'Chapter completed and progress saved.'
+          );
         }}
       />
 
@@ -1649,6 +1728,49 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: '#FFB606',
+  },
+  quizHeroCard: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  quizHeroBadge: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: 'rgba(255, 182, 6, 0.16)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  quizHeroTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  quizHeroSub: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#94A3B8',
+    textAlign: 'center',
+    marginBottom: 14,
+  },
+  quizHeroBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 10,
+    minHeight: 44,
+  },
+  quizHeroBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
   },
   videoFallbackBtn: {
     flexDirection: 'row',

@@ -128,20 +128,31 @@ export function transformWpCourse(raw: any): Course {
         id: String(sec.id || `mod-${secIdx + 1}`),
         title: cleanHtml(sec.title || `Module ${secIdx + 1}`),
         lessons: items.map((item: any, itemIdx: number) => {
-          const videoData = resolveLessonVideoData(
-            { id, title, category: catId },
-            { id: String(item.id), title: cleanHtml(item.title) },
-            globalLessonIdx++
-          );
+          const isQuiz = item.type === 'lp_quiz' || item.format === 'quiz';
+          const videoData = isQuiz
+            ? {
+                duration: item.duration || '10:00',
+                videoUrl: undefined,
+                videoIntro: undefined,
+                videoType: 'none' as const,
+                summary: `Assessment quiz testing course competencies for ${cleanHtml(item.title || 'this module')}.`,
+              }
+            : resolveLessonVideoData(
+                { id, title, category: catId },
+                { id: String(item.id), title: cleanHtml(item.title) },
+                globalLessonIdx++
+              );
           return {
             id: String(item.id || `les-${secIdx}-${itemIdx}`),
-            title: cleanHtml(item.title || `Lesson ${itemIdx + 1}`),
-            duration: item.duration || videoData.duration || '15:00',
-            videoUrl: item.video_url || videoData.videoUrl,
-            videoIntro: item.video_intro || videoData.videoIntro,
-            videoType: item.video_intro?.includes('vimeo') ? 'vimeo' : videoData.videoType,
-            isFreePreview: Boolean(item.preview) || itemIdx === 0,
+            title: cleanHtml(item.title || (isQuiz ? `Quiz: Module ${secIdx + 1}` : `Lesson ${itemIdx + 1}`)),
+            duration: item.duration || videoData.duration || (isQuiz ? '10:00' : '15:00'),
+            videoUrl: videoData.videoUrl,
+            videoIntro: videoData.videoIntro,
+            videoType: videoData.videoType,
+            isFreePreview: Boolean(item.preview) || (!isQuiz && itemIdx === 0),
             summary: item.summary || videoData.summary || `Interactive lesson covering ${item.title || 'course competencies'}.`,
+            type: isQuiz ? ('quiz' as const) : ('lesson' as const),
+            quizId: isQuiz ? String(item.id) : undefined,
           };
         }),
       };

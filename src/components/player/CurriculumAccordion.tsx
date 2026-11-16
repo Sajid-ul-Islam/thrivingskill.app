@@ -104,6 +104,7 @@ export const CurriculumAccordion: React.FC<CurriculumAccordionProps> = ({
                   const isCompleted = completedLessonIds.includes(lesson.id);
                   const isActive = activeLessonId === lesson.id;
                   const isAccessible = isAdmin || isEnrolled || Boolean(lesson.isFreePreview);
+                  const isQuizItem = lesson.type === 'quiz' || Boolean(lesson.quiz);
 
                   return (
                     <TouchableOpacity
@@ -137,9 +138,9 @@ export const CurriculumAccordion: React.FC<CurriculumAccordionProps> = ({
                           {isCompleted ? (
                             <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
                           ) : isActive ? (
-                            <Ionicons name="play" size={12} color={colors.onPrimary} />
+                            <Ionicons name={isQuizItem ? "help-circle" : "play"} size={isQuizItem ? 14 : 12} color={colors.onPrimary} />
                           ) : isAccessible ? (
-                            <Ionicons name="play-outline" size={14} color={colors.textMuted} />
+                            <Ionicons name={isQuizItem ? "help-circle-outline" : "play-outline"} size={14} color={isQuizItem ? colors.secondary : colors.textMuted} />
                           ) : (
                             <Ionicons name="lock-closed" size={14} color={colors.textMuted} />
                           )}
@@ -167,7 +168,7 @@ export const CurriculumAccordion: React.FC<CurriculumAccordionProps> = ({
                             <Text style={[styles.lessonDuration, { color: colors.textLight }]}>
                               {lesson.duration}
                             </Text>
-                            {lesson.quiz && (
+                            {isQuizItem && (
                               <View style={styles.quizTag}>
                                 <Ionicons name="help-circle-outline" size={12} color={colors.secondary} />
                                 <Text style={[styles.quizTagText, { color: colors.secondary }]}>

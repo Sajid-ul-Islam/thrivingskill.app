@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Modal,
   View,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,6 +15,8 @@ import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useGamification } from '../../context/GamificationContext';
 import { LessonsService } from '../../services/api/lessonsService';
+import { cleanHtml } from '../../services/api/transformers';
+import { getDomainQuestionsForCourse } from '../../data/domainQuizBank';
 import { triggerHaptic } from '../../utils/haptics';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
@@ -29,76 +32,190 @@ export interface QuizItem {
 interface QuizPlayerModalProps {
   visible: boolean;
   courseTitle: string;
+  courseCategory?: string;
   quizId?: string | number;
   questions?: QuizItem[];
   onClose: () => void;
   onPassed?: () => void;
 }
 
-const DEFAULT_QUESTIONS: QuizItem[] = [
-  {
-    id: 'q1',
-    question: 'In the RTCC Prompt Engineering model, what does the "C" represent?',
-    options: ['Computation & Code', 'Context & Constraints', 'Creativity & Cloud', 'Cost & Calibration'],
-    correctIndex: 1,
-    explanation: 'RTCC stands for Role, Task, Context, and Constraints — ensuring reliable structured output from LLMs.',
-  },
-  {
-    id: 'q2',
-    question: 'Which of the following is a primary pillar of Emotional Intelligence in workplace leadership?',
-    options: ['Self-Regulation & Empathy', 'Raw Cognitive IQ', 'Authoritarian Directing', 'Speed Reading'],
-    correctIndex: 0,
-    explanation: 'Self-regulation, self-awareness, empathy, motivation, and social skills form the core framework of EI.',
-  },
-  {
-    id: 'q3',
-    question: 'What is the recommended approach to reduce AI hallucinations in business reporting?',
-    options: [
-      'Increase temperature to maximum',
-      'Provide source documents in prompt and request citations',
-      'Shorten the prompt to one word',
-      'Disable prompt system messages',
-    ],
-    correctIndex: 1,
-    explanation: 'Grounding the LLM with factual source text (RAG / Context injection) dramatically eliminates hallucinations.',
-  },
-];
-
 export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
   visible,
   courseTitle,
+  courseCategory,
   quizId,
-  questions = DEFAULT_QUESTIONS,
+  questions: propQuestions,
   onClose,
   onPassed,
 }) => {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const { t } = useLanguage();
+  const { t, isBangla } = useLanguage();
   const { unlockBadge, triggerCelebration } = useGamification();
+
+  const [activeQuestions, setActiveQuestions] = useState<QuizItem[]>([]);
+  const [isLoadingQuiz, setIsLoadingQuiz] = useState<boolean>(false);
+  const [isLiveLearnPressQuiz, setIsLiveLearnPressQuiz] = useState<boolean>(false);
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(120); // 2 minutes
 
-  useEffect(() => {
-    if (visible) {
-      setCurrentIndex(0);
-      setSelectedAnswers({});
-      setIsSubmitted(false);
-      setTimeLeft(120);
-    }
-  }, [visible, quizId]);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Initialize and load quiz questions
   useEffect(() => {
-    if (visible && !isSubmitted) {
-      const interval = setInterval(() => {
-        setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
-      }, 1000);
-      return () => clearInterval(interval);
+    let isMounted = true;
+
+    if (!visible) {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      return;
     }
-  }, [visible, isSubmitted]);
+
+    setCurrentIndex(0);
+    setSelectedAnswers({});
+    setIsSubmitted(false);
+    setTimeLeft(120);
+
+    // 1. If explicit questions are supplied, use them immediately
+    if (propQuestions && propQuestions.length > 0) {
+      setActiveQuestions(propQuestions);
+      setIsLiveLearnPressQuiz(false);
+      setIsLoadingQuiz(false);
+      return;
+    }
+
+    // 2. If quizId is provided, attempt to fetch live LearnPress quiz
+    if (quizId) {
+      setIsLoadingQuiz(true);
+      LessonsService.getQuiz(quizId)
+        .then((raw) => {
+          if (!isMounted) return;
+          let parsed: QuizItem[] = [];
+
+          const rawList = Array.isArray(raw?.questions)
+            ? raw.questions
+            : Array.isArray(raw?.items)
+            ? raw.items
+            : Array.isArray(raw)
+            ? raw
+            : [];
+
+          if (rawList.length > 0) {
+            parsed = rawList.map((q: any, idx: number) => {
+              const qText = cleanHtml(q.title || q.name || q.question || `Question ${idx + 1}`);
+              let opts: string[] = [];
+              let cIndex = 0;
+
+              if (Array.isArray(q.options)) {
+                opts = q.options.map((o: any) =>
+                  cleanHtml(typeof o === 'string' ? o : o.title || o.text || o.value || '')
+                );
+                const matchIdx = q.options.findIndex(
+                  (o: any) =>
+                    o.is_true === 'yes' ||
+                    o.is_true === true ||
+                    o.is_true === '1' ||
+                    o.correct === 1 ||
+                    o.correct === true
+                );
+                if (matchIdx >= 0) cIndex = matchIdx;
+              } else if (Array.isArray(q.answers)) {
+                opts = q.answers.map((a: any) =>
+                  cleanHtml(typeof a === 'string' ? a : a.title || a.text || a.value || '')
+                );
+                const matchIdx = q.answers.findIndex(
+                  (a: any) =>
+                    a.is_true === 'yes' ||
+                    a.is_true === true ||
+                    a.is_true === '1' ||
+                    a.correct === 1 ||
+                    a.correct === true
+                );
+                if (matchIdx >= 0) cIndex = matchIdx;
+              }
+
+              return {
+                id: String(q.id || `lp-q-${idx}`),
+                question: qText,
+                options: opts.length >= 2 ? opts : [isBangla ? 'সঠিক' : 'True', isBangla ? 'ভুল' : 'False'],
+                correctIndex: cIndex,
+                explanation: cleanHtml(
+                  q.explanation ||
+                    q.hint ||
+                    (isBangla
+                      ? 'সম্পূর্ণ ধারণা পরিষ্কারের জন্য সংশ্লিষ্ট লেকচারটি পুনরায় দেখুন।'
+                      : 'Review the course lecture for comprehensive theoretical rationale.')
+                ),
+              };
+            });
+          }
+
+          if (parsed.length > 0) {
+            setActiveQuestions(parsed);
+            setIsLiveLearnPressQuiz(true);
+          } else {
+            // Fallback to domain-tailored questions for this specific course
+            const fallback = getDomainQuestionsForCourse(courseTitle, courseCategory, isBangla);
+            setActiveQuestions(fallback);
+            setIsLiveLearnPressQuiz(false);
+          }
+          setIsLoadingQuiz(false);
+        })
+        .catch(() => {
+          if (!isMounted) return;
+          // Fallback seamlessly to domain questions on 401 or network error
+          const fallback = getDomainQuestionsForCourse(courseTitle, courseCategory, isBangla);
+          setActiveQuestions(fallback);
+          setIsLiveLearnPressQuiz(false);
+          setIsLoadingQuiz(false);
+        });
+    } else {
+      // 3. Fallback to domain-tailored course questions
+      const fallback = getDomainQuestionsForCourse(courseTitle, courseCategory, isBangla);
+      setActiveQuestions(fallback);
+      setIsLiveLearnPressQuiz(false);
+      setIsLoadingQuiz(false);
+    }
+
+    return () => {
+      isMounted = false;
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [visible, quizId, courseTitle, courseCategory, isBangla, propQuestions]);
+
+  // Countdown timer with proper unmount hygiene
+  useEffect(() => {
+    if (visible && !isSubmitted && !isLoadingQuiz && activeQuestions.length > 0) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = setInterval(() => {
+        setTimeLeft((prev) => {
+          if (prev <= 1) {
+            if (timerRef.current) {
+              clearInterval(timerRef.current);
+              timerRef.current = null;
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => {
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+      };
+    }
+  }, [visible, isSubmitted, isLoadingQuiz, activeQuestions.length]);
 
   const handleSelectOption = (optionIndex: number) => {
     if (isSubmitted) return;
@@ -110,25 +227,31 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
   };
 
   const calculateScore = () => {
-    if (!questions || questions.length === 0) return 0;
+    if (!activeQuestions || activeQuestions.length === 0) return 0;
     let correct = 0;
-    questions.forEach((q, idx) => {
+    activeQuestions.forEach((q, idx) => {
       if (selectedAnswers[idx] === q.correctIndex) {
         correct++;
       }
     });
-    return Math.round((correct / questions.length) * 100);
+    return Math.round((correct / activeQuestions.length) * 100);
   };
 
   const handleSubmit = () => {
     if (isSubmitted) return;
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
     setIsSubmitted(true);
     const score = calculateScore();
     if (score >= 70) {
       unlockBadge('quiz_master');
       triggerCelebration({
-        title: 'Quiz Passed! 🏆',
-        subtitle: `Scored ${score}% • Knowledge Milestone Achieved`,
+        title: isBangla ? 'কুইজ সম্পন্ন! 🏆' : 'Quiz Passed! 🏆',
+        subtitle: isBangla
+          ? `স্কোর ${score}% • জ্ঞান অর্জন সফলভাবে যাচাই করা হয়েছে`
+          : `Scored ${score}% • Knowledge Milestone Achieved`,
         xpAwarded: 100,
         icon: 'trophy',
       });
@@ -136,16 +259,16 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
     }
     if (quizId) {
       LessonsService.finishQuiz(quizId).catch((err) => {
-        console.log('[QuizPlayerModal] Background LearnPress quiz finish:', err?.message || err);
+        console.log('[QuizPlayerModal] LearnPress background quiz sync:', err?.message || err);
       });
     }
   };
 
   useEffect(() => {
-    if (visible && !isSubmitted && timeLeft === 0) {
+    if (visible && !isSubmitted && timeLeft === 0 && activeQuestions.length > 0) {
       handleSubmit();
     }
-  }, [visible, isSubmitted, timeLeft]);
+  }, [visible, isSubmitted, timeLeft, activeQuestions.length]);
 
   const resetQuiz = () => {
     setCurrentIndex(0);
@@ -154,17 +277,15 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
     setTimeLeft(120);
   };
 
-  if (!questions || questions.length === 0) return null;
-
-  const currentQ = questions[currentIndex] || questions[0];
-  const score = isSubmitted ? calculateScore() : 0;
-  const passed = score >= 70;
-
   const formatTime = (secs: number) => {
     const mins = Math.floor(secs / 60);
     const remainder = secs % 60;
     return `${mins}:${remainder < 10 ? '0' : ''}${remainder}`;
   };
+
+  const currentQ = activeQuestions[currentIndex];
+  const score = isSubmitted ? calculateScore() : 0;
+  const passed = score >= 70;
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -173,7 +294,7 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
           style={[
             styles.card,
             {
-              backgroundColor: colors.surface,
+              backgroundColor: colors.surfaceCard,
               borderColor: colors.border,
               paddingBottom: Math.max(insets.bottom, Platform.OS === 'ios' ? 24 : 16),
             },
@@ -181,15 +302,31 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
         >
           {/* Header */}
           <View style={[styles.topRow, { borderBottomColor: colors.border }]}>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.quizTitle, { color: colors.text }]}>{t('quizTitle')}</Text>
+            <View style={{ flex: 1, paddingRight: 8 }}>
+              <View style={styles.titleBadgeRow}>
+                <Text style={[styles.quizTitle, { color: colors.text }]}>{t('quizTitle')}</Text>
+                {isLiveLearnPressQuiz ? (
+                  <View style={styles.liveSyncBadge}>
+                    <View style={styles.liveSyncDot} />
+                    <Text style={styles.liveSyncText}>
+                      {isBangla ? 'লাইভ লার্নপ্রেস' : 'LearnPress Sync'}
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={[styles.domainBadge, { backgroundColor: isDark ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF' }]}>
+                    <Text style={[styles.domainBadgeText, { color: isDark ? '#93C5FD' : '#2563EB' }]}>
+                      {isBangla ? 'কোর্স মূল্যায়ন' : 'Curriculum Assessment'}
+                    </Text>
+                  </View>
+                )}
+              </View>
               <Text style={[styles.courseSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
                 {courseTitle}
               </Text>
             </View>
 
-            {!isSubmitted && (
-              <View style={[styles.timerBadge, { backgroundColor: colors.surfaceSubtle }]}>
+            {!isSubmitted && !isLoadingQuiz && activeQuestions.length > 0 && (
+              <View style={[styles.timerBadge, { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' }]}>
                 <Ionicons name="time-outline" size={16} color={colors.primary} />
                 <Text style={[styles.timerText, { color: colors.primary }]}>{formatTime(timeLeft)}</Text>
               </View>
@@ -208,181 +345,245 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-            {!isSubmitted ? (
-              <>
-                {/* Question progress */}
-                <View style={styles.progressRow}>
-                  <Text style={[styles.progressText, { color: colors.textMuted }]}>
-                    {t('question')} {currentIndex + 1} {t('of')} {questions.length}
-                  </Text>
-                  <View style={[styles.progressBar, { backgroundColor: colors.surfaceSubtle }]}>
-                    <View
-                      style={[
-                        styles.progressFill,
-                        {
-                          backgroundColor: colors.primary,
-                          width: `${((currentIndex + 1) / questions.length) * 100}%`,
-                        },
-                      ]}
-                    />
-                  </View>
-                </View>
-
-                {/* Question text */}
-                <Text style={[styles.questionText, { color: colors.text }]}>{currentQ.question}</Text>
-
-                {/* Options */}
-                <View style={styles.optionsList}>
-                  {currentQ.options.map((opt, optIdx) => {
-                    const isSelected = selectedAnswers[currentIndex] === optIdx;
-                    return (
-                      <TouchableOpacity
-                        key={optIdx}
+          {isLoadingQuiz ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+              <Text style={[styles.loadingText, { color: colors.textMuted }]}>
+                {isBangla ? 'কুইজ প্রশ্ন লোড হচ্ছে...' : 'Loading quiz questions...'}
+              </Text>
+            </View>
+          ) : activeQuestions.length === 0 ? (
+            <View style={styles.loadingContainer}>
+              <Ionicons name="alert-circle-outline" size={36} color={colors.textMuted} />
+              <Text style={[styles.loadingText, { color: colors.textMuted }]}>
+                {isBangla ? 'কোনো কুইজ প্রশ্ন পাওয়া যায়নি।' : 'No quiz questions available.'}
+              </Text>
+            </View>
+          ) : (
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+              {!isSubmitted ? (
+                <>
+                  {/* Question progress */}
+                  <View style={styles.progressRow}>
+                    <Text style={[styles.progressText, { color: colors.textMuted }]}>
+                      {isBangla ? 'প্রশ্ন' : 'Question'} {currentIndex + 1} {isBangla ? 'এর' : 'of'}{' '}
+                      {activeQuestions.length}
+                    </Text>
+                    <View style={[styles.progressBar, { backgroundColor: isDark ? colors.surfaceSubtle : '#E2E8F0' }]}>
+                      <View
                         style={[
-                          styles.optionCard,
+                          styles.progressFill,
                           {
-                            backgroundColor: isSelected ? colors.primaryLight : colors.surfaceSubtle,
-                            borderColor: isSelected ? colors.primary : colors.border,
+                            backgroundColor: colors.primary,
+                            width: `${((currentIndex + 1) / activeQuestions.length) * 100}%`,
                           },
                         ]}
-                        onPress={() => handleSelectOption(optIdx)}
-                        activeOpacity={0.8}
+                      />
+                    </View>
+                  </View>
+
+                  {/* Question text */}
+                  {currentQ && (
+                    <Text style={[styles.questionText, { color: colors.text }]}>{currentQ.question}</Text>
+                  )}
+
+                  {/* Options */}
+                  {currentQ && (
+                    <View style={styles.optionsList}>
+                      {currentQ.options.map((opt, optIdx) => {
+                        const isSelected = selectedAnswers[currentIndex] === optIdx;
+                        return (
+                          <TouchableOpacity
+                            key={optIdx}
+                            style={[
+                              styles.optionCard,
+                              {
+                                backgroundColor: isSelected
+                                  ? isDark
+                                    ? 'rgba(16, 47, 83, 0.5)'
+                                    : '#EEF2FF'
+                                  : isDark
+                                  ? colors.surfaceSubtle
+                                  : '#F8FAFC',
+                                borderColor: isSelected ? colors.primary : colors.border,
+                              },
+                            ]}
+                            onPress={() => handleSelectOption(optIdx)}
+                            activeOpacity={0.8}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Option ${String.fromCharCode(65 + optIdx)}: ${opt}`}
+                          >
+                            <View
+                              style={[
+                                styles.optionRadio,
+                                {
+                                  borderColor: isSelected ? colors.primary : colors.border,
+                                  backgroundColor: isSelected ? colors.primary : 'transparent',
+                                },
+                              ]}
+                            >
+                              {isSelected && <View style={styles.radioDot} />}
+                            </View>
+                            <Text
+                              style={[
+                                styles.optionText,
+                                { color: colors.text, fontWeight: isSelected ? '700' : '500' },
+                              ]}
+                            >
+                              {opt}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  )}
+
+                  {/* Navigation Buttons */}
+                  <View style={styles.navButtonsRow}>
+                    {currentIndex > 0 && (
+                      <TouchableOpacity
+                        style={[styles.prevBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                        onPress={() => setCurrentIndex((prev) => prev - 1)}
+                        accessibilityRole="button"
+                        accessibilityLabel="Previous question"
                       >
-                        <View
-                          style={[
-                            styles.optionRadio,
-                            {
-                              borderColor: isSelected ? colors.primary : colors.textMuted,
-                              backgroundColor: isSelected ? colors.primary : 'transparent',
-                            },
-                          ]}
-                        >
-                          {isSelected && <View style={styles.radioDot} />}
-                        </View>
-                        <Text
-                          style={[
-                            styles.optionText,
-                            { color: colors.text, fontWeight: isSelected ? '700' : '500' },
-                          ]}
-                        >
-                          {opt}
+                        <Ionicons name="arrow-back" size={16} color={colors.text} />
+                        <Text style={[styles.prevBtnText, { color: colors.text }]}>
+                          {isBangla ? 'পূর্ববর্তী' : 'Previous'}
                         </Text>
                       </TouchableOpacity>
-                    );
-                  })}
-                </View>
+                    )}
 
-                {/* Navigation Buttons */}
-                <View style={styles.navButtonsRow}>
-                  {currentIndex > 0 && (
-                    <TouchableOpacity
-                      style={[styles.prevBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
-                      onPress={() => setCurrentIndex((prev) => prev - 1)}
-                    >
-                      <Ionicons name="arrow-back" size={16} color={colors.text} />
-                      <Text style={[styles.prevBtnText, { color: colors.text }]}>Previous</Text>
-                    </TouchableOpacity>
-                  )}
+                    {currentIndex < activeQuestions.length - 1 ? (
+                      <TouchableOpacity
+                        style={[styles.nextBtn, { backgroundColor: colors.primary }]}
+                        onPress={() => setCurrentIndex((prev) => prev + 1)}
+                        accessibilityRole="button"
+                        accessibilityLabel="Next question"
+                      >
+                        <Text style={[styles.nextBtnText, { color: colors.onPrimary }]}>
+                          {isBangla ? 'পরবর্তী প্রশ্ন' : 'Next Question'}
+                        </Text>
+                        <Ionicons name="arrow-forward" size={16} color={colors.onPrimary} />
+                      </TouchableOpacity>
+                    ) : (
+                      <TouchableOpacity
+                        style={[styles.nextBtn, { backgroundColor: '#047857' }]}
+                        onPress={handleSubmit}
+                        accessibilityRole="button"
+                        accessibilityLabel="Submit quiz"
+                      >
+                        <Ionicons name="checkmark-done" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+                        <Text style={styles.nextBtnText}>
+                          {isBangla ? 'কুইজ জমা দিন' : t('submitAnswer')}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </>
+              ) : (
+                /* Quiz Results View */
+                <View style={styles.resultsContainer}>
+                  <View
+                    style={[
+                      styles.scoreRing,
+                      {
+                        backgroundColor: passed ? (isDark ? 'rgba(16, 185, 129, 0.15)' : '#ECFDF5') : (isDark ? 'rgba(239, 68, 68, 0.15)' : '#FEF2F2'),
+                        borderColor: passed ? '#10B981' : '#EF4444',
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name={passed ? 'trophy' : 'alert-circle'}
+                      size={40}
+                      color={passed ? '#10B981' : '#EF4444'}
+                    />
+                    <Text style={[styles.scoreValue, { color: passed ? '#059669' : '#DC2626' }]}>
+                      {score}%
+                    </Text>
+                  </View>
 
-                  {currentIndex < questions.length - 1 ? (
-                    <TouchableOpacity
-                      style={[styles.nextBtn, { backgroundColor: colors.primary }]}
-                      onPress={() => setCurrentIndex((prev) => prev + 1)}
-                    >
-                      <Text style={[styles.nextBtnText, { color: colors.onPrimary }]}>Next Question</Text>
-                      <Ionicons name="arrow-forward" size={16} color={colors.onPrimary} />
-                    </TouchableOpacity>
-                  ) : (
-                    <TouchableOpacity
-                      style={[styles.nextBtn, { backgroundColor: '#047857' }]}
-                      onPress={handleSubmit}
-                    >
-                      <Ionicons name="checkmark-done" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
-                      <Text style={styles.nextBtnText}>{t('submitAnswer')}</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </>
-            ) : (
-              /* Quiz Results View */
-              <View style={styles.resultsContainer}>
-                <View
-                  style={[
-                    styles.scoreRing,
-                    { backgroundColor: passed ? '#ECFDF5' : '#FEF2F2', borderColor: passed ? '#10B981' : '#EF4444' },
-                  ]}
-                >
-                  <Ionicons
-                    name={passed ? 'trophy' : 'alert-circle'}
-                    size={40}
-                    color={passed ? '#10B981' : '#EF4444'}
-                  />
-                  <Text style={[styles.scoreValue, { color: passed ? '#065F46' : '#991B1B' }]}>{score}%</Text>
-                </View>
+                  <Text style={[styles.resultTitle, { color: colors.text }]}>
+                    {passed
+                      ? isBangla
+                        ? 'অভিনন্দন! আপনি কুইজে উত্তীর্ণ হয়েছেন 🎉'
+                        : t('passed')
+                      : isBangla
+                      ? 'আবার চেষ্টা করুন (পাস মার্ক ৭০%)'
+                      : t('failed')}
+                  </Text>
 
-                <Text style={[styles.resultTitle, { color: colors.text }]}>
-                  {passed ? t('passed') : t('failed')}
-                </Text>
+                  {/* Explanations List */}
+                  <Text style={[styles.explanationsHeading, { color: colors.text }]}>
+                    {isBangla ? 'উত্তর ও বিশদ পর্যালোচনা' : `${t('reviewExplanations')}:`}
+                  </Text>
 
-                {/* Explanations List */}
-                <Text style={[styles.explanationsHeading, { color: colors.text }]}>
-                  {t('reviewExplanations')}:
-                </Text>
-                {questions.map((q, qIdx) => {
-                  const userAns = selectedAnswers[qIdx];
-                  const isCorrect = userAns === q.correctIndex;
-                  return (
-                    <View
-                      key={q.id}
-                      style={[
-                        styles.explanationCard,
-                        {
-                          backgroundColor: colors.surfaceSubtle,
-                          borderColor: isCorrect ? '#10B981' : '#EF4444',
-                        },
-                      ]}
-                    >
-                      <View style={styles.explHeader}>
-                        <Ionicons
-                          name={isCorrect ? 'checkmark-circle' : 'close-circle'}
-                          size={18}
-                          color={isCorrect ? '#10B981' : '#EF4444'}
-                        />
-                        <Text style={[styles.explQuestion, { color: colors.text }]}>
-                          Q{qIdx + 1}: {q.question}
+                  {activeQuestions.map((q, qIdx) => {
+                    const userAns = selectedAnswers[qIdx];
+                    const isCorrect = userAns === q.correctIndex;
+                    return (
+                      <View
+                        key={q.id}
+                        style={[
+                          styles.explanationCard,
+                          {
+                            backgroundColor: colors.surfaceSubtle,
+                            borderColor: isCorrect ? '#10B981' : '#EF4444',
+                          },
+                        ]}
+                      >
+                        <View style={styles.explHeader}>
+                          <Ionicons
+                            name={isCorrect ? 'checkmark-circle' : 'close-circle'}
+                            size={18}
+                            color={isCorrect ? '#10B981' : '#EF4444'}
+                          />
+                          <Text style={[styles.explQuestion, { color: colors.text }]}>
+                            {isBangla ? 'প্রশ্ন' : 'Q'}{qIdx + 1}: {q.question}
+                          </Text>
+                        </View>
+                        <Text style={[styles.correctAnswerText, { color: '#059669' }]}>
+                          ✓ {isBangla ? 'সঠিক উত্তর' : 'Correct Answer'}: {q.options[q.correctIndex]}
+                        </Text>
+                        <Text style={[styles.explanationNote, { color: colors.textMuted }]}>
+                          {q.explanation}
                         </Text>
                       </View>
-                      <Text style={[styles.correctAnswerText, { color: colors.primary }]}>
-                        ✓ Correct Answer: {q.options[q.correctIndex]}
-                      </Text>
-                      <Text style={[styles.explanationNote, { color: colors.textMuted }]}>
-                        {q.explanation}
-                      </Text>
-                    </View>
-                  );
-                })}
+                    );
+                  })}
 
-                {/* Actions */}
-                <View style={styles.resultActions}>
-                  {!passed ? (
-                    <TouchableOpacity
-                      style={[styles.retryBtn, { backgroundColor: colors.primary }]}
-                      onPress={resetQuiz}
-                    >
-                      <Ionicons name="refresh" size={18} color={colors.onPrimary} style={{ marginRight: 6 }} />
-                      <Text style={[styles.retryBtnText, { color: colors.onPrimary }]}>Retake Quiz</Text>
-                    </TouchableOpacity>
-                  ) : (
-                    <TouchableOpacity style={[styles.retryBtn, { backgroundColor: '#047857' }]} onPress={onClose}>
-                      <Ionicons name="ribbon" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
-                      <Text style={styles.retryBtnText}>{t('claimCertificate')}</Text>
-                    </TouchableOpacity>
-                  )}
+                  {/* Actions */}
+                  <View style={styles.resultActions}>
+                    {!passed ? (
+                      <TouchableOpacity
+                        style={[styles.retryBtn, { backgroundColor: colors.primary }]}
+                        onPress={resetQuiz}
+                        accessibilityRole="button"
+                        accessibilityLabel="Retake quiz"
+                      >
+                        <Ionicons name="refresh" size={18} color={colors.onPrimary} style={{ marginRight: 6 }} />
+                        <Text style={[styles.retryBtnText, { color: colors.onPrimary }]}>
+                          {isBangla ? 'পুনরায় পরীক্ষা দিন' : 'Retake Quiz'}
+                        </Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <TouchableOpacity
+                        style={[styles.retryBtn, { backgroundColor: '#047857' }]}
+                        onPress={onClose}
+                        accessibilityRole="button"
+                        accessibilityLabel="Complete and continue"
+                      >
+                        <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+                        <Text style={styles.retryBtnText}>
+                          {isBangla ? 'সম্পন্ন ও পরবর্তী পাঠ' : 'Complete & Continue'}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 </View>
-              </View>
-            )}
-          </ScrollView>
+              )}
+            </ScrollView>
+          )}
         </View>
       </View>
     </Modal>
@@ -401,7 +602,6 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: Platform.OS === 'ios' ? 36 : 24,
     maxHeight: '92%',
   },
   topRow: {
@@ -411,8 +611,43 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     marginBottom: 16,
   },
+  titleBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
   quizTitle: {
     ...typography.h4,
+  },
+  liveSyncBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    gap: 4,
+  },
+  liveSyncDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#10B981',
+  },
+  liveSyncText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#065F46',
+  },
+  domainBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  domainBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
   },
   courseSubtitle: {
     ...typography.caption,
@@ -428,26 +663,35 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   timerText: {
-    fontSize: 13,
+    ...typography.caption,
     fontWeight: '700',
   },
   closeBtn: {
     width: MIN_TOUCH_TARGET,
     height: MIN_TOUCH_TARGET,
-    borderRadius: shape.full,
+    borderRadius: MIN_TOUCH_TARGET / 2,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  loadingContainer: {
+    paddingVertical: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
   scroll: {
     paddingBottom: 24,
   },
   progressRow: {
-    marginBottom: 14,
-    gap: 6,
+    marginBottom: 16,
   },
   progressText: {
-    fontSize: 12,
-    fontWeight: '600',
+    ...typography.caption,
+    marginBottom: 6,
   },
   progressBar: {
     height: 6,
@@ -460,8 +704,8 @@ const styles = StyleSheet.create({
   },
   questionText: {
     fontSize: 16,
+    lineHeight: 24,
     fontWeight: '700',
-    lineHeight: 22,
     marginBottom: 18,
   },
   optionsList: {
@@ -472,9 +716,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 14,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    gap: 12,
+    borderRadius: shape.medium,
+    borderWidth: 1,
+    minHeight: MIN_TOUCH_TARGET,
   },
   optionRadio: {
     width: 20,
@@ -483,122 +727,128 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 12,
   },
   radioDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: '#FFFFFF',
   },
   optionText: {
-    fontSize: 14,
     flex: 1,
-    lineHeight: 19,
+    fontSize: 14,
+    lineHeight: 20,
   },
   navButtonsRow: {
     flexDirection: 'row',
+    justifyContent: 'flex-end',
     gap: 10,
     marginTop: 10,
   },
   prevBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     paddingHorizontal: 16,
-    height: 48,
-    borderRadius: 14,
+    paddingVertical: 12,
+    borderRadius: shape.medium,
     borderWidth: 1,
     gap: 6,
+    minHeight: MIN_TOUCH_TARGET,
   },
   prevBtnText: {
     fontSize: 14,
     fontWeight: '600',
   },
   nextBtn: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    height: 48,
-    borderRadius: 14,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: shape.medium,
     gap: 6,
+    minHeight: MIN_TOUCH_TARGET,
   },
   nextBtnText: {
-    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',
+    color: '#FFFFFF',
   },
   resultsContainer: {
     alignItems: 'center',
     paddingTop: 10,
   },
   scoreRing: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     borderWidth: 3,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 14,
+    marginBottom: 12,
   },
   scoreValue: {
-    fontSize: 20,
-    fontWeight: '900',
+    fontSize: 18,
+    fontWeight: '800',
     marginTop: 2,
   },
   resultTitle: {
-    fontSize: 18,
-    fontWeight: '800',
+    ...typography.h3,
     textAlign: 'center',
     marginBottom: 20,
   },
   explanationsHeading: {
-    fontSize: 14,
-    fontWeight: '800',
+    ...typography.h5,
     alignSelf: 'flex-start',
     marginBottom: 12,
+    marginTop: 8,
   },
   explanationCard: {
     width: '100%',
     padding: 14,
-    borderRadius: 14,
+    borderRadius: shape.medium,
     borderWidth: 1,
-    marginBottom: 10,
-    gap: 6,
+    marginBottom: 12,
   },
   explHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 8,
+    marginBottom: 6,
   },
   explQuestion: {
-    fontSize: 13,
-    fontWeight: '700',
     flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 18,
   },
   correctAnswerText: {
     fontSize: 12,
     fontWeight: '700',
-    marginTop: 2,
+    marginBottom: 4,
+    paddingLeft: 26,
   },
   explanationNote: {
     fontSize: 12,
-    lineHeight: 16,
+    lineHeight: 17,
+    paddingLeft: 26,
   },
   resultActions: {
     width: '100%',
     marginTop: 16,
+    marginBottom: 10,
   },
   retryBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 50,
-    borderRadius: 14,
+    paddingVertical: 14,
+    borderRadius: shape.medium,
+    minHeight: MIN_TOUCH_TARGET,
   },
   retryBtnText: {
-    color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '700',
+    color: '#FFFFFF',
   },
 });

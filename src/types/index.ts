@@ -86,6 +86,8 @@ export interface Lesson {
   summary?: string;
   quiz?: QuizQuestion[];
   resources?: { name: string; size: string; type: string }[];
+  type?: 'lesson' | 'quiz';
+  quizId?: string | number;
 }
 
 export interface CourseModule {
@@ -293,8 +295,10 @@ export interface CopilotMessage {
 export interface SkillAssessmentQuestion {
   id: string;
   domain: string;
+  domainBn?: string;
   question: string;
-  options: { text: string; points: number }[];
+  questionBn?: string;
+  options: { text: string; textBn?: string; points: number }[];
 }
 
 export interface SkillAssessmentResult {
