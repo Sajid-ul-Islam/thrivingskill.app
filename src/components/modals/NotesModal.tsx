@@ -19,6 +19,7 @@ import { useLearning } from '../../context/LearningContext';
 import { useFeedback } from '../../context/FeedbackContext';
 import { triggerHaptic } from '../../utils/haptics';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
+import { shape } from '../../theme/shapes';
 
 interface NotesModalProps {
   visible: boolean;
@@ -178,9 +179,12 @@ export const NotesModal: React.FC<NotesModalProps> = ({
               <TouchableOpacity
                 style={[styles.timestampChip, { backgroundColor: colors.primaryLight }]}
                 onPress={() => {
+                  triggerHaptic('light');
                   const stamp = formatSeconds(currentPositionSeconds);
                   setNewNoteText((prev) => (prev ? `[${stamp}] ${prev}` : `[${stamp}] `));
                 }}
+                accessibilityRole="button"
+                accessibilityLabel={`Stamp current playback time ${formatSeconds(currentPositionSeconds)}`}
               >
                 <Ionicons name="time" size={13} color={colors.primary} />
                 <Text style={[styles.timestampChipText, { color: colors.primary }]}>
@@ -212,6 +216,8 @@ export const NotesModal: React.FC<NotesModalProps> = ({
                 ]}
                 onPress={handleSaveNote}
                 disabled={!newNoteText.trim()}
+                accessibilityRole="button"
+                accessibilityLabel="Save study note"
               >
                 <Ionicons name="send" size={16} color={newNoteText.trim() ? colors.onPrimary : colors.textMuted} />
               </TouchableOpacity>
@@ -244,9 +250,12 @@ export const NotesModal: React.FC<NotesModalProps> = ({
                         style={[styles.timeTag, { backgroundColor: colors.primaryLight }]}
                         hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
                         onPress={() => {
+                          triggerHaptic('light');
                           const sec = parseTimestampToSeconds(note.timestamp);
                           onSeekTo?.(sec);
                         }}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Jump to timestamp ${note.timestamp}`}
                       >
                         <Ionicons name="play" size={10} color={colors.primary} />
                         <Text style={[styles.timeText, { color: colors.primary }]}>

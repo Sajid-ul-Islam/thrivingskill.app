@@ -1,12 +1,29 @@
+/**
+ * Thriving Skills Color Palette — Official Design Rule
+ *
+ * The color system is built to convey professionalism, trust, and action-driven learning.
+ *
+ * Primary Colors:
+ * • Deep Royal Blue (Primary Brand Color) — #102F53
+ *   Usage: App bar headers, primary buttons, major card backgrounds, main branding elements, and primary text headers.
+ * • Secondary / Accent Red — #E34234
+ *   Usage: Call-to-action (CTA) highlights, notification badges, active states, important alerts, and discount tags.
+ * • Pure White — #FFFFFF
+ *   Usage: Card backgrounds, container surfaces in dark modes, body text on dark headers, and negative space separation.
+ *
+ * Enforcement: Use these brand tokens exclusively in component code. Do not hardcode bare hex values,
+ * and do not treat other alternate brand hues as replacements for the three primary palette colors.
+ */
+
 export const lightColors = {
-  primary: '#102F53', // Thriving Skills Brand Navy
+  primary: '#102F53', // Deep Royal Blue (Primary Brand Color)
   primaryDark: '#0A1C33',
   primaryLight: '#E8EEF5',
   primaryGradientStart: '#102F53',
-  primaryGradientEnd: '#E34234', // Signature Accent Gradient
-  secondary: '#1D4476', // Navy Light
+  primaryGradientEnd: '#1D4476',
+  secondary: '#1D4476', // Deep Royal Blue Light
   secondaryLight: '#EFF6FF',
-  accent: '#E34234', // Brand Red / CTA
+  accent: '#E34234', // Secondary / Accent Red (CTA, badges, alerts, discounts)
   accentLight: '#FEE2E2',
   brandNavy: '#102F53',
   brandRed: '#E34234',
@@ -20,19 +37,19 @@ export const lightColors = {
   successLight: 'rgba(16, 185, 129, 0.16)',
   onSuccess: '#FFFFFF',
   background: '#F8FAFC',
-  surface: '#FFFFFF',
-  surfaceCard: '#FFFFFF',
+  surface: '#FFFFFF', // Pure White surface
+  surfaceCard: '#FFFFFF', // Pure White card
   surfaceSubtle: '#F1F5F9',
   surfaceElevated: '#FFFFFF',
   border: '#E2E8F0',
   borderSubtle: '#F1F5F9',
-  text: '#0F172A',
+  text: '#102F53', // Primary Text Headers in Deep Royal Blue
   textMuted: '#475569',
   textLight: '#64748B',
   textInverse: '#FFFFFF',
-  onPrimary: '#FFFFFF',
+  onPrimary: '#FFFFFF', // Pure White on Deep Royal Blue
   onSecondary: '#FFFFFF',
-  onAccent: '#FFFFFF',
+  onAccent: '#FFFFFF', // Pure White on Accent Red
   onDanger: '#FFFFFF',
   onGold: '#102F53',
   cardShadow: 'rgba(16, 47, 83, 0.08)',

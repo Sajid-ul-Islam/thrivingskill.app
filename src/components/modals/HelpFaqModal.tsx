@@ -246,7 +246,12 @@ export const HelpFaqModal: React.FC<HelpFaqModalProps> = ({ visible, onClose }) 
               onChangeText={setSearchQuery}
             />
             {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <TouchableOpacity
+                onPress={() => setSearchQuery('')}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel="Clear search"
+              >
                 <Ionicons name="close-circle" size={18} color={colors.textMuted} />
               </TouchableOpacity>
             )}
@@ -272,6 +277,9 @@ export const HelpFaqModal: React.FC<HelpFaqModalProps> = ({ visible, onClose }) 
                     },
                   ]}
                   onPress={() => setSelectedCategory(cat.id)}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: active }}
+                  accessibilityLabel={`Category ${cat.label}`}
                 >
                   <Ionicons
                     name={cat.icon as any}
@@ -323,6 +331,9 @@ export const HelpFaqModal: React.FC<HelpFaqModalProps> = ({ visible, onClose }) 
                     style={styles.faqHeader}
                     onPress={() => toggleExpand(faq.id)}
                     activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded: isExpanded }}
+                    accessibilityLabel={isBangla ? faq.banglaQuestion : faq.question}
                   >
                     <Text style={[styles.faqQuestion, { color: colors.text }]}>
                       {isBangla ? faq.banglaQuestion : faq.question}

@@ -19,13 +19,60 @@ for (const rel of files) {
   const src = fs.readFileSync(path.join(ROOT, rel), 'utf8');
   const findings = [];
 
-  // Check TouchableOpacity / Pressable without accessibilityRole or accessibilityLabel
-  const touchables = [...src.matchAll(/<(TouchableOpacity|Pressable|SpringPressable)\b([\s\S]*?)>/g)];
+  // Check TouchableOpacity / Pressable / SpringPressable without accessibilityRole or accessibilityLabel
   let missingA11y = 0;
-  for (const m of touchables) {
-    if (!m[2].includes('accessibilityRole') && !m[2].includes('accessibilityLabel')) missingA11y++;
+  let totalTouchables = 0;
+  const lines = src.split('\n');
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const match = line.match(/<(TouchableOpacity|Pressable|SpringPressable)\b/);
+    if (match) {
+      totalTouchables++;
+      let tagContent = '';
+      let depth = 0;
+      let inString = false;
+      let stringChar = '';
+      let finished = false;
+
+      for (let j = i; j < lines.length; j++) {
+        const curLine = lines[j];
+        for (let k = 0; k < curLine.length; k++) {
+          const ch = curLine[k];
+          const prev = k > 0 ? curLine[k - 1] : '';
+
+          if (inString) {
+            if (ch === stringChar && prev !== '\\') {
+              inString = false;
+            }
+          } else {
+            if (ch === '"' || ch === "'" || ch === '`') {
+              inString = true;
+              stringChar = ch;
+            } else if (ch === '{') {
+              depth++;
+            } else if (ch === '}') {
+              depth--;
+            } else if (ch === '>' && depth === 0 && prev !== '=') {
+              tagContent += curLine.substring(0, k + 1);
+              finished = true;
+              break;
+            }
+          }
+        }
+        if (finished) break;
+        tagContent += curLine + '\n';
+      }
+
+      const hasRole = tagContent.includes('accessibilityRole');
+      const hasLabel = tagContent.includes('accessibilityLabel');
+      if (!hasRole && !hasLabel) {
+        missingA11y++;
+      }
+    }
   }
-  if (missingA11y > 0) findings.push(`a11y_missing=${missingA11y}/${touchables.length}`);
+
+  if (missingA11y > 0) findings.push(`a11y_missing=${missingA11y}/${totalTouchables}`);
 
   // Check Feedback (useFeedback / triggerHaptic / SpringPressable)
   if (!src.includes('useFeedback') && !src.includes('triggerHaptic') && !src.includes('SpringPressable')) {
@@ -44,7 +91,7 @@ for (const rel of files) {
   const closeMatch = src.match(/(closeBtn|backBtn|shareBtn|markAllBtn|headerBtn|controlBtn)\s*:\s*\{([^}]*)\}/g);
   if (closeMatch) {
     for (const block of closeMatch) {
-      const has44 = /minWidth\s*:\s*(4[4-9]|[5-9]\d)|width\s*:\s*(4[4-9]|[5-9]\d)|minHeight\s*:\s*(4[4-9]|[5-9]\d)|height\s*:\s*(4[4-9]|[5-9]\d)/.test(block);
+      const has44 = /minWidth\s*:\s*(4[4-9]|[5-9]\d|MIN_TOUCH_TARGET)|width\s*:\s*(4[4-9]|[5-9]\d|MIN_TOUCH_TARGET)|minHeight\s*:\s*(4[4-9]|[5-9]\d|MIN_TOUCH_TARGET)|height\s*:\s*(4[4-9]|[5-9]\d|MIN_TOUCH_TARGET)/.test(block);
       if (!has44 && !src.includes('TOUCH_HIT_SLOP') && !src.includes('hitSlop')) {
         findings.push(`small_btn_no_hitslop: ${block.split(':')[0].trim()}`);
       }

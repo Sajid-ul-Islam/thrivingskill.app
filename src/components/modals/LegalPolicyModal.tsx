@@ -104,6 +104,9 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
                   isActive && { borderBottomColor: colors.primary, borderBottomWidth: 2.5 },
                 ]}
                 onPress={() => setActiveTab(tab.key)}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: isActive }}
+                accessibilityLabel={tab.label}
               >
                 <Ionicons
                   name={tab.icon as any}
@@ -161,6 +164,8 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
               <TouchableOpacity
                 style={[styles.webLinkBtn, { borderColor: colors.primary }]}
                 onPress={() => handleOpenWebLegal('https://thrivingskill.com/terms-and-conditions/')}
+                accessibilityRole="button"
+                accessibilityLabel="View live terms and conditions on website"
               >
                 <Ionicons name="globe-outline" size={16} color={colors.primary} />
                 <Text style={[styles.webLinkText, { color: colors.primary }]}>
@@ -184,6 +189,9 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
                       : { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
                   ]}
                   onPress={() => setPrivacyLang('en')}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: privacyLang === 'en' }}
+                  accessibilityLabel="Switch to English privacy policy"
                 >
                   <Text
                     style={[
@@ -203,6 +211,9 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
                       : { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
                   ]}
                   onPress={() => setPrivacyLang('bn')}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: privacyLang === 'bn' }}
+                  accessibilityLabel="Switch to Bangla privacy policy"
                 >
                   <Text
                     style={[
@@ -252,6 +263,8 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
                   <TouchableOpacity
                     style={[styles.webLinkBtn, { borderColor: colors.danger, marginBottom: 12 }]}
                     onPress={() => handleOpenWebLegal('https://thrivingskill.com/delete-account/')}
+                    accessibilityRole="button"
+                    accessibilityLabel="Submit web account deletion request"
                   >
                     <Ionicons name="trash-bin-outline" size={16} color={colors.danger} />
                     <Text style={[styles.webLinkText, { color: colors.danger }]}>
@@ -263,6 +276,8 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
                   <TouchableOpacity
                     style={[styles.webLinkBtn, { borderColor: colors.primary }]}
                     onPress={() => handleOpenWebLegal('https://thrivingskill.com/privacy-policy/')}
+                    accessibilityRole="button"
+                    accessibilityLabel="View live privacy policy on website"
                   >
                     <Ionicons name="globe-outline" size={16} color={colors.primary} />
                     <Text style={[styles.webLinkText, { color: colors.primary }]}>
@@ -298,6 +313,8 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
                   <TouchableOpacity
                     style={[styles.webLinkBtn, { borderColor: colors.primary }]}
                     onPress={() => handleOpenWebLegal('https://thrivingskill.com/privacy-policy-bangla/')}
+                    accessibilityRole="button"
+                    accessibilityLabel="ওয়েবসাইটে প্রাইভেসি পলিসি দেখুন"
                   >
                     <Ionicons name="globe-outline" size={16} color={colors.primary} />
                     <Text style={[styles.webLinkText, { color: colors.primary }]}>

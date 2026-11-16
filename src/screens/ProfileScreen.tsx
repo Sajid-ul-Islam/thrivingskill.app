@@ -695,6 +695,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   onPress={() => onNavigateTab('MyLearning')}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   style={{ minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' }}
+                  accessibilityRole="button"
+                  accessibilityLabel={isBangla ? 'আমার লার্নিং হাব' : 'My Learning Hub'}
                 >
                   <Text style={[styles.seeAllText, { color: colors.primary }]}>
                     {isBangla ? 'আমার লার্নিং হাব →' : 'My Learning Hub →'}
@@ -748,6 +750,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   <TouchableOpacity
                     style={[styles.emptyActionBtn, { backgroundColor: colors.primary }]}
                     onPress={() => onNavigateTab('Courses')}
+                    accessibilityRole="button"
+                    accessibilityLabel={isBangla ? 'কোর্স ক্যাটালগ দেখুন' : 'Browse Catalog'}
                   >
                     <Text style={[styles.emptyActionBtnText, { color: colors.onPrimary }]}>
                       {isBangla ? 'কোর্স দেখুন' : 'Browse Catalog'}
@@ -899,6 +903,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                                 onNavigateToCourse?.(course.id);
                               }
                             }}
+                            accessibilityRole="button"
+                            accessibilityLabel={isBangla ? 'পুনরায় শুরু করুন' : 'Retake Course'}
                           >
                             <Ionicons name="refresh" size={13} color="#FFFFFF" />
                             <Text style={[styles.continueBtnText, { color: '#FFFFFF' }]}>
@@ -915,6 +921,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                                 onNavigateToCourse?.(course.id);
                               }
                             }}
+                            accessibilityRole="button"
+                            accessibilityLabel={isBangla ? 'চালিয়ে যান' : 'Continue Learning'}
                           >
                             <Ionicons name="play" size={13} color={colors.onPrimary} />
                             <Text style={[styles.continueBtnText, { color: colors.onPrimary }]}>
@@ -948,6 +956,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <TouchableOpacity
                 style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
                 onPress={() => Linking.openURL(Env.WP_ADMIN_URL).catch(() => {})}
+                accessibilityRole="button"
+                accessibilityLabel="WordPress Admin Dashboard"
               >
                 <View style={styles.settingLeft}>
                   <Ionicons name="speedometer-outline" size={20} color="#EC4899" />
@@ -966,6 +976,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <TouchableOpacity
                 style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
                 onPress={() => Linking.openURL(`${Env.SITE_URL}/wp-admin/edit.php?post_type=lp_course`).catch(() => {})}
+                accessibilityRole="button"
+                accessibilityLabel="Courses and Lessons Management"
               >
                 <View style={styles.settingLeft}>
                   <Ionicons name="book-outline" size={20} color="#3B82F6" />
@@ -984,6 +996,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <TouchableOpacity
                 style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
                 onPress={() => Linking.openURL(`${Env.SITE_URL}/wp-admin/users.php`).catch(() => {})}
+                accessibilityRole="button"
+                accessibilityLabel="Students and Users Management"
               >
                 <View style={styles.settingLeft}>
                   <Ionicons name="people-outline" size={20} color="#10B981" />
@@ -1002,6 +1016,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <TouchableOpacity
                 style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
                 onPress={() => Linking.openURL(`${Env.SITE_URL}/wp-admin/edit.php?post_type=lp_order`).catch(() => {})}
+                accessibilityRole="button"
+                accessibilityLabel="Orders and Enrollment Management"
               >
                 <View style={styles.settingLeft}>
                   <Ionicons name="card-outline" size={20} color="#F59E0B" />
@@ -1020,6 +1036,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <TouchableOpacity
                 style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
                 onPress={() => Linking.openURL(`${Env.SITE_URL}/wp-admin/admin.php?page=learnpress-statistics`).catch(() => {})}
+                accessibilityRole="button"
+                accessibilityLabel="Reports and Analytics"
               >
                 <View style={styles.settingLeft}>
                   <Ionicons name="analytics-outline" size={20} color="#8B5CF6" />
@@ -1079,6 +1097,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <TouchableOpacity
                 style={[styles.managePlanBtn, { backgroundColor: colors.primary }]}
                 onPress={onOpenSubscription}
+                accessibilityRole="button"
+                accessibilityLabel={isBangla ? 'মেম্বারশিপ তথ্য' : 'Membership Details'}
               >
                 <Ionicons name="shield-checkmark-outline" size={16} color={colors.onPrimary} />
                 <Text style={[styles.managePlanText, { color: colors.onPrimary }]}>
@@ -1089,6 +1109,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <TouchableOpacity
                 style={[styles.invoiceBtn, { borderColor: colors.border, backgroundColor: colors.surfaceSubtle }]}
                 onPress={() => setPaymentHistoryModalVisible(true)}
+                accessibilityRole="button"
+                accessibilityLabel={isBangla ? 'অর্ডার রেকর্ড' : 'Orders'}
               >
                 <Ionicons name="library-outline" size={16} color={colors.text} />
                 <Text style={[styles.invoiceBtnText, { color: colors.text }]}>
@@ -1107,6 +1129,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               { backgroundColor: colors.surfaceCard, borderColor: colors.border },
             ]}
             onPress={() => onNavigateTab('MyLearning')}
+            accessibilityRole="button"
+            accessibilityLabel={`Enrolled courses: ${enrolledCount}`}
           >
             <Text style={[styles.statVal, { color: colors.primary }]}>{enrolledCount}</Text>
             <Text style={[styles.statLbl, { color: colors.textMuted }]}>Enrolled</Text>
@@ -1118,6 +1142,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               { backgroundColor: colors.surfaceCard, borderColor: colors.border },
             ]}
             onPress={() => onNavigateTab('MyLearning')}
+            accessibilityRole="button"
+            accessibilityLabel={`Completed courses: ${completedCount}`}
           >
             <Text style={[styles.statVal, { color: colors.secondary }]}>{completedCount}</Text>
             <Text style={[styles.statLbl, { color: colors.textMuted }]}>Completed</Text>
@@ -1129,6 +1155,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               { backgroundColor: colors.surfaceCard, borderColor: colors.border },
             ]}
             onPress={() => onNavigateTab('MyLearning')}
+            accessibilityRole="button"
+            accessibilityLabel={`Earned certificates: ${certificates.length}`}
           >
             <Text style={[styles.statVal, { color: colors.accent }]}>{certificates.length}</Text>
             <Text style={[styles.statLbl, { color: colors.textMuted }]}>Certificates</Text>
@@ -2292,6 +2320,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   <TouchableOpacity
                     style={[styles.secondaryActionBtn, { borderColor: colors.primary, backgroundColor: colors.primaryLight }]}
                     onPress={() => Linking.openURL('https://gravatar.com').catch(() => {})}
+                    accessibilityRole="button"
+                    accessibilityLabel="Update avatar on Gravatar"
                   >
                     <Ionicons name="image-outline" size={16} color={colors.primary} />
                     <Text style={[styles.secondaryActionText, { color: colors.primary }]}>
@@ -2533,7 +2563,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   {isBangla ? 'আপনার অ্যাকাউন্টের নিরাপত্তা নিশ্চিত করুন' : 'Update your account credentials safely'}
                 </Text>
               </View>
-              <TouchableOpacity onPress={() => setChangePasswordModalVisible(false)} style={styles.modalCloseBtn}>
+              <TouchableOpacity
+                onPress={() => setChangePasswordModalVisible(false)}
+                style={styles.modalCloseBtn}
+                accessibilityRole="button"
+                accessibilityLabel={isBangla ? 'পাসওয়ার্ড পরিবর্তন উইন্ডো বন্ধ করুন' : 'Close change password modal'}
+              >
                 <Ionicons name="close" size={20} color={colors.text} />
               </TouchableOpacity>
             </View>
@@ -2678,6 +2713,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <TouchableOpacity
                 style={[styles.cancelBtn, { borderColor: colors.border }]}
                 onPress={() => setChangePasswordModalVisible(false)}
+                accessibilityRole="button"
+                accessibilityLabel={isBangla ? 'বাতিল' : 'Cancel'}
               >
                 <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>
                   {isBangla ? 'বাতিল' : 'Cancel'}
@@ -2687,6 +2724,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 style={[styles.saveBtn, { backgroundColor: colors.primary, opacity: isChangingPass ? 0.7 : 1 }]}
                 onPress={handleChangePassword}
                 disabled={isChangingPass}
+                accessibilityRole="button"
+                accessibilityLabel={isBangla ? 'পাসওয়ার্ড আপডেট' : 'Update Password'}
               >
                 <Ionicons name="shield-checkmark-outline" size={16} color={colors.onPrimary} />
                 <Text style={[styles.saveBtnText, { color: colors.onPrimary }]}>
@@ -2719,7 +2758,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   {isBangla ? 'আপনার অ্যাকাউন্টের সিঙ্ক করা LearnPress ও WooCommerce অর্ডার' : 'LearnPress & WooCommerce orders synced with your account'}
                 </Text>
               </View>
-              <TouchableOpacity onPress={() => setPaymentHistoryModalVisible(false)} style={styles.modalCloseBtn}>
+              <TouchableOpacity
+                onPress={() => setPaymentHistoryModalVisible(false)}
+                style={styles.modalCloseBtn}
+                accessibilityRole="button"
+                accessibilityLabel={isBangla ? 'অর্ডার রেকর্ড উইন্ডো বন্ধ করুন' : 'Close orders modal'}
+              >
                 <Ionicons name="close" size={20} color={colors.text} />
               </TouchableOpacity>
             </View>
@@ -2809,6 +2853,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 onPress={() => !isDeletingAccount && setDeleteAccountModalVisible(false)}
                 style={styles.modalCloseBtn}
                 disabled={isDeletingAccount}
+                accessibilityRole="button"
+                accessibilityLabel="Close account deletion modal"
               >
                 <Ionicons name="close" size={20} color={colors.text} />
               </TouchableOpacity>
@@ -2854,6 +2900,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 style={[styles.cancelBtn, { borderColor: colors.border }]}
                 onPress={() => setDeleteAccountModalVisible(false)}
                 disabled={isDeletingAccount}
+                accessibilityRole="button"
+                accessibilityLabel={isBangla ? 'বাতিল' : 'Cancel'}
               >
                 <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>
                   {isBangla ? 'বাতিল' : 'Cancel'}
@@ -2863,6 +2911,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 style={[styles.saveBtn, { backgroundColor: colors.danger, opacity: isDeletingAccount ? 0.7 : 1 }]}
                 onPress={handleConfirmDeleteAccount}
                 disabled={isDeletingAccount}
+                accessibilityRole="button"
+                accessibilityLabel={isBangla ? 'স্থায়ীভাবে মুছুন' : 'Permanently Delete'}
               >
                 {isDeletingAccount ? (
                   <ActivityIndicator size="small" color={colors.onDanger} />
@@ -2885,6 +2935,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               style={{ marginTop: 14, alignItems: 'center' }}
               onPress={() => Linking.openURL(Env.ACCOUNT_DELETION_URL).catch(() => {})}
               disabled={isDeletingAccount}
+              accessibilityRole="button"
+              accessibilityLabel="Open web data deletion request page"
             >
               <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '700' }}>
                 {t('dataDeletionRequestWeb')} →

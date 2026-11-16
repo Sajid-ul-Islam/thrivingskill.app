@@ -275,8 +275,13 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 styles.resultItem,
                 { backgroundColor: colors.surfaceCard, borderColor: colors.border },
               ]}
-              onPress={() => handleSelectItem(item)}
+              onPress={() => {
+                triggerHaptic('light');
+                handleSelectItem(item);
+              }}
               activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={`${item.title}, ${item.type}`}
             >
               {item.thumbnail ? (
                 <View style={styles.thumbWrapper}>

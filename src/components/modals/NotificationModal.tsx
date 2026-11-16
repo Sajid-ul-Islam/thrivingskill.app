@@ -168,6 +168,8 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                     ]}
                     onPress={() => handleNotificationPress(item)}
                     activeOpacity={0.8}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${item.title}, ${item.isRead ? 'read' : 'unread'}`}
                   >
                     <View style={[styles.iconBg, { backgroundColor: icon.bg }]}>
                       <Ionicons name={icon.name as any} size={18} color={icon.color} />

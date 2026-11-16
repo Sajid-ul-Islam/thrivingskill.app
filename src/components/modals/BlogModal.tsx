@@ -269,7 +269,12 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
                   onChangeText={setSearchQuery}
                 />
                 {searchQuery.length > 0 && (
-                  <TouchableOpacity onPress={() => setSearchQuery('')}>
+                  <TouchableOpacity
+                    onPress={() => setSearchQuery('')}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Clear search"
+                  >
                     <Ionicons name="close-circle" size={18} color={colors.textMuted} />
                   </TouchableOpacity>
                 )}
@@ -294,6 +299,9 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
                         },
                       ]}
                       onPress={() => setSelectedCategory(cat.id)}
+                      accessibilityRole="tab"
+                      accessibilityState={{ selected: active }}
+                      accessibilityLabel={`Category ${cat.label}`}
                     >
                       <Text
                         style={[
@@ -361,6 +369,8 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
               <TouchableOpacity
                 style={[styles.webLinkBtn, { borderColor: colors.primary }]}
                 onPress={() => Linking.openURL('https://thrivingskill.com/blog').catch(() => {})}
+                accessibilityRole="button"
+                accessibilityLabel="Read full blog on website"
               >
                 <Ionicons name="open-outline" size={16} color={colors.primary} />
                 <Text style={[styles.webLinkText, { color: colors.primary }]}>
@@ -394,6 +404,8 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
                   ]}
                   onPress={() => setActiveArticle(article)}
                   activeOpacity={0.85}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Read article: ${article.title}`}
                 >
                   <Image source={{ uri: article.imageUrl }} style={styles.cardThumb} />
                   <View style={styles.cardContent}>

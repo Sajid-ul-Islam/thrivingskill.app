@@ -249,6 +249,8 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
           style={[styles.quickYtFallback, { backgroundColor: isDark ? '#27272A' : '#FEF2F2' }]}
           onPress={handleOpenYouTube}
           activeOpacity={0.8}
+          accessibilityRole="button"
+          accessibilityLabel="Open video in external YouTube app"
         >
           <Ionicons name="logo-youtube" size={15} color="#FF0000" />
           <Text style={[styles.quickYtFallbackText, { color: isDark ? '#FCA5A5' : '#DC2626' }]}>
@@ -302,6 +304,8 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
                     : { backgroundColor: colors.background, borderColor: colors.border },
                 ]}
                 onPress={() => toggleSaveVideo(currentVideo.id)}
+                accessibilityRole="button"
+                accessibilityLabel={saved ? 'Remove from watch later' : 'Save to watch later'}
               >
                 <Ionicons
                   name={saved ? 'bookmark' : 'bookmark-outline'}
@@ -322,13 +326,20 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
               <TouchableOpacity
                 style={[styles.shareBtn, { borderColor: colors.border, backgroundColor: colors.background }]}
                 onPress={handleShare}
+                accessibilityRole="button"
+                accessibilityLabel="Share video"
               >
                 <Ionicons name="share-social-outline" size={16} color={colors.text} />
                 <Text style={[styles.shareBtnText, { color: colors.text }]}>Share</Text>
               </TouchableOpacity>
 
               {/* Open in YouTube */}
-              <TouchableOpacity style={styles.openYouTubeBtn} onPress={handleOpenYouTube}>
+              <TouchableOpacity
+                style={styles.openYouTubeBtn}
+                onPress={handleOpenYouTube}
+                accessibilityRole="button"
+                accessibilityLabel="Open in YouTube"
+              >
                 <Ionicons name="logo-youtube" size={16} color="#FFFFFF" />
                 <Text style={styles.openYouTubeText}>YouTube</Text>
               </TouchableOpacity>
@@ -409,7 +420,12 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
                 </View>
               </View>
 
-              <TouchableOpacity style={styles.viewCourseBtn} onPress={handleCoursePress}>
+              <TouchableOpacity
+                style={styles.viewCourseBtn}
+                onPress={handleCoursePress}
+                accessibilityRole="button"
+                accessibilityLabel="Enroll in full course and syllabus"
+              >
                 <Text style={styles.viewCourseBtnText}>Enroll in Full Course & Syllabus</Text>
                 <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
               </TouchableOpacity>
@@ -420,6 +436,8 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
           <TouchableOpacity
             style={[styles.channelCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
             onPress={handleOpenChannel}
+            accessibilityRole="button"
+            accessibilityLabel={`Visit ${YOUTUBE_CHANNEL.name} channel`}
           >
             <View style={styles.channelAvatar}>
               <Ionicons name="logo-youtube" size={24} color="#FF0000" />
@@ -449,6 +467,8 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
                   style={[styles.relatedCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
                   onPress={() => handleSelectRelated(rel)}
                   activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Play masterclass: ${rel.title}`}
                 >
                   <View style={styles.relatedThumbContainer}>
                     <Image source={{ uri: rel.thumbnail }} style={styles.relatedThumb} />

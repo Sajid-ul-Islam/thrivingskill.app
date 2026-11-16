@@ -924,31 +924,68 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               {course.instructor.name} • {currentItem?.moduleTitle}
             </Text>
             <View style={styles.commuteControlsRow}>
-              <TouchableOpacity style={styles.commuteSkipBtn} onPress={() => handleRewind(15)}>
+              <TouchableOpacity
+                style={styles.commuteSkipBtn}
+                onPress={() => {
+                  triggerHaptic('light');
+                  handleRewind(15);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Rewind 15 seconds"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
                 <Ionicons name="play-back" size={20} color="#FFFFFF" />
                 <Text style={styles.skipSecText}>15s</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={handlePrevLesson}
+                onPress={() => {
+                  triggerHaptic('light');
+                  handlePrevLesson();
+                }}
                 disabled={currentLessonIndex === 0}
                 style={[styles.commuteSkipBtn, currentLessonIndex === 0 && { opacity: 0.4 }]}
+                accessibilityRole="button"
+                accessibilityLabel="Previous lesson"
+                accessibilityState={{ disabled: currentLessonIndex === 0 }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <Ionicons name="play-skip-back" size={22} color="#FFFFFF" />
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.commuteMainPlayBtn, { backgroundColor: '#FFB606' }]}
-                onPress={handleTogglePlay}
+                onPress={() => {
+                  triggerHaptic('light');
+                  handleTogglePlay();
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={isPlaying ? 'Pause audio playback' : 'Play audio playback'}
               >
                 <Ionicons name={isPlaying ? 'pause' : 'play'} size={26} color="#102F53" />
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={handleNextLesson}
+                onPress={() => {
+                  triggerHaptic('light');
+                  handleNextLesson();
+                }}
                 disabled={currentLessonIndex === allLessons.length - 1}
                 style={[styles.commuteSkipBtn, currentLessonIndex === allLessons.length - 1 && { opacity: 0.4 }]}
+                accessibilityRole="button"
+                accessibilityLabel="Next lesson"
+                accessibilityState={{ disabled: currentLessonIndex === allLessons.length - 1 }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <Ionicons name="play-skip-forward" size={22} color="#FFFFFF" />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.commuteSkipBtn} onPress={() => handleForward(30)}>
+              <TouchableOpacity
+                style={styles.commuteSkipBtn}
+                onPress={() => {
+                  triggerHaptic('light');
+                  handleForward(30);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Fast forward 30 seconds"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
                 <Ionicons name="play-forward" size={20} color="#FFFFFF" />
                 <Text style={styles.skipSecText}>30s</Text>
               </TouchableOpacity>
@@ -961,7 +998,16 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                 <Ionicons name="radio" size={12} color="#10B981" />
                 <Text style={styles.bgPlaybackText}>Background Playback Active</Text>
               </View>
-              <TouchableOpacity style={styles.speedPill} onPress={cycleSpeed}>
+              <TouchableOpacity
+                style={styles.speedPill}
+                onPress={() => {
+                  triggerHaptic('selection');
+                  cycleSpeed();
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`Playback speed ${playbackSpeed}`}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
                 <Text style={styles.speedPillText}>{playbackSpeed}</Text>
               </TouchableOpacity>
             </View>
@@ -986,7 +1032,12 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                 gap: 8,
                 marginTop: 8,
               }}
-              onPress={() => Linking.openURL(zoomMeetingUrl).catch(() => {})}
+              onPress={() => {
+                triggerHaptic('light');
+                Linking.openURL(zoomMeetingUrl).catch(() => {});
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={isBangla ? 'জুমে ক্লাসে যোগ দিন' : 'Launch Live Zoom Session'}
             >
               <Ionicons name="open-outline" size={16} color="#FFFFFF" />
               <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 13 }}>
@@ -1049,7 +1100,12 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                     {resolvedVideoUrl && (
                       <TouchableOpacity
                         style={styles.videoFallbackBtn}
-                        onPress={() => Linking.openURL(resolvedVideoUrl).catch(() => {})}
+                        onPress={() => {
+                          triggerHaptic('light');
+                          Linking.openURL(resolvedVideoUrl).catch(() => {});
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel={isBangla ? 'ব্রাউজারে ভিডিও চালু করুন' : 'Watch in Browser / App'}
                       >
                         <Ionicons name="open-outline" size={14} color="#102F53" />
                         <Text style={styles.videoFallbackBtnText}>
@@ -1121,7 +1177,12 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                   <View style={styles.autoplayActionsRow}>
                     <TouchableOpacity
                       style={[styles.autoplayCancelBtn, { borderColor: colors.border }]}
-                      onPress={() => setAutoplayCountdown(null)}
+                      onPress={() => {
+                        triggerHaptic('light');
+                        setAutoplayCountdown(null);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={isBangla ? 'স্বয়ংক্রিয় প্লেব্যাক বাতিল' : 'Cancel auto-play'}
                     >
                       <Text style={[styles.autoplayCancelText, { color: colors.textMuted }]}>
                         {isBangla ? 'বাতিল' : 'Cancel'}
@@ -1130,9 +1191,12 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                     <TouchableOpacity
                       style={styles.autoplayPlayNowBtn}
                       onPress={() => {
+                        triggerHaptic('light');
                         setAutoplayCountdown(null);
                         handleNextLesson();
                       }}
+                      accessibilityRole="button"
+                      accessibilityLabel={isBangla ? 'পরবর্তী লেসন এখনই চালু করুন' : 'Play next lesson now'}
                     >
                       <Ionicons name="play" size={14} color="#FFFFFF" />
                       <Text style={styles.autoplayPlayNowText}>
@@ -1336,6 +1400,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                         ]}
                         onPress={() => {
                           if (itemAccessible) {
+                            triggerHaptic('light');
                             onSelectLesson(courseId, item.lesson.id);
                           } else {
                             Alert.alert(
@@ -1347,6 +1412,9 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                           }
                         }}
                         activeOpacity={0.7}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${item.lesson.title}, ${item.lesson.duration || ''}, ${isCompleted ? 'completed' : isSelected ? 'playing' : itemAccessible ? 'ready' : 'locked'}`}
+                        accessibilityState={{ selected: isSelected, disabled: !itemAccessible }}
                       >
                         <View
                           style={[
@@ -1462,7 +1530,10 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                     >
                       <View style={styles.noteTopRow}>
                         <TouchableOpacity
-                          style={[styles.noteTimestampPill, { backgroundColor: '#FFB60620' }]}
+                          style={[
+                            styles.noteTimestampPill,
+                            { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.18)' : '#FEF3C7' },
+                          ]}
                           onPress={() => {
                             triggerHaptic('light');
                             const sec = n.timestamp.includes(':')
@@ -1471,9 +1542,19 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                             handleSeekTo(sec);
                             showToast({ message: `Jumped to ${n.timestamp}`, type: 'info' });
                           }}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Jump to video timestamp ${n.timestamp}`}
+                          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                         >
-                          <Ionicons name="time-outline" size={12} color="#102F53" />
-                          <Text style={styles.noteTimestampText}>{n.timestamp}</Text>
+                          <Ionicons name="time-outline" size={12} color={isDark ? '#FBBF24' : '#102F53'} />
+                          <Text
+                            style={[
+                              styles.noteTimestampText,
+                              { color: isDark ? '#FBBF24' : '#102F53' },
+                            ]}
+                          >
+                            {n.timestamp}
+                          </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                           onPress={() => {

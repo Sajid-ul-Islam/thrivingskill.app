@@ -2,6 +2,22 @@
 
 All screens, modals, cards, navigation flows, and interactive components in `src/` MUST satisfy the **Core UI Design Principles**, **Peter Morville's UX Honeycomb**, and **Key Psychological Laws of UI/UX**:
 
+## Color Palette & Brand Tokens (Mandatory)
+All visual interfaces, buttons, badges, and progress gauges MUST align with the official Thriving Skills color palette:
+
+### Primary Colors
+- **Deep Royal Blue (Primary Brand Color)** — HEX `#102F53`
+  - **Usage:** App bar headers, primary buttons, major card backgrounds, main branding elements, and primary text headers.
+- **Secondary / Accent Red** — HEX `#E34234`
+  - **Usage:** Call-to-action (CTA) highlights, notification badges, active states, important alerts, and discount tags.
+- **Pure White** — HEX `#FFFFFF`
+  - **Usage:** Card backgrounds, container surfaces in dark modes, body text on dark headers, and negative space separation.
+
+### Enforcement
+- Use brand tokens exclusively from `src/theme/colors.ts` (`primary`, `accent`, `surface`, `surfaceCard`, `onPrimary`, `onAccent`, etc.) and never hardcode bare hex values such as `#102F53` / `#E34234` / `#FFFFFF` in component code.
+- The brand tokens are the canonical source for these three palette colors; do not re-introduce older alternate brand hues (for example `brandGold`, `danger`, `success`) as replacements for the three primary palette colors.
+- Both light and dark themes MUST preserve Deep Royal Blue, Accent Red, and Pure White as the brand identity through equivalent token mappings, not by changing the primary palette owner in dark mode.
+
 ## 1. Psychological Laws (Mandatory Enforcements)
 - **Miller's Law (5–7 Item Chunking)**: Never place more than 7 interactive rows inside a single unchunked `cardGroup`, tab strip, or form step. Split dense lists (such as Profile settings) into labeled Gestalt sections of 3–5 items each.
 - **Hick's Law (Minimal Choice Overhead)**: Keep bottom navigation to 3–5 core destinations, keep filter/category strips focused, and highlight one clear primary CTA per view or modal footer.

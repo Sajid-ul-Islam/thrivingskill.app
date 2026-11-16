@@ -17,6 +17,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { triggerHaptic } from '../../utils/haptics';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
+import { shape } from '../../theme/shapes';
 
 interface MandatoryReviewModalProps {
   visible: boolean;
@@ -236,7 +237,12 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
 
             {/* Dismiss for now */}
             {onDismissLater && (
-              <TouchableOpacity style={styles.laterButton} onPress={handleDismiss}>
+              <TouchableOpacity
+                style={styles.laterButton}
+                onPress={handleDismiss}
+                accessibilityRole="button"
+                accessibilityLabel={isBangla ? 'পরে রিভিউ দেব' : 'Review later'}
+              >
                 <Text style={[styles.laterButtonText, { color: colors.textMuted }]}>
                   {isBangla ? 'পরে রিভিউ দেব (সার্টিফিকেট লক থাকবে)' : 'I will review later (Keep certificate locked)'}
                 </Text>

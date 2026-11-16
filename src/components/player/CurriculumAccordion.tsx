@@ -4,6 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { CourseModule, Lesson } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { useLearning } from '../../context/LearningContext';
+import { triggerHaptic } from '../../utils/haptics';
+import { shape } from '../../theme/shapes';
+import { typography } from '../../theme/typography';
 
 interface CurriculumAccordionProps {
   courseId: string;
@@ -59,8 +62,14 @@ export const CurriculumAccordion: React.FC<CurriculumAccordionProps> = ({
           >
             <TouchableOpacity
               style={styles.moduleHeader}
-              onPress={() => toggleModule(mod.id)}
+              onPress={() => {
+                triggerHaptic('light');
+                toggleModule(mod.id);
+              }}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={`${mod.title}, ${mod.lessons.length} lessons, ${moduleCompletedCount} completed, ${isExpanded ? 'expanded' : 'collapsed'}`}
+              accessibilityState={{ expanded: isExpanded }}
             >
               <View style={styles.moduleHeaderLeft}>
                 <View
@@ -116,11 +125,15 @@ export const CurriculumAccordion: React.FC<CurriculumAccordionProps> = ({
                       ]}
                       onPress={() => {
                         if (isAccessible) {
+                          triggerHaptic('light');
                           onSelectLesson(lesson);
                         }
                       }}
                       disabled={!isAccessible}
                       activeOpacity={0.7}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${lesson.title}, ${lesson.duration || ''}, ${isCompleted ? 'completed' : isActive ? 'current' : isAccessible ? 'available' : 'locked'}`}
+                      accessibilityState={{ selected: isActive, disabled: !isAccessible }}
                     >
                       <View style={styles.lessonLeft}>
                         <View
@@ -232,14 +245,14 @@ const styles = StyleSheet.create({
   moduleNumberBadge: {
     width: 28,
     height: 28,
-    borderRadius: 8,
+    borderRadius: shape.small,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
     flexShrink: 0,
   },
   moduleNumberText: {
-    fontSize: 13,
+    ...typography.caption,
     fontWeight: '700',
   },
   moduleTitleCol: {
@@ -247,12 +260,12 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   moduleTitle: {
-    fontSize: 14,
+    ...typography.h4,
     fontWeight: '700',
     lineHeight: 18,
   },
   moduleMeta: {
-    fontSize: 11,
+    ...typography.caption,
     marginTop: 2,
   },
   lessonsList: {
@@ -276,7 +289,7 @@ const styles = StyleSheet.create({
   lessonStatusIcon: {
     width: 26,
     height: 26,
-    borderRadius: 13,
+    borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
@@ -288,7 +301,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   lessonTitle: {
-    fontSize: 13,
+    ...typography.bodyMedium,
     marginBottom: 2,
   },
   lessonDetailsRow: {
@@ -297,7 +310,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   lessonDuration: {
-    fontSize: 11,
+    ...typography.caption,
   },
   quizTag: {
     flexDirection: 'row',
@@ -306,17 +319,17 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   quizTagText: {
-    fontSize: 11,
+    ...typography.caption,
     fontWeight: '600',
   },
   previewBadge: {
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 6,
+    borderRadius: shape.extraSmall,
     flexShrink: 0,
   },
   previewText: {
-    fontSize: 11,
+    ...typography.caption,
     fontWeight: '700',
   },
 });

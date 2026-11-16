@@ -78,7 +78,13 @@ export const DownloadQualityModal: React.FC<DownloadQualityModalProps> = ({
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
       <View style={styles.backdrop}>
-        <TouchableOpacity style={styles.backdropTouch} activeOpacity={1} onPress={onClose} />
+        <TouchableOpacity
+          style={styles.backdropTouch}
+          activeOpacity={1}
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss quality modal"
+        />
         <View
           style={[
             styles.sheetContainer,

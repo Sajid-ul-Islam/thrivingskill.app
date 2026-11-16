@@ -343,7 +343,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-        <TouchableOpacity style={styles.overlayClose} activeOpacity={1} onPress={onClose} />
+        <TouchableOpacity
+          style={styles.overlayClose}
+          activeOpacity={1}
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss checkout dialog"
+        />
         <View
           style={[
             styles.modalCard,
@@ -383,6 +389,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <TouchableOpacity
                   style={styles.openExternalBtn}
                   onPress={() => Linking.openURL(checkoutWebUrl)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open checkout in external browser"
                 >
                   <Ionicons name="open-outline" size={18} color={colors.primary} />
                 </TouchableOpacity>
@@ -458,7 +466,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     styles.tabBtn,
                     activeTab === 'checkout' && [styles.activeTabBtn, { backgroundColor: colors.surface }],
                   ]}
-                  onPress={() => setActiveTab('checkout')}
+                  onPress={() => {
+                    triggerHaptic('selection');
+                    setActiveTab('checkout');
+                  }}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: activeTab === 'checkout' }}
+                  accessibilityLabel={isBangla ? 'অর্ডার প্লেস করুন' : 'Place Order'}
                 >
                   <Ionicons
                     name="card-outline"
@@ -481,7 +495,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     styles.tabBtn,
                     activeTab === 'sync' && [styles.activeTabBtn, { backgroundColor: colors.surface }],
                   ]}
-                  onPress={() => setActiveTab('sync')}
+                  onPress={() => {
+                    triggerHaptic('selection');
+                    setActiveTab('sync');
+                  }}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: activeTab === 'sync' }}
+                  accessibilityLabel={isBangla ? 'অ্যাক্সেস সিঙ্ক' : 'Sync Access'}
                 >
                   <Ionicons
                     name="sync-outline"
@@ -926,6 +946,16 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     onPress={performEnrollmentSync}
                     disabled={isSyncing}
                     activeOpacity={0.88}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      isAuthenticated
+                        ? isBangla
+                          ? 'অ্যাকাউন্ট এনরোলমেন্ট সিঙ্ক করুন'
+                          : 'Sync Account Enrollments'
+                        : isBangla
+                        ? 'থ্রাইভিং স্কিলস অ্যাকাউন্টে সাইন ইন'
+                        : 'Sign In to Sync Account'
+                    }
                   >
                     {isSyncing ? (
                       <>

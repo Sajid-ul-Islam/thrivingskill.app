@@ -20,6 +20,7 @@ import { useYouTube } from '../context/YouTubeContext';
 import { YouTubeCard } from '../components/YouTubeCard';
 import { StateView } from '../components/common';
 import { YouTubeVideo, YOUTUBE_CHANNEL } from '../data/youtubeVideos';
+import { triggerHaptic } from '../utils/haptics';
 import { shape } from '../theme/shapes';
 import { MIN_TOUCH_TARGET } from '../theme/typography';
 
@@ -110,10 +111,12 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
   }, [videos, savedVideos, searchQuery, selectedCategory]);
 
   const handleOpenChannel = () => {
+    triggerHaptic('selection');
     Linking.openURL(YOUTUBE_CHANNEL.url).catch(() => {});
   };
 
   const handlePlay = (vid: YouTubeVideo) => {
+    triggerHaptic('light');
     playVideo(vid, 'modal');
   };
 
@@ -132,7 +135,10 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
       >
         <TouchableOpacity
           style={[styles.backBtn, { backgroundColor: isDark ? '#2C2C2E' : '#F3F4F6' }]}
-          onPress={onBack}
+          onPress={() => {
+            triggerHaptic('light');
+            onBack();
+          }}
           accessibilityRole="button"
           accessibilityLabel={isBangla ? 'ফিরে যান' : 'Back'}
           hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
@@ -152,7 +158,10 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
 
         <TouchableOpacity
           style={styles.subscribeBtn}
-          onPress={handleOpenChannel}
+          onPress={() => {
+            triggerHaptic('selection');
+            handleOpenChannel();
+          }}
           accessibilityRole="button"
           accessibilityLabel={isBangla ? 'ইউটিউবে সাবস্ক্রাইব করুন' : 'Subscribe on YouTube'}
         >
@@ -178,7 +187,10 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity
-              onPress={() => setSearchQuery('')}
+              onPress={() => {
+                triggerHaptic('light');
+                setSearchQuery('');
+              }}
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               accessibilityRole="button"
               accessibilityLabel={isBangla ? 'সার্চ মুছুন' : 'Clear search'}
@@ -190,7 +202,10 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
 
         <TouchableOpacity
           style={[styles.viewToggleBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
-          onPress={() => setViewMode(viewMode === 'card' ? 'horizontal' : 'card')}
+          onPress={() => {
+            triggerHaptic('light');
+            setViewMode(viewMode === 'card' ? 'horizontal' : 'card');
+          }}
           accessibilityRole="button"
           accessibilityLabel={isBangla ? 'ভিউ পরিবর্তন করুন' : 'Toggle list/grid view'}
         >
@@ -222,7 +237,10 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
                     borderColor: isSelected ? colors.primary : colors.border,
                   },
                 ]}
-                onPress={() => setSelectedCategory(cat.id)}
+                onPress={() => {
+                  triggerHaptic('selection');
+                  setSelectedCategory(cat.id);
+                }}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: isSelected }}
                 accessibilityLabel={isBangla ? `${cat.label} ক্যাটাগরি` : `Filter by ${cat.label}`}

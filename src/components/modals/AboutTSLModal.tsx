@@ -154,6 +154,9 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                     },
                   ]}
                   onPress={() => setActiveTab(tab.key as AboutTabKey)}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: isActive }}
+                  accessibilityLabel={tab.label}
                 >
                   <Ionicons
                     name={tab.icon as any}
@@ -705,6 +708,8 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                           style={[styles.leaderMiniBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#F1F5F9' }]}
                           onPress={() => handleOpenUrl(leader.profileUrl)}
                           activeOpacity={0.7}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Open official bio for ${leader.name}`}
                         >
                           <Ionicons name="globe-outline" size={12} color={colors.primary} />
                           <Text style={[styles.leaderMiniBtnText, { color: colors.primary }]}>
@@ -718,6 +723,8 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                           style={[styles.leaderMiniBtn, { backgroundColor: isDark ? 'rgba(10, 102, 194, 0.15)' : '#EFF6FF' }]}
                           onPress={() => handleOpenUrl(leader.linkedin)}
                           activeOpacity={0.7}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Open LinkedIn profile for ${leader.name}`}
                         >
                           <Ionicons name="logo-linkedin" size={12} color="#0A66C2" />
                           <Text style={[styles.leaderMiniBtnText, { color: '#0A66C2' }]}>LinkedIn</Text>
@@ -739,7 +746,12 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                 </Text>
 
                 {/* Hotline Phone */}
-                <TouchableOpacity style={styles.contactRow} onPress={handleCall}>
+                <TouchableOpacity
+                  style={styles.contactRow}
+                  onPress={handleCall}
+                  accessibilityRole="button"
+                  accessibilityLabel="Call direct helpline 01312 100288"
+                >
                   <View style={[styles.contactIconBg, { backgroundColor: isDark ? 'rgba(37, 99, 235, 0.18)' : '#EFF6FF' }]}>
                     <Ionicons name="call" size={18} color={isDark ? '#60A5FA' : '#2563EB'} />
                   </View>
@@ -753,7 +765,12 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                 </TouchableOpacity>
 
                 {/* WhatsApp */}
-                <TouchableOpacity style={styles.contactRow} onPress={handleWhatsApp}>
+                <TouchableOpacity
+                  style={styles.contactRow}
+                  onPress={handleWhatsApp}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open official WhatsApp chat +880 1312-100288"
+                >
                   <View style={[styles.contactIconBg, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.18)' : '#ECFDF5' }]}>
                     <Ionicons name="logo-whatsapp" size={18} color="#10B981" />
                   </View>
@@ -767,7 +784,12 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                 </TouchableOpacity>
 
                 {/* Email */}
-                <TouchableOpacity style={styles.contactRow} onPress={handleEmail}>
+                <TouchableOpacity
+                  style={styles.contactRow}
+                  onPress={handleEmail}
+                  accessibilityRole="button"
+                  accessibilityLabel="Send email to info@thrivingskill.com"
+                >
                   <View style={[styles.contactIconBg, { backgroundColor: '#FAF5FF' }]}>
                     <Ionicons name="mail" size={18} color="#8B5CF6" />
                   </View>
@@ -784,6 +806,8 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                 <TouchableOpacity
                   style={styles.contactRow}
                   onPress={() => handleOpenUrl(Env.SITE_URL)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open official portal on web"
                 >
                   <View style={[styles.contactIconBg, { backgroundColor: '#FEF2F2' }]}>
                     <Ionicons name="globe-outline" size={18} color="#EF4444" />
@@ -840,6 +864,8 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                     key={idx}
                     style={[styles.socialPill, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
                     onPress={() => handleOpenUrl(social.url)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Visit Thriving Skills on ${social.name}`}
                   >
                     <Ionicons name={social.icon as any} size={18} color={social.color} />
                     <Text style={[styles.socialName, { color: colors.text }]}>{social.name}</Text>
@@ -867,6 +893,8 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                       setLegalInitialTab('terms');
                       setLegalModalVisible(true);
                     }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Open Terms of Use"
                   >
                     <Ionicons name="document-text-outline" size={14} color={colors.primary} />
                     <Text style={[styles.legalBtnText, { color: colors.primary }]}>
@@ -880,6 +908,8 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                       setLegalInitialTab('privacy');
                       setLegalModalVisible(true);
                     }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Open Privacy Policy"
                   >
                     <Ionicons name="lock-closed-outline" size={14} color={colors.secondary} />
                     <Text style={[styles.legalBtnText, { color: colors.secondary }]}>Privacy Policy</Text>

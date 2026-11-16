@@ -107,6 +107,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   }, [setSearchQuery]);
 
   const handleClearSearch = useCallback(() => {
+    triggerHaptic('light');
     setLocalSearch('');
     startTransition(() => {
       setSearchQuery('');
@@ -116,6 +117,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
 
   // Filter Selection Handlers with React 19 Concurrent Transitions & instant scroll-to-top
   const handleCategorySelect = useCallback((catId: string) => {
+    triggerHaptic('selection');
     startTransition(() => {
       setSelectedCategory(catId);
     });
@@ -148,6 +150,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   }, [selectedSort]);
 
   const handleClearAllFilters = useCallback(() => {
+    triggerHaptic('light');
     setLocalSearch('');
     startTransition(() => {
       setSearchQuery('');
@@ -556,6 +559,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                   onPress={handleClearSearch}
                   accessibilityRole="button"
                   accessibilityLabel={`Clear search: ${searchQuery}`}
+                  hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
                 >
                   <Text style={[styles.activeFilterChipText, { color: colors.text }]}>
                     "{searchQuery}"
@@ -569,6 +573,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                   onPress={() => handleCategorySelect('all')}
                   accessibilityRole="button"
                   accessibilityLabel="Clear category filter"
+                  hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
                 >
                   <Text style={[styles.activeFilterChipText, { color: colors.text }]}>
                     {categories.find((c) => c.id === selectedCategory)?.name || selectedCategory}
@@ -582,6 +587,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                   onPress={() => handleLevelSelect('All')}
                   accessibilityRole="button"
                   accessibilityLabel="Clear level filter"
+                  hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
                 >
                   <Text style={[styles.activeFilterChipText, { color: colors.text }]}>
                     {selectedLevel}
@@ -595,6 +601,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                   onPress={() => handlePriceFilterSelect('all')}
                   accessibilityRole="button"
                   accessibilityLabel="Clear price filter"
+                  hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
                 >
                   <Text style={[styles.activeFilterChipText, { color: colors.text }]}>
                     {selectedPriceFilter === 'free' ? 'Free' : 'Members'}
@@ -607,6 +614,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                 onPress={handleClearAllFilters}
                 accessibilityRole="button"
                 accessibilityLabel="Clear all active filters"
+                hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
               >
                 <Text style={[styles.clearAllFiltersText, { color: colors.primary }]}>
                   {isBangla ? 'সব মুছুন' : 'Clear all'}
@@ -919,8 +927,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    minHeight: 32,
     borderRadius: shape.full,
     borderWidth: 1,
   },
@@ -929,8 +938,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   clearAllFiltersBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    minHeight: 32,
     justifyContent: 'center',
   },
   clearAllFiltersText: {

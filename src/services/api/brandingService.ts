@@ -44,7 +44,7 @@ export const DEFAULT_CURATED_SLIDES: DynamicCarouselSlide[] = [
     title: 'Skills-Focused Economy',
     subtitle: 'Bridge the future of work with tech-enabled human potential.',
     ctaText: 'Explore Curricula →',
-    gradientColors: ['#102F53', '#1E3A8A', '#2563EB'],
+    gradientColors: ['#102F53', '#1D4476', '#102F53'],
     actionType: 'course',
     targetId: 'skills-growth',
     imageUrl: 'https://thrivingskill.com/wp-content/uploads/2026/05/cover2.jpg2_.jpeg',
@@ -56,7 +56,7 @@ export const DEFAULT_CURATED_SLIDES: DynamicCarouselSlide[] = [
     title: 'Bangladesh Skills Summit 2026',
     subtitle: 'Decoding 4IR employability, AI workforce transformation, & leadership.',
     ctaText: 'Reserve Summit Pass →',
-    gradientColors: ['#1E1B4B', '#312E81', '#4338CA'],
+    gradientColors: ['#102F53', '#1D4476', '#E34234'],
     actionType: 'summit',
     targetId: 'summit-2026',
   },
@@ -67,7 +67,7 @@ export const DEFAULT_CURATED_SLIDES: DynamicCarouselSlide[] = [
     title: 'Generative AI & Prompt Engineering',
     subtitle: '10x office productivity with ChatGPT, Claude & automated workflow models.',
     ctaText: 'Watch Video Trailer →',
-    gradientColors: ['#3B0764', '#581C87', '#7E22CE'],
+    gradientColors: ['#102F53', '#0A1C33', '#102F53'],
     actionType: 'trailer',
     targetId: 'course-ai-productivity',
     imageUrl: 'https://thrivingskill.com/wp-content/uploads/2026/05/AI-Bundle-Promotional-Poster.jpg',
@@ -79,7 +79,7 @@ export const DEFAULT_CURATED_SLIDES: DynamicCarouselSlide[] = [
     title: 'Advanced Excel & Financial Modeling',
     subtitle: 'Build dynamic C-suite KPI cockpits & automate financial valuations.',
     ctaText: 'Explore Course →',
-    gradientColors: ['#064E3B', '#047857', '#059669'],
+    gradientColors: ['#102F53', '#B92B1D', '#E34234'],
     actionType: 'course',
     targetId: 'course-excel-dashboards',
   },
@@ -188,12 +188,12 @@ export class BrandingService {
 
     // Distinct gradients aligned with Thriving Skills brand identity
     const paletteList: [string, string, ...string[]][] = [
-      ['#102F53', '#1E3A8A', '#2563EB'], // Brand Deep Navy
-      ['#3B0764', '#581C87', '#7E22CE'], // Royal Purple AI
-      ['#1E1B4B', '#312E81', '#4338CA'], // Indigo Summit
-      ['#064E3B', '#047857', '#059669'], // Emerald Excel
-      ['#831843', '#9D174D', '#BE185D'], // Crimson Rose
-      ['#0F172A', '#1E293B', '#334155'], // Slate Dark
+      ['#102F53', '#1D4476', '#102F53'], // Deep Royal Blue
+      ['#102F53', '#1D4476', '#E34234'], // Deep Royal Blue with Accent Red
+      ['#102F53', '#0A1C33', '#102F53'], // Deep Royal Blue Navy
+      ['#102F53', '#B92B1D', '#E34234'], // Deep Royal Blue to Crimson Red
+      ['#102F53', '#1E293B', '#102F53'], // Slate Navy
+      ['#102F53', '#334155', '#E34234'], // Navy Slate Red
     ];
 
     try {

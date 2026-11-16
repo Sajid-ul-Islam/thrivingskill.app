@@ -156,6 +156,8 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
           style={[styles.askBtn, { backgroundColor: colors.accent }]}
           onPress={() => setAskModalVisible(true)}
           activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Ask a question"
         >
           <Ionicons name="chatbubble-ellipses" size={16} color={colors.onAccent} style={{ marginRight: 6 }} />
           <Text style={[styles.askBtnText, { color: colors.onAccent }]}>Ask Question</Text>
@@ -198,6 +200,8 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
                   },
                 ]}
                 onPress={() => handleToggleUpvote(item.id)}
+                accessibilityRole="button"
+                accessibilityLabel={`Upvote question, current count: ${item.upvotes}`}
               >
                 <Ionicons
                   name={item.hasUpvoted ? 'arrow-up-circle' : 'arrow-up-circle-outline'}
@@ -330,6 +334,8 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
                 <TouchableOpacity
                   style={[styles.cancelBtn, { borderColor: colors.border }]}
                   onPress={() => setAskModalVisible(false)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Cancel question"
                 >
                   <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>Cancel</Text>
                 </TouchableOpacity>
@@ -337,6 +343,8 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
                 <TouchableOpacity
                   style={[styles.submitQuestionBtn, { backgroundColor: colors.accent }]}
                   onPress={handlePostQuestion}
+                  accessibilityRole="button"
+                  accessibilityLabel="Submit question"
                 >
                   <Text style={[styles.submitQuestionText, { color: colors.onAccent }]}>Submit Question</Text>
                 </TouchableOpacity>

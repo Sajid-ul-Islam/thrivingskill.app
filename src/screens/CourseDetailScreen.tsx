@@ -36,6 +36,7 @@ import { findRelatedVideoForCourse } from '../services/youtubeService';
 import { CoursesService } from '../services/api/coursesService';
 import { Env } from '../config/env';
 import { MIN_TOUCH_TARGET } from '../theme/typography';
+import { shape } from '../theme/shapes';
 import { triggerHaptic } from '../utils/haptics';
 import { Lesson } from '../types';
 
@@ -395,6 +396,8 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
             ]}
             onPress={() => playVideo(trailerVideo, 'modal')}
             activeOpacity={0.88}
+            accessibilityRole="button"
+            accessibilityLabel={isBangla ? 'ফ্রি কোর্স ট্রেইলার ভিডিও দেখুন' : 'Watch Free Course Trailer'}
           >
             <View style={styles.trailerThumbWrapper}>
               <Image source={{ uri: trailerVideo.thumbnail }} style={styles.trailerThumb} />
@@ -746,8 +749,13 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                   styles.writeReviewCTA,
                   { backgroundColor: colors.primaryLight, borderColor: colors.primary },
                 ]}
-                onPress={() => setWriteReviewModalVisible(true)}
+                onPress={() => {
+                  triggerHaptic('light');
+                  setWriteReviewModalVisible(true);
+                }}
                 activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel={isBangla ? 'কোর্সের রিভিউ ও রেটিং দিন' : 'Rate & Write a Review'}
               >
                 <Ionicons name="star" size={16} color={colors.primary} />
                 <Text style={[styles.writeReviewCTAText, { color: colors.primary }]}>
@@ -885,7 +893,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
               : isEnrolled
               ? colors.primary
               : isPaidCourse
-              ? '#FFB606'
+              ? colors.accent
               : colors.primary,
           },
         ]}
@@ -903,13 +911,13 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
           <Ionicons
             name={isAdmin ? 'play-circle' : isEnrolled ? 'play' : isPaidCourse ? 'card-outline' : 'flash'}
             size={18}
-            color={isAdmin ? '#FFFFFF' : !isEnrolled && isPaidCourse ? '#102F53' : colors.onPrimary}
+            color={isAdmin ? '#FFFFFF' : !isEnrolled && isPaidCourse ? colors.onAccent : colors.onPrimary}
           />
           <Text
             style={[
               styles.enrollCTAText,
               {
-                color: isAdmin ? '#FFFFFF' : !isEnrolled && isPaidCourse ? '#102F53' : colors.onPrimary,
+                color: isAdmin ? '#FFFFFF' : !isEnrolled && isPaidCourse ? colors.onAccent : colors.onPrimary,
                 fontWeight: !isEnrolled && isPaidCourse ? '800' : '700',
               },
             ]}
@@ -967,6 +975,8 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                 onPress={() => setCertPreviewVisible(false)}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 style={{ flexShrink: 0 }}
+                accessibilityRole="button"
+                accessibilityLabel="Close certificate preview"
               >
                 <Ionicons name="close" size={20} color={colors.textMuted} />
               </TouchableOpacity>
@@ -1066,6 +1076,8 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                         Alert.alert('LinkedIn Credential 🔗', `Visit ${verifyUrl} to verify or share credential #${certId}.`);
                       });
                     }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Add certificate to LinkedIn Profile"
                   >
                     <Ionicons name="logo-linkedin" size={16} color="#FFFFFF" />
                     <Text style={styles.certShareBtnText}>Add to LinkedIn Profile</Text>
@@ -1077,6 +1089,8 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                       setCertPreviewVisible(false);
                       setMandatoryReviewVisible(true);
                     }}
+                    accessibilityRole="button"
+                    accessibilityLabel={isBangla ? 'রিভিউ দিয়ে সার্টিফিকেট আনলক করুন' : 'Rate & Review to Unlock Certificate'}
                   >
                     <Ionicons name="star" size={16} color="#FFFFFF" />
                     <Text style={styles.certShareBtnText}>
@@ -1095,6 +1109,8 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                 <TouchableOpacity
                   style={[styles.certCloseBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
                   onPress={() => setCertPreviewVisible(false)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close certificate preview"
                 >
                   <Text style={[styles.certCloseBtnText, { color: colors.text }]}>Close Preview</Text>
                 </TouchableOpacity>
@@ -1129,6 +1145,8 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                 onPress={() => setWriteReviewModalVisible(false)}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 style={{ flexShrink: 0 }}
+                accessibilityRole="button"
+                accessibilityLabel="Close review dialog"
               >
                 <Ionicons name="close" size={20} color={colors.textMuted} />
               </TouchableOpacity>
@@ -1154,9 +1172,16 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                 {[1, 2, 3, 4, 5].map((star) => (
                   <TouchableOpacity
                     key={star}
-                    onPress={() => setReviewRating(star)}
+                    onPress={() => {
+                      triggerHaptic('selection');
+                      setReviewRating(star);
+                    }}
                     style={styles.starTouch}
                     activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={isBangla ? `${star} তারকা রেটিং` : `${star} stars rating`}
+                    accessibilityState={{ selected: star <= reviewRating }}
+                    hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
                   >
                     <Ionicons
                       name={star <= reviewRating ? 'star' : 'star-outline'}
@@ -1202,6 +1227,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                 multiline
                 numberOfLines={4}
                 textAlignVertical="top"
+                accessibilityLabel={isBangla ? 'আপনার রিভিউ মতামত' : 'Your Detailed Feedback'}
               />
 
               {/* Actions */}
@@ -1211,6 +1237,8 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                   onPress={handleSubmitReview}
                   disabled={isSubmittingReview}
                   activeOpacity={0.88}
+                  accessibilityRole="button"
+                  accessibilityLabel={isBangla ? 'রিভিউ সাবমিট করুন' : 'Submit Review'}
                 >
                   <Ionicons name="checkmark-circle" size={18} color={colors.onPrimary} />
                   <Text style={[styles.submitReviewBtnText, { color: colors.onPrimary }]}>
@@ -1221,6 +1249,8 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                 <TouchableOpacity
                   style={[styles.cancelReviewBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
                   onPress={() => setWriteReviewModalVisible(false)}
+                  accessibilityRole="button"
+                  accessibilityLabel={isBangla ? 'বাতিল' : 'Cancel'}
                 >
                   <Text style={[styles.cancelReviewBtnText, { color: colors.textMuted }]}>
                     {isBangla ? 'বাতিল' : 'Cancel'}

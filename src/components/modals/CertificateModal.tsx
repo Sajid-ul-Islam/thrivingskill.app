@@ -380,6 +380,8 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
                 <TouchableOpacity
                   style={[styles.halfActionBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
                   onPress={handleShare}
+                  accessibilityRole="button"
+                  accessibilityLabel="Share certificate"
                 >
                   <Ionicons name="share-social-outline" size={16} color={colors.text} />
                   <Text style={[styles.halfActionText, { color: colors.text }]}>Share</Text>
@@ -388,6 +390,8 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
                 <TouchableOpacity
                   style={[styles.halfActionBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
                   onPress={handleShareToLinkedInFeed}
+                  accessibilityRole="button"
+                  accessibilityLabel="Post certificate to LinkedIn feed"
                 >
                   <Ionicons name="logo-linkedin" size={16} color="#0A66C2" />
                   <Text style={[styles.halfActionText, { color: colors.text }]}>Post to Feed</Text>
@@ -399,6 +403,8 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
                 <TouchableOpacity
                   style={[styles.halfActionBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
                   onPress={handleCopyLink}
+                  accessibilityRole="button"
+                  accessibilityLabel={copied ? "Certificate link copied" : "Copy certificate link"}
                 >
                   <Ionicons
                     name={copied ? 'checkmark-circle' : 'copy-outline'}
@@ -413,6 +419,8 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
                 <TouchableOpacity
                   style={[styles.halfActionBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
                   onPress={handleVerifyOnline}
+                  accessibilityRole="button"
+                  accessibilityLabel="Verify certificate online in browser"
                 >
                   <Ionicons name="open-outline" size={16} color={colors.primary} />
                   <Text style={[styles.halfActionText, { color: colors.primary }]}>Verify on Web</Text>

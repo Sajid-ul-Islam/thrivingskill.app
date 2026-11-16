@@ -71,6 +71,8 @@ export const PiPFloatingPlayer: React.FC<PiPFloatingPlayerProps> = ({
           style={styles.previewBox}
           activeOpacity={0.9}
           onPress={onMaximize}
+          accessibilityRole="button"
+          accessibilityLabel={`Maximize player for ${title}`}
         >
           <Ionicons name="tv-outline" size={24} color="#FFB606" />
           <Text style={styles.previewTitle} numberOfLines={1}>

@@ -319,12 +319,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               activeOpacity={0.85}
               style={styles.avatarWrap}
               onPress={() => {
+                triggerHaptic('light');
                 if (isGuest && !isAuthenticated) {
                   setAuthModalVisible(true);
                 } else {
                   onNavigateTab('Profile');
                 }
               }}
+              accessibilityRole="button"
+              accessibilityLabel={isBangla ? 'প্রোফাইল ওপেন করুন' : 'Open profile'}
             >
               {user?.avatar ? (
                 <Image
@@ -360,12 +363,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               activeOpacity={0.85}
               style={styles.greetingTextCol}
               onPress={() => {
+                triggerHaptic('light');
                 if (isGuest && !isAuthenticated) {
                   setAuthModalVisible(true);
                 } else {
                   onNavigateTab('Profile');
                 }
               }}
+              accessibilityRole="button"
+              accessibilityLabel={`${greetingInfo.salutation}, ${learnerDisplayName}`}
             >
               <View style={styles.salutationRow}>
                 <Ionicons name={greetingInfo.icon} size={13} color={greetingInfo.iconColor} />
@@ -396,6 +402,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 },
               ]}
               onPress={() => {
+                triggerHaptic('light');
                 Alert.alert(
                   isBangla ? 'দৈনিক লার্নিং মোমেন্টাম 🔥' : 'Learning Momentum 🔥',
                   `${isBangla ? '• টানা স্ট্রিক' : '• Streak'}: ${streakDays} ${isBangla ? 'দিন' : 'Days'}\n${isBangla ? '• আজকের সময়' : '• Today\'s Time'}: ${dailyMinutesSpent}m / ${dailyTargetMinutes}m ${isBangla ? 'লক্ষ্য' : 'Goal'}\n\n${isBangla ? 'প্রতিদিন কোর্স ও ভিডিও দেখে নতুন ব্যাজ অর্জন করুন!' : 'Complete lessons and videos to keep up your daily streak!'}`,
@@ -408,6 +415,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   ]
                 );
               }}
+              accessibilityRole="button"
+              accessibilityLabel={isBangla ? `দৈনিক স্ট্রিক ${streakDays} দিন, আজকের স্টাডি ${dailyMinutesSpent} মিনিট` : `Daily streak ${streakDays} days, today study ${dailyMinutesSpent} minutes`}
             >
               <View style={styles.momentumItem}>
                 <Text style={styles.flameEmoji}>🔥</Text>
@@ -540,6 +549,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   },
                 ]}
                 onPress={() => {
+                  triggerHaptic('light');
                   const targetLessonId =
                     activeProgress?.lastAccessedLessonId ||
                     activeCourse.modules[0]?.lessons[0]?.id ||
@@ -547,6 +557,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   onNavigateToLesson(activeCourse.id, targetLessonId);
                 }}
                 activeOpacity={0.88}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  isBangla
+                    ? `${activeCourse.title} কোর্সটি চালিয়ে যান, অগ্রগতি ${activeProgressPercent}%`
+                    : `Resume ${activeCourse.title}, progress ${activeProgressPercent}%`
+                }
               >
                 <Image source={{ uri: activeCourse.thumbnail }} style={styles.resumeThumb} />
                 <View style={styles.resumeInfo}>
@@ -594,8 +610,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     shadowColor: colors.cardShadow,
                   },
                 ]}
-                onPress={() => playVideo(lastWatchedVideo, 'modal')}
+                onPress={() => {
+                  triggerHaptic('light');
+                  playVideo(lastWatchedVideo, 'modal');
+                }}
                 activeOpacity={0.88}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  isBangla
+                    ? `${lastWatchedVideo.title} মাস্টারক্লাস চালিয়ে যান`
+                    : `Resume masterclass ${lastWatchedVideo.title}`
+                }
               >
                 <View style={{ position: 'relative' }}>
                   <Image source={{ uri: lastWatchedVideo.thumbnail }} style={styles.resumeThumb} />
@@ -692,9 +717,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               </View>
               <TouchableOpacity
                 style={styles.seeAllTouch}
-                onPress={() => onNavigateTab('Courses')}
+                onPress={() => {
+                  triggerHaptic('light');
+                  onNavigateTab('Courses');
+                }}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 accessibilityRole="button"
+                accessibilityLabel={
+                  isBangla
+                    ? `আপনার জন্য প্রস্তাবিত সব কোর্স দেখুন, সর্বমোট ${recommendedCourses.length} টি`
+                    : `View all recommended courses, total ${recommendedCourses.length}`
+                }
               >
                 <Text style={[styles.seeAllText, { color: colors.primary }]}>
                   {isBangla ? 'সব দেখুন' : 'View All'} ({recommendedCourses.length}) →

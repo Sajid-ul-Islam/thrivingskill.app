@@ -274,7 +274,7 @@ export const VideoPlayerGestureOverlay: React.FC<VideoPlayerGestureOverlayProps>
           ]}
           pointerEvents="none"
         >
-          <Ionicons name="play-back" size={28} color="#FFB606" />
+          <Ionicons name="play-back" size={28} color="#FFFFFF" />
           <Text style={styles.seekRippleText}>10s</Text>
         </Animated.View>
       )}
@@ -299,7 +299,7 @@ export const VideoPlayerGestureOverlay: React.FC<VideoPlayerGestureOverlayProps>
           ]}
           pointerEvents="none"
         >
-          <Ionicons name="play-forward" size={28} color="#FFB606" />
+          <Ionicons name="play-forward" size={28} color="#FFFFFF" />
           <Text style={styles.seekRippleText}>10s</Text>
         </Animated.View>
       )}
@@ -321,7 +321,7 @@ export const VideoPlayerGestureOverlay: React.FC<VideoPlayerGestureOverlayProps>
                   : 'volume-medium'
               }
               size={22}
-              color="#FFB606"
+              color="#FFFFFF"
             />
             <View style={styles.hudProgressBarTrack}>
               <View
@@ -352,7 +352,7 @@ export const VideoPlayerGestureOverlay: React.FC<VideoPlayerGestureOverlayProps>
             accessibilityRole="button"
             accessibilityLabel="Screen is locked. Tap to unlock screen controls."
           >
-            <Ionicons name="lock-closed" size={22} color="#FFB606" />
+            <Ionicons name="lock-closed" size={22} color="#E34234" />
             <Text style={styles.padlockUnlockText}>Screen Locked • Tap to Unlock</Text>
           </TouchableOpacity>
         </View>
@@ -399,7 +399,7 @@ export const VideoPlayerGestureOverlay: React.FC<VideoPlayerGestureOverlayProps>
                   accessibilityLabel="Lock screen touches"
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Ionicons name="lock-open-outline" size={18} color="#FFB606" />
+                  <Ionicons name="lock-open-outline" size={18} color="#FFFFFF" />
                 </TouchableOpacity>
 
                 {/* Fullscreen Toggle */}
@@ -449,8 +449,8 @@ export const VideoPlayerGestureOverlay: React.FC<VideoPlayerGestureOverlayProps>
               >
                 <Ionicons
                   name={isPlaying ? 'pause' : 'play'}
-                  size={32}
-                  color="#102F53"
+                  size={30}
+                  color="#FFFFFF"
                 />
               </TouchableOpacity>
 
@@ -494,13 +494,20 @@ export const VideoPlayerGestureOverlay: React.FC<VideoPlayerGestureOverlayProps>
                     accessibilityRole="button"
                     accessibilityLabel={`Video streaming quality: ${videoQuality}`}
                   >
-                    <Ionicons name="options-outline" size={12} color="#FFB606" />
+                    <Ionicons name="options-outline" size={12} color="#FFFFFF" />
                     <Text style={styles.qualityPillText}>{videoQuality}</Text>
                   </TouchableOpacity>
 
                   {/* ONE-TAP SPEED PILL: Cycles 1.0x -> 1.25x -> 1.5x -> 2.0x -> 0.75x */}
                   <TouchableOpacity
-                    style={styles.speedPill}
+                    style={[
+                      styles.speedPill,
+                      playbackSpeed !== '1.0x' && styles.speedPillActive,
+                      { backgroundColor: '#102F53' },
+                      { borderColor: '#FFB606' },
+                      { borderWidth: 1.5 },
+                      { paddingHorizontal: 9 },
+                    ]}
                     onPress={() => {
                       triggerHaptic('light');
                       onCycleSpeed();
@@ -664,6 +671,13 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
     color: '#102F53',
+  },
+  speedPillActive: {
+    backgroundColor: '#102F53',
+    borderRadius: 12,
+    minHeight: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   seekRippleBubble: {
     position: 'absolute',

@@ -23,7 +23,7 @@ const ThemeContext = createContext<ThemeContextType>({
 });
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [mode, setModeState] = useState<ThemeMode>('dark'); // Sleek dark default for modern tech feel
+  const [mode, setModeState] = useState<ThemeMode>('light'); // Professional Thriving Skills Deep Royal Blue light default
 
   useEffect(() => {
     (async () => {
