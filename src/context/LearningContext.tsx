@@ -572,7 +572,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // 1. Record review on course object
     addCourseReview(courseId, {
       userName,
-      userAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120',
+      userAvatar: '',
       rating,
       comment: feedback,
       userRole,

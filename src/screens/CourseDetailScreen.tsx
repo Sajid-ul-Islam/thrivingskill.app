@@ -240,9 +240,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     setIsSubmittingReview(true);
     addCourseReview(course.id, {
       userName: user?.displayName || user?.username || 'Executive Learner',
-      userAvatar:
-        user?.avatar ||
-        'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
+      userAvatar: user?.avatar || '',
       rating: reviewRating,
       comment: reviewComment.trim(),
       userRole: isEnrolled ? 'Enrolled Student' : 'Verified Learner',
@@ -643,7 +641,21 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
               ]}
             >
               <View style={styles.instructorHeader}>
-                <Image source={{ uri: course.instructor.avatar }} style={styles.instructorAvatar} />
+                {course.instructor.avatar ? (
+                  <Image source={{ uri: course.instructor.avatar }} style={styles.instructorAvatar} />
+                ) : (
+                  <View
+                    style={[
+                      styles.instructorAvatar,
+                      styles.avatarInitialsCircle,
+                      { backgroundColor: colors.primary },
+                    ]}
+                  >
+                    <Text style={styles.avatarInitialsText}>
+                      {(course.instructor.name || 'I').charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                )}
                 <View style={styles.instructorMeta}>
                   <Text style={[styles.instructorName, { color: colors.text }]}>
                     {course.instructor.name}
@@ -715,7 +727,21 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                     ]}
                   >
                     <View style={styles.reviewTop}>
-                      <Image source={{ uri: rev.userAvatar }} style={styles.reviewAvatar} />
+                      {rev.userAvatar ? (
+                        <Image source={{ uri: rev.userAvatar }} style={styles.reviewAvatar} />
+                      ) : (
+                        <View
+                          style={[
+                            styles.reviewAvatar,
+                            styles.avatarInitialsCircle,
+                            { backgroundColor: colors.primary },
+                          ]}
+                        >
+                          <Text style={styles.avatarInitialsText}>
+                            {(rev.userName || 'L').charAt(0).toUpperCase()}
+                          </Text>
+                        </View>
+                      )}
                       <View style={styles.reviewMeta}>
                         <Text style={[styles.reviewUser, { color: colors.text }]}>
                           {rev.userName}
@@ -1375,6 +1401,15 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
+  },
+  avatarInitialsCircle: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitialsText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
   },
   instructorMeta: {
     flex: 1,

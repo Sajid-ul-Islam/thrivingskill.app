@@ -276,14 +276,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 }
               }}
             >
-              <Image
-                source={{
-                  uri:
-                    user?.avatar ||
-                    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&auto=format&fit=crop&q=80',
-                }}
-                style={styles.learnerAvatar}
-              />
+              {user?.avatar ? (
+                <Image
+                  source={{ uri: user.avatar }}
+                  style={styles.learnerAvatar}
+                />
+              ) : (
+                <View
+                  style={[
+                    styles.learnerAvatar,
+                    styles.avatarInitialsCircle,
+                    { backgroundColor: colors.primary, borderColor: colors.primaryLight },
+                  ]}
+                >
+                  <Text style={styles.avatarInitialsText}>
+                    {(user?.name || user?.username || (isAuthenticated ? 'Student' : 'Learner')).charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+              )}
               <View
                 style={[
                   styles.avatarOnlineDot,
@@ -892,6 +902,15 @@ const styles = StyleSheet.create({
     borderRadius: 21,
     borderWidth: 1.5,
     borderColor: '#6366F1',
+  },
+  avatarInitialsCircle: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitialsText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '800',
   },
   avatarOnlineDot: {
     position: 'absolute',

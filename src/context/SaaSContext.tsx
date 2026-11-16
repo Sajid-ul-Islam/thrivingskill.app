@@ -157,7 +157,7 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email,
       department: department || 'Operations',
       role: role || 'Member',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      avatar: '',
       assignedCourseIds: ['course-1'],
       completedCoursesCount: 0,
       progressPercent: 0,

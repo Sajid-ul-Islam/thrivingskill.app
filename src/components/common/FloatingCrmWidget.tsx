@@ -24,9 +24,9 @@ import {
 import { shape } from '../../theme/shapes';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
 
-const FAB_SIZE = 54;
-const DISMISS_TARGET_SIZE = 60;
-const SNAP_MARGIN = 16;
+const FAB_SIZE = 50;
+const DISMISS_TARGET_SIZE = 58;
+const SNAP_MARGIN = 8;
 
 export interface FloatingCrmWidgetProps {
   bottomOffset?: number;
@@ -469,33 +469,11 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
               snappedSide === 'left' ? styles.fabRowLeft : styles.fabRowRight,
             ]}
           >
-            {/* Text Pill Badge (extends left or right depending on edge) */}
-            {!expanded && !isDragging && (
-              <TouchableOpacity
-                style={[
-                  styles.fabPill,
-                  {
-                    backgroundColor: colors.surfaceCard,
-                    borderColor: isDark ? colors.border : 'rgba(37, 211, 102, 0.4)',
-                    shadowColor: colors.cardShadow,
-                  },
-                ]}
-                onPress={toggleExpand}
-                activeOpacity={0.85}
-                accessibilityRole="button"
-                accessibilityLabel="Open live support options"
-              >
-                <View style={styles.onlineDot} />
-                <Text style={[styles.fabPillText, { color: colors.text }]}>
-                  {isBangla ? 'হোয়াটসঅ্যাপে সাহায্য' : 'Chat / WhatsApp'}
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Primary Circular Draggable FAB */}
+            {/* Primary Circular Draggable FAB (Facebook Messenger chat-head style) */}
             <Animated.View
               style={{
                 transform: [{ scale: expanded || isDragging ? 1 : pulseAnim }],
+                opacity: isDragging || expanded ? 1 : 0.94,
               }}
               {...panResponder.panHandlers}
             >
@@ -515,6 +493,11 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
                     color="#FFFFFF"
                   />
                 </Animated.View>
+
+                {/* Subtle online availability badge */}
+                {!expanded && (
+                  <View style={styles.bubbleStatusDot} />
+                )}
               </View>
             </Animated.View>
           </View>
@@ -648,6 +631,18 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.28,
     shadowRadius: 6,
+  },
+  bubbleStatusDot: {
+    position: 'absolute',
+    top: 1,
+    right: 1,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#10B981',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    zIndex: 5,
   },
   dismissTargetContainer: {
     position: 'absolute',

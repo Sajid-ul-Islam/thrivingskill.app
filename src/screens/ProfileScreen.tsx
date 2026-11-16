@@ -434,15 +434,28 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             { backgroundColor: colors.surfaceCard, borderColor: colors.border },
           ]}
         >
-          <Image
-            source={{
-              uri:
-                user?.avatar ||
-                (user?.avatar_urls && (user.avatar_urls['96'] || user.avatar_urls['48'] || user.avatar_urls['24'])) ||
-                'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
-            }}
-            style={styles.avatar}
-          />
+          {user?.avatar || (user?.avatar_urls && (user.avatar_urls['96'] || user.avatar_urls['48'] || user.avatar_urls['24'])) ? (
+            <Image
+              source={{
+                uri:
+                  user?.avatar ||
+                  (user?.avatar_urls && (user.avatar_urls['96'] || user.avatar_urls['48'] || user.avatar_urls['24'])),
+              }}
+              style={styles.avatar}
+            />
+          ) : (
+            <View
+              style={[
+                styles.avatar,
+                styles.avatarInitialsCircle,
+                { backgroundColor: colors.primary },
+              ]}
+            >
+              <Text style={styles.avatarInitialsTextBig}>
+                {(user?.name || user?.displayName || user?.username || customName || (isBangla ? 'অ' : 'G')).charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          )}
           <View style={styles.profileInfo}>
             <View style={styles.nameRow}>
               <Text style={[styles.name, { color: colors.text, flexShrink: 1 }]} numberOfLines={1}>
@@ -2673,6 +2686,15 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
+  },
+  avatarInitialsCircle: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitialsTextBig: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '800',
   },
   profileInfo: {
     flex: 1,
