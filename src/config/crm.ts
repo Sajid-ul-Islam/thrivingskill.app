@@ -15,12 +15,16 @@ export const CRM_CHANNELS = {
   workingHoursBn: 'শনিবার - বৃহস্পতিবার: সকাল ১০টা - রাত ৮টা',
 };
 
-export type CrmInquiryType = 'general' | 'payment' | 'live' | 'certificate' | 'corporate';
+export type CrmInquiryType = 'general' | 'course' | 'payment' | 'live' | 'certificate' | 'corporate';
 
 export const CRM_INQUIRY_PROMPTS: Record<CrmInquiryType, { en: string; bn: string }> = {
   general: {
     en: 'Hello Thriving Skills, I would like to learn more about your courses and services.',
     bn: 'হ্যালো থ্রাইভিং স্কিলস, আমি আপনাদের কোর্স এবং সেবা সম্পর্কে আরও জানতে চাই।',
+  },
+  course: {
+    en: 'Hello Thriving Skills, I have an inquiry about course enrollment and curriculum.',
+    bn: 'হ্যালো থ্রাইভিং স্কিলস, কোর্স কারিকুলাম ও ভর্তি সংক্রান্ত তথ্য জানতে চাচ্ছি।',
   },
   payment: {
     en: 'Hello Thriving Skills, I need assistance with course payment (bKash/Nagad/Cards).',

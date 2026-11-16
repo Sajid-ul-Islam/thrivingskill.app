@@ -439,13 +439,16 @@ const MainAppContent: React.FC = () => {
         }}
       />
 
-      {/* Omnipresent Floating WhatsApp & Messenger CRM Widget */}
-      {activeScreen.name === 'MainTabs' && (
+      {/* Omnipresent Floating Draggable WhatsApp & Messenger CRM Widget */}
+      {(activeScreen.name === 'MainTabs' || activeScreen.name === 'CourseDetail') && (
         <FloatingCrmWidget
           bottomOffset={
-            (playerMode === 'mini' && activeVideo !== null ? 134 : 68) +
-            Math.max(insets.bottom, Platform.OS === 'ios' ? 12 : 8)
+            activeScreen.name === 'CourseDetail'
+              ? 84 + Math.max(insets.bottom, Platform.OS === 'ios' ? 12 : 8)
+              : (playerMode === 'mini' && activeVideo !== null ? 134 : 68) +
+                Math.max(insets.bottom, Platform.OS === 'ios' ? 12 : 8)
           }
+          inquiryType={activeScreen.name === 'CourseDetail' ? 'course' : 'general'}
           onOpenFullModal={() => setSupportModalVisible(true)}
         />
       )}
