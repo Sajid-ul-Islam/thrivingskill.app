@@ -72,6 +72,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [checkoutWebUrl, setCheckoutWebUrl] = useState<string | null>(null);
 
+  // Focus Chaining Refs for Seamless Form UX
+  const lastNameRef = useRef<React.ElementRef<typeof TextInput>>(null);
+  const phoneRef = useRef<React.ElementRef<typeof TextInput>>(null);
+  const emailRef = useRef<React.ElementRef<typeof TextInput>>(null);
+  const passwordRef = useRef<React.ElementRef<typeof TextInput>>(null);
+  const orderNotesRef = useRef<React.ElementRef<typeof TextInput>>(null);
+
   // Sync State & Hygiene
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncAttempt, setSyncAttempt] = useState(1);
@@ -524,6 +531,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                         }}
                         placeholder="e.g. Tanvir"
                         placeholderTextColor={colors.textMuted}
+                        autoCapitalize="words"
+                        autoComplete="name-given"
+                        textContentType="givenName"
+                        returnKeyType="next"
+                        onSubmitEditing={() => lastNameRef.current?.focus()}
+                        blurOnSubmit={false}
                         accessibilityLabel={isBangla ? 'নামের প্রথম অংশ' : 'First name'}
                       />
                     </View>
@@ -533,6 +546,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                         {isBangla ? 'নামের শেষ অংশ' : 'Last name'} <Text style={styles.requiredAsterisk}>*</Text>
                       </Text>
                       <TextInput
+                        ref={lastNameRef}
                         style={[
                           styles.input,
                           {
@@ -548,6 +562,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                         }}
                         placeholder="e.g. Ahmed"
                         placeholderTextColor={colors.textMuted}
+                        autoCapitalize="words"
+                        autoComplete="name-family"
+                        textContentType="familyName"
+                        returnKeyType="next"
+                        onSubmitEditing={() => phoneRef.current?.focus()}
+                        blurOnSubmit={false}
                         accessibilityLabel={isBangla ? 'নামের শেষ অংশ' : 'Last name'}
                       />
                     </View>
@@ -559,6 +579,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       {isBangla ? 'ফোন নম্বর' : 'Phone'} <Text style={styles.requiredAsterisk}>*</Text>
                     </Text>
                     <TextInput
+                      ref={phoneRef}
                       style={[
                         styles.input,
                         {
@@ -575,6 +596,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       placeholder="017XXXXXXXX"
                       placeholderTextColor={colors.textMuted}
                       keyboardType="phone-pad"
+                      autoComplete="tel"
+                      textContentType="telephoneNumber"
+                      returnKeyType="next"
+                      onSubmitEditing={() => emailRef.current?.focus()}
+                      blurOnSubmit={false}
                       accessibilityLabel={isBangla ? 'ফোন নম্বর' : 'Phone number'}
                     />
                   </View>
@@ -585,6 +611,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       {isBangla ? 'ইমেল ঠিকানা' : 'Email address'} <Text style={styles.requiredAsterisk}>*</Text>
                     </Text>
                     <TextInput
+                      ref={emailRef}
                       style={[
                         styles.input,
                         {
@@ -602,6 +629,18 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       placeholderTextColor={colors.textMuted}
                       keyboardType="email-address"
                       autoCapitalize="none"
+                      autoCorrect={false}
+                      autoComplete="email"
+                      textContentType="emailAddress"
+                      returnKeyType={!isAuthenticated ? 'next' : 'done'}
+                      onSubmitEditing={() => {
+                        if (!isAuthenticated) {
+                          passwordRef.current?.focus();
+                        } else {
+                          orderNotesRef.current?.focus();
+                        }
+                      }}
+                      blurOnSubmit={false}
                       accessibilityLabel={isBangla ? 'ইমেল ঠিকানা' : 'Email address'}
                     />
                   </View>
@@ -614,6 +653,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       </Text>
                       <View style={styles.passwordWrapper}>
                         <TextInput
+                          ref={passwordRef}
                           style={[
                             styles.input,
                             styles.passwordInput,
@@ -631,11 +671,24 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                           placeholder="Password"
                           placeholderTextColor={colors.textMuted}
                           secureTextEntry={!showPassword}
+                          autoCapitalize="none"
+                          autoCorrect={false}
+                          autoComplete="new-password"
+                          textContentType="newPassword"
+                          returnKeyType="next"
+                          onSubmitEditing={() => orderNotesRef.current?.focus()}
+                          blurOnSubmit={false}
                           accessibilityLabel={isBangla ? 'পাসওয়ার্ড' : 'Password'}
                         />
                         <TouchableOpacity
                           style={styles.eyeToggle}
-                          onPress={() => setShowPassword(!showPassword)}
+                          onPress={() => {
+                            triggerHaptic('light');
+                            setShowPassword(!showPassword);
+                          }}
+                          accessibilityRole="button"
+                          accessibilityLabel={showPassword ? (isBangla ? 'পাসওয়ার্ড লুকান' : 'Hide password') : (isBangla ? 'পাসওয়ার্ড দেখান' : 'Show password')}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         >
                           <Ionicons
                             name={showPassword ? 'eye-off-outline' : 'eye-outline'}
@@ -653,6 +706,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       {isBangla ? 'অতিরিক্ত তথ্য (ঐচ্ছিক)' : 'Order Notes (optional)'}
                     </Text>
                     <TextInput
+                      ref={orderNotesRef}
                       style={[
                         styles.input,
                         styles.textArea,
@@ -668,6 +722,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       placeholderTextColor={colors.textMuted}
                       multiline
                       numberOfLines={3}
+                      returnKeyType="done"
                       accessibilityLabel={isBangla ? 'অতিরিক্ত তথ্য' : 'Order Notes'}
                     />
                   </View>
@@ -707,7 +762,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       <Text style={[styles.totalLabel, { color: colors.text }]}>
                         {isBangla ? 'সর্বমোট' : 'Total'}
                       </Text>
-                      <Text style={[styles.totalValue, { color: '#102F53' }]}>
+                      <Text style={[styles.totalValue, { color: isDark ? colors.brandGold : '#102F53' }]}>
                         {formattedPrice}
                       </Text>
                     </View>
@@ -760,20 +815,24 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     style={styles.termsRow}
                     activeOpacity={0.8}
                     onPress={() => {
+                      triggerHaptic('selection');
                       setAgreedToTerms(!agreedToTerms);
                       if (formErrors.terms) setFormErrors((p) => ({ ...p, terms: '' }));
                     }}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: agreedToTerms }}
+                    accessibilityLabel={isBangla ? 'ওয়েবসাইট শর্তাবলী মেনে নিচ্ছি' : 'I have read and agree to the website terms and conditions'}
                   >
                     <View
                       style={[
                         styles.checkbox,
                         {
-                          borderColor: formErrors.terms ? '#DC2626' : agreedToTerms ? '#102F53' : colors.border,
-                          backgroundColor: agreedToTerms ? '#102F53' : colors.surface,
+                          borderColor: formErrors.terms ? '#DC2626' : agreedToTerms ? (isDark ? colors.brandGold : '#102F53') : colors.border,
+                          backgroundColor: agreedToTerms ? (isDark ? colors.brandGold : '#102F53') : colors.surface,
                         },
                       ]}
                     >
-                      {agreedToTerms && <Ionicons name="checkmark" size={14} color="#FFFFFF" />}
+                      {agreedToTerms && <Ionicons name="checkmark" size={14} color={isDark ? '#102F53' : '#FFFFFF'} />}
                     </View>
                     <Text style={[styles.termsText, { color: colors.text }]}>
                       I have read and agree to the website terms and conditions <Text style={styles.requiredAsterisk}>*</Text>
@@ -782,22 +841,30 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
                   {/* PLACE ORDER Action Button */}
                   <TouchableOpacity
-                    style={[styles.placeOrderBtn, { backgroundColor: '#102F53' }]}
+                    style={[
+                      styles.placeOrderBtn,
+                      {
+                        backgroundColor: isDark ? colors.primary : '#102F53',
+                        borderColor: isDark ? colors.primaryLight : undefined,
+                      },
+                    ]}
                     onPress={handlePlaceOrder}
                     disabled={isPlacingOrder}
                     activeOpacity={0.88}
+                    accessibilityRole="button"
+                    accessibilityLabel={isBangla ? 'অর্ডার প্লেস করুন' : 'Place order'}
                   >
                     {isPlacingOrder ? (
                       <>
-                        <ActivityIndicator color="#FFFFFF" size="small" style={{ marginRight: 8 }} />
-                        <Text style={styles.placeOrderBtnText}>
+                        <ActivityIndicator color={isDark ? '#0F172A' : '#FFFFFF'} size="small" style={{ marginRight: 8 }} />
+                        <Text style={[styles.placeOrderBtnText, { color: isDark ? '#0F172A' : '#FFFFFF' }]}>
                           {isBangla ? 'অর্ডার প্রসেস হচ্ছে...' : 'Processing Order...'}
                         </Text>
                       </>
                     ) : (
                       <>
-                        <Ionicons name="lock-closed" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
-                        <Text style={styles.placeOrderBtnText}>
+                        <Ionicons name="lock-closed" size={18} color={isDark ? '#0F172A' : '#FFFFFF'} style={{ marginRight: 8 }} />
+                        <Text style={[styles.placeOrderBtnText, { color: isDark ? '#0F172A' : '#FFFFFF' }]}>
                           {isBangla ? 'অর্ডার প্লেস করুন (PLACE ORDER)' : 'PLACE ORDER'}
                         </Text>
                       </>

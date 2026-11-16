@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -176,6 +176,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [newPass, setNewPass] = useState('');
   const [confirmPass, setConfirmPass] = useState('');
   const [isChangingPass, setIsChangingPass] = useState(false);
+  const [showCurrentPass, setShowCurrentPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
+
+  // Focus Chaining Refs
+  const tabNewPassRef = useRef<React.ElementRef<typeof TextInput>>(null);
+  const tabConfirmPassRef = useRef<React.ElementRef<typeof TextInput>>(null);
+  const modalNewPassRef = useRef<React.ElementRef<typeof TextInput>>(null);
+  const modalConfirmPassRef = useRef<React.ElementRef<typeof TextInput>>(null);
 
   // Video Streaming Preference (Section 26 Spec)
   const [videoQuality, setVideoQuality] = useState<'Auto' | '1080p' | '720p' | '480p'>('Auto');
@@ -2249,15 +2258,17 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
                   {/* Save Changes CTA */}
                   <TouchableOpacity
-                    style={[styles.saveChangesBtn, { backgroundColor: '#102F53' }]}
+                    style={[styles.saveChangesBtn, { backgroundColor: isDark ? colors.primary : '#102F53' }]}
                     onPress={handleSaveProfile}
                     disabled={isSavingProfile}
                     activeOpacity={0.88}
+                    accessibilityRole="button"
+                    accessibilityLabel="Save profile changes"
                   >
                     {isSavingProfile ? (
-                      <ActivityIndicator size="small" color="#FFFFFF" />
+                      <ActivityIndicator size="small" color={isDark ? '#0F172A' : '#FFFFFF'} />
                     ) : (
-                      <Text style={styles.saveChangesBtnText}>SAVE CHANGES</Text>
+                      <Text style={[styles.saveChangesBtnText, { color: isDark ? '#0F172A' : '#FFFFFF' }]}>SAVE CHANGES</Text>
                     )}
                   </TouchableOpacity>
                 </View>
@@ -2306,24 +2317,75 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               {settingsActiveTab === 'password' && (
                 <View style={{ paddingVertical: 10 }}>
                   <Text style={[styles.inputLabel, { color: colors.text }]}>Old Password</Text>
-                  <TextInput
-                    style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
-                    value={currentPass}
-                    onChangeText={setCurrentPass}
-                    secureTextEntry
-                    placeholder="Enter current password"
-                    placeholderTextColor={colors.textMuted}
-                  />
+                  <View style={[styles.passwordInputRow, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+                    <TextInput
+                      style={[styles.passwordInputFlex, { color: colors.text }]}
+                      value={currentPass}
+                      onChangeText={setCurrentPass}
+                      secureTextEntry={!showCurrentPass}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      returnKeyType="next"
+                      onSubmitEditing={() => tabNewPassRef.current?.focus()}
+                      blurOnSubmit={false}
+                      placeholder="Enter current password"
+                      placeholderTextColor={colors.textMuted}
+                      accessibilityLabel="Current password"
+                    />
+                    <TouchableOpacity
+                      style={styles.eyeToggleBtn}
+                      onPress={() => {
+                        triggerHaptic('light');
+                        setShowCurrentPass(!showCurrentPass);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={showCurrentPass ? 'Hide current password' : 'Show current password'}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Ionicons
+                        name={showCurrentPass ? 'eye-off-outline' : 'eye-outline'}
+                        size={18}
+                        color={colors.textMuted}
+                      />
+                    </TouchableOpacity>
+                  </View>
 
                   <Text style={[styles.inputLabel, { color: colors.text, marginTop: 12 }]}>New Password * (Min 12 Chars)</Text>
-                  <TextInput
-                    style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
-                    value={newPass}
-                    onChangeText={setNewPass}
-                    secureTextEntry
-                    placeholder="Enter new password (min 12 chars)"
-                    placeholderTextColor={colors.textMuted}
-                  />
+                  <View style={[styles.passwordInputRow, { backgroundColor: colors.surfaceSubtle, borderColor: newPass.length > 0 && newPass.length < 12 ? colors.danger : colors.border }]}>
+                    <TextInput
+                      ref={tabNewPassRef}
+                      style={[styles.passwordInputFlex, { color: colors.text }]}
+                      value={newPass}
+                      onChangeText={setNewPass}
+                      secureTextEntry={!showNewPass}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      autoComplete="new-password"
+                      textContentType="newPassword"
+                      returnKeyType="next"
+                      onSubmitEditing={() => tabConfirmPassRef.current?.focus()}
+                      blurOnSubmit={false}
+                      placeholder="Enter new password (min 12 chars)"
+                      placeholderTextColor={colors.textMuted}
+                      accessibilityLabel="New password"
+                    />
+                    <TouchableOpacity
+                      style={styles.eyeToggleBtn}
+                      onPress={() => {
+                        triggerHaptic('light');
+                        setShowNewPass(!showNewPass);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={showNewPass ? 'Hide new password' : 'Show new password'}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Ionicons
+                        name={showNewPass ? 'eye-off-outline' : 'eye-outline'}
+                        size={18}
+                        color={colors.textMuted}
+                      />
+                    </TouchableOpacity>
+                  </View>
                   {/* Official Password Hint from thrivingskill.com / WordPress */}
                   <View style={[styles.siteHintBox, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
                     <Ionicons name="information-circle" size={16} color={colors.primary} style={{ marginTop: 1 }} />
@@ -2334,25 +2396,56 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   </View>
 
                   <Text style={[styles.inputLabel, { color: colors.text, marginTop: 12 }]}>Confirm New Password</Text>
-                  <TextInput
-                    style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
-                    value={confirmPass}
-                    onChangeText={setConfirmPass}
-                    secureTextEntry
-                    placeholder="Confirm new password"
-                    placeholderTextColor={colors.textMuted}
-                  />
+                  <View style={[styles.passwordInputRow, { backgroundColor: colors.surfaceSubtle, borderColor: confirmPass.length > 0 && confirmPass !== newPass ? colors.danger : colors.border }]}>
+                    <TextInput
+                      ref={tabConfirmPassRef}
+                      style={[styles.passwordInputFlex, { color: colors.text }]}
+                      value={confirmPass}
+                      onChangeText={setConfirmPass}
+                      secureTextEntry={!showConfirmPass}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      returnKeyType="done"
+                      placeholder="Confirm new password"
+                      placeholderTextColor={colors.textMuted}
+                      accessibilityLabel="Confirm new password"
+                    />
+                    <TouchableOpacity
+                      style={styles.eyeToggleBtn}
+                      onPress={() => {
+                        triggerHaptic('light');
+                        setShowConfirmPass(!showConfirmPass);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={showConfirmPass ? 'Hide confirm password' : 'Show confirm password'}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Ionicons
+                        name={showConfirmPass ? 'eye-off-outline' : 'eye-outline'}
+                        size={18}
+                        color={colors.textMuted}
+                      />
+                    </TouchableOpacity>
+                  </View>
 
                   <TouchableOpacity
-                    style={[styles.saveChangesBtn, { backgroundColor: '#102F53', marginTop: 18 }]}
+                    style={[
+                      styles.saveChangesBtn,
+                      {
+                        backgroundColor: isDark ? colors.primary : '#102F53',
+                        marginTop: 18,
+                      },
+                    ]}
                     onPress={handleChangePassword}
                     disabled={isChangingPass}
                     activeOpacity={0.88}
+                    accessibilityRole="button"
+                    accessibilityLabel="Save password changes"
                   >
                     {isChangingPass ? (
-                      <ActivityIndicator size="small" color="#FFFFFF" />
+                      <ActivityIndicator size="small" color={isDark ? '#0F172A' : '#FFFFFF'} />
                     ) : (
-                      <Text style={styles.saveChangesBtnText}>SAVE CHANGES</Text>
+                      <Text style={[styles.saveChangesBtnText, { color: isDark ? '#0F172A' : '#FFFFFF' }]}>SAVE CHANGES</Text>
                     )}
                   </TouchableOpacity>
                 </View>
@@ -2450,35 +2543,79 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 <Text style={[styles.inputLabel, { color: colors.text }]}>
                   {isBangla ? 'বর্তমান পাসওয়ার্ড' : 'Current Password'}
                 </Text>
-                <TextInput
-                  style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
-                  value={currentPass}
-                  onChangeText={setCurrentPass}
-                  secureTextEntry
-                  placeholder="••••••••"
-                  placeholderTextColor={colors.textMuted}
-                />
+                <View style={[styles.passwordInputRow, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+                  <TextInput
+                    style={[styles.passwordInputFlex, { color: colors.text }]}
+                    value={currentPass}
+                    onChangeText={setCurrentPass}
+                    secureTextEntry={!showCurrentPass}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    returnKeyType="next"
+                    onSubmitEditing={() => modalNewPassRef.current?.focus()}
+                    blurOnSubmit={false}
+                    placeholder="••••••••"
+                    placeholderTextColor={colors.textMuted}
+                    accessibilityLabel={isBangla ? 'বর্তমান পাসওয়ার্ড' : 'Current password'}
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeToggleBtn}
+                    onPress={() => {
+                      triggerHaptic('light');
+                      setShowCurrentPass(!showCurrentPass);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={showCurrentPass ? 'Hide current password' : 'Show current password'}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Ionicons
+                      name={showCurrentPass ? 'eye-off-outline' : 'eye-outline'}
+                      size={18}
+                      color={colors.textMuted}
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
 
               <View>
                 <Text style={[styles.inputLabel, { color: colors.text }]}>
                   {isBangla ? 'নতুন পাসওয়ার্ড (কমপক্ষে ১২ অক্ষর)' : 'New Password (min 12 chars)'}
                 </Text>
-                <TextInput
-                  style={[
-                    styles.modalInput,
-                    {
-                      backgroundColor: colors.surfaceSubtle,
-                      color: colors.text,
-                      borderColor: newPass.length > 0 && newPass.length < 12 ? colors.danger : colors.border,
-                    },
-                  ]}
-                  value={newPass}
-                  onChangeText={setNewPass}
-                  secureTextEntry
-                  placeholder="••••••••••••"
-                  placeholderTextColor={colors.textMuted}
-                />
+                <View style={[styles.passwordInputRow, { backgroundColor: colors.surfaceSubtle, borderColor: newPass.length > 0 && newPass.length < 12 ? colors.danger : colors.border }]}>
+                  <TextInput
+                    ref={modalNewPassRef}
+                    style={[styles.passwordInputFlex, { color: colors.text }]}
+                    value={newPass}
+                    onChangeText={setNewPass}
+                    secureTextEntry={!showNewPass}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    autoComplete="new-password"
+                    textContentType="newPassword"
+                    returnKeyType="next"
+                    onSubmitEditing={() => modalConfirmPassRef.current?.focus()}
+                    blurOnSubmit={false}
+                    placeholder="••••••••••••"
+                    placeholderTextColor={colors.textMuted}
+                    accessibilityLabel={isBangla ? 'নতুন পাসওয়ার্ড' : 'New password'}
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeToggleBtn}
+                    onPress={() => {
+                      triggerHaptic('light');
+                      setShowNewPass(!showNewPass);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={showNewPass ? 'Hide new password' : 'Show new password'}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Ionicons
+                      name={showNewPass ? 'eye-off-outline' : 'eye-outline'}
+                      size={18}
+                      color={colors.textMuted}
+                    />
+                  </TouchableOpacity>
+                </View>
                 {newPass.length > 0 && newPass.length < 12 && (
                   <Text style={{ fontSize: 11, color: colors.danger, marginTop: 4, fontWeight: '600' }}>
                     {isBangla ? 'পাসওয়ার্ড কমপক্ষে ১২ অক্ষরের হতে হবে।' : 'Password should be at least 12 characters long.'}
@@ -2498,21 +2635,37 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 <Text style={[styles.inputLabel, { color: colors.text }]}>
                   {isBangla ? 'পাসওয়ার্ড নিশ্চিত করুন' : 'Confirm New Password'}
                 </Text>
-                <TextInput
-                  style={[
-                    styles.modalInput,
-                    {
-                      backgroundColor: colors.surfaceSubtle,
-                      color: colors.text,
-                      borderColor: confirmPass.length > 0 && confirmPass !== newPass ? colors.danger : colors.border,
-                    },
-                  ]}
-                  value={confirmPass}
-                  onChangeText={setConfirmPass}
-                  secureTextEntry
-                  placeholder="••••••••"
-                  placeholderTextColor={colors.textMuted}
-                />
+                <View style={[styles.passwordInputRow, { backgroundColor: colors.surfaceSubtle, borderColor: confirmPass.length > 0 && confirmPass !== newPass ? colors.danger : colors.border }]}>
+                  <TextInput
+                    ref={modalConfirmPassRef}
+                    style={[styles.passwordInputFlex, { color: colors.text }]}
+                    value={confirmPass}
+                    onChangeText={setConfirmPass}
+                    secureTextEntry={!showConfirmPass}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    returnKeyType="done"
+                    placeholder="••••••••"
+                    placeholderTextColor={colors.textMuted}
+                    accessibilityLabel={isBangla ? 'পাসওয়ার্ড নিশ্চিত করুন' : 'Confirm new password'}
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeToggleBtn}
+                    onPress={() => {
+                      triggerHaptic('light');
+                      setShowConfirmPass(!showConfirmPass);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={showConfirmPass ? 'Hide confirm password' : 'Show confirm password'}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Ionicons
+                      name={showConfirmPass ? 'eye-off-outline' : 'eye-outline'}
+                      size={18}
+                      color={colors.textMuted}
+                    />
+                  </TouchableOpacity>
+                </View>
                 {confirmPass.length > 0 && confirmPass !== newPass && (
                   <Text style={{ fontSize: 11, color: colors.danger, marginTop: 4, fontWeight: '600' }}>
                     {isBangla ? 'পাসওয়ার্ড মেলেনি।' : 'Passwords do not match.'}
@@ -3127,6 +3280,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
+  },
+  passwordInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+  },
+  passwordInputFlex: {
+    flex: 1,
+    paddingVertical: 10,
+    fontSize: 14,
+  },
+  eyeToggleBtn: {
+    padding: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modalActionRow: {
     flexDirection: 'row',
