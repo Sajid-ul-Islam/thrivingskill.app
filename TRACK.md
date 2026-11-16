@@ -77,5 +77,5 @@ gantt
 - [x] **CR-01: Behavior-Based Course Recommendation Engine**
 - [x] **CR-02: Mandatory Course Review Gate for Certificate Unlock**
 - [x] **CR-03: Continuous Video Auto-Play (5-Second Countdown)**
-- [x] **CR-04: Mobile Number + SMS OTP Authentication**
+- [x] **CR-04: Native LearnPress JWT Authentication**
 - [x] **CR-05: Authenticated Learner Profile & Learning Analytics Dashboard**
