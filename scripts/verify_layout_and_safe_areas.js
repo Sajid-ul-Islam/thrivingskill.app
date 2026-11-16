@@ -202,6 +202,48 @@ check('Floating badges have zIndex layering and flex rows have shrink/wrap guard
   assert(profCode.includes('flexShrink: 1') && profCode.includes('flexShrink: 0'), 'ProfileScreen nameRow missing shrink protection');
 });
 
+// 13. Comprehensive Keyboard Avoidance, Translucent Status Bar, and Tap Persistence across all Input Modals
+check('All input-bearing modals and sheets have KeyboardAvoidingView, statusBarTranslucent, and keyboardShouldPersistTaps', () => {
+  const paymentCode = fs.readFileSync('src/components/modals/PaymentModal.tsx', 'utf8');
+  assert(paymentCode.includes("statusBarTranslucent={true}"), 'PaymentModal missing statusBarTranslucent');
+  assert(paymentCode.includes("behavior={Platform.OS === 'ios' ? 'padding' : 'height'}"), 'PaymentModal missing dual-platform KeyboardAvoidingView behavior');
+  assert(paymentCode.includes("keyboardVerticalOffset"), 'PaymentModal missing keyboardVerticalOffset');
+  assert(paymentCode.includes('keyboardShouldPersistTaps="handled"'), 'PaymentModal ScrollView missing keyboardShouldPersistTaps');
+
+  const qnaCode = fs.readFileSync('src/components/player/CourseQnATab.tsx', 'utf8');
+  assert(qnaCode.includes("statusBarTranslucent={true}"), 'CourseQnATab Ask Modal missing statusBarTranslucent');
+  assert(qnaCode.includes("behavior={Platform.OS === 'ios' ? 'padding' : 'height'}"), 'CourseQnATab missing KeyboardAvoidingView');
+  assert(qnaCode.includes('keyboardShouldPersistTaps="handled"'), 'CourseQnATab ScrollView missing keyboardShouldPersistTaps');
+
+  const courseDetailCode = fs.readFileSync('src/screens/CourseDetailScreen.tsx', 'utf8');
+  assert(courseDetailCode.includes("statusBarTranslucent={true}"), 'CourseDetailScreen Write Review Modal missing statusBarTranslucent');
+  assert(courseDetailCode.includes("behavior={Platform.OS === 'ios' ? 'padding' : 'height'}"), 'CourseDetailScreen Review Modal missing KeyboardAvoidingView');
+  assert(courseDetailCode.includes('keyboardShouldPersistTaps="handled"'), 'CourseDetailScreen Review ScrollView missing keyboardShouldPersistTaps');
+
+  const profileCode = fs.readFileSync('src/screens/ProfileScreen.tsx', 'utf8');
+  assert(profileCode.includes("changePasswordModalVisible"), 'ProfileScreen missing changePasswordModalVisible');
+  assert(profileCode.includes("keyboardShouldPersistTaps=\"handled\""), 'ProfileScreen modals missing keyboardShouldPersistTaps');
+
+  const quickNoteCode = fs.readFileSync('src/components/player/QuickNoteBottomSheet.tsx', 'utf8');
+  assert(quickNoteCode.includes("behavior={Platform.OS === 'ios' ? 'padding' : 'height'}"), 'QuickNoteBottomSheet missing Android keyboard avoiding behavior');
+
+  const corpCode = fs.readFileSync('src/components/modals/CorporateInquiryModal.tsx', 'utf8');
+  assert(corpCode.includes("statusBarTranslucent={true}"), 'CorporateInquiryModal missing statusBarTranslucent');
+  assert(corpCode.includes("keyboardVerticalOffset"), 'CorporateInquiryModal missing keyboardVerticalOffset');
+
+  const notesCode = fs.readFileSync('src/components/modals/NotesModal.tsx', 'utf8');
+  assert(notesCode.includes("statusBarTranslucent={true}"), 'NotesModal missing statusBarTranslucent');
+  assert(notesCode.includes("keyboardVerticalOffset"), 'NotesModal missing keyboardVerticalOffset');
+
+  const reviewCode = fs.readFileSync('src/components/modals/MandatoryReviewModal.tsx', 'utf8');
+  assert(reviewCode.includes("statusBarTranslucent={true}"), 'MandatoryReviewModal missing statusBarTranslucent');
+  assert(reviewCode.includes("keyboardVerticalOffset"), 'MandatoryReviewModal missing keyboardVerticalOffset');
+
+  const localSearchCode = fs.readFileSync('src/components/modals/LocalSearchModal.tsx', 'utf8');
+  assert(localSearchCode.includes("statusBarTranslucent={true}"), 'LocalSearchModal missing statusBarTranslucent');
+  assert(localSearchCode.includes("behavior={Platform.OS === 'ios' ? 'padding' : 'height'}"), 'LocalSearchModal missing dual-platform behavior');
+});
+
 console.log('\n====================================================');
 console.log(`TOTAL AUDIT CHECKS: ${passCount + failCount} | PASSED: ${passCount} | FAILED: ${failCount}`);
 console.log('====================================================');
