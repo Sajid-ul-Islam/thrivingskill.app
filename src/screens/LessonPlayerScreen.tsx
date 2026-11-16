@@ -11,6 +11,8 @@ import {
   Dimensions,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  AppState,
+  AppStateStatus,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -33,6 +35,8 @@ import {
   DownloadQualityModal,
   QuickNoteBottomSheet,
   PiPFloatingPlayer,
+  NativeMedia3Player,
+  NativeMedia3PlayerRef,
 } from '../components/player';
 import { SpringPressable, StateView } from '../components/common';
 import { useAuth } from '../context/AuthContext';
@@ -41,6 +45,7 @@ import { useGamification } from '../context/GamificationContext';
 import { useFeedback } from '../context/FeedbackContext';
 import { triggerHaptic } from '../utils/haptics';
 import { resolveLessonVideoData } from '../data/lessonVideosRegistry';
+import { isSystemPiPSupported, isBackgroundAudioSupported } from '../utils/pipManager';
 import { OfflineManager } from '../services/offline/offlineManager';
 import { SpacedRepetitionModal } from '../components/modals/SpacedRepetitionModal';
 import { LessonsService, LessonDetail } from '../services/api/lessonsService';
@@ -95,7 +100,9 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [isScreenLocked, setIsScreenLocked] = useState<boolean>(false);
   const [isPiPActive, setIsPiPActive] = useState<boolean>(false);
+  const [isSystemPiPActive, setIsSystemPiPActive] = useState<boolean>(false);
   const [isQuickNoteOpen, setIsQuickNoteOpen] = useState<boolean>(false);
+  const nativePlayerRef = useRef<NativeMedia3PlayerRef | null>(null);
 
   // Quality & Download states
   const [streamQuality, setStreamQuality] = useState<string>('720p HD');
@@ -298,10 +305,43 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     };
   }, [isPlaying, currentLesson?.id, course?.id, autoplayCountdown, totalLessonSeconds, currentLessonIndex, allLessons.length, canPlayVideo]);
 
+  // System lifecycle management for Background Audio & PiP
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'background') {
+        if (!isCommuteMode && !isPiPActive && !isSystemPiPActive) {
+          if (course && currentLesson) {
+            recordWatchPosition(course.id, currentLesson.id, currentPosRef.current);
+          }
+        }
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [course, currentLesson, isCommuteMode, isPiPActive, isSystemPiPActive, recordWatchPosition]);
+
+  const handleTogglePlay = () => {
+    triggerHaptic('light');
+    const nextPlaying = !isPlaying;
+    setIsPlaying(nextPlaying);
+    if (nativePlayerRef.current) {
+      if (nextPlaying) {
+        nativePlayerRef.current.play();
+      } else {
+        nativePlayerRef.current.pause();
+      }
+    }
+  };
+
   const handleRewind = (sec: number = 10) => {
     const next = Math.max(0, currentPosRef.current - sec);
     currentPosRef.current = next;
     setCurrentPositionSeconds(next);
+    if (nativePlayerRef.current) {
+      nativePlayerRef.current.seekTo(next);
+    }
     if (course && currentLesson) recordWatchPosition(course.id, currentLesson.id, next);
   };
 
@@ -309,6 +349,9 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     const next = currentPosRef.current + sec;
     currentPosRef.current = next;
     setCurrentPositionSeconds(next);
+    if (nativePlayerRef.current) {
+      nativePlayerRef.current.seekTo(next);
+    }
     if (course && currentLesson) recordWatchPosition(course.id, currentLesson.id, next);
   };
 
@@ -316,7 +359,34 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     const next = Math.max(0, Math.min(sec, totalLessonSeconds));
     currentPosRef.current = next;
     setCurrentPositionSeconds(next);
+    if (nativePlayerRef.current) {
+      nativePlayerRef.current.seekTo(next);
+    }
     if (course && currentLesson) recordWatchPosition(course.id, currentLesson.id, next);
+  };
+
+  const handleTriggerPiP = async () => {
+    triggerHaptic('medium');
+    if (isDirectStream && nativePlayerRef.current) {
+      try {
+        await nativePlayerRef.current.startPictureInPicture();
+        setIsSystemPiPActive(true);
+        showToast({
+          message: isBangla ? 'পিকচার-ইন-পিকচার (ভাসমান উইন্ডো) সক্রিয়' : 'Picture-in-Picture window activated',
+          type: 'success',
+        });
+        return;
+      } catch (err) {
+        console.warn('Native PiP could not start', err);
+      }
+    }
+
+    // Fallback: in-app floating player
+    setIsPiPActive(true);
+    showToast({
+      message: isBangla ? 'ইন-অ্যাপ ভাসমান প্লেয়ার চালু হয়েছে' : 'In-App Floating Player activated',
+      type: 'info',
+    });
   };
 
   const formatSeconds = (sec: number): string => {
@@ -564,6 +634,12 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     (rawContent && rawContent.match(/https?:\/\/[^\s"'<>]*zoom\.us\/[^\s"'<>]*/i));
   const zoomMeetingUrl = zoomMatch ? zoomMatch[0].replace(/&amp;/g, '&') : null;
 
+  // Determine whether video can be played via hardware-accelerated NativeMedia3Player
+  const isDirectStream = !!(
+    activeVideoUrl &&
+    activeVideoUrl.match(/\.(mp4|m3u8|mpd|webm|aac|mp3|m4a)($|\?)/i)
+  );
+
   // Android Media3 Jetpack architecture with Adaptive Bitrate Streaming (HLS/DASH)
   const buildVideoHtml = () => {
     let embedMarkup = '';
@@ -669,7 +745,14 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               ]}
               onPress={() => {
                 triggerHaptic('light');
-                setIsCommuteMode(!isCommuteMode);
+                const nextMode = !isCommuteMode;
+                setIsCommuteMode(nextMode);
+                showToast({
+                  message: nextMode
+                    ? (isBangla ? 'ব্যাকগ্রাউন্ড অডিও মোড সক্রিয় (স্ক্রিন বন্ধ করেও চলবে)' : 'Background Audio Mode active (listens with screen locked)')
+                    : (isBangla ? 'স্ট্যান্ডার্ড প্লেয়ার সক্রিয়' : 'Standard Player active'),
+                  type: 'info',
+                });
               }}
               accessibilityRole="button"
               accessibilityLabel="Toggle commute background audio mode"
@@ -854,7 +937,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.commuteMainPlayBtn, { backgroundColor: '#FFB606' }]}
-                onPress={() => setIsPlaying(!isPlaying)}
+                onPress={handleTogglePlay}
               >
                 <Ionicons name={isPlaying ? 'pause' : 'play'} size={26} color="#102F53" />
               </TouchableOpacity>
@@ -919,6 +1002,30 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                 <ActivityIndicator size="large" color="#FFB606" />
                 <Text style={styles.loadingVideoText}>Loading video stream (Media3)...</Text>
               </View>
+            ) : isDirectStream && activeVideoUrl ? (
+              <NativeMedia3Player
+                ref={nativePlayerRef}
+                sourceUrl={activeVideoUrl}
+                title={currentLesson.title}
+                courseTitle={course?.title}
+                playbackSpeed={parseFloat(playbackSpeed) || 1.0}
+                isCommuteMode={isCommuteMode}
+                onProgress={(curr) => {
+                  const sec = Math.floor(curr);
+                  currentPosRef.current = sec;
+                  setCurrentPositionSeconds(sec);
+                }}
+                onPlayStateChange={(playing) => {
+                  setIsPlaying(playing);
+                }}
+                onEnd={handleMarkComplete}
+                onPictureInPictureStart={() => {
+                  setIsSystemPiPActive(true);
+                }}
+                onPictureInPictureStop={() => {
+                  setIsSystemPiPActive(false);
+                }}
+              />
             ) : (
               <WebView
                 source={{ html: buildVideoHtml(), baseUrl: 'https://thrivingskill.com' }}
@@ -958,7 +1065,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
             {/* 2. ANDROID-SPECIFIC GESTURES & CONTROLS OVERLAY */}
             <VideoPlayerGestureOverlay
               isPlaying={isPlaying}
-              onTogglePlay={() => setIsPlaying(!isPlaying)}
+              onTogglePlay={handleTogglePlay}
               currentPositionSeconds={currentPositionSeconds}
               totalDurationSeconds={totalLessonSeconds}
               onSeekTo={handleSeekTo}
@@ -973,10 +1080,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                 triggerHaptic('medium');
                 setIsFullscreen(!isFullscreen);
               }}
-              onTriggerPiP={() => {
-                triggerHaptic('light');
-                setIsPiPActive(true);
-              }}
+              onTriggerPiP={handleTriggerPiP}
               title={currentLesson.title}
               subtitle={currentItem?.moduleTitle}
               isLocked={isScreenLocked}
@@ -1456,7 +1560,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
       <PiPFloatingPlayer
         visible={isPiPActive}
         isPlaying={isPlaying}
-        onTogglePlay={() => setIsPlaying(!isPlaying)}
+        onTogglePlay={handleTogglePlay}
         onMaximize={() => setIsPiPActive(false)}
         onClose={() => setIsPiPActive(false)}
         title={currentLesson.title}

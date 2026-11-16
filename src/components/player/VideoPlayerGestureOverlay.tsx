@@ -374,18 +374,18 @@ export const VideoPlayerGestureOverlay: React.FC<VideoPlayerGestureOverlayProps>
               </View>
 
               <View style={styles.topActionsRow}>
-                {/* PiP Button */}
+                {/* PiP Floating Window Button */}
                 <TouchableOpacity
                   style={styles.topIconBtn}
                   onPress={() => {
-                    triggerHaptic('light');
+                    triggerHaptic('medium');
                     onTriggerPiP();
                   }}
                   accessibilityRole="button"
-                  accessibilityLabel="Picture-in-picture mode"
+                  accessibilityLabel="Picture-in-picture floating window"
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Ionicons name="copy-outline" size={18} color="#FFFFFF" />
+                  <Ionicons name="albums-outline" size={18} color="#FFFFFF" />
                 </TouchableOpacity>
 
                 {/* Screen Lock Button */}
