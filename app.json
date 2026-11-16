@@ -9,7 +9,12 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.thrivingskill.app",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "audio"
+        ]
+      }
     },
     "android": {
       "package": "com.thrivingskill.app",
@@ -63,7 +68,14 @@
     "plugins": [
       "expo-font",
       "expo-status-bar",
-      "expo-splash-screen"
+      "expo-splash-screen",
+      [
+        "expo-video",
+        {
+          "supportsBackgroundPlayback": true,
+          "supportsPictureInPicture": true
+        }
+      ]
     ],
     "extra": {
       "eas": {
