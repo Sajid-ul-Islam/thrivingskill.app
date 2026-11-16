@@ -6,6 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -60,6 +62,16 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
 
   const [activeTab, setActiveTab] = useState<TabMode>('in-progress');
   const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    if (offsetY > 8 && !isScrolled) {
+      setIsScrolled(true);
+    } else if (offsetY <= 8 && isScrolled) {
+      setIsScrolled(false);
+    }
+  };
 
   const getCourseStatus = (courseId: string): 'in-progress' | 'finished' | 'passed' | 'failed' => {
     const prog = userProgress[courseId];
@@ -322,6 +334,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
       <Header
         title={isBangla ? 'আমার লার্নিং হাব' : 'My Learning Hub'}
         subtitle={isBangla ? 'স্কিল প্রগ্রেস ও পোর্টফোলিও' : 'Skill Progression & Portfolio'}
+        isScrolled={isScrolled}
         onOpenSubscription={onOpenSubscription}
         onOpenNotifications={onOpenNotifications}
         onOpenYouTube={onOpenYouTube}
@@ -329,7 +342,12 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
         onOpenSupport={onOpenSupport}
       />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
         {/* Authentic LearnPress 5 KPI Cards matching thrivingskill.com */}
         <LearnPressStatsGrid
           stats={lpStats}

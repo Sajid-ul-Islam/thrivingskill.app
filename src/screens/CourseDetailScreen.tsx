@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -23,7 +23,7 @@ import { useLearning } from '../context/LearningContext';
 import { useAuth } from '../context/AuthContext';
 import { Header } from '../components/Header';
 import { CurriculumAccordion } from '../components/CurriculumAccordion';
-import { AnimatedTabContent, SpringPressable, CircularProgressRing, StateView } from '../components/common';
+import { AnimatedTabContent, SpringPressable, CircularProgressRing, StateView, ScrollToTopPill } from '../components/common';
 import { PaymentModal } from '../components/PaymentModal';
 import { CourseQnATab } from '../components/CourseQnATab';
 import { MandatoryReviewModal } from '../components/MandatoryReviewModal';
@@ -79,6 +79,9 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
   const [reviewComment, setReviewComment] = useState('');
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [showHeaderTitle, setShowHeaderTitle] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const scrollViewRef = useRef<React.ElementRef<typeof ScrollView> | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -260,15 +263,29 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     );
   };
 
-  // Scroll-aware sticky course title in header:
-  // When the user scrolls past the main hero title (>220px),
-  // transition the header title from generic "Course Overview" to the specific course name.
+  // Multi-tier scroll dynamics:
+  // 1. Elevate header when scrolled (>8px)
+  // 2. Transition header title to course name when hero scrolls out (>220px)
+  // 3. Reveal floating "Scroll to Top" pill on deep scroll (>480px)
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
+
+    if (offsetY > 8 && !isScrolled) {
+      setIsScrolled(true);
+    } else if (offsetY <= 8 && isScrolled) {
+      setIsScrolled(false);
+    }
+
     if (offsetY > 220 && !showHeaderTitle) {
       setShowHeaderTitle(true);
     } else if (offsetY <= 220 && showHeaderTitle) {
       setShowHeaderTitle(false);
+    }
+
+    if (offsetY > 480 && !showScrollTop) {
+      setShowScrollTop(true);
+    } else if (offsetY <= 480 && showScrollTop) {
+      setShowScrollTop(false);
     }
   };
 
@@ -277,6 +294,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
       <Header
         showBack
         onBack={onBack}
+        isScrolled={isScrolled}
         title={showHeaderTitle ? course.title : (isBangla ? 'কোর্স বিবরণ' : 'Course Overview')}
         subtitle={showHeaderTitle ? (isBangla ? 'কোর্স বিবরণ' : 'Course Overview') : undefined}
         rightAction={
@@ -307,6 +325,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
       />
 
       <ScrollView
+        ref={scrollViewRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 12) + 100 }]}
         onScroll={handleScroll}
@@ -1178,6 +1197,13 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
           </View>
         </View>
       </Modal>
+
+      {/* Dynamic Scroll to Top Quick Pill */}
+      <ScrollToTopPill
+        visible={showScrollTop}
+        onPress={() => scrollViewRef.current?.scrollTo({ y: 0, animated: true })}
+        bottomOffset={Math.max(insets.bottom, 12) + 84}
+      />
     </View>
   );
 };

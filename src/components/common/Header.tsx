@@ -31,6 +31,7 @@ interface HeaderProps {
   onOpenYouTube?: () => void;
   onOpenSearch?: () => void;
   showSearch?: boolean;
+  isScrolled?: boolean;
   onOpenUpdate?: () => void;
   onOpenDrawer?: () => void;
   onOpenOfflineContent?: () => void;
@@ -46,6 +47,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenNotifications,
   onOpenSearch,
   showSearch = true,
+  isScrolled = false,
   onOpenOfflineContent,
 }) => {
   const { colors, isDark } = useTheme();
@@ -94,7 +96,12 @@ export const Header: React.FC<HeaderProps> = ({
           styles.container,
           {
             backgroundColor: colors.surface,
-            borderBottomColor: colors.border,
+            borderBottomColor: isScrolled ? colors.border : 'transparent',
+            elevation: isScrolled ? 3 : 0,
+            shadowColor: '#000000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: isScrolled ? (isDark ? 0.25 : 0.06) : 0,
+            shadowRadius: 4,
             paddingTop: topInset + 6,
           },
         ]}

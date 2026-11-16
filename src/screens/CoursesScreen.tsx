@@ -20,7 +20,7 @@ import { Header } from '../components/Header';
 import { CategoryPills } from '../components/CategoryPills';
 import { CourseCard } from '../components/CourseCard';
 import { CourseCardSkeleton } from '../components/SkeletonLoader';
-import { StateView } from '../components/common';
+import { StateView, ScrollToTopPill } from '../components/common';
 import { triggerHaptic } from '../utils/haptics';
 import { shape } from '../theme/shapes';
 import { MIN_TOUCH_TARGET } from '../theme/typography';
@@ -66,18 +66,36 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   const [selectedSort, setSelectedSort] = useState<SortOption>('popular');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showHeaderSearch, setShowHeaderSearch] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   const scrollViewRef = useRef<React.ElementRef<typeof ScrollView> | null>(null);
   const searchInputRef = useRef<React.ElementRef<typeof TextInput> | null>(null);
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
+
+    // 1. Dynamic Header Elevation:
+    if (offsetY > 8 && !isScrolled) {
+      setIsScrolled(true);
+    } else if (offsetY <= 8 && isScrolled) {
+      setIsScrolled(false);
+    }
+
+    // 2. Dynamic Sticky Search in Header:
     // When the inline search bar scrolls off the viewport (>70px),
     // reveal the search icon in the header so search is never lost.
     if (offsetY > 70 && !showHeaderSearch) {
       setShowHeaderSearch(true);
     } else if (offsetY <= 70 && showHeaderSearch) {
       setShowHeaderSearch(false);
+    }
+
+    // 3. Dynamic "Back to Top" Floating Pill:
+    if (offsetY > 450 && !showScrollTop) {
+      setShowScrollTop(true);
+    } else if (offsetY <= 450 && showScrollTop) {
+      setShowScrollTop(false);
     }
   };
 
@@ -143,6 +161,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
       <Header
         title={isBangla ? 'কোর্স ক্যাটালগ' : 'Thriving Skills Catalog'}
         subtitle={isBangla ? '৩০০+ প্রিমিয়াম কোর্স ও স্পেশাল বান্ডেল' : '300+ Premium Courses & Special Bundles'}
+        isScrolled={isScrolled}
         showSearch={showHeaderSearch}
         onOpenSearch={handleHeaderSearchPress}
         onOpenSubscription={onOpenSubscription}
@@ -160,7 +179,10 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
         refreshControl={
           <RefreshControl
             refreshing={isLoadingCourses}
-            onRefresh={refreshCourses}
+            onRefresh={() => {
+              triggerHaptic('light');
+              refreshCourses();
+            }}
             tintColor={colors.primary}
             colors={[colors.primary]}
           />
@@ -543,6 +565,13 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
           )}
         </View>
       </ScrollView>
+
+      {/* Dynamic Scroll to Top Quick Pill */}
+      <ScrollToTopPill
+        visible={showScrollTop}
+        onPress={() => scrollViewRef.current?.scrollTo({ y: 0, animated: true })}
+        bottomOffset={Math.max(insets.bottom, 16) + 72}
+      />
     </View>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Linking } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Linking, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
@@ -38,6 +38,16 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
 
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [refreshing, setRefreshing] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    if (offsetY > 8 && !isScrolled) {
+      setIsScrolled(true);
+    } else if (offsetY <= 8 && isScrolled) {
+      setIsScrolled(false);
+    }
+  };
 
   const handleRefresh = async () => {
     setRefreshing(true);
@@ -87,6 +97,7 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
       <Header
         title={isBangla ? 'লাইভ ক্লাস ও সামিট' : 'Live Class & Summits'}
         subtitle={isBangla ? 'সরাসরি লাইভ ক্লাস ও ন্যাশনাল স্কিল সামিট' : 'Upcoming live sessions & skill summits'}
+        isScrolled={isScrolled}
         onOpenSubscription={onOpenSubscription}
         onOpenNotifications={onOpenNotifications}
         onOpenDrawer={onOpenDrawer}
@@ -95,6 +106,8 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
 
       <ScrollView
         showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl
             refreshing={refreshing || (isLoadingCourses && workshops.length > 0)}

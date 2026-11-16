@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -26,7 +26,7 @@ import { CourseCard } from '../components/CourseCard';
 import { HeroCarousel, CarouselSlide } from '../components/HeroCarousel';
 import { QuickActionDock } from '../components/QuickActionDock';
 import { SearchSpotlightBar } from '../components/SearchSpotlightBar';
-import { CourseCardSkeleton, SpringPressable, StateView, CircularProgressRing } from '../components/common';
+import { CourseCardSkeleton, SpringPressable, StateView, CircularProgressRing, ScrollToTopPill } from '../components/common';
 import { triggerHaptic } from '../utils/haptics';
 import { useYouTube } from '../context/YouTubeContext';
 import { RootTab } from '../types';
@@ -66,6 +66,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const [aboutModalVisible, setAboutModalVisible] = useState(false);
   const [aboutInitialTab, setAboutInitialTab] = useState<AboutTabKey>('overview');
   const [showHeaderSearch, setShowHeaderSearch] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const scrollViewRef = useRef<React.ElementRef<typeof ScrollView> | null>(null);
 
   const { t, isBangla } = useLanguage();
   const { streakDays, dailyMinutesSpent, dailyGoalMinutes } = useGamification();
@@ -219,21 +222,36 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     }
   };
 
-  // Scroll-aware sticky search trigger:
-  // When the in-page SearchSpotlightBar scrolls out of the window (>140px),
-  // smoothly reveal the search button in the top header so search is never lost.
+  // Multi-tier scroll dynamics:
+  // 1. Elevate header when scrolled (>8px)
+  // 2. Reveal sticky search in header when inline spotlight scrolls out (>140px)
+  // 3. Reveal floating "Scroll to Top" pill on deep scroll (>480px)
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
+
+    if (offsetY > 8 && !isScrolled) {
+      setIsScrolled(true);
+    } else if (offsetY <= 8 && isScrolled) {
+      setIsScrolled(false);
+    }
+
     if (offsetY > 140 && !showHeaderSearch) {
       setShowHeaderSearch(true);
     } else if (offsetY <= 140 && showHeaderSearch) {
       setShowHeaderSearch(false);
+    }
+
+    if (offsetY > 480 && !showScrollTop) {
+      setShowScrollTop(true);
+    } else if (offsetY <= 480 && showScrollTop) {
+      setShowScrollTop(false);
     }
   };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
+        isScrolled={isScrolled}
         showSearch={showHeaderSearch}
         onOpenSearch={onOpenSearch}
         onOpenSubscription={onOpenSubscription}
@@ -245,6 +263,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       />
 
       <ScrollView
+        ref={scrollViewRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}
         onScroll={handleScroll}
@@ -252,7 +271,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         refreshControl={
           <RefreshControl
             refreshing={isLoadingCourses}
-            onRefresh={refreshCourses}
+            onRefresh={() => {
+              triggerHaptic('light');
+              refreshCourses();
+            }}
             tintColor={colors.primary}
             colors={[colors.primary]}
           />
@@ -803,6 +825,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         onClose={() => setAboutModalVisible(false)}
         initialTab={aboutInitialTab}
         onNavigateTab={onNavigateTab}
+      />
+
+      {/* Dynamic Scroll to Top Quick Pill */}
+      <ScrollToTopPill
+        visible={showScrollTop}
+        onPress={() => scrollViewRef.current?.scrollTo({ y: 0, animated: true })}
+        bottomOffset={Math.max(insets.bottom, 16) + 72}
       />
     </View>
   );

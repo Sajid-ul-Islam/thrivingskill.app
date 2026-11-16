@@ -15,6 +15,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -82,6 +84,16 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   } = useSaaS();
 
   const [biometricEnabled, setBiometricEnabled] = useState(true);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    if (offsetY > 8 && !isScrolled) {
+      setIsScrolled(true);
+    } else if (offsetY <= 8 && isScrolled) {
+      setIsScrolled(false);
+    }
+  };
   const [profileSection, setProfileSection] = useState<'learning' | 'settings'>('learning');
   const [portfolioTab, setPortfolioTab] = useState<LearnPressCourseFilter>('all');
   const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
@@ -420,13 +432,19 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       <Header
         title="Executive Account"
         subtitle="SaaS Profile & Preferences"
+        isScrolled={isScrolled}
         onOpenSubscription={onOpenSubscription}
         onOpenNotifications={onOpenNotifications}
         onOpenDrawer={onOpenDrawer}
         onOpenSupport={onOpenSupport}
       />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
         {/* Profile Card */}
         <View
           style={[
