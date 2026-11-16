@@ -12,7 +12,7 @@ This document provides a comprehensive inventory of all features, capabilities, 
 | **CR-01** | Behavior-Based Course Recommendation Engine | `HomeScreen.tsx`, `LearningContext.tsx` | ✅ Production Ready |
 | **CR-02** | Mandatory Review Gate for Certificates | `LessonPlayerScreen.tsx`, `MandatoryReviewModal.tsx` | ✅ Production Ready |
 | **CR-03** | Continuous Video Auto-Play (5s Countdown) | `LessonPlayerScreen.tsx`, `VideoPlayer.tsx` | ✅ Production Ready |
-| **CR-04** | Mobile Number + SMS OTP Authentication | `AuthModal.tsx`, `authService.ts` | ✅ Production Ready |
+| **CR-04** | Native LearnPress JWT Authentication | `AuthModal.tsx`, `authService.ts` | ✅ Production Ready |
 | **CR-05** | Learner Profile & Analytics Dashboard | `ProfileScreen.tsx`, `ProfileLearningAnalytics.tsx` | ✅ Production Ready |
 | **F-06** | Live LearnPress 370+ Course Catalog | `ExploreScreen.tsx`, `courseService.ts` | ✅ Production Ready |
 | **F-07** | Course Curriculum & Section Accordion | `CourseDetailScreen.tsx` | ✅ Production Ready |
@@ -53,12 +53,13 @@ This document provides a comprehensive inventory of all features, capabilities, 
   - Overlays a sleek 5-second countdown timer with an animated circular progress ring.
   - Provides instant **"Play Now"** button and **"Cancel / Pause"** button to allow students to take notes or review prior to advancing.
 
-### 4. CR-04: Mobile Number + SMS OTP Authentication
-- **Purpose**: Solves onboarding friction for mobile learners in Bangladesh who prefer mobile phone verification.
+### 4. CR-04: Native LearnPress JWT Authentication
+- **Purpose**: Direct, authentic authentication matching `https://thrivingskill.com` with zero external SMS dependencies or recurring telco charges.
 - **Workflow**:
-  - Supports standard Bangladeshi phone numbers (`+880 1X-XXXXXXXX`).
-  - Dispatches a 6-digit OTP with a 60-second cooldown timer and anti-spam rate limiting.
-  - Direct Email and Password login/registration fallback with zero dependence on unstable third-party social SDKs (Facebook/Google).
+  - Direct JWT token generation (`POST /learnpress/v1/token`) using WordPress username or email and password.
+  - In-app student registration (`POST /learnpress/v1/token/register`) creating verified student accounts directly in WordPress.
+  - Token freshness validation (`POST /learnpress/v1/token/validate`) and persistent session hydration.
+  - Native WordPress password recovery via `action=lostpassword` with deep link handling.
 
 ### 5. CR-05: Authenticated Learner Profile & Analytics Dashboard
 - **Purpose**: Transforms the profile tab into an executive command center displaying learning velocity, progress, and credentials.

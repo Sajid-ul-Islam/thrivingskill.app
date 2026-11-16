@@ -41,8 +41,8 @@ The project includes an exhaustive technical, product, and architectural specifi
    - Gated workflow intercepting 100% course completions with a required 1–5 star rating and written review before digital certificate issuance.
 3. **CR-03: Continuous Video Auto-Play**:
    - Seamless next-lesson advance with a sleek 5-second countdown banner, animated ring, and "Play Now" / "Cancel" controls.
-4. **CR-04: Mobile Number + SMS OTP Authentication**:
-   - Frictionless login and registration tailored for Bangladeshi mobile users (`+880 1X-XXXXXXXX`) with 60-second cooldown timers and direct email fallback.
+4. **CR-04: Native LearnPress JWT Authentication**:
+   - Direct, authentic session token exchange (`/learnpress/v1/token`), instant in-app student registration (`/learnpress/v1/token/register`), token validation (`/learnpress/v1/token/validate`), and native WordPress email password recovery directly tied to `https://thrivingskill.com`.
 5. **CR-05: Authenticated Learner Profile & Analytics Dashboard**:
    - Enrolled Courses shelf with active progress tracking and direct "Continue Learning" CTA.
    - Graduated Courses shelf with verified completion certificates and Gold ribbon badges.

@@ -53,10 +53,11 @@
 - [x] **CR-03: Continuous Video Auto-Play**:
   - Automatic next-lesson transition triggered on playback completion.
   - 5-second countdown overlay with "Play Now" and "Cancel / Pause" controls.
-- [x] **CR-04: Mobile Number + SMS OTP Authentication**:
-  - Bangladeshi mobile phone format validation (`+880 1X-XXXXXXXX`).
-  - 60-second countdown timer on OTP resend with anti-abuse rate limiting.
-  - Direct Email and Password authentication fallback without third-party OAuth lock-ins.
+- [x] **CR-04: Native LearnPress JWT Authentication**:
+  - Direct JWT token generation (`POST /learnpress/v1/token`) using WordPress username or email and password.
+  - In-app student registration (`POST /learnpress/v1/token/register`) directly provisioning accounts in WordPress.
+  - Token freshness validation (`POST /learnpress/v1/token/validate`) and persistent encrypted session hydration.
+  - Native WordPress password recovery via `action=lostpassword` with deep link handling.
 - [x] **CR-05: Authenticated Learner Profile & Analytics Dashboard**:
   - Active Enrolled Courses shelf with progress tracking and direct "Continue Learning" CTA.
   - Graduated Courses shelf with verified completion certificates and Gold ribbon badges.

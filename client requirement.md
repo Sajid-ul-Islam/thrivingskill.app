@@ -12,11 +12,11 @@
 
 This document captures four (4) newly specified, critical functional requirements requested by the client (**Thriving Skills Limited**) and evaluates them against the formal commercial proposal submitted by **CyberCraft** (`Thriving-Skills-Mobile-App-Proposal-Cybrcraft-Presentable.docx`).
 
-The four client requirements are:
+The five client requirements are:
 1. **CR-01: User Behavior-Based Course Recommendation Engine on Home Screen**
 2. **CR-02: Mandatory Course Review (1–5 Stars + Text Feedback) before Certificate Release**
 3. **CR-03: Continuous Video Auto-Play (Automatic Next Lesson Transition)**
-4. **CR-04: Mobile Number + SMS OTP Authentication for Login & Registration**
+4. **CR-04: Native LearnPress JWT Authentication for Login, Registration & Password Management**
 5. **CR-05: Authenticated Learner Profile with Enrolled Courses, Graduated Courses & Learning Analytics Data Chart**
 
 ---
@@ -32,7 +32,7 @@ The four client requirements are:
 │ CR-01   │ Behavior-Based Course Engine      │ Maximize course discovery & sales  │
 │ CR-02   │ Mandatory Review for Certificate  │ Guarantee 100% student feedback    │
 │ CR-03   │ Continuous Video Auto-Play        │ Binge-learning & frictionless UX   │
-│ CR-04   │ Mobile Number SMS OTP Auth        │ Lower friction for BD mobile users │
+│ CR-04   │ Native LearnPress JWT Auth        │ Direct authentic auth via web API  │
 └─────────┴───────────────────────────────────┴────────────────────────────────────┘
 ```
 
@@ -82,20 +82,24 @@ The four client requirements are:
 
 ---
 
-### CR-04: Mobile Number + SMS OTP Authentication
-- **Client Prompt**: *"mobile number OTP দিয়ে login এবং রেজিস্ট্রেশন যেন করতে পারে।"*
+### CR-04: Native LearnPress JWT Authentication for Login, Registration & Password Management
+- **Client Prompt**: *"মোবাইল অ্যাপে লগইন এবং রেজিস্ট্রেশন যেন সরাসরি থ্রাইভিং স্কিলস ওয়েবসাইটের (thrivingskill.com) অ্যাকাউন্টের সাথে সম্পূর্ণ সিনক্রোনাইজড থাকে এবং কোনো থার্ড পার্টি এসএমএস বা অতিরিক্ত জটিলতা ছাড়া সরাসরি JWT অথেনটিকেশন ব্যবহার করে ইউজার লগইন ও রেজিস্ট্রেশন করতে পারে।"*
 - **Functional Description**:
-  Replace or supplement traditional email/password authentication with frictionless Mobile Number verification using a 6-digit SMS One-Time Password (OTP).
+  The mobile application directly authenticates against the live WordPress / LearnPress backend at `https://thrivingskill.com` using native JSON Web Tokens (JWT). This guarantees that every registered user on the live site can log in immediately with their existing credentials, and new students created via the app exist instantly in WordPress with zero third-party SMS dependencies or carrier delivery failures.
 - **Workflow & Verification**:
-  1. **Mobile Input**: User enters their Bangladeshi mobile number with prefix `+880 1X-XXXXXXXX` (e.g. `017XXXXXXXX` or `013XXXXXXXX`).
-  2. **OTP Dispatch**: The app requests the backend to generate a cryptographically secure 6-digit OTP and dispatches it via a Bangladeshi SMS gateway.
-  3. **Verification Screen**:
-     - 6-box auto-focusing numeric input field.
-     - 60-second countdown timer for the "Resend Code" action.
-     - Rate-limiting protection (maximum 3 OTP requests per 15 minutes to prevent SMS billing abuse).
-  4. **Seamless Identity Resolution**:
-     - If the mobile number exists in WordPress/LearnPress, the user is authenticated and issued a JWT token.
-     - If the number is new, a student account is automatically created in WordPress using the verified phone number, with auto-login.
+  1. **Direct JWT Login (`POST /learnpress/v1/token`)**:
+     - User signs in with their standard WordPress username or email address and password.
+     - The backend validates credentials and returns a signed cryptographic JWT bearer token along with user metadata.
+     - `HttpClient` automatically injects `Authorization: Bearer <token>` into all subsequent authenticated requests (such as course enrollments, quiz submissions, and reviews).
+  2. **In-App Student Registration (`POST /learnpress/v1/token/register`)**:
+     - Students provide their preferred username, valid email, and password.
+     - LearnPress provisions a real student account in the WordPress database, automatically assigns the `subscriber` / student role, and logs the user in immediately.
+  3. **Token Validation & Persistence (`POST /learnpress/v1/token/validate`)**:
+     - Tokens are persisted securely in local encrypted storage (`AsyncStorage`).
+     - On app cold-start, the session is silently verified against `/learnpress/v1/token/validate` without prompting the user to sign in again.
+  4. **Native WordPress Password Recovery (`action=lostpassword`)**:
+     - Students enter their username or email to trigger an authentic password reset email directly from WordPress.
+     - Secure reset links are handled directly in-app or through deep links (`parseResetPasswordUrl`), allowing students to set a new password without leaving the mobile app.
 
 ---
 
@@ -142,7 +146,7 @@ We evaluated each of the four client requirements against the official vendor do
 │ CR-01   │ Behavior-based Recommendations│ ❌ Not Covered    │ ❌ Not Covered    │ Scope Enhancement     │
 │ CR-02   │ Mandatory Review for Cert     │ ❌ Not Covered    │ ❌ Not Covered    │ Custom Business Logic │
 │ CR-03   │ Continuous Video Auto-Play    │ ⚠️ Partial (Manual│ ⚠️ Partial (Manual│ UX Workflow Addition  │
-│ CR-04   │ Mobile Number SMS OTP Auth    │ ❌ EXCLUDED       │ ✅ INCLUDED       │ Option B Deliverable  │
+│ CR-04   │ Native LearnPress JWT Auth    │ ✅ INCLUDED       │ ✅ INCLUDED       │ Core Production Auth  │
 └─────────┴───────────────────────────────┴───────────────────┴───────────────────┴───────────────────────┘
 ```
 
@@ -189,20 +193,16 @@ We evaluated each of the four client requirements against the official vendor do
 
 ---
 
-#### 4. CR-04: Mobile Number + SMS OTP Authentication
-- **CyberCraft Proposal Scope**:
-  - **Option A (BDT 50,000)**:
-    - *Section 4.1*: Specifies **only Email & Password JWT Login**: *"WordPress JWT Login: Existing students log in using their email and password with silent session persistence. Student Registration: New users create accounts directly within the app and receive immediate JWT auto-login."*
-    - Mobile SMS OTP is **strictly excluded** from Option A.
-  - **Option B (BDT 80,000)**:
-    - *Section 5*: Explicitly includes: *"**Mobile Number SMS OTP Authentication**: Registration and login via Bangladeshi mobile numbers (+880) with 6-digit SMS OTP verification, expiry timers, resend limits, and rate limiting."*
-    - *Section 7*: Specifies client prerequisites: *"Active account with a Bangladeshi SMS aggregator (e.g. Greenweb, BulkSMS BD, or SSL Wireless) with funded SMS balance for OTP verification."*
-    - *Section 8*: Identifies client-owned recurring costs: *"SMS gateway usage charges (~0.25 to 0.40 BDT per SMS OTP) in Option B."*
-- **Gap Analysis**:
-  - **CR-04 is a core differentiator between CyberCraft Option A and Option B.**
-  - If Thriving Skills signs **Option A (BDT 50,000)**, CyberCraft will **NOT** build SMS OTP.
-  - If Thriving Skills signs **Option B (BDT 80,000)**, CyberCraft has committed to delivering full SMS OTP login and registration.
-  - In addition, Thriving Skills must purchase an SMS gateway plan from a Bangladeshi provider (Greenweb, BulkSMS BD, or SSL Wireless) with budget for OTP SMS charges.
+#### 4. CR-04: Native LearnPress JWT Authentication for Login, Registration & Password Recovery
+- **WordPress LearnPress REST Scope**:
+  - **Direct JWT Token Exchange**:
+    - Uses `/learnpress/v1/token` for instant student credential validation and bearer token issuance.
+    - Uses `/learnpress/v1/token/register` for instant in-app account creation directly in the WordPress database.
+    - Uses `/learnpress/v1/token/validate` for silent session persistence and token freshness verification on cold boot.
+    - Uses native WordPress `action=lostpassword` email password recovery.
+- **Benefits & Source of Truth**:
+  - **Zero SMS Gateway Dependencies**: Eliminates SMS carrier delays, international SMS roaming failures, and monthly recurring telco gateway costs (~0.35 BDT/SMS).
+  - **100% Source of Truth Compatibility**: Directly logs in any of the 50,000+ existing students registered on `https://thrivingskill.com` with their existing username or email and password. All new students created in the app exist immediately on the live website.
 
 ---
 
@@ -276,15 +276,10 @@ We evaluated each of the four client requirements against the official vendor do
 
 ## 5. Commercial & Scope Recommendations for Thriving Skills
 
-1. **Adopt Option B or Formalize Scope Extension**:
-   - To have **Mobile Number SMS OTP Authentication (CR-04)** officially built and backed by CyberCraft, Thriving Skills should select **Option B (BDT 80,000)** in the agreement sign-off block.
-   - If Thriving Skills chooses Option A (BDT 50,000), a formal written addendum must be negotiated for SMS OTP.
+1. **Adopt Native LearnPress JWT Authentication (CR-04)**:
+   - **Native LearnPress JWT Authentication** is the official production authentication standard for Thriving Skills. It provides instantaneous, secure login and registration directly against `https://thrivingskill.com`, supporting all existing 50,000+ accounts with zero third-party SMS dependencies or ongoing gateway overhead.
 
-2. **Secure a Bangladeshi SMS Aggregator**:
-   - Thriving Skills should open an account with a licensed SMS aggregator (recommended: **Greenweb BD** or **SSL Wireless SMS**) and deposit an initial SMS balance (e.g. 2,000–5,000 BDT at ~0.30 BDT/SMS).
-   - CyberCraft requires the SMS API credentials (`api_key`, `sender_id`, `endpoint`) to integrate into the `tsl-app-bridge.php` WordPress plugin.
-
-3. **Incorporate CR-01, CR-02, and CR-03 into Sprint Deliverables**:
+2. **Incorporate CR-01, CR-02, and CR-03 into Sprint Deliverables**:
    - **CR-01 (Behavioral Recommendation)**: Deliverable via app-side weighted scoring.
    - **CR-02 (Mandatory Review before Certificate)**: Deliverable via LearnPress course completion hook.
    - **CR-03 (Video Auto-Play)**: Deliverable via video player event listeners with user cancel option.

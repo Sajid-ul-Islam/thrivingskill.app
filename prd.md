@@ -56,13 +56,13 @@ The mobile app maintains bidirectional synchronization with the live WordPress/L
   2. Displays sleek 5-second countdown banner with "Play Now" and "Cancel / Pause" controls.
   3. Automatically marks lesson complete, syncs progress, and boots the next video lesson seamlessly.
 
-### CR-04: Mobile Number + SMS OTP Authentication
-* **Objective**: Minimize onboarding friction for Bangladeshi smartphone users who prefer phone numbers over email/password.
+### CR-04: Native LearnPress JWT Authentication
+* **Objective**: Secure, authentic authentication directly matching `https://thrivingskill.com` with zero external SMS dependencies or recurring telco charges.
 * **Business Logic**:
-  1. Supports Bangladeshi mobile numbers (`+880 1X-XXXXXXXX`).
-  2. 6-digit secure OTP dispatch with 60-second cooldown timer on resend.
-  3. Rate limiting (max 3 OTP requests per 15 minutes) to protect against SMS gateway abuse.
-  4. Fallback to direct Email and Password authentication with zero social SDK lock-in.
+  1. Direct JWT token generation (`POST /learnpress/v1/token`) using WordPress username or email and password.
+  2. In-app student registration (`POST /learnpress/v1/token/register`) instantly provisioning accounts in WordPress.
+  3. Token freshness validation (`POST /learnpress/v1/token/validate`) and persistent encrypted session hydration.
+  4. Native WordPress password recovery via `action=lostpassword` with deep link handling.
 
 ### CR-05: Authenticated Learner Profile & Analytics Dashboard
 * **Objective**: Transform the student profile into an executive learning dashboard showcasing progress, certificates, and data visualization.
