@@ -8,3 +8,4 @@ export * from './LessonTranscriptTab';
 export * from './DownloadQualityModal';
 export * from './QuickNoteBottomSheet';
 export * from './PiPFloatingPlayer';
+export * from './NativeMedia3Player';
