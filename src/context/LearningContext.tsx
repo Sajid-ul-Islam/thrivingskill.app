@@ -1,9 +1,12 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Env } from '../config/env';
 import { Course, UserProgress, Certificate, Note, CategoryId, Workshop, Category, WpPost, Review } from '../types';
 import { WORKSHOPS } from '../data/mockData';
 import { useAuth } from './AuthContext';
+import { useNetwork } from './NetworkContext';
+import { CoursesService } from '../services/api/coursesService';
 import { Endpoints } from '../services/api/endpoints';
 import { SyncQueueManager } from '../services/offline/syncQueue';
 import {
@@ -20,6 +23,16 @@ import {
   fetchWpCourseDetail,
   fetchWpLiveWorkshops,
 } from '../services/wordpressApi';
+
+function areDataEqual(a: any, b: any): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  try {
+    return JSON.stringify(a) === JSON.stringify(b);
+  } catch {
+    return false;
+  }
+}
 
 const PROGRESS_STORAGE_KEY = '@thriving_skill_progress';
 const BOOKMARKS_STORAGE_KEY = '@thriving_skill_bookmarks';
@@ -94,12 +107,17 @@ interface LearningContextType {
   banners: DynamicCarouselSlide[];
   isBrandingLoading: boolean;
   refreshBranding: (forceRefresh?: boolean) => Promise<void>;
+
+  // Dynamic Live Site Synchronization
+  lastSyncedAt: number | null;
+  isBackgroundSyncing: boolean;
 }
 
 const LearningContext = createContext<LearningContextType>({} as LearningContextType);
 
 export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
+  const { isOffline } = useNetwork();
   const userScope = user?.id ? `_u_${user.id}` : '_guest';
 
   const [courses, setCourses] = useState<Course[]>([]);
@@ -117,7 +135,11 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [workshops, setWorkshops] = useState<Workshop[]>(WORKSHOPS);
   const [blogPosts, setBlogPosts] = useState<WpPost[]>([]);
   const [isLoadingCourses, setIsLoadingCourses] = useState<boolean>(true);
+  const [isBackgroundSyncing, setIsBackgroundSyncing] = useState<boolean>(false);
+  const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
   const [coursesError, setCoursesError] = useState<string | null>(null);
+  const heartbeatTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const prevOfflineRef = useRef<boolean>(isOffline);
   const [selectedCategory, setSelectedCategory] = useState<CategoryId>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -174,39 +196,57 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return SyncQueueManager.processQueue(force);
   }, []);
 
-  // Fetch live courses, categories, workshops, and blog posts from WordPress
-  const loadWordPressData = useCallback(async (forceRefresh: boolean = false) => {
-    setIsLoadingCourses(true);
+  // Fetch live courses, categories, workshops, and blog posts from WordPress with SWR
+  const loadWordPressData = useCallback(async (forceRefresh: boolean = false, silent: boolean = false) => {
+    if (!silent) {
+      setIsLoadingCourses(true);
+    } else {
+      setIsBackgroundSyncing(true);
+    }
     setCoursesError(null);
+
     try {
       const [wpCourses, wpCategories, wpWorkshops, wpPosts] = await Promise.allSettled([
         fetchWpCourses({ perPage: 40, forceRefresh }),
-        fetchWpCategories(),
-        fetchWpLiveWorkshops(),
+        fetchWpCategories({ forceRefresh }),
+        fetchWpLiveWorkshops({ forceRefresh }),
         fetchWpPosts({ perPage: 6 }),
       ]);
 
       if (wpCourses.status === 'fulfilled' && wpCourses.value.length > 0) {
-        setCourses(wpCourses.value);
-      } else if (wpCourses.status === 'rejected') {
+        setCourses((prev) => (areDataEqual(prev, wpCourses.value) ? prev : wpCourses.value));
+      } else if (wpCourses.status === 'rejected' && !silent) {
         setCoursesError(wpCourses.reason?.message || 'Unable to sync latest courses.');
       }
+
       if (wpCategories.status === 'fulfilled' && wpCategories.value.length > 0) {
-        setCategories(wpCategories.value);
+        setCategories((prev) => (areDataEqual(prev, wpCategories.value) ? prev : wpCategories.value));
       }
+
       if (wpWorkshops.status === 'fulfilled' && wpWorkshops.value.length > 0) {
-        setWorkshops(wpWorkshops.value);
-      } else {
+        setWorkshops((prev) => (areDataEqual(prev, wpWorkshops.value) ? prev : wpWorkshops.value));
+      } else if (!silent) {
         setWorkshops(WORKSHOPS);
       }
+
       if (wpPosts.status === 'fulfilled' && wpPosts.value.length > 0) {
-        setBlogPosts(wpPosts.value);
+        setBlogPosts((prev) => (areDataEqual(prev, wpPosts.value) ? prev : wpPosts.value));
       }
+
+      setLastSyncedAt(Date.now());
     } catch (err: any) {
-      setCoursesError(err?.message || 'Unable to connect to Thriving Skills.');
-      console.warn('Error fetching WordPress backend data:', err);
+      if (!silent) {
+        setCoursesError(err?.message || 'Unable to connect to Thriving Skills.');
+      }
+      if (Env.DEBUG_API) {
+        console.warn('Error fetching WordPress backend data:', err);
+      }
     } finally {
-      setIsLoadingCourses(false);
+      if (!silent) {
+        setIsLoadingCourses(false);
+      } else {
+        setIsBackgroundSyncing(false);
+      }
     }
   }, []);
 

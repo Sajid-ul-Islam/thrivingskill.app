@@ -76,10 +76,19 @@ export class LessonsService {
   }
 
   /**
-   * Fetch quiz details
+   * Fetch quiz details directly from live WordPress LearnPress API with anti-stale headers
    */
   static async getQuiz(quizId: string | number): Promise<any> {
-    return HttpClient.get(Endpoints.LEARNPRESS.QUIZ_DETAIL(quizId));
+    return HttpClient.get(
+      Endpoints.LEARNPRESS.QUIZ_DETAIL(quizId),
+      { _t: Date.now() },
+      {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          Pragma: 'no-cache',
+        },
+      }
+    );
   }
 
   /**

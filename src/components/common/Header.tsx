@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   Image,
   Platform,
   StatusBar as RNStatusBar,
+  Animated,
+  Easing,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -28,6 +30,7 @@ interface HeaderProps {
   onOpenNotifications?: () => void;
   onOpenYouTube?: () => void;
   onOpenSearch?: () => void;
+  showSearch?: boolean;
   onOpenUpdate?: () => void;
   onOpenDrawer?: () => void;
   onOpenOfflineContent?: () => void;
@@ -42,12 +45,40 @@ export const Header: React.FC<HeaderProps> = ({
   rightAction,
   onOpenNotifications,
   onOpenSearch,
+  showSearch = true,
   onOpenOfflineContent,
 }) => {
   const { colors, isDark } = useTheme();
   const { unreadNotificationsCount } = useSaaS();
   const { refreshCourses } = useLearning();
   const insets = useSafeAreaInsets();
+
+  const isSearchVisible = Boolean(onOpenSearch && showSearch !== false);
+  const searchAnim = useRef(new Animated.Value(isSearchVisible ? 1 : 0)).current;
+  const [renderSearch, setRenderSearch] = useState(isSearchVisible);
+
+  useEffect(() => {
+    if (isSearchVisible) {
+      setRenderSearch(true);
+      Animated.timing(searchAnim, {
+        toValue: 1,
+        duration: 180,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(searchAnim, {
+        toValue: 0,
+        duration: 150,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }).start(({ finished }) => {
+        if (finished) {
+          setRenderSearch(false);
+        }
+      });
+    }
+  }, [isSearchVisible, searchAnim]);
 
   const topInset = Math.max(
     insets.top,
@@ -120,17 +151,31 @@ export const Header: React.FC<HeaderProps> = ({
         <View style={styles.rightRow}>
           {rightAction}
 
-          {onOpenSearch && (
-            <TouchableOpacity
-              style={[styles.iconButton, { backgroundColor: colors.surfaceSubtle }]}
-              onPress={onOpenSearch}
-              activeOpacity={0.7}
-              hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
-              accessibilityRole="button"
-              accessibilityLabel="Universal Search"
+          {renderSearch && onOpenSearch && (
+            <Animated.View
+              style={{
+                opacity: searchAnim,
+                transform: [
+                  {
+                    scale: searchAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0.8, 1],
+                    }),
+                  },
+                ],
+              }}
             >
-              <Ionicons name="search" size={20} color={colors.text} />
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.iconButton, { backgroundColor: colors.surfaceSubtle }]}
+                onPress={onOpenSearch}
+                activeOpacity={0.7}
+                hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+                accessibilityRole="button"
+                accessibilityLabel="Universal Search"
+              >
+                <Ionicons name="search" size={20} color={colors.text} />
+              </TouchableOpacity>
+            </Animated.View>
           )}
 
           {onOpenNotifications && (

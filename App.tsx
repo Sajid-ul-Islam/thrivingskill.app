@@ -239,6 +239,7 @@ const MainAppContent: React.FC = () => {
                   onOpenNotifications={() => setNotificationModalVisible(true)}
                   onOpenDrawer={() => setBrandDrawerVisible(true)}
                   onOpenSupport={() => setSupportModalVisible(true)}
+                  onOpenSearch={() => setSearchModalVisible(true)}
                 />
               </ScreenTransition>
             )}

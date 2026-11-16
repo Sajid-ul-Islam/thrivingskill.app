@@ -3,6 +3,7 @@ import { Endpoints } from './endpoints';
 import { CacheManager } from '../cache/cacheManager';
 import { Course, Category, CategoryId, Workshop } from '../../types';
 import { transformWpCourse, cleanHtml } from './transformers';
+import { Env } from '../../config/env';
 
 export interface CourseQueryParams {
   page?: number;
@@ -19,8 +20,28 @@ export class CoursesService {
   private static CATEGORIES_CACHE_KEY = 'categories_list';
   private static LIVE_WORKSHOPS_CACHE_KEY = 'live_workshops_list';
 
+  // Catalog update subscribers for real-time background sync
+  private static catalogListeners = new Set<() => void>();
+
+  static subscribeCatalogUpdates(listener: () => void): () => void {
+    this.catalogListeners.add(listener);
+    return () => {
+      this.catalogListeners.delete(listener);
+    };
+  }
+
+  static notifyCatalogUpdated(): void {
+    this.catalogListeners.forEach((fn) => {
+      try {
+        fn();
+      } catch (e) {
+        if (Env.DEBUG_API) console.warn('[CoursesService] Catalog listener error:', e);
+      }
+    });
+  }
+
   /**
-   * Fetch courses with caching, pagination, category filtering, and search.
+   * Fetch courses with caching, pagination, category filtering, search, and SWR.
    * On failure, returns stale cache if available, otherwise throws so callers
    * can display explicit error/offline states instead of silent mock data.
    */
@@ -29,16 +50,11 @@ export class CoursesService {
     const perPage = params.perPage || 30;
     const cacheKey = `${this.COURSES_CACHE_PREFIX}_p${page}_pp${perPage}_s${params.search || ''}_c${params.category || ''}`;
 
-    // Try fresh cache first if not searching or forcing refresh
-    if (!params.search && !params.forceRefresh) {
-      const cached = await CacheManager.get<Course[]>(cacheKey);
-      if (cached && cached.length > 0) return cached;
-    }
-
-    try {
+    const fetchFromNetwork = async (): Promise<Course[]> => {
       const queryParams: Record<string, any> = {
         page,
         per_page: perPage,
+        _t: Date.now(),
       };
 
       if (params.search && params.search.trim()) {
@@ -50,26 +66,44 @@ export class CoursesService {
       if (params.order) queryParams.order = params.order;
       if (params.orderby) queryParams.orderby = params.orderby;
 
-      const rawCourses = await HttpClient.get<any[]>(Endpoints.LEARNPRESS.COURSES, queryParams);
+      const rawCourses = await HttpClient.get<any[]>(
+        Endpoints.LEARNPRESS.COURSES,
+        queryParams,
+        {
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            Pragma: 'no-cache',
+          },
+        }
+      );
 
       if (!Array.isArray(rawCourses)) {
         throw new Error('Expected array of courses from backend');
       }
 
-      const courses = rawCourses.map(transformWpCourse);
+      return rawCourses.map(transformWpCourse);
+    };
 
-      // Cache the fresh result
-      await CacheManager.set(cacheKey, courses);
-
-      return courses;
-    } catch (err) {
-      // Try stale cache on failure
-      const stale = await CacheManager.get<Course[]>(cacheKey, true);
-      if (stale && stale.length > 0) return stale;
-
-      // Do NOT return mock courses; throw or return empty array so UI can show proper error/empty state
-      throw err;
+    // If explicit forceRefresh or performing a text query, fetch directly
+    if (params.forceRefresh || params.search) {
+      const freshCourses = await fetchFromNetwork();
+      await CacheManager.set(cacheKey, freshCourses);
+      return freshCourses;
     }
+
+    // Stale-While-Revalidate: return stale immediately, revalidate silently
+    const courses = await CacheManager.getOrRevalidate<Course[]>(
+      cacheKey,
+      fetchFromNetwork,
+      (updatedCourses) => {
+        if (Env.DEBUG_API) {
+          console.log(`[CoursesService] Live sync detected ${updatedCourses.length} updated courses`);
+        }
+        this.notifyCatalogUpdated();
+      }
+    );
+
+    return courses || [];
   }
 
   /**
@@ -79,46 +113,67 @@ export class CoursesService {
   static async getCourseDetail(courseId: string | number, forceRefresh: boolean = false): Promise<Course> {
     const cacheKey = `course_detail_${courseId}`;
 
-    if (!forceRefresh) {
-      const cached = await CacheManager.get<Course>(cacheKey);
-      if (cached) return cached;
-    }
+    const fetchDetailFromNetwork = async (): Promise<Course> => {
+      const raw = await HttpClient.get<any>(
+        Endpoints.LEARNPRESS.COURSE_DETAIL(courseId),
+        { _t: Date.now() },
+        {
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            Pragma: 'no-cache',
+          },
+        }
+      );
+      return transformWpCourse(raw);
+    };
 
-    try {
-      const raw = await HttpClient.get<any>(Endpoints.LEARNPRESS.COURSE_DETAIL(courseId));
-      const course = transformWpCourse(raw);
-
-      // Cache detail with extended TTL (10 minutes)
+    if (forceRefresh) {
+      const course = await fetchDetailFromNetwork();
       await CacheManager.set(cacheKey, course, 600000);
-
       return course;
-    } catch (err) {
-      const stale = await CacheManager.get<Course>(cacheKey, true);
-      if (stale) return stale;
-
-      throw err;
     }
+
+    const course = await CacheManager.getOrRevalidate<Course>(
+      cacheKey,
+      fetchDetailFromNetwork,
+      () => {
+        if (Env.DEBUG_API) {
+          console.log(`[CoursesService] Live course detail updated for ${courseId}`);
+        }
+        this.notifyCatalogUpdated();
+      },
+      600000
+    );
+
+    if (course) return course;
+    throw new Error(`Failed to load course ${courseId}`);
   }
 
   /**
    * Fetch course categories from LearnPress.
    * Returns valid categories with live course counts.
    */
-  static async getCategories(): Promise<Category[]> {
-    const cached = await CacheManager.get<Category[]>(this.CATEGORIES_CACHE_KEY);
-    if (cached && cached.length > 0) return cached;
-
-    try {
-      const rawCats = await HttpClient.get<any[]>(Endpoints.LEARNPRESS.COURSE_CATEGORIES, {
-        per_page: 50,
-      });
+  static async getCategories(forceRefresh: boolean = false): Promise<Category[]> {
+    const fetchCatsFromNetwork = async (): Promise<Category[]> => {
+      const rawCats = await HttpClient.get<any[]>(
+        Endpoints.LEARNPRESS.COURSE_CATEGORIES,
+        {
+          per_page: 50,
+          _t: Date.now(),
+        },
+        {
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            Pragma: 'no-cache',
+          },
+        }
+      );
 
       if (!Array.isArray(rawCats)) {
         throw new Error('Expected array of categories');
       }
 
       const validCats = rawCats.filter((c: any) => c.count > 0 && c.slug !== 'published');
-
       const totalCount = validCats.reduce((acc: number, c: any) => acc + (c.count || 0), 0);
 
       const mapped: Category[] = [
@@ -141,45 +196,63 @@ export class CoursesService {
         })),
       ];
 
-      await CacheManager.set(this.CATEGORIES_CACHE_KEY, mapped, 900000); // 15 minutes
       return mapped;
-    } catch (err) {
-      const stale = await CacheManager.get<Category[]>(this.CATEGORIES_CACHE_KEY, true);
-      if (stale && stale.length > 0) return stale;
+    };
 
-      // Fallback to minimal root category with 0 count until synced
-      return [
-        {
-          id: 'all',
-          name: 'All Courses',
-          banglaName: 'সব কোর্স',
-          icon: 'grid',
-          count: 0,
-          color: '#059669',
-          slug: 'all',
-        },
-      ];
+    if (forceRefresh) {
+      const cats = await fetchCatsFromNetwork();
+      await CacheManager.set(this.CATEGORIES_CACHE_KEY, cats, 900000);
+      return cats;
     }
+
+    const cats = await CacheManager.getOrRevalidate<Category[]>(
+      this.CATEGORIES_CACHE_KEY,
+      fetchCatsFromNetwork,
+      () => {
+        this.notifyCatalogUpdated();
+      },
+      900000
+    );
+
+    return cats || [
+      {
+        id: 'all',
+        name: 'All Courses',
+        banglaName: 'সব কোর্স',
+        icon: 'grid',
+        count: 0,
+        color: '#059669',
+        slug: 'all',
+      },
+    ];
   }
 
   /**
    * Fetch authentic live workshops and upcoming masterclasses from LearnPress
    * (Category 459: Upcoming Live Training).
    */
-  static async getLiveWorkshops(): Promise<Workshop[]> {
+  static async getLiveWorkshops(forceRefresh: boolean = false): Promise<Workshop[]> {
     const cacheKey = this.LIVE_WORKSHOPS_CACHE_KEY;
-    const cached = await CacheManager.get<Workshop[]>(cacheKey);
-    if (cached && cached.length > 0) return cached;
 
-    try {
-      const raw = await HttpClient.get<any[]>(Endpoints.LEARNPRESS.COURSES, {
-        category: 459,
-        per_page: 20,
-      });
+    const fetchWorkshopsFromNetwork = async (): Promise<Workshop[]> => {
+      const raw = await HttpClient.get<any[]>(
+        Endpoints.LEARNPRESS.COURSES,
+        {
+          category: 459,
+          per_page: 20,
+          _t: Date.now(),
+        },
+        {
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            Pragma: 'no-cache',
+          },
+        }
+      );
 
       if (!Array.isArray(raw)) throw new Error('Expected array of live training courses');
 
-      const workshops: Workshop[] = raw.map((c: any) => {
+      return raw.map((c: any) => {
         const course = transformWpCourse(c);
         return {
           id: String(course.id),
@@ -200,14 +273,24 @@ export class CoursesService {
           joinUrl: `https://thrivingskill.com/courses/${course.id}`,
         };
       });
+    };
 
-      await CacheManager.set(cacheKey, workshops, 300000); // 5 min cache
+    if (forceRefresh) {
+      const workshops = await fetchWorkshopsFromNetwork();
+      await CacheManager.set(cacheKey, workshops, 300000);
       return workshops;
-    } catch (err) {
-      const stale = await CacheManager.get<Workshop[]>(cacheKey, true);
-      if (stale && stale.length > 0) return stale;
-      return [];
     }
+
+    const workshops = await CacheManager.getOrRevalidate<Workshop[]>(
+      cacheKey,
+      fetchWorkshopsFromNetwork,
+      () => {
+        this.notifyCatalogUpdated();
+      },
+      300000
+    );
+
+    return workshops || [];
   }
 
   /**

@@ -44,22 +44,22 @@ export async function fetchWpCourses(params?: {
 /**
  * Fetch course detail by ID using CoursesService
  */
-export async function fetchWpCourseDetail(courseId: string | number): Promise<Course> {
-  return CoursesService.getCourseDetail(courseId);
+export async function fetchWpCourseDetail(courseId: string | number, forceRefresh: boolean = false): Promise<Course> {
+  return CoursesService.getCourseDetail(courseId, forceRefresh);
 }
 
 /**
  * Fetch categories using CoursesService
  */
-export async function fetchWpCategories(): Promise<Category[]> {
-  return CoursesService.getCategories();
+export async function fetchWpCategories(params?: { forceRefresh?: boolean }): Promise<Category[]> {
+  return CoursesService.getCategories(params?.forceRefresh);
 }
 
 /**
  * Fetch authentic live workshops and masterclasses using CoursesService
  */
-export async function fetchWpLiveWorkshops(): Promise<Workshop[]> {
-  return CoursesService.getLiveWorkshops();
+export async function fetchWpLiveWorkshops(params?: { forceRefresh?: boolean }): Promise<Workshop[]> {
+  return CoursesService.getLiveWorkshops(params?.forceRefresh);
 }
 
 /**

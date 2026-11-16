@@ -8,6 +8,8 @@ import {
   Image,
   Alert,
   RefreshControl,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -63,6 +65,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const insets = useSafeAreaInsets();
   const [aboutModalVisible, setAboutModalVisible] = useState(false);
   const [aboutInitialTab, setAboutInitialTab] = useState<AboutTabKey>('overview');
+  const [showHeaderSearch, setShowHeaderSearch] = useState(false);
 
   const { t, isBangla } = useLanguage();
   const { streakDays, dailyMinutesSpent, dailyGoalMinutes } = useGamification();
@@ -216,9 +219,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     }
   };
 
+  // Scroll-aware sticky search trigger:
+  // When the in-page SearchSpotlightBar scrolls out of the window (>140px),
+  // smoothly reveal the search button in the top header so search is never lost.
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    if (offsetY > 140 && !showHeaderSearch) {
+      setShowHeaderSearch(true);
+    } else if (offsetY <= 140 && showHeaderSearch) {
+      setShowHeaderSearch(false);
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
+        showSearch={showHeaderSearch}
+        onOpenSearch={onOpenSearch}
         onOpenSubscription={onOpenSubscription}
         onOpenNotifications={onOpenNotifications}
         onOpenYouTube={onOpenYouTube}
@@ -230,6 +247,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl
             refreshing={isLoadingCourses}

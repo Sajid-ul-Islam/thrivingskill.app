@@ -13,6 +13,8 @@ import {
   AppState,
   AppStateStatus,
   Linking,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -76,6 +78,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [showHeaderTitle, setShowHeaderTitle] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -257,12 +260,25 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     );
   };
 
+  // Scroll-aware sticky course title in header:
+  // When the user scrolls past the main hero title (>220px),
+  // transition the header title from generic "Course Overview" to the specific course name.
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    if (offsetY > 220 && !showHeaderTitle) {
+      setShowHeaderTitle(true);
+    } else if (offsetY <= 220 && showHeaderTitle) {
+      setShowHeaderTitle(false);
+    }
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
         showBack
         onBack={onBack}
-        title={isBangla ? 'কোর্স বিবরণ' : 'Course Overview'}
+        title={showHeaderTitle ? course.title : (isBangla ? 'কোর্স বিবরণ' : 'Course Overview')}
+        subtitle={showHeaderTitle ? (isBangla ? 'কোর্স বিবরণ' : 'Course Overview') : undefined}
         rightAction={
           <TouchableOpacity
             style={[styles.headerBookmark, { backgroundColor: colors.surfaceSubtle }]}
@@ -290,7 +306,12 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
         }
       />
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 12) + 100 }]}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 12) + 100 }]}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
         {/* Thumbnail Hero with Preview Button */}
         <View style={styles.heroWrapper}>
           <Image source={{ uri: course.thumbnail }} style={styles.heroThumbnail} />

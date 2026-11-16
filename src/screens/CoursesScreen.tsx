@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   Alert,
   RefreshControl,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -29,6 +31,7 @@ interface CoursesScreenProps {
   onOpenNotifications?: () => void;
   onOpenDrawer?: () => void;
   onOpenSupport?: () => void;
+  onOpenSearch?: () => void;
 }
 
 type LevelFilter = 'All' | 'Beginner' | 'Intermediate' | 'Advanced';
@@ -41,6 +44,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   onOpenNotifications,
   onOpenDrawer,
   onOpenSupport,
+  onOpenSearch,
 }) => {
   const { colors } = useTheme();
   const { isBangla } = useLanguage();
@@ -61,6 +65,30 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   const [selectedPriceFilter, setSelectedPriceFilter] = useState<PriceFilter>('all');
   const [selectedSort, setSelectedSort] = useState<SortOption>('popular');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [showHeaderSearch, setShowHeaderSearch] = useState(false);
+
+  const scrollViewRef = useRef<React.ElementRef<typeof ScrollView> | null>(null);
+  const searchInputRef = useRef<React.ElementRef<typeof TextInput> | null>(null);
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    // When the inline search bar scrolls off the viewport (>70px),
+    // reveal the search icon in the header so search is never lost.
+    if (offsetY > 70 && !showHeaderSearch) {
+      setShowHeaderSearch(true);
+    } else if (offsetY <= 70 && showHeaderSearch) {
+      setShowHeaderSearch(false);
+    }
+  };
+
+  const handleHeaderSearchPress = () => {
+    if (onOpenSearch) {
+      onOpenSearch();
+    } else {
+      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+      searchInputRef.current?.focus();
+    }
+  };
 
   const levelLabels: Record<LevelFilter, { en: string; bn: string }> = {
     All: { en: 'All', bn: 'সব' },
@@ -115,6 +143,8 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
       <Header
         title={isBangla ? 'কোর্স ক্যাটালগ' : 'Thriving Skills Catalog'}
         subtitle={isBangla ? '৩০০+ প্রিমিয়াম কোর্স ও স্পেশাল বান্ডেল' : '300+ Premium Courses & Special Bundles'}
+        showSearch={showHeaderSearch}
+        onOpenSearch={handleHeaderSearchPress}
         onOpenSubscription={onOpenSubscription}
         onOpenNotifications={onOpenNotifications}
         onOpenDrawer={onOpenDrawer}
@@ -122,8 +152,11 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
       />
 
       <ScrollView
+        ref={scrollViewRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl
             refreshing={isLoadingCourses}
@@ -143,6 +176,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
           >
             <Ionicons name="search" size={18} color={colors.textMuted} />
             <TextInput
+              ref={searchInputRef}
               style={[styles.searchInput, { color: colors.text }]}
               placeholder={isBangla ? 'কোর্স, জেনারেটিভ এআই, এক্সেল ফর্মুলা সার্চ করুন...' : 'Search courses, Generative AI, Excel formulas...'}
               placeholderTextColor={colors.textLight}
