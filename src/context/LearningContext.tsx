@@ -146,17 +146,21 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const initial = CoursesService.getCachedCoursesSync();
     return initial && initial.length > 0 ? initial.length : 382;
   });
-  const [categories, setCategories] = useState<Category[]>([
-    {
-      id: 'all',
-      name: 'All Courses',
-      banglaName: 'সব কোর্স',
-      icon: 'grid',
-      count: 382,
-      color: '#059669',
-      slug: 'all',
-    },
-  ]);
+  const [categories, setCategories] = useState<Category[]>(() => {
+    const initial = CoursesService.getCachedCategoriesSync();
+    if (initial && initial.length > 0) return initial;
+    return [
+      {
+        id: 'all',
+        name: 'All Courses',
+        banglaName: 'সব কোর্স',
+        icon: 'grid',
+        count: 382,
+        color: '#059669',
+        slug: 'all',
+      },
+    ];
+  });
   const [workshops, setWorkshops] = useState<Workshop[]>(WORKSHOPS);
   const [blogPosts, setBlogPosts] = useState<WpPost[]>([]);
   // Only show blocking loader if no cached courses exist at all

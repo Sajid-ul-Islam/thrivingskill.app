@@ -1050,25 +1050,47 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
 
               {/* Action Buttons */}
               <View style={styles.certModalActions}>
-                <TouchableOpacity
-                  style={[styles.certShareBtn, { backgroundColor: '#0A66C2' }]}
-                  onPress={() => {
-                    const now = new Date();
-                    const certId = `TSL-CERT-${course.id}-2026`;
-                    const verifyUrl = `${Env.SITE_URL.replace(/\/+$/, '')}/verify/${certId}`;
-                    const linkedinUrl = `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${encodeURIComponent(
-                      course.title
-                    )}&organizationName=${encodeURIComponent('Thriving Skills')}&issueYear=${now.getFullYear()}&issueMonth=${
-                      now.getMonth() + 1
-                    }&certUrl=${encodeURIComponent(verifyUrl)}&certId=${encodeURIComponent(certId)}`;
-                    Linking.openURL(linkedinUrl).catch(() => {
-                      Alert.alert('LinkedIn Credential 🔗', `Visit ${verifyUrl} to verify or share credential #${certId}.`);
-                    });
-                  }}
-                >
-                  <Ionicons name="logo-linkedin" size={16} color="#FFFFFF" />
-                  <Text style={styles.certShareBtnText}>Add to LinkedIn Profile</Text>
-                </TouchableOpacity>
+                {isCertificateUnlocked(course.id) ? (
+                  <TouchableOpacity
+                    style={[styles.certShareBtn, { backgroundColor: '#0A66C2' }]}
+                    onPress={() => {
+                      const now = new Date();
+                      const certId = userProgress[course.id]?.certificateId || `TSL-CERT-${course.id}-2026`;
+                      const verifyUrl = `${Env.SITE_URL.replace(/\/+$/, '')}/verify/${certId}`;
+                      const linkedinUrl = `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${encodeURIComponent(
+                        course.title
+                      )}&organizationName=${encodeURIComponent('Thriving Skills')}&issueYear=${now.getFullYear()}&issueMonth=${
+                        now.getMonth() + 1
+                      }&certUrl=${encodeURIComponent(verifyUrl)}&certId=${encodeURIComponent(certId)}`;
+                      Linking.openURL(linkedinUrl).catch(() => {
+                        Alert.alert('LinkedIn Credential 🔗', `Visit ${verifyUrl} to verify or share credential #${certId}.`);
+                      });
+                    }}
+                  >
+                    <Ionicons name="logo-linkedin" size={16} color="#FFFFFF" />
+                    <Text style={styles.certShareBtnText}>Add to LinkedIn Profile</Text>
+                  </TouchableOpacity>
+                ) : userProgress[course.id]?.isCompleted && !hasReviewedCourse(course.id) ? (
+                  <TouchableOpacity
+                    style={[styles.certShareBtn, { backgroundColor: '#F59E0B' }]}
+                    onPress={() => {
+                      setCertPreviewVisible(false);
+                      setMandatoryReviewVisible(true);
+                    }}
+                  >
+                    <Ionicons name="star" size={16} color="#FFFFFF" />
+                    <Text style={styles.certShareBtnText}>
+                      {isBangla ? 'রিভিউ দিয়ে সার্টিফিকেট আনলক করুন' : 'Rate & Review to Unlock'}
+                    </Text>
+                  </TouchableOpacity>
+                ) : (
+                  <View style={[styles.certShareBtn, { backgroundColor: isDark ? '#374151' : '#E5E7EB' }]}>
+                    <Ionicons name="lock-closed" size={16} color={isDark ? '#9CA3AF' : '#6B7280'} />
+                    <Text style={[styles.certShareBtnText, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>
+                      {isBangla ? 'কোর্স সম্পন্ন ও রিভিউ দিলে আনলক হবে' : 'Complete & Review to Unlock'}
+                    </Text>
+                  </View>
+                )}
 
                 <TouchableOpacity
                   style={[styles.certCloseBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}

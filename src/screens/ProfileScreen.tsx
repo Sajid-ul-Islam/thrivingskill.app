@@ -38,6 +38,7 @@ import { HelpFaqModal } from '../components/HelpFaqModal';
 import { BlogModal } from '../components/BlogModal';
 import { ProfileLearningAnalytics } from '../components/ProfileLearningAnalytics';
 import { CertificateModal } from '../components/CertificateModal';
+import { MandatoryReviewModal } from '../components/modals/MandatoryReviewModal';
 import { StorageManagerModal } from '../components/modals/StorageManagerModal';
 import { SpacedRepetitionModal } from '../components/modals/SpacedRepetitionModal';
 import { OfflineStudyDeckModal } from '../components/modals/OfflineStudyDeckModal';
@@ -74,7 +75,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const { language, toggleLanguage, isBangla, t } = useLanguage();
   const { badges, streakDays } = useGamification();
   const { showToast } = useFeedback();
-  const { courses, userProgress, certificates, pendingSyncCount } = useLearning();
+  const {
+    courses,
+    userProgress,
+    certificates,
+    pendingSyncCount,
+    hasReviewedCourse,
+    submitMandatoryCourseReview,
+  } = useLearning();
   const { user, isAuthenticated, logout, deleteAccount, setAuthModalVisible, updateUserProfile } = useAuth();
   const isAdmin = Array.isArray(user?.roles) && user.roles.includes('administrator');
   const {
@@ -97,6 +105,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [profileSection, setProfileSection] = useState<'learning' | 'settings'>('learning');
   const [portfolioTab, setPortfolioTab] = useState<LearnPressCourseFilter>('all');
   const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
+  const [mandatoryReviewVisible, setMandatoryReviewVisible] = useState(false);
+  const [reviewTargetCourse, setReviewTargetCourse] = useState<Course | null>(null);
   const [updateModalVisible, setUpdateModalVisible] = useState(false);
   const [aboutModalVisible, setAboutModalVisible] = useState(false);
   const [aboutInitialTab, setAboutInitialTab] = useState<AboutTabKey>('overview');
@@ -846,14 +856,31 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                             />
                           </View>
                         </View>
-                        {courseStatus === 'passed' && cert ? (
+                        {courseStatus === 'passed' && cert && hasReviewedCourse(course.id) ? (
                           <TouchableOpacity
                             style={[styles.certificateActionBtn, { backgroundColor: colors.brandGold }]}
                             onPress={() => setSelectedCert(cert)}
+                            accessibilityRole="button"
+                            accessibilityLabel={isBangla ? 'সনদপত্র দেখুন' : 'View Certificate'}
                           >
                             <Ionicons name="ribbon" size={14} color="#102F53" />
                             <Text style={styles.certificateActionBtnText}>
                               {isBangla ? 'সনদপত্র দেখুন' : 'View Certificate'}
+                            </Text>
+                          </TouchableOpacity>
+                        ) : courseStatus === 'passed' && !hasReviewedCourse(course.id) ? (
+                          <TouchableOpacity
+                            style={[styles.certificateActionBtn, { backgroundColor: '#F59E0B' }]}
+                            onPress={() => {
+                              setReviewTargetCourse(course);
+                              setMandatoryReviewVisible(true);
+                            }}
+                            accessibilityRole="button"
+                            accessibilityLabel={isBangla ? 'রিভিউ দিন (লক)' : 'Review to Unlock'}
+                          >
+                            <Ionicons name="lock-closed" size={14} color="#FFFFFF" />
+                            <Text style={[styles.certificateActionBtnText, { color: '#FFFFFF' }]}>
+                              {isBangla ? 'রিভিউ দিন (লক)' : 'Review to Unlock'}
                             </Text>
                           </TouchableOpacity>
                         ) : courseStatus === 'failed' ? (
@@ -2712,6 +2739,29 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         certificate={selectedCert}
         onClose={() => setSelectedCert(null)}
       />
+
+      {/* Mandatory Course Review Modal before Certificate Unlock (CR-02) */}
+      {reviewTargetCourse && (
+        <MandatoryReviewModal
+          visible={mandatoryReviewVisible}
+          courseTitle={reviewTargetCourse.title}
+          instructorName={reviewTargetCourse.instructor?.name || 'Course Instructor'}
+          onSubmit={(rating, feedback) => {
+            const unlockedCert = submitMandatoryCourseReview(
+              reviewTargetCourse.id,
+              rating,
+              feedback,
+              user?.displayName || user?.username || 'Executive Graduate',
+              'Course Graduate'
+            );
+            setMandatoryReviewVisible(false);
+            if (unlockedCert) {
+              setSelectedCert(unlockedCert);
+            }
+          }}
+          onDismissLater={() => setMandatoryReviewVisible(false)}
+        />
+      )}
     </View>
   );
 };

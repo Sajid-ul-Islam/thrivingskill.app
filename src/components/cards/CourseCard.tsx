@@ -60,8 +60,12 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({ course, onPress, horiz
           accessibilityRole="button"
           accessibilityLabel={`${course.title} by ${course.instructor?.name || "Thriving Skills"}`}
         >
-          <View style={styles.horizontalThumbWrapper}>
-            <Image source={{ uri: course.thumbnail }} style={styles.horizontalThumb} />
+          <View style={[styles.horizontalThumbWrapper, { backgroundColor: colors.surfaceSubtle }]}>
+            <Image
+              source={{ uri: course.thumbnail }}
+              style={styles.horizontalThumb}
+              fadeDuration={150}
+            />
             {course.badge && (
               <View style={[styles.horizontalBadgeTag, { backgroundColor: colors.badgeBackground }]}>
                 <Text
@@ -160,8 +164,12 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({ course, onPress, horiz
         accessibilityRole="button"
         accessibilityLabel={`${course.title} by ${course.instructor?.name || "Thriving Skills"}`}
       >
-        <View style={styles.thumbWrapper}>
-          <Image source={{ uri: course.thumbnail }} style={styles.thumbnail} />
+        <View style={[styles.thumbWrapper, { backgroundColor: colors.surfaceSubtle }]}>
+          <Image
+            source={{ uri: course.thumbnail }}
+            style={styles.thumbnail}
+            fadeDuration={150}
+          />
           {course.badge && (
             <View style={[styles.badgeTag, { backgroundColor: colors.badgeBackground }]}>
               <Text

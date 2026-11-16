@@ -15,8 +15,10 @@ import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useGamification } from '../context/GamificationContext';
 import { useLearning } from '../context/LearningContext';
+import { useAuth } from '../context/AuthContext';
 import { Header } from '../components/Header';
 import { CertificateModal } from '../components/CertificateModal';
+import { MandatoryReviewModal } from '../components/modals/MandatoryReviewModal';
 import { YouTubeCard } from '../components/YouTubeCard';
 import { AnimatedTabContent, CircularProgressRing, SpringPressable, StateView } from '../components/common';
 import { useYouTube } from '../context/YouTubeContext';
@@ -51,6 +53,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
   const { isBangla } = useLanguage();
   const { streakDays } = useGamification();
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   const { savedVideos, playVideo } = useYouTube();
   const {
     courses,
@@ -58,10 +61,14 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
     bookmarks,
     certificates,
     getCourseProgressPercentage,
+    hasReviewedCourse,
+    submitMandatoryCourseReview,
   } = useLearning();
 
   const [activeTab, setActiveTab] = useState<TabMode>('in-progress');
   const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
+  const [reviewModalVisible, setReviewModalVisible] = useState(false);
+  const [reviewTargetCourse, setReviewTargetCourse] = useState<Course | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -283,16 +290,41 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                     </Text>
                   </TouchableOpacity>
 
-                  {courseStatus === 'passed' && cert ? (
+                  {courseStatus === 'passed' && hasReviewedCourse(course.id) && cert ? (
                     <SpringPressable
                       style={[styles.resumeBtn, { backgroundColor: colors.brandGold }]}
                       onPress={() => setSelectedCert(cert)}
                       activeScale={0.96}
                       accessibilityRole="button"
+                      accessibilityLabel={
+                        isBangla
+                          ? `${course.title} এর সনদপত্র দেখুন`
+                          : `View certificate for ${course.title}`
+                      }
                     >
                       <Ionicons name="ribbon" size={14} color="#102F53" />
                       <Text style={[styles.resumeBtnText, { color: '#102F53' }]}>
                         {isBangla ? 'সনদপত্র দেখুন' : 'Certificate'}
+                      </Text>
+                    </SpringPressable>
+                  ) : courseStatus === 'passed' && !hasReviewedCourse(course.id) ? (
+                    <SpringPressable
+                      style={[styles.resumeBtn, { backgroundColor: '#F59E0B' }]}
+                      onPress={() => {
+                        setReviewTargetCourse(course);
+                        setReviewModalVisible(true);
+                      }}
+                      activeScale={0.96}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        isBangla
+                          ? `${course.title} এর সার্টিফিকেট আনলক করতে রিভিউ দিন`
+                          : `Review to unlock certificate for ${course.title}`
+                      }
+                    >
+                      <Ionicons name="lock-closed" size={14} color="#FFFFFF" />
+                      <Text style={[styles.resumeBtnText, { color: '#FFFFFF' }]}>
+                        {isBangla ? 'রিভিউ দিন (লক)' : 'Review to Unlock'}
                       </Text>
                     </SpringPressable>
                   ) : courseStatus === 'failed' ? (
@@ -594,48 +626,101 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                   onPrimaryAction={onBrowseCourses}
                 />
               ) : (
-                certificates.map((cert) => (
+                certificates.map((cert) => {
+                const isReviewed = hasReviewedCourse(cert.courseId);
+                return (
                   <TouchableOpacity
                     key={cert.id}
                     style={[
                       styles.certItemCard,
                       {
                         backgroundColor: colors.surfaceCard,
-                        borderColor: colors.border,
+                        borderColor: isReviewed ? colors.border : '#F59E0B',
                         shadowColor: colors.cardShadow,
                       },
                     ]}
-                    onPress={() => setSelectedCert(cert)}
+                    onPress={() => {
+                      if (!isReviewed) {
+                        const targetCourse = courses.find((c) => c.id === cert.courseId);
+                        if (targetCourse) {
+                          setReviewTargetCourse(targetCourse);
+                        } else {
+                          setReviewTargetCourse({
+                            id: cert.courseId,
+                            title: cert.courseTitle,
+                            instructor: { name: cert.instructorName },
+                          } as any);
+                        }
+                        setReviewModalVisible(true);
+                      } else {
+                        setSelectedCert(cert);
+                      }
+                    }}
                     activeOpacity={0.85}
                     accessibilityRole="button"
                     accessibilityLabel={
-                      isBangla
-                        ? `${cert.courseTitle} এর ভেরিফাইড সার্টিফিকেট দেখুন`
-                        : `View verified digital certificate for ${cert.courseTitle}`
+                      isReviewed
+                        ? (isBangla
+                            ? `${cert.courseTitle} এর ভেরিফাইড সার্টিফিকেট দেখুন`
+                            : `View verified digital certificate for ${cert.courseTitle}`)
+                        : (isBangla
+                            ? `${cert.courseTitle} এর সার্টিফিকেট আনলক করতে রিভিউ দিন`
+                            : `Review to unlock certificate for ${cert.courseTitle}`)
                     }
                   >
-                    <View style={[styles.certIconBadge, { backgroundColor: isDark ? 'rgba(217, 119, 6, 0.2)' : '#FEF3C7' }]}>
-                      <Ionicons name="ribbon" size={26} color={isDark ? '#FBBF24' : '#D97706'} />
+                    <View
+                      style={[
+                        styles.certIconBadge,
+                        {
+                          backgroundColor: isReviewed
+                            ? (isDark ? 'rgba(217, 119, 6, 0.2)' : '#FEF3C7')
+                            : (isDark ? 'rgba(239, 68, 68, 0.2)' : '#FEF2F2'),
+                        },
+                      ]}
+                    >
+                      <Ionicons
+                        name={isReviewed ? "ribbon" : "lock-closed"}
+                        size={26}
+                        color={isReviewed ? (isDark ? '#FBBF24' : '#D97706') : '#EF4444'}
+                      />
                     </View>
 
                     <View style={styles.certCol}>
                       <View style={styles.verifiedTag}>
-                        <Ionicons name="checkmark-circle" size={11} color={isDark ? '#34D399' : '#047857'} />
-                        <Text style={[styles.verifiedTagText, { color: isDark ? '#34D399' : '#047857' }]}>
-                          {isBangla ? 'ভেরিফাইড ক্রেডেনশিয়াল' : 'VERIFIED CREDENTIAL'}
+                        <Ionicons
+                          name={isReviewed ? "checkmark-circle" : "lock-closed"}
+                          size={11}
+                          color={isReviewed ? (isDark ? '#34D399' : '#047857') : '#EF4444'}
+                        />
+                        <Text
+                          style={[
+                            styles.verifiedTagText,
+                            { color: isReviewed ? (isDark ? '#34D399' : '#047857') : '#EF4444' },
+                          ]}
+                        >
+                          {isReviewed
+                            ? (isBangla ? 'ভেরিফাইড ক্রেডেনশিয়াল' : 'VERIFIED CREDENTIAL')
+                            : (isBangla ? 'রিভিউ আবশ্যক (লক)' : 'REVIEW REQUIRED (LOCKED)')}
                         </Text>
                       </View>
                       <Text style={[styles.certItemTitle, { color: colors.text }]} numberOfLines={2}>
                         {cert.courseTitle}
                       </Text>
                       <Text style={[styles.certItemMeta, { color: colors.textMuted }]}>
-                        {isBangla ? 'ইস্যুর তারিখ ' : 'Issued '}{cert.issueDate} • ID: {cert.credentialId}
+                        {isReviewed
+                          ? `${isBangla ? 'ইস্যুর তারিখ ' : 'Issued '}${cert.issueDate} • ID: ${cert.credentialId}`
+                          : (isBangla ? 'সার্টিফিকেট আনলক করতে ১-৫ স্টার রেটিং দিন' : 'Rate & review course to unlock certificate')}
                       </Text>
                     </View>
 
-                    <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                    <Ionicons
+                      name={isReviewed ? "chevron-forward" : "lock-closed-outline"}
+                      size={18}
+                      color={isReviewed ? colors.textMuted : '#F59E0B'}
+                    />
                   </TouchableOpacity>
-                ))
+                );
+              })
               )}
             </>
           )}
@@ -765,6 +850,29 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
         certificate={selectedCert}
         onClose={() => setSelectedCert(null)}
       />
+
+      {/* Mandatory Course Review Modal before Certificate Unlock (CR-02) */}
+      {reviewTargetCourse && (
+        <MandatoryReviewModal
+          visible={reviewModalVisible}
+          courseTitle={reviewTargetCourse.title}
+          instructorName={reviewTargetCourse.instructor?.name || 'Course Instructor'}
+          onSubmit={(rating, feedback) => {
+            const unlockedCert = submitMandatoryCourseReview(
+              reviewTargetCourse.id,
+              rating,
+              feedback,
+              user?.displayName || user?.username || 'Executive Graduate',
+              'Course Graduate'
+            );
+            setReviewModalVisible(false);
+            if (unlockedCert) {
+              setSelectedCert(unlockedCert);
+            }
+          }}
+          onDismissLater={() => setReviewModalVisible(false)}
+        />
+      )}
 
     </View>
   );

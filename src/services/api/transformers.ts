@@ -290,5 +290,6 @@ export function transformWpCourse(raw: any): Course {
     modules,
     reviews: getLiveReviewsForCourse(id),
     skillTrack: title.includes('AI') ? 'Generative AI Career Track' : 'Professional Skills Track',
+    _searchIndex: `${title} ${excerpt} ${instructor.name} ${catId} ${categorySlugs.join(' ')}`.toLowerCase(),
   };
 }

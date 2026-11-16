@@ -5,6 +5,7 @@ import { Course, Category, CategoryId, Workshop } from '../../types';
 import { transformWpCourse, cleanHtml } from './transformers';
 import { Env } from '../../config/env';
 import { INITIAL_COURSES_SEED } from '../../data/coursesCatalogSeed';
+import { CATEGORIES } from '../../data/mockData';
 
 // Eagerly pre-seed in-memory cache with the verified catalog for 0ms startup
 CacheManager.set(
@@ -58,6 +59,16 @@ export class CoursesService {
     const memory = CacheManager.getSync<Course[]>(this.ALL_COURSES_CACHE_KEY);
     if (memory && memory.length > 0) return memory;
     return INITIAL_COURSES_SEED;
+  }
+
+  /**
+   * Synchronously retrieve cached categories from memory (0ms latency).
+   * Falls back to verified categories with calculated counts if memory cache is unpopulated.
+   */
+  static getCachedCategoriesSync(): Category[] {
+    const memory = CacheManager.getSync<Category[]>(this.CATEGORIES_CACHE_KEY);
+    if (memory && memory.length > 0) return memory;
+    return CATEGORIES;
   }
 
   /**

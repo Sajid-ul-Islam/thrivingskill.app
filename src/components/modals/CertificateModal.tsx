@@ -17,9 +17,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Certificate } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { useFeedback } from '../../context/FeedbackContext';
+import { useLanguage } from '../../context/LanguageContext';
+import { useLearning } from '../../context/LearningContext';
 import { triggerHaptic } from '../../utils/haptics';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
+import { MandatoryReviewModal } from './MandatoryReviewModal';
 
 interface CertificateModalProps {
   visible: boolean;
@@ -33,10 +36,16 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
   onClose,
 }) => {
   const { colors, isDark } = useTheme();
+  const { isBangla } = useLanguage();
   const { showToast } = useFeedback();
+  const { hasReviewedCourse, submitMandatoryCourseReview } = useLearning();
   const insets = useSafeAreaInsets();
   const pdfTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [copied, setCopied] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [reviewModalVisible, setReviewModalVisible] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -44,12 +53,28 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
       if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
     };
   }, []);
-  const [copied, setCopied] = useState(false);
-  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   if (!certificate) return null;
 
+  const isReviewed = certificate.courseId ? hasReviewedCourse(certificate.courseId) : true;
+
+  const requireReviewGate = (): boolean => {
+    if (!isReviewed) {
+      triggerHaptic('warning');
+      showToast({
+        message: isBangla
+          ? 'সার্টিফিকেট ডাউনলোড বা শেয়ার করতে আগে রিভিউ দিন'
+          : 'Rating and review required before downloading or sharing certificate',
+        type: 'warning',
+      });
+      setReviewModalVisible(true);
+      return false;
+    }
+    return true;
+  };
+
   const handleShare = async () => {
+    if (!requireReviewGate()) return;
     try {
       await Share.share({
         message: `I've successfully completed "${certificate.courseTitle}" on Thriving Skills! Check my verified certificate: ${certificate.verificationUrl}`,
@@ -61,6 +86,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
   };
 
   const handleDownloadPdf = async () => {
+    if (!requireReviewGate()) return;
     setIsDownloadingPdf(true);
     pdfTimerRef.current = setTimeout(async () => {
       setIsDownloadingPdf(false);
@@ -76,12 +102,14 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
   };
 
   const handleVerifyOnline = () => {
+    if (!requireReviewGate()) return;
     Linking.openURL(certificate.verificationUrl).catch(() => {
       Alert.alert('Verification', `Visit ${certificate.verificationUrl} to verify this credential online.`);
     });
   };
 
   const handleCopyLink = async () => {
+    if (!requireReviewGate()) return;
     triggerHaptic('selection');
     try {
       if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
@@ -103,6 +131,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
   };
 
   const handleAddToLinkedIn = () => {
+    if (!requireReviewGate()) return;
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth() + 1;
@@ -120,6 +149,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
   };
 
   const handleShareToLinkedInFeed = () => {
+    if (!requireReviewGate()) return;
     const shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(certificate.verificationUrl)}`;
     Linking.openURL(shareUrl).catch(() => {
       handleShare();
@@ -160,6 +190,45 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
               { paddingBottom: Math.max(insets.bottom, 24) },
             ]}
           >
+            {/* Mandatory Review Warning Banner when certificate is locked */}
+            {!isReviewed && (
+              <View
+                style={[
+                  styles.lockedBanner,
+                  {
+                    backgroundColor: isDark ? 'rgba(217, 119, 6, 0.15)' : '#FEF3C7',
+                    borderColor: '#F59E0B',
+                  },
+                ]}
+              >
+                <View style={styles.lockedBannerHeader}>
+                  <View style={styles.lockedIconCircle}>
+                    <Ionicons name="lock-closed" size={16} color="#B45309" />
+                  </View>
+                  <Text style={[styles.lockedBannerTitle, { color: isDark ? '#FBBF24' : '#92400E' }]}>
+                    {isBangla ? 'সার্টিফিকেট ডাউনলোড করতে রিভিউ আবশ্যক' : 'Mandatory Review Required to Unlock'}
+                  </Text>
+                </View>
+                <Text style={[styles.lockedBannerBody, { color: isDark ? '#E5E7EB' : '#78350F' }]}>
+                  {isBangla
+                    ? 'অফিসিয়াল সার্টিফিকেট PDF ডাউনলোড, লিঙ্কডইন অ্যাড এবং ভেরিফিকেশন লিংক পেতে কোর্সটির উপর ১-৫ স্টার রেটিং ও মতামত প্রদান করুন।'
+                    : 'To download official PDF, share, or add credentials to LinkedIn, please rate this course (1 to 5 stars) and write your review.'}
+                </Text>
+                <TouchableOpacity
+                  style={styles.reviewNowCta}
+                  onPress={() => setReviewModalVisible(true)}
+                  activeOpacity={0.85}
+                  accessibilityRole="button"
+                  accessibilityLabel="Rate and review course to unlock certificate"
+                >
+                  <Ionicons name="star" size={15} color="#FFFFFF" />
+                  <Text style={styles.reviewNowCtaText}>
+                    {isBangla ? 'এখনই রিভিউ দিন (১-৫ স্টার)' : 'Submit Review to Unlock'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
             {/* The Certificate Frame */}
             <View style={[styles.certFrame, { backgroundColor: '#FFFFFF', borderColor: '#FFB606' }]}>
               {/* Inner Decorative Border */}
@@ -255,29 +324,55 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
             <View style={styles.actionsContainer}>
               {/* Primary: Download PDF Certificate */}
               <TouchableOpacity
-                style={[styles.downloadPdfBtn, { backgroundColor: colors.accent }]}
+                style={[
+                  styles.downloadPdfBtn,
+                  { backgroundColor: isReviewed ? colors.accent : '#F59E0B' },
+                ]}
                 onPress={handleDownloadPdf}
                 disabled={isDownloadingPdf}
                 activeOpacity={0.88}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  isReviewed
+                    ? (isBangla ? 'পিডিএফ সার্টিফিকেট ডাউনলোড করুন' : 'Download PDF Certificate')
+                    : (isBangla ? 'রিভিউ দিয়ে সার্টিফিকেট ডাউনলোড করুন (লক)' : 'Review to Download PDF (Locked)')
+                }
               >
                 {isDownloadingPdf ? (
                   <ActivityIndicator color={colors.onAccent} size="small" />
                 ) : (
                   <>
-                    <Ionicons name="arrow-down-circle-outline" size={18} color={colors.onAccent} />
-                    <Text style={[styles.downloadPdfText, { color: colors.onAccent }]}>Download PDF Certificate</Text>
+                    <Ionicons
+                      name={isReviewed ? 'arrow-down-circle-outline' : 'lock-closed'}
+                      size={18}
+                      color={isReviewed ? colors.onAccent : '#FFFFFF'}
+                    />
+                    <Text
+                      style={[
+                        styles.downloadPdfText,
+                        { color: isReviewed ? colors.onAccent : '#FFFFFF' },
+                      ]}
+                    >
+                      {isReviewed
+                        ? (isBangla ? 'পিডিএফ সার্টিফিকেট ডাউনলোড করুন' : 'Download PDF Certificate')
+                        : (isBangla ? 'রিভিউ দিয়ে ডাউনলোড করুন (লক)' : 'Review to Download PDF (Locked)')}
+                    </Text>
                   </>
                 )}
               </TouchableOpacity>
 
               {/* Add to LinkedIn Profile */}
               <TouchableOpacity
-                style={[styles.linkedinActionBtn, { backgroundColor: '#0A66C2' }]}
+                style={[styles.linkedinActionBtn, { backgroundColor: isReviewed ? '#0A66C2' : (isDark ? '#374151' : '#E5E7EB') }]}
                 onPress={handleAddToLinkedIn}
                 activeOpacity={0.88}
+                accessibilityRole="button"
+                accessibilityLabel={isReviewed ? "Add to LinkedIn Profile" : "Review required to add credential to LinkedIn"}
               >
-                <Ionicons name="logo-linkedin" size={18} color="#FFFFFF" />
-                <Text style={styles.linkedinActionText}>Add to LinkedIn Profile</Text>
+                <Ionicons name="logo-linkedin" size={18} color={isReviewed ? "#FFFFFF" : (isDark ? "#9CA3AF" : "#6B7280")} />
+                <Text style={[styles.linkedinActionText, !isReviewed && { color: isDark ? "#9CA3AF" : "#6B7280" }]}>
+                  {isReviewed ? 'Add to LinkedIn Profile' : (isBangla ? 'রিভিউ দিয়ে লিঙ্কডইনে যোগ করুন' : 'Review to Add on LinkedIn')}
+                </Text>
               </TouchableOpacity>
 
               {/* Share Row: Native Share + Post on LinkedIn */}
@@ -327,6 +422,33 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
           </ScrollView>
         </View>
       </View>
+
+      {/* Mandatory Review Modal for Gated Unlock (CR-02) */}
+      {certificate && (
+        <MandatoryReviewModal
+          visible={reviewModalVisible}
+          courseTitle={certificate.courseTitle}
+          instructorName={certificate.instructorName}
+          onSubmit={(rating, feedback) => {
+            submitMandatoryCourseReview(
+              certificate.courseId,
+              rating,
+              feedback,
+              certificate.studentName,
+              'Course Graduate'
+            );
+            setReviewModalVisible(false);
+            triggerHaptic('success');
+            showToast({
+              message: isBangla
+                ? '🎉 রিভিউ সম্পন্ন হয়েছে! সার্টিফিকেট সফলভাবে আনলক হয়েছে।'
+                : '🎉 Review submitted! Certificate unlocked.',
+              type: 'success',
+            });
+          }}
+          onDismissLater={() => setReviewModalVisible(false)}
+        />
+      )}
     </Modal>
   );
 };
@@ -343,6 +465,54 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     maxHeight: '90%',
     overflow: 'hidden',
+  },
+  lockedBanner: {
+    marginHorizontal: 16,
+    marginTop: 14,
+    marginBottom: 8,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    padding: 14,
+  },
+  lockedBannerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  lockedIconCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FEF3C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lockedBannerTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    flex: 1,
+  },
+  lockedBannerBody: {
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 10,
+  },
+  reviewNowCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#D97706',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    gap: 6,
+    minHeight: MIN_TOUCH_TARGET,
+  },
+  reviewNowCtaText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
   },
   topBar: {
     flexDirection: 'row',

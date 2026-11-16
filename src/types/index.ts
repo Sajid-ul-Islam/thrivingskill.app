@@ -140,6 +140,7 @@ export interface Course {
   isProExclusive?: boolean;
   skillTrack?: string;
   isCareerBundle?: boolean;
+  _searchIndex?: string;
 }
 
 export interface SpecialBundle {

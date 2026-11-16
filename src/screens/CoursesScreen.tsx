@@ -1,15 +1,17 @@
-import React, { useState, useRef, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useMemo, useEffect, useCallback, startTransition } from 'react';
 import {
   View,
   Text,
   StyleSheet,
+  FlatList,
   ScrollView,
   TextInput,
   TouchableOpacity,
-  Alert,
   RefreshControl,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  Platform,
+  ListRenderItem,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,6 +26,7 @@ import { StateView, ScrollToTopPill } from '../components/common';
 import { triggerHaptic } from '../utils/haptics';
 import { shape } from '../theme/shapes';
 import { MIN_TOUCH_TARGET } from '../theme/typography';
+import { Course } from '../types';
 
 interface CoursesScreenProps {
   onNavigateToCourse: (courseId: string) => void;
@@ -69,10 +72,9 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   const [showHeaderSearch, setShowHeaderSearch] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [displayLimit, setDisplayLimit] = useState<number>(24);
   const [localSearch, setLocalSearch] = useState<string>(searchQuery);
 
-  const scrollViewRef = useRef<React.ElementRef<typeof ScrollView> | null>(null);
+  const flatListRef = useRef<FlatList<Course> | null>(null);
   const searchInputRef = useRef<React.ElementRef<typeof TextInput> | null>(null);
   const searchDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -98,53 +100,62 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
       clearTimeout(searchDebounceTimerRef.current);
     }
     searchDebounceTimerRef.current = setTimeout(() => {
-      setSearchQuery(text);
+      startTransition(() => {
+        setSearchQuery(text);
+      });
     }, 90);
   }, [setSearchQuery]);
 
   const handleClearSearch = useCallback(() => {
     setLocalSearch('');
-    setSearchQuery('');
-    setDisplayLimit(24);
+    startTransition(() => {
+      setSearchQuery('');
+    });
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
   }, [setSearchQuery]);
 
-  // Filter Selection Handlers with instant window reset and scroll-to-top
+  // Filter Selection Handlers with React 19 Concurrent Transitions & instant scroll-to-top
   const handleCategorySelect = useCallback((catId: string) => {
-    setSelectedCategory(catId);
-    setDisplayLimit(24);
-    scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+    startTransition(() => {
+      setSelectedCategory(catId);
+    });
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
   }, [setSelectedCategory]);
 
   const handleLevelSelect = useCallback((lvl: LevelFilter) => {
     triggerHaptic('selection');
-    setSelectedLevel(lvl);
-    setDisplayLimit(24);
-    scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+    startTransition(() => {
+      setSelectedLevel(lvl);
+    });
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
   }, []);
 
   const handlePriceFilterSelect = useCallback((pf: PriceFilter) => {
     triggerHaptic('selection');
-    setSelectedPriceFilter(pf);
-    setDisplayLimit(24);
-    scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+    startTransition(() => {
+      setSelectedPriceFilter(pf);
+    });
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
   }, []);
 
   const handleSortToggle = useCallback(() => {
     triggerHaptic('selection');
     const order: SortOption[] = ['popular', 'newest', 'rating', 'price-low', 'price-high'];
     const nextIdx = (order.indexOf(selectedSort) + 1) % order.length;
-    setSelectedSort(order[nextIdx]);
-    setDisplayLimit(24);
+    startTransition(() => {
+      setSelectedSort(order[nextIdx]);
+    });
   }, [selectedSort]);
 
   const handleClearAllFilters = useCallback(() => {
     setLocalSearch('');
-    setSearchQuery('');
-    setSelectedCategory('all');
-    setSelectedLevel('All');
-    setSelectedPriceFilter('all');
-    setDisplayLimit(24);
-    scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+    startTransition(() => {
+      setSearchQuery('');
+      setSelectedCategory('all');
+      setSelectedLevel('All');
+      setSelectedPriceFilter('all');
+    });
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
   }, [setSearchQuery, setSelectedCategory]);
 
   const levelLabels: Record<LevelFilter, { en: string; bn: string }> = {
@@ -154,8 +165,47 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     Advanced: { en: 'Advanced', bn: 'অ্যাডভান্সড' },
   };
 
-  // High-Performance Memoized Filtering & Sorting:
-  // Evaluates in <2ms and caches results, preventing wasteful recomputations on scroll
+  // 1. Pre-build inverted category index Map for O(1) category access
+  const categoryIndex = useMemo(() => {
+    const map = new Map<string, Course[]>();
+    const bundles: Course[] = [];
+
+    for (let i = 0; i < courses.length; i++) {
+      const c = courses[i];
+      // Check special bundles
+      if (
+        c.isCareerBundle ||
+        c.title.toLowerCase().includes('bundle') ||
+        c.slug.toLowerCase().includes('bundle')
+      ) {
+        bundles.push(c);
+      }
+
+      // Check category and categorySlugs
+      const slugs = new Set<string>();
+      if (c.category) slugs.add(c.category);
+      if (c.categorySlugs && c.categorySlugs.length > 0) {
+        for (let j = 0; j < c.categorySlugs.length; j++) {
+          if (c.categorySlugs[j]) slugs.add(c.categorySlugs[j]);
+        }
+      }
+
+      slugs.forEach((s) => {
+        let list = map.get(s);
+        if (!list) {
+          list = [];
+          map.set(s, list);
+        }
+        list.push(c);
+      });
+    }
+
+    map.set('career-track', bundles);
+    return map;
+  }, [courses]);
+
+  // 2. High-Performance Memoized Filtering & Sorting:
+  // Evaluates in sub-millisecond time and caches results
   const filtered = useMemo(() => {
     const q = (searchQuery || '').trim().toLowerCase();
     const cat = selectedCategory;
@@ -163,44 +213,51 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     const pf = selectedPriceFilter;
     const sort = selectedSort;
 
-    const matched = courses.filter((course) => {
-      // 1. Category check
-      if (cat !== 'all') {
-        if (cat === 'career-track') {
-          const isBundle =
-            course.isCareerBundle ||
-            course.title.toLowerCase().includes('bundle') ||
-            course.slug.toLowerCase().includes('bundle');
-          if (!isBundle) return false;
-        } else {
-          const directMatch = course.category === cat;
-          const slugList = course.categorySlugs;
+    // Fast-path: O(1) candidate category pool
+    let candidateList: Course[];
+    if (cat === 'all') {
+      candidateList = courses;
+    } else {
+      const indexed = categoryIndex.get(cat);
+      if (indexed) {
+        candidateList = indexed;
+      } else {
+        // Fallback for partial category match
+        candidateList = courses.filter((c) => {
+          const directMatch = c.category === cat;
+          const slugList = c.categorySlugs;
           const slugMatch =
             slugList &&
             (slugList.includes(cat) ||
               slugList.some((s) => s.includes(cat) || cat.includes(s)));
-          if (!directMatch && !slugMatch) return false;
-        }
+          return directMatch || slugMatch;
+        });
       }
+    }
 
-      // 2. Level check
+    const matched = candidateList.filter((course) => {
+      // Level check
       if (lvl !== 'All') {
         if (course.level !== lvl && course.level !== 'All Levels') return false;
       }
 
-      // 3. Price check
+      // Price check
       if (pf !== 'all') {
         const isFree = (!course.price || course.price === 0) && (!course.priceBdt || course.priceBdt === 0);
         if (pf === 'free' && !isFree) return false;
         if (pf === 'paid' && isFree) return false;
       }
 
-      // 4. Search query check
+      // Search query check using pre-computed search index (zero string allocations)
       if (q) {
-        const titleMatch = course.title.toLowerCase().includes(q);
-        const subMatch = course.subtitle?.toLowerCase().includes(q);
-        const instMatch = course.instructor?.name?.toLowerCase().includes(q);
-        if (!titleMatch && !subMatch && !instMatch) return false;
+        if (course._searchIndex) {
+          if (!course._searchIndex.includes(q)) return false;
+        } else {
+          const titleMatch = course.title.toLowerCase().includes(q);
+          const subMatch = course.subtitle?.toLowerCase().includes(q);
+          const instMatch = course.instructor?.name?.toLowerCase().includes(q);
+          if (!titleMatch && !subMatch && !instMatch) return false;
+        }
       }
 
       return true;
@@ -220,9 +277,9 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     }
 
     return matched;
-  }, [courses, selectedCategory, selectedLevel, selectedPriceFilter, selectedSort, searchQuery]);
+  }, [courses, categoryIndex, selectedCategory, selectedLevel, selectedPriceFilter, selectedSort, searchQuery]);
 
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
 
     // 1. Dynamic Header Elevation:
@@ -245,23 +302,16 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     } else if (offsetY <= 450 && showScrollTop) {
       setShowScrollTop(false);
     }
+  }, [isScrolled, showHeaderSearch, showScrollTop]);
 
-    // 4. Progressive Windowing: auto-load next batch when scrolling near bottom
-    const layoutHeight = event.nativeEvent.layoutMeasurement.height;
-    const contentHeight = event.nativeEvent.contentSize.height;
-    if (contentHeight > 0 && offsetY + layoutHeight >= contentHeight - 200) {
-      setDisplayLimit((prev) => (prev < filtered.length ? Math.min(prev + 24, filtered.length) : prev));
-    }
-  };
-
-  const handleHeaderSearchPress = () => {
+  const handleHeaderSearchPress = useCallback(() => {
     if (onOpenSearch) {
       onOpenSearch();
     } else {
-      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+      flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
       searchInputRef.current?.focus();
     }
-  };
+  }, [onOpenSearch]);
 
   const hasActiveFilters =
     selectedCategory !== 'all' ||
@@ -271,42 +321,26 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
 
   const catalogCount = totalCourseCount || courses.length || 382;
 
-  return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Header
-        title={isBangla ? 'কোর্স ক্যাটালগ' : 'Thriving Skills Catalog'}
-        subtitle={
-          isBangla
-            ? `${catalogCount}+ প্রিমিয়াম কোর্স ও স্পেশাল বান্ডেল`
-            : `${catalogCount}+ Premium Courses & Special Bundles`
-        }
-        isScrolled={isScrolled}
-        showSearch={showHeaderSearch}
-        onOpenSearch={handleHeaderSearchPress}
-        onOpenSubscription={onOpenSubscription}
-        onOpenNotifications={onOpenNotifications}
-        onOpenDrawer={onOpenDrawer}
-        onOpenSupport={onOpenSupport}
-      />
+  // Render course item with memoized CourseCard
+  const renderItem: ListRenderItem<Course> = useCallback(
+    ({ item }) => (
+      <View style={styles.cardItemWrapper}>
+        <CourseCard
+          course={item}
+          horizontal={viewMode === 'list'}
+          onPress={() => onNavigateToCourse(item.id)}
+        />
+      </View>
+    ),
+    [viewMode, onNavigateToCourse]
+  );
 
-      <ScrollView
-        ref={scrollViewRef}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        refreshControl={
-          <RefreshControl
-            refreshing={isLoadingCourses}
-            onRefresh={() => {
-              triggerHaptic('light');
-              refreshCourses();
-            }}
-            tintColor={colors.primary}
-            colors={[colors.primary]}
-          />
-        }
-      >
+  const keyExtractor = useCallback((item: Course) => item.id, []);
+
+  // List Header Component containing all interactive controls
+  const renderHeader = useMemo(() => {
+    return (
+      <View>
         {/* Search Header */}
         <View style={styles.searchSection}>
           <View
@@ -346,89 +380,89 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
 
         {/* Filters and View Mode Controls */}
         <View style={styles.filterRow}>
-            {/* Level selector (user-controlled static scroll) */}
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.levelsScroll}
-              accessibilityRole="tablist"
-            >
-              {(['All', 'Beginner', 'Intermediate', 'Advanced'] as LevelFilter[]).map((lvl) => {
-                const isSelected = selectedLevel === lvl;
-                return (
-                  <TouchableOpacity
-                    key={lvl}
+          {/* Level selector (user-controlled static scroll) */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.levelsScroll}
+            accessibilityRole="tablist"
+          >
+            {(['All', 'Beginner', 'Intermediate', 'Advanced'] as LevelFilter[]).map((lvl) => {
+              const isSelected = selectedLevel === lvl;
+              return (
+                <TouchableOpacity
+                  key={lvl}
+                  style={[
+                    styles.levelPill,
+                    {
+                      backgroundColor:
+                        isSelected ? colors.secondary : colors.surfaceSubtle,
+                      borderColor: isSelected ? colors.secondary : colors.border,
+                    },
+                  ]}
+                  onPress={() => handleLevelSelect(lvl)}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: isSelected }}
+                  accessibilityLabel={
+                    isBangla
+                      ? `${levelLabels[lvl].bn} লেভেল ফিল্টার`
+                      : `Filter by ${levelLabels[lvl].en} difficulty`
+                  }
+                  hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+                >
+                  <Text
                     style={[
-                      styles.levelPill,
-                      {
-                        backgroundColor:
-                          isSelected ? colors.secondary : colors.surfaceSubtle,
-                        borderColor: isSelected ? colors.secondary : colors.border,
-                      },
+                      styles.levelText,
+                      { color: isSelected ? colors.onSecondary : colors.textMuted },
                     ]}
-                    onPress={() => handleLevelSelect(lvl)}
-                    accessibilityRole="tab"
-                    accessibilityState={{ selected: isSelected }}
-                    accessibilityLabel={
-                      isBangla
-                        ? `${levelLabels[lvl].bn} লেভেল ফিল্টার`
-                        : `Filter by ${levelLabels[lvl].en} difficulty`
-                    }
-                    hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
                   >
-                    <Text
-                      style={[
-                        styles.levelText,
-                        { color: isSelected ? colors.onSecondary : colors.textMuted },
-                      ]}
-                    >
-                      {isBangla ? levelLabels[lvl].bn : levelLabels[lvl].en}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
+                    {isBangla ? levelLabels[lvl].bn : levelLabels[lvl].en}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
 
-            {/* View toggle */}
-            <View style={styles.viewToggleGroup}>
-              <TouchableOpacity
-                style={[
-                  styles.viewToggleBtn,
-                  viewMode === 'grid' && { backgroundColor: colors.surfaceSubtle },
-                ]}
-                onPress={() => {
-                  triggerHaptic('selection');
-                  setViewMode('grid');
-                }}
-                accessibilityRole="button"
-                accessibilityLabel="Switch to grid layout"
-              >
-                <Ionicons
-                  name="grid-outline"
-                  size={18}
-                  color={viewMode === 'grid' ? colors.primary : colors.textLight}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.viewToggleBtn,
-                  viewMode === 'list' && { backgroundColor: colors.surfaceSubtle },
-                ]}
-                onPress={() => {
-                  triggerHaptic('selection');
-                  setViewMode('list');
-                }}
-                accessibilityRole="button"
-                accessibilityLabel="Switch to list layout"
-              >
-                <Ionicons
-                  name="list-outline"
-                  size={18}
-                  color={viewMode === 'list' ? colors.primary : colors.textLight}
-                />
-              </TouchableOpacity>
-            </View>
+          {/* View toggle */}
+          <View style={styles.viewToggleGroup}>
+            <TouchableOpacity
+              style={[
+                styles.viewToggleBtn,
+                viewMode === 'grid' && { backgroundColor: colors.surfaceSubtle },
+              ]}
+              onPress={() => {
+                triggerHaptic('selection');
+                setViewMode('grid');
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Switch to grid layout"
+            >
+              <Ionicons
+                name="grid-outline"
+                size={18}
+                color={viewMode === 'grid' ? colors.primary : colors.textLight}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.viewToggleBtn,
+                viewMode === 'list' && { backgroundColor: colors.surfaceSubtle },
+              ]}
+              onPress={() => {
+                triggerHaptic('selection');
+                setViewMode('list');
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Switch to list layout"
+            >
+              <Ionicons
+                name="list-outline"
+                size={18}
+                color={viewMode === 'list' ? colors.primary : colors.textLight}
+              />
+            </TouchableOpacity>
           </View>
+        </View>
 
         {/* Result Header & Filters */}
         <View style={styles.resultMetaRow}>
@@ -441,7 +475,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
           </Text>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-            {/* Free / Paid / All Segmented Pills (Section 5 Spec) */}
+            {/* Free / Paid / All Segmented Pills */}
             <View style={[styles.priceFilterGroup, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]} accessibilityRole="tablist">
               {(['all', 'free', 'paid'] as PriceFilter[]).map((pf) => {
                 const isSelected = selectedPriceFilter === pf;
@@ -581,129 +615,189 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
             </ScrollView>
           </View>
         )}
+      </View>
+    );
+  }, [
+    colors,
+    isBangla,
+    localSearch,
+    handleSearchChange,
+    handleClearSearch,
+    selectedCategory,
+    categories,
+    handleCategorySelect,
+    selectedLevel,
+    handleLevelSelect,
+    levelLabels,
+    viewMode,
+    filtered.length,
+    selectedPriceFilter,
+    handlePriceFilterSelect,
+    selectedSort,
+    handleSortToggle,
+    hasActiveFilters,
+    searchQuery,
+    handleClearAllFilters,
+  ]);
 
-        {/* Content Rendering: Real Courses */}
+  // List Empty Component (skeleton / error / empty search)
+  const renderEmpty = useMemo(() => {
+    if (isLoadingCourses && courses.length === 0) {
+      return (
         <View style={styles.coursesContainer}>
-          {isLoadingCourses && courses.length === 0 ? (
-            <>
-              <CourseCardSkeleton horizontal={viewMode === 'list'} />
-              <CourseCardSkeleton horizontal={viewMode === 'list'} />
-              <CourseCardSkeleton horizontal={viewMode === 'list'} />
-            </>
-          ) : coursesError && courses.length === 0 ? (
-            <StateView
-              mode="error"
-              title={isBangla ? 'ক্যাটালগ লোড করা যায়নি' : 'Could not load catalog'}
-              message={coursesError}
-              primaryActionLabel={isBangla ? 'আবার চেষ্টা করুন' : 'Retry'}
-              onPrimaryAction={refreshCourses}
-            />
-          ) : filtered.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <View style={[styles.emptyIconCircle, { backgroundColor: colors.surfaceSubtle }]}>
-                <Ionicons name="search-outline" size={42} color={colors.primary} />
-              </View>
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>
-                {isBangla ? 'কোনো কোর্স পাওয়া যায়নি' : 'No courses found'}
-              </Text>
-              <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
-                {isBangla
-                  ? `"${searchQuery || selectedCategory}" এর সাথে মিলে এমন কোনো কোর্স পাওয়া যায়নি। জনপ্রিয় বিষয়গুলো দেখতে পারেন:`
-                  : `We couldn't find any courses matching "${searchQuery || selectedCategory}". Try popular topics:`}
-              </Text>
-
-              {/* Popular quick searches */}
-              <View style={styles.suggestionRow}>
-                {(isBangla
-                  ? [
-                      { label: 'এআই ও অটোমেশন', q: 'AI' },
-                      { label: 'ফাইন্যান্সিয়াল মডেলিং', q: 'Financial' },
-                      { label: 'কর্পোরেট লিডারশিপ', q: 'Corporate' },
-                    ]
-                  : [
-                      { label: 'AI & Automation', q: 'AI' },
-                      { label: 'Financial Modeling', q: 'Financial' },
-                      { label: 'Corporate Leadership', q: 'Corporate' },
-                    ]
-                ).map((topic) => (
-                  <TouchableOpacity
-                    key={topic.label}
-                    style={[styles.suggestionChip, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
-                    onPress={() => {
-                      setLocalSearch(topic.q);
-                      setSearchQuery(topic.q);
-                      setSelectedCategory('all');
-                      setSelectedLevel('All');
-                      setDisplayLimit(24);
-                      scrollViewRef.current?.scrollTo({ y: 0, animated: false });
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={
-                      isBangla
-                        ? `${topic.label} বিষয় সার্চ করুন`
-                        : `Search for ${topic.label}`
-                    }
-                  >
-                    <Text style={[styles.suggestionText, { color: colors.text }]}>{topic.label}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
-              <TouchableOpacity
-                style={[styles.resetBtn, { backgroundColor: colors.primary }]}
-                onPress={handleClearAllFilters}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  isBangla ? 'সকল ফিল্টার রিসেট করুন' : 'Reset All Filters'
-                }
-              >
-                <Ionicons name="refresh" size={15} color={colors.onPrimary} />
-                <Text style={[styles.resetBtnText, { color: colors.onPrimary }]}>
-                  {isBangla ? 'সকল ফিল্টার রিসেট করুন' : 'Reset All Filters'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <>
-              {filtered.slice(0, displayLimit).map((course) => (
-                <CourseCard
-                  key={course.id}
-                  course={course}
-                  horizontal={viewMode === 'list'}
-                  onPress={() => onNavigateToCourse(course.id)}
-                />
-              ))}
-
-              {displayLimit < filtered.length && (
-                <TouchableOpacity
-                  style={[
-                    styles.loadMoreButton,
-                    { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-                  ]}
-                  onPress={() => {
-                    triggerHaptic('light');
-                    setDisplayLimit((prev) => Math.min(prev + 24, filtered.length));
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel={isBangla ? 'আরও কোর্স দেখুন' : 'Load more courses'}
-                >
-                  <Ionicons name="chevron-down-circle-outline" size={18} color={colors.primary} />
-                  <Text style={[styles.loadMoreText, { color: colors.primary }]}>
-                    {isBangla
-                      ? `আরও ২৪টি কোর্স দেখুন (${filtered.length - displayLimit}টি বাকি)`
-                      : `Load More Courses (${filtered.length - displayLimit} remaining)`}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </>
-          )}
+          <CourseCardSkeleton horizontal={viewMode === 'list'} />
+          <CourseCardSkeleton horizontal={viewMode === 'list'} />
+          <CourseCardSkeleton horizontal={viewMode === 'list'} />
         </View>
-      </ScrollView>
+      );
+    }
+
+    if (coursesError && courses.length === 0) {
+      return (
+        <View style={styles.coursesContainer}>
+          <StateView
+            mode="error"
+            title={isBangla ? 'ক্যাটালগ লোড করা যায়নি' : 'Could not load catalog'}
+            message={coursesError}
+            primaryActionLabel={isBangla ? 'আবার চেষ্টা করুন' : 'Retry'}
+            onPrimaryAction={refreshCourses}
+          />
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.emptyContainer}>
+        <View style={[styles.emptyIconCircle, { backgroundColor: colors.surfaceSubtle }]}>
+          <Ionicons name="search-outline" size={42} color={colors.primary} />
+        </View>
+        <Text style={[styles.emptyTitle, { color: colors.text }]}>
+          {isBangla ? 'কোনো কোর্স পাওয়া যায়নি' : 'No courses found'}
+        </Text>
+        <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
+          {isBangla
+            ? `"${searchQuery || selectedCategory}" এর সাথে মিলে এমন কোনো কোর্স পাওয়া যায়নি। জনপ্রিয় বিষয়গুলো দেখতে পারেন:`
+            : `We couldn't find any courses matching "${searchQuery || selectedCategory}". Try popular topics:`}
+        </Text>
+
+        {/* Popular quick searches */}
+        <View style={styles.suggestionRow}>
+          {(isBangla
+            ? [
+                { label: 'এআই ও অটোমেশন', q: 'AI' },
+                { label: 'ফাইন্যান্সিয়াল মডেলিং', q: 'Financial' },
+                { label: 'কর্পোরেট লিডারশিপ', q: 'Corporate' },
+              ]
+            : [
+                { label: 'AI & Automation', q: 'AI' },
+                { label: 'Financial Modeling', q: 'Financial' },
+                { label: 'Corporate Leadership', q: 'Corporate' },
+              ]
+          ).map((topic) => (
+            <TouchableOpacity
+              key={topic.label}
+              style={[styles.suggestionChip, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+              onPress={() => {
+                setLocalSearch(topic.q);
+                startTransition(() => {
+                  setSearchQuery(topic.q);
+                  setSelectedCategory('all');
+                  setSelectedLevel('All');
+                });
+                flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={
+                isBangla
+                  ? `${topic.label} বিষয় সার্চ করুন`
+                  : `Search for ${topic.label}`
+              }
+            >
+              <Text style={[styles.suggestionText, { color: colors.text }]}>{topic.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <TouchableOpacity
+          style={[styles.resetBtn, { backgroundColor: colors.primary }]}
+          onPress={handleClearAllFilters}
+          accessibilityRole="button"
+          accessibilityLabel={
+            isBangla ? 'সকল ফিল্টার রিসেট করুন' : 'Reset All Filters'
+          }
+        >
+          <Ionicons name="refresh" size={15} color={colors.onPrimary} />
+          <Text style={[styles.resetBtnText, { color: colors.onPrimary }]}>
+            {isBangla ? 'সকল ফিল্টার রিসেট করুন' : 'Reset All Filters'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }, [
+    isLoadingCourses,
+    courses.length,
+    viewMode,
+    coursesError,
+    isBangla,
+    refreshCourses,
+    colors,
+    searchQuery,
+    selectedCategory,
+    handleClearAllFilters,
+    setSearchQuery,
+    setSelectedCategory,
+  ]);
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Header
+        title={isBangla ? 'কোর্স ক্যাটালগ' : 'Thriving Skills Catalog'}
+        subtitle={
+          isBangla
+            ? `${catalogCount}+ প্রিমিয়াম কোর্স ও স্পেশাল বান্ডেল`
+            : `${catalogCount}+ Premium Courses & Special Bundles`
+        }
+        isScrolled={isScrolled}
+        showSearch={showHeaderSearch}
+        onOpenSearch={handleHeaderSearchPress}
+        onOpenSubscription={onOpenSubscription}
+        onOpenNotifications={onOpenNotifications}
+        onOpenDrawer={onOpenDrawer}
+        onOpenSupport={onOpenSupport}
+      />
+
+      <FlatList
+        ref={flatListRef}
+        data={filtered}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={renderEmpty}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoadingCourses}
+            onRefresh={() => {
+              triggerHaptic('light');
+              refreshCourses();
+            }}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
+        initialNumToRender={8}
+        maxToRenderPerBatch={8}
+        windowSize={5}
+        removeClippedSubviews={Platform.OS === 'android'}
+      />
 
       {/* Dynamic Scroll to Top Quick Pill */}
       <ScrollToTopPill
         visible={showScrollTop}
-        onPress={() => scrollViewRef.current?.scrollTo({ y: 0, animated: true })}
+        onPress={() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true })}
         bottomOffset={Math.max(insets.bottom, 16) + 72}
       />
     </View>
@@ -844,6 +938,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textDecorationLine: 'underline',
   },
+  cardItemWrapper: {
+    paddingHorizontal: 16,
+  },
   coursesContainer: {
     paddingHorizontal: 16,
   },
@@ -904,22 +1001,5 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
-  },
-  loadMoreButton: {
-    minHeight: MIN_TOUCH_TARGET,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: shape.medium,
-    borderWidth: 1,
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  loadMoreText: {
-    fontSize: 14,
-    fontWeight: '600',
   },
 });
