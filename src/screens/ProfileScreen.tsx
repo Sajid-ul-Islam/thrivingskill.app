@@ -261,7 +261,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         });
         setEditProfileModalVisible(false);
         showToast({
-          message: isBangla ? 'প্রোফাইল লোকালি সংরক্ষিত হয়েছে।' : 'Profile details saved locally.',
+          message: isBangla
+            ? 'আপনার প্রোফাইল তথ্য লোকালি সংরক্ষিত হয়েছে (সার্ভারে সিঙ্ক পেন্ডিং)।'
+            : 'Your personal executive details have been saved locally (server sync pending).',
           type: 'info',
         });
       } catch {
