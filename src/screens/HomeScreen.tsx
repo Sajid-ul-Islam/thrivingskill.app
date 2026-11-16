@@ -31,7 +31,6 @@ import { RootTab } from '../types';
 import { AboutTSLModal, AboutTabKey } from '../components/AboutTSLModal';
 import { typography, MIN_TOUCH_TARGET } from '../theme/typography';
 import { shape } from '../theme/shapes';
-import { openWhatsAppChat, openFacebookMessenger, CRM_CHANNELS } from '../config/crm';
 
 interface HomeScreenProps {
   onNavigateToCourse: (courseId: string) => void;
@@ -223,7 +222,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         onOpenSubscription={onOpenSubscription}
         onOpenNotifications={onOpenNotifications}
         onOpenYouTube={onOpenYouTube}
-        onOpenSearch={onOpenSearch}
         onOpenDrawer={onOpenDrawer}
         onOpenSupport={onOpenSupport}
         onOpenOfflineContent={() => onNavigateTab('MyLearning')}
@@ -732,71 +730,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           )}
         </View>
 
-        {/* Visible WhatsApp & Messenger Counselor Help Card */}
-        <View style={styles.section}>
-          <View
-            style={[
-              styles.counselorCard,
-              {
-                backgroundColor: isDark ? '#0F1F17' : '#F0FDF4',
-                borderColor: isDark ? 'rgba(37, 211, 102, 0.4)' : '#BBF7D0',
-              },
-            ]}
-          >
-            <View style={styles.counselorHeader}>
-              <View style={styles.counselorBadge}>
-                <View style={styles.counselorPulseDot} />
-                <Text style={styles.counselorBadgeText}>
-                  {isBangla ? 'কাউন্সিলর অনলাইন' : 'COUNSELOR ONLINE'}
-                </Text>
-              </View>
-              <Text style={[styles.counselorHours, { color: colors.textMuted }]}>
-                01312-100288
-              </Text>
-            </View>
-
-            <Text style={[styles.counselorTitle, { color: colors.text }]}>
-              {isBangla ? 'কোর্স বা ভর্তি বিষয়ে সরাসরি কথা বলতে চান?' : 'Need Help Choosing the Right Course?'}
-            </Text>
-            <Text style={[styles.counselorSub, { color: colors.textMuted }]}>
-              {isBangla
-                ? 'আমাদের এডভাইজারদের সাথে হোয়াটসঅ্যাপ বা ফেসবুক মেসেঞ্জারে এখনই চ্যাট করুন।'
-                : 'Chat directly with Thriving Skills counselors on WhatsApp or Facebook Messenger for instant answers.'}
-            </Text>
-
-            <View style={styles.counselorBtnRow}>
-              <TouchableOpacity
-                style={[styles.counselorBtn, { backgroundColor: '#25D366' }]}
-                onPress={() => {
-                  triggerHaptic('light');
-                  openWhatsAppChat('payment', isBangla);
-                }}
-                activeOpacity={0.88}
-                accessibilityRole="button"
-                accessibilityLabel="Chat on WhatsApp with Counselor"
-              >
-                <Ionicons name="logo-whatsapp" size={17} color="#FFFFFF" />
-                <Text style={styles.counselorBtnText}>WhatsApp Chat</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.counselorBtn, { backgroundColor: '#0084FF' }]}
-                onPress={() => {
-                  triggerHaptic('light');
-                  openFacebookMessenger();
-                }}
-                activeOpacity={0.88}
-                accessibilityRole="button"
-                accessibilityLabel="Chat on Facebook Messenger"
-              >
-                <Ionicons name="logo-facebook" size={17} color="#FFFFFF" />
-                <Text style={styles.counselorBtnText}>Messenger</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-
-        {/* Streamlined Enterprise & About Gateway Card (Keeps Home focused on Learning Launchpad) */}
+        {/* Streamlined About Thriving Skills Gateway Card */}
         <View style={styles.section}>
           <View
             style={[
@@ -806,37 +740,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           >
             <View style={styles.gatewayHeaderRow}>
               <View style={[styles.gatewayIconWrap, { backgroundColor: colors.primaryLight }]}>
-                <Ionicons name="business-outline" size={20} color={colors.primary} />
+                <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={[typography.h4, { color: colors.text }]}>
-                  {isBangla ? 'টিএসএল ইকোসিস্টেম ও কর্পোরেট সল্যুশন' : 'TSL Enterprise & Ecosystem'}
+                  {isBangla ? 'থ্রাইভিং স্কিলস পরিচিতি ও ইকোসিস্টেম' : 'About Thriving Skills & Ecosystem'}
                 </Text>
                 <Text style={[typography.bodySmall, { color: colors.textMuted }]} numberOfLines={2}>
                   {isBangla
-                    ? 'টিম ট্রেনিং, ইউনিভার্সিটি পার্টনারশিপ ও প্রতিষ্ঠান সম্পর্কে জানুন।'
-                    : 'Corporate training proposals, university MoUs, and leadership info.'}
+                    ? 'আমাদের মিশন, ভিশন, ফ্যাকাল্টি ও পার্টনারশিপ সম্পর্কে জানুন।'
+                    : 'Learn about our mission, executive faculty, corporate partners, and university MoUs.'}
                 </Text>
               </View>
             </View>
 
             <View style={styles.gatewayActionsRow}>
               <SpringPressable
-                style={[styles.gatewayPrimaryBtn, { backgroundColor: colors.primary }]}
-                onPress={onOpenCorporateModal}
-                accessibilityRole="button"
-                accessibilityLabel="Corporate Solutions"
-              >
-                <Ionicons name="briefcase-outline" size={16} color={colors.onPrimary} />
-                <Text style={[typography.button, { color: colors.onPrimary }]} numberOfLines={1}>
-                  {isBangla ? 'কর্পোরেট প্রস্তাব' : 'Corporate Inquiry'}
-                </Text>
-              </SpringPressable>
-
-              <SpringPressable
                 style={[
                   styles.gatewaySecondaryBtn,
-                  { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                  { backgroundColor: colors.surfaceSubtle, borderColor: colors.border, flex: 1 },
                 ]}
                 onPress={() => {
                   setAboutInitialTab('overview');
@@ -847,7 +769,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               >
                 <Ionicons name="information-circle-outline" size={16} color={colors.text} />
                 <Text style={[typography.button, { color: colors.text }]} numberOfLines={1}>
-                  {isBangla ? 'আমাদের সম্পর্কে' : 'About TSL'}
+                  {isBangla ? 'আমাদের সম্পর্কে বিস্তারিত জানুন →' : 'Explore About TSL →'}
                 </Text>
               </SpringPressable>
             </View>
@@ -1641,83 +1563,6 @@ const styles = StyleSheet.create({
   },
   footerCopyrightBox: {
     alignItems: 'center',
-  },
-  counselorCard: {
-    padding: 16,
-    borderRadius: shape.large,
-    borderWidth: 1.5,
-    elevation: 3,
-    shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 6,
-  },
-  counselorHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  counselorBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#10B981',
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 5,
-    gap: 5,
-  },
-  counselorPulseDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#FFFFFF',
-  },
-  counselorBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 9.5,
-    fontWeight: '800',
-    letterSpacing: 0.4,
-  },
-  counselorHours: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  counselorTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    lineHeight: 20,
-    marginBottom: 4,
-  },
-  counselorSub: {
-    fontSize: 12,
-    lineHeight: 16,
-    marginBottom: 12,
-  },
-  counselorBtnRow: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  counselorBtn: {
-    flex: 1,
-    minHeight: MIN_TOUCH_TARGET,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderRadius: shape.medium,
-    gap: 6,
-    elevation: 2,
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-  },
-  counselorBtnText: {
-    color: '#FFFFFF',
-    fontSize: 12.5,
-    fontWeight: '800',
   },
   copyrightNotice: {
     fontSize: 11,
