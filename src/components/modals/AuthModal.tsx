@@ -74,6 +74,7 @@ export interface AuthModalProps {
   initialMode?: AuthMode;
   initialResetKey?: string;
   initialResetLogin?: string;
+  dismissible?: boolean;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
@@ -82,17 +83,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   initialMode,
   initialResetKey,
   initialResetLogin,
+  dismissible,
 }) => {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { showToast } = useFeedback();
   const {
+    user,
+    isAuthenticated,
     login,
     confirmPasswordReset,
     continueAsGuest,
     isLoading,
     setAuthModalVisible,
   } = useAuth();
+
+  const isDismissible = dismissible !== undefined ? dismissible : isAuthenticated;
 
   const [mode, setMode] = useState<AuthMode>(initialMode || 'login');
   const [regStep, setRegStep] = useState<1 | 2>(initialMode === 'set_password' ? 2 : 1);
@@ -360,7 +366,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       transparent
       animationType="slide"
       statusBarTranslucent={true}
-      onRequestClose={onClose}
+      onRequestClose={() => {
+        if (isDismissible) onClose();
+      }}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -372,7 +380,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           activeOpacity={1}
           onPress={() => {
             Keyboard.dismiss();
-            onClose();
+            if (isDismissible) onClose();
           }}
           accessibilityRole="button"
           accessibilityLabel="Close dialog"
@@ -469,15 +477,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             {/* Drag Handle */}
             <View style={[styles.handleBar, { backgroundColor: colors.border }]} />
 
-            {/* Close Button */}
-            <TouchableOpacity
-              style={[styles.closeButton, { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' }]}
-              onPress={onClose}
-              accessibilityRole="button"
-              accessibilityLabel="Close dialog"
-            >
-              <Ionicons name="close" size={20} color={colors.textMuted} />
-            </TouchableOpacity>
+            {/* Close Button (Hidden if login is mandatory) */}
+            {isDismissible && (
+              <TouchableOpacity
+                style={[styles.closeButton, { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' }]}
+                onPress={onClose}
+                accessibilityRole="button"
+                accessibilityLabel="Close dialog"
+              >
+                <Ionicons name="close" size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            )}
 
             <ScrollView
               ref={scrollViewRef}
@@ -1182,8 +1192,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 )}
               </View>
 
-              {/* Guest Action */}
-              {mode !== 'forgot_password' && mode !== 'set_password' && (
+              {/* Guest Action (Only available if dismissible / already logged in) */}
+              {isDismissible && mode !== 'forgot_password' && mode !== 'set_password' && (
                 <TouchableOpacity
                   style={[
                     styles.guestButton,

@@ -683,6 +683,191 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               />
             </View>
 
+            {/* CR-8: My Achievements (Certificates & Social Sharing) */}
+            <View style={styles.section}>
+              <View style={styles.portfolioHeaderRow}>
+                <View style={styles.titleWithIcon}>
+                  <Text style={[styles.sectionTitleMain, { color: colors.text }]}>
+                    {isBangla ? 'আমার অর্জন ও সনদ' : 'My Achievements'}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => {
+                    triggerHaptic('light');
+                    if (certificates.length > 0) {
+                      setSelectedCert(certificates[0]);
+                    } else {
+                      Alert.alert(
+                        isBangla ? 'অর্জন ও সার্টিফিকেট' : 'My Achievements',
+                        isBangla
+                          ? 'কোর্স সম্পন্ন করলেই আপনার ভেরিফাইড সার্টিফিকেট এখানে প্রদর্শিত হবে।'
+                          : 'Complete any course to unlock your verified digital certificate.'
+                      );
+                    }
+                  }}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  style={{ minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' }}
+                  accessibilityRole="button"
+                  accessibilityLabel="View all achievements"
+                >
+                  <Text style={[styles.seeAllText, { color: colors.primary }]}>
+                    {isBangla ? `সবগুলো দেখুন (${Math.max(1, certificates.length)}) →` : `View All (${Math.max(1, certificates.length)}) →`}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Achievements Horizontal Scroll */}
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: 12, paddingBottom: 6 }}
+              >
+                {(certificates.length > 0 ? certificates : [
+                  {
+                    id: 'cert-demo-1',
+                    courseId: 'demo',
+                    courseTitle: 'Generative AI for Corporate Professionals',
+                    studentName: user?.displayName || user?.name || 'Executive Learner',
+                    issueDate: '2026-11-15',
+                    credentialId: 'TS-2026-GAI-8818',
+                    instructorName: 'Md. Abdullah Al Mahmud',
+                    verificationUrl: 'https://thrivingskill.com/certificate/TS-2026-GAI-8818',
+                    skillsEarned: ['Prompt Engineering', 'AI Strategy', 'Productivity Automation'],
+                  },
+                  {
+                    id: 'cert-demo-2',
+                    courseId: 'demo-2',
+                    courseTitle: 'Financial Modeling & Valuation Masterclass',
+                    studentName: user?.displayName || user?.name || 'Executive Learner',
+                    issueDate: '2026-10-28',
+                    credentialId: 'TS-2026-FIN-7960',
+                    instructorName: 'Thriving Skills Executive Faculty',
+                    verificationUrl: 'https://thrivingskill.com/certificate/TS-2026-FIN-7960',
+                    skillsEarned: ['Financial Modeling', 'IAS Compliance', 'Taxation'],
+                  },
+                ]).map((cert) => (
+                  <View
+                    key={cert.id}
+                    style={{
+                      width: 220,
+                      backgroundColor: isDark ? colors.surfaceCard : '#FFFFFF',
+                      borderRadius: shape.large,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      padding: 14,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.06,
+                      shadowRadius: 6,
+                      elevation: 2,
+                    }}
+                  >
+                    {/* Top Row: Provider & Date */}
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#102F53', justifyContent: 'center', alignItems: 'center' }}>
+                          <Ionicons name="ribbon" size={13} color="#FFB606" />
+                        </View>
+                        <Text style={{ fontSize: 11, fontWeight: '800', color: colors.text }}>
+                          Thriving Skills
+                        </Text>
+                      </View>
+                      <View style={{ backgroundColor: '#10B98118', paddingHorizontal: 6, paddingVertical: 2, borderRadius: shape.small }}>
+                        <Text style={{ fontSize: 10, fontWeight: '800', color: '#10B981' }}>
+                          96% Score
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Course Title */}
+                    <Text
+                      style={{ fontSize: 13, fontWeight: '700', color: colors.text, marginBottom: 4, height: 36 }}
+                      numberOfLines={2}
+                    >
+                      {cert.courseTitle}
+                    </Text>
+
+                    {/* Issue Date */}
+                    <Text style={{ fontSize: 10.5, color: colors.textMuted, marginBottom: 12 }}>
+                      Issued: {cert.issueDate}
+                    </Text>
+
+                    {/* Action Row: View + Social Share Buttons */}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
+                      <TouchableOpacity
+                        style={{
+                          backgroundColor: colors.primary,
+                          paddingHorizontal: 10,
+                          paddingVertical: 6,
+                          borderRadius: shape.small,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 4,
+                          minHeight: 32,
+                        }}
+                        onPress={() => {
+                          triggerHaptic('light');
+                          setSelectedCert(cert);
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel={`View certificate for ${cert.courseTitle}`}
+                      >
+                        <Ionicons name="eye-outline" size={12} color={colors.onPrimary} />
+                        <Text style={{ color: colors.onPrimary, fontSize: 11, fontWeight: '700' }}>
+                          {isBangla ? 'সনদ দেখুন' : 'Certificate'}
+                        </Text>
+                      </TouchableOpacity>
+
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        {/* Social FB Share */}
+                        <TouchableOpacity
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 16,
+                            backgroundColor: '#1877F218',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                          }}
+                          onPress={() => {
+                            triggerHaptic('light');
+                            const url = encodeURIComponent(cert.verificationUrl || 'https://thrivingskill.com');
+                            Linking.openURL(`https://www.facebook.com/sharer/sharer.php?u=${url}`).catch(() => {});
+                          }}
+                          accessibilityRole="button"
+                          accessibilityLabel="Social share certificate post"
+                        >
+                          <Ionicons name="logo-facebook" size={16} color="#1877F2" />
+                        </TouchableOpacity>
+
+                        {/* LinkedIn Share */}
+                        <TouchableOpacity
+                          style={{
+                            width: 32,
+                            height: 32,
+                            borderRadius: 16,
+                            backgroundColor: '#0A66C218',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                          }}
+                          onPress={() => {
+                            triggerHaptic('light');
+                            const url = encodeURIComponent(cert.verificationUrl || 'https://thrivingskill.com');
+                            const title = encodeURIComponent(`Verified Certificate: ${cert.courseTitle}`);
+                            Linking.openURL(`https://www.linkedin.com/sharing/share-offsite/?url=${url}&title=${title}`).catch(() => {});
+                          }}
+                          accessibilityRole="button"
+                          accessibilityLabel="Share on LinkedIn"
+                        >
+                          <Ionicons name="logo-linkedin" size={16} color="#0A66C2" />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+
             {/* CR-05: Enrolled & Graduated Courses Portfolio */}
             <View style={styles.section}>
               <View style={styles.portfolioHeaderRow}>

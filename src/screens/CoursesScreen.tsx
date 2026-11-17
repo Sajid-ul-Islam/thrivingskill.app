@@ -49,7 +49,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   onOpenSupport,
   onOpenSearch,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
   const insets = useSafeAreaInsets();
   const {
@@ -73,6 +73,17 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   const [isScrolled, setIsScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [localSearch, setLocalSearch] = useState<string>(searchQuery);
+
+  const departments = useMemo(() => [
+    { id: 'generative-ai', title: isBangla ? 'জেনারেটিভ এআই' : 'Generative AI', icon: 'sparkles', color: '#6366F1' },
+    { id: 'sales-marketing', title: isBangla ? 'মার্কেটিং' : 'Marketing', icon: 'megaphone', color: '#EC4899' },
+    { id: 'supply-chain-management', title: isBangla ? 'সাপ্লাই চেইন' : 'Supply Chain', icon: 'cube', color: '#F59E0B' },
+    { id: 'human-resource-management', title: isBangla ? 'এইচআর ম্যানেজমেন্ট' : 'Human Resource', icon: 'people', color: '#10B981' },
+    { id: 'finance-accounting-legal', title: isBangla ? 'ফাইন্যান্স ও ট্যাক্স' : 'Finance & Accounts', icon: 'calculator', color: '#0EA5E9' },
+    { id: 'microsoft-excel-courses', title: isBangla ? 'এক্সেল ও ডেটা' : 'Excel & Analytics', icon: 'stats-chart', color: '#8B5CF6' },
+    { id: 'leadership-management', title: isBangla ? 'লিডারশিপ' : 'Leadership', icon: 'trophy', color: '#F97316' },
+    { id: 'bundle', title: isBangla ? 'স্পেশাল বান্ডেল' : 'Special Bundles', icon: 'layers', color: '#E11D48' },
+  ], [isBangla]);
 
   const flatListRef = useRef<FlatList<Course> | null>(null);
   const searchInputRef = useRef<React.ElementRef<typeof TextInput> | null>(null);
@@ -220,6 +231,8 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     let candidateList: Course[];
     if (cat === 'all') {
       candidateList = courses;
+    } else if (cat === 'bundle') {
+      candidateList = courses.filter((c) => c.isCareerBundle === true || c.title.includes('Bundle') || c.category === 'special-bundle');
     } else {
       const indexed = categoryIndex.get(cat);
       if (indexed) {
@@ -371,6 +384,68 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                 <Ionicons name="close-circle" size={18} color={colors.textMuted} />
               </TouchableOpacity>
             )}
+          </View>
+        </View>
+
+        {/* CR-4: Department-wise Category Navigation Grid */}
+        <View style={styles.deptGridSection}>
+          <View style={styles.deptHeaderRow}>
+            <Text style={[styles.deptSectionTitle, { color: colors.text }]}>
+              {isBangla ? 'ক্যাটাগরি বিভাগ' : 'Department Categories'}
+            </Text>
+            {selectedCategory !== 'all' && (
+              <TouchableOpacity
+                onPress={() => handleCategorySelect('all')}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel="Show all categories"
+              >
+                <Text style={[styles.resetCatText, { color: colors.primary }]}>
+                  {isBangla ? 'সকল কোর্স দেখুন →' : 'View All →'}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          <View style={styles.deptGridCards}>
+            {departments.map((dept) => {
+              const isSelected = selectedCategory === dept.id;
+              return (
+                <TouchableOpacity
+                  key={dept.id}
+                  style={[
+                    styles.deptCard,
+                    {
+                      backgroundColor: isSelected ? colors.primaryLight : (isDark ? colors.surfaceCard : '#FFFFFF'),
+                      borderColor: isSelected ? colors.primary : colors.border,
+                    },
+                  ]}
+                  onPress={() => handleCategorySelect(dept.id)}
+                  activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Filter by ${dept.title}`}
+                >
+                  <View style={[styles.deptIconCircle, { backgroundColor: dept.color + '18' }]}>
+                    <Ionicons name={dept.icon as any} size={18} color={dept.color} />
+                  </View>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text
+                      style={[
+                        styles.deptCardTitle,
+                        { color: isSelected ? colors.primary : colors.text },
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {dept.title}
+                    </Text>
+                  </View>
+                  <Ionicons
+                    name={isSelected ? 'checkmark-circle' : 'chevron-forward'}
+                    size={14}
+                    color={isSelected ? colors.primary : colors.textMuted}
+                  />
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
 
@@ -831,6 +906,54 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     gap: 10,
+  },
+  deptGridSection: {
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 4,
+  },
+  deptHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  deptSectionTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  resetCatText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  deptGridCards: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 8,
+  },
+  deptCard: {
+    width: '48.5%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderRadius: shape.small,
+    borderWidth: 1,
+    gap: 6,
+    minHeight: 44,
+  },
+  deptIconCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  deptCardTitle: {
+    fontSize: 11.5,
+    fontWeight: '700',
   },
   searchInput: {
     flex: 1,

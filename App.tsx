@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Platform, Pressable, BackHandler, UIManager } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, Platform, Pressable, BackHandler, UIManager, Image, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -51,10 +51,27 @@ const MainAppContent: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { userProgress, hasActiveLiveWorkshop } = useLearning();
   const { activeWorkspace, unreadNotificationsCount } = useSaaS();
-  const { isAuthModalVisible, setAuthModalVisible } = useAuth();
+  const { user, isAuthenticated, isLoading: isAuthLoading, isAuthModalVisible, setAuthModalVisible } = useAuth();
   const { celebration, clearCelebration } = useGamification();
   const { activeVideo, playerMode, closePlayer, minimizePlayer, playVideo } = useYouTube();
   const { currentToast, dismissToast, showToast } = useFeedback();
+
+  // CR-1: Splash screen timer (2 seconds) with logo, wordmark, tagline
+  const [isSplashVisible, setIsSplashVisible] = useState(true);
+  const splashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    splashTimerRef.current = setTimeout(() => {
+      setIsSplashVisible(false);
+    }, 2000);
+
+    return () => {
+      if (splashTimerRef.current) {
+        clearTimeout(splashTimerRef.current);
+        splashTimerRef.current = null;
+      }
+    };
+  }, []);
 
   // Cross-platform timer for proactive background OTA check
   const updateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -204,6 +221,48 @@ const MainAppContent: React.FC = () => {
     },
     { id: 'Profile', label: t('tabProfile'), icon: 'person', iconOutline: 'person-outline' },
   ];
+
+  // CR-1: Brand splash screen on startup
+  if (isSplashVisible) {
+    return (
+      <View style={splashStyles.container}>
+        <StatusBar style="light" />
+        <View style={splashStyles.content}>
+          <View style={splashStyles.logoWrap}>
+            <Image
+              source={require('./assets/icon.png')}
+              style={splashStyles.logoImage}
+              resizeMode="contain"
+            />
+          </View>
+          <Text style={splashStyles.wordmark}>
+            Thriving <Text style={{ color: '#FFB606' }}>Skills</Text>
+          </Text>
+          <Text style={splashStyles.tagline}>
+            Empowering Next-Gen Professionals
+          </Text>
+        </View>
+        <View style={splashStyles.footer}>
+          <ActivityIndicator size="small" color="#FFB606" />
+          <Text style={splashStyles.footerText}>Loading LMS Workspace...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  // CR-1: Mandatory login access control - without logging in, no content is accessible
+  if (!isAuthenticated && !isAuthLoading) {
+    return (
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top', 'left', 'right', 'bottom']}>
+        <StatusBar style={isDark ? "light" : "dark"} />
+        <AuthModal
+          visible={true}
+          dismissible={false}
+          onClose={() => {}}
+        />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['left', 'right']}>
@@ -625,5 +684,61 @@ const styles = StyleSheet.create({
   tabButtonLabel: {
     fontSize: 10.5,
     marginTop: 3,
+  },
+});
+
+const splashStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#102F53',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  content: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoWrap: {
+    width: 90,
+    height: 90,
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    padding: 12,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  logoImage: {
+    width: '100%',
+    height: '100%',
+  },
+  wordmark: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: -0.5,
+    marginBottom: 6,
+  },
+  tagline: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFB606',
+    letterSpacing: 0.2,
+    textAlign: 'center',
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 48,
+    alignItems: 'center',
+    gap: 8,
+  },
+  footerText: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.7)',
+    fontWeight: '600',
   },
 });

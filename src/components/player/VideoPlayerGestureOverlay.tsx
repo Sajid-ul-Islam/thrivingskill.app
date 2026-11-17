@@ -103,13 +103,13 @@ export const VideoPlayerGestureOverlay: React.FC<VideoPlayerGestureOverlayProps>
     };
   }, []);
 
-  // Auto-hide controls after 4 seconds of inactivity if playing
+  // Auto-hide controls after 3 seconds of inactivity if playing
   const resetControlsTimer = () => {
     if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
     if (isPlaying && !isLocked) {
       controlsTimeoutRef.current = setTimeout(() => {
         setControlsVisible(false);
-      }, 4000);
+      }, 3000);
     }
   };
 

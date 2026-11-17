@@ -26,6 +26,7 @@ import { CoursesService } from '../../services/api/coursesService';
 import { triggerHaptic } from '../../utils/haptics';
 import { shape } from '../../theme/shapes';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
+import { getBundleConfig } from '../../data/bundleCoursesMap';
 
 export const MAX_SYNC_ATTEMPTS = 4;
 export const RETRY_DELAYS_MS = [0, 1500, 2500, 4000];
@@ -132,8 +133,16 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     }
   }, [visible, course?.id]);
 
+  const bundleConfig = course ? getBundleConfig(course.id, course.title) : null;
+  const isBundle = !!bundleConfig;
   const coursePriceBdt = course?.priceBdt || (course?.price ? Math.round(course.price * 120) : 0);
+  const bundleSubtotalBdt = bundleConfig
+    ? bundleConfig.subCourses.reduce((acc, c) => acc + c.priceBdt, 0)
+    : (course?.originalPriceBdt || coursePriceBdt);
+  const bundleDiscountBdt = isBundle ? Math.max(0, bundleSubtotalBdt - coursePriceBdt) : 0;
   const formattedPrice = `৳ ${coursePriceBdt.toLocaleString()}`;
+  const formattedSubtotal = `৳ ${bundleSubtotalBdt.toLocaleString()}`;
+  const formattedDiscount = `-৳ ${bundleDiscountBdt.toLocaleString()}`;
 
   // Form Validation
   const validateBillingDetails = (): boolean => {
@@ -256,6 +265,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
       if (backendVerified || userProgress[course.id]) {
         enrollInCourse(course.id);
+        if (bundleConfig) {
+          bundleConfig.subCourses.forEach((sub) => {
+            enrollInCourse(sub.id);
+          });
+        }
         Alert.alert(
           t('syncSuccessTitle'),
           t('syncSuccessMsg'),
@@ -316,6 +330,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       setCheckoutWebUrl(null);
       if (course) {
         enrollInCourse(course.id);
+        if (bundleConfig) {
+          bundleConfig.subCourses.forEach((sub) => {
+            enrollInCourse(sub.id);
+          });
+        }
         onSuccess(course.id);
         onClose();
         Alert.alert(
@@ -754,10 +773,20 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
                     ]}
                   >
-                    <Text style={[styles.orderSummaryTitle, { color: colors.text }]}>
-                      {isBangla ? 'আপনার অর্ডার' : 'Your order'}
-                    </Text>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <Text style={[styles.orderSummaryTitle, { color: colors.text, marginBottom: 0 }]}>
+                        {isBangla ? 'আপনার অর্ডার' : 'Your order'}
+                      </Text>
+                      {isBundle && (
+                        <View style={{ backgroundColor: '#102F53', paddingHorizontal: 8, paddingVertical: 3, borderRadius: shape.full }}>
+                          <Text style={{ color: '#FFB606', fontSize: 10, fontWeight: '800' }}>
+                            {isBangla ? 'স্পেশাল বান্ডেল (৫টি কোর্স)' : 'SPECIAL BUNDLE (5 COURSES)'}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
 
+                    {/* Main Item Row */}
                     <View style={styles.orderItemRow}>
                       <Text style={[styles.orderItemName, { color: colors.text }]} numberOfLines={2}>
                         {course.title} × 1
@@ -767,6 +796,34 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       </Text>
                     </View>
 
+                    {/* Bundle Sub-Courses Breakdown (CR-5) */}
+                    {isBundle && bundleConfig && (
+                      <View style={{ marginVertical: 8, padding: 10, backgroundColor: isDark ? '#1E293B' : '#F1F5F9', borderRadius: shape.medium }}>
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: colors.text, marginBottom: 6 }}>
+                          {isBangla ? 'বান্ডেলে অন্তর্ভুক্ত ৫টি কোর্স (সবগুলো আনলক হবে):' : 'Included 5 courses in this bundle (all unlock):'}
+                        </Text>
+                        {bundleConfig.subCourses.map((sub, idx) => (
+                          <View key={sub.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginVertical: 2.5 }}>
+                            <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+                            <Text style={{ fontSize: 11, color: colors.text, flex: 1 }} numberOfLines={1}>
+                              {idx + 1}. {sub.title}
+                            </Text>
+                            <Text style={{ fontSize: 10, color: colors.textMuted, textDecorationLine: 'line-through' }}>
+                              ৳{sub.priceBdt}
+                            </Text>
+                          </View>
+                        ))}
+                        <View style={{ marginTop: 6, paddingTop: 4, borderTopWidth: 1, borderTopColor: colors.border, flexDirection: 'row', justifyContent: 'space-between' }}>
+                          <Text style={{ fontSize: 11, fontWeight: '700', color: '#10B981' }}>
+                            {isBangla ? `বান্ডেল ছাড় (${bundleConfig.discountPercent}% OFF)` : `Bundle Discount Applied (-${bundleConfig.discountPercent}%)`}
+                          </Text>
+                          <Text style={{ fontSize: 11, fontWeight: '800', color: '#10B981' }}>
+                            {formattedDiscount}
+                          </Text>
+                        </View>
+                      </View>
+                    )}
+
                     <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
                     <View style={styles.orderSummaryRow}>
@@ -774,7 +831,27 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                         {isBangla ? 'সাবটোটাল' : 'Subtotal'}
                       </Text>
                       <Text style={[styles.summaryValue, { color: colors.text }]}>
-                        {formattedPrice}
+                        {isBundle ? formattedSubtotal : formattedPrice}
+                      </Text>
+                    </View>
+
+                    {isBundle && (
+                      <View style={styles.orderSummaryRow}>
+                        <Text style={[styles.summaryLabel, { color: '#10B981' }]}>
+                          {isBangla ? 'বান্ডেল ছাড়' : 'Bundle Discount'}
+                        </Text>
+                        <Text style={[styles.summaryValue, { color: '#10B981' }]}>
+                          {formattedDiscount}
+                        </Text>
+                      </View>
+                    )}
+
+                    <View style={styles.orderSummaryRow}>
+                      <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>
+                        {isBangla ? 'ডেলিভারি ফি' : 'Delivery Fee'}
+                      </Text>
+                      <Text style={[styles.summaryValue, { color: colors.textMuted }]}>
+                        ৳ 0 ({isBangla ? 'ডিজিটাল কন্টেন্ট' : 'Digital Content'})
                       </Text>
                     </View>
 

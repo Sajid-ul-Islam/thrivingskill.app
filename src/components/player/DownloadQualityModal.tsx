@@ -129,70 +129,33 @@ export const DownloadQualityModal: React.FC<DownloadQualityModalProps> = ({
           {/* Options List */}
           <View style={styles.optionsList}>
             {mode === 'download' ? (
-              downloadOptions.map((opt) => {
-                const isSelected = currentQuality.includes(opt.id);
-                return (
-                  <TouchableOpacity
-                    key={opt.id}
-                    style={[
-                      styles.optionCard,
-                      {
-                        backgroundColor: isSelected
-                          ? isDark
-                            ? 'rgba(255, 182, 6, 0.12)'
-                            : '#FEF9C3'
-                          : colors.surfaceSubtle,
-                        borderColor: isSelected ? '#FFB606' : colors.border,
-                      },
-                    ]}
-                    onPress={() => {
-                      triggerHaptic('light');
-                      if (onStartDownload) onStartDownload(opt.id);
-                      onClose();
-                    }}
-                    activeOpacity={0.7}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Download in ${opt.label}, ${opt.size}`}
-                  >
-                    <View style={styles.optionLeft}>
-                      <Ionicons
-                        name={opt.icon as any}
-                        size={22}
-                        color={isSelected ? '#FFB606' : colors.textMuted}
-                      />
-                      <View style={styles.optionTextCol}>
-                        <View style={styles.labelBadgeRow}>
-                          <Text
-                            style={[
-                              styles.optionLabel,
-                              { color: colors.text, fontWeight: isSelected ? '700' : '600' },
-                            ]}
-                          >
-                            {opt.label}
-                          </Text>
-                          {opt.recommended && (
-                            <View style={styles.recommendedBadge}>
-                              <Text style={styles.recommendedBadgeText}>Recommended</Text>
-                            </View>
-                          )}
-                        </View>
-                        <Text style={[styles.optionSublabel, { color: colors.textMuted }]}>
-                          {opt.sublabel}
-                        </Text>
-                      </View>
-                    </View>
-
-                    <View style={styles.sizeCol}>
-                      <Text style={[styles.sizeText, { color: colors.primary }]}>{opt.size}</Text>
-                      <Ionicons
-                        name={isSelected ? 'checkmark-circle' : 'download-outline'}
-                        size={20}
-                        color={isSelected ? '#10B981' : colors.textMuted}
-                      />
-                    </View>
-                  </TouchableOpacity>
-                );
-              })
+              <View style={{ padding: 16, alignItems: 'center', backgroundColor: colors.surfaceSubtle, borderRadius: shape.medium }}>
+                <Ionicons name="shield-checkmark" size={36} color="#102F53" style={{ marginBottom: 8 }} />
+                <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text, textAlign: 'center', marginBottom: 4 }}>
+                  Online Streaming Only
+                </Text>
+                <Text style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center', lineHeight: 18, marginBottom: 14 }}>
+                  Offline video downloads have been removed to protect intellectual property. All lessons stream seamlessly in HD online.
+                </Text>
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: '#102F53',
+                    paddingHorizontal: 18,
+                    paddingVertical: 10,
+                    borderRadius: shape.small,
+                    minHeight: MIN_TOUCH_TARGET,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}
+                  onPress={onClose}
+                  accessibilityRole="button"
+                  accessibilityLabel="Understand and dismiss"
+                >
+                  <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 13 }}>
+                    Continue Watching Online
+                  </Text>
+                </TouchableOpacity>
+              </View>
             ) : (
               streamOptions.map((opt) => {
                 const isSelected = currentQuality === opt.id;

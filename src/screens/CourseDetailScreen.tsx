@@ -743,23 +743,51 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
 
           {activeTab === 'reviews' && (
             <View style={styles.reviewsTab}>
-              {/* Write a Review Button */}
+              {/* Write a Review Button (Gated to Enrolled Learners only per CR-6) */}
               <TouchableOpacity
                 style={[
                   styles.writeReviewCTA,
-                  { backgroundColor: colors.primaryLight, borderColor: colors.primary },
+                  {
+                    backgroundColor: isEnrolled ? colors.primaryLight : (isDark ? colors.surfaceSubtle : '#F1F5F9'),
+                    borderColor: isEnrolled ? colors.primary : colors.border,
+                  },
                 ]}
                 onPress={() => {
+                  if (!isEnrolled) {
+                    triggerHaptic('error');
+                    Alert.alert(
+                      isBangla ? 'এনরোলমেন্ট আবশ্যক' : 'Enrolled Learners Only',
+                      isBangla
+                        ? 'শুধুমাত্র এই কোর্সে সক্রিয়ভাবে এনরোল করা শিক্ষার্থীরা রিভিউ ও রেটিং প্রদান করতে পারবেন।'
+                        : 'Only learners enrolled in this course can rate and review it. Please enroll to share your feedback.'
+                    );
+                    return;
+                  }
                   triggerHaptic('light');
                   setWriteReviewModalVisible(true);
                 }}
                 activeOpacity={0.8}
                 accessibilityRole="button"
-                accessibilityLabel={isBangla ? 'কোর্সের রিভিউ ও রেটিং দিন' : 'Rate & Write a Review'}
+                accessibilityLabel={
+                  isEnrolled
+                    ? (isBangla ? 'কোর্সের রিভিউ ও রেটিং দিন' : 'Rate & Write a Review')
+                    : (isBangla ? 'রিভিউ দিতে কোর্সে এনরোল করুন' : 'Enroll to Leave a Review')
+                }
               >
-                <Ionicons name="star" size={16} color={colors.primary} />
-                <Text style={[styles.writeReviewCTAText, { color: colors.primary }]}>
-                  {isBangla ? 'আপনার মূল্যবান রিভিউ ও রেটিং দিন ★' : 'Rate & Write a Review ★'}
+                <Ionicons
+                  name={isEnrolled ? "star" : "lock-closed"}
+                  size={16}
+                  color={isEnrolled ? colors.primary : colors.textMuted}
+                />
+                <Text
+                  style={[
+                    styles.writeReviewCTAText,
+                    { color: isEnrolled ? colors.primary : colors.textMuted },
+                  ]}
+                >
+                  {isEnrolled
+                    ? (isBangla ? 'আপনার মূল্যবান রিভিউ ও রেটিং দিন ★' : 'Rate & Write a Review ★')
+                    : (isBangla ? 'রিভিউ দিতে কোর্সে এনরোল করুন (লকড)' : 'Enroll in Course to Leave a Review (Locked)')}
                 </Text>
               </TouchableOpacity>
 

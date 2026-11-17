@@ -1,9 +1,10 @@
-import React, { useState, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
+  FlatList,
   TouchableOpacity,
   Image,
   Alert,
@@ -21,10 +22,8 @@ import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useGamification } from '../context/GamificationContext';
 import { Header } from '../components/Header';
-import { CategoryPills } from '../components/CategoryPills';
 import { CourseCard } from '../components/CourseCard';
 import { HeroCarousel, CarouselSlide } from '../components/HeroCarousel';
-import { QuickActionDock } from '../components/QuickActionDock';
 import { SearchSpotlightBar } from '../components/SearchSpotlightBar';
 import { CourseCardSkeleton, SpringPressable, StateView, CircularProgressRing, ScrollToTopPill } from '../components/common';
 import { triggerHaptic } from '../utils/haptics';
@@ -33,6 +32,129 @@ import { RootTab } from '../types';
 import { AboutTSLModal, AboutTabKey } from '../components/AboutTSLModal';
 import { typography, MIN_TOUCH_TARGET } from '../theme/typography';
 import { shape } from '../theme/shapes';
+import type { Course } from '../types';
+
+// ─── Category Carousel Row ───────────────────────────────────────────────────
+
+interface CategoryRowProps {
+  title: string;
+  courses: Course[];
+  onNavigateToCourse: (id: string) => void;
+  onNavigateTab: (tab: RootTab) => void;
+  colors: ReturnType<typeof useTheme>['colors'];
+}
+
+const CategoryRow: React.FC<CategoryRowProps> = ({
+  title,
+  courses,
+  onNavigateToCourse,
+  onNavigateTab,
+  colors,
+}) => {
+  const flatRef = useRef<FlatList<Course> | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const indexRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (courses.length <= 1) return;
+
+    timerRef.current = setInterval(() => {
+      indexRef.current = (indexRef.current + 1) % courses.length;
+      flatRef.current?.scrollToIndex({
+        index: indexRef.current,
+        animated: true,
+        viewPosition: 0,
+      });
+    }, 3000);
+
+    return () => {
+      if (timerRef.current !== null) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [courses.length]);
+
+  if (courses.length === 0) return null;
+
+  return (
+    <View style={{ marginTop: 14 }}>
+      {/* Row Header */}
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingHorizontal: 16,
+          marginBottom: 10,
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 17,
+            fontWeight: '800',
+            color: colors.text,
+            letterSpacing: -0.3,
+            flex: 1,
+          }}
+          numberOfLines={1}
+        >
+          {title}
+        </Text>
+        <TouchableOpacity
+          onPress={() => {
+            triggerHaptic('light');
+            onNavigateTab('Courses');
+          }}
+          style={{
+            minHeight: MIN_TOUCH_TARGET,
+            minWidth: MIN_TOUCH_TARGET,
+            justifyContent: 'center',
+            alignItems: 'flex-end',
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={`See all ${title} courses`}
+        >
+          <Text
+            style={{
+              fontSize: 12,
+              fontWeight: '700',
+              color: '#102F53',
+            }}
+          >
+            See All →
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Horizontal FlatList */}
+      <FlatList
+        ref={flatRef}
+        data={courses.slice(0, 7)}
+        keyExtractor={(item) => `cat-row-${title}-${item.id}`}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 16, gap: 12, paddingBottom: 4 }}
+        onScrollToIndexFailed={() => {
+          indexRef.current = 0;
+        }}
+        renderItem={({ item }) => (
+          <View style={{ width: 240 }}>
+            <CourseCard
+              course={item}
+              onPress={() => {
+                triggerHaptic('light');
+                onNavigateToCourse(item.id);
+              }}
+            />
+          </View>
+        )}
+      />
+    </View>
+  );
+};
+
+// ─── HomeScreen Props ─────────────────────────────────────────────────────────
 
 interface HomeScreenProps {
   onNavigateToCourse: (courseId: string) => void;
@@ -47,6 +169,8 @@ interface HomeScreenProps {
   onOpenDrawer?: () => void;
   onOpenSupport?: () => void;
 }
+
+// ─── HomeScreen ───────────────────────────────────────────────────────────────
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
   onNavigateToCourse,
@@ -77,12 +201,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const isGoalAchieved = currentGoalPercent >= 100;
   const {
     courses,
-    categories,
     isLoadingCourses,
     coursesError,
     refreshCourses,
-    selectedCategory,
-    setSelectedCategory,
     searchQuery,
     setSearchQuery,
     userProgress,
@@ -93,15 +214,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     banners,
     siteBranding,
   } = useLearning();
-
-  const {
-    courses: rawRecCourses,
-    rationale: rawRecRationale,
-    rationaleBn: rawRecRationaleBn,
-  } = useMemo(() => getRecommendedCourses(), [getRecommendedCourses]);
-  const recommendedCourses = rawRecCourses;
-  const recRationale = rawRecRationale;
-  const recRationaleBn = rawRecRationaleBn;
 
   const { activeWorkspace, subscriptionTier, assessmentResult } = useSaaS();
   const { lastWatchedVideo, playVideo } = useYouTube();
@@ -137,7 +249,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     }
   }, [isBangla]);
 
-  // Learner Display Name (Extracts actual first name or friendly name)
+  // Learner Display Name
   const learnerDisplayName = useMemo(() => {
     if (user?.displayName && user.displayName.trim().length > 0) {
       const parts = user.displayName.trim().split(' ');
@@ -149,7 +261,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     return isBangla ? 'লার্নার' : 'Learner';
   }, [user?.displayName, user?.username, isBangla]);
 
-  // Find enrolled active course to show "Continue Learning"
+  // Active enrolled course
   const activeCourse = useMemo(() => {
     const enrolledCourseIds = Object.keys(userProgress);
     const activeCourseId = enrolledCourseIds[0];
@@ -174,32 +286,68 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     return isBangla ? 'আজকে আপনি কোন নতুন স্কিল শিখবেন?' : 'What skill will you master today?';
   }, [activeCourse, activeProgressPercent, isBangla, streakDays]);
 
-  // High-performance memoized filtered courses using pre-computed search index
-  const filteredCourses = useMemo(() => {
-    const q = (searchQuery || '').trim().toLowerCase();
-    const cat = selectedCategory;
-    return courses.filter((course) => {
-      const matchesCategory =
-        cat === 'all' || course.category === cat || (course.categorySlugs && course.categorySlugs.includes(cat));
-      if (!matchesCategory) return false;
-      if (!q) return true;
-      if (course._searchIndex) return course._searchIndex.includes(q);
-      return (
-        course.title.toLowerCase().includes(q) ||
-        course.subtitle.toLowerCase().includes(q)
-      );
-    });
-  }, [courses, selectedCategory, searchQuery]);
+  // ─── CR-3: Per-category filtered course lists ───────────────────────────────
 
+  const upcomingCourses = useMemo(
+    () =>
+      courses.filter(
+        (c) =>
+          c.category === 'upcoming' ||
+          (c.categorySlugs && c.categorySlugs.includes('upcoming-live-training')),
+      ),
+    [courses],
+  );
+
+  const generativeAiCourses = useMemo(
+    () => courses.filter((c) => c.category === 'generative-ai'),
+    [courses],
+  );
+
+  const marketingCourses = useMemo(
+    () =>
+      courses.filter(
+        (c) => c.category === 'sales-marketing' || c.category === 'marketing',
+      ),
+    [courses],
+  );
+
+  const hrCourses = useMemo(
+    () => courses.filter((c) => c.category === 'human-resource-management'),
+    [courses],
+  );
+
+  const supplyChainCourses = useMemo(
+    () =>
+      courses.filter(
+        (c) => c.categorySlugs && c.categorySlugs.includes('supply-chain-management'),
+      ),
+    [courses],
+  );
+
+  const financeCourses = useMemo(
+    () => courses.filter((c) => c.category === 'finance-accounting-legal'),
+    [courses],
+  );
+
+  const bundleCourses = useMemo(
+    () =>
+      courses.filter(
+        (c) => c.isCareerBundle === true || c.title.includes('Bundle'),
+      ),
+    [courses],
+  );
+
+  // HeroCarousel slide handler
   const handleSelectSlide = (slide: CarouselSlide) => {
     if (slide.actionType === 'summit') {
       onNavigateTab('Workshops');
     } else if (slide.actionType === 'trailer') {
-      const aiCourse = courses.find((c) =>
-        c.id === slide.targetId ||
-        c.category === 'generative-ai' ||
-        c.category === 'agentic-ai' ||
-        c.title.toLowerCase().includes('ai')
+      const aiCourse = courses.find(
+        (c) =>
+          c.id === slide.targetId ||
+          c.category === 'generative-ai' ||
+          c.category === 'agentic-ai' ||
+          c.title.toLowerCase().includes('ai'),
       );
       if (aiCourse) {
         onNavigateToCourse(aiCourse.id);
@@ -207,11 +355,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         onNavigateTab('Courses');
       }
     } else if (slide.actionType === 'course') {
-      const excelCourse = courses.find((c) =>
-        c.id === slide.targetId ||
-        c.category === 'excel' ||
-        c.category === 'excel-data' ||
-        c.title.toLowerCase().includes('excel')
+      const excelCourse = courses.find(
+        (c) =>
+          c.id === slide.targetId ||
+          c.category === 'excel' ||
+          c.category === 'excel-data' ||
+          c.title.toLowerCase().includes('excel'),
       );
       if (excelCourse) {
         onNavigateToCourse(excelCourse.id);
@@ -219,9 +368,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         onNavigateTab('Courses');
       }
     } else if (slide.actionType === 'bundle') {
-      const bundleCourse = courses.find((c) =>
-        (slide.targetId && c.id.toLowerCase() === slide.targetId.toLowerCase()) ||
-        c.title.toLowerCase().includes(slide.title.toLowerCase())
+      const bundleCourse = courses.find(
+        (c) =>
+          (slide.targetId && c.id.toLowerCase() === slide.targetId.toLowerCase()) ||
+          c.title.toLowerCase().includes(slide.title.toLowerCase()),
       );
       if (bundleCourse) {
         onNavigateToCourse(bundleCourse.id);
@@ -233,10 +383,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     }
   };
 
-  // Multi-tier scroll dynamics:
-  // 1. Elevate header when scrolled (>8px)
-  // 2. Reveal sticky search in header when inline spotlight scrolls out (>140px)
-  // 3. Reveal floating "Scroll to Top" pill on deep scroll (>480px)
+  // Scroll dynamics
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
 
@@ -258,6 +405,29 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       setShowScrollTop(false);
     }
   };
+
+  // Category rows definition
+  const categoryRows = useMemo(
+    () => [
+      { title: isBangla ? 'আসন্ন লাইভ ট্রেনিং' : 'Upcoming Live', courses: upcomingCourses },
+      { title: isBangla ? 'জেনারেটিভ এআই' : 'Generative AI', courses: generativeAiCourses },
+      { title: isBangla ? 'মার্কেটিং' : 'Marketing', courses: marketingCourses },
+      { title: isBangla ? 'হিউম্যান রিসোর্স' : 'Human Resource', courses: hrCourses },
+      { title: isBangla ? 'সাপ্লাই চেইন' : 'Supply Chain', courses: supplyChainCourses },
+      { title: isBangla ? 'ফাইন্যান্স ও অ্যাকাউন্টিং' : 'Finance & Accounting', courses: financeCourses },
+      { title: isBangla ? 'বান্ডেল' : 'Bundle', courses: bundleCourses },
+    ],
+    [
+      isBangla,
+      upcomingCourses,
+      generativeAiCourses,
+      marketingCourses,
+      hrCourses,
+      supplyChainCourses,
+      financeCourses,
+      bundleCourses,
+    ],
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -291,7 +461,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           />
         }
       >
-        {/* 1. Personalized Learner Greeting Hero Card */}
+        {/* ── 1. Personalized Greeting Header ── */}
         <View
           style={[
             styles.greetingCard,
@@ -314,7 +484,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           />
 
           <View style={styles.greetingTopRow}>
-            {/* Learner Avatar & Identity */}
+            {/* Learner Avatar */}
             <TouchableOpacity
               activeOpacity={0.85}
               style={styles.avatarWrap}
@@ -358,7 +528,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               />
             </TouchableOpacity>
 
-            {/* Greeting & Name */}
+            {/* Greeting Text */}
             <TouchableOpacity
               activeOpacity={0.85}
               style={styles.greetingTextCol}
@@ -385,13 +555,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   </View>
                 )}
               </View>
-
               <Text style={[styles.greetingTitle, { color: colors.text }]} numberOfLines={1}>
                 {learnerDisplayName} 👋
               </Text>
             </TouchableOpacity>
 
-            {/* Interactive Momentum & Daily Goal Capsule */}
+            {/* Momentum Capsule */}
             <TouchableOpacity
               activeOpacity={0.8}
               style={[
@@ -412,7 +581,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                       onPress: () => onNavigateTab('MyLearning'),
                     },
                     { text: isBangla ? 'ঠিক আছে' : 'Got it', style: 'cancel' },
-                  ]
+                  ],
                 );
               }}
               accessibilityRole="button"
@@ -434,7 +603,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </TouchableOpacity>
           </View>
 
-          {/* Subtitle & Motivating Radial Daily Goal Ring (EdTech UX Principle 4) */}
+          {/* Subtitle + Radial Goal Ring */}
           <View style={styles.greetingBottomRow}>
             <View style={{ flex: 1, marginRight: 10 }}>
               <Text style={[styles.greetingSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
@@ -442,7 +611,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               </Text>
             </View>
 
-            {/* Radial Progress Ring Goal Widget */}
             <TouchableOpacity
               style={[
                 styles.radialGoalBadge,
@@ -458,13 +626,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   isBangla ? 'দৈনিক লক্ষ্য ও মোমেন্টাম 🎯' : 'Daily Study Goal 🎯',
                   `${isBangla ? '• আজকের স্টাডি' : '• Today'}: ${dailyMinutesSpent}m / ${dailyTargetMinutes}m (${currentGoalPercent}% ${isBangla ? 'সম্পন্ন' : 'completed'})\n${isBangla ? '• স্টাডি স্ট্রিক' : '• Study Streak'}: ${streakDays} ${isBangla ? 'দিন' : 'days'} 🔥\n\n${
                     isGoalAchieved
-                      ? (isBangla ? 'অভিনন্দন! আজকের লক্ষ্য অর্জিত হয়েছে 🎉' : 'Awesome! You hit today’s learning goal 🎉')
+                      ? (isBangla ? 'অভিনন্দন! আজকের লক্ষ্য অর্জিত হয়েছে 🎉' : 'Awesome! You hit today\'s learning goal 🎉')
                       : (isBangla ? `আর মাত্র ${Math.max(0, dailyTargetMinutes - dailyMinutesSpent)} মিনিট স্টাডি করলেই আজকের লক্ষ্য সম্পন্ন!` : `Only ${Math.max(0, dailyTargetMinutes - dailyMinutesSpent)} minutes left to complete today's goal!`)
                   }`,
                   [
                     { text: isBangla ? 'কোর্স চালিয়ে যান' : 'Continue Course', onPress: () => onNavigateTab('MyLearning') },
                     { text: isBangla ? 'ঠিক আছে' : 'OK', style: 'cancel' },
-                  ]
+                  ],
                 );
               }}
               accessibilityRole="button"
@@ -502,7 +670,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </View>
         </View>
 
-        {/* 2. Unified Search Spotlight Launcher Bar */}
+        {/* ── 2. Search Bar ── */}
         <SearchSpotlightBar
           onPress={() => onOpenSearch && onOpenSearch()}
           onSelectTag={(query) => {
@@ -512,310 +680,46 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           }}
         />
 
-        {/* Continue Learning Quick-Resume Hero Widget (Placed prominently at top for active learners) */}
-        {(activeCourse || lastWatchedVideo) && (
-          <View style={[styles.section, { marginTop: 6, marginBottom: 4 }]}>
-            <View style={styles.sectionHeader}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 0, marginRight: 8 }}>
-                <Ionicons name="play-circle" size={18} color={colors.primary} />
-                <Text style={[styles.sectionTitle, { color: colors.text }]} numberOfLines={1}>
-                  {isBangla ? 'চালিয়ে যান' : 'Continue Learning'}
-                </Text>
-              </View>
-              {activeCourse && (
-                <TouchableOpacity
-                  style={styles.seeAllTouch}
-                  onPress={() => onNavigateTab('MyLearning')}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  accessibilityRole="button"
-                >
-                  <Text style={[styles.seeAllText, { color: colors.primary }]}>
-                    {isBangla ? 'আমার লার্নিং হাব →' : 'My Learning Hub →'}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            {/* In-Progress Course Card */}
-            {activeCourse && (
-              <TouchableOpacity
-                style={[
-                  styles.resumeCard,
-                  {
-                    backgroundColor: colors.surfaceCard,
-                    borderColor: colors.border,
-                    shadowColor: colors.cardShadow,
-                    marginBottom: lastWatchedVideo ? 10 : 0,
-                  },
-                ]}
-                onPress={() => {
-                  triggerHaptic('light');
-                  const targetLessonId =
-                    activeProgress?.lastAccessedLessonId ||
-                    activeCourse.modules[0]?.lessons[0]?.id ||
-                    '';
-                  onNavigateToLesson(activeCourse.id, targetLessonId);
-                }}
-                activeOpacity={0.88}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  isBangla
-                    ? `${activeCourse.title} কোর্সটি চালিয়ে যান, অগ্রগতি ${activeProgressPercent}%`
-                    : `Resume ${activeCourse.title}, progress ${activeProgressPercent}%`
-                }
-              >
-                <Image source={{ uri: activeCourse.thumbnail }} style={styles.resumeThumb} />
-                <View style={styles.resumeInfo}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-                    <View style={[styles.miniPill, { backgroundColor: colors.primaryLight, flexShrink: 0 }]}>
-                      <Text style={[styles.miniPillText, { color: colors.primary }]}>IN PROGRESS</Text>
-                    </View>
-                    <Text style={[styles.resumeInstructor, { color: colors.textMuted, flex: 1 }]} numberOfLines={1} ellipsizeMode="tail">
-                      • {activeCourse.instructor.name}
-                    </Text>
-                  </View>
-                  <Text style={[styles.resumeCourseTitle, { color: colors.text }]} numberOfLines={1}>
-                    {activeCourse.title}
-                  </Text>
-
-                  <View style={styles.resumeProgressRow}>
-                    <View style={[styles.resumeTrack, { backgroundColor: colors.surfaceSubtle }]}>
-                      <View
-                        style={[
-                          styles.resumeFill,
-                          { backgroundColor: colors.primary, width: `${Math.max(activeProgressPercent, 8)}%` },
-                        ]}
-                      />
-                    </View>
-                    <Text style={[styles.resumePercentText, { color: colors.primary }]}>
-                      {activeProgressPercent}%
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={[styles.playBtnBg, { backgroundColor: colors.primary }]}>
-                  <Ionicons name="play" size={16} color={colors.onPrimary} />
-                </View>
-              </TouchableOpacity>
-            )}
-
-            {/* Last-Watched YouTube Masterclass */}
-            {lastWatchedVideo && (
-              <TouchableOpacity
-                style={[
-                  styles.resumeCard,
-                  {
-                    backgroundColor: colors.surfaceCard,
-                    borderColor: colors.border,
-                    shadowColor: colors.cardShadow,
-                  },
-                ]}
-                onPress={() => {
-                  triggerHaptic('light');
-                  playVideo(lastWatchedVideo, 'modal');
-                }}
-                activeOpacity={0.88}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  isBangla
-                    ? `${lastWatchedVideo.title} মাস্টারক্লাস চালিয়ে যান`
-                    : `Resume masterclass ${lastWatchedVideo.title}`
-                }
-              >
-                <View style={{ position: 'relative' }}>
-                  <Image source={{ uri: lastWatchedVideo.thumbnail }} style={styles.resumeThumb} />
-                  <View style={styles.resumeYtBadge}>
-                    <Ionicons name="logo-youtube" size={10} color="#FFFFFF" />
-                  </View>
-                </View>
-                <View style={styles.resumeInfo}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 }}>
-                    <View style={[styles.miniPill, { backgroundColor: 'rgba(255, 0, 0, 0.1)', flexShrink: 0 }]}>
-                      <Text style={[styles.miniPillText, { color: '#FF0000' }]}>MASTERCLASS</Text>
-                    </View>
-                    <Text style={[styles.resumeInstructor, { color: colors.textMuted, flex: 1 }]} numberOfLines={1} ellipsizeMode="tail">
-                      • @ThrivingSkills
-                    </Text>
-                  </View>
-                  <Text style={[styles.resumeCourseTitle, { color: colors.text }]} numberOfLines={1}>
-                    {lastWatchedVideo.title}
-                  </Text>
-                  <Text style={[styles.resumeSubText, { color: colors.textMuted }]}>
-                    Tap to resume masterclass video
-                  </Text>
-                </View>
-
-                <View style={[styles.playBtnBg, { backgroundColor: '#FF0000' }]}>
-                  <Ionicons name="play" size={16} color="#FFFFFF" />
-                </View>
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
-
-        {/* 3. High-Impact Swipeable Hero Carousel */}
+        {/* ── 3. Hero Banner (1 slide max) ── */}
         <HeroCarousel
-          slides={banners}
+          slides={banners.slice(0, 1)}
           onSelectSlide={handleSelectSlide}
           onOpenSubscription={onOpenSubscription}
         />
 
-        {/* 4. Justified Flagship Action Dock (Distinct High-Value Features) */}
-        <QuickActionDock
-          onOpenAssessment={onOpenAssessment}
-          onOpenSubscription={onOpenSubscription}
-          onOpenYouTube={onOpenYouTube}
-          onOpenCorporateModal={onOpenCorporateModal}
-        />
-
-        
-
-        {/* Category Filter Pills */}
-        <View style={styles.categorySection}>
-          <CategoryPills
-            selectedId={selectedCategory}
-            categories={categories}
-            onSelect={(id) => {
-              recordCategoryInteraction(id);
-              setSelectedCategory(id);
-              if (id !== 'all') {
-                onNavigateTab('Courses');
-              }
-            }}
-          />
-        </View>
-
-        {/* CR-01: Behavior-Based Course Recommendations Shelf (আপনার পছন্দের ভিত্তিতে স্মার্ট রিকমেন্ডেশন) */}
-        {recommendedCourses.length > 0 && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <View style={{ flex: 1, paddingRight: 8 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      backgroundColor: colors.primaryLight,
-                      paddingHorizontal: 8,
-                      paddingVertical: 3,
-                      borderRadius: 12,
-                      gap: 4,
-                    }}
-                  >
-                    <Ionicons name="sparkles" size={12} color={colors.primary} />
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary }}>
-                      {isBangla ? 'স্মার্ট রিকমেন্ডেশন' : 'FOR YOU'}
-                    </Text>
-                  </View>
-                </View>
-                <Text style={[typography.h3, styles.sectionTitle, { color: colors.text }]}>
-                  {isBangla ? 'আপনার পছন্দের ভিত্তিতে প্রস্তাবিত' : 'Recommended For You'}
-                </Text>
-                <Text style={[typography.bodySmall, styles.sectionSubtitle, { color: colors.textMuted }]} numberOfLines={2}>
-                  {isBangla ? recRationaleBn : recRationale}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={styles.seeAllTouch}
-                onPress={() => {
-                  triggerHaptic('light');
-                  onNavigateTab('Courses');
-                }}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  isBangla
-                    ? `আপনার জন্য প্রস্তাবিত সব কোর্স দেখুন, সর্বমোট ${recommendedCourses.length} টি`
-                    : `View all recommended courses, total ${recommendedCourses.length}`
-                }
-              >
-                <Text style={[styles.seeAllText, { color: colors.primary }]}>
-                  {isBangla ? 'সব দেখুন' : 'View All'} ({recommendedCourses.length}) →
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {recommendedCourses.slice(0, 3).map((course) => (
-              <CourseCard
-                key={`rec-${course.id}`}
-                course={course}
-                onPress={() => {
-                  recordCategoryInteraction(course.category);
-                  onNavigateToCourse(course.id);
-                }}
-              />
-            ))}
+        {/* ── Loading / Error State ── */}
+        {isLoadingCourses && courses.length === 0 && (
+          <View style={{ paddingHorizontal: 16, marginTop: 14 }}>
+            <CourseCardSkeleton />
+            <CourseCardSkeleton />
           </View>
         )}
 
-        {/* Popular Executive Masterclasses */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={{ flex: 1, minWidth: 0, paddingRight: 8 }}>
-              <Text style={[typography.h3, styles.sectionTitle, { color: colors.text }]}>
-                {isBangla ? 'আমাদের জনপ্রিয় কোর্সসমূহ' : 'Popular Courses'}
-              </Text>
-              <Text style={[typography.bodySmall, styles.sectionSubtitle, { color: colors.textMuted }]} numberOfLines={2}>
-                {isBangla
-                  ? 'জেনারেটিভ এআই, এক্সেল ও বিজনেসের সেরা স্কিল কোর্সসমূহ'
-                  : 'Top courses in Generative AI, Excel, Finance & Business'}
-              </Text>
-            </View>
-            <TouchableOpacity
-              onPress={() => onNavigateTab('Courses')}
-              style={[styles.seeAllTouch, { flexShrink: 0 }]}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              accessibilityRole="button"
-              accessibilityLabel={
-                isBangla
-                  ? `সব কোর্স দেখুন, সর্বমোট ${courses.length} টি`
-                  : `View all courses, total ${courses.length}`
-              }
-            >
-              <Text style={[styles.seeAllText, { color: colors.primary }]}>
-                {isBangla ? 'সব দেখুন' : 'View All'} ({courses.length}) →
-              </Text>
-            </TouchableOpacity>
-          </View>
+        {!isLoadingCourses && coursesError && courses.length === 0 && (
+          <StateView
+            mode="error"
+            title={isBangla ? 'কোর্স লোড করা যায়নি' : 'Could not load courses'}
+            message={coursesError}
+            primaryActionLabel={isBangla ? 'আবার চেষ্টা করুন' : 'Retry'}
+            onPrimaryAction={refreshCourses}
+            compact
+          />
+        )}
 
-          {isLoadingCourses && courses.length === 0 ? (
-            <>
-              <CourseCardSkeleton />
-              <CourseCardSkeleton />
-            </>
-          ) : coursesError && courses.length === 0 ? (
-            <StateView
-              mode="error"
-              title={isBangla ? 'কোর্স লোড করা যায়নি' : 'Could not load courses'}
-              message={coursesError}
-              primaryActionLabel={isBangla ? 'আবার চেষ্টা করুন' : 'Retry'}
-              onPrimaryAction={refreshCourses}
-              compact
+        {/* ── 4. CR-3: Category Carousels ── */}
+        {courses.length > 0 &&
+          categoryRows.map((row) => (
+            <CategoryRow
+              key={`cat-${row.title}`}
+              title={row.title}
+              courses={row.courses}
+              onNavigateToCourse={onNavigateToCourse}
+              onNavigateTab={onNavigateTab}
+              colors={colors}
             />
-          ) : filteredCourses.length === 0 ? (
-            <StateView
-              mode="empty"
-              title={isBangla ? 'কোনো কোর্স পাওয়া যায়নি' : 'No matching courses'}
-              message={isBangla ? 'ফিল্টার রিসেট করে সকল কোর্স দেখুন।' : 'Reset filters to browse all executive courses.'}
-              primaryActionLabel={isBangla ? 'সকল কোর্স' : 'Reset Filters'}
-              onPrimaryAction={() => {
-                setSelectedCategory('all');
-                setSearchQuery('');
-              }}
-              compact
-            />
-          ) : (
-            filteredCourses.slice(0, 3).map((course) => (
-              <CourseCard
-                key={course.id}
-                course={course}
-                onPress={() => onNavigateToCourse(course.id)}
-              />
-            ))
-          )}
-        </View>
+          ))}
 
-        {/* Streamlined About Thriving Skills Gateway Card */}
+        {/* ── About TSL Footer Card ── */}
         <View style={styles.section}>
           <View
             style={[
@@ -862,8 +766,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </View>
       </ScrollView>
 
-      
-
       <AboutTSLModal
         visible={aboutModalVisible}
         onClose={() => setAboutModalVisible(false)}
@@ -871,7 +773,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         onNavigateTab={onNavigateTab}
       />
 
-      {/* Dynamic Scroll to Top Quick Pill */}
+      {/* Scroll to Top Pill */}
       <ScrollToTopPill
         visible={showScrollTop}
         onPress={() => scrollViewRef.current?.scrollTo({ y: 0, animated: true })}
@@ -880,6 +782,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     </View>
   );
 };
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: {
@@ -1048,32 +952,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginTop: 14,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-    gap: 8,
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-  },
-  sectionSubtitle: {
-    fontSize: 11,
-    marginTop: 1,
-  },
-  seeAllTouch: {
-    minHeight: MIN_TOUCH_TARGET,
-    minWidth: MIN_TOUCH_TARGET,
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-    flexShrink: 0,
-  },
-  seeAllText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
   gatewayCard: {
     borderRadius: shape.large,
     borderWidth: 1,
@@ -1096,16 +974,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 10,
   },
-  gatewayPrimaryBtn: {
-    flex: 1,
-    minHeight: MIN_TOUCH_TARGET,
-    borderRadius: shape.medium,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-  },
   gatewaySecondaryBtn: {
     flex: 1,
     minHeight: MIN_TOUCH_TARGET,
@@ -1116,555 +984,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     paddingHorizontal: 12,
-  },
-  resumeCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 14,
-    borderWidth: 1,
-    marginBottom: 16,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  resumeThumb: {
-    width: 60,
-    height: 60,
-    borderRadius: 10,
-    resizeMode: 'cover',
-  },
-  resumeYtBadge: {
-    position: 'absolute',
-    bottom: 4,
-    right: 4,
-    backgroundColor: '#FF0000',
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  miniPill: {
-    paddingHorizontal: 5,
-    paddingVertical: 1.5,
-    borderRadius: 4,
-  },
-  miniPillText: {
-    fontSize: 9,
-    fontWeight: '800',
-  },
-  resumeSubText: {
-    fontSize: 11,
-    marginTop: 2,
-  },
-  resumeInfo: {
-    flex: 1,
-    marginLeft: 12,
-    marginRight: 8,
-  },
-  resumeCourseTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  resumeInstructor: {
-    fontSize: 12,
-    marginBottom: 0,
-  },
-  resumeProgressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  resumeTrack: {
-    flex: 1,
-    height: 5,
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  resumeFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  resumePercentText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  playBtnBg: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  categorySection: {
-    marginBottom: 6,
-  },
-  corporateBanner: {
-    margin: 16,
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 1,
-  },
-  corporateBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 8,
-  },
-  corporateBadgeText: {
-    color: '#818CF8',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  corporateTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    lineHeight: 23,
-    marginBottom: 6,
-  },
-  corporateSubtitle: {
-    fontSize: 12,
-    color: '#CBD5E1',
-    lineHeight: 17,
-    marginBottom: 14,
-  },
-  corpServicesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 16,
-  },
-  corpServItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-    gap: 6,
-  },
-  corpServText: {
-    color: '#E2E8F0',
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  corporateBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 10,
-    gap: 8,
-  },
-  corporateBtnText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  reviewsScroll: {
-    paddingRight: 16,
-    gap: 12,
-    paddingBottom: 6,
-  },
-  reviewCard: {
-    width: 280,
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 14,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  reviewHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  revAvatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    marginRight: 10,
-  },
-  revUserCol: {
-    flex: 1,
-  },
-  revName: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  revRole: {
-    fontSize: 10,
-  },
-  starsRow: {
-    flexDirection: 'row',
-    gap: 1,
-  },
-  revComment: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontStyle: 'italic',
-    marginBottom: 10,
-  },
-  verifiedTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  verifiedTagText: {
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  trustSection: {
-    marginTop: 16,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-  },
-  trustHeading: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  clientLogosRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 8,
-  },
-  clientChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    gap: 6,
-  },
-  clientName: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  articlesScroll: {
-    paddingHorizontal: 16,
-    gap: 14,
-    paddingBottom: 4,
-  },
-  articleCard: {
-    width: 270,
-    borderRadius: 16,
-    borderWidth: 1,
-    overflow: 'hidden',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  articleThumb: {
-    width: '100%',
-    height: 120,
-    backgroundColor: '#141414',
-  },
-  articleThumbPlaceholder: {
-    width: '100%',
-    height: 120,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  articleBody: {
-    padding: 12,
-  },
-  articleMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-    gap: 4,
-  },
-  articleDate: {
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  articleAuthor: {
-    fontSize: 10,
-  },
-  articleTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    lineHeight: 18,
-    marginBottom: 6,
-  },
-  articleExcerpt: {
-    fontSize: 11,
-    lineHeight: 15,
-    marginBottom: 8,
-  },
-  articleFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  articleReadMore: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  leadershipSpotlightSection: {
-    marginHorizontal: 16,
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  leadershipCard: {
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  leadershipCardHeader: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    marginBottom: 8,
-  },
-  badgePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
-  },
-  badgePillText: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  viewLeadershipBtn: {
-    paddingVertical: 2,
-    paddingHorizontal: 4,
-  },
-  viewLeadershipText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  leadershipTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    lineHeight: 20,
-    marginBottom: 12,
-  },
-  foundersRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  founderMiniCard: {
-    flex: 1,
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 10,
-    alignItems: 'center',
-  },
-  founderImgContainer: {
-    position: 'relative',
-    marginBottom: 8,
-  },
-  founderAvatar: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: '#262626',
-  },
-  verifiedDot: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    zIndex: 10,
-    elevation: 3,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
-  },
-  founderName: {
-    fontSize: 12,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: 2,
-  },
-  founderRole: {
-    fontSize: 10.5,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  partnerSection: {
-    marginTop: 16,
-    marginBottom: 10,
-  },
-  partnerHeaderRow: {
-    paddingHorizontal: 16,
-    marginBottom: 12,
-  },
-  partnerBadgeTag: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.6,
-  },
-  partnerSectionTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: -0.3,
-    marginTop: 2,
-    marginBottom: 3,
-  },
-  partnerSectionSubtitle: {
-    fontSize: 11.5,
-    lineHeight: 16,
-  },
-  partnerCardsScroll: {
-    paddingHorizontal: 16,
-    gap: 10,
-    paddingBottom: 6,
-  },
-  partnerCardItem: {
-    width: 210,
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 12,
-  },
-  partnerCardItemHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  partnerItemIconBg: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  partnerItemTag: {
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  partnerItemTagText: {
-    fontSize: 9.5,
-    fontWeight: '800',
-  },
-  partnerOrgTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  partnerOrgDesc: {
-    fontSize: 10.5,
-    lineHeight: 14,
-  },
-  seeAllPartnersBtn: {
-    marginHorizontal: 16,
-    marginTop: 10,
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-  },
-  seeAllPartnersText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  enterpriseFooter: {
-    marginHorizontal: 16,
-    marginTop: 24,
-    marginBottom: 20,
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: 16,
-  },
-  footerBrandRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 14,
-  },
-  footerLogo: {
-    width: 38,
-    height: 38,
-    borderRadius: 9,
-  },
-  footerBrandName: {
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  footerTagline: {
-    fontSize: 11,
-    marginTop: 1,
-  },
-  footerLegalLinksRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 14,
-  },
-  legalPillBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  legalPillText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  footerContactRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-    gap: 10,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    marginBottom: 12,
-  },
-  footerContactItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  footerContactText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  footerDot: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-  },
-  footerCopyrightBox: {
-    alignItems: 'center',
-  },
-  copyrightNotice: {
-    fontSize: 11,
-    fontWeight: '700',
-    textAlign: 'center',
-    marginBottom: 3,
-  },
-  copyrightSubtext: {
-    fontSize: 10,
-    textAlign: 'center',
-    lineHeight: 14,
   },
 });

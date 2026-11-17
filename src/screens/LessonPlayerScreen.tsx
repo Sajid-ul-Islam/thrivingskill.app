@@ -660,13 +660,13 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
           vSrc = `https://player.vimeo.com/video/${vId}`;
         }
         const joinChar = vSrc.includes('?') ? '&' : '?';
-        const vUrlWithParams = `${vSrc}${joinChar}autoplay=1&title=0&byline=0&portrait=0&dnt=1`;
+        const vUrlWithParams = `${vSrc}${joinChar}autoplay=1&controls=0&title=0&byline=0&portrait=0&dnt=1`;
         embedMarkup = `<iframe src="${vUrlWithParams}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
       } else if (activeVideoUrl.includes('youtube.com') || activeVideoUrl.includes('youtu.be')) {
         let ytId = '';
         const yMatch = activeVideoUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
         if (yMatch && yMatch[1]) ytId = yMatch[1];
-        const ytSrc = ytId ? `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&playsinline=1&modestbranding=1&rel=0&enablejsapi=1` : activeVideoUrl;
+        const ytSrc = ytId ? `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&controls=0&playsinline=1&modestbranding=1&rel=0&enablejsapi=1` : activeVideoUrl;
         embedMarkup = `<iframe src="${ytSrc}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
       } else if (activeVideoUrl.match(/\.(mp4|m3u8|mpd|webm)($|\?)/i)) {
         embedMarkup = `<video id="media3Player" src="${activeVideoUrl}" playsinline webkit-playsinline autoplay style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;"></video>`;
@@ -1237,26 +1237,6 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                 accessibilityLabel="Study active recall flashcards"
               >
                 <Ionicons name="sparkles" size={16} color={colors.brandGold} />
-              </TouchableOpacity>
-
-              {/* Offline download quality trigger */}
-              <TouchableOpacity
-                style={[
-                  styles.headerActionBtn,
-                  {
-                    backgroundColor: isDownloaded ? colors.primaryLight : colors.surfaceSubtle,
-                    borderColor: isDownloaded ? colors.primary : colors.border,
-                  },
-                ]}
-                onPress={handleToggleOffline}
-                accessibilityRole="button"
-                accessibilityLabel={isDownloaded ? "Manage downloaded lesson" : "Download lesson with quality options"}
-              >
-                <Ionicons
-                  name={isDownloaded ? 'cloud-done' : 'cloud-download-outline'}
-                  size={16}
-                  color={isDownloaded ? colors.primary : colors.textMuted}
-                />
               </TouchableOpacity>
 
               {/* Mark Complete Button */}

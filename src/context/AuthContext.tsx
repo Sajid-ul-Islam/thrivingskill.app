@@ -113,8 +113,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           });
         } else {
-          // Default to guest mode
-          setIsGuest(true);
+          // Mandatory login required per client change request (no unauthenticated guest bypass)
+          setIsGuest(false);
         }
       } catch (e) {
         console.warn('Failed to restore auth state:', e);
