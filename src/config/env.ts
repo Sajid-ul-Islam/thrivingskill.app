@@ -22,7 +22,7 @@ const getEnvVar = (key: string): string | undefined => {
 export const Env = {
   /**
    * Base REST API URL (WordPress / LearnPress REST API)
-   * e.g. https://staging.thrivingskill.com/wp-json
+   * e.g. https://thrivingskill.com/wp-json
    */
   get API_URL(): string {
     return normalizeUrl(getEnvVar('EXPO_PUBLIC_API_URL')) || 'https://thrivingskill.com/wp-json';
