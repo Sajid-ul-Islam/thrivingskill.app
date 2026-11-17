@@ -44,6 +44,10 @@ interface CategoryRowProps {
   colors: ReturnType<typeof useTheme>['colors'];
 }
 
+const CARD_WIDTH = 240;
+const CARD_GAP = 12;
+const CARD_SNAP = CARD_WIDTH + CARD_GAP; // 252
+
 const CategoryRow: React.FC<CategoryRowProps> = ({
   title,
   courses,
@@ -54,17 +58,26 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
   const flatRef = useRef<FlatList<Course> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const indexRef = useRef<number>(0);
+  const isDraggingRef = useRef<boolean>(false);
+
+  // Take up to 7 items for the horizontal carousel
+  const displayCourses = useMemo(() => courses.slice(0, 7), [courses]);
+  const itemCount = displayCourses.length;
 
   useEffect(() => {
-    if (courses.length <= 1) return;
+    if (itemCount <= 1) return;
 
     timerRef.current = setInterval(() => {
-      indexRef.current = (indexRef.current + 1) % courses.length;
-      flatRef.current?.scrollToIndex({
-        index: indexRef.current,
-        animated: true,
-        viewPosition: 0,
-      });
+      if (isDraggingRef.current) return;
+      try {
+        indexRef.current = (indexRef.current + 1) % itemCount;
+        flatRef.current?.scrollToOffset({
+          offset: indexRef.current * CARD_SNAP,
+          animated: true,
+        });
+      } catch {
+        // Silently prevent any scroll layout error
+      }
     }, 3000);
 
     return () => {
@@ -73,9 +86,9 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
         timerRef.current = null;
       }
     };
-  }, [courses.length]);
+  }, [itemCount]);
 
-  if (courses.length === 0) return null;
+  if (itemCount === 0) return null;
 
   return (
     <View style={{ marginTop: 14 }}>
@@ -127,19 +140,32 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
         </TouchableOpacity>
       </View>
 
-      {/* Horizontal FlatList */}
+      {/* Horizontal FlatList with Safe Offset Scrolling */}
       <FlatList
         ref={flatRef}
-        data={courses.slice(0, 7)}
+        data={displayCourses}
         keyExtractor={(item) => `cat-row-${title}-${item.id}`}
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16, gap: 12, paddingBottom: 4 }}
-        onScrollToIndexFailed={() => {
-          indexRef.current = 0;
+        contentContainerStyle={{ paddingHorizontal: 16, gap: CARD_GAP, paddingBottom: 4 }}
+        getItemLayout={(_, index) => ({
+          length: CARD_SNAP,
+          offset: CARD_SNAP * index,
+          index,
+        })}
+        onScrollBeginDrag={() => {
+          isDraggingRef.current = true;
+        }}
+        onScrollEndDrag={() => {
+          isDraggingRef.current = false;
+        }}
+        onMomentumScrollEnd={(e) => {
+          isDraggingRef.current = false;
+          const offX = e.nativeEvent.contentOffset.x;
+          indexRef.current = Math.round(offX / CARD_SNAP);
         }}
         renderItem={({ item }) => (
-          <View style={{ width: 240 }}>
+          <View style={{ width: CARD_WIDTH }}>
             <CourseCard
               course={item}
               onPress={() => {

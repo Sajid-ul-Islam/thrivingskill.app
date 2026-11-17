@@ -371,7 +371,11 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
       if (isBrowsingDepartments) {
         const idx = departmentSections.findIndex((d) => d.id === deptId);
         if (idx !== -1 && flatListRef.current) {
-          flatListRef.current.scrollToIndex({ index: idx, animated: true, viewPosition: 0 });
+          try {
+            flatListRef.current.scrollToIndex({ index: idx, animated: true, viewPosition: 0 });
+          } catch {
+            flatListRef.current.scrollToOffset({ offset: Math.max(0, idx * 300), animated: true });
+          }
           return;
         }
       }

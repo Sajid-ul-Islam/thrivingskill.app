@@ -39,7 +39,7 @@ import { BrandDrawer } from './src/components/BrandDrawer';
 import { AppUpdateModal } from './src/components/AppUpdateModal';
 import { AppUpdateService } from './src/services/appUpdateService';
 import { SupportContactModal } from './src/components/modals/SupportContactModal';
-import { ScreenTransition, CelebrationToast, ActionToast, FloatingCrmWidget } from './src/components/common';
+import { ScreenTransition, CelebrationToast, ActionToast, FloatingCrmWidget, AppErrorBoundary } from './src/components/common';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -75,8 +75,12 @@ const MainAppContent: React.FC = () => {
 
   // Cross-platform timer for proactive background OTA check
   const updateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasCheckedUpdateRef = useRef<boolean>(false);
 
   useEffect(() => {
+    if (hasCheckedUpdateRef.current) return;
+    hasCheckedUpdateRef.current = true;
+
     // Proactive background OTA check in standalone builds (silently bypassed in Expo Go)
     updateTimerRef.current = setTimeout(async () => {
       try {
@@ -93,7 +97,7 @@ const MainAppContent: React.FC = () => {
       } catch {
         // Silent catch for offline or dev mode
       }
-    }, 4000);
+    }, 6000);
 
     return () => {
       if (updateTimerRef.current) {
@@ -574,27 +578,29 @@ const MainAppContent: React.FC = () => {
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <ThemeProvider>
-        <LanguageProvider>
-          <NetworkProvider>
-            <FeedbackProvider>
-              <AuthProvider>
-                <GamificationProvider>
-                  <SaaSProvider>
-                    <LearningProvider>
-                      <YouTubeProvider>
-                        <MainAppContent />
-                      </YouTubeProvider>
-                    </LearningProvider>
-                  </SaaSProvider>
-                </GamificationProvider>
-              </AuthProvider>
-            </FeedbackProvider>
-          </NetworkProvider>
-        </LanguageProvider>
-      </ThemeProvider>
-    </SafeAreaProvider>
+    <AppErrorBoundary>
+      <SafeAreaProvider>
+        <ThemeProvider>
+          <LanguageProvider>
+            <NetworkProvider>
+              <FeedbackProvider>
+                <AuthProvider>
+                  <GamificationProvider>
+                    <SaaSProvider>
+                      <LearningProvider>
+                        <YouTubeProvider>
+                          <MainAppContent />
+                        </YouTubeProvider>
+                      </LearningProvider>
+                    </SaaSProvider>
+                  </GamificationProvider>
+                </AuthProvider>
+              </FeedbackProvider>
+            </NetworkProvider>
+          </LanguageProvider>
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </AppErrorBoundary>
   );
 }
 

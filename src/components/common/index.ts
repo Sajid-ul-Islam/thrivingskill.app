@@ -16,3 +16,4 @@ export * from './OfflineBanner';
 export * from './StateView';
 export * from './FloatingCrmWidget';
 export * from './ScrollToTopPill';
+export * from './AppErrorBoundary';
