@@ -14,8 +14,9 @@ import {
   KeyboardAvoidingView,
   Keyboard,
 } from 'react-native';
-import { WebView } from 'react-native-webview';
+import { WebView, WebViewNavigation } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
+import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -65,13 +66,20 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [orderNotes, setOrderNotes] = useState('');
-  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(true);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [isEditingDetails, setIsEditingDetails] = useState(false);
 
   // Checkout Execution State
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
   const [checkoutWebUrl, setCheckoutWebUrl] = useState<string | null>(null);
+  const [canGoBack, setCanGoBack] = useState(false);
+  const [currentUrl, setCurrentUrl] = useState<string>('');
+  const [loadProgress, setLoadProgress] = useState<number>(0);
+
+  // WebView Ref
+  const webViewRef = useRef<any>(null);
 
   // Focus Chaining Refs for Seamless Form UX
   const lastNameRef = useRef<React.ElementRef<typeof TextInput>>(null);
@@ -82,8 +90,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   // Sync State & Hygiene
   const [isSyncing, setIsSyncing] = useState(false);
-  const [syncAttempt, setSyncAttempt] = useState(1);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cartForwardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef<boolean>(true);
   const isCancelledRef = useRef<boolean>(false);
 
@@ -92,13 +100,16 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   // Hydrate user info if logged in
   useEffect(() => {
     if (visible && user) {
-      const parts = (user.displayName || '').trim().split(' ');
+      const parts = (user.displayName || user.username || '').trim().split(' ');
       setFirstName(parts[0] || '');
-      setLastName(parts.slice(1).join(' ') || '');
+      setLastName(parts.slice(1).join(' ') || (parts[0] ? '' : 'Learner'));
       setEmail(user.email || '');
       setPhone(user.phone || '');
+      setIsEditingDetails(!user.displayName || !user.email);
+    } else if (visible && !isAuthenticated) {
+      setIsEditingDetails(true);
     }
-  }, [visible, user]);
+  }, [visible, user, isAuthenticated]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -120,6 +131,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
       }
+      if (cartForwardTimeoutRef.current) {
+        clearTimeout(cartForwardTimeoutRef.current);
+        cartForwardTimeoutRef.current = null;
+      }
     };
   }, []);
 
@@ -128,8 +143,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       setIsSyncing(false);
       setIsPlacingOrder(false);
       setCheckoutWebUrl(null);
+      setCanGoBack(false);
+      setCurrentUrl('');
+      setLoadProgress(0);
       setFormErrors({});
-      setSyncAttempt(1);
     }
   }, [visible, course?.id]);
 
@@ -172,10 +189,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   };
 
   // Place Order Action: Launches Official SSLCommerz Checkout Flow
-  const handlePlaceOrder = async () => {
+  const handleProceedToCheckout = () => {
     if (!course) return;
 
     if (!validateBillingDetails()) {
+      setIsEditingDetails(true);
       triggerHaptic('error');
       Alert.alert(
         isBangla ? 'আবশ্যক তথ্য অসম্পূর্ণ' : 'Required Fields Missing',
@@ -190,20 +208,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     setIsPlacingOrder(true);
 
     try {
-      // Build pre-filled WooCommerce Checkout URL
-      const params = new URLSearchParams({
-        'add-to-cart': String(course.id),
-        billing_first_name: firstName.trim(),
-        billing_last_name: lastName.trim(),
-        billing_email: email.trim(),
-        billing_phone: phone.trim(),
-      });
-
-      if (orderNotes.trim()) {
-        params.append('order_comments', orderNotes.trim());
-      }
-
-      const fullCheckoutUrl = `https://thrivingskill.com/checkout/?${params.toString()}`;
+      // Build official WooCommerce Checkout Cart URL
+      const fullCheckoutUrl = `https://thrivingskill.com/checkout/?add-to-cart=${course.id}`;
+      setCurrentUrl(fullCheckoutUrl);
       setCheckoutWebUrl(fullCheckoutUrl);
     } catch (err: any) {
       Alert.alert(
@@ -213,6 +220,47 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     } finally {
       setIsPlacingOrder(false);
     }
+  };
+
+  // Open checkout directly in system web browser (Chrome / Safari)
+  const handleOpenInExternalBrowser = () => {
+    if (!course) return;
+    const url = currentUrl || `https://thrivingskill.com/checkout/?add-to-cart=${course.id}`;
+    Linking.openURL(url).catch(() => {
+      Alert.alert(
+        isBangla ? 'ত্রুটি' : 'Error',
+        isBangla ? 'ব্রাউজার খোলা সম্ভব হয়নি।' : 'Could not open external web browser.'
+      );
+    });
+  };
+
+  // Prompt before exiting active web checkout
+  const handleBackOrExitCheckout = () => {
+    if (canGoBack && webViewRef.current) {
+      webViewRef.current.goBack();
+      return;
+    }
+
+    Alert.alert(
+      isBangla ? 'চেকআউট থেকে ফিরে যাবেন?' : 'Leave Checkout?',
+      isBangla
+        ? 'আপনি কি পেমেন্ট প্রক্রিয়া স্থগিত করে কোর্সে ফিরে যেতে চান? আপনি যেকোনো সময় পুনরায় চেকআউট করতে পারবেন।'
+        : 'Do you want to exit the checkout? You can resume or sync your enrollment at any time.',
+      [
+        {
+          text: isBangla ? 'পেমেন্ট চালিয়ে যান' : 'Continue Payment',
+          style: 'cancel',
+        },
+        {
+          text: isBangla ? 'কোর্সে ফিরে যান' : 'Return to Course',
+          style: 'destructive',
+          onPress: () => {
+            triggerHaptic('light');
+            setCheckoutWebUrl(null);
+          },
+        },
+      ]
+    );
   };
 
   // Verify real enrollment against WordPress / LearnPress backend
@@ -318,13 +366,17 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   ]);
 
   // Handle WebView Checkout URL changes (Detect completion redirect)
-  const handleWebViewNavChange = (navState: any) => {
+  const handleWebViewNavChange = (navState: WebViewNavigation) => {
     const url = navState.url || '';
+    setCanGoBack(navState.canGoBack);
+    setCurrentUrl(url);
+
+    // Detect Order Completion Redirects
     if (
       url.includes('order-received') ||
       url.includes('thank-you') ||
       url.includes('checkout/success') ||
-      url.includes('order-pay') === false && url.includes('/order/')
+      (url.includes('key=wc_order_') && !url.includes('order-pay'))
     ) {
       triggerHaptic('success');
       setCheckoutWebUrl(null);
@@ -335,20 +387,256 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             enrollInCourse(sub.id);
           });
         }
-        onSuccess(course.id);
+        // Background verify with backend
+        CoursesService.enrollCourse(course.id).catch(() => {});
+        refreshCourses().catch(() => {});
+
         onClose();
+        onSuccess(course.id);
+
         Alert.alert(
-          isBangla ? 'অর্ডার সফল হয়েছে! 🎉' : 'Order Placed Successfully! 🎉',
+          isBangla ? 'ভর্তি সফল হয়েছে! 🎉' : 'Enrollment Successful! 🎉',
           isBangla
-            ? 'আপনার কোর্সটি সফলভাবে চালু হয়েছে। এখনই শেখা শুরু করুন!'
-            : 'Your payment was confirmed and course access has been activated!'
+            ? `অভিনন্দন! "${course.title}" কোর্সটিতে আপনার অ্যাক্সেস চালু হয়েছে। এখনই প্রথম লেসন শুরু করুন।`
+            : `Congratulations! Your access to "${course.title}" is now active. Let's begin learning!`,
+          [
+            {
+              text: isBangla ? 'লেসন শুরু করুন' : 'Start First Lesson',
+              onPress: () => onSuccess(course.id),
+            },
+          ]
         );
       }
     }
   };
 
+  // Safe Request Interceptor: handles deep links (bKash/Nagad app) and skips /cart/
+  const handleShouldStartLoadWithRequest = (request: any) => {
+    const url = request.url || '';
+
+    // 1. Intercept custom app schemes (bKash app, Nagad app, etc.)
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      Linking.canOpenURL(url).then((supported) => {
+        if (supported) {
+          Linking.openURL(url).catch(() => {});
+        } else if (url.startsWith('intent://')) {
+          const fallbackMatch = url.match(/browser_fallback_url=([^;&]+)/);
+          if (fallbackMatch && fallbackMatch[1]) {
+            const decodedFallback = decodeURIComponent(fallbackMatch[1]);
+            Linking.openURL(decodedFallback).catch(() => {});
+          }
+        }
+      }).catch(() => {});
+      return false;
+    }
+
+    // 2. Fast-forward from /cart/ redirect directly to /checkout/
+    if (url.includes('thrivingskill.com/cart') && !url.includes('checkout')) {
+      if (cartForwardTimeoutRef.current) clearTimeout(cartForwardTimeoutRef.current);
+      cartForwardTimeoutRef.current = setTimeout(() => {
+        if (webViewRef.current) {
+          webViewRef.current.injectJavaScript(`
+            window.location.replace('https://thrivingskill.com/checkout/');
+            true;
+          `);
+        }
+      }, 50);
+    }
+
+    return true;
+  };
+
+  // Smart Autofill and Mobile Styling Injected into WebView
+  const injectedCheckoutJs = `
+    (function() {
+      function runAutofill() {
+        try {
+          // Auto-skip intermediate cart page
+          if (window.location.pathname.includes('/cart')) {
+            window.location.replace('https://thrivingskill.com/checkout/');
+            return;
+          }
+
+          // Pre-populate billing fields on checkout
+          if (window.location.pathname.includes('/checkout')) {
+            function setField(id, val) {
+              if (!val) return;
+              var el = document.getElementById(id);
+              if (el && (!el.value || el.value.trim() === '')) {
+                el.value = val;
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+                el.dispatchEvent(new Event('change', { bubbles: true }));
+              }
+            }
+
+            setField('billing_first_name', ${JSON.stringify(firstName.trim())});
+            setField('billing_last_name', ${JSON.stringify(lastName.trim())});
+            setField('billing_email', ${JSON.stringify(email.trim())});
+            setField('billing_phone', ${JSON.stringify(phone.trim())});
+
+            if (${JSON.stringify(orderNotes.trim())}) {
+              setField('order_comments', ${JSON.stringify(orderNotes.trim())});
+            }
+
+            var terms = document.getElementById('terms');
+            if (terms && !terms.checked) {
+              terms.checked = true;
+              terms.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
+            // Remove distracting desktop header/footer for clean mobile checkout UX
+            var masthead = document.getElementById('masthead') || document.querySelector('.site-header, header');
+            if (masthead) {
+              masthead.style.display = 'none';
+            }
+            var footer = document.querySelector('footer');
+            if (footer) {
+              footer.style.display = 'none';
+            }
+
+            // Inject responsive CSS
+            var style = document.getElementById('ts-app-custom-style');
+            if (!style) {
+              style = document.createElement('style');
+              style.id = 'ts-app-custom-style';
+              style.innerHTML = \`
+                body { padding-top: 10px !important; margin: 0 !important; }
+                .woocommerce-NoticeGroup, .woocommerce-error { margin: 10px !important; border-radius: 8px !important; }
+                #customer_details { margin-bottom: 20px !important; }
+                .woocommerce-checkout-review-order { background: #F8FAFC !important; border-radius: 14px !important; padding: 16px !important; border: 1px solid #E2E8F0 !important; }
+                #place_order { background-color: #102F53 !important; color: #FFFFFF !important; font-size: 16px !important; padding: 14px 20px !important; border-radius: 10px !important; width: 100% !important; font-weight: 800 !important; cursor: pointer !important; margin-top: 14px !important; }
+                #place_order:hover { background-color: #0b223d !important; }
+              \`;
+              document.head.appendChild(style);
+            }
+          }
+        } catch (err) {
+          console.error('TS Autofill error:', err);
+        }
+      }
+
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        runAutofill();
+      } else {
+        document.addEventListener('DOMContentLoaded', runAutofill);
+      }
+      setTimeout(runAutofill, 400);
+      setTimeout(runAutofill, 1200);
+      setTimeout(runAutofill, 2500);
+    })();
+    true;
+  `;
+
   if (!course) return null;
 
+  // View Mode 1: Dedicated Full-Screen Secure In-App Checkout Browser
+  if (checkoutWebUrl) {
+    return (
+      <Modal
+        visible={visible}
+        animationType="slide"
+        statusBarTranslucent={true}
+        onRequestClose={handleBackOrExitCheckout}
+      >
+        <StatusBar style="light" />
+        <View style={[styles.fullScreenContainer, { backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }]}>
+          {/* Native-Grade Top App Bar */}
+          <View style={[styles.fullScreenHeader, { paddingTop: Math.max(insets.top, 14) + 6 }]}>
+            <TouchableOpacity
+              style={styles.headerActionBtn}
+              onPress={handleBackOrExitCheckout}
+              accessibilityRole="button"
+              accessibilityLabel={canGoBack ? 'Go back' : 'Cancel checkout'}
+            >
+              <Ionicons name={canGoBack ? 'arrow-back' : 'close'} size={24} color="#FFFFFF" />
+            </TouchableOpacity>
+
+            <View style={styles.headerTitleCol}>
+              <View style={styles.headerSecurityRow}>
+                <Ionicons name="lock-closed" size={13} color="#10B981" />
+                <Text style={styles.headerSecurityText}>SSLCommerz 256-Bit SSL</Text>
+              </View>
+              <Text style={styles.headerHostText} numberOfLines={1}>
+                thrivingskill.com/checkout
+              </Text>
+            </View>
+
+            <View style={styles.headerRightActions}>
+              <TouchableOpacity
+                style={styles.headerActionBtn}
+                onPress={() => webViewRef.current?.reload()}
+                accessibilityRole="button"
+                accessibilityLabel="Reload checkout"
+              >
+                <Ionicons name="reload" size={19} color="#FFFFFF" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.headerActionBtn}
+                onPress={handleOpenInExternalBrowser}
+                accessibilityRole="button"
+                accessibilityLabel="Open in external browser"
+              >
+                <Ionicons name="open-outline" size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Slim Animated Loading Progress Bar */}
+          {loadProgress < 1 && (
+            <View style={styles.progressBarTrack}>
+              <View
+                style={[
+                  styles.progressBarFill,
+                  { width: `${Math.max(8, Math.round(loadProgress * 100))}%` },
+                ]}
+              />
+            </View>
+          )}
+
+          {/* Full-Screen Web View */}
+          <WebView
+            ref={webViewRef}
+            source={{ uri: checkoutWebUrl }}
+            onNavigationStateChange={handleWebViewNavChange}
+            onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
+            onLoadProgress={(syntheticEvent) => {
+              setLoadProgress(syntheticEvent.nativeEvent.progress);
+            }}
+            injectedJavaScript={injectedCheckoutJs}
+            startInLoadingState={true}
+            renderLoading={() => (
+              <View style={[styles.fullScreenLoading, { backgroundColor: isDark ? '#0F172A' : '#FFFFFF' }]}>
+                <View style={styles.loadingSpinnerBadge}>
+                  <ActivityIndicator size="large" color="#FFB606" />
+                </View>
+                <Text style={[styles.loadingTitle, { color: colors.text }]}>
+                  {isBangla ? 'নিরাপদ চেকআউট লোড হচ্ছে...' : 'Connecting to Secure Checkout...'}
+                </Text>
+                <Text style={[styles.loadingSubtitle, { color: colors.textMuted }]}>
+                  {isBangla
+                    ? 'এসএসএলকমার্জ ও থ্রাইভিং স্কিলস গেটওয়ে প্রস্তুত হচ্ছে...'
+                    : 'Preparing SSLCommerz Payment Gateway, please wait...'}
+                </Text>
+              </View>
+            )}
+            style={styles.fullScreenWebView}
+            domStorageEnabled={true}
+            javaScriptEnabled={true}
+            sharedCookiesEnabled={true}
+            thirdPartyCookiesEnabled={true}
+            allowsBackForwardNavigationGestures={true}
+            originWhitelist={['*']}
+          />
+
+          {/* Bottom Safe Area Padding */}
+          <View style={{ height: insets.bottom, backgroundColor: isDark ? '#0F172A' : '#FFFFFF' }} />
+        </View>
+      </Modal>
+    );
+  }
+
+  // View Mode 2: In-App Order Review & Checkout Bottom Sheet
   return (
     <Modal
       visible={visible}
@@ -384,694 +672,711 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
           <TouchableOpacity
             style={[styles.closeBtn, { backgroundColor: isDark ? '#27272A' : '#F4F4F5' }]}
-            onPress={() => {
-              if (checkoutWebUrl) {
-                setCheckoutWebUrl(null);
-              } else {
-                onClose();
-              }
-            }}
+            onPress={onClose}
             accessibilityRole="button"
             accessibilityLabel="Close checkout modal"
           >
             <Ionicons name="close" size={20} color={colors.textMuted} />
           </TouchableOpacity>
 
-          {/* Embedded SSLCommerz Checkout WebView */}
-          {checkoutWebUrl ? (
-            <View style={styles.webViewContainer}>
-              <View style={[styles.webViewHeader, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
-                <Ionicons name="lock-closed" size={16} color="#059669" />
-                <Text style={[styles.webViewTitle, { color: colors.text }]} numberOfLines={1}>
-                  SSLCommerz Secure Payment
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            contentContainerStyle={[
+              styles.scroll,
+              isKeyboardVisible && { paddingBottom: 160 },
+            ]}
+          >
+            {/* Header Badge */}
+            <View style={styles.headerRow}>
+              <View style={[styles.shieldBadge, { backgroundColor: colors.primaryLight }]}>
+                <Ionicons name="bag-check-outline" size={24} color={colors.primary} />
+              </View>
+              <View style={{ flex: 1, paddingRight: 28 }}>
+                <Text style={[styles.title, { color: colors.text }]}>
+                  {isBangla ? 'কোর্স ভর্তি ও চেকআউট' : 'Checkout & Enrollment'}
                 </Text>
-                <TouchableOpacity
-                  style={styles.openExternalBtn}
-                  onPress={() => Linking.openURL(checkoutWebUrl)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Open checkout in external browser"
-                >
-                  <Ionicons name="open-outline" size={18} color={colors.primary} />
-                </TouchableOpacity>
+                <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+                  {isBangla ? 'এসএসএলকমার্জ এর মাধ্যমে নিরাপদ পেমেন্ট' : 'Secure payment via SSLCommerz'}
+                </Text>
               </View>
-
-              <WebView
-                source={{ uri: checkoutWebUrl }}
-                onNavigationStateChange={handleWebViewNavChange}
-                startInLoadingState={true}
-                renderLoading={() => (
-                  <View style={styles.webLoading}>
-                    <ActivityIndicator size="large" color="#102F53" />
-                    <Text style={[styles.webLoadingText, { color: colors.textMuted }]}>
-                      Connecting to SSLCommerz Payment Gateway...
-                    </Text>
-                  </View>
-                )}
-                style={styles.webView}
-              />
             </View>
-          ) : (
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              keyboardDismissMode="on-drag"
-              contentContainerStyle={[
-                styles.scroll,
-                isKeyboardVisible && { paddingBottom: 160 },
-              ]}
-            >
-              {/* Header Badge */}
-              <View style={styles.headerRow}>
-                <View style={[styles.shieldBadge, { backgroundColor: colors.primaryLight }]}>
-                  <Ionicons name="bag-check-outline" size={24} color={colors.primary} />
-                </View>
-                <View style={{ flex: 1, paddingRight: 28 }}>
-                  <Text style={[styles.title, { color: colors.text }]}>
-                    {isBangla ? 'কোর্স অর্ডার ও চেকআউট' : 'Checkout & Place Order'}
-                  </Text>
-                  <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                    {isBangla ? 'এসএসএলকমার্জ এর মাধ্যমে নিরাপদ পেমেন্ট' : 'Secure payment via SSLCommerz'}
-                  </Text>
-                </View>
-              </View>
 
-              {/* 2-Step Member Access Sync Progress Stepper */}
-              <View style={[styles.stepperContainer, { backgroundColor: colors.surfaceSubtle }]}>
-                <View style={styles.stepperInfoRow}>
-                  <Text style={[styles.stepperLabel, { color: colors.textMuted }]}>
-                    {isBangla ? `ধাপ ${syncStep}/২: সদস্য অ্যাক্সেস যাচাই` : `Step ${syncStep} of 2: Member Access Sync`}
-                  </Text>
-                  <Text style={[styles.stepperPercent, { color: colors.primary }]}>
-                    {syncStep === 2 ? '100%' : '50%'}
-                  </Text>
-                </View>
-                <View style={[styles.stepperTrack, { backgroundColor: colors.border }]}>
-                  <View
-                    style={[
-                      styles.stepperFill,
-                      {
-                        width: syncStep === 2 ? '100%' : '50%',
-                        backgroundColor: colors.primary,
-                      },
-                    ]}
-                  />
-                </View>
+            {/* Stepper Access Info */}
+            <View style={[styles.stepperContainer, { backgroundColor: colors.surfaceSubtle }]}>
+              <View style={styles.stepperInfoRow}>
+                <Text style={[styles.stepperLabel, { color: colors.textMuted }]}>
+                  {isBangla ? `ধাপ ${syncStep}/২: সদস্য অ্যাক্সেস যাচাই` : `Step ${syncStep} of 2: Member Access Sync`}
+                </Text>
+                <Text style={[styles.stepperPercent, { color: colors.primary }]}>
+                  {syncStep === 2 ? '100%' : '50%'}
+                </Text>
               </View>
-
-              {/* Mode Toggle Tabs */}
-              <View style={[styles.tabSelector, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
-                <TouchableOpacity
+              <View style={[styles.stepperTrack, { backgroundColor: colors.border }]}>
+                <View
                   style={[
-                    styles.tabBtn,
-                    activeTab === 'checkout' && [styles.activeTabBtn, { backgroundColor: colors.surface }],
+                    styles.stepperFill,
+                    {
+                      width: syncStep === 2 ? '100%' : '50%',
+                      backgroundColor: colors.primary,
+                    },
                   ]}
-                  onPress={() => {
-                    triggerHaptic('selection');
-                    setActiveTab('checkout');
-                  }}
-                  accessibilityRole="tab"
-                  accessibilityState={{ selected: activeTab === 'checkout' }}
-                  accessibilityLabel={isBangla ? 'অর্ডার প্লেস করুন' : 'Place Order'}
-                >
-                  <Ionicons
-                    name="card-outline"
-                    size={16}
-                    color={activeTab === 'checkout' ? colors.primary : colors.textMuted}
-                    style={{ marginRight: 6 }}
-                  />
-                  <Text
-                    style={[
-                      styles.tabBtnText,
-                      { color: activeTab === 'checkout' ? colors.primary : colors.textMuted },
-                    ]}
-                  >
-                    {isBangla ? 'অর্ডার প্লেস করুন' : 'Place Order'}
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.tabBtn,
-                    activeTab === 'sync' && [styles.activeTabBtn, { backgroundColor: colors.surface }],
-                  ]}
-                  onPress={() => {
-                    triggerHaptic('selection');
-                    setActiveTab('sync');
-                  }}
-                  accessibilityRole="tab"
-                  accessibilityState={{ selected: activeTab === 'sync' }}
-                  accessibilityLabel={isBangla ? 'অ্যাক্সেস সিঙ্ক' : 'Sync Access'}
-                >
-                  <Ionicons
-                    name="sync-outline"
-                    size={16}
-                    color={activeTab === 'sync' ? colors.primary : colors.textMuted}
-                    style={{ marginRight: 6 }}
-                  />
-                  <Text
-                    style={[
-                      styles.tabBtnText,
-                      { color: activeTab === 'sync' ? colors.primary : colors.textMuted },
-                    ]}
-                  >
-                    {isBangla ? 'পূর্ববর্তী এনরোলমেন্ট সিঙ্ক' : 'Sync Enrolled Access'}
-                  </Text>
-                </TouchableOpacity>
+                />
               </View>
+            </View>
 
-              {activeTab === 'checkout' ? (
-                <>
-                  {/* Section 1: Billing details */}
-                  <View style={styles.sectionHeaderRow}>
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                      {isBangla ? 'বিলিং তথ্য' : 'Billing details'}
+            {/* Mode Toggle Tabs */}
+            <View style={[styles.tabSelector, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+              <TouchableOpacity
+                style={[
+                  styles.tabBtn,
+                  activeTab === 'checkout' && [styles.activeTabBtn, { backgroundColor: colors.surface }],
+                ]}
+                onPress={() => {
+                  triggerHaptic('selection');
+                  setActiveTab('checkout');
+                }}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: activeTab === 'checkout' }}
+                accessibilityLabel={isBangla ? 'অর্ডার ও চেকআউট' : 'Order & Checkout'}
+              >
+                <Ionicons
+                  name="card-outline"
+                  size={16}
+                  color={activeTab === 'checkout' ? colors.primary : colors.textMuted}
+                  style={{ marginRight: 6 }}
+                />
+                <Text
+                  style={[
+                    styles.tabBtnText,
+                    { color: activeTab === 'checkout' ? colors.primary : colors.textMuted },
+                  ]}
+                >
+                  {isBangla ? 'অর্ডার ও চেকআউট' : 'Order & Checkout'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.tabBtn,
+                  activeTab === 'sync' && [styles.activeTabBtn, { backgroundColor: colors.surface }],
+                ]}
+                onPress={() => {
+                  triggerHaptic('selection');
+                  setActiveTab('sync');
+                }}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: activeTab === 'sync' }}
+                accessibilityLabel={isBangla ? 'অ্যাক্সেস সিঙ্ক' : 'Sync Access'}
+              >
+                <Ionicons
+                  name="sync-outline"
+                  size={16}
+                  color={activeTab === 'sync' ? colors.primary : colors.textMuted}
+                  style={{ marginRight: 6 }}
+                />
+                <Text
+                  style={[
+                    styles.tabBtnText,
+                    { color: activeTab === 'sync' ? colors.primary : colors.textMuted },
+                  ]}
+                >
+                  {isBangla ? 'পূর্ববর্তী এনরোলমেন্ট সিঙ্ক' : 'Sync Enrolled Access'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {activeTab === 'checkout' ? (
+              <>
+                {/* Section: Your Order Summary (CR-5 & Live Site Aligned) */}
+                <View
+                  style={[
+                    styles.orderSummaryCard,
+                    { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                  ]}
+                >
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <Text style={[styles.orderSummaryTitle, { color: colors.text, marginBottom: 0 }]}>
+                      {isBangla ? 'আপনার অর্ডার' : 'Your order'}
+                    </Text>
+                    {isBundle && (
+                      <View style={{ backgroundColor: '#102F53', paddingHorizontal: 8, paddingVertical: 3, borderRadius: shape.full }}>
+                        <Text style={{ color: '#FFB606', fontSize: 10, fontWeight: '800' }}>
+                          {isBangla ? 'স্পেশাল বান্ডেল (৫টি কোর্স)' : 'SPECIAL BUNDLE (5 COURSES)'}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Main Item Row */}
+                  <View style={styles.orderItemRow}>
+                    <Text style={[styles.orderItemName, { color: colors.text }]} numberOfLines={2}>
+                      {course.title} × 1
+                    </Text>
+                    <Text style={[styles.orderItemPrice, { color: colors.text }]}>
+                      {formattedPrice}
                     </Text>
                   </View>
 
-                  {/* First Name & Last Name */}
-                  <View style={styles.nameRow}>
-                    <View style={styles.nameCol}>
-                      <Text style={[styles.inputLabel, { color: colors.text }]}>
-                        {isBangla ? 'নামের প্রথম অংশ' : 'First name'} <Text style={styles.requiredAsterisk}>*</Text>
+                  {/* Bundle Sub-Courses Breakdown (CR-5) */}
+                  {isBundle && bundleConfig && (
+                    <View style={{ marginVertical: 8, padding: 10, backgroundColor: isDark ? '#1E293B' : '#F1F5F9', borderRadius: shape.medium }}>
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: colors.text, marginBottom: 6 }}>
+                        {isBangla ? 'বান্ডেলে অন্তর্ভুক্ত ৫টি কোর্স (সবগুলো আনলক হবে):' : 'Included 5 courses in this bundle (all unlock):'}
                       </Text>
-                      <TextInput
-                        style={[
-                          styles.input,
-                          {
-                            backgroundColor: colors.surfaceSubtle,
-                            borderColor: formErrors.firstName ? '#DC2626' : colors.border,
-                            color: colors.text,
-                          },
-                        ]}
-                        value={firstName}
-                        onChangeText={(txt) => {
-                          setFirstName(txt);
-                          if (formErrors.firstName) setFormErrors((p) => ({ ...p, firstName: '' }));
-                        }}
-                        placeholder="e.g. Tanvir"
-                        placeholderTextColor={colors.textMuted}
-                        autoCapitalize="words"
-                        autoComplete="name-given"
-                        textContentType="givenName"
-                        returnKeyType="next"
-                        onSubmitEditing={() => lastNameRef.current?.focus()}
-                        blurOnSubmit={false}
-                        accessibilityLabel={isBangla ? 'নামের প্রথম অংশ' : 'First name'}
-                      />
-                    </View>
-
-                    <View style={styles.nameCol}>
-                      <Text style={[styles.inputLabel, { color: colors.text }]}>
-                        {isBangla ? 'নামের শেষ অংশ' : 'Last name'} <Text style={styles.requiredAsterisk}>*</Text>
-                      </Text>
-                      <TextInput
-                        ref={lastNameRef}
-                        style={[
-                          styles.input,
-                          {
-                            backgroundColor: colors.surfaceSubtle,
-                            borderColor: formErrors.lastName ? '#DC2626' : colors.border,
-                            color: colors.text,
-                          },
-                        ]}
-                        value={lastName}
-                        onChangeText={(txt) => {
-                          setLastName(txt);
-                          if (formErrors.lastName) setFormErrors((p) => ({ ...p, lastName: '' }));
-                        }}
-                        placeholder="e.g. Ahmed"
-                        placeholderTextColor={colors.textMuted}
-                        autoCapitalize="words"
-                        autoComplete="name-family"
-                        textContentType="familyName"
-                        returnKeyType="next"
-                        onSubmitEditing={() => phoneRef.current?.focus()}
-                        blurOnSubmit={false}
-                        accessibilityLabel={isBangla ? 'নামের শেষ অংশ' : 'Last name'}
-                      />
-                    </View>
-                  </View>
-
-                  {/* Phone Number */}
-                  <View style={styles.fieldGroup}>
-                    <Text style={[styles.inputLabel, { color: colors.text }]}>
-                      {isBangla ? 'ফোন নম্বর' : 'Phone'} <Text style={styles.requiredAsterisk}>*</Text>
-                    </Text>
-                    <TextInput
-                      ref={phoneRef}
-                      style={[
-                        styles.input,
-                        {
-                          backgroundColor: colors.surfaceSubtle,
-                          borderColor: formErrors.phone ? '#DC2626' : colors.border,
-                          color: colors.text,
-                        },
-                      ]}
-                      value={phone}
-                      onChangeText={(txt) => {
-                        setPhone(txt);
-                        if (formErrors.phone) setFormErrors((p) => ({ ...p, phone: '' }));
-                      }}
-                      placeholder="017XXXXXXXX"
-                      placeholderTextColor={colors.textMuted}
-                      keyboardType="phone-pad"
-                      autoComplete="tel"
-                      textContentType="telephoneNumber"
-                      returnKeyType="next"
-                      onSubmitEditing={() => emailRef.current?.focus()}
-                      blurOnSubmit={false}
-                      accessibilityLabel={isBangla ? 'ফোন নম্বর' : 'Phone number'}
-                    />
-                  </View>
-
-                  {/* Email address */}
-                  <View style={styles.fieldGroup}>
-                    <Text style={[styles.inputLabel, { color: colors.text }]}>
-                      {isBangla ? 'ইমেল ঠিকানা' : 'Email address'} <Text style={styles.requiredAsterisk}>*</Text>
-                    </Text>
-                    <TextInput
-                      ref={emailRef}
-                      style={[
-                        styles.input,
-                        {
-                          backgroundColor: colors.surfaceSubtle,
-                          borderColor: formErrors.email ? '#DC2626' : colors.border,
-                          color: colors.text,
-                        },
-                      ]}
-                      value={email}
-                      onChangeText={(txt) => {
-                        setEmail(txt);
-                        if (formErrors.email) setFormErrors((p) => ({ ...p, email: '' }));
-                      }}
-                      placeholder="name@example.com"
-                      placeholderTextColor={colors.textMuted}
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                      autoComplete="email"
-                      textContentType="emailAddress"
-                      returnKeyType={!isAuthenticated ? 'next' : 'done'}
-                      onSubmitEditing={() => {
-                        if (!isAuthenticated) {
-                          passwordRef.current?.focus();
-                        } else {
-                          orderNotesRef.current?.focus();
-                        }
-                      }}
-                      blurOnSubmit={false}
-                      accessibilityLabel={isBangla ? 'ইমেল ঠিকানা' : 'Email address'}
-                    />
-                  </View>
-
-                  {/* Password (for new student account registration) */}
-                  {!isAuthenticated && (
-                    <View style={styles.fieldGroup}>
-                      <Text style={[styles.inputLabel, { color: colors.text }]}>
-                        {isBangla ? 'পাসওয়ার্ড তৈরি করুন' : 'Password'} <Text style={styles.requiredAsterisk}>*</Text>
-                      </Text>
-                      <View style={styles.passwordWrapper}>
-                        <TextInput
-                          ref={passwordRef}
-                          style={[
-                            styles.input,
-                            styles.passwordInput,
-                            {
-                              backgroundColor: colors.surfaceSubtle,
-                              borderColor: formErrors.password ? '#DC2626' : colors.border,
-                              color: colors.text,
-                            },
-                          ]}
-                          value={password}
-                          onChangeText={(txt) => {
-                            setPassword(txt);
-                            if (formErrors.password) setFormErrors((p) => ({ ...p, password: '' }));
-                          }}
-                          placeholder="Password"
-                          placeholderTextColor={colors.textMuted}
-                          secureTextEntry={!showPassword}
-                          autoCapitalize="none"
-                          autoCorrect={false}
-                          autoComplete="new-password"
-                          textContentType="newPassword"
-                          returnKeyType="next"
-                          onSubmitEditing={() => orderNotesRef.current?.focus()}
-                          blurOnSubmit={false}
-                          accessibilityLabel={isBangla ? 'পাসওয়ার্ড' : 'Password'}
-                        />
-                        <TouchableOpacity
-                          style={styles.eyeToggle}
-                          onPress={() => {
-                            triggerHaptic('light');
-                            setShowPassword(!showPassword);
-                          }}
-                          accessibilityRole="button"
-                          accessibilityLabel={showPassword ? (isBangla ? 'পাসওয়ার্ড লুকান' : 'Hide password') : (isBangla ? 'পাসওয়ার্ড দেখান' : 'Show password')}
-                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        >
-                          <Ionicons
-                            name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                            size={20}
-                            color={colors.textMuted}
-                          />
-                        </TouchableOpacity>
+                      {bundleConfig.subCourses.map((sub, idx) => (
+                        <View key={sub.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginVertical: 2.5 }}>
+                          <Ionicons name="checkmark-circle" size={14} color="#10B981" />
+                          <Text style={{ fontSize: 11, color: colors.text, flex: 1 }} numberOfLines={1}>
+                            {idx + 1}. {sub.title}
+                          </Text>
+                          <Text style={{ fontSize: 10, color: colors.textMuted, textDecorationLine: 'line-through' }}>
+                            ৳{sub.priceBdt}
+                          </Text>
+                        </View>
+                      ))}
+                      <View style={{ marginTop: 6, paddingTop: 4, borderTopWidth: 1, borderTopColor: colors.border, flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: '#10B981' }}>
+                          {isBangla ? `বান্ডেল ছাড় (${bundleConfig.discountPercent}% OFF)` : `Bundle Discount Applied (-${bundleConfig.discountPercent}%)`}
+                        </Text>
+                        <Text style={{ fontSize: 11, fontWeight: '800', color: '#10B981' }}>
+                          {formattedDiscount}
+                        </Text>
                       </View>
                     </View>
                   )}
 
-                  {/* Order Notes (optional) */}
-                  <View style={styles.fieldGroup}>
-                    <Text style={[styles.inputLabel, { color: colors.text }]}>
-                      {isBangla ? 'অতিরিক্ত তথ্য (ঐচ্ছিক)' : 'Order Notes (optional)'}
+                  <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+                  <View style={styles.orderSummaryRow}>
+                    <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>
+                      {isBangla ? 'সাবটোটাল' : 'Subtotal'}
                     </Text>
-                    <TextInput
-                      ref={orderNotesRef}
-                      style={[
-                        styles.input,
-                        styles.textArea,
-                        {
-                          backgroundColor: colors.surfaceSubtle,
-                          borderColor: colors.border,
-                          color: colors.text,
-                        },
-                      ]}
-                      value={orderNotes}
-                      onChangeText={setOrderNotes}
-                      placeholder={isBangla ? 'কোর্স সংক্রান্ত কোনো বিশেষ নির্দেশনা থাকলে লিখুন...' : 'Notes about your order, e.g. special requests'}
-                      placeholderTextColor={colors.textMuted}
-                      multiline
-                      numberOfLines={3}
-                      returnKeyType="done"
-                      accessibilityLabel={isBangla ? 'অতিরিক্ত তথ্য' : 'Order Notes'}
-                    />
+                    <Text style={[styles.summaryValue, { color: colors.text }]}>
+                      {isBundle ? formattedSubtotal : formattedPrice}
+                    </Text>
                   </View>
 
-                  {/* Section 2: Your order */}
-                  <View
-                    style={[
-                      styles.orderSummaryCard,
-                      { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
-                    ]}
-                  >
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                      <Text style={[styles.orderSummaryTitle, { color: colors.text, marginBottom: 0 }]}>
-                        {isBangla ? 'আপনার অর্ডার' : 'Your order'}
+                  {isBundle && (
+                    <View style={styles.orderSummaryRow}>
+                      <Text style={[styles.summaryLabel, { color: '#10B981' }]}>
+                        {isBangla ? 'বান্ডেল ছাড়' : 'Bundle Discount'}
                       </Text>
-                      {isBundle && (
-                        <View style={{ backgroundColor: '#102F53', paddingHorizontal: 8, paddingVertical: 3, borderRadius: shape.full }}>
-                          <Text style={{ color: '#FFB606', fontSize: 10, fontWeight: '800' }}>
-                            {isBangla ? 'স্পেশাল বান্ডেল (৫টি কোর্স)' : 'SPECIAL BUNDLE (5 COURSES)'}
+                      <Text style={[styles.summaryValue, { color: '#10B981' }]}>
+                        {formattedDiscount}
+                      </Text>
+                    </View>
+                  )}
+
+                  <View style={styles.orderSummaryRow}>
+                    <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>
+                      {isBangla ? 'ডেলিভারি ফি' : 'Delivery Fee'}
+                    </Text>
+                    <Text style={[styles.summaryValue, { color: colors.textMuted }]}>
+                      ৳ 0 ({isBangla ? 'ডিজিটাল কন্টেন্ট' : 'Digital Content'})
+                    </Text>
+                  </View>
+
+                  <View style={styles.orderSummaryRow}>
+                    <Text style={[styles.totalLabel, { color: colors.text }]}>
+                      {isBangla ? 'সর্বমোট' : 'Total'}
+                    </Text>
+                    <Text style={[styles.totalValue, { color: isDark ? colors.brandGold : '#102F53' }]}>
+                      {formattedPrice}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Section: Learner Details Card (Smooth Auto-Preload) */}
+                <View style={[styles.learnerSummaryCard, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+                  <View style={styles.learnerHeaderRow}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                      <View style={[styles.learnerAvatarIcon, { backgroundColor: colors.primaryLight }]}>
+                        <Ionicons name="person" size={16} color={colors.primary} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.learnerTitle, { color: colors.text }]} numberOfLines={1}>
+                          {isAuthenticated
+                            ? `${firstName} ${lastName}`.trim() || user?.displayName || user?.username
+                            : isBangla
+                            ? 'অতিথি শিক্ষার্থী'
+                            : 'Guest Learner'}
+                        </Text>
+                        <Text style={[styles.learnerSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
+                          {email || (isBangla ? 'ইমেল তথ্য প্রয়োজন' : 'Email required')} {phone ? `• ${phone}` : ''}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <TouchableOpacity
+                      style={[styles.editDetailsBtn, { borderColor: colors.border }]}
+                      onPress={() => {
+                        triggerHaptic('selection');
+                        setIsEditingDetails(!isEditingDetails);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Edit billing details"
+                    >
+                      <Ionicons
+                        name={isEditingDetails ? 'checkmark-outline' : 'pencil-outline'}
+                        size={14}
+                        color={colors.primary}
+                        style={{ marginRight: 4 }}
+                      />
+                      <Text style={[styles.editDetailsBtnText, { color: colors.primary }]}>
+                        {isEditingDetails
+                          ? isBangla ? 'ঠিক আছে' : 'Done'
+                          : isBangla ? 'পরিবর্তন' : 'Edit'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Expandable Form Fields for Editing or Guest Registration */}
+                  {isEditingDetails && (
+                    <View style={styles.expandedFieldsContainer}>
+                      <View style={[styles.divider, { backgroundColor: colors.border, marginVertical: 10 }]} />
+
+                      {/* First & Last Name */}
+                      <View style={styles.nameRow}>
+                        <View style={styles.nameCol}>
+                          <Text style={[styles.inputLabel, { color: colors.text }]}>
+                            {isBangla ? 'নামের প্রথম অংশ' : 'First name'} <Text style={styles.requiredAsterisk}>*</Text>
                           </Text>
+                          <TextInput
+                            style={[
+                              styles.input,
+                              {
+                                backgroundColor: colors.surface,
+                                borderColor: formErrors.firstName ? '#DC2626' : colors.border,
+                                color: colors.text,
+                              },
+                            ]}
+                            value={firstName}
+                            onChangeText={(txt) => {
+                              setFirstName(txt);
+                              if (formErrors.firstName) setFormErrors((p) => ({ ...p, firstName: '' }));
+                            }}
+                            placeholder="e.g. Tanvir"
+                            placeholderTextColor={colors.textMuted}
+                            autoCapitalize="words"
+                            autoComplete="name-given"
+                            textContentType="givenName"
+                            returnKeyType="next"
+                            onSubmitEditing={() => lastNameRef.current?.focus()}
+                            blurOnSubmit={false}
+                            accessibilityLabel={isBangla ? 'নামের প্রথম অংশ' : 'First name'}
+                          />
+                        </View>
+
+                        <View style={styles.nameCol}>
+                          <Text style={[styles.inputLabel, { color: colors.text }]}>
+                            {isBangla ? 'নামের শেষ অংশ' : 'Last name'} <Text style={styles.requiredAsterisk}>*</Text>
+                          </Text>
+                          <TextInput
+                            ref={lastNameRef}
+                            style={[
+                              styles.input,
+                              {
+                                backgroundColor: colors.surface,
+                                borderColor: formErrors.lastName ? '#DC2626' : colors.border,
+                                color: colors.text,
+                              },
+                            ]}
+                            value={lastName}
+                            onChangeText={(txt) => {
+                              setLastName(txt);
+                              if (formErrors.lastName) setFormErrors((p) => ({ ...p, lastName: '' }));
+                            }}
+                            placeholder="e.g. Ahmed"
+                            placeholderTextColor={colors.textMuted}
+                            autoCapitalize="words"
+                            autoComplete="name-family"
+                            textContentType="familyName"
+                            returnKeyType="next"
+                            onSubmitEditing={() => phoneRef.current?.focus()}
+                            blurOnSubmit={false}
+                            accessibilityLabel={isBangla ? 'নামের শেষ অংশ' : 'Last name'}
+                          />
+                        </View>
+                      </View>
+
+                      {/* Phone Number */}
+                      <View style={styles.fieldGroup}>
+                        <Text style={[styles.inputLabel, { color: colors.text }]}>
+                          {isBangla ? 'ফোন নম্বর (পেমেন্ট ও এসএমএস নোটিফিকেশন)' : 'Phone (Payment & SMS confirmation)'} <Text style={styles.requiredAsterisk}>*</Text>
+                        </Text>
+                        <TextInput
+                          ref={phoneRef}
+                          style={[
+                            styles.input,
+                            {
+                              backgroundColor: colors.surface,
+                              borderColor: formErrors.phone ? '#DC2626' : colors.border,
+                              color: colors.text,
+                            },
+                          ]}
+                          value={phone}
+                          onChangeText={(txt) => {
+                            setPhone(txt);
+                            if (formErrors.phone) setFormErrors((p) => ({ ...p, phone: '' }));
+                          }}
+                          placeholder="017XXXXXXXX"
+                          placeholderTextColor={colors.textMuted}
+                          keyboardType="phone-pad"
+                          autoComplete="tel"
+                          textContentType="telephoneNumber"
+                          returnKeyType="next"
+                          onSubmitEditing={() => emailRef.current?.focus()}
+                          blurOnSubmit={false}
+                          accessibilityLabel={isBangla ? 'ফোন নম্বর' : 'Phone number'}
+                        />
+                      </View>
+
+                      {/* Email address */}
+                      <View style={styles.fieldGroup}>
+                        <Text style={[styles.inputLabel, { color: colors.text }]}>
+                          {isBangla ? 'ইমেল ঠিকানা' : 'Email address'} <Text style={styles.requiredAsterisk}>*</Text>
+                        </Text>
+                        <TextInput
+                          ref={emailRef}
+                          style={[
+                            styles.input,
+                            {
+                              backgroundColor: colors.surface,
+                              borderColor: formErrors.email ? '#DC2626' : colors.border,
+                              color: colors.text,
+                            },
+                          ]}
+                          value={email}
+                          onChangeText={(txt) => {
+                            setEmail(txt);
+                            if (formErrors.email) setFormErrors((p) => ({ ...p, email: '' }));
+                          }}
+                          placeholder="name@example.com"
+                          placeholderTextColor={colors.textMuted}
+                          keyboardType="email-address"
+                          autoCapitalize="none"
+                          autoCorrect={false}
+                          autoComplete="email"
+                          textContentType="emailAddress"
+                          returnKeyType={!isAuthenticated ? 'next' : 'done'}
+                          onSubmitEditing={() => {
+                            if (!isAuthenticated) {
+                              passwordRef.current?.focus();
+                            } else {
+                              orderNotesRef.current?.focus();
+                            }
+                          }}
+                          blurOnSubmit={false}
+                          accessibilityLabel={isBangla ? 'ইমেল ঠিকানা' : 'Email address'}
+                        />
+                      </View>
+
+                      {/* Password (for new student account registration) */}
+                      {!isAuthenticated && (
+                        <View style={styles.fieldGroup}>
+                          <Text style={[styles.inputLabel, { color: colors.text }]}>
+                            {isBangla ? 'পাসওয়ার্ড তৈরি করুন' : 'Account Password'} <Text style={styles.requiredAsterisk}>*</Text>
+                          </Text>
+                          <View style={styles.passwordWrapper}>
+                            <TextInput
+                              ref={passwordRef}
+                              style={[
+                                styles.input,
+                                styles.passwordInput,
+                                {
+                                  backgroundColor: colors.surface,
+                                  borderColor: formErrors.password ? '#DC2626' : colors.border,
+                                  color: colors.text,
+                                },
+                              ]}
+                              value={password}
+                              onChangeText={(txt) => {
+                                setPassword(txt);
+                                if (formErrors.password) setFormErrors((p) => ({ ...p, password: '' }));
+                              }}
+                              placeholder="Create account password"
+                              placeholderTextColor={colors.textMuted}
+                              secureTextEntry={!showPassword}
+                              autoCapitalize="none"
+                              autoCorrect={false}
+                              autoComplete="new-password"
+                              textContentType="newPassword"
+                              returnKeyType="next"
+                              onSubmitEditing={() => orderNotesRef.current?.focus()}
+                              blurOnSubmit={false}
+                              accessibilityLabel={isBangla ? 'পাসওয়ার্ড' : 'Password'}
+                            />
+                            <TouchableOpacity
+                              style={styles.eyeToggle}
+                              onPress={() => {
+                                triggerHaptic('light');
+                                setShowPassword(!showPassword);
+                              }}
+                              accessibilityRole="button"
+                              accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            >
+                              <Ionicons
+                                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                                size={20}
+                                color={colors.textMuted}
+                              />
+                            </TouchableOpacity>
+                          </View>
                         </View>
                       )}
-                    </View>
 
-                    {/* Main Item Row */}
-                    <View style={styles.orderItemRow}>
-                      <Text style={[styles.orderItemName, { color: colors.text }]} numberOfLines={2}>
-                        {course.title} × 1
-                      </Text>
-                      <Text style={[styles.orderItemPrice, { color: colors.text }]}>
-                        {formattedPrice}
-                      </Text>
-                    </View>
-
-                    {/* Bundle Sub-Courses Breakdown (CR-5) */}
-                    {isBundle && bundleConfig && (
-                      <View style={{ marginVertical: 8, padding: 10, backgroundColor: isDark ? '#1E293B' : '#F1F5F9', borderRadius: shape.medium }}>
-                        <Text style={{ fontSize: 11, fontWeight: '700', color: colors.text, marginBottom: 6 }}>
-                          {isBangla ? 'বান্ডেলে অন্তর্ভুক্ত ৫টি কোর্স (সবগুলো আনলক হবে):' : 'Included 5 courses in this bundle (all unlock):'}
+                      {/* Order Notes (optional) */}
+                      <View style={styles.fieldGroup}>
+                        <Text style={[styles.inputLabel, { color: colors.text }]}>
+                          {isBangla ? 'অতিরিক্ত তথ্য (ঐচ্ছিক)' : 'Order Notes (optional)'}
                         </Text>
-                        {bundleConfig.subCourses.map((sub, idx) => (
-                          <View key={sub.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginVertical: 2.5 }}>
-                            <Ionicons name="checkmark-circle" size={14} color="#10B981" />
-                            <Text style={{ fontSize: 11, color: colors.text, flex: 1 }} numberOfLines={1}>
-                              {idx + 1}. {sub.title}
-                            </Text>
-                            <Text style={{ fontSize: 10, color: colors.textMuted, textDecorationLine: 'line-through' }}>
-                              ৳{sub.priceBdt}
-                            </Text>
-                          </View>
-                        ))}
-                        <View style={{ marginTop: 6, paddingTop: 4, borderTopWidth: 1, borderTopColor: colors.border, flexDirection: 'row', justifyContent: 'space-between' }}>
-                          <Text style={{ fontSize: 11, fontWeight: '700', color: '#10B981' }}>
-                            {isBangla ? `বান্ডেল ছাড় (${bundleConfig.discountPercent}% OFF)` : `Bundle Discount Applied (-${bundleConfig.discountPercent}%)`}
-                          </Text>
-                          <Text style={{ fontSize: 11, fontWeight: '800', color: '#10B981' }}>
-                            {formattedDiscount}
-                          </Text>
-                        </View>
-                      </View>
-                    )}
-
-                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-                    <View style={styles.orderSummaryRow}>
-                      <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>
-                        {isBangla ? 'সাবটোটাল' : 'Subtotal'}
-                      </Text>
-                      <Text style={[styles.summaryValue, { color: colors.text }]}>
-                        {isBundle ? formattedSubtotal : formattedPrice}
-                      </Text>
-                    </View>
-
-                    {isBundle && (
-                      <View style={styles.orderSummaryRow}>
-                        <Text style={[styles.summaryLabel, { color: '#10B981' }]}>
-                          {isBangla ? 'বান্ডেল ছাড়' : 'Bundle Discount'}
-                        </Text>
-                        <Text style={[styles.summaryValue, { color: '#10B981' }]}>
-                          {formattedDiscount}
-                        </Text>
-                      </View>
-                    )}
-
-                    <View style={styles.orderSummaryRow}>
-                      <Text style={[styles.summaryLabel, { color: colors.textMuted }]}>
-                        {isBangla ? 'ডেলিভারি ফি' : 'Delivery Fee'}
-                      </Text>
-                      <Text style={[styles.summaryValue, { color: colors.textMuted }]}>
-                        ৳ 0 ({isBangla ? 'ডিজিটাল কন্টেন্ট' : 'Digital Content'})
-                      </Text>
-                    </View>
-
-                    <View style={styles.orderSummaryRow}>
-                      <Text style={[styles.totalLabel, { color: colors.text }]}>
-                        {isBangla ? 'সর্বমোট' : 'Total'}
-                      </Text>
-                      <Text style={[styles.totalValue, { color: isDark ? colors.brandGold : '#102F53' }]}>
-                        {formattedPrice}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Section 3: SSLCommerz Notice */}
-                  <View
-                    style={[
-                      styles.sslCard,
-                      { backgroundColor: isDark ? '#1E293B' : '#F3F4F6', borderColor: colors.border },
-                    ]}
-                  >
-                    <View style={styles.sslHeader}>
-                      <Text style={[styles.sslTitle, { color: colors.text }]}>SSLCommerz</Text>
-                      <View style={styles.sslBadge}>
-                        <Ionicons name="shield-checkmark" size={14} color="#059669" />
-                        <Text style={styles.sslBadgeText}>22+ Payment Options</Text>
-                      </View>
-                    </View>
-
-                    <Text style={[styles.sslDesc, { color: colors.textMuted }]}>
-                      Pay securely by Mobile banking (bKash, Rocket), Credit/Debit card (VISA, mastercard),
-                      Internet banking (Bank Asia, Brac) through SSLCommerz. Here SSLCommerz containing 22
-                      payment options for you.
-                    </Text>
-
-                    {/* Payment Brands Pills */}
-                    <View style={styles.badgeChipsRow}>
-                      {['bKash', 'Nagad', 'Rocket', 'VISA', 'Mastercard', 'Bank Asia', 'BRAC'].map((b) => (
-                        <View
-                          key={b}
+                        <TextInput
+                          ref={orderNotesRef}
                           style={[
-                            styles.chip,
-                            { backgroundColor: colors.surface, borderColor: colors.border },
+                            styles.input,
+                            styles.textArea,
+                            {
+                              backgroundColor: colors.surface,
+                              borderColor: colors.border,
+                              color: colors.text,
+                            },
                           ]}
-                        >
-                          <Text style={[styles.chipText, { color: colors.text }]}>{b}</Text>
-                        </View>
-                      ))}
+                          value={orderNotes}
+                          onChangeText={setOrderNotes}
+                          placeholder={isBangla ? 'কোর্স সংক্রান্ত কোনো বিশেষ নির্দেশনা থাকলে লিখুন...' : 'Notes about your order, e.g. special requests'}
+                          placeholderTextColor={colors.textMuted}
+                          multiline
+                          numberOfLines={2}
+                          returnKeyType="done"
+                          accessibilityLabel={isBangla ? 'অতিরিক্ত তথ্য' : 'Order Notes'}
+                        />
+                      </View>
+                    </View>
+                  )}
+                </View>
+
+                {/* Section: SSLCommerz Payment Gateway Notice */}
+                <View
+                  style={[
+                    styles.sslCard,
+                    { backgroundColor: isDark ? '#1E293B' : '#F1F5F9', borderColor: colors.border },
+                  ]}
+                >
+                  <View style={styles.sslHeader}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Ionicons name="shield-checkmark" size={16} color="#059669" />
+                      <Text style={[styles.sslTitle, { color: colors.text }]}>SSLCommerz Gateway</Text>
+                    </View>
+                    <View style={styles.sslBadge}>
+                      <Text style={styles.sslBadgeText}>22+ Payment Methods</Text>
                     </View>
                   </View>
 
-                  {/* Privacy Policy */}
-                  <Text style={[styles.privacyText, { color: colors.textMuted }]}>
-                    Your personal data will be used to process your order, purposes described in our privacy policy.
+                  <Text style={[styles.sslDesc, { color: colors.textMuted }]}>
+                    {isBangla
+                      ? 'বিকাশ, নগদ, রকেট, ভিসা, মাস্টারকার্ড ও সকল ইন্টারনেট ব্যাংকিংয়ের মাধ্যমে তাত্ক্ষণিক স্বয়ংক্রিয় পেমেন্ট।'
+                      : 'Pay securely via bKash, Nagad, Rocket, VISA, Mastercard, or Internet Banking.'}
                   </Text>
 
-                  {/* Terms & Conditions Checkbox */}
-                  <TouchableOpacity
-                    style={styles.termsRow}
-                    activeOpacity={0.8}
-                    onPress={() => {
-                      triggerHaptic('selection');
-                      setAgreedToTerms(!agreedToTerms);
-                      if (formErrors.terms) setFormErrors((p) => ({ ...p, terms: '' }));
-                    }}
-                    accessibilityRole="checkbox"
-                    accessibilityState={{ checked: agreedToTerms }}
-                    accessibilityLabel={isBangla ? 'ওয়েবসাইট শর্তাবলী মেনে নিচ্ছি' : 'I have read and agree to the website terms and conditions'}
-                  >
-                    <View
-                      style={[
-                        styles.checkbox,
-                        {
-                          borderColor: formErrors.terms ? '#DC2626' : agreedToTerms ? (isDark ? colors.brandGold : '#102F53') : colors.border,
-                          backgroundColor: agreedToTerms ? (isDark ? colors.brandGold : '#102F53') : colors.surface,
-                        },
-                      ]}
-                    >
-                      {agreedToTerms && <Ionicons name="checkmark" size={14} color={isDark ? '#102F53' : '#FFFFFF'} />}
-                    </View>
-                    <Text style={[styles.termsText, { color: colors.text }]}>
-                      I have read and agree to the website terms and conditions <Text style={styles.requiredAsterisk}>*</Text>
-                    </Text>
-                  </TouchableOpacity>
-
-                  {/* PLACE ORDER Action Button */}
-                  <TouchableOpacity
-                    style={[
-                      styles.placeOrderBtn,
-                      {
-                        backgroundColor: isDark ? colors.primary : '#102F53',
-                        borderColor: isDark ? colors.primaryLight : undefined,
-                      },
-                    ]}
-                    onPress={handlePlaceOrder}
-                    disabled={isPlacingOrder}
-                    activeOpacity={0.88}
-                    accessibilityRole="button"
-                    accessibilityLabel={isBangla ? 'অর্ডার প্লেস করুন' : 'Place order'}
-                  >
-                    {isPlacingOrder ? (
-                      <>
-                        <ActivityIndicator color={isDark ? '#0F172A' : '#FFFFFF'} size="small" style={{ marginRight: 8 }} />
-                        <Text style={[styles.placeOrderBtnText, { color: isDark ? '#0F172A' : '#FFFFFF' }]}>
-                          {isBangla ? 'অর্ডার প্রসেস হচ্ছে...' : 'Processing Order...'}
-                        </Text>
-                      </>
-                    ) : (
-                      <>
-                        <Ionicons name="lock-closed" size={18} color={isDark ? '#0F172A' : '#FFFFFF'} style={{ marginRight: 8 }} />
-                        <Text style={[styles.placeOrderBtnText, { color: isDark ? '#0F172A' : '#FFFFFF' }]}>
-                          {isBangla ? 'অর্ডার প্লেস করুন (PLACE ORDER)' : 'PLACE ORDER'}
-                        </Text>
-                      </>
-                    )}
-                  </TouchableOpacity>
-                </>
-              ) : (
-                /* Mode 2: Existing Member Access Sync */
-                <>
-                  <View
-                    style={[
-                      styles.courseSummaryCard,
-                      { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
-                    ]}
-                  >
-                    <Text style={[styles.courseTitle, { color: colors.text }]} numberOfLines={2}>
-                      {course.title}
-                    </Text>
-                    <Text style={[styles.instructorName, { color: colors.textMuted }]}>
-                      Mentor: {course.instructor.name}
-                    </Text>
-                    <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
-                    <View style={styles.accessBadgeRow}>
-                      <Ionicons name="shield-checkmark-outline" size={16} color={colors.primary} />
-                      <Text style={[styles.accessStatusText, { color: colors.primary }]}>
-                        {isBangla ? 'সক্রিয় সদস্যদের জন্য সংরক্ষিত কোর্স' : 'Available to Enrolled Members'}
-                      </Text>
-                    </View>
+                  {/* Payment Brands Pills */}
+                  <View style={styles.badgeChipsRow}>
+                    {['bKash', 'Nagad', 'Rocket', 'VISA', 'Mastercard', 'Internet Banking'].map((b) => (
+                      <View
+                        key={b}
+                        style={[
+                          styles.chip,
+                          { backgroundColor: colors.surface, borderColor: colors.border },
+                        ]}
+                      >
+                        <Text style={[styles.chipText, { color: colors.text }]}>{b}</Text>
+                      </View>
+                    ))}
                   </View>
+                </View>
 
+                {/* Terms & Conditions Checkbox */}
+                <TouchableOpacity
+                  style={styles.termsRow}
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    triggerHaptic('selection');
+                    setAgreedToTerms(!agreedToTerms);
+                    if (formErrors.terms) setFormErrors((p) => ({ ...p, terms: '' }));
+                  }}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: agreedToTerms }}
+                  accessibilityLabel={isBangla ? 'ওয়েবসাইট শর্তাবলী মেনে নিচ্ছি' : 'I agree to the terms and conditions'}
+                >
                   <View
                     style={[
-                      styles.noticeBox,
+                      styles.checkbox,
                       {
-                        backgroundColor: colors.primaryLight,
-                        borderColor: isDark ? 'rgba(56, 189, 248, 0.25)' : 'rgba(16, 47, 83, 0.18)',
+                        borderColor: formErrors.terms ? '#DC2626' : agreedToTerms ? '#102F53' : colors.border,
+                        backgroundColor: agreedToTerms ? '#102F53' : colors.surface,
                       },
                     ]}
                   >
-                    <View style={styles.noticeHeader}>
-                      <Ionicons name="information-circle" size={20} color={colors.primary} />
-                      <Text style={[styles.noticeTitle, { color: colors.primary }]}>
-                        {isBangla ? 'কম্প্যানিয়ন লার্নিং অ্যাক্সেস' : 'Cross-Platform Account Access'}
+                    {agreedToTerms && <Ionicons name="checkmark" size={14} color="#FFFFFF" />}
+                  </View>
+                  <Text style={[styles.termsText, { color: colors.text }]}>
+                    {isBangla
+                      ? 'আমি ওয়েবসাইটটির সাধারণ শর্তাবলী ও নীতিমালা মেনে নিচ্ছি'
+                      : 'I have read and agree to the website terms and conditions'}{' '}
+                    <Text style={styles.requiredAsterisk}>*</Text>
+                  </Text>
+                </TouchableOpacity>
+
+                {/* PRIMARY CTA: Smooth Proceed to Secure Checkout */}
+                <TouchableOpacity
+                  style={[
+                    styles.placeOrderBtn,
+                    {
+                      backgroundColor: '#102F53',
+                    },
+                  ]}
+                  onPress={handleProceedToCheckout}
+                  disabled={isPlacingOrder}
+                  activeOpacity={0.88}
+                  accessibilityRole="button"
+                  accessibilityLabel={isBangla ? 'নিরাপদ চেকআউট শুরু করুন' : 'Proceed to Secure Checkout'}
+                >
+                  {isPlacingOrder ? (
+                    <>
+                      <ActivityIndicator color="#FFFFFF" size="small" style={{ marginRight: 8 }} />
+                      <Text style={styles.placeOrderBtnText}>
+                        {isBangla ? 'অর্ডার প্রস্তুত হচ্ছে...' : 'Preparing Checkout...'}
                       </Text>
-                    </View>
-                    <Text style={[styles.noticeBody, { color: colors.text }]}>
-                      {isAuthenticated
-                        ? isBangla
-                          ? `আপনি বর্তমানে ${user?.email || user?.username} অ্যাকাউন্টে সাইন ইন আছেন। আপনার অ্যাকাউন্টে এই কোর্সের এনরোলমেন্ট থাকলে নিচের বাটনে ট্যাপ করে সিঙ্ক করুন।`
-                          : `Signed in as ${user?.email || user?.username}. If your account is enrolled in this course, tap below to sync your latest LearnPress access.`
-                        : isBangla
-                        ? 'আপনার এনরোল করা কোর্সগুলো আনলক করতে অনুগ্রহ করে আপনার থ্রাইভিং স্কিলস অ্যাকাউন্ট দিয়ে সাইন ইন করুন।'
-                        : 'Sign in with your Thriving Skills account to access courses in your enrolled member library.'}
+                    </>
+                  ) : (
+                    <>
+                      <Ionicons name="shield-checkmark" size={18} color="#FFB606" style={{ marginRight: 8 }} />
+                      <Text style={styles.placeOrderBtnText}>
+                        {isBangla ? 'নিরাপদ চেকআউট শুরু করুন (PROCEED)' : 'PROCEED TO SECURE CHECKOUT'}
+                      </Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+
+                {/* SECONDARY ACTION: Open Directly in External Web Browser */}
+                <TouchableOpacity
+                  style={[styles.openBrowserBtn, { borderColor: colors.border, backgroundColor: colors.surface }]}
+                  onPress={handleOpenInExternalBrowser}
+                  activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open in external browser"
+                >
+                  <Ionicons name="globe-outline" size={16} color={colors.text} style={{ marginRight: 6 }} />
+                  <Text style={[styles.openBrowserBtnText, { color: colors.text }]}>
+                    {isBangla ? 'ওয়েব ব্রাউজারে খুলুন (Chrome / Safari)' : 'Open in Web Browser (Chrome / Safari)'}
+                  </Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              /* Mode 2: Existing Member Access Sync */
+              <>
+                <View
+                  style={[
+                    styles.courseSummaryCard,
+                    { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                  ]}
+                >
+                  <Text style={[styles.courseTitle, { color: colors.text }]} numberOfLines={2}>
+                    {course.title}
+                  </Text>
+                  <Text style={[styles.instructorName, { color: colors.textMuted }]}>
+                    Mentor: {course.instructor.name}
+                  </Text>
+                  <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
+                  <View style={styles.accessBadgeRow}>
+                    <Ionicons name="shield-checkmark-outline" size={16} color={colors.primary} />
+                    <Text style={[styles.accessStatusText, { color: colors.primary }]}>
+                      {isBangla ? 'সক্রিয় সদস্যদের জন্য সংরক্ষিত কোর্স' : 'Available to Enrolled Members'}
                     </Text>
                   </View>
+                </View>
 
-                  <TouchableOpacity
-                    style={[styles.primaryCheckoutBtn, { backgroundColor: colors.primary }]}
-                    onPress={performEnrollmentSync}
-                    disabled={isSyncing}
-                    activeOpacity={0.88}
-                    accessibilityRole="button"
-                    accessibilityLabel={
-                      isAuthenticated
-                        ? isBangla
-                          ? 'অ্যাকাউন্ট এনরোলমেন্ট সিঙ্ক করুন'
-                          : 'Sync Account Enrollments'
-                        : isBangla
-                        ? 'থ্রাইভিং স্কিলস অ্যাকাউন্টে সাইন ইন'
-                        : 'Sign In to Sync Account'
-                    }
-                  >
-                    {isSyncing ? (
-                      <>
-                        <ActivityIndicator color={colors.onPrimary} size="small" style={{ marginRight: 8 }} />
-                        <Text style={[styles.primaryBtnText, { color: colors.onPrimary }]}>
-                          {t('syncingEnrollment')}
-                        </Text>
-                      </>
-                    ) : (
-                      <>
-                        <Ionicons
-                          name={isAuthenticated ? 'sync' : 'log-in-outline'}
-                          size={20}
-                          color={colors.onPrimary}
-                          style={{ marginRight: 8 }}
-                        />
-                        <Text style={[styles.primaryBtnText, { color: colors.onPrimary }]}>
-                          {isAuthenticated
-                            ? isBangla
-                              ? 'অ্যাকাউন্ট এনরোলমেন্ট সিঙ্ক করুন'
-                              : 'Sync Account Enrollments'
-                            : isBangla
-                            ? 'থ্রাইভিং স্কিলস অ্যাকাউন্টে সাইন ইন'
-                            : 'Sign In to Sync Account'}
-                        </Text>
-                      </>
-                    )}
-                  </TouchableOpacity>
-                </>
-              )}
+                <View
+                  style={[
+                    styles.noticeBox,
+                    {
+                      backgroundColor: colors.primaryLight,
+                      borderColor: isDark ? 'rgba(56, 189, 248, 0.25)' : 'rgba(16, 47, 83, 0.18)',
+                    },
+                  ]}
+                >
+                  <View style={styles.noticeHeader}>
+                    <Ionicons name="information-circle" size={20} color={colors.primary} />
+                    <Text style={[styles.noticeTitle, { color: colors.primary }]}>
+                      {isBangla ? 'কম্প্যানিয়ন লার্নিং অ্যাক্সেস' : 'Cross-Platform Account Access'}
+                    </Text>
+                  </View>
+                  <Text style={[styles.noticeBody, { color: colors.text }]}>
+                    {isAuthenticated
+                      ? isBangla
+                        ? `আপনি বর্তমানে ${user?.email || user?.username} অ্যাকাউন্টে সাইন ইন আছেন। আপনার অ্যাকাউন্টে এই কোর্সের এনরোলমেন্ট থাকলে নিচের বাটনে ট্যাপ করে সিঙ্ক করুন।`
+                        : `Signed in as ${user?.email || user?.username}. If your account is enrolled in this course, tap below to sync your latest LearnPress access.`
+                      : isBangla
+                      ? 'আপনার এনরোল করা কোর্সগুলো আনলক করতে অনুগ্রহ করে আপনার থ্রাইভিং স্কিলস অ্যাকাউন্ট দিয়ে সাইন ইন করুন।'
+                      : 'Sign in with your Thriving Skills account to access courses in your enrolled member library.'}
+                  </Text>
+                </View>
 
-              <View style={styles.guaranteeContainer}>
-                <Ionicons name="lock-closed" size={14} color="#059669" style={{ marginRight: 6 }} />
-                <Text style={[styles.guaranteeText, { color: colors.textMuted }]}>
-                  SSLCommerz Encrypted 256-Bit Bank Grade Payment Security
-                </Text>
-              </View>
-            </ScrollView>
-          )}
+                <TouchableOpacity
+                  style={[styles.primaryCheckoutBtn, { backgroundColor: colors.primary }]}
+                  onPress={performEnrollmentSync}
+                  disabled={isSyncing}
+                  activeOpacity={0.88}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    isAuthenticated
+                      ? isBangla
+                        ? 'অ্যাকাউন্ট এনরোলমেন্ট সিঙ্ক করুন'
+                        : 'Sync Account Enrollments'
+                      : isBangla
+                      ? 'থ্রাইভিং স্কিলস অ্যাকাউন্টে সাইন ইন'
+                      : 'Sign In to Sync Account'
+                  }
+                >
+                  {isSyncing ? (
+                    <>
+                      <ActivityIndicator color={colors.onPrimary} size="small" style={{ marginRight: 8 }} />
+                      <Text style={[styles.primaryBtnText, { color: colors.onPrimary }]}>
+                        {t('syncingEnrollment')}
+                      </Text>
+                    </>
+                  ) : (
+                    <>
+                      <Ionicons
+                        name={isAuthenticated ? 'sync' : 'log-in-outline'}
+                        size={20}
+                        color={colors.onPrimary}
+                        style={{ marginRight: 8 }}
+                      />
+                      <Text style={[styles.primaryBtnText, { color: colors.onPrimary }]}>
+                        {isAuthenticated
+                          ? isBangla
+                            ? 'অ্যাকাউন্ট এনরোলমেন্ট সিঙ্ক করুন'
+                            : 'Sync Account Enrollments'
+                          : isBangla
+                          ? 'থ্রাইভিং স্কিলস অ্যাকাউন্টে সাইন ইন'
+                          : 'Sign In to Sync Account'}
+                      </Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </>
+            )}
+
+            <View style={styles.guaranteeContainer}>
+              <Ionicons name="lock-closed" size={14} color="#059669" style={{ marginRight: 6 }} />
+              <Text style={[styles.guaranteeText, { color: colors.textMuted }]}>
+                SSLCommerz Encrypted 256-Bit Bank Grade Payment Security
+              </Text>
+            </View>
+          </ScrollView>
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -1079,6 +1384,103 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 };
 
 const styles = StyleSheet.create({
+  // Dedicated Full-Screen Checkout Viewer Styles
+  fullScreenContainer: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  fullScreenHeader: {
+    backgroundColor: '#102F53',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  headerActionBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 20,
+  },
+  headerTitleCol: {
+    flex: 1,
+    paddingHorizontal: 8,
+  },
+  headerSecurityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  headerSecurityText: {
+    color: '#10B981',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  headerHostText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+    marginTop: 1,
+  },
+  headerRightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  progressBarTrack: {
+    height: 3,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: '100%',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#FFB606',
+  },
+  fullScreenWebView: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  fullScreenLoading: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 20,
+    paddingHorizontal: 24,
+  },
+  loadingSpinnerBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#102F53',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  loadingTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  loadingSubtitle: {
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 19,
+  },
+
+  // Bottom Sheet Modal Styles
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.65)',
@@ -1145,7 +1547,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     padding: 3,
-    marginBottom: 18,
+    marginBottom: 16,
   },
   tabBtn: {
     flex: 1,
@@ -1165,40 +1567,77 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     fontWeight: '700',
   },
-  sectionHeaderRow: {
-    marginBottom: 12,
+
+  // Learner Summary Card
+  learnerSummaryCard: {
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 14,
   },
-  sectionTitle: {
-    fontSize: 17,
+  learnerHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  learnerAvatarIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  learnerTitle: {
+    fontSize: 14,
     fontWeight: '800',
-    letterSpacing: -0.2,
   },
+  learnerSubtitle: {
+    fontSize: 12,
+    marginTop: 1,
+  },
+  editDetailsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  editDetailsBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  expandedFieldsContainer: {
+    marginTop: 4,
+  },
+
+  // Input Fields
   nameRow: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   nameCol: {
     flex: 1,
   },
   fieldGroup: {
-    marginBottom: 12,
+    marginBottom: 10,
   },
   inputLabel: {
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: '700',
-    marginBottom: 6,
+    marginBottom: 5,
   },
   requiredAsterisk: {
     color: '#DC2626',
     fontWeight: '700',
   },
   input: {
-    height: 48,
+    height: 46,
     borderRadius: 10,
     borderWidth: 1,
-    paddingHorizontal: 14,
-    fontSize: 14,
+    paddingHorizontal: 12,
+    fontSize: 13.5,
   },
   passwordWrapper: {
     position: 'relative',
@@ -1210,37 +1649,39 @@ const styles = StyleSheet.create({
   eyeToggle: {
     position: 'absolute',
     right: 12,
-    height: 48,
+    height: 46,
     justifyContent: 'center',
     paddingHorizontal: 4,
   },
   textArea: {
-    height: 80,
+    height: 64,
     textAlignVertical: 'top',
-    paddingTop: 10,
+    paddingTop: 8,
   },
+
+  // Order Summary Card
   orderSummaryCard: {
-    padding: 16,
+    padding: 14,
     borderRadius: 14,
     borderWidth: 1,
-    marginVertical: 14,
+    marginBottom: 14,
   },
   orderSummaryTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '800',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   orderItemRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   orderItemName: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 13.5,
     fontWeight: '600',
-    paddingRight: 12,
+    paddingRight: 10,
   },
   orderItemPrice: {
     fontSize: 14,
@@ -1248,32 +1689,34 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    marginVertical: 10,
+    marginVertical: 8,
   },
   orderSummaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginVertical: 4,
+    marginVertical: 3,
   },
   summaryLabel: {
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: '600',
   },
   summaryValue: {
-    fontSize: 14,
+    fontSize: 13.5,
     fontWeight: '700',
   },
   totalLabel: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '800',
   },
   totalValue: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '900',
   },
+
+  // SSLCommerz Card
   sslCard: {
-    padding: 16,
+    padding: 14,
     borderRadius: 14,
     borderWidth: 1,
     marginBottom: 14,
@@ -1282,16 +1725,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   sslTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '800',
   },
   sslBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+    backgroundColor: 'rgba(5, 150, 105, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
   },
   sslBadgeText: {
     fontSize: 11,
@@ -1299,9 +1743,9 @@ const styles = StyleSheet.create({
     color: '#059669',
   },
   sslDesc: {
-    fontSize: 12,
-    lineHeight: 18,
-    marginBottom: 12,
+    fontSize: 11.5,
+    lineHeight: 17,
+    marginBottom: 10,
   },
   badgeChipsRow: {
     flexDirection: 'row',
@@ -1309,29 +1753,26 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   chip: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 6,
     borderWidth: 1,
   },
   chipText: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: '700',
   },
-  privacyText: {
-    fontSize: 12,
-    lineHeight: 18,
-    marginBottom: 14,
-  },
+
+  // Terms & Conditions
   termsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 18,
+    marginBottom: 16,
     gap: 10,
   },
   checkbox: {
-    width: 22,
-    height: 22,
+    width: 20,
+    height: 20,
     borderRadius: 6,
     borderWidth: 1.5,
     alignItems: 'center',
@@ -1339,23 +1780,45 @@ const styles = StyleSheet.create({
   },
   termsText: {
     flex: 1,
-    fontSize: 12.5,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 17,
   },
+
+  // Action Buttons
   placeOrderBtn: {
-    height: 52,
+    height: 50,
     borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
+    shadowColor: '#102F53',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
   placeOrderBtnText: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '800',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
+  openBrowserBtn: {
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  openBrowserBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+
+  // Member Access Sync View Styles
   courseSummaryCard: {
     padding: 14,
     borderRadius: 16,
@@ -1420,57 +1883,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 14,
+    marginTop: 10,
   },
   guaranteeText: {
     fontSize: 11,
     fontWeight: '600',
   },
-  webViewContainer: {
-    flex: 1,
-    minHeight: 520,
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  webViewHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    gap: 8,
-  },
-  webViewTitle: {
-    flex: 1,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  openExternalBtn: {
-    padding: 4,
-  },
-  webView: {
-    flex: 1,
-  },
-  webLoading: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    zIndex: 10,
-  },
-  webLoadingText: {
-    marginTop: 12,
-    fontSize: 13,
-    fontWeight: '600',
-  },
   stepperContainer: {
     padding: 12,
     borderRadius: 12,
-    marginBottom: 16,
+    marginBottom: 14,
   },
   stepperInfoRow: {
     flexDirection: 'row',
