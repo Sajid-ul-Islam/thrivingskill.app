@@ -100,7 +100,21 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
           <View style={[styles.infoBox, { backgroundColor: isDark ? colors.surfaceCard : '#F8FAFC' }]}>
             <View style={styles.infoRow}>
               <Text style={[styles.infoLabel, { color: colors.textMuted }]}>App Version</Text>
-              <Text style={[styles.infoVal, { color: colors.text }]}>v1.0.0 (Expo SDK 57)</Text>
+              <Text style={[styles.infoVal, { color: colors.text }]}>v1.4.0 (Runtime {info.runtimeVersion})</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Launch Type</Text>
+              <View style={styles.statusPill}>
+                <View style={[styles.dot, { backgroundColor: info.isEmbeddedLaunch ? '#64748B' : '#10B981' }]} />
+                <Text
+                  style={[
+                    styles.statusPillText,
+                    { color: info.isEmbeddedLaunch ? colors.textMuted : colors.success, fontWeight: '700' },
+                  ]}
+                >
+                  {info.isEmbeddedLaunch ? 'Embedded Base APK' : 'OTA Update Active'}
+                </Text>
+              </View>
             </View>
             <View style={styles.infoRow}>
               <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Channel / Environment</Text>
@@ -117,12 +131,18 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
             </View>
             {info.updateId && (
               <View style={styles.infoRow}>
-                <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Update ID</Text>
+                <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Active Update ID</Text>
                 <Text style={[styles.infoVal, { color: colors.textMuted, fontSize: 11 }]}>
                   {info.updateId.slice(0, 16)}...
                 </Text>
               </View>
             )}
+            <View style={styles.infoRow}>
+              <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Release Date</Text>
+              <Text style={[styles.infoVal, { color: colors.textMuted, fontSize: 12 }]}>
+                {info.createdAt}
+              </Text>
+            </View>
           </View>
 
           {/* Status Message */}

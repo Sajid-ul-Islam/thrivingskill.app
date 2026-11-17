@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Platform, Pressable, BackHandler, UIManager } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -37,6 +37,7 @@ import { YouTubePlayerModal } from './src/components/YouTubePlayerModal';
 import { UniversalSearchModal } from './src/components/UniversalSearchModal';
 import { BrandDrawer } from './src/components/BrandDrawer';
 import { AppUpdateModal } from './src/components/AppUpdateModal';
+import { AppUpdateService } from './src/services/appUpdateService';
 import { SupportContactModal } from './src/components/modals/SupportContactModal';
 import { ScreenTransition, CelebrationToast, ActionToast, FloatingCrmWidget } from './src/components/common';
 
@@ -53,7 +54,37 @@ const MainAppContent: React.FC = () => {
   const { isAuthModalVisible, setAuthModalVisible } = useAuth();
   const { celebration, clearCelebration } = useGamification();
   const { activeVideo, playerMode, closePlayer, minimizePlayer, playVideo } = useYouTube();
-  const { currentToast, dismissToast } = useFeedback();
+  const { currentToast, dismissToast, showToast } = useFeedback();
+
+  // Cross-platform timer for proactive background OTA check
+  const updateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    // Proactive background OTA check in standalone builds (silently bypassed in Expo Go)
+    updateTimerRef.current = setTimeout(async () => {
+      try {
+        const update = await AppUpdateService.checkForUpdate();
+        if (update.isDownloaded) {
+          showToast({
+            message: 'A new update was downloaded! Restart now to apply latest features.',
+            type: 'success',
+            actionLabel: 'Restart',
+            onAction: () => AppUpdateService.reloadApp(),
+            durationMs: 9000,
+          });
+        }
+      } catch {
+        // Silent catch for offline or dev mode
+      }
+    }, 4000);
+
+    return () => {
+      if (updateTimerRef.current) {
+        clearTimeout(updateTimerRef.current);
+        updateTimerRef.current = null;
+      }
+    };
+  }, [showToast]);
 
   // Type-Safe Navigation Stack Architecture
   const {

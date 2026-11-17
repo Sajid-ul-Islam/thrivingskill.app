@@ -22,7 +22,7 @@ export class AppUpdateService {
       isEnabled: Updates.isEnabled,
       updateId: Updates.updateId || null,
       channel: Updates.channel || 'production',
-      runtimeVersion: Updates.runtimeVersion || '1.0.0',
+      runtimeVersion: Updates.runtimeVersion || '1.4.0',
       isEmbeddedLaunch: Updates.isEmbeddedLaunch,
       createdAt: Updates.createdAt ? new Date(Updates.createdAt).toLocaleDateString() : 'Initial Build',
     };
