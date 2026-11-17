@@ -222,8 +222,8 @@ const MainAppContent: React.FC = () => {
     { id: 'Profile', label: t('tabProfile'), icon: 'person', iconOutline: 'person-outline' },
   ];
 
-  // CR-1: Brand splash screen on startup
-  if (isSplashVisible) {
+  // CR-1: Brand splash screen on startup (holds until both 2s splash timer and auth session restore complete)
+  if (isSplashVisible || isAuthLoading) {
     return (
       <View style={splashStyles.container}>
         <StatusBar style="light" />

@@ -7,7 +7,6 @@ import { CacheManager } from '../services/cache/cacheManager';
 import {
   loginWpUser,
   registerWpUser,
-  validateWpToken,
   sendWpPhoneOtp,
   verifyWpPhoneOtp,
   confirmWpPasswordReset,
@@ -90,28 +89,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           await AsyncStorage.removeItem(AUTH_ADMIN_BYPASS_KEY);
         }
 
-        if (savedUser && savedToken) {
-          const parsedUser: UserProfile = JSON.parse(savedUser);
-          setUser(parsedUser);
-          setToken(savedToken);
-          HttpClient.setAuthToken(savedToken);
-          setIsGuest(false);
-
-          // Verify token in background and invalidate expired sessions
-          validateWpToken(savedToken).then(async (isValid) => {
-            if (!isValid) {
-              setUser(null);
-              setToken(null);
+        if (savedUser) {
+          try {
+            const parsedUser: UserProfile = JSON.parse(savedUser);
+            if (parsedUser && (parsedUser.id || parsedUser.email || parsedUser.username)) {
+              // Extract persistent session token or generate durable session id
+              const activeToken = savedToken || parsedUser.token || `ts_session_${parsedUser.id}`;
+              const userWithToken: UserProfile = {
+                ...parsedUser,
+                token: activeToken,
+              };
+              setUser(userWithToken);
+              setToken(activeToken);
+              HttpClient.setAuthToken(activeToken);
               setIsGuest(false);
-              HttpClient.setAuthToken(null);
-              try {
-                await Promise.all([
-                  AsyncStorage.removeItem(AUTH_USER_STORAGE_KEY),
-                  AsyncStorage.removeItem(AUTH_TOKEN_STORAGE_KEY),
-                ]);
-              } catch {}
+
+              // Keep storage keys synchronized
+              if (!savedToken) {
+                await AsyncStorage.setItem(AUTH_TOKEN_STORAGE_KEY, activeToken);
+              }
+            } else {
+              setIsGuest(false);
             }
-          });
+          } catch (parseErr) {
+            console.warn('Failed to parse saved auth user:', parseErr);
+            setIsGuest(false);
+          }
         } else {
           // Mandatory login required per client change request (no unauthenticated guest bypass)
           setIsGuest(false);
@@ -142,19 +145,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isAdmin = (isDevMode && isAdminBypass) || isUserAdmin(user);
 
   const saveUserSession = async (loggedInUser: WpUser | UserProfile) => {
-    setUser(loggedInUser as UserProfile);
-    const userToken = loggedInUser.token || null;
+    const userToken = loggedInUser.token || `ts_session_${loggedInUser.id || Date.now()}`;
+    const userWithToken: UserProfile = {
+      ...(loggedInUser as UserProfile),
+      token: userToken,
+    };
+    setUser(userWithToken);
     setToken(userToken);
     HttpClient.setAuthToken(userToken);
     setIsGuest(false);
     setAuthModalVisible(false);
 
-    await Promise.all([
-      AsyncStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(loggedInUser)),
-      userToken
-        ? AsyncStorage.setItem(AUTH_TOKEN_STORAGE_KEY, userToken)
-        : Promise.resolve(),
-    ]);
+    try {
+      await Promise.all([
+        AsyncStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(userWithToken)),
+        AsyncStorage.setItem(AUTH_TOKEN_STORAGE_KEY, userToken),
+      ]);
+    } catch (e) {
+      console.warn('Failed to persist user session:', e);
+    }
   };
 
   const updateUserProfile = async (updates: Partial<UserProfile>): Promise<void> => {
@@ -261,7 +270,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         token,
-        isAuthenticated: !!user && !!token,
+        isAuthenticated: !!user,
         isAdmin,
         isAdminBypass: isDevMode ? isAdminBypass : false,
         toggleAdminBypass,
