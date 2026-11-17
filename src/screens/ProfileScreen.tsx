@@ -1811,7 +1811,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
             </TouchableOpacity>
 
-            {/* Facebook Messenger */}
+            {/* Messenger */}
             <TouchableOpacity
               style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
               onPress={() => {
@@ -1819,12 +1819,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 Linking.openURL('https://m.me/thrivingskills').catch(() => {});
               }}
               accessibilityRole="button"
-              accessibilityLabel="Chat on Facebook Messenger"
+              accessibilityLabel="Chat on Messenger"
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="logo-facebook" size={20} color="#0084FF" />
                 <View style={{ marginLeft: 6 }}>
-                  <Text style={[styles.settingLabel, { color: colors.text }]}>Facebook Messenger</Text>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>Messenger</Text>
                   <Text style={[styles.settingSubtext, { color: '#0084FF', fontWeight: '700' }]}>
                     @thrivingskills • Community CRM
                   </Text>

@@ -769,7 +769,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                   style={styles.contactRow}
                   onPress={handleWhatsApp}
                   accessibilityRole="button"
-                  accessibilityLabel="Open official WhatsApp chat +880 1312-100288"
+                  accessibilityLabel="Open official WhatsApp +880 1312-100288"
                 >
                   <View style={[styles.contactIconBg, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.18)' : '#ECFDF5' }]}>
                     <Ionicons name="logo-whatsapp" size={18} color="#10B981" />

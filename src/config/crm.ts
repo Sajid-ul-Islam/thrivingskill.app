@@ -45,7 +45,7 @@ export const CRM_INQUIRY_PROMPTS: Record<CrmInquiryType, { en: string; bn: strin
 };
 
 /**
- * Open official WhatsApp chat with pre-filled message
+ * Open official WhatsApp with pre-filled message
  */
 export async function openWhatsAppChat(inquiryType: CrmInquiryType = 'general', isBangla = false): Promise<boolean> {
   const message = isBangla
@@ -75,7 +75,7 @@ export async function openWhatsAppChat(inquiryType: CrmInquiryType = 'general', 
 }
 
 /**
- * Open official Facebook Messenger chat
+ * Open official Messenger chat
  */
 export async function openFacebookMessenger(): Promise<boolean> {
   const messengerUrl = CRM_CHANNELS.messengerUrl;

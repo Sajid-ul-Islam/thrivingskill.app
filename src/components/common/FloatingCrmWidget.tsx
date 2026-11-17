@@ -145,7 +145,7 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
     triggerHaptic('medium');
     closeMenu();
     showToast({
-      message: isBangla ? 'হোয়াটসঅ্যাপ খোলা হচ্ছে...' : 'Launching WhatsApp chat...',
+      message: isBangla ? 'হোয়াটসঅ্যাপ খোলা হচ্ছে...' : 'Launching WhatsApp...',
       type: 'info',
     });
     await openWhatsAppChat(inquiryType, isBangla);
@@ -155,7 +155,7 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
     triggerHaptic('medium');
     closeMenu();
     showToast({
-      message: isBangla ? 'মেসেঞ্জার খোলা হচ্ছে...' : 'Launching Facebook Messenger...',
+      message: isBangla ? 'মেসেঞ্জার খোলা হচ্ছে...' : 'Launching Messenger...',
       type: 'info',
     });
     await openFacebookMessenger();
@@ -186,7 +186,7 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
     }).start();
   };
 
-  // PanResponder to handle smooth dragging & drop-to-dismiss (Facebook Messenger bubble physics)
+  // PanResponder to handle smooth dragging & drop-to-dismiss (Messenger bubble physics)
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -338,7 +338,7 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
             onPress={restoreBubble}
             activeOpacity={0.8}
             accessibilityRole="button"
-            accessibilityLabel="Reopen WhatsApp chat bubble"
+            accessibilityLabel="Reopen WhatsApp bubble"
           >
             <View style={styles.onlineDot} />
             <Ionicons name="logo-whatsapp" size={17} color="#25D366" />
@@ -422,25 +422,25 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
                 <Ionicons name="logo-whatsapp" size={20} color="#FFFFFF" />
               </View>
               <View style={styles.menuTextCol}>
-                <Text style={styles.menuTitle}>WhatsApp Chat</Text>
+                <Text style={styles.menuTitle}>WhatsApp</Text>
                 <Text style={styles.menuSubtitle}>{CRM_CHANNELS.phoneDisplay} • Instant reply</Text>
               </View>
               <Ionicons name="chevron-forward" size={16} color="#FFFFFF" />
             </TouchableOpacity>
 
-            {/* 2. Facebook Messenger */}
+            {/* 2. Messenger */}
             <TouchableOpacity
               style={[styles.menuItem, { backgroundColor: '#0084FF' }]}
               onPress={handleMessenger}
               activeOpacity={0.88}
               accessibilityRole="button"
-              accessibilityLabel="Chat on Facebook Messenger"
+              accessibilityLabel="Chat on Messenger"
             >
               <View style={styles.menuIconBg}>
                 <Ionicons name="logo-facebook" size={20} color="#FFFFFF" />
               </View>
               <View style={styles.menuTextCol}>
-                <Text style={styles.menuTitle}>Facebook Messenger</Text>
+                <Text style={styles.menuTitle}>Messenger</Text>
                 <Text style={styles.menuSubtitle}>@thrivingskills • Active community</Text>
               </View>
               <Ionicons name="chevron-forward" size={16} color="#FFFFFF" />
@@ -469,7 +469,7 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
               snappedSide === 'left' ? styles.fabRowLeft : styles.fabRowRight,
             ]}
           >
-            {/* Primary Circular Draggable FAB (Facebook Messenger chat-head style) */}
+            {/* Primary Circular Draggable FAB (Messenger chat-head style) */}
             <Animated.View
               style={{
                 transform: [{ scale: expanded || isDragging ? 1 : pulseAnim }],

@@ -258,13 +258,13 @@ export const SupportContactModal: React.FC<SupportContactModalProps> = ({
             <Ionicons name="arrow-forward-circle" size={26} color="#FFFFFF" />
           </TouchableOpacity>
 
-          {/* 2. Official Facebook Messenger Card */}
+          {/* 2. Official Messenger Card */}
           <TouchableOpacity
             style={[styles.channelCard, { backgroundColor: '#0084FF', marginTop: 12 }]}
             onPress={handleOpenMessenger}
             activeOpacity={0.88}
             accessibilityRole="button"
-            accessibilityLabel="Chat on Facebook Messenger"
+            accessibilityLabel="Chat on Messenger"
           >
             <View style={styles.channelIconWrap}>
               <Ionicons name="logo-facebook" size={28} color="#FFFFFF" />
@@ -273,7 +273,7 @@ export const SupportContactModal: React.FC<SupportContactModalProps> = ({
               <View style={[styles.channelBadgeRow, { backgroundColor: 'rgba(255, 255, 255, 0.25)' }]}>
                 <Text style={styles.channelBadgeText}>OFFICIAL COMMUNITY CRM</Text>
               </View>
-              <Text style={styles.channelTitle}>Facebook Messenger</Text>
+              <Text style={styles.channelTitle}>Messenger</Text>
               <Text style={styles.channelSubtitle}>
                 facebook.com/thrivingskills • @thrivingskills
               </Text>

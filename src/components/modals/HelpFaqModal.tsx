@@ -388,7 +388,7 @@ export const HelpFaqModal: React.FC<HelpFaqModalProps> = ({ visible, onClose }) 
                 style={[styles.contactBtn, { backgroundColor: '#0084FF' }]}
                 onPress={openFacebookMessenger}
                 accessibilityRole="button"
-                accessibilityLabel="Chat on Facebook Messenger"
+                accessibilityLabel="Chat on Messenger"
               >
                 <Ionicons name="logo-facebook" size={16} color="#FFFFFF" />
                 <Text style={styles.contactBtnText}>Messenger</Text>

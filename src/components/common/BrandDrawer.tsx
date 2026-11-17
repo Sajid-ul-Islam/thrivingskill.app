@@ -521,7 +521,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <Ionicons name="logo-facebook" size={18} color="#0084FF" />
-                <Text style={[styles.actionLabel, { color: colors.text }]}>Facebook Messenger</Text>
+                <Text style={[styles.actionLabel, { color: colors.text }]}>Messenger</Text>
               </View>
               <Text style={{ fontSize: 11, fontWeight: '700', color: '#0084FF' }}>@thrivingskills</Text>
             </TouchableOpacity>
