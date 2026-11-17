@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { SpringPressable } from '../common';
 import { SpecialBundle } from '../../types';
 import { useTheme } from '../../context/ThemeContext';

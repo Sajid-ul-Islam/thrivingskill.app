@@ -6,7 +6,7 @@ import {
   Modal,
   TouchableOpacity,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { triggerHaptic } from '../../utils/haptics';

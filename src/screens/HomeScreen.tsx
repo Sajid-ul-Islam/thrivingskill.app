@@ -8,11 +8,12 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  Platform,
   RefreshControl,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../context/ThemeContext';
@@ -147,6 +148,10 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
         keyExtractor={(item) => `cat-row-${title}-${item.id}`}
         horizontal
         showsHorizontalScrollIndicator={false}
+        initialNumToRender={3}
+        maxToRenderPerBatch={4}
+        windowSize={3}
+        removeClippedSubviews={Platform.OS === 'android'}
         contentContainerStyle={{ paddingHorizontal: 16, gap: CARD_GAP, paddingBottom: 4 }}
         getItemLayout={(_, index) => ({
           length: CARD_SNAP,

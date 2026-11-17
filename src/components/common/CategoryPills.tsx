@@ -1,6 +1,6 @@
 import React, { useRef, useCallback, useEffect } from 'react';
 import { ScrollView, Text, TouchableOpacity, StyleSheet, View, LayoutChangeEvent } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Category, CategoryId } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';

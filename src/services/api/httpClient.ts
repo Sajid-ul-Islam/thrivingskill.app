@@ -50,6 +50,7 @@ export function sanitizeWpMessage(message?: string): string {
 export class HttpClient {
   private static activeToken: string | null = null;
   private static connectivityListener: ((isOnline: boolean, errorMsg?: string) => void) | null = null;
+  private static inFlightRequests = new Map<string, Promise<any>>();
 
   /**
    * Register a global listener for network reachability changes detected by HTTP calls
@@ -104,9 +105,30 @@ export class HttpClient {
   }
 
   /**
-   * Core execution method with timeout and retry logic
+   * Core execution method with in-flight GET deduplication, timeout, and retry logic
    */
-  static async request<T = any>(endpoint: string, options: RequestOptions = {}): Promise<T> {
+  static request<T = any>(endpoint: string, options: RequestOptions = {}): Promise<T> {
+    const isGet = !options.method || options.method.toUpperCase() === 'GET';
+    const requestKey = `${options.method || 'GET'}:${this.buildUrl(endpoint, options.params)}`;
+
+    if (isGet && this.inFlightRequests.has(requestKey)) {
+      return this.inFlightRequests.get(requestKey) as Promise<T>;
+    }
+
+    const task = this.executeRequest<T>(endpoint, options).finally(() => {
+      if (isGet) {
+        this.inFlightRequests.delete(requestKey);
+      }
+    });
+
+    if (isGet) {
+      this.inFlightRequests.set(requestKey, task);
+    }
+
+    return task;
+  }
+
+  private static async executeRequest<T = any>(endpoint: string, options: RequestOptions = {}): Promise<T> {
     const {
       params,
       timeoutMs = Env.REQUEST_TIMEOUT_MS,

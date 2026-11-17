@@ -13,7 +13,7 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import { useTheme } from '../../context/ThemeContext';

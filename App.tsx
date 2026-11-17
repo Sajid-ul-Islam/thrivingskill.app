@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Platform, Pressable, BackHandler, UIManager, Image, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { shape } from './src/theme/shapes';
 
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';

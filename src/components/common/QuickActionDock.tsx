@@ -1,7 +1,7 @@
 import React from 'react';
 import { SpringPressable } from './SpringPressable';
 import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import { useSaaS } from '../../context/SaaSContext';
 import { useLanguage } from '../../context/LanguageContext';

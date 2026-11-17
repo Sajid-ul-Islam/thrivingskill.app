@@ -18,7 +18,7 @@ import {
   Platform,
   KeyboardAvoidingView,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { useLearning } from '../context/LearningContext';
@@ -336,7 +336,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
       >
         {/* Thumbnail Hero with Preview Button */}
         <View style={styles.heroWrapper}>
-          <Image source={{ uri: course.thumbnail }} style={styles.heroThumbnail} />
+          <Image source={{ uri: course.thumbnail, cache: 'force-cache' }} style={styles.heroThumbnail} />
           {course.badge && (
             <View style={[styles.badgeTag, { backgroundColor: colors.badgeBackground }]}>
               <Text style={[styles.badgeText, { color: colors.badgeText }]}>{course.badge}</Text>
@@ -400,7 +400,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
             accessibilityLabel={isBangla ? 'ফ্রি কোর্স ট্রেইলার ভিডিও দেখুন' : 'Watch Free Course Trailer'}
           >
             <View style={styles.trailerThumbWrapper}>
-              <Image source={{ uri: trailerVideo.thumbnail }} style={styles.trailerThumb} />
+              <Image source={{ uri: trailerVideo.thumbnail, cache: 'force-cache' }} style={styles.trailerThumb} />
               <View style={styles.trailerPlayOverlay}>
                 <Ionicons name="play" size={14} color="#FFFFFF" />
               </View>

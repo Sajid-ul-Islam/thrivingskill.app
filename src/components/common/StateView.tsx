@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import { shape } from '../../theme/shapes';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';

@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { ThemeColors } from '../../theme/colors';
 import { LearnPressCourseFilter } from '../../types';
 import { triggerHaptic } from '../../utils/haptics';

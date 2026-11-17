@@ -1,7 +1,7 @@
 import { Course } from '../types';
-import seedData from './coursesCatalogSeed.json';
+import { COURSES } from './mockData';
 
-export const INITIAL_COURSES_SEED: Course[] = (seedData as unknown as Course[]).map((c) => ({
+export const INITIAL_COURSES_SEED: Course[] = COURSES.map((c: Course) => ({
   ...c,
   _searchIndex: (
     c._searchIndex ||

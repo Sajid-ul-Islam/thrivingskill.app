@@ -1,7 +1,7 @@
 import { SpringPressable } from '../common';
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Course } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -12,15 +12,29 @@ interface CourseCardProps {
   course: Course;
   onPress: () => void;
   horizontal?: boolean;
+  isBookmarked?: boolean;
+  isEnrolled?: boolean;
+  progressPercent?: number;
 }
 
-const CourseCardComponent: React.FC<CourseCardProps> = ({ course, onPress, horizontal = false }) => {
+const CourseCardComponent: React.FC<CourseCardProps> = ({
+  course,
+  onPress,
+  horizontal = false,
+  isBookmarked: propIsBookmarked,
+  isEnrolled: propIsEnrolled,
+  progressPercent: propProgressPercent,
+}) => {
   const { colors } = useTheme();
   const { isBangla } = useLanguage();
-  const { isBookmarked, toggleBookmark, getCourseProgressPercentage, userProgress } = useLearning();
+  const { isBookmarked: contextIsBookmarked, toggleBookmark, getCourseProgressPercentage, userProgress } = useLearning();
   const { showToast } = useFeedback();
 
-  const bookmarked = isBookmarked(course.id);
+  const [thumbError, setThumbError] = React.useState(false);
+
+  const bookmarked = propIsBookmarked !== undefined ? propIsBookmarked : contextIsBookmarked(course.id);
+  const isEnrolled = propIsEnrolled !== undefined ? propIsEnrolled : !!userProgress[course.id];
+  const progressPercent = propProgressPercent !== undefined ? propProgressPercent : getCourseProgressPercentage(course.id);
 
   const handleToggleBookmark = () => {
     const wasBookmarked = bookmarked;
@@ -34,8 +48,6 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({ course, onPress, horiz
       onAction: wasBookmarked ? () => toggleBookmark(course.id) : undefined,
     });
   };
-  const isEnrolled = !!userProgress[course.id];
-  const progressPercent = getCourseProgressPercentage(course.id);
 
   const bdtPrice = course.priceBdt || (course.price > 0 ? Math.round(course.price * 120) : 0);
   const origBdtPrice = course.originalPriceBdt || (course.originalPrice && course.originalPrice > course.price ? Math.round(course.originalPrice * 120) : 0);
@@ -62,9 +74,10 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({ course, onPress, horiz
         >
           <View style={[styles.horizontalThumbWrapper, { backgroundColor: colors.surfaceSubtle }]}>
             <Image
-              source={{ uri: course.thumbnail }}
+              source={{ uri: course.thumbnail, cache: 'force-cache' }}
               style={styles.horizontalThumb}
               fadeDuration={150}
+              onError={() => setThumbError(true)}
             />
             {course.badge && (
               <View style={[styles.horizontalBadgeTag, { backgroundColor: colors.badgeBackground }]}>
@@ -166,9 +179,10 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({ course, onPress, horiz
       >
         <View style={[styles.thumbWrapper, { backgroundColor: colors.surfaceSubtle }]}>
           <Image
-            source={{ uri: course.thumbnail }}
+            source={{ uri: course.thumbnail, cache: 'force-cache' }}
             style={styles.thumbnail}
             fadeDuration={150}
+            onError={() => setThumbError(true)}
           />
           {course.badge && (
             <View style={[styles.badgeTag, { backgroundColor: colors.badgeBackground }]}>
@@ -505,9 +519,13 @@ export const CourseCard = React.memo<CourseCardProps>(CourseCardComponent, (prev
   return (
     prev.course.id === next.course.id &&
     prev.horizontal === next.horizontal &&
+    prev.isBookmarked === next.isBookmarked &&
+    prev.isEnrolled === next.isEnrolled &&
+    prev.progressPercent === next.progressPercent &&
     prev.course.title === next.course.title &&
     prev.course.priceBdt === next.course.priceBdt &&
     prev.course.rating === next.course.rating &&
-    prev.course.enrolledCount === next.course.enrolledCount
+    prev.course.enrolledCount === next.course.enrolledCount &&
+    prev.course.thumbnail === next.course.thumbnail
   );
 });

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
 import Svg, { Circle, G, Text as SvgText, Defs, LinearGradient, Stop, Path, Line, Rect } from 'react-native-svg';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { ThemeColors } from '../../theme/colors';
 import { LearnPressCourseFilter } from '../../types';
 import { triggerHaptic } from '../../utils/haptics';

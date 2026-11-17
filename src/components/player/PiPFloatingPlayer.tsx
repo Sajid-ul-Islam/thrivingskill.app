@@ -5,7 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { triggerHaptic } from '../../utils/haptics';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';

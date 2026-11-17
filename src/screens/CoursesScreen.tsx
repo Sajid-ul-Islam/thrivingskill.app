@@ -13,7 +13,7 @@ import {
   Platform,
   ListRenderItem,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -63,6 +63,8 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     setSelectedCategory,
     searchQuery,
     setSearchQuery,
+    bookmarks,
+    userProgress,
   } = useLearning();
 
   const [selectedLevel, setSelectedLevel] = useState<LevelFilter>('All');
@@ -435,10 +437,16 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.deptCarouselContent}
+              initialNumToRender={3}
+              maxToRenderPerBatch={4}
+              windowSize={3}
+              removeClippedSubviews={Platform.OS === 'android'}
               renderItem={({ item: courseItem }) => (
                 <View style={styles.deptCardItemWrap}>
                   <CourseCard
                     course={courseItem}
+                    isBookmarked={bookmarks.includes(courseItem.id)}
+                    isEnrolled={!!userProgress[courseItem.id]}
                     onPress={() => onNavigateToCourse(courseItem.id)}
                   />
                 </View>
@@ -453,12 +461,14 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
           <CourseCard
             course={item as Course}
             horizontal={viewMode === 'list'}
+            isBookmarked={bookmarks.includes((item as Course).id)}
+            isEnrolled={!!userProgress[(item as Course).id]}
             onPress={() => onNavigateToCourse(item.id)}
           />
         </View>
       );
     },
-    [isBrowsingDepartments, colors, isDark, isBangla, handleCategorySelect, onNavigateToCourse, viewMode]
+    [isBrowsingDepartments, colors, isDark, isBangla, handleCategorySelect, onNavigateToCourse, viewMode, bookmarks, userProgress]
   );
 
   const keyExtractor = useCallback(
@@ -973,6 +983,11 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
         contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}
         onScroll={handleScroll}
         scrollEventThrottle={16}
+        initialNumToRender={6}
+        maxToRenderPerBatch={8}
+        windowSize={5}
+        removeClippedSubviews={Platform.OS === 'android'}
+        updateCellsBatchingPeriod={50}
         onScrollToIndexFailed={(info) => {
           flatListRef.current?.scrollToOffset({
             offset: Math.max(0, info.averageItemLength * info.index),
@@ -990,10 +1005,6 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
             colors={[colors.primary]}
           />
         }
-        initialNumToRender={8}
-        maxToRenderPerBatch={8}
-        windowSize={5}
-        removeClippedSubviews={Platform.OS === 'android'}
       />
 
       {/* Dynamic Scroll to Top Quick Pill */}
