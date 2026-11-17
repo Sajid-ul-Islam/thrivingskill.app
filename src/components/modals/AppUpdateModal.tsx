@@ -28,24 +28,22 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
   const insets = useSafeAreaInsets();
   const [isChecking, setIsChecking] = useState(false);
   const [updateReady, setUpdateReady] = useState(false);
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
-
-  const info = AppUpdateService.getUpdateInfo();
+  const [checked, setChecked] = useState(false);
 
   const handleCheck = async () => {
     triggerHaptic('light');
     setIsChecking(true);
-    setStatusMessage(null);
+    setChecked(false);
 
     const result = await AppUpdateService.checkForUpdate();
     setIsChecking(false);
-    setStatusMessage(result.message);
+    setChecked(true);
 
     if (result.isDownloaded) {
       triggerHaptic('success');
       setUpdateReady(true);
     } else {
-      showToast({ message: result.message, type: 'info' });
+      showToast({ message: "You're on the latest version!", type: 'success' });
     }
   };
 
@@ -59,152 +57,97 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
   };
 
   return (
-    <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
-      <View
-        style={[
-          styles.overlay,
-          {
-            paddingTop: Math.max(insets.top, 20),
-            paddingBottom: Math.max(insets.bottom, 20),
-          },
-        ]}
-      >
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+      <View style={[styles.overlay, { paddingBottom: Math.max(insets.bottom, 24) }]}>
         <View
-          style={[styles.card, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
+          style={[styles.sheet, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
           accessibilityViewIsModal={true}
         >
+          {/* Handle bar */}
+          <View style={[styles.handle, { backgroundColor: colors.border }]} />
+
           {/* Header */}
           <View style={styles.header}>
-            <View style={styles.iconCircle}>
-              <Ionicons name="cloud-download-outline" size={24} color={colors.primary} />
+            <View style={[styles.iconCircle, { backgroundColor: 'rgba(16,47,83,0.08)' }]}>
+              <Ionicons name="cloud-download-outline" size={22} color={colors.primary} />
+            </View>
+            <View style={styles.headerText}>
+              <Text style={[styles.title, { color: colors.text }]}>App Updates</Text>
+              <Text style={[styles.subtitle, { color: colors.textMuted }]}>Version 1.4.0</Text>
             </View>
             <TouchableOpacity
               style={[styles.closeBtn, { backgroundColor: colors.surfaceSubtle }]}
-              onPress={() => {
-                triggerHaptic('light');
-                onClose();
-              }}
+              onPress={() => { triggerHaptic('light'); onClose(); }}
               accessibilityRole="button"
-              accessibilityLabel="Close In-App Updates dialog"
+              accessibilityLabel="Close"
             >
-              <Ionicons name="close" size={20} color={colors.text} />
+              <Ionicons name="close" size={18} color={colors.text} />
             </TouchableOpacity>
           </View>
 
-          <Text style={[styles.title, { color: colors.text }]}>In-App Updates (OTA)</Text>
-          <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-            Over-the-air updates deliver the latest features, screens, and bug fixes without reinstalling or rebuilding the APK.
-          </Text>
-
-          {/* Current Build Metadata */}
-          <View style={[styles.infoBox, { backgroundColor: isDark ? colors.surfaceCard : '#F8FAFC' }]}>
-            <View style={styles.infoRow}>
-              <Text style={[styles.infoLabel, { color: colors.textMuted }]}>App Version</Text>
-              <Text style={[styles.infoVal, { color: colors.text }]}>v1.4.0 (Runtime {info.runtimeVersion})</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Launch Type</Text>
-              <View style={styles.statusPill}>
-                <View style={[styles.dot, { backgroundColor: info.isEmbeddedLaunch ? '#64748B' : '#10B981' }]} />
-                <Text
-                  style={[
-                    styles.statusPillText,
-                    { color: info.isEmbeddedLaunch ? colors.textMuted : colors.success, fontWeight: '700' },
-                  ]}
-                >
-                  {info.isEmbeddedLaunch ? 'Embedded Base APK' : 'OTA Update Active'}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Channel / Environment</Text>
-              <Text style={[styles.infoVal, { color: colors.primary }]}>{info.channel}</Text>
-            </View>
-            <View style={styles.infoRow}>
-              <Text style={[styles.infoLabel, { color: colors.textMuted }]}>OTA Update Engine</Text>
-              <View style={styles.statusPill}>
-                <View style={[styles.dot, { backgroundColor: info.isEnabled ? '#10B981' : '#F59E0B' }]} />
-                <Text style={styles.statusPillText}>
-                  {info.isEnabled ? 'EAS Production OTA Active' : 'Metro Live Bundler'}
-                </Text>
-              </View>
-            </View>
-            {info.updateId && (
-              <View style={styles.infoRow}>
-                <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Active Update ID</Text>
-                <Text style={[styles.infoVal, { color: colors.textMuted, fontSize: 11 }]}>
-                  {info.updateId.slice(0, 16)}...
-                </Text>
-              </View>
-            )}
-            <View style={styles.infoRow}>
-              <Text style={[styles.infoLabel, { color: colors.textMuted }]}>Release Date</Text>
-              <Text style={[styles.infoVal, { color: colors.textMuted, fontSize: 12 }]}>
-                {info.createdAt}
+          {/* State card */}
+          {updateReady ? (
+            <View style={[styles.stateCard, { backgroundColor: colors.successLight, borderColor: colors.success }]}>
+              <Ionicons name="checkmark-circle" size={40} color={colors.success} />
+              <Text style={[styles.stateTitle, { color: colors.success }]}>Update Ready!</Text>
+              <Text style={[styles.stateBody, { color: colors.text }]}>
+                A new version of Thriving Skills is downloaded and ready. Tap below to apply it now.
               </Text>
             </View>
-          </View>
-
-          {/* Status Message */}
-          {statusMessage && (
-            <View
-              style={[
-                styles.messageBox,
-                {
-                  backgroundColor: updateReady
-                    ? colors.successLight
-                    : isDark
-                    ? colors.surfaceSubtle
-                    : '#EFF6FF',
-                  borderColor: updateReady ? colors.success : colors.primary,
-                },
-              ]}
-            >
-              <Ionicons
-                name={updateReady ? 'checkmark-circle' : 'information-circle'}
-                size={16}
-                color={updateReady ? colors.success : colors.primary}
-              />
-              <Text
-                style={[
-                  styles.messageText,
-                  { color: updateReady ? colors.success : colors.text },
-                ]}
-              >
-                {statusMessage}
+          ) : checked ? (
+            <View style={[styles.stateCard, { backgroundColor: isDark ? colors.surfaceSubtle : '#F0FDF4', borderColor: colors.success }]}>
+              <Ionicons name="shield-checkmark-outline" size={40} color={colors.success} />
+              <Text style={[styles.stateTitle, { color: colors.text }]}>You're up to date</Text>
+              <Text style={[styles.stateBody, { color: colors.textMuted }]}>
+                Thriving Skills is running the latest version. We'll notify you when a new update arrives.
+              </Text>
+            </View>
+          ) : (
+            <View style={[styles.stateCard, { backgroundColor: isDark ? colors.surfaceSubtle : '#F8FAFC', borderColor: colors.border }]}>
+              <Ionicons name="sync-circle-outline" size={40} color={colors.primary} />
+              <Text style={[styles.stateTitle, { color: colors.text }]}>Keep Your App Fresh</Text>
+              <Text style={[styles.stateBody, { color: colors.textMuted }]}>
+                Get new lessons, features, and fixes instantly — no app store visit needed.
               </Text>
             </View>
           )}
 
-          {/* Action Buttons */}
+          {/* Action button */}
           {updateReady ? (
             <TouchableOpacity
-              style={[styles.actionBtn, { backgroundColor: colors.success }]}
+              style={[styles.btn, { backgroundColor: colors.success }]}
               onPress={handleRestart}
               accessibilityRole="button"
-              accessibilityLabel="Restart and apply update"
+              accessibilityLabel="Apply update and restart"
             >
               <Ionicons name="refresh" size={18} color={colors.onSuccess} />
-              <Text style={[styles.actionBtnText, { color: colors.onSuccess }]}>Restart & Apply Update</Text>
+              <Text style={[styles.btnText, { color: colors.onSuccess }]}>Apply Update & Restart</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
-              style={[styles.actionBtn, { backgroundColor: colors.primary }]}
+              style={[styles.btn, { backgroundColor: colors.primary, opacity: isChecking ? 0.75 : 1 }]}
               onPress={handleCheck}
               disabled={isChecking}
               accessibilityRole="button"
-              accessibilityLabel="Check for app updates"
+              accessibilityLabel="Check for updates"
             >
               {isChecking ? (
-                <ActivityIndicator size="small" color={colors.onPrimary} />
+                <>
+                  <ActivityIndicator size="small" color={colors.onPrimary} />
+                  <Text style={[styles.btnText, { color: colors.onPrimary }]}>Checking…</Text>
+                </>
               ) : (
                 <>
                   <Ionicons name="sync-outline" size={18} color={colors.onPrimary} />
-                  <Text style={[styles.actionBtnText, { color: colors.onPrimary }]}>Check for Updates</Text>
+                  <Text style={[styles.btnText, { color: colors.onPrimary }]}>Check for Updates</Text>
                 </>
               )}
             </TouchableOpacity>
           )}
+
+          <Text style={[styles.hint, { color: colors.textMuted }]}>
+            Updates also apply automatically each time you open the app.
+          </Text>
         </View>
       </View>
     </Modal>
@@ -214,36 +157,54 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
   },
-  card: {
-    width: '100%',
-    maxWidth: 400,
-    borderRadius: shape.largeIncreased,
+  sheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     borderWidth: 1,
-    padding: 22,
+    borderBottomWidth: 0,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 8,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 10,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 12,
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 16,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 14,
+    gap: 12,
+    marginBottom: 20,
   },
   iconCircle: {
-    width: MIN_TOUCH_TARGET,
-    height: MIN_TOUCH_TARGET,
+    width: 44,
+    height: 44,
     borderRadius: shape.full,
-    backgroundColor: 'rgba(16, 47, 83, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
+  },
+  headerText: {
+    flex: 1,
+  },
+  title: {
+    ...typography.h3,
+  },
+  subtitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 1,
   },
   closeBtn: {
     width: MIN_TOUCH_TARGET,
@@ -251,80 +212,45 @@ const styles = StyleSheet.create({
     borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
-  title: {
-    ...typography.h3,
-    marginBottom: 4,
-  },
-  subtitle: {
-    ...typography.caption,
-    marginBottom: 16,
-  },
-  infoBox: {
+  stateCard: {
     borderRadius: shape.large,
-    padding: 12,
-    gap: 10,
-    marginBottom: 16,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  infoLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    flex: 1,
-    minWidth: 0,
-    marginRight: 8,
-  },
-  infoVal: {
-    fontSize: 12,
-    fontWeight: '700',
-    flexShrink: 0,
-  },
-  statusPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    flexShrink: 0,
-  },
-  dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-  },
-  statusPillText: {
-    fontSize: 11.5,
-    fontWeight: '700',
-  },
-  messageBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 10,
     borderWidth: 1,
-    gap: 8,
-    marginBottom: 16,
+    padding: 20,
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 20,
   },
-  messageText: {
-    flex: 1,
-    fontSize: 12.5,
-    lineHeight: 18,
+  stateTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  stateBody: {
+    fontSize: 13,
+    lineHeight: 20,
+    textAlign: 'center',
     fontWeight: '500',
   },
-  actionBtn: {
+  btn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: shape.medium,
     gap: 8,
+    minHeight: MIN_TOUCH_TARGET,
+    marginBottom: 12,
   },
-  actionBtnText: {
-    color: '#FFFFFF',
-    fontSize: 14,
+  btnText: {
+    fontSize: 15,
     fontWeight: '800',
+  },
+  hint: {
+    fontSize: 11,
+    textAlign: 'center',
+    lineHeight: 16,
+    marginBottom: 4,
   },
 });
