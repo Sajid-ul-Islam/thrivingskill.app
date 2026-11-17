@@ -23,6 +23,7 @@ import {
 import { LiteRtService } from '../../services/ai/liteRtService';
 import { SpacedRepetitionService } from '../../services/study/spacedRepetitionService';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
+import { shape } from '../../theme/shapes';
 
 interface LocalSearchModalProps {
   visible: boolean;
@@ -394,7 +395,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: shape.medium,
     borderWidth: 1,
     paddingHorizontal: 12,
     height: 44,
@@ -427,7 +428,7 @@ const styles = StyleSheet.create({
   filterChip: {
     paddingHorizontal: 14,
     paddingVertical: 7,
-    borderRadius: 20,
+    borderRadius: shape.full,
     borderWidth: 1,
     minHeight: 32,
     justifyContent: 'center',
@@ -459,7 +460,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   resultCard: {
-    borderRadius: 14,
+    borderRadius: shape.large,
     borderWidth: 1,
     padding: 14,
     gap: 6,
@@ -475,7 +476,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 6,
+    borderRadius: shape.extraSmall,
   },
   typeBadgeText: {
     fontSize: 10,

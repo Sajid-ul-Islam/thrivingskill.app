@@ -16,6 +16,7 @@ import { useLearning } from '../../context/LearningContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { triggerHaptic } from '../../utils/haptics';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
+import { shape } from '../../theme/shapes';
 import { SkillAssessmentQuestion, SkillAssessmentResult, Course } from '../../types';
 import { SkillRadarChart } from '../analytics/SkillRadarChart';
 
@@ -559,17 +560,17 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 6,
+    borderRadius: shape.extraSmall,
     flexShrink: 0,
   },
   progressTrack: {
     height: 6,
-    borderRadius: 3,
+    borderRadius: shape.extraSmall,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: shape.extraSmall,
   },
   questionText: {
     fontSize: 16,
@@ -584,14 +585,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 14,
-    borderRadius: 14,
+    borderRadius: shape.large,
     borderWidth: 1.5,
     gap: 12,
   },
   optionLetter: {
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: shape.full,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -626,7 +627,7 @@ const styles = StyleSheet.create({
   scoreBadgeCircle: {
     width: 100,
     height: 100,
-    borderRadius: 50,
+    borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 14,

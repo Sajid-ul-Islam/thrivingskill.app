@@ -11,6 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { triggerHaptic } from '../../utils/haptics';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
+import { shape } from '../../theme/shapes';
 
 export interface VideoPlayerGestureOverlayProps {
   isPlaying: boolean;
@@ -649,7 +650,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255, 182, 6, 0.5)',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: shape.medium,
     minHeight: 28,
     gap: 4,
   },
@@ -662,7 +663,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFB606',
     paddingHorizontal: 9,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: shape.medium,
     minHeight: 28,
     alignItems: 'center',
     justifyContent: 'center',
@@ -674,7 +675,7 @@ const styles = StyleSheet.create({
   },
   speedPillActive: {
     backgroundColor: '#102F53',
-    borderRadius: 12,
+    borderRadius: shape.medium,
     minHeight: 28,
     alignItems: 'center',
     justifyContent: 'center',
@@ -684,7 +685,7 @@ const styles = StyleSheet.create({
     top: '32%',
     width: 80,
     height: 80,
-    borderRadius: 40,
+    borderRadius: shape.full,
     backgroundColor: 'rgba(0, 0, 0, 0.75)',
     borderWidth: 1.5,
     borderColor: '#FFB606',
@@ -712,7 +713,7 @@ const styles = StyleSheet.create({
   },
   hudCard: {
     backgroundColor: 'rgba(16, 47, 83, 0.88)',
-    borderRadius: 16,
+    borderRadius: shape.large,
     paddingHorizontal: 16,
     paddingVertical: 12,
     alignItems: 'center',
@@ -725,14 +726,14 @@ const styles = StyleSheet.create({
     width: 8,
     height: 70,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 4,
+    borderRadius: shape.extraSmall,
     justifyContent: 'flex-end',
     overflow: 'hidden',
   },
   hudProgressBarFill: {
     width: '100%',
     backgroundColor: '#FFB606',
-    borderRadius: 4,
+    borderRadius: shape.extraSmall,
   },
   hudPercentText: {
     fontSize: 11,
@@ -752,7 +753,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#102F53',
     borderColor: '#FFB606',
     borderWidth: 1.5,
-    borderRadius: 24,
+    borderRadius: shape.full,
     paddingHorizontal: 18,
     paddingVertical: 10,
     minHeight: MIN_TOUCH_TARGET,

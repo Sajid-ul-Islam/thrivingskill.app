@@ -23,6 +23,7 @@ import { OfflineManager } from '../../services/offline/offlineManager';
 import { SyncQueueManager, OfflineMutation } from '../../services/offline/syncQueue';
 import { LiteRtService, LiteRtRuntimeStatus } from '../../services/ai/liteRtService';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
+import { shape } from '../../theme/shapes';
 
 const DATA_SAVER_STORAGE_KEY = '@thrivingskill_data_saver';
 
@@ -508,7 +509,7 @@ const styles = StyleSheet.create({
   closeButton: {
     width: MIN_TOUCH_TARGET,
     height: MIN_TOUCH_TARGET,
-    borderRadius: MIN_TOUCH_TARGET / 2,
+    borderRadius: shape.full,
     justifyContent: 'center',
     alignItems: 'center',
     flexShrink: 0,
@@ -518,7 +519,7 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   card: {
-    borderRadius: 14,
+    borderRadius: shape.large,
     borderWidth: 1,
     padding: 16,
   },
@@ -557,7 +558,7 @@ const styles = StyleSheet.create({
   dot: {
     width: 8,
     height: 8,
-    borderRadius: 4,
+    borderRadius: shape.full,
     marginRight: 8,
     flexShrink: 0,
   },
@@ -593,7 +594,7 @@ const styles = StyleSheet.create({
   syncBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: shape.small,
   },
   syncBadgeText: {
     fontSize: 11,
@@ -619,7 +620,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: shape.small,
     borderWidth: 1,
     marginTop: 14,
     gap: 8,

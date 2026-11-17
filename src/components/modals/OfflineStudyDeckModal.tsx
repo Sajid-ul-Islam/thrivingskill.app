@@ -16,6 +16,7 @@ import { useFeedback } from '../../context/FeedbackContext';
 import { triggerHaptic } from '../../utils/haptics';
 import { OfflineManager, OfflineLessonData } from '../../services/offline/offlineManager';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
+import { shape } from '../../theme/shapes';
 
 interface OfflineStudyDeckModalProps {
   visible: boolean;
@@ -387,7 +388,7 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   readerCard: {
-    borderRadius: 16,
+    borderRadius: shape.large,
     borderWidth: 1,
     padding: 18,
   },
@@ -404,7 +405,7 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: shape.extraSmall,
     flexShrink: 0,
   },
   downloadBadgeText: {
@@ -427,7 +428,7 @@ const styles = StyleSheet.create({
   },
   takeawaySection: {
     marginTop: 16,
-    borderRadius: 12,
+    borderRadius: shape.medium,
     padding: 14,
     gap: 8,
   },
@@ -470,7 +471,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: shape.medium,
     minHeight: MIN_TOUCH_TARGET,
     gap: 6,
   },
@@ -480,7 +481,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: shape.medium,
     borderWidth: 1,
     minHeight: MIN_TOUCH_TARGET,
     gap: 6,
@@ -488,7 +489,7 @@ const styles = StyleSheet.create({
   deleteBtn: {
     width: MIN_TOUCH_TARGET,
     height: MIN_TOUCH_TARGET,
-    borderRadius: 12,
+    borderRadius: shape.medium,
     justifyContent: 'center',
     alignItems: 'center',
   },

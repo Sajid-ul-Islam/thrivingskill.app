@@ -21,6 +21,7 @@ import {
 } from '../../services/study/spacedRepetitionService';
 import { Course } from '../../types';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
+import { shape } from '../../theme/shapes';
 
 interface SpacedRepetitionModalProps {
   visible: boolean;
@@ -397,17 +398,17 @@ const styles = StyleSheet.create({
   },
   progressBarTrack: {
     height: 6,
-    borderRadius: 3,
+    borderRadius: shape.extraSmall,
     overflow: 'hidden',
     marginBottom: 20,
   },
   progressBarFill: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: shape.extraSmall,
   },
   flashcard: {
     flex: 1,
-    borderRadius: 18,
+    borderRadius: shape.largeIncreased,
     borderWidth: 1.5,
     padding: 20,
     justifyContent: 'space-between',
@@ -421,7 +422,7 @@ const styles = StyleSheet.create({
   sideBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: shape.extraSmall,
     flexShrink: 0,
   },
   sideBadgeText: {
@@ -461,7 +462,7 @@ const styles = StyleSheet.create({
   rateBtn: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: shape.small,
     borderWidth: 1,
     alignItems: 'center',
     minHeight: MIN_TOUCH_TARGET,
@@ -479,7 +480,7 @@ const styles = StyleSheet.create({
   revealBtn: {
     marginTop: 18,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: shape.medium,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: MIN_TOUCH_TARGET,
