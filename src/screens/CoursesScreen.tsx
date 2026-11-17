@@ -85,7 +85,35 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     { id: 'bundle', title: isBangla ? 'স্পেশাল বান্ডেল' : 'Special Bundles', icon: 'layers', color: '#E11D48' },
   ], [isBangla]);
 
-  const flatListRef = useRef<FlatList<Course> | null>(null);
+  const departmentSections = useMemo(() => {
+    return departments
+      .map((dept) => {
+        const deptCourses = courses.filter((c) => {
+          if (dept.id === 'bundle') {
+            return c.category === 'bundle' || c.title.toLowerCase().includes('bundle');
+          }
+          if (c.category === dept.id) return true;
+          if (c.categorySlugs && c.categorySlugs.some((s) => s.includes(dept.id) || dept.id.includes(s))) return true;
+          const lowerCat = (c.category || '').toLowerCase();
+          const lowerTitle = (c.title || '').toLowerCase();
+          if (dept.id === 'generative-ai' && (lowerCat.includes('ai') || lowerTitle.includes('ai') || lowerCat.includes('prompt'))) return true;
+          if (dept.id === 'sales-marketing' && (lowerCat.includes('market') || lowerCat.includes('sales') || lowerTitle.includes('marketing'))) return true;
+          if (dept.id === 'supply-chain-management' && (lowerCat.includes('supply') || lowerCat.includes('logistics') || lowerTitle.includes('supply chain'))) return true;
+          if (dept.id === 'human-resource-management' && (lowerCat.includes('hr') || lowerCat.includes('human') || lowerCat.includes('resource') || lowerTitle.includes('hr'))) return true;
+          if (dept.id === 'finance-accounting-legal' && (lowerCat.includes('finan') || lowerCat.includes('account') || lowerCat.includes('tax') || lowerTitle.includes('tax') || lowerTitle.includes('financial'))) return true;
+          if (dept.id === 'microsoft-excel-courses' && (lowerCat.includes('excel') || lowerTitle.includes('excel') || lowerCat.includes('data'))) return true;
+          if (dept.id === 'leadership-management' && (lowerCat.includes('leader') || lowerCat.includes('manage') || lowerTitle.includes('leadership'))) return true;
+          return false;
+        });
+        return {
+          ...dept,
+          courses: deptCourses,
+        };
+      })
+      .filter((d) => d.courses.length > 0);
+  }, [departments, courses]);
+
+  const flatListRef = useRef<FlatList<any> | null>(null);
   const searchInputRef = useRef<React.ElementRef<typeof TextInput> | null>(null);
   const searchDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -335,23 +363,104 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     selectedPriceFilter !== 'all' ||
     searchQuery.trim().length > 0;
 
-  const catalogCount = totalCourseCount || courses.length || 382;
+  const isBrowsingDepartments = selectedCategory === 'all' && !hasActiveFilters;
 
-  // Render course item with memoized CourseCard
-  const renderItem: ListRenderItem<Course> = useCallback(
-    ({ item }) => (
-      <View style={styles.cardItemWrapper}>
-        <CourseCard
-          course={item}
-          horizontal={viewMode === 'list'}
-          onPress={() => onNavigateToCourse(item.id)}
-        />
-      </View>
-    ),
-    [viewMode, onNavigateToCourse]
+  const handleDeptCardPress = useCallback(
+    (deptId: string) => {
+      triggerHaptic('selection');
+      if (isBrowsingDepartments) {
+        const idx = departmentSections.findIndex((d) => d.id === deptId);
+        if (idx !== -1 && flatListRef.current) {
+          flatListRef.current.scrollToIndex({ index: idx, animated: true, viewPosition: 0 });
+          return;
+        }
+      }
+      handleCategorySelect(deptId);
+    },
+    [isBrowsingDepartments, departmentSections, handleCategorySelect]
   );
 
-  const keyExtractor = useCallback((item: Course) => item.id, []);
+  const catalogCount = totalCourseCount || courses.length || 382;
+
+  // Render course item or department carousel row
+  const renderItem = useCallback(
+    ({ item }: { item: any }) => {
+      if (isBrowsingDepartments) {
+        const dept = item as {
+          id: string;
+          title: string;
+          icon: string;
+          color: string;
+          courses: Course[];
+        };
+        return (
+          <View style={styles.deptRowSection}>
+            <View style={styles.deptRowHeader}>
+              <View style={styles.deptRowTitleRow}>
+                <View style={[styles.deptIconCircle, { backgroundColor: dept.color + '18' }]}>
+                  <Ionicons name={dept.icon as any} size={15} color={dept.color} />
+                </View>
+                <Text style={[styles.deptRowTitle, { color: colors.text }]}>
+                  {dept.title}
+                </Text>
+                <View style={[styles.deptCountBadge, { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' }]}>
+                  <Text style={[styles.deptCountText, { color: colors.textMuted }]}>
+                    {dept.courses.length}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  triggerHaptic('light');
+                  handleCategorySelect(dept.id);
+                }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={styles.seeAllTouch}
+                accessibilityRole="button"
+                accessibilityLabel={`See all ${dept.title} courses`}
+              >
+                <Text style={[styles.seeAllDeptText, { color: colors.primary }]}>
+                  {isBangla ? 'সবগুলো দেখুন →' : 'See All →'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <FlatList
+              data={dept.courses}
+              keyExtractor={(c) => `dept-course-${dept.id}-${c.id}`}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.deptCarouselContent}
+              renderItem={({ item: courseItem }) => (
+                <View style={styles.deptCardItemWrap}>
+                  <CourseCard
+                    course={courseItem}
+                    onPress={() => onNavigateToCourse(courseItem.id)}
+                  />
+                </View>
+              )}
+            />
+          </View>
+        );
+      }
+
+      return (
+        <View style={styles.cardItemWrapper}>
+          <CourseCard
+            course={item as Course}
+            horizontal={viewMode === 'list'}
+            onPress={() => onNavigateToCourse(item.id)}
+          />
+        </View>
+      );
+    },
+    [isBrowsingDepartments, colors, isDark, isBangla, handleCategorySelect, onNavigateToCourse, viewMode]
+  );
+
+  const keyExtractor = useCallback(
+    (item: any) => (isBrowsingDepartments ? `dept-sec-${item.id}` : item.id),
+    [isBrowsingDepartments]
+  );
 
   // List Header Component containing all interactive controls
   const renderHeader = useMemo(() => {
@@ -419,10 +528,10 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                       borderColor: isSelected ? colors.primary : colors.border,
                     },
                   ]}
-                  onPress={() => handleCategorySelect(dept.id)}
+                  onPress={() => handleDeptCardPress(dept.id)}
                   activeOpacity={0.8}
                   accessibilityRole="button"
-                  accessibilityLabel={`Filter by ${dept.title}`}
+                  accessibilityLabel={`Filter or jump to ${dept.title}`}
                 >
                   <View style={[styles.deptIconCircle, { backgroundColor: dept.color + '18' }]}>
                     <Ionicons name={dept.icon as any} size={18} color={dept.color} />
@@ -851,7 +960,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
 
       <FlatList
         ref={flatListRef}
-        data={filtered}
+        data={isBrowsingDepartments ? (departmentSections as any[]) : filtered}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
         ListHeaderComponent={renderHeader}
@@ -860,6 +969,12 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
         contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}
         onScroll={handleScroll}
         scrollEventThrottle={16}
+        onScrollToIndexFailed={(info) => {
+          flatListRef.current?.scrollToOffset({
+            offset: Math.max(0, info.averageItemLength * info.index),
+            animated: true,
+          });
+        }}
         refreshControl={
           <RefreshControl
             refreshing={isLoadingCourses}
@@ -1134,5 +1249,54 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
+  },
+  deptRowSection: {
+    marginTop: 14,
+    marginBottom: 8,
+  },
+  deptRowHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 10,
+  },
+  deptRowTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  deptRowTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: -0.2,
+  },
+  deptCountBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  deptCountText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  seeAllTouch: {
+    minHeight: MIN_TOUCH_TARGET,
+    minWidth: MIN_TOUCH_TARGET,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+  },
+  seeAllDeptText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  deptCarouselContent: {
+    paddingHorizontal: 16,
+    gap: 12,
+    paddingBottom: 4,
+  },
+  deptCardItemWrap: {
+    width: 250,
   },
 });

@@ -71,7 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<UserProfile | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isGuest, setIsGuest] = useState<boolean>(true);
+  const [isGuest, setIsGuest] = useState<boolean>(false);
   const [isAuthModalVisible, setAuthModalVisible] = useState<boolean>(false);
   const [isAdminBypass, setIsAdminBypass] = useState<boolean>(false);
 
@@ -102,7 +102,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (!isValid) {
               setUser(null);
               setToken(null);
-              setIsGuest(true);
+              setIsGuest(false);
               HttpClient.setAuthToken(null);
               try {
                 await Promise.all([

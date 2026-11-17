@@ -239,7 +239,7 @@ const MainAppContent: React.FC = () => {
             Thriving <Text style={{ color: '#FFB606' }}>Skills</Text>
           </Text>
           <Text style={splashStyles.tagline}>
-            Empowering Next-Gen Professionals
+            জাতির দক্ষতা বিনির্মাণে • Building a Skilled Nation
           </Text>
         </View>
         <View style={splashStyles.footer}>
