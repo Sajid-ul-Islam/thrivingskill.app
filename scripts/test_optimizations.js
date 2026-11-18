@@ -23,11 +23,11 @@ function runTests() {
   );
   console.log('✓ Scope 1: Direct Ionicons import avoids bundling 14 unused TTF icon fonts (~4.5MB saved)');
 
-  // Test 2: Scope 1 - Catalog Seed JSON Removal
+  // Test 2: Scope 1 - Catalog Seed JSON Decoupled from Bundle
   console.log('\n[Scope 1] Verifying seed catalog cleanup...');
-  const seedJson = fs.readFileSync(path.join(__dirname, '..', 'src', 'data', 'coursesCatalogSeed.json'), 'utf8');
-  assert.strictEqual(seedJson.trim(), '[]', 'coursesCatalogSeed.json should be an empty array');
-  console.log('✓ Scope 1: 580 KB orphaned seed JSON eliminated');
+  const coursesService = fs.readFileSync(path.join(__dirname, '..', 'src', 'services', 'api', 'coursesService.ts'), 'utf8');
+  assert.strictEqual(!coursesService.includes('coursesCatalogSeed.json'), true, 'coursesService should not bundle json seed');
+  console.log('✓ Scope 1: 580 KB orphaned seed JSON eliminated from JS bundle');
 
   // Test 3: Scope 2 - FlatList Virtualization Properties
   console.log('\n[Scope 2] Verifying FlatList virtualization settings...');

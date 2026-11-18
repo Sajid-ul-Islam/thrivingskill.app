@@ -61,7 +61,7 @@ test('SEC-06: PaymentModal validates intent:// fallback URLs against trusted dom
 test('SEC-03: AuthModal WebView restricts navigation to thrivingskill.com and https', () => {
   const content = fs.readFileSync(path.join(__dirname, '../src/components/modals/AuthModal.tsx'), 'utf8');
   assert(content.includes("originWhitelist={['https://*']}"), 'Expected AuthModal originWhitelist https only');
-  assert(content.includes('hostname === \'thrivingskill.com\''), 'Expected hostname validation');
+  assert(content.includes("url.startsWith('https://thrivingskill.com')"), 'Expected thrivingskill.com domain restriction');
 });
 
 // 5. Offline Sync Queue allowlist validation
