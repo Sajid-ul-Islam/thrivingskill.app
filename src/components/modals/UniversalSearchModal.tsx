@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import { useLearning } from '../../context/LearningContext';
 import { useYouTube } from '../../context/YouTubeContext';
 import { Course } from '../../types';
 import { YouTubeVideo } from '../../data/youtubeVideos';
+import { GeminiNanoService } from '../../services/ai/geminiNanoService';
 import { triggerHaptic } from '../../utils/haptics';
 import { shape } from '../../theme/shapes';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
@@ -52,6 +53,29 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
 
   const [query, setQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<SearchFilterType>('all');
+  const [suggestedEnhancement, setSuggestedEnhancement] = useState<string | null>(null);
+
+  useEffect(() => {
+    const clean = query.trim();
+    if (clean.length >= 2) {
+      GeminiNanoService.enhanceSearchQuery(clean).then((res) => {
+        if (res.isExpanded && res.enhanced.toLowerCase() !== clean.toLowerCase()) {
+          setSuggestedEnhancement(res.enhanced);
+        } else {
+          setSuggestedEnhancement(null);
+        }
+      });
+    } else {
+      setSuggestedEnhancement(null);
+    }
+  }, [query]);
+
+  const handleApplyEnhancement = () => {
+    if (!suggestedEnhancement) return;
+    triggerHaptic('light');
+    setQuery(suggestedEnhancement);
+    setSuggestedEnhancement(null);
+  };
 
   const filterTabs: { id: SearchFilterType; label: string; icon: string }[] = [
     { id: 'all', label: isBangla ? 'সব' : 'All', icon: 'apps-outline' },
@@ -205,6 +229,34 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
             </Text>
           </TouchableOpacity>
         </View>
+
+        {/* Gemini Nano On-Device Query Enhancement / Proofreading */}
+        {suggestedEnhancement && (
+          <TouchableOpacity
+            style={[
+              styles.nanoEnhanceBanner,
+              {
+                backgroundColor: isDark ? '#1E293B' : '#F0FDF4',
+                borderColor: isDark ? '#059669' : '#BBF7D0',
+              },
+            ]}
+            onPress={handleApplyEnhancement}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel={`Gemini Nano suggested query: ${suggestedEnhancement}`}
+          >
+            <Ionicons name="sparkles" size={14} color="#059669" />
+            <Text style={[styles.nanoEnhanceText, { color: colors.text }]}>
+              {isBangla ? 'সংশোধিত সার্চ:' : 'Search instead for:'}{' '}
+              <Text style={{ fontWeight: '800', color: '#059669' }}>
+                {suggestedEnhancement}
+              </Text>
+            </Text>
+            <View style={styles.nanoBadgeTag}>
+              <Text style={styles.nanoBadgeText}>Nano AI</Text>
+            </View>
+          </TouchableOpacity>
+        )}
 
         {/* Filter Pills */}
         <View style={[styles.filterBar, { borderBottomColor: colors.border }]} accessibilityRole="tablist">
@@ -461,6 +513,33 @@ const styles = StyleSheet.create({
   cancelBtnText: {
     ...typography.button,
     fontWeight: '600',
+  },
+  nanoEnhanceBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: shape.medium,
+    borderWidth: 1,
+  },
+  nanoEnhanceText: {
+    fontSize: 12,
+    flex: 1,
+  },
+  nanoBadgeTag: {
+    backgroundColor: '#059669',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  nanoBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
   },
   filterBar: {
     flexDirection: 'row',

@@ -23,6 +23,7 @@ import {
   fetchWpCourseDetail,
   fetchWpLiveWorkshops,
 } from '../services/wordpressApi';
+import { GeminiNanoService } from '../services/ai/geminiNanoService';
 
 function areDataEqual(a: any, b: any): boolean {
   if (a === b) return true;
@@ -843,12 +844,12 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     scoredCourses.sort((a, b) => b.score - a.score);
     const recommended = scoredCourses.slice(0, 6).map((item) => item.course);
 
-    let rationale = 'Curated based on top trending & your learning preferences';
-    let rationaleBn = 'জনপ্রিয় স্কিল ও রেটিংয়ের উপর ভিত্তি করে আপনার জন্য বিশেষভাবে নির্বাচিত';
+    let rationale = '✨ Gemini Nano Recommendation: Curated for executive skill acceleration';
+    let rationaleBn = '✨ অন-ডিভাইস জেমিনাই ন্যানো সুপারিশ: পেশাগত দক্ষতা বৃদ্ধির জন্য বিশেষভাবে নির্বাচিত';
 
     if (topCatObj && topScore > 2) {
-      rationale = `Based on your interest in ${topCatObj.name}`;
-      rationaleBn = `আপনার "${topCatObj.banglaName || topCatObj.name}" বিষয়ক সক্রিয় আগ্রহের ভিত্তিতে প্রস্তাবিত`;
+      rationale = `✨ Gemini Nano Match: Tailored for your interest in ${topCatObj.name}`;
+      rationaleBn = `✨ অন-ডিভাইস জেমিনাই ন্যানো সুপারিশ: আপনার "${topCatObj.banglaName || topCatObj.name}" বিষয়ক সক্রিয় আগ্রহের ভিত্তিতে প্রস্তাবিত`;
     }
 
     return { courses: recommended, rationale, rationaleBn };

@@ -90,7 +90,7 @@ android {
     namespace 'com.thrivingskill.app'
     defaultConfig {
         applicationId 'com.thrivingskill.app'
-        minSdkVersion rootProject.ext.minSdkVersion
+        minSdkVersion 31 // Required for Google AI Edge AICore (Gemini Nano on Android 12+)
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 10400
         versionName "1.4.0"
@@ -183,4 +183,8 @@ dependencies {
     // Google Play services LiteRT runtime (dynamic loading, saves ~8MB APK bloat)
     implementation("com.google.android.gms:play-services-tflite-java:16.4.0")
     implementation("com.google.android.gms:play-services-tflite-gpu:16.4.0")
+
+    // Google AI Edge AICore for on-device Gemini Nano inference
+    // Runs inference locally through Android's AICore system service with zero API cost
+    implementation("com.google.ai.edge.aicore:aicore:0.0.1-exp01")
 }

@@ -33,27 +33,43 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
   const [messages, setMessages] = useState<TutorMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isThinking, setIsThinking] = useState(false);
+  const [nanoStatus, setNanoStatus] = useState<string>('Gemini Nano On-Device');
+  const [isNanoOfflineReady, setIsNanoOfflineReady] = useState(false);
+  const [smartReplies, setSmartReplies] = useState<string[]>([]);
   const scrollRef = useRef<React.ElementRef<typeof ScrollView> | null>(null);
 
-  // Load chat history when opened
+  // Load chat history & on-device Gemini Nano status when opened
   useEffect(() => {
-    if (visible && context.lessonId) {
-      AiTutorService.getStoredHistory(context.lessonId).then((history) => {
-        if (history.length > 0) {
-          setMessages(history);
-        } else {
-          // Welcome message
-          const welcomeMsg: TutorMessage = {
-            id: 'welcome',
-            role: 'assistant',
-            content: isBangla
-              ? `স্বাগতম! আমি "SkillBot", আপনার ব্যক্তিগত এআই লার্নিং টিউটর।\n\n"${context.lessonTitle}" লেকচার নিয়ে যেকোনো প্রশ্ন বা কনসেপ্ট পরিষ্কার করতে নিচে লিখুন অথবা দ্রুত বাটনগুলোতে ট্যাপ করুন।`
-              : `Welcome! I'm "SkillBot", your personal in-lecture AI tutor.\n\nAsk me anything about "${context.lessonTitle}", or tap one of the suggested prompts below to get started!`,
-            timestamp: Date.now(),
-          };
-          setMessages([welcomeMsg]);
-        }
+    if (visible) {
+      AiTutorService.getExecutionStatus().then((status) => {
+        setIsNanoOfflineReady(status.isSupported);
+        setNanoStatus(
+          status.isSupported
+            ? 'Gemini Nano (Offline ⚡)'
+            : 'AI Edge Hybrid'
+        );
       });
+
+      AiTutorService.getSmartReplies('', isBangla).then(setSmartReplies);
+
+      if (context.lessonId) {
+        AiTutorService.getStoredHistory(context.lessonId).then((history) => {
+          if (history.length > 0) {
+            setMessages(history);
+          } else {
+            // Welcome message
+            const welcomeMsg: TutorMessage = {
+              id: 'welcome',
+              role: 'assistant',
+              content: isBangla
+                ? `স্বাগতম! আমি "SkillBot", আপনার অন-ডিভাইস এআই লার্নিং টিউটর (Gemini Nano Powered)।\n\n"${context.lessonTitle}" লেকচার নিয়ে যেকোনো প্রশ্ন বা কনসেপ্ট পরিষ্কার করতে নিচে লিখুন অথবা দ্রুত বাটনগুলোতে ট্যাপ করুন। এটি ১০০% অফলাইনেও কাজ করে!`
+                : `Welcome! I'm "SkillBot", your in-lecture AI copilot powered by Gemini Nano on-device.\n\nAsk me anything about "${context.lessonTitle}", summarize key points, or tap one of the suggested prompts below to get started—even 100% offline!`,
+              timestamp: Date.now(),
+            };
+            setMessages([welcomeMsg]);
+          }
+        });
+      }
     }
   }, [visible, context.lessonId, isBangla, context.lessonTitle]);
 
@@ -89,6 +105,7 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
       const finalHistory = [...newHistory, assistantMsg];
       setMessages(finalHistory);
       AiTutorService.saveHistory(context.lessonId, finalHistory);
+      AiTutorService.getSmartReplies(answer, isBangla).then(setSmartReplies);
     } catch {
       const errorMsg: TutorMessage = {
         id: `assistant-${Date.now()}`,
@@ -100,6 +117,32 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
+      setIsThinking(false);
+      setTimeout(() => {
+        scrollRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  };
+
+  const handleSummarizeLecture = async () => {
+    if (isThinking) return;
+    triggerHaptic('medium');
+    setIsThinking(true);
+    const content = context.lessonSummary || context.lessonTitle;
+    try {
+      const res = await AiTutorService.summarizeLectureOnDevice(content, isBangla);
+      const summaryMsg: TutorMessage = {
+        id: `summary-${Date.now()}`,
+        role: 'assistant',
+        content: res.summary,
+        timestamp: Date.now(),
+      };
+      const finalHistory = [...messages, summaryMsg];
+      setMessages(finalHistory);
+      AiTutorService.saveHistory(context.lessonId, finalHistory);
+      AiTutorService.getSmartReplies(res.summary, isBangla).then(setSmartReplies);
+    } catch {}
+    finally {
       setIsThinking(false);
       setTimeout(() => {
         scrollRef.current?.scrollToEnd({ animated: true });
@@ -149,8 +192,30 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
               <View style={styles.headerTitleWrap}>
                 <View style={styles.headerBadgeRow}>
                   <Text style={[styles.botName, { color: colors.text }]}>SkillBot Copilot</Text>
-                  <View style={styles.aiBadge}>
-                    <Text style={styles.aiBadgeText}>AI TUTOR</Text>
+                  <View
+                    style={[
+                      styles.aiBadge,
+                      {
+                        backgroundColor: isNanoOfflineReady
+                          ? 'rgba(16, 185, 129, 0.16)'
+                          : 'rgba(255, 182, 6, 0.16)',
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name={isNanoOfflineReady ? 'flash' : 'sparkles'}
+                      size={10}
+                      color={isNanoOfflineReady ? '#059669' : '#D97706'}
+                      style={{ marginRight: 3 }}
+                    />
+                    <Text
+                      style={[
+                        styles.aiBadgeText,
+                        { color: isNanoOfflineReady ? '#059669' : '#D97706' },
+                      ]}
+                    >
+                      {nanoStatus}
+                    </Text>
                   </View>
                 </View>
                 <Text style={[styles.lessonSub, { color: colors.textMuted }]} numberOfLines={1}>
@@ -187,6 +252,26 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.quickPromptScroll}
           >
+            {/* On-Device Gemini Nano Quick Summarize Button */}
+            <TouchableOpacity
+              style={[
+                styles.quickPromptPill,
+                {
+                  backgroundColor: isDark ? '#064E3B' : '#ECFDF5',
+                  borderColor: isDark ? '#059669' : '#A7F3D0',
+                },
+              ]}
+              onPress={handleSummarizeLecture}
+              activeOpacity={0.75}
+              accessibilityRole="button"
+              accessibilityLabel={isBangla ? 'অন-ডিভাইস লেকচার সামারি' : 'On-Device Lecture Summary'}
+            >
+              <Ionicons name="sparkles" size={12} color="#059669" />
+              <Text style={[styles.quickPromptText, { color: '#059669', fontWeight: '700' }]}>
+                {isBangla ? '⚡ লেকচার সামারি (অন-ডিভাইস)' : '⚡ Summarize (On-Device)'}
+              </Text>
+            </TouchableOpacity>
+
             {QUICK_PROMPTS.map((p, idx) => (
               <TouchableOpacity
                 key={idx}
@@ -284,6 +369,37 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
               </View>
             )}
           </ScrollView>
+
+          {/* Smart Reply Suggestions (Powered by Gemini Nano) */}
+          {smartReplies.length > 0 && !isThinking && (
+            <View style={styles.smartRepliesContainer}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.smartRepliesScroll}
+              >
+                {smartReplies.map((reply, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    style={[
+                      styles.smartReplyChip,
+                      {
+                        backgroundColor: isDark ? '#1E293B' : '#F1F5F9',
+                        borderColor: isDark ? '#334155' : '#CBD5E1',
+                      },
+                    ]}
+                    onPress={() => handleSendMessage(reply)}
+                    activeOpacity={0.75}
+                    accessibilityRole="button"
+                    accessibilityLabel={reply}
+                  >
+                    <Ionicons name="chatbubble-ellipses-outline" size={11} color={colors.primary} />
+                    <Text style={[styles.smartReplyText, { color: colors.text }]}>{reply}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
 
           {/* Input Bar */}
           <View style={[styles.inputBar, { borderTopColor: colors.border }]}>
@@ -499,5 +615,26 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  smartRepliesContainer: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+  },
+  smartRepliesScroll: {
+    gap: 8,
+    alignItems: 'center',
+  },
+  smartReplyChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+    borderWidth: 1,
+  },
+  smartReplyText: {
+    fontSize: 11,
+    fontWeight: '600',
   },
 });

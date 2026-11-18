@@ -21,6 +21,7 @@ import {
   SearchResult,
 } from '../../services/search/localSearchEngine';
 import { LiteRtService } from '../../services/ai/liteRtService';
+import { GeminiNanoService } from '../../services/ai/geminiNanoService';
 import { SpacedRepetitionService } from '../../services/study/spacedRepetitionService';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
@@ -48,6 +49,7 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
   const [filterType, setFilterType] = useState<FilterOption>('all');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSemanticActive, setIsSemanticActive] = useState<boolean>(LiteRtService.isSemanticEnabled());
+  const [suggestedEnhancement, setSuggestedEnhancement] = useState<string | null>(null);
   const inputRef = useRef<React.ElementRef<typeof TextInput>>(null);
 
   const handleToggleSemantic = async () => {
@@ -62,6 +64,15 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
       );
       setResults(res);
     }
+  };
+
+  const handleApplyEnhancement = () => {
+    if (!suggestedEnhancement) return;
+    triggerHaptic('light');
+    const next = suggestedEnhancement;
+    setQuery(next);
+    setSuggestedEnhancement(null);
+    handleSearch(next, filterType);
   };
 
   // Rebuild the local index on modal open or when courses/notes change
@@ -84,12 +95,28 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
   const handleSearch = useCallback(
     (text: string, filter: FilterOption) => {
       setQuery(text);
-      if (!text.trim()) {
+      const clean = text.trim();
+      if (!clean) {
         setResults([]);
+        setSuggestedEnhancement(null);
         return;
       }
+
+      // Check on-device Gemini Nano query proofreading / semantic expansion
+      if (clean.length >= 2) {
+        GeminiNanoService.enhanceSearchQuery(clean).then((res) => {
+          if (res.isExpanded && res.enhanced.toLowerCase() !== clean.toLowerCase()) {
+            setSuggestedEnhancement(res.enhanced);
+          } else {
+            setSuggestedEnhancement(null);
+          }
+        });
+      } else {
+        setSuggestedEnhancement(null);
+      }
+
       const res = LocalSearchEngine.search(
-        text.trim(),
+        clean,
         filter === 'all' ? undefined : filter
       );
       setResults(res);
@@ -222,6 +249,34 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
             </TouchableOpacity>
           </View>
 
+          {/* Gemini Nano On-Device Query Enhancement / Proofreading */}
+          {suggestedEnhancement && (
+            <TouchableOpacity
+              style={[
+                styles.nanoEnhanceBanner,
+                {
+                  backgroundColor: isDark ? '#1E293B' : '#F0FDF4',
+                  borderColor: isDark ? '#059669' : '#BBF7D0',
+                },
+              ]}
+              onPress={handleApplyEnhancement}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={`Gemini Nano suggested query: ${suggestedEnhancement}`}
+            >
+              <Ionicons name="sparkles" size={14} color="#059669" />
+              <Text style={[styles.nanoEnhanceText, { color: colors.text }]}>
+                Search instead for:{' '}
+                <Text style={{ fontWeight: '800', color: '#059669' }}>
+                  {suggestedEnhancement}
+                </Text>
+              </Text>
+              <View style={styles.nanoBadgeTag}>
+                <Text style={styles.nanoBadgeText}>Nano AI</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+
           {/* Filter Chips Bar */}
           <View style={styles.filterBar}>
             <ScrollView
@@ -257,7 +312,7 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
                     isSemanticActive && { fontWeight: '700' },
                   ]}
                 >
-                  {isSemanticActive ? 'Semantic Match: ON' : 'Semantic Match: OFF'}
+                  {isSemanticActive ? '✨ Nano + LiteRT: ON' : 'Semantic Match: OFF'}
                 </Text>
               </TouchableOpacity>
 
@@ -415,6 +470,33 @@ const styles = StyleSheet.create({
   cancelBtnText: {
     fontSize: 15,
     fontWeight: '700',
+  },
+  nanoEnhanceBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 2,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: shape.medium,
+    borderWidth: 1,
+  },
+  nanoEnhanceText: {
+    fontSize: 12,
+    flex: 1,
+  },
+  nanoBadgeTag: {
+    backgroundColor: '#059669',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  nanoBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
   },
   filterBar: {
     paddingVertical: 10,

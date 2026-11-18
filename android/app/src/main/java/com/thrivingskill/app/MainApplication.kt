@@ -23,6 +23,8 @@ class MainApplication : Application(), ReactApplication {
         PackageList(this).packages.apply {
           // LiteRT Google Play Services Native Module Package
           add(com.thrivingskill.app.litert.LiteRtPackage())
+          // Google AI Edge Gemini Nano Native Module Package
+          add(com.thrivingskill.app.aicore.GeminiNanoPackage())
         }
     )
   }

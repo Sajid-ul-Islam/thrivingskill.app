@@ -425,7 +425,12 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
 
               {isScreenLocked && (
                 <View style={styles.screenLockGuard} pointerEvents="auto">
-                  <TouchableOpacity style={styles.unlockPill} onPress={onToggleScreenLock}>
+                  <TouchableOpacity
+                    style={styles.unlockPill}
+                    onPress={onToggleScreenLock}
+                    accessibilityRole="button"
+                    accessibilityLabel={isBangla ? 'ভিডিও কন্ট্রোল আনলক করুন' : 'Unlock video controls'}
+                  >
                     <Ionicons name="lock-closed" size={18} color="#FFB606" />
                     <Text style={styles.unlockPillText}>
                       {isBangla ? 'আনলক করতে ট্যাপ করুন' : 'Tap to Unlock Controls'}

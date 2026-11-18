@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Env } from '../../config/env';
+import { GeminiNanoService, GeminiNanoStatus } from './geminiNanoService';
 
 export interface AiTutorContext {
   courseId: string;
@@ -25,6 +26,8 @@ const STORAGE_KEY_PREFIX = '@thrivingskill_ai_tutor_';
 export class AiTutorService {
   /**
    * Generates a grounded, pedagogical response from the SkillBot AI Tutor.
+   * Leverages On-Device Gemini Nano via Google AI Edge (AICore) when available for 100% offline,
+   * zero-cost inference, and coordinates with Google Gemini 1.5 Flash Cloud and contextual fallback.
    */
   static async askTutor(
     question: string,
@@ -39,8 +42,28 @@ export class AiTutorService {
         : 'Please ask a question or topic regarding this lecture.';
     }
 
-    const geminiKey = Env.GEMINI_API_KEY;
+    // 1. Try On-Device Gemini Nano via Google AI Edge (Zero API cost, works 100% offline)
+    const isNanoReady = await GeminiNanoService.isAvailable();
+    if (isNanoReady) {
+      try {
+        const nanoRes = await GeminiNanoService.generateText(trimmed, {
+          isBangla,
+          context: {
+            courseTitle: context.courseTitle,
+            lessonTitle: context.lessonTitle,
+            instructorName: context.instructorName,
+          },
+        });
+        if (nanoRes && nanoRes.text) {
+          return nanoRes.text;
+        }
+      } catch (err) {
+        // Fall back gracefully to cloud or localized synthesis
+      }
+    }
 
+    // 2. Try Google Gemini 1.5 Flash Cloud API if key is present
+    const geminiKey = Env.GEMINI_API_KEY;
     if (geminiKey) {
       try {
         const response = await this.callGeminiApi(trimmed, context, conversationHistory, isBangla, geminiKey);
@@ -50,8 +73,35 @@ export class AiTutorService {
       }
     }
 
-    // Contextual intelligent synthesis fallback grounded in lecture curriculum
+    // 3. Contextual intelligent synthesis fallback grounded in lecture curriculum
     return this.generateContextualResponse(trimmed, context, isBangla);
+  }
+
+  /**
+   * Summarizes lecture transcript or notes using on-device Gemini Nano with zero API cost.
+   */
+  static async summarizeLectureOnDevice(
+    content: string,
+    isBangla: boolean = false
+  ): Promise<{ summary: string; isOffline: boolean; source: string }> {
+    return GeminiNanoService.summarizeLecture(content, isBangla);
+  }
+
+  /**
+   * Generates on-device smart reply options for the current student.
+   */
+  static async getSmartReplies(
+    lastMessage: string,
+    isBangla: boolean = false
+  ): Promise<string[]> {
+    return GeminiNanoService.generateSmartReplies(lastMessage, { isBangla });
+  }
+
+  /**
+   * Check status of on-device AI runtime (AICore / Gemini Nano)
+   */
+  static async getExecutionStatus(): Promise<GeminiNanoStatus> {
+    return GeminiNanoService.checkStatus();
   }
 
   /**
