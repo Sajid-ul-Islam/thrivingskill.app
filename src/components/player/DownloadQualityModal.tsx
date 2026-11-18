@@ -55,7 +55,7 @@ export const DownloadQualityModal: React.FC<DownloadQualityModalProps> = ({
       label: '720p HD Video',
       sublabel: 'Standard crisp high-definition quality',
       size: '~65 MB',
-      icon: 'sparkles-outline',
+      icon: 'videocam-outline',
       recommended: true,
     },
     {
@@ -135,7 +135,7 @@ export const DownloadQualityModal: React.FC<DownloadQualityModalProps> = ({
                   Online Streaming Only
                 </Text>
                 <Text style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center', lineHeight: 18, marginBottom: 14 }}>
-                  Offline video downloads have been removed to protect intellectual property. All lessons stream seamlessly in HD online.
+                  Offline video downloads have been removed to protect intellectual property. All lessons stream directly in HD online.
                 </Text>
                 <TouchableOpacity
                   style={{

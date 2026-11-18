@@ -62,7 +62,7 @@ When prompting Large Language Models (LLMs), unstructured commands yield erratic
 4. **Constraints**: Define what *not* to do (e.g. "Do not extrapolate missing numbers; flag them with [DATA NEEDED]").
 
 ### Enterprise Adoption Across Dhaka & Chittagong
-Major multinationals and leading conglomerates in Bangladesh are now integrating private AI copilots to automate Excel forecasting, draft bilingual board resolutions, and optimize talent acquisition pipelines. Upskilling internal teams has proven 4x more cost-effective than outsourcing technical development.`,
+Major multinationals and leading conglomerates in Bangladesh are now integrating private AI assistants and workflow models to automate Excel forecasting, draft bilingual board resolutions, and optimize talent acquisition pipelines. Upskilling internal teams has proven 4x more cost-effective than outsourcing technical development.`,
     category: 'ai',
     categoryLabel: 'Generative AI & 4IR',
     author: 'Abdullah Al Mahmud',

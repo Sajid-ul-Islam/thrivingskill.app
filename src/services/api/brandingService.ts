@@ -63,9 +63,9 @@ export const DEFAULT_CURATED_SLIDES: DynamicCarouselSlide[] = [
   {
     id: 'ai-masterclass',
     badge: 'EXECUTIVE MASTERCLASS',
-    badgeIcon: 'sparkles',
+    badgeIcon: 'bulb',
     title: 'Generative AI & Prompt Engineering',
-    subtitle: '10x office productivity with ChatGPT, Claude & automated workflow models.',
+    subtitle: 'Boost office productivity with practical AI, prompt engineering & automated workflow models.',
     ctaText: 'Watch Video Trailer →',
     gradientColors: ['#102F53', '#0A1C33', '#102F53'],
     actionType: 'trailer',

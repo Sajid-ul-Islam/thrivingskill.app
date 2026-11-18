@@ -256,7 +256,7 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
                       : `Playback Alert (${playerError})`}
                   </Text>
                   <Text style={styles.playerErrorSubtext}>
-                    This YouTube video has restricted embed permissions. Tap below to watch seamlessly in the YouTube app.
+                    This YouTube video has restricted embed permissions. Tap below to watch directly in the YouTube app.
                   </Text>
                   <TouchableOpacity
                     style={styles.errorOpenBtn}

@@ -188,7 +188,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
               {/* Mission Hero Banner */}
               <View style={[styles.heroCard, { backgroundColor: isDark ? colors.surfaceCard : '#F0FDF4', borderColor: '#BBF7D0' }]}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                  <Ionicons name="sparkles" size={18} color="#10B981" />
+                  <Ionicons name="shield-checkmark" size={18} color="#10B981" />
                   <Text style={[styles.heroBadge, { color: '#059669' }]}>
                     OFFICIAL CORPORATE ECOSYSTEM
                   </Text>

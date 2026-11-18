@@ -193,7 +193,7 @@ export const SupportContactModal: React.FC<SupportContactModalProps> = ({
                   style={[
                     styles.topicChip,
                     {
-                      backgroundColor: isSelected ? (isDark ? '#1E293B' : colors.primaryLight) : colors.surfaceCard,
+                      backgroundColor: isSelected ? colors.primaryLight : colors.surfaceCard,
                       borderColor: isSelected ? colors.primary : colors.border,
                     },
                   ]}

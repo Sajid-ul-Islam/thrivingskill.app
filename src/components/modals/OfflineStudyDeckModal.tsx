@@ -153,7 +153,7 @@ export const OfflineStudyDeckModal: React.FC<OfflineStudyDeckModalProps> = ({
                     <Text style={[styles.takeawayHeader, { color: colors.primary }]}>Key Concepts & Takeaways</Text>
                     {selectedLesson.takeaways.map((point, idx) => (
                       <View key={idx} style={styles.takeawayRow}>
-                        <Ionicons name="sparkles-outline" size={16} color={colors.primary} style={{ marginTop: 2 }} />
+                        <Ionicons name="checkmark-circle-outline" size={16} color={colors.primary} style={{ marginTop: 2 }} />
                         <Text style={[styles.takeawayText, { color: colors.text }]}>{point}</Text>
                       </View>
                     ))}

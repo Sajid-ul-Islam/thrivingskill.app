@@ -581,7 +581,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 </Text>
                 {(subscriptionTier === 'pro' || subscriptionTier === 'enterprise') && (
                   <View style={[styles.proBadge, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.2)' : '#FEF3C7' }]}>
-                    <Ionicons name="sparkles" size={10} color="#D97706" />
+                    <Ionicons name="star" size={10} color="#D97706" />
                     <Text style={styles.proBadgeText}>{subscriptionTier.toUpperCase()}</Text>
                   </View>
                 )}

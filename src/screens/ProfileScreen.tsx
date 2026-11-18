@@ -1254,7 +1254,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           >
             <View style={styles.planBadgeRow}>
               <View style={[styles.tierTag, { backgroundColor: colors.primaryLight }]}>
-                <Ionicons name="sparkles" size={12} color={colors.primary} />
+                <Ionicons name="ribbon" size={12} color={colors.primary} />
                 <Text style={[styles.tierTagText, { color: colors.primary }]}>
                   {subscriptionTier === 'enterprise'
                     ? 'ENTERPRISE SCALE'

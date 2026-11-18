@@ -113,7 +113,7 @@ export const CelebrationToast: React.FC<CelebrationToastProps> = ({
             </Text>
             {data.xpAwarded ? (
               <View style={styles.xpBadge}>
-                <Ionicons name="sparkles" size={10} color="#102F53" />
+                <Ionicons name="star" size={10} color="#102F53" />
                 <Text style={styles.xpText}>+{data.xpAwarded} XP</Text>
               </View>
             ) : null}
