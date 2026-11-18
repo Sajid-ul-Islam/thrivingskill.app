@@ -2251,7 +2251,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(16, 47, 83, 0.85)',
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: shape.pill,
+    borderRadius: shape.full,
     maxWidth: '60%',
   },
   serverPlayerTitleText: {
@@ -2271,7 +2271,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(15, 25, 44, 0.85)',
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: shape.pill,
+    borderRadius: shape.full,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.25)',
   },
@@ -2300,7 +2300,7 @@ const styles = StyleSheet.create({
     borderColor: '#FFB606',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: shape.pill,
+    borderRadius: shape.full,
   },
   unlockPillText: {
     color: '#FFFFFF',
