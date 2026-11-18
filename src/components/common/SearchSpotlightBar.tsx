@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useResponsive } from '../../theme/responsive';
 import { shape } from '../../theme/shapes';
 
 interface SearchSpotlightBarProps {
@@ -24,6 +25,7 @@ export const SearchSpotlightBar: React.FC<SearchSpotlightBarProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
+  const { isTablet } = useResponsive();
 
   return (
     <View style={styles.container}>
@@ -31,6 +33,7 @@ export const SearchSpotlightBar: React.FC<SearchSpotlightBarProps> = ({
       <TouchableOpacity
         style={[
           styles.searchBox,
+          isTablet && { minHeight: 52, paddingHorizontal: 16 },
           {
             backgroundColor: isDark ? colors.surfaceCard : '#FFFFFF',
             borderColor: colors.border,
@@ -39,8 +42,8 @@ export const SearchSpotlightBar: React.FC<SearchSpotlightBarProps> = ({
         onPress={onPress}
         activeOpacity={0.85}
       >
-        <Ionicons name="search" size={18} color={colors.primary} />
-        <Text style={[styles.placeholderText, { color: colors.textMuted }]} numberOfLines={1}>
+        <Ionicons name="search" size={isTablet ? 20 : 18} color={colors.primary} />
+        <Text style={[styles.placeholderText, isTablet && { fontSize: 14 }, { color: colors.textMuted }]} numberOfLines={1}>
           {isBangla ? 'আজকে আপনি কি শিখতে চান?' : 'What do you want to learn today?'}
         </Text>
         <View style={[styles.cmdKChip, { backgroundColor: colors.surfaceSubtle }]}>

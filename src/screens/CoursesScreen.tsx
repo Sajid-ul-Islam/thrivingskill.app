@@ -57,7 +57,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
   const insets = useSafeAreaInsets();
-  const { isTablet, isLandscape, numColumns, containerClampStyle } = useResponsive();
+  const { isTablet, isLandscape, numColumns, containerClampStyle, width } = useResponsive();
   const {
     courses,
     totalCourseCount,
@@ -423,6 +423,14 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
           color: string;
           courses: Course[];
         };
+        const deptItemCount = dept.courses.length;
+        const effectiveWidth = Math.min(width, 1100);
+        const deptCardWidth = isTablet
+          ? isLandscape
+            ? Math.max(280, Math.floor((effectiveWidth - 48) / 3.2))
+            : Math.max(300, Math.floor((effectiveWidth - 48) / 2.2))
+          : 250;
+
         return (
           <View style={styles.deptRowSection}>
             <View style={styles.deptRowHeader}>
@@ -455,27 +463,52 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               </TouchableOpacity>
             </View>
 
-            <FlatList
-              data={dept.courses}
-              keyExtractor={(c) => `dept-course-${dept.id}-${c.id}`}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.deptCarouselContent}
-              initialNumToRender={3}
-              maxToRenderPerBatch={4}
-              windowSize={3}
-              removeClippedSubviews={Platform.OS === 'android'}
-              renderItem={({ item: courseItem }) => (
-                <View style={styles.deptCardItemWrap}>
-                  <CourseCard
-                    course={courseItem}
-                    isBookmarked={bookmarks.includes(courseItem.id)}
-                    isEnrolled={!!userProgress[courseItem.id]}
-                    onPress={() => onNavigateToCourse(courseItem.id)}
-                  />
-                </View>
-              )}
-            />
+            {isTablet && deptItemCount === 1 ? (
+              <View style={{ paddingHorizontal: 16 }}>
+                <CourseCard
+                  course={dept.courses[0]}
+                  horizontal={true}
+                  isBookmarked={bookmarks.includes(dept.courses[0].id)}
+                  isEnrolled={!!userProgress[dept.courses[0].id]}
+                  onPress={() => onNavigateToCourse(dept.courses[0].id)}
+                />
+              </View>
+            ) : isTablet && deptItemCount === 2 && !isLandscape ? (
+              <View style={{ flexDirection: 'row', paddingHorizontal: 16, gap: 12 }}>
+                {dept.courses.map((courseItem) => (
+                  <View key={`dept-course-${dept.id}-${courseItem.id}`} style={{ flex: 1 }}>
+                    <CourseCard
+                      course={courseItem}
+                      isBookmarked={bookmarks.includes(courseItem.id)}
+                      isEnrolled={!!userProgress[courseItem.id]}
+                      onPress={() => onNavigateToCourse(courseItem.id)}
+                    />
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <FlatList
+                data={dept.courses}
+                keyExtractor={(c) => `dept-course-${dept.id}-${c.id}`}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.deptCarouselContent}
+                initialNumToRender={isTablet ? 4 : 3}
+                maxToRenderPerBatch={4}
+                windowSize={3}
+                removeClippedSubviews={Platform.OS === 'android'}
+                renderItem={({ item: courseItem }) => (
+                  <View style={{ width: deptCardWidth }}>
+                    <CourseCard
+                      course={courseItem}
+                      isBookmarked={bookmarks.includes(courseItem.id)}
+                      isEnrolled={!!userProgress[courseItem.id]}
+                      onPress={() => onNavigateToCourse(courseItem.id)}
+                    />
+                  </View>
+                )}
+              />
+            )}
           </View>
         );
       }
@@ -492,7 +525,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
         </View>
       );
     },
-    [isBrowsingDepartments, colors, isDark, isBangla, handleCategorySelect, onNavigateToCourse, viewMode, bookmarks, userProgress, effectiveColumns]
+    [isBrowsingDepartments, colors, isDark, isBangla, handleCategorySelect, onNavigateToCourse, viewMode, bookmarks, userProgress, effectiveColumns, width, isTablet, isLandscape]
   );
 
   const keyExtractor = useCallback(

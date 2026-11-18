@@ -17,6 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import { shape } from '../../theme/shapes';
+import { useResponsive } from '../../theme/responsive';
 
 export interface CarouselSlide {
   id: string;
@@ -114,7 +115,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
   onSelectSlide,
 }) => {
   const { colors, isDark } = useTheme();
-  const { width: screenWidth } = useWindowDimensions();
+  const { isTablet, width: screenWidth } = useResponsive();
   const cardWidth = Math.min(Math.max(280, screenWidth - 32), 880);
   const slides = propSlides && propSlides.length > 0 ? propSlides : SLIDES;
 
@@ -236,7 +237,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
           }
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={styles.gradient}
+          style={[styles.gradient, isTablet && styles.tabletGradient]}
         >
           {/* Subtle Background Glow Circles */}
           <View style={styles.glowCircleOne} />
@@ -245,30 +246,30 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
           {/* Top Badge Row */}
           <View style={styles.badgeRow}>
             <View style={styles.badge}>
-              <Ionicons name={item.badgeIcon as any} size={11} color="#FBBF24" />
-              <Text style={styles.badgeText} numberOfLines={1} ellipsizeMode="tail">
+              <Ionicons name={item.badgeIcon as any} size={isTablet ? 13 : 11} color="#FBBF24" />
+              <Text style={[styles.badgeText, isTablet && { fontSize: 11 }]} numberOfLines={1} ellipsizeMode="tail">
                 {item.badge}
               </Text>
             </View>
 
             <View style={styles.verifiedChip}>
-              <Ionicons name="checkmark-circle" size={12} color="#34D399" />
-              <Text style={styles.verifiedChipText}>Official</Text>
+              <Ionicons name="checkmark-circle" size={isTablet ? 14 : 12} color="#34D399" />
+              <Text style={[styles.verifiedChipText, isTablet && { fontSize: 11 }]}>Official</Text>
             </View>
           </View>
 
           {/* Title & Subtitle */}
-          <Text style={styles.title} numberOfLines={2}>
+          <Text style={[styles.title, isTablet && styles.tabletTitle]} numberOfLines={2}>
             {item.title}
           </Text>
-          <Text style={styles.subtitle} numberOfLines={2}>
+          <Text style={[styles.subtitle, isTablet && styles.tabletSubtitle]} numberOfLines={2}>
             {item.subtitle}
           </Text>
 
           {/* CTA Row */}
-          <View style={styles.ctaRow}>
-            <View style={styles.ctaBtn}>
-              <Text style={styles.ctaText}>{item.ctaText}</Text>
+          <View style={[styles.ctaRow, isTablet && { marginTop: 16 }]}>
+            <View style={[styles.ctaBtn, isTablet && styles.tabletCtaBtn]}>
+              <Text style={[styles.ctaText, isTablet && { fontSize: 13 }]}>{item.ctaText}</Text>
             </View>
             <View style={styles.slideCounterGroup}>
               <TouchableOpacity
@@ -493,5 +494,23 @@ const styles = StyleSheet.create({
   },
   inactiveDot: {
     width: 6,
+  },
+  tabletGradient: {
+    padding: 24,
+    minHeight: 200,
+  },
+  tabletTitle: {
+    fontSize: 24,
+    lineHeight: 32,
+    marginTop: 10,
+  },
+  tabletSubtitle: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginTop: 6,
+  },
+  tabletCtaBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 9,
   },
 });

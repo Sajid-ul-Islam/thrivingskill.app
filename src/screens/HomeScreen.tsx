@@ -54,9 +54,7 @@ interface CategoryRowProps {
   colors: ReturnType<typeof useTheme>['colors'];
 }
 
-const CARD_WIDTH = 240;
 const CARD_GAP = 12;
-const CARD_SNAP = CARD_WIDTH + CARD_GAP; // 252
 
 const CategoryRow: React.FC<CategoryRowProps> = ({
   title,
@@ -65,6 +63,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
   onNavigateTab,
   colors,
 }) => {
+  const { isTablet, isLandscape, width } = useResponsive();
   const flatRef = useRef<FlatList<Course> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const indexRef = useRef<number>(0);
@@ -74,15 +73,31 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
   const displayCourses = useMemo(() => courses.slice(0, 7), [courses]);
   const itemCount = displayCourses.length;
 
+  const effectiveWidth = Math.min(width, 1100);
+
+  // Dynamic card width for tablets to ensure beautiful proportional layouts
+  const cardWidth = useMemo(() => {
+    if (!isTablet) return 240;
+    if (itemCount === 2 && !isLandscape) {
+      return Math.floor((effectiveWidth - 32 - CARD_GAP) / 2);
+    }
+    return isLandscape
+      ? Math.max(280, Math.floor((effectiveWidth - 48) / 3.2))
+      : Math.max(300, Math.floor((effectiveWidth - 48) / 2.2));
+  }, [isTablet, isLandscape, effectiveWidth, itemCount]);
+
+  const cardSnap = cardWidth + CARD_GAP;
+
   useEffect(() => {
-    if (itemCount <= 1) return;
+    // Suppress auto-scroll if single item or if all items fit comfortably on screen without scrolling
+    if (itemCount <= 1 || (isTablet && itemCount <= (isLandscape ? 3 : 2) && (itemCount <= 2 && !isLandscape))) return;
 
     timerRef.current = setInterval(() => {
       if (isDraggingRef.current) return;
       try {
         indexRef.current = (indexRef.current + 1) % itemCount;
         flatRef.current?.scrollToOffset({
-          offset: indexRef.current * CARD_SNAP,
+          offset: indexRef.current * cardSnap,
           animated: true,
         });
       } catch {
@@ -96,7 +111,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
         timerRef.current = null;
       }
     };
-  }, [itemCount]);
+  }, [itemCount, cardSnap, isTablet, isLandscape]);
 
   if (itemCount === 0) return null;
 
@@ -152,46 +167,75 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
         </SpringPressable>
       </View>
 
-      {/* Horizontal FlatList with Safe Offset Scrolling */}
-      <FlatList
-        ref={flatRef}
-        data={displayCourses}
-        keyExtractor={(item) => `cat-row-${title}-${item.id}`}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        initialNumToRender={3}
-        maxToRenderPerBatch={4}
-        windowSize={3}
-        removeClippedSubviews={Platform.OS === 'android'}
-        contentContainerStyle={{ paddingHorizontal: 16, gap: CARD_GAP, paddingBottom: 4 }}
-        getItemLayout={(_, index) => ({
-          length: CARD_SNAP,
-          offset: CARD_SNAP * index,
-          index,
-        })}
-        onScrollBeginDrag={() => {
-          isDraggingRef.current = true;
-        }}
-        onScrollEndDrag={() => {
-          isDraggingRef.current = false;
-        }}
-        onMomentumScrollEnd={(e) => {
-          isDraggingRef.current = false;
-          const offX = e.nativeEvent.contentOffset.x;
-          indexRef.current = Math.round(offX / CARD_SNAP);
-        }}
-        renderItem={({ item }) => (
-          <View style={{ width: CARD_WIDTH }}>
-            <CourseCard
-              course={item}
-              onPress={() => {
-                triggerHaptic('light');
-                onNavigateToCourse(item.id);
-              }}
-            />
-          </View>
-        )}
-      />
+      {/* If single course on tablet, render featured wide horizontal card */}
+      {isTablet && itemCount === 1 ? (
+        <View style={{ paddingHorizontal: 16 }}>
+          <CourseCard
+            course={displayCourses[0]}
+            horizontal={true}
+            onPress={() => {
+              triggerHaptic('light');
+              onNavigateToCourse(displayCourses[0].id);
+            }}
+          />
+        </View>
+      ) : isTablet && itemCount === 2 && !isLandscape ? (
+        /* If 2 courses on tablet portrait, display both side-by-side filling the width */
+        <View style={{ flexDirection: 'row', paddingHorizontal: 16, gap: CARD_GAP }}>
+          {displayCourses.map((item) => (
+            <View key={`cat-row-${title}-${item.id}`} style={{ flex: 1 }}>
+              <CourseCard
+                course={item}
+                onPress={() => {
+                  triggerHaptic('light');
+                  onNavigateToCourse(item.id);
+                }}
+              />
+            </View>
+          ))}
+        </View>
+      ) : (
+        /* Multi-item horizontal carousel with responsive cardWidth */
+        <FlatList
+          ref={flatRef}
+          data={displayCourses}
+          keyExtractor={(item) => `cat-row-${title}-${item.id}`}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          initialNumToRender={isTablet ? 4 : 3}
+          maxToRenderPerBatch={4}
+          windowSize={3}
+          removeClippedSubviews={Platform.OS === 'android'}
+          contentContainerStyle={{ paddingHorizontal: 16, gap: CARD_GAP, paddingBottom: 4 }}
+          getItemLayout={(_, index) => ({
+            length: cardSnap,
+            offset: cardSnap * index,
+            index,
+          })}
+          onScrollBeginDrag={() => {
+            isDraggingRef.current = true;
+          }}
+          onScrollEndDrag={() => {
+            isDraggingRef.current = false;
+          }}
+          onMomentumScrollEnd={(e) => {
+            isDraggingRef.current = false;
+            const offX = e.nativeEvent.contentOffset.x;
+            indexRef.current = Math.round(offX / cardSnap);
+          }}
+          renderItem={({ item }) => (
+            <View style={{ width: cardWidth }}>
+              <CourseCard
+                course={item}
+                onPress={() => {
+                  triggerHaptic('light');
+                  onNavigateToCourse(item.id);
+                }}
+              />
+            </View>
+          )}
+        />
+      )}
     </View>
   );
 };
@@ -530,193 +574,388 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             pointerEvents="none"
           />
 
-          <View style={styles.greetingTopRow}>
-            {/* Learner Avatar */}
-            <SpringPressable
-              style={styles.avatarWrap}
-              onPress={() => {
-                triggerHaptic('light');
-                if (isGuest && !isAuthenticated) {
-                  setAuthModalVisible(true);
-                } else {
-                  onNavigateTab('Profile');
-                }
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={isBangla ? 'প্রোফাইল ওপেন করুন' : 'Open profile'}
-              haptic="light"
-              activeScale={0.92}
-            >
-              {user?.avatar ? (
-                <Image
-                  source={{ uri: user.avatar }}
-                  style={styles.learnerAvatar}
-                />
-              ) : (
-                <View
-                  style={[
-                    styles.learnerAvatar,
-                    styles.avatarInitialsCircle,
-                    { backgroundColor: colors.primary, borderColor: colors.primaryLight },
-                  ]}
+          {isTablet ? (
+            /* Tablet: Balanced 3-Widget Executive Dashboard Row */
+            <View style={styles.tabletDashboardContainer}>
+              {/* 1. Learner Profile & Greeting Section */}
+              <View style={styles.tabletProfileCol}>
+                <SpringPressable
+                  style={styles.avatarWrap}
+                  onPress={() => {
+                    triggerHaptic('light');
+                    if (isGuest && !isAuthenticated) {
+                      setAuthModalVisible(true);
+                    } else {
+                      onNavigateTab('Profile');
+                    }
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={isBangla ? 'প্রোফাইল ওপেন করুন' : 'Open profile'}
+                  haptic="light"
+                  activeScale={0.92}
                 >
-                  <Text style={styles.avatarInitialsText}>
-                    {(user?.name || user?.username || (isAuthenticated ? 'Student' : 'Learner')).charAt(0).toUpperCase()}
-                  </Text>
-                </View>
-              )}
-              <View
-                style={[
-                  styles.avatarOnlineDot,
-                  {
-                    backgroundColor: isAuthenticated ? '#10B981' : '#F59E0B',
-                    borderColor: isDark ? colors.surfaceCard : '#FFFFFF',
-                  },
-                ]}
-              />
-            </SpringPressable>
-
-            {/* Greeting Text */}
-            <TouchableOpacity
-              activeOpacity={0.85}
-              style={styles.greetingTextCol}
-              onPress={() => {
-                triggerHaptic('light');
-                if (isGuest && !isAuthenticated) {
-                  setAuthModalVisible(true);
-                } else {
-                  onNavigateTab('Profile');
-                }
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={`${greetingInfo.salutation}, ${learnerDisplayName}`}
-            >
-              <View style={styles.salutationRow}>
-                <Ionicons name={greetingInfo.icon} size={13} color={greetingInfo.iconColor} />
-                <Text style={[styles.salutationText, { color: colors.textMuted }]}>
-                  {greetingInfo.salutation}
-                </Text>
-                {(subscriptionTier === 'pro' || subscriptionTier === 'enterprise') && (
-                  <View style={[styles.proBadge, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.2)' : '#FEF3C7' }]}>
-                    <Ionicons name="star" size={10} color="#D97706" />
-                    <Text style={styles.proBadgeText}>{subscriptionTier.toUpperCase()}</Text>
-                  </View>
-                )}
-              </View>
-              <Text style={[styles.greetingTitle, { color: colors.text }]} numberOfLines={1}>
-                {learnerDisplayName} 👋
-              </Text>
-            </TouchableOpacity>
-
-            {/* Momentum Capsule */}
-            <SpringPressable
-              style={[
-                styles.momentumCapsule,
-                {
-                  backgroundColor: isDark ? colors.surfaceSubtle : '#F8FAFC',
-                  borderColor: colors.border,
-                },
-              ]}
-              onPress={() => {
-                triggerHaptic('light');
-                Alert.alert(
-                  isBangla ? 'দৈনিক লার্নিং মোমেন্টাম 🔥' : 'Learning Momentum 🔥',
-                  `${isBangla ? '• টানা স্ট্রিক' : '• Streak'}: ${streakDays} ${isBangla ? 'দিন' : 'Days'}\n${isBangla ? '• আজকের সময়' : '• Today\'s Time'}: ${dailyMinutesSpent}m / ${dailyTargetMinutes}m ${isBangla ? 'লক্ষ্য' : 'Goal'}\n\n${isBangla ? 'প্রতিদিন কোর্স ও ভিডিও দেখে নতুন ব্যাজ অর্জন করুন!' : 'Complete lessons and videos to keep up your daily streak!'}`,
-                  [
-                    {
-                      text: isBangla ? 'মাই হাব দেখুন' : 'View My Hub',
-                      onPress: () => onNavigateTab('MyLearning'),
-                    },
-                    { text: isBangla ? 'ঠিক আছে' : 'Got it', style: 'cancel' },
-                  ],
-                );
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={isBangla ? `দৈনিক স্ট্রিক ${streakDays} দিন, আজকের স্টাডি ${dailyMinutesSpent} মিনিট` : `Daily streak ${streakDays} days, today study ${dailyMinutesSpent} minutes`}
-              haptic="selection"
-              activeScale={0.93}
-            >
-              <View style={styles.momentumItem}>
-                <Text style={styles.flameEmoji}>🔥</Text>
-                <Text style={[styles.momentumValue, { color: '#F97316' }]}>
-                  {streakDays}d
-                </Text>
-              </View>
-              <View style={[styles.momentumDivider, { backgroundColor: colors.border }]} />
-              <View style={styles.momentumItem}>
-                <Ionicons name="time" size={12} color={colors.primary} />
-                <Text style={[styles.momentumValue, { color: colors.primary }]}>
-                  {dailyMinutesSpent}m
-                </Text>
-              </View>
-            </SpringPressable>
-          </View>
-
-          {/* Subtitle + Radial Goal Ring */}
-          <View style={styles.greetingBottomRow}>
-            <View style={{ flex: 1, marginRight: 10 }}>
-              <Text style={[styles.greetingSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
-                {greetingSubtitleText}
-              </Text>
-            </View>
-
-            <TouchableOpacity
-              style={[
-                styles.radialGoalBadge,
-                {
-                  backgroundColor: isDark ? colors.surfaceSubtle : '#F8FAFC',
-                  borderColor: colors.border,
-                },
-              ]}
-              activeOpacity={0.85}
-              onPress={() => {
-                triggerHaptic('light');
-                Alert.alert(
-                  isBangla ? 'দৈনিক লক্ষ্য ও মোমেন্টাম 🎯' : 'Daily Study Goal 🎯',
-                  `${isBangla ? '• আজকের স্টাডি' : '• Today'}: ${dailyMinutesSpent}m / ${dailyTargetMinutes}m (${currentGoalPercent}% ${isBangla ? 'সম্পন্ন' : 'completed'})\n${isBangla ? '• স্টাডি স্ট্রিক' : '• Study Streak'}: ${streakDays} ${isBangla ? 'দিন' : 'days'} 🔥\n\n${
-                    isGoalAchieved
-                      ? (isBangla ? 'অভিনন্দন! আজকের লক্ষ্য অর্জিত হয়েছে 🎉' : 'Awesome! You hit today\'s learning goal 🎉')
-                      : (isBangla ? `আর মাত্র ${Math.max(0, dailyTargetMinutes - dailyMinutesSpent)} মিনিট স্টাডি করলেই আজকের লক্ষ্য সম্পন্ন!` : `Only ${Math.max(0, dailyTargetMinutes - dailyMinutesSpent)} minutes left to complete today's goal!`)
-                  }`,
-                  [
-                    { text: isBangla ? 'কোর্স চালিয়ে যান' : 'Continue Course', onPress: () => onNavigateTab('MyLearning') },
-                    { text: isBangla ? 'ঠিক আছে' : 'OK', style: 'cancel' },
-                  ],
-                );
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={`Daily Goal: ${dailyMinutesSpent} of ${dailyTargetMinutes} minutes completed`}
-            >
-              <CircularProgressRing
-                progress={currentGoalPercent}
-                size={32}
-                strokeWidth={3}
-                trackColor={isDark ? colors.border : '#E2E8F0'}
-                progressColor={isGoalAchieved ? '#10B981' : (colors.brandGold || '#FFB606')}
-                showText={false}
-                centerContent={
-                  <Text
+                  {user?.avatar ? (
+                    <Image
+                      source={{ uri: user.avatar }}
+                      style={styles.learnerAvatar}
+                    />
+                  ) : (
+                    <View
+                      style={[
+                        styles.learnerAvatar,
+                        styles.avatarInitialsCircle,
+                        { backgroundColor: colors.primary, borderColor: colors.primaryLight },
+                      ]}
+                    >
+                      <Text style={styles.avatarInitialsText}>
+                        {(user?.name || user?.username || (isAuthenticated ? 'Student' : 'Learner')).charAt(0).toUpperCase()}
+                      </Text>
+                    </View>
+                  )}
+                  <View
                     style={[
-                      styles.radialCenterIcon,
+                      styles.avatarOnlineDot,
                       {
-                        color: isGoalAchieved ? '#10B981' : (colors.brandGold || '#FFB606'),
+                        backgroundColor: isAuthenticated ? '#10B981' : '#F59E0B',
+                        borderColor: isDark ? colors.surfaceCard : '#FFFFFF',
                       },
                     ]}
-                  >
-                    {isGoalAchieved ? '✓' : '⚡'}
+                  />
+                </SpringPressable>
+
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  style={styles.tabletProfileTextCol}
+                  onPress={() => {
+                    triggerHaptic('light');
+                    if (isGuest && !isAuthenticated) {
+                      setAuthModalVisible(true);
+                    } else {
+                      onNavigateTab('Profile');
+                    }
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${greetingInfo.salutation}, ${learnerDisplayName}`}
+                >
+                  <View style={styles.salutationRow}>
+                    <Ionicons name={greetingInfo.icon} size={14} color={greetingInfo.iconColor} />
+                    <Text style={[styles.salutationText, { color: colors.textMuted }]}>
+                      {greetingInfo.salutation}
+                    </Text>
+                    {(subscriptionTier === 'pro' || subscriptionTier === 'enterprise') && (
+                      <View style={[styles.proBadge, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.2)' : '#FEF3C7' }]}>
+                        <Ionicons name="star" size={10} color="#D97706" />
+                        <Text style={styles.proBadgeText}>{subscriptionTier.toUpperCase()}</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text style={[styles.tabletGreetingTitle, { color: colors.text }]} numberOfLines={1}>
+                    {learnerDisplayName} 👋
                   </Text>
-                }
-              />
-              <View style={styles.radialGoalTextCol}>
-                <Text style={[styles.radialGoalTitle, { color: colors.text }]}>
-                  {dailyMinutesSpent}/{dailyTargetMinutes}m
-                </Text>
-                <Text style={[styles.radialGoalSub, { color: colors.textMuted }]}>
-                  {isBangla ? 'দৈনিক লক্ষ্য' : 'Daily Goal'}
-                </Text>
+                  <Text style={[styles.tabletGreetingSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
+                    {greetingSubtitleText}
+                  </Text>
+                </TouchableOpacity>
               </View>
-            </TouchableOpacity>
-          </View>
+
+              {/* Vertical divider */}
+              <View style={[styles.tabletDivider, { backgroundColor: colors.border }]} />
+
+              {/* 2. Streak & Momentum Section */}
+              <SpringPressable
+                style={[
+                  styles.tabletWidgetPill,
+                  {
+                    backgroundColor: isDark ? colors.surfaceSubtle : '#F8FAFC',
+                    borderColor: colors.border,
+                  },
+                ]}
+                onPress={() => {
+                  triggerHaptic('light');
+                  Alert.alert(
+                    isBangla ? 'দৈনিক লার্নিং মোমেন্টাম 🔥' : 'Learning Momentum 🔥',
+                    `${isBangla ? '• টানা স্ট্রিক' : '• Streak'}: ${streakDays} ${isBangla ? 'দিন' : 'Days'}\n${isBangla ? '• আজকের সময়' : '• Today\'s Time'}: ${dailyMinutesSpent}m / ${dailyTargetMinutes}m ${isBangla ? 'লক্ষ্য' : 'Goal'}\n\n${isBangla ? 'প্রতিদিন কোর্স ও ভিডিও দেখে নতুন ব্যাজ অর্জন করুন!' : 'Complete lessons and videos to keep up your daily streak!'}`,
+                    [
+                      {
+                        text: isBangla ? 'মাই হাব দেখুন' : 'View My Hub',
+                        onPress: () => onNavigateTab('MyLearning'),
+                      },
+                      { text: isBangla ? 'ঠিক আছে' : 'Got it', style: 'cancel' },
+                    ],
+                  );
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={isBangla ? `দৈনিক স্ট্রিক ${streakDays} দিন, আজকের স্টাডি ${dailyMinutesSpent} মিনিট` : `Daily streak ${streakDays} days, today study ${dailyMinutesSpent} minutes`}
+                haptic="selection"
+                activeScale={0.95}
+              >
+                <View style={styles.tabletWidgetIconCircle}>
+                  <Text style={{ fontSize: 20 }}>🔥</Text>
+                </View>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={[styles.tabletWidgetTitle, { color: '#F97316' }]} numberOfLines={1}>
+                    {streakDays} {isBangla ? 'দিন স্ট্রিক' : 'Days Streak'}
+                  </Text>
+                  <Text style={[styles.tabletWidgetSub, { color: colors.textMuted }]} numberOfLines={1}>
+                    {dailyMinutesSpent}m {isBangla ? 'আজকের স্টাডি' : 'studied today'}
+                  </Text>
+                </View>
+              </SpringPressable>
+
+              {/* Vertical divider */}
+              <View style={[styles.tabletDivider, { backgroundColor: colors.border }]} />
+
+              {/* 3. Daily Study Goal Section */}
+              <TouchableOpacity
+                style={[
+                  styles.tabletWidgetPill,
+                  {
+                    backgroundColor: isDark ? colors.surfaceSubtle : '#F8FAFC',
+                    borderColor: colors.border,
+                  },
+                ]}
+                activeOpacity={0.85}
+                onPress={() => {
+                  triggerHaptic('light');
+                  Alert.alert(
+                    isBangla ? 'দৈনিক লক্ষ্য ও মোমেন্টাম 🎯' : 'Daily Study Goal 🎯',
+                    `${isBangla ? '• আজকের স্টাডি' : '• Today'}: ${dailyMinutesSpent}m / ${dailyTargetMinutes}m (${currentGoalPercent}% ${isBangla ? 'সম্পন্ন' : 'completed'})\n${isBangla ? '• স্টাডি স্ট্রিক' : '• Study Streak'}: ${streakDays} ${isBangla ? 'দিন' : 'days'} 🔥\n\n${
+                      isGoalAchieved
+                        ? (isBangla ? 'অভিনন্দন! আজকের লক্ষ্য অর্জিত হয়েছে 🎉' : 'Awesome! You hit today\'s learning goal 🎉')
+                        : (isBangla ? `আর মাত্র ${Math.max(0, dailyTargetMinutes - dailyMinutesSpent)} মিনিট স্টাডি করলেই আজকের লক্ষ্য সম্পন্ন!` : `Only ${Math.max(0, dailyTargetMinutes - dailyMinutesSpent)} minutes left to complete today's goal!`)
+                    }`,
+                    [
+                      { text: isBangla ? 'কোর্স চালিয়ে যান' : 'Continue Course', onPress: () => onNavigateTab('MyLearning') },
+                      { text: isBangla ? 'ঠিক আছে' : 'OK', style: 'cancel' },
+                    ],
+                  );
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`Daily Goal: ${dailyMinutesSpent} of ${dailyTargetMinutes} minutes completed`}
+              >
+                <CircularProgressRing
+                  progress={currentGoalPercent}
+                  size={36}
+                  strokeWidth={3.5}
+                  trackColor={isDark ? colors.border : '#E2E8F0'}
+                  progressColor={isGoalAchieved ? '#10B981' : (colors.brandGold || '#FFB606')}
+                  showText={false}
+                  centerContent={
+                    <Text
+                      style={[
+                        styles.radialCenterIcon,
+                        {
+                          color: isGoalAchieved ? '#10B981' : (colors.brandGold || '#FFB606'),
+                          fontSize: 10,
+                        },
+                      ]}
+                    >
+                      {isGoalAchieved ? '✓' : '⚡'}
+                    </Text>
+                  }
+                />
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={[styles.tabletWidgetTitle, { color: colors.text }]} numberOfLines={1}>
+                    {dailyMinutesSpent}/{dailyTargetMinutes}m ({currentGoalPercent}%)
+                  </Text>
+                  <Text style={[styles.tabletWidgetSub, { color: colors.textMuted }]} numberOfLines={1}>
+                    {isBangla ? 'দৈনিক লক্ষ্য' : 'Daily Goal'}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            /* Mobile: Compact 2-row layout */
+            <>
+              <View style={styles.greetingTopRow}>
+                {/* Learner Avatar */}
+                <SpringPressable
+                  style={styles.avatarWrap}
+                  onPress={() => {
+                    triggerHaptic('light');
+                    if (isGuest && !isAuthenticated) {
+                      setAuthModalVisible(true);
+                    } else {
+                      onNavigateTab('Profile');
+                    }
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={isBangla ? 'প্রোফাইল ওপেন করুন' : 'Open profile'}
+                  haptic="light"
+                  activeScale={0.92}
+                >
+                  {user?.avatar ? (
+                    <Image
+                      source={{ uri: user.avatar }}
+                      style={styles.learnerAvatar}
+                    />
+                  ) : (
+                    <View
+                      style={[
+                        styles.learnerAvatar,
+                        styles.avatarInitialsCircle,
+                        { backgroundColor: colors.primary, borderColor: colors.primaryLight },
+                      ]}
+                    >
+                      <Text style={styles.avatarInitialsText}>
+                        {(user?.name || user?.username || (isAuthenticated ? 'Student' : 'Learner')).charAt(0).toUpperCase()}
+                      </Text>
+                    </View>
+                  )}
+                  <View
+                    style={[
+                      styles.avatarOnlineDot,
+                      {
+                        backgroundColor: isAuthenticated ? '#10B981' : '#F59E0B',
+                        borderColor: isDark ? colors.surfaceCard : '#FFFFFF',
+                      },
+                    ]}
+                  />
+                </SpringPressable>
+
+                {/* Greeting Text */}
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  style={styles.greetingTextCol}
+                  onPress={() => {
+                    triggerHaptic('light');
+                    if (isGuest && !isAuthenticated) {
+                      setAuthModalVisible(true);
+                    } else {
+                      onNavigateTab('Profile');
+                    }
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${greetingInfo.salutation}, ${learnerDisplayName}`}
+                >
+                  <View style={styles.salutationRow}>
+                    <Ionicons name={greetingInfo.icon} size={13} color={greetingInfo.iconColor} />
+                    <Text style={[styles.salutationText, { color: colors.textMuted }]}>
+                      {greetingInfo.salutation}
+                    </Text>
+                    {(subscriptionTier === 'pro' || subscriptionTier === 'enterprise') && (
+                      <View style={[styles.proBadge, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.2)' : '#FEF3C7' }]}>
+                        <Ionicons name="star" size={10} color="#D97706" />
+                        <Text style={styles.proBadgeText}>{subscriptionTier.toUpperCase()}</Text>
+                      </View>
+                    )}
+                  </View>
+                  <Text style={[styles.greetingTitle, { color: colors.text }]} numberOfLines={1}>
+                    {learnerDisplayName} 👋
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Momentum Capsule */}
+                <SpringPressable
+                  style={[
+                    styles.momentumCapsule,
+                    {
+                      backgroundColor: isDark ? colors.surfaceSubtle : '#F8FAFC',
+                      borderColor: colors.border,
+                    },
+                  ]}
+                  onPress={() => {
+                    triggerHaptic('light');
+                    Alert.alert(
+                      isBangla ? 'দৈনিক লার্নিং মোমেন্টাম 🔥' : 'Learning Momentum 🔥',
+                      `${isBangla ? '• টানা স্ট্রিক' : '• Streak'}: ${streakDays} ${isBangla ? 'দিন' : 'Days'}\n${isBangla ? '• আজকের সময়' : '• Today\'s Time'}: ${dailyMinutesSpent}m / ${dailyTargetMinutes}m ${isBangla ? 'লক্ষ্য' : 'Goal'}\n\n${isBangla ? 'প্রতিদিন কোর্স ও ভিডিও দেখে নতুন ব্যাজ অর্জন করুন!' : 'Complete lessons and videos to keep up your daily streak!'}`,
+                      [
+                        {
+                          text: isBangla ? 'মাই হাব দেখুন' : 'View My Hub',
+                          onPress: () => onNavigateTab('MyLearning'),
+                        },
+                        { text: isBangla ? 'ঠিক আছে' : 'Got it', style: 'cancel' },
+                      ],
+                    );
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={isBangla ? `দৈনিক স্ট্রিক ${streakDays} দিন, আজকের স্টাডি ${dailyMinutesSpent} মিনিট` : `Daily streak ${streakDays} days, today study ${dailyMinutesSpent} minutes`}
+                  haptic="selection"
+                  activeScale={0.93}
+                >
+                  <View style={styles.momentumItem}>
+                    <Text style={styles.flameEmoji}>🔥</Text>
+                    <Text style={[styles.momentumValue, { color: '#F97316' }]}>
+                      {streakDays}d
+                    </Text>
+                  </View>
+                  <View style={[styles.momentumDivider, { backgroundColor: colors.border }]} />
+                  <View style={styles.momentumItem}>
+                    <Ionicons name="time" size={12} color={colors.primary} />
+                    <Text style={[styles.momentumValue, { color: colors.primary }]}>
+                      {dailyMinutesSpent}m
+                    </Text>
+                  </View>
+                </SpringPressable>
+              </View>
+
+              {/* Subtitle + Radial Goal Ring */}
+              <View style={styles.greetingBottomRow}>
+                <View style={{ flex: 1, marginRight: 10 }}>
+                  <Text style={[styles.greetingSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
+                    {greetingSubtitleText}
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  style={[
+                    styles.radialGoalBadge,
+                    {
+                      backgroundColor: isDark ? colors.surfaceSubtle : '#F8FAFC',
+                      borderColor: colors.border,
+                    },
+                  ]}
+                  activeOpacity={0.85}
+                  onPress={() => {
+                    triggerHaptic('light');
+                    Alert.alert(
+                      isBangla ? 'দৈনিক লক্ষ্য ও মোমেন্টাম 🎯' : 'Daily Study Goal 🎯',
+                      `${isBangla ? '• আজকের স্টাডি' : '• Today'}: ${dailyMinutesSpent}m / ${dailyTargetMinutes}m (${currentGoalPercent}% ${isBangla ? 'সম্পন্ন' : 'completed'})\n${isBangla ? '• স্টাডি স্ট্রিক' : '• Study Streak'}: ${streakDays} ${isBangla ? 'দিন' : 'days'} 🔥\n\n${
+                        isGoalAchieved
+                          ? (isBangla ? 'অভিনন্দন! আজকের লক্ষ্য অর্জিত হয়েছে 🎉' : 'Awesome! You hit today\'s learning goal 🎉')
+                          : (isBangla ? `আর মাত্র ${Math.max(0, dailyTargetMinutes - dailyMinutesSpent)} মিনিট স্টাডি করলেই আজকের লক্ষ্য সম্পন্ন!` : `Only ${Math.max(0, dailyTargetMinutes - dailyMinutesSpent)} minutes left to complete today's goal!`)
+                      }`,
+                      [
+                        { text: isBangla ? 'কোর্স চালিয়ে যান' : 'Continue Course', onPress: () => onNavigateTab('MyLearning') },
+                        { text: isBangla ? 'ঠিক আছে' : 'OK', style: 'cancel' },
+                      ],
+                    );
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Daily Goal: ${dailyMinutesSpent} of ${dailyTargetMinutes} minutes completed`}
+                >
+                  <CircularProgressRing
+                    progress={currentGoalPercent}
+                    size={32}
+                    strokeWidth={3}
+                    trackColor={isDark ? colors.border : '#E2E8F0'}
+                    progressColor={isGoalAchieved ? '#10B981' : (colors.brandGold || '#FFB606')}
+                    showText={false}
+                    centerContent={
+                      <Text
+                        style={[
+                          styles.radialCenterIcon,
+                          {
+                            color: isGoalAchieved ? '#10B981' : (colors.brandGold || '#FFB606'),
+                          },
+                        ]}
+                      >
+                        {isGoalAchieved ? '✓' : '⚡'}
+                      </Text>
+                    }
+                  />
+                  <View style={styles.radialGoalTextCol}>
+                    <Text style={[styles.radialGoalTitle, { color: colors.text }]}>
+                      {dailyMinutesSpent}/{dailyTargetMinutes}m
+                    </Text>
+                    <Text style={[styles.radialGoalSub, { color: colors.textMuted }]}>
+                      {isBangla ? 'দৈনিক লক্ষ্য' : 'Daily Goal'}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
         </View>
 
         {/* ── 2. Search Bar ── */}
@@ -1033,5 +1272,67 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     paddingHorizontal: 12,
+  },
+  tabletDashboardContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+    gap: 16,
+  },
+  tabletProfileCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1.3,
+    minWidth: 0,
+  },
+  tabletProfileTextCol: {
+    flex: 1,
+    minWidth: 0,
+    justifyContent: 'center',
+  },
+  tabletGreetingTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+    marginTop: 2,
+  },
+  tabletGreetingSubtitle: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  tabletDivider: {
+    width: 1,
+    height: 48,
+    opacity: 0.8,
+  },
+  tabletWidgetPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 16,
+    borderWidth: 1,
+    flex: 1,
+    gap: 10,
+    minHeight: 56,
+  },
+  tabletWidgetIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(249, 115, 22, 0.12)',
+  },
+  tabletWidgetTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  tabletWidgetSub: {
+    fontSize: 11,
+    fontWeight: '500',
+    marginTop: 2,
   },
 });
