@@ -50,7 +50,25 @@ assert(pushServiceContent.includes('notifyNewCourse('), 'Must provide notifyNewC
 assert(pushServiceContent.includes('notifyCourseOffer('), 'Must provide notifyCourseOffer helper');
 assert(pushServiceContent.includes('notifyCourseRecommendation('), 'Must provide notifyCourseRecommendation helper');
 assert(pushServiceContent.includes('notifySiteUpdate('), 'Must provide notifySiteUpdate helper');
-pass('PushNotificationService event emitter and dispatch methods verified');
+assert(pushServiceContent.includes('Notifications.scheduleNotificationAsync'), 'Must deliver to native notification manager');
+assert(pushServiceContent.includes('addNativeNotificationResponseListener'), 'Must provide native tap response listener');
+pass('PushNotificationService event emitter, native delivery, and dispatch methods verified');
+
+// -------------------------------------------------------------
+// Test 1b: Android Manifest & App Config Status Bar Permissions
+// -------------------------------------------------------------
+console.log('\nTest 1b: Verifying Android Manifest & App Config for Native Status Bar Drop-Down...');
+const manifestPath = path.join(__dirname, '../android/app/src/main/AndroidManifest.xml');
+assert(fs.existsSync(manifestPath), 'AndroidManifest.xml must exist');
+const manifestContent = fs.readFileSync(manifestPath, 'utf8');
+assert(manifestContent.includes('android.permission.POST_NOTIFICATIONS'), 'Must declare POST_NOTIFICATIONS in AndroidManifest.xml');
+assert(manifestContent.includes('android.permission.VIBRATE'), 'Must declare VIBRATE in AndroidManifest.xml');
+
+const appJsonPath = path.join(__dirname, '../app.json');
+const appJsonContent = fs.readFileSync(appJsonPath, 'utf8');
+assert(appJsonContent.includes('POST_NOTIFICATIONS'), 'Must declare POST_NOTIFICATIONS in app.json');
+assert(appJsonContent.includes('expo-notifications'), 'Must configure expo-notifications plugin in app.json');
+pass('Native Android Status Bar permissions (POST_NOTIFICATIONS, VIBRATE) and plugin configured');
 
 // -------------------------------------------------------------
 // Test 2: Live Site Sync Service Verification
@@ -135,7 +153,8 @@ const appContent = fs.readFileSync(appPath, 'utf8');
 assert(appContent.includes('IosActionNotificationPanel'), 'App.tsx must mount IosActionNotificationPanel');
 assert(appContent.includes('onNavigateToCourse={navigateToCourse}'), 'Must wire navigation into panel');
 assert(appContent.includes('onBookmarkCourse='), 'Must wire bookmarking into panel');
-pass('App.tsx mounts IosActionNotificationPanel globally with navigation and bookmarking');
+assert(appContent.includes('addNativeNotificationResponseListener'), 'Must wire native status bar notification tap routing');
+pass('App.tsx mounts IosActionNotificationPanel globally with navigation, bookmarking, and native status bar deep-linking');
 
 console.log('\n====================================================');
 console.log(`   ALL ${passedChecks} NOTIFICATION & SYNC AUDIT CHECKS PASSED!   `);

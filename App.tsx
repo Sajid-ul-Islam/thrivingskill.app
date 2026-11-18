@@ -13,6 +13,7 @@ import {
   Animated,
   Easing,
   LayoutAnimation,
+  Linking,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -197,6 +198,18 @@ const MainAppContent: React.FC = () => {
       message: `Navigated to ${activeScreen.name}`,
     });
   }, [activeScreen.name]);
+
+  // Deep-link routing when learner taps native Android status bar drop-down notification
+  useEffect(() => {
+    const unsub = PushNotificationService.addNativeNotificationResponseListener((data) => {
+      if (data?.courseId) {
+        navigateToCourse(String(data.courseId));
+      } else if (data?.postUrl) {
+        Linking.openURL(String(data.postUrl)).catch(() => {});
+      }
+    });
+    return unsub;
+  }, [navigateToCourse]);
 
   // Global Modals State
   const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);

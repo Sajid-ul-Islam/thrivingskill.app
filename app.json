@@ -23,7 +23,9 @@
       "softwareKeyboardLayoutMode": "resize",
       "permissions": [
         "INTERNET",
-        "ACCESS_NETWORK_STATE"
+        "ACCESS_NETWORK_STATE",
+        "VIBRATE",
+        "POST_NOTIFICATIONS"
       ],
       "blockedPermissions": [
         "android.permission.SYSTEM_ALERT_WINDOW",
@@ -83,6 +85,13 @@
         {
           "supportsBackgroundPlayback": true,
           "supportsPictureInPicture": true
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#102F53"
         }
       ]
     ],

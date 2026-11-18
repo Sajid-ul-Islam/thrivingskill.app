@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
 
 export interface NotificationSettings {
   streakReminders: boolean;
@@ -92,6 +93,20 @@ export const IOS_NOTIFICATION_CATEGORIES = {
   },
 } as const;
 
+// Configure global notification handler: ensures notifications pop down from the status bar
+// as heads-up alerts and remain in the pull-down notification shade even when app is foregrounded
+try {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+} catch {}
+
 const STORAGE_KEY_TOKEN = '@thrivingskill_push_token';
 const STORAGE_KEY_SETTINGS = '@thrivingskill_notification_settings';
 const STORAGE_KEY_INBOX = '@thrivingskill_notifications_inbox';
@@ -108,9 +123,10 @@ const DEFAULT_SETTINGS: NotificationSettings = {
 export class PushNotificationService {
   private static cachedToken: string | null = null;
   private static listeners = new Set<(notif: InAppNotification) => void>();
+  private static channelsInitialized = false;
 
   /**
-   * Subscribe to live in-app notifications (e.g. for iOS action panel banner)
+   * Subscribe to live in-app notifications (e.g. for Action Notification Panel)
    */
   static subscribe(listener: (notif: InAppNotification) => void): () => void {
     this.listeners.add(listener);
@@ -128,22 +144,71 @@ export class PushNotificationService {
   }
 
   /**
-   * Registers the device for push notifications and returns the active push token
+   * Registers the device for push notifications, sets up Android notification channels,
+   * requests Android 13+ POST_NOTIFICATIONS permission, and returns the device push token.
    */
   static async registerForPushNotifications(): Promise<string | null> {
     try {
       const stored = await AsyncStorage.getItem(STORAGE_KEY_TOKEN);
       if (stored) {
         this.cachedToken = stored;
-        return stored;
       }
 
-      // Generate a deterministic client device push token
-      const deviceId = `ts_push_${Platform.OS}_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 8)}`;
-      await AsyncStorage.setItem(STORAGE_KEY_TOKEN, deviceId);
-      this.cachedToken = deviceId;
+      // Request native system notification permissions (Android 13+ & iOS)
+      if (Platform.OS !== 'web') {
+        try {
+          const { status: existingStatus } = await Notifications.getPermissionsAsync();
+          let finalStatus = existingStatus;
+          if (existingStatus !== 'granted') {
+            const { status } = await Notifications.requestPermissionsAsync();
+            finalStatus = status;
+          }
+        } catch {}
+      }
 
-      // In browser environment, request Web Notification permission if available
+      // Initialize Android Notification Channels (Enables status bar pull-down shade & heads-up drop-down)
+      if (Platform.OS === 'android' && !this.channelsInitialized) {
+        try {
+          await Notifications.setNotificationChannelAsync(ANDROID_NOTIFICATION_CHANNELS.OFFERS.id, {
+            name: ANDROID_NOTIFICATION_CHANNELS.OFFERS.name,
+            importance: Notifications.AndroidImportance.MAX,
+            vibrationPattern: [0, 250, 250, 250],
+            lightColor: '#FFB606',
+            sound: 'default',
+            showBadge: true,
+            enableLights: true,
+            enableVibrate: true,
+          });
+
+          await Notifications.setNotificationChannelAsync(ANDROID_NOTIFICATION_CHANNELS.COURSES.id, {
+            name: ANDROID_NOTIFICATION_CHANNELS.COURSES.name,
+            importance: Notifications.AndroidImportance.HIGH,
+            vibrationPattern: [0, 200, 200, 200],
+            lightColor: '#102F53',
+            sound: 'default',
+            showBadge: true,
+            enableLights: true,
+            enableVibrate: true,
+          });
+
+          await Notifications.setNotificationChannelAsync(ANDROID_NOTIFICATION_CHANNELS.RECOMMENDATIONS.id, {
+            name: ANDROID_NOTIFICATION_CHANNELS.RECOMMENDATIONS.name,
+            importance: Notifications.AndroidImportance.HIGH,
+            sound: 'default',
+            showBadge: true,
+          });
+
+          await Notifications.setNotificationChannelAsync(ANDROID_NOTIFICATION_CHANNELS.UPDATES.id, {
+            name: ANDROID_NOTIFICATION_CHANNELS.UPDATES.name,
+            importance: Notifications.AndroidImportance.DEFAULT,
+            showBadge: true,
+          });
+
+          this.channelsInitialized = true;
+        } catch {}
+      }
+
+      // Web Notification permission
       if (Platform.OS === 'web' && typeof window !== 'undefined' && 'Notification' in window) {
         try {
           if (Notification.permission === 'default') {
@@ -152,7 +217,25 @@ export class PushNotificationService {
         } catch {}
       }
 
-      return deviceId;
+      // Generate or retrieve push token
+      if (!this.cachedToken) {
+        let deviceToken: string | null = null;
+        try {
+          const expoToken = await Notifications.getExpoPushTokenAsync().catch(() => null);
+          if (expoToken?.data) {
+            deviceToken = expoToken.data;
+          }
+        } catch {}
+
+        if (!deviceToken) {
+          deviceToken = `ts_push_${Platform.OS}_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 8)}`;
+        }
+
+        await AsyncStorage.setItem(STORAGE_KEY_TOKEN, deviceToken);
+        this.cachedToken = deviceToken;
+      }
+
+      return this.cachedToken;
     } catch {
       return null;
     }
@@ -183,7 +266,11 @@ export class PushNotificationService {
   }
 
   /**
-   * Dispatches or schedules an in-app or native notification
+   * Dispatches a notification to:
+   * 1. The phone's native Android/iOS status bar notification panel (pull down drawer)
+   * 2. In-app student notifications inbox (AsyncStorage)
+   * 3. Web Notification API (in browser)
+   * 4. In-app action notification subscribers
    */
   static async dispatchNotification(
     title: string,
@@ -203,15 +290,45 @@ export class PushNotificationService {
       actionCategory,
     };
 
+    // 1. Store in persistent in-app inbox
     try {
       const raw = await AsyncStorage.getItem(STORAGE_KEY_INBOX);
       const list: InAppNotification[] = raw ? JSON.parse(raw) : [];
       list.unshift(notification);
-      // Keep last 40 notifications in student inbox
       await AsyncStorage.setItem(STORAGE_KEY_INBOX, JSON.stringify(list.slice(0, 40)));
     } catch {}
 
-    // Dispatch to Web Notifications API if supported and granted
+    // 2. Deliver to phone's native notification shade (pull down from status bar)
+    if (Platform.OS !== 'web') {
+      try {
+        const channelId = data?.channelId || (
+          type === 'offer'
+            ? ANDROID_NOTIFICATION_CHANNELS.OFFERS.id
+            : type === 'course'
+            ? ANDROID_NOTIFICATION_CHANNELS.COURSES.id
+            : type === 'recommendation'
+            ? ANDROID_NOTIFICATION_CHANNELS.RECOMMENDATIONS.id
+            : ANDROID_NOTIFICATION_CHANNELS.UPDATES.id
+        );
+
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title,
+            body,
+            data: { ...data, type, notificationId: notification.id },
+            sound: true,
+            badge: 1,
+            // @ts-ignore Android channel config
+            channelId,
+          },
+          trigger: null, // null delivers immediately into status bar tray
+        });
+      } catch (nativeErr) {
+        // Gracefully catch if native module is unavailable
+      }
+    }
+
+    // 3. Dispatch to Web Notifications API if in browser
     if (Platform.OS === 'web' && typeof window !== 'undefined' && 'Notification' in window) {
       try {
         if (Notification.permission === 'granted') {
@@ -224,9 +341,30 @@ export class PushNotificationService {
       } catch {}
     }
 
-    // Broadcast to UI subscribers (Action Notification Panel, Modals, Badges)
+    // 4. Broadcast to in-app subscribers (Action Notification Panel, Badges)
     this.notifySubscribers(notification);
     return notification;
+  }
+
+  /**
+   * Subscribes to user taps on the phone's native status bar drop-down notification
+   */
+  static addNativeNotificationResponseListener(
+    listener: (data: Record<string, any>) => void
+  ): () => void {
+    try {
+      const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+        const data = response?.notification?.request?.content?.data;
+        if (data) {
+          listener(data);
+        }
+      });
+      return () => {
+        subscription.remove();
+      };
+    } catch {
+      return () => {};
+    }
   }
 
   /**
