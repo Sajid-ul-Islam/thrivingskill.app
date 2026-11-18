@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   coverPhotoOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(16, 47, 83, 0.2)',
   },
   contentRow: {

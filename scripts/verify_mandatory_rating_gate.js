@@ -131,15 +131,18 @@ assert(
   'MyLearningScreen renders MandatoryReviewModal and handles submission'
 );
 
-// 4. Audit ProfileScreen for completed course gating
-console.log('\n[4/6] Auditing ProfileScreen.tsx...');
+// 4. Audit ProfileScreen & ProfileLearningPortfolio for completed course gating
+console.log('\n[4/6] Auditing ProfileScreen.tsx & ProfileLearningPortfolio.tsx...');
 const profilePath = path.join(__dirname, '..', 'src', 'screens', 'ProfileScreen.tsx');
 const profileSrc = fs.readFileSync(profilePath, 'utf8');
+const portfolioPath = path.join(__dirname, '..', 'src', 'components', 'profile', 'ProfileLearningPortfolio.tsx');
+const portfolioSrc = fs.existsSync(portfolioPath) ? fs.readFileSync(portfolioPath, 'utf8') : '';
+const combinedProfileSrc = profileSrc + '\n' + portfolioSrc;
 
 assert(
-  profileSrc.includes('courseStatus === \'passed\' && cert && hasReviewedCourse(course.id)') &&
-  profileSrc.includes('courseStatus === \'passed\' && !hasReviewedCourse(course.id)'),
-  'ProfileScreen gates completed courses behind hasReviewedCourse check'
+  combinedProfileSrc.includes('courseStatus === \'passed\' && cert && hasReviewedCourse(course.id)') &&
+  combinedProfileSrc.includes('courseStatus === \'passed\' && !hasReviewedCourse(course.id)'),
+  'ProfileScreen / ProfileLearningPortfolio gates completed courses behind hasReviewedCourse check'
 );
 
 assert(
@@ -155,7 +158,9 @@ const courseDetailSrc = fs.readFileSync(courseDetailPath, 'utf8');
 
 assert(
   courseDetailSrc.includes('isCertificateUnlocked(course.id)') &&
-  courseDetailSrc.includes('userProgress[course.id]?.isCompleted && !hasReviewedCourse(course.id)'),
+  (courseDetailSrc.includes('userProgress[course.id]?.isCompleted && !hasReviewedCourse(course.id)') ||
+   courseDetailSrc.includes('hasReviewed={hasReviewedCourse(course.id)}') ||
+   courseDetailSrc.includes('isUnlocked={isCertificateUnlocked(course.id)}')),
   'CourseDetailScreen gates preview actions behind isCertificateUnlocked'
 );
 

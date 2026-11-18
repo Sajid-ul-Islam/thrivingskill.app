@@ -42,6 +42,12 @@ interface ProfileSettingsModalProps {
   setBioInfo: (val: string) => void;
   phoneNumber: string;
   setPhoneNumber: (val: string) => void;
+  city: string;
+  setCity: (val: string) => void;
+  avatarUrl: string;
+  setAvatarUrl: (val: string) => void;
+  coverPhotoUrl: string;
+  setCoverPhotoUrl: (val: string) => void;
   socialFacebook: string;
   setSocialFacebook: (val: string) => void;
   socialTwitter: string;
@@ -78,6 +84,22 @@ interface ProfileSettingsModalProps {
   setPrivacyCertificates: (val: boolean) => void;
 }
 
+const AVATAR_PRESETS = [
+  { id: 'av1', label: 'Executive Male', uri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=256&h=256&fit=crop&crop=faces' },
+  { id: 'av2', label: 'Executive Female', uri: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=256&h=256&fit=crop&crop=faces' },
+  { id: 'av3', label: 'Tech Specialist', uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=256&h=256&fit=crop&crop=faces' },
+  { id: 'av4', label: 'Scholar', uri: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=256&h=256&fit=crop&crop=faces' },
+  { id: 'av5', label: 'Creative', uri: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=256&h=256&fit=crop&crop=faces' },
+  { id: 'av6', label: 'Strategist', uri: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=256&h=256&fit=crop&crop=faces' },
+];
+
+const COVER_PRESETS = [
+  { id: 'cov1', label: 'Executive Workspace', uri: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=300&fit=crop' },
+  { id: 'cov2', label: 'Tech Innovation', uri: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&h=300&fit=crop' },
+  { id: 'cov3', label: 'Corporate Tower', uri: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=300&fit=crop' },
+  { id: 'cov4', label: 'Grand Academy', uri: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&h=300&fit=crop' },
+];
+
 export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   visible,
   onClose,
@@ -96,6 +118,12 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   setBioInfo,
   phoneNumber,
   setPhoneNumber,
+  city,
+  setCity,
+  avatarUrl,
+  setAvatarUrl,
+  coverPhotoUrl,
+  setCoverPhotoUrl,
   socialFacebook,
   setSocialFacebook,
   socialTwitter,
@@ -323,21 +351,38 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                   </Text>
                 </View>
 
-                {/* Phone Number */}
-                <View style={{ marginTop: 12 }}>
-                  <Text style={[styles.inputLabel, { color: colors.text }]}>Phone Number</Text>
-                  <TextInput
-                    style={[
-                      styles.modalInput,
-                      { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border },
-                    ]}
-                    value={phoneNumber}
-                    onChangeText={setPhoneNumber}
-                    placeholder="Phone Number"
-                    placeholderTextColor={colors.textMuted}
-                    keyboardType="phone-pad"
-                    accessibilityLabel="Phone Number"
-                  />
+                {/* Phone Number & City */}
+                <View style={[styles.twoColRow, { marginTop: 12 }]}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.inputLabel, { color: colors.text }]}>Phone Number</Text>
+                    <TextInput
+                      style={[
+                        styles.modalInput,
+                        { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border },
+                      ]}
+                      value={phoneNumber}
+                      onChangeText={setPhoneNumber}
+                      placeholder="Phone Number"
+                      placeholderTextColor={colors.textMuted}
+                      keyboardType="phone-pad"
+                      accessibilityLabel="Phone Number"
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.inputLabel, { color: colors.text }]}>City / Region</Text>
+                    <TextInput
+                      style={[
+                        styles.modalInput,
+                        { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border },
+                      ]}
+                      value={city}
+                      onChangeText={setCity}
+                      placeholder="e.g. Dhaka"
+                      placeholderTextColor={colors.textMuted}
+                      autoCapitalize="words"
+                      accessibilityLabel="City / Region"
+                    />
+                  </View>
                 </View>
 
                 {/* Social Links: Facebook & X Profile */}
@@ -431,8 +476,8 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
             {activeTab === 'avatar' && (
               <View style={{ paddingVertical: 18, alignItems: 'center' }}>
                 <View style={[styles.avatarWrapBig, { borderColor: colors.primary }]}>
-                  {user?.avatar ? (
-                    <Image source={{ uri: user.avatar }} style={styles.avatarImgBig} />
+                  {avatarUrl || user?.avatar ? (
+                    <Image source={{ uri: avatarUrl || user?.avatar }} style={styles.avatarImgBig} />
                   ) : (
                     <Ionicons name="person" size={54} color={colors.primary} />
                   )}
@@ -441,12 +486,84 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                   {displayName || 'Student Profile'}
                 </Text>
                 <Text style={[styles.avatarSubBig, { color: colors.textMuted }]}>
-                  Your avatar is synchronized with Gravatar and your official Thriving Skills LMS profile.
+                  Select a professional avatar preset or paste your custom image URL. Changes sync directly to your official LMS profile.
                 </Text>
+
+                {/* Preset Avatars Grid */}
+                <View style={{ width: '100%', marginTop: 16 }}>
+                  <Text style={[styles.inputLabel, { color: colors.text, marginBottom: 8 }]}>
+                    Choose Avatar Preset
+                  </Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+                    {AVATAR_PRESETS.map((p) => {
+                      const isSelected = avatarUrl === p.uri;
+                      return (
+                        <TouchableOpacity
+                          key={p.id}
+                          style={[
+                            styles.presetAvatarItem,
+                            { borderColor: isSelected ? colors.primary : colors.border },
+                            isSelected && { borderWidth: 2.5 },
+                          ]}
+                          onPress={() => {
+                            triggerHaptic('selection');
+                            setAvatarUrl(p.uri);
+                          }}
+                          accessibilityRole="button"
+                          accessibilityLabel={p.label}
+                        >
+                          <Image source={{ uri: p.uri }} style={styles.presetAvatarImg} />
+                          {isSelected && (
+                            <View style={[styles.presetCheckmark, { backgroundColor: colors.primary }]}>
+                              <Ionicons name="checkmark" size={12} color="#FFFFFF" />
+                            </View>
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+
+                {/* Custom Avatar URL Input */}
+                <View style={{ width: '100%', marginTop: 14 }}>
+                  <Text style={[styles.inputLabel, { color: colors.text }]}>Custom Avatar Image URL</Text>
+                  <TextInput
+                    style={[
+                      styles.modalInput,
+                      { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border },
+                    ]}
+                    value={avatarUrl}
+                    onChangeText={setAvatarUrl}
+                    placeholder="https://..."
+                    placeholderTextColor={colors.textMuted}
+                    autoCapitalize="none"
+                    accessibilityLabel="Custom Avatar Image URL"
+                  />
+                </View>
+
+                {/* Save Avatar Button */}
+                <TouchableOpacity
+                  style={[styles.saveChangesBtn, { backgroundColor: isDark ? colors.primary : '#102F53', width: '100%', marginTop: 16 }]}
+                  onPress={handleSaveProfile}
+                  disabled={isSavingProfile}
+                  activeOpacity={0.88}
+                  accessibilityRole="button"
+                  accessibilityLabel="Save avatar"
+                >
+                  {isSavingProfile ? (
+                    <ActivityIndicator size="small" color={isDark ? '#0F172A' : '#FFFFFF'} />
+                  ) : (
+                    <Text style={[styles.saveChangesBtnText, { color: isDark ? '#0F172A' : '#FFFFFF' }]}>
+                      APPLY & SYNC AVATAR
+                    </Text>
+                  )}
+                </TouchableOpacity>
+
+                {/* Gravatar Option */}
                 <TouchableOpacity
                   style={[
                     styles.secondaryActionBtn,
-                    { borderColor: colors.primary, backgroundColor: colors.primaryLight },
+                    { borderColor: colors.border, backgroundColor: colors.surfaceSubtle, marginTop: 12 },
                   ]}
                   onPress={() => Linking.openURL('https://gravatar.com').catch(() => {})}
                   accessibilityRole="button"
@@ -454,7 +571,7 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                 >
                   <Ionicons name="image-outline" size={16} color={colors.primary} />
                   <Text style={[styles.secondaryActionText, { color: colors.primary }]}>
-                    Update on Gravatar
+                    Or Sync via Gravatar.com
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -462,14 +579,95 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
 
             {activeTab === 'cover' && (
               <View style={{ paddingVertical: 18, alignItems: 'center' }}>
-                <View style={[styles.coverPreviewCard, { backgroundColor: '#102F53' }]}>
-                  <Ionicons name="school" size={42} color="#FFB606" />
+                <View style={[styles.coverPreviewCard, { backgroundColor: '#102F53', overflow: 'hidden' }]}>
+                  {coverPhotoUrl || user?.cover_photo ? (
+                    <Image
+                      source={{ uri: coverPhotoUrl || user?.cover_photo }}
+                      style={StyleSheet.absoluteFill}
+                      resizeMode="cover"
+                    />
+                  ) : null}
+                  <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(16, 47, 83, 0.4)' }]} />
+                  <Ionicons name="school" size={36} color="#FFB606" />
                   <Text style={styles.coverCardTitle}>THRIVING SKILLS</Text>
                   <Text style={styles.coverCardSub}>Executive Learning & Career Advancement</Text>
                 </View>
                 <Text style={[styles.avatarSubBig, { color: colors.textMuted, marginTop: 14 }]}>
-                  Cover photos appear across your public student profile and verified completion badges.
+                  Cover banners appear across your student profile header, verified certificates, and LMS portfolios.
                 </Text>
+
+                {/* Cover Presets */}
+                <View style={{ width: '100%', marginTop: 16 }}>
+                  <Text style={[styles.inputLabel, { color: colors.text, marginBottom: 8 }]}>
+                    Choose Cover Preset Theme
+                  </Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+                    {COVER_PRESETS.map((p) => {
+                      const isSelected = coverPhotoUrl === p.uri;
+                      return (
+                        <TouchableOpacity
+                          key={p.id}
+                          style={[
+                            styles.presetCoverItem,
+                            { borderColor: isSelected ? colors.primary : colors.border },
+                            isSelected && { borderWidth: 2.5 },
+                          ]}
+                          onPress={() => {
+                            triggerHaptic('selection');
+                            setCoverPhotoUrl(p.uri);
+                          }}
+                          accessibilityRole="button"
+                          accessibilityLabel={p.label}
+                        >
+                          <Image source={{ uri: p.uri }} style={styles.presetCoverImg} />
+                          <View style={styles.presetCoverOverlay}>
+                            <Text style={styles.presetCoverText} numberOfLines={1}>{p.label}</Text>
+                          </View>
+                          {isSelected && (
+                            <View style={[styles.presetCheckmark, { backgroundColor: colors.primary }]}>
+                              <Ionicons name="checkmark" size={12} color="#FFFFFF" />
+                            </View>
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+
+                {/* Custom Cover Photo URL */}
+                <View style={{ width: '100%', marginTop: 14 }}>
+                  <Text style={[styles.inputLabel, { color: colors.text }]}>Custom Cover Image URL</Text>
+                  <TextInput
+                    style={[
+                      styles.modalInput,
+                      { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border },
+                    ]}
+                    value={coverPhotoUrl}
+                    onChangeText={setCoverPhotoUrl}
+                    placeholder="https://..."
+                    placeholderTextColor={colors.textMuted}
+                    autoCapitalize="none"
+                    accessibilityLabel="Custom Cover Image URL"
+                  />
+                </View>
+
+                {/* Save Cover Button */}
+                <TouchableOpacity
+                  style={[styles.saveChangesBtn, { backgroundColor: isDark ? colors.primary : '#102F53', width: '100%', marginTop: 16 }]}
+                  onPress={handleSaveProfile}
+                  disabled={isSavingProfile}
+                  activeOpacity={0.88}
+                  accessibilityRole="button"
+                  accessibilityLabel="Save cover photo"
+                >
+                  {isSavingProfile ? (
+                    <ActivityIndicator size="small" color={isDark ? '#0F172A' : '#FFFFFF'} />
+                  ) : (
+                    <Text style={[styles.saveChangesBtnText, { color: isDark ? '#0F172A' : '#FFFFFF' }]}>
+                      APPLY & SYNC COVER PHOTO
+                    </Text>
+                  )}
+                </TouchableOpacity>
               </View>
             )}
 
@@ -906,5 +1104,50 @@ const styles = StyleSheet.create({
   privacySub: {
     fontSize: 12,
     lineHeight: 16,
+  },
+  presetAvatarItem: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 1.5,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  presetAvatarImg: {
+    width: '100%',
+    height: '100%',
+  },
+  presetCoverItem: {
+    width: 110,
+    height: 65,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  presetCoverImg: {
+    width: '100%',
+    height: '100%',
+  },
+  presetCoverOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'flex-end',
+    padding: 4,
+  },
+  presetCoverText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '700',
+  },
+  presetCheckmark: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

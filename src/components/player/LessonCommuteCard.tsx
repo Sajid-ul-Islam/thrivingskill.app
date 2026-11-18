@@ -62,7 +62,7 @@ export const LessonCommuteCard: React.FC<LessonCommuteCardProps> = ({
         </Text>
       </View>
 
-      <LiveAudioWaveform isPlaying={isPlaying} primaryColor="#FFB606" accentColor="#E34234" />
+      <LiveAudioWaveform isPlaying={isPlaying} primaryColor={isDark ? '#38BDF8' : '#102F53'} accentColor="#E34234" />
 
       <Text style={styles.commuteLessonTitle} numberOfLines={1}>
         {currentLesson.title}
@@ -102,7 +102,7 @@ export const LessonCommuteCard: React.FC<LessonCommuteCardProps> = ({
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.commuteMainPlayBtn, { backgroundColor: '#FFB606' }]}
+          style={[styles.commuteMainPlayBtn, { backgroundColor: '#E34234' }]}
           onPress={() => {
             triggerHaptic('light');
             onTogglePlay();
@@ -110,7 +110,7 @@ export const LessonCommuteCard: React.FC<LessonCommuteCardProps> = ({
           accessibilityRole="button"
           accessibilityLabel={isPlaying ? 'Pause audio playback' : 'Play audio playback'}
         >
-          <Ionicons name={isPlaying ? 'pause' : 'play'} size={26} color="#102F53" />
+          <Ionicons name={isPlaying ? 'pause' : 'play'} size={26} color="#FFFFFF" />
         </TouchableOpacity>
 
         <TouchableOpacity

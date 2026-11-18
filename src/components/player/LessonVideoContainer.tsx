@@ -143,7 +143,7 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
         /* LOCKED PAYWALL STATE */
         <View style={[styles.lockedCard, { backgroundColor: isDark ? colors.surfaceCard : '#102F53' }]}>
           <View style={styles.lockedIconBg}>
-            <Ionicons name="lock-closed" size={34} color="#FFB606" />
+            <Ionicons name="lock-closed" size={34} color="#E34234" />
           </View>
           <Text style={styles.lockedTitle}>
             {isBangla ? 'সদস্যদের জন্য সংরক্ষিত লেসন' : 'Enrolled Member Access'}
@@ -161,7 +161,7 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Sync account access"
             >
-              <Ionicons name="sync" size={15} color="#102F53" />
+              <Ionicons name="sync" size={15} color="#FFFFFF" />
               <Text style={styles.lockedPurchaseBtnText}>
                 {isBangla ? 'অ্যাকাউন্ট অ্যাক্সেস সিঙ্ক করুন' : 'Sync Account Access'}
               </Text>
@@ -175,7 +175,7 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Watch free preview lesson"
               >
-                <Ionicons name="play-outline" size={14} color="#FFB606" />
+                <Ionicons name="play-outline" size={14} color="#FFFFFF" />
                 <Text style={styles.lockedPreviewBtnText}>
                   {isBangla ? 'ফ্রি প্রিভিউ দেখুন' : 'Watch Free Preview'}
                 </Text>
@@ -187,7 +187,7 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
         /* DEDICATED QUIZ HERO FRAME */
         <View style={[styles.quizHeroCard, { backgroundColor: isDark ? colors.surfaceCard : '#102F53' }]}>
           <View style={styles.quizHeroBadge}>
-            <Ionicons name="help-circle" size={32} color="#FFB606" />
+            <Ionicons name="help-circle" size={32} color="#E34234" />
           </View>
           <Text style={styles.quizHeroTitle} numberOfLines={1}>
             {currentLesson.title}
@@ -204,7 +204,7 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
           <TouchableOpacity
             style={[
               styles.quizHeroBtn,
-              { backgroundColor: isLessonCompleted ? '#059669' : '#FFB606' },
+              { backgroundColor: isLessonCompleted ? '#059669' : '#E34234' },
             ]}
             onPress={() => onOpenQuizPlayer(currentLesson)}
             activeOpacity={0.88}
@@ -214,12 +214,12 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
             <Ionicons
               name={isLessonCompleted ? 'refresh' : 'play'}
               size={16}
-              color={isLessonCompleted ? '#FFFFFF' : '#102F53'}
+              color="#FFFFFF"
             />
             <Text
               style={[
                 styles.quizHeroBtnText,
-                { color: isLessonCompleted ? '#FFFFFF' : '#102F53' },
+                { color: '#FFFFFF' },
               ]}
             >
               {isLessonCompleted
@@ -290,7 +290,7 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
         <View style={styles.playerContainer}>
           {isLoadingVideo ? (
             <View style={styles.loadingVideoOverlay}>
-              <ActivityIndicator size="large" color="#FFB606" />
+              <ActivityIndicator size="large" color="#E34234" />
               <Text style={styles.loadingVideoText}>Loading video stream (Media3)...</Text>
             </View>
           ) : isDirectStream && activeVideoUrl ? (
@@ -325,7 +325,7 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
               userAgent="Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
               renderError={() => (
                 <View style={styles.loadingVideoOverlay}>
-                  <Ionicons name="alert-circle-outline" size={32} color="#FFB606" />
+                  <Ionicons name="alert-circle-outline" size={32} color="#E34234" />
                   <Text style={[styles.loadingVideoText, { color: '#FFFFFF', marginTop: 4 }]}>
                     {isBangla ? 'ভিডিও স্ট্রিমে সংযোগ ব্যর্থ হয়েছে' : 'Video stream unavailable'}
                   </Text>
@@ -382,7 +382,7 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
             <View style={styles.serverPlayerControlsOverlay} pointerEvents="box-none">
               <View style={styles.serverPlayerTopBar} pointerEvents="box-none">
                 <View style={styles.serverPlayerTitleBadge} pointerEvents="none">
-                  <Ionicons name="play-circle" size={14} color="#FFB606" />
+                  <Ionicons name="play-circle" size={14} color="#E34234" />
                   <Text style={styles.serverPlayerTitleText} numberOfLines={1}>
                     {currentLesson.title}
                   </Text>
@@ -398,7 +398,7 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
                     <Ionicons
                       name={isScreenLocked ? 'lock-closed' : 'lock-open-outline'}
                       size={16}
-                      color={isScreenLocked ? '#FFB606' : '#FFFFFF'}
+                      color={isScreenLocked ? '#E34234' : '#FFFFFF'}
                     />
                   </TouchableOpacity>
 
@@ -431,7 +431,7 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
                     accessibilityRole="button"
                     accessibilityLabel={isBangla ? 'ভিডিও কন্ট্রোল আনলক করুন' : 'Unlock video controls'}
                   >
-                    <Ionicons name="lock-closed" size={18} color="#FFB606" />
+                    <Ionicons name="lock-closed" size={18} color="#E34234" />
                     <Text style={styles.unlockPillText}>
                       {isBangla ? 'আনলক করতে ট্যাপ করুন' : 'Tap to Unlock Controls'}
                     </Text>
@@ -543,7 +543,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   loadingVideoText: {
-    color: '#FFB606',
+    color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '700',
     marginTop: 8,
@@ -552,14 +552,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#FFB606',
+    backgroundColor: '#102F53',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
     marginTop: 12,
   },
   videoFallbackBtnText: {
-    color: '#102F53',
+    color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '800',
   },
@@ -573,7 +575,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: 'rgba(255, 182, 6, 0.15)',
+    backgroundColor: 'rgba(227, 66, 52, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
@@ -602,13 +604,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#FFB606',
+    backgroundColor: '#E34234',
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderRadius: 8,
   },
   lockedPurchaseBtnText: {
-    color: '#102F53',
+    color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '800',
   },
@@ -617,13 +619,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
     borderWidth: 1,
-    borderColor: '#FFB606',
+    borderColor: 'rgba(255, 255, 255, 0.4)',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
   },
   lockedPreviewBtnText: {
-    color: '#FFB606',
+    color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '700',
   },
@@ -712,7 +714,7 @@ const styles = StyleSheet.create({
   },
   serverPlayerActionBtnActive: {
     backgroundColor: '#102F53',
-    borderColor: '#FFB606',
+    borderColor: '#E34234',
     borderWidth: 1,
   },
   landscapePillText: {
@@ -735,7 +737,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     backgroundColor: '#102F53',
-    borderColor: '#FFB606',
+    borderColor: '#E34234',
     borderWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 9,

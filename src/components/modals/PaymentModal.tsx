@@ -15,6 +15,7 @@ import {
   Keyboard,
 } from 'react-native';
 import { WebView, WebViewNavigation } from 'react-native-webview';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -32,6 +33,7 @@ import { getBundleConfig } from '../../data/bundleCoursesMap';
 
 export const MAX_SYNC_ATTEMPTS = 4;
 export const RETRY_DELAYS_MS = [0, 1500, 2500, 4000];
+export const CHECKOUT_AUTOFILL_KEY = '@thrivingskill_checkout_autofill_v1';
 
 export interface PaymentModalProps {
   visible: boolean;
@@ -55,7 +57,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const insets = useSafeAreaInsets();
   const { isTablet } = useResponsive();
   const { t, isBangla } = useLanguage();
-  const { user, isAuthenticated, setAuthModalVisible } = useAuth();
+  const { user, isAuthenticated, setAuthModalVisible, updateUserProfile } = useAuth();
   const { userProgress, enrollInCourse, refreshCourses, loadCourseDetail } = useLearning();
 
   const [activeTab, setActiveTab] = useState<'checkout' | 'sync'>('checkout');
@@ -65,6 +67,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
+  const [city, setCity] = useState('');
+  const [address, setAddress] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [orderNotes, setOrderNotes] = useState('');
@@ -86,6 +90,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   // Focus Chaining Refs for Seamless Form UX
   const lastNameRef = useRef<React.ElementRef<typeof TextInput>>(null);
   const phoneRef = useRef<React.ElementRef<typeof TextInput>>(null);
+  const cityRef = useRef<React.ElementRef<typeof TextInput>>(null);
+  const addressRef = useRef<React.ElementRef<typeof TextInput>>(null);
   const emailRef = useRef<React.ElementRef<typeof TextInput>>(null);
   const passwordRef = useRef<React.ElementRef<typeof TextInput>>(null);
   const orderNotesRef = useRef<React.ElementRef<typeof TextInput>>(null);
@@ -99,19 +105,56 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const syncStep = isAuthenticated ? 2 : 1;
 
-  // Hydrate user info if logged in
+  // Hydrate user info & autofill cache
   useEffect(() => {
-    if (visible && user) {
-      const parts = (user.displayName || user.username || '').trim().split(' ');
-      setFirstName(parts[0] || '');
-      setLastName(parts.slice(1).join(' ') || (parts[0] ? '' : 'Learner'));
-      setEmail(user.email || '');
-      setPhone(user.phone || '');
-      setIsEditingDetails(!user.displayName || !user.email);
-    } else if (visible && !isAuthenticated) {
-      setIsEditingDetails(true);
-    }
-  }, [visible, user, isAuthenticated]);
+    if (!visible) return;
+
+    let isMounted = true;
+    const hydrateDetails = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(CHECKOUT_AUTOFILL_KEY);
+        const cached = stored ? JSON.parse(stored) : null;
+
+        if (!isMounted) return;
+
+        if (user) {
+          const parts = (user.displayName || user.username || '').trim().split(' ');
+          setFirstName(cached?.firstName || user.first_name || parts[0] || '');
+          setLastName(cached?.lastName || user.last_name || parts.slice(1).join(' ') || (parts[0] ? '' : 'Learner'));
+          setEmail(cached?.email || user.email || '');
+          setPhone(cached?.phone || user.phone || '');
+          setCity(cached?.city || user.city || '');
+          setAddress(cached?.address || '');
+          setIsEditingDetails(!user.displayName || !user.email || !(cached?.phone || user.phone));
+        } else if (cached) {
+          setFirstName(cached.firstName || '');
+          setLastName(cached.lastName || '');
+          setEmail(cached.email || '');
+          setPhone(cached.phone || '');
+          setCity(cached.city || '');
+          setAddress(cached.address || '');
+          setIsEditingDetails(false);
+        } else {
+          setIsEditingDetails(true);
+        }
+      } catch {
+        if (!isMounted) return;
+        if (user) {
+          const parts = (user.displayName || user.username || '').trim().split(' ');
+          setFirstName(user.first_name || parts[0] || '');
+          setLastName(user.last_name || parts.slice(1).join(' ') || (parts[0] ? '' : 'Learner'));
+          setEmail(user.email || '');
+          setPhone(user.phone || '');
+          setCity(user.city || '');
+        }
+      }
+    };
+
+    hydrateDetails();
+    return () => {
+      isMounted = false;
+    };
+  }, [visible, user]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -210,6 +253,24 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     setIsPlacingOrder(true);
 
     try {
+      // Persist details locally so learner never has to retype across checkouts
+      const autofillData = {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        city: city.trim(),
+        address: address.trim(),
+      };
+      AsyncStorage.setItem(CHECKOUT_AUTOFILL_KEY, JSON.stringify(autofillData)).catch(() => {});
+
+      if (isAuthenticated) {
+        updateUserProfile({
+          phone: phone.trim(),
+          city: city.trim(),
+        }, true).catch(() => {});
+      }
+
       // Build official WooCommerce Checkout Cart URL
       const fullCheckoutUrl = `https://thrivingskill.com/checkout/?add-to-cart=${course.id}`;
       setCurrentUrl(fullCheckoutUrl);
@@ -222,6 +283,48 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     } finally {
       setIsPlacingOrder(false);
     }
+  };
+
+  // Handle message from WebView (Bi-directional field auto-detection & synchronization)
+  const handleWebViewMessage = (event: any) => {
+    try {
+      const data = JSON.parse(event.nativeEvent.data);
+      if (data && data.type === 'CHECKOUT_FIELD_AUTO_DETECT') {
+        const { field, value } = data;
+        if (!value) return;
+
+        if (field === 'billing_phone') setPhone(value);
+        if (field === 'billing_city') setCity(value);
+        if (field === 'billing_first_name') setFirstName(value);
+        if (field === 'billing_last_name') setLastName(value);
+        if (field === 'billing_address_1') setAddress(value);
+
+        AsyncStorage.getItem(CHECKOUT_AUTOFILL_KEY).then((res) => {
+          const current = res ? JSON.parse(res) : {};
+          const fieldMap: Record<string, string> = {
+            billing_first_name: 'firstName',
+            billing_last_name: 'lastName',
+            billing_phone: 'phone',
+            billing_email: 'email',
+            billing_city: 'city',
+            billing_address_1: 'address',
+          };
+          const mappedKey = fieldMap[field];
+          if (mappedKey) {
+            current[mappedKey] = value;
+            AsyncStorage.setItem(CHECKOUT_AUTOFILL_KEY, JSON.stringify(current)).catch(() => {});
+          }
+        });
+
+        if (isAuthenticated) {
+          if (field === 'billing_phone') {
+            updateUserProfile({ phone: value }, true).catch(() => {});
+          } else if (field === 'billing_city') {
+            updateUserProfile({ city: value }, true).catch(() => {});
+          }
+        }
+      }
+    } catch {}
   };
 
   // Open checkout directly in system web browser (Chrome / Safari)
@@ -490,6 +593,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             setField('billing_last_name', ${JSON.stringify(lastName.trim())});
             setField('billing_email', ${JSON.stringify(email.trim())});
             setField('billing_phone', ${JSON.stringify(phone.trim())});
+            if (${JSON.stringify(city.trim())}) {
+              setField('billing_city', ${JSON.stringify(city.trim())});
+            }
+            if (${JSON.stringify(address.trim())}) {
+              setField('billing_address_1', ${JSON.stringify(address.trim())});
+            }
 
             if (${JSON.stringify(orderNotes.trim())}) {
               setField('order_comments', ${JSON.stringify(orderNotes.trim())});
@@ -499,6 +608,36 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             if (terms && !terms.checked) {
               terms.checked = true;
               terms.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
+            // Monitor field changes in web checkout to auto-save back to native app
+            var fieldsToTrack = ['billing_first_name', 'billing_last_name', 'billing_email', 'billing_phone', 'billing_city', 'billing_address_1'];
+            fieldsToTrack.forEach(function(fieldId) {
+              var inputEl = document.getElementById(fieldId);
+              if (inputEl && !inputEl.dataset.tsWatched) {
+                inputEl.dataset.tsWatched = 'true';
+                var changeHandler = function() {
+                  try {
+                    if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+                      window.ReactNativeWebView.postMessage(JSON.stringify({
+                        type: 'CHECKOUT_FIELD_AUTO_DETECT',
+                        field: fieldId,
+                        value: inputEl.value
+                      }));
+                    }
+                  } catch(e) {}
+                };
+                inputEl.addEventListener('change', changeHandler);
+                inputEl.addEventListener('blur', changeHandler);
+              }
+            });
+
+            // Hook WooCommerce AJAX update event
+            if (window.jQuery && !window.tsJqueryHooked) {
+              window.tsJqueryHooked = true;
+              window.jQuery(document.body).on('updated_checkout', function() {
+                setTimeout(runAutofill, 80);
+              });
             }
 
             // Remove distracting desktop header/footer for clean mobile checkout UX
@@ -540,6 +679,17 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       setTimeout(runAutofill, 400);
       setTimeout(runAutofill, 1200);
       setTimeout(runAutofill, 2500);
+
+      // MutationObserver for dynamic WooCommerce checkout re-renders
+      try {
+        var observer = new MutationObserver(function() {
+          var phoneInput = document.getElementById('billing_phone');
+          if (phoneInput && !phoneInput.value) {
+            runAutofill();
+          }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+      } catch(e) {}
     })();
     true;
   `;
@@ -623,6 +773,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               setLoadProgress(syntheticEvent.nativeEvent.progress);
             }}
             injectedJavaScript={injectedCheckoutJs}
+            onMessage={handleWebViewMessage}
             startInLoadingState={true}
             renderLoading={() => (
               <View style={[styles.fullScreenLoading, { backgroundColor: isDark ? '#0F172A' : '#FFFFFF' }]}>
@@ -924,7 +1075,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                             : 'Guest Learner'}
                         </Text>
                         <Text style={[styles.learnerSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
-                          {email || (isBangla ? 'ইমেল তথ্য প্রয়োজন' : 'Email required')} {phone ? `• ${phone}` : ''}
+                          {email || (isBangla ? 'ইমেল তথ্য প্রয়োজন' : 'Email required')} {phone ? `• ${phone}` : ''} {city ? `• ${city}` : ''}
                         </Text>
                       </View>
                     </View>
@@ -1047,10 +1198,69 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                           autoComplete="tel"
                           textContentType="telephoneNumber"
                           returnKeyType="next"
-                          onSubmitEditing={() => emailRef.current?.focus()}
+                          onSubmitEditing={() => cityRef.current?.focus()}
                           blurOnSubmit={false}
                           accessibilityLabel={isBangla ? 'ফোন নম্বর' : 'Phone number'}
                         />
+                      </View>
+
+                      {/* City / District & Address (Autofilled for native checkout) */}
+                      <View style={styles.nameRow}>
+                        <View style={styles.nameCol}>
+                          <Text style={[styles.inputLabel, { color: colors.text }]}>
+                            {isBangla ? 'জেলা / শহর' : 'Town / City'}
+                          </Text>
+                          <TextInput
+                            ref={cityRef}
+                            style={[
+                              styles.input,
+                              {
+                                backgroundColor: colors.surface,
+                                borderColor: colors.border,
+                                color: colors.text,
+                              },
+                            ]}
+                            value={city}
+                            onChangeText={(txt) => setCity(txt)}
+                            placeholder="e.g. Dhaka"
+                            placeholderTextColor={colors.textMuted}
+                            autoCapitalize="words"
+                            autoComplete="postal-address-locality"
+                            textContentType="addressCity"
+                            returnKeyType="next"
+                            onSubmitEditing={() => addressRef.current?.focus()}
+                            blurOnSubmit={false}
+                            accessibilityLabel={isBangla ? 'জেলা বা শহর' : 'City or Town'}
+                          />
+                        </View>
+
+                        <View style={styles.nameCol}>
+                          <Text style={[styles.inputLabel, { color: colors.text }]}>
+                            {isBangla ? 'ঠিকানা (ঐচ্ছিক)' : 'Street Address'}
+                          </Text>
+                          <TextInput
+                            ref={addressRef}
+                            style={[
+                              styles.input,
+                              {
+                                backgroundColor: colors.surface,
+                                borderColor: colors.border,
+                                color: colors.text,
+                              },
+                            ]}
+                            value={address}
+                            onChangeText={(txt) => setAddress(txt)}
+                            placeholder="e.g. Dhanmondi, Rd 27"
+                            placeholderTextColor={colors.textMuted}
+                            autoCapitalize="words"
+                            autoComplete="street-address"
+                            textContentType="fullStreetAddress"
+                            returnKeyType="next"
+                            onSubmitEditing={() => emailRef.current?.focus()}
+                            blurOnSubmit={false}
+                            accessibilityLabel={isBangla ? 'ঠিকানা' : 'Street Address'}
+                          />
+                        </View>
                       </View>
 
                       {/* Email address */}

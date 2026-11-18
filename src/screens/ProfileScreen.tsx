@@ -10,6 +10,7 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   LayoutAnimation,
+  RefreshControl,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -89,7 +90,16 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     hasReviewedCourse,
     submitMandatoryCourseReview,
   } = useLearning();
-  const { user, isAuthenticated, logout, deleteAccount, setAuthModalVisible, updateUserProfile } = useAuth();
+  const {
+    user,
+    isAuthenticated,
+    logout,
+    deleteAccount,
+    setAuthModalVisible,
+    updateUserProfile,
+    isSyncingProfile,
+    refreshUserProfile,
+  } = useAuth();
   const isAdmin = Array.isArray(user?.roles) && user.roles.includes('administrator');
   const {
     subscriptionTier,
@@ -139,6 +149,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [userEmail, setUserEmail] = useState(user?.email || '');
   const [bioInfo, setBioInfo] = useState(user?.description || '');
   const [phoneNumber, setPhoneNumber] = useState(user?.phone || '');
+  const [city, setCity] = useState(user?.city || '');
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatar || '');
+  const [coverPhotoUrl, setCoverPhotoUrl] = useState(user?.cover_photo || '');
   const [socialFacebook, setSocialFacebook] = useState(user?.social?.facebook || '');
   const [socialTwitter, setSocialTwitter] = useState(user?.social?.twitter || '');
   const [socialYoutube, setSocialYoutube] = useState(user?.social?.youtube || '');
@@ -160,6 +173,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       setUserEmail(user.email || '');
       setBioInfo(user.description || '');
       setPhoneNumber(user.phone || '');
+      setCity(user.city || '');
+      setAvatarUrl(user.avatar || '');
+      setCoverPhotoUrl(user.cover_photo || '');
       setSocialFacebook(user.social?.facebook || '');
       setSocialTwitter(user.social?.twitter || '');
       setSocialYoutube(user.social?.youtube || '');
@@ -224,6 +240,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         nickname: displayName.trim(),
         description: bioInfo.trim(),
         phone: phoneNumber.trim(),
+        city: city.trim(),
+        avatar: avatarUrl.trim(),
+        cover_photo: coverPhotoUrl.trim(),
         social: {
           facebook: socialFacebook.trim(),
           twitter: socialTwitter.trim(),
@@ -240,6 +259,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         displayName: displayName.trim(),
         description: bioInfo.trim(),
         phone: phoneNumber.trim(),
+        city: city.trim(),
+        avatar: avatarUrl.trim() || updatedUser.avatar,
+        cover_photo: coverPhotoUrl.trim() || updatedUser.cover_photo,
         social: {
           facebook: socialFacebook.trim(),
           twitter: socialTwitter.trim(),
@@ -263,6 +285,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           displayName: displayName.trim(),
           description: bioInfo.trim(),
           phone: phoneNumber.trim(),
+          city: city.trim(),
+          avatar: avatarUrl.trim(),
+          cover_photo: coverPhotoUrl.trim(),
           social: {
             facebook: socialFacebook.trim(),
             twitter: socialTwitter.trim(),
@@ -451,6 +476,17 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
       <ScrollView
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isSyncingProfile}
+            onRefresh={async () => {
+              triggerHaptic('light');
+              await refreshUserProfile();
+            }}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
         contentContainerStyle={[
           styles.scrollContent,
           containerClampStyle,
@@ -740,6 +776,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         setBioInfo={setBioInfo}
         phoneNumber={phoneNumber}
         setPhoneNumber={setPhoneNumber}
+        city={city}
+        setCity={setCity}
+        avatarUrl={avatarUrl}
+        setAvatarUrl={setAvatarUrl}
+        coverPhotoUrl={coverPhotoUrl}
+        setCoverPhotoUrl={setCoverPhotoUrl}
         socialFacebook={socialFacebook}
         setSocialFacebook={setSocialFacebook}
         socialTwitter={socialTwitter}

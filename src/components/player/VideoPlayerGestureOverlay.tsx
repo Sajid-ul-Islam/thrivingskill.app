@@ -407,7 +407,7 @@ export const VideoPlayerGestureOverlay: React.FC<VideoPlayerGestureOverlayProps>
                 <TouchableOpacity
                   style={[
                     styles.topIconBtn,
-                    isFullscreen && { backgroundColor: '#102F53', borderColor: '#FFB606', borderWidth: 1 },
+                    isFullscreen && { backgroundColor: '#102F53', borderColor: '#E34234', borderWidth: 1 },
                   ]}
                   onPress={() => {
                     triggerHaptic('light');
@@ -507,10 +507,6 @@ export const VideoPlayerGestureOverlay: React.FC<VideoPlayerGestureOverlayProps>
                     style={[
                       styles.speedPill,
                       playbackSpeed !== '1.0x' && styles.speedPillActive,
-                      { backgroundColor: '#102F53' },
-                      { borderColor: '#FFB606' },
-                      { borderWidth: 1.5 },
-                      { paddingHorizontal: 9 },
                     ]}
                     onPress={() => {
                       triggerHaptic('light');
@@ -602,10 +598,12 @@ const styles = StyleSheet.create({
     marginTop: -2,
   },
   centerPlayPauseBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#FFB606',
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: '#102F53',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.65)',
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 4,
@@ -627,7 +625,7 @@ const styles = StyleSheet.create({
   },
   progressTrackFill: {
     height: '100%',
-    backgroundColor: '#FFB606',
+    backgroundColor: '#E34234',
   },
   bottomMetaRow: {
     flexDirection: 'row',
@@ -648,9 +646,9 @@ const styles = StyleSheet.create({
   qualityPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    backgroundColor: 'rgba(16, 47, 83, 0.75)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 182, 6, 0.5)',
+    borderColor: 'rgba(255, 255, 255, 0.35)',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: shape.medium,
@@ -663,7 +661,9 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   speedPill: {
-    backgroundColor: '#FFB606',
+    backgroundColor: 'rgba(16, 47, 83, 0.75)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.35)',
     paddingHorizontal: 9,
     paddingVertical: 4,
     borderRadius: shape.medium,
@@ -674,10 +674,11 @@ const styles = StyleSheet.create({
   speedPillText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#102F53',
+    color: '#FFFFFF',
   },
   speedPillActive: {
-    backgroundColor: '#102F53',
+    backgroundColor: '#E34234',
+    borderColor: '#E34234',
     borderRadius: shape.medium,
     minHeight: 28,
     alignItems: 'center',
@@ -691,7 +692,7 @@ const styles = StyleSheet.create({
     borderRadius: shape.full,
     backgroundColor: 'rgba(0, 0, 0, 0.75)',
     borderWidth: 1.5,
-    borderColor: '#FFB606',
+    borderColor: '#E34234',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 30,
@@ -703,7 +704,7 @@ const styles = StyleSheet.create({
     right: '12%',
   },
   seekRippleText: {
-    color: '#FFB606',
+    color: '#FFFFFF',
     fontSize: 11,
     fontWeight: '800',
     marginTop: 2,
@@ -715,14 +716,14 @@ const styles = StyleSheet.create({
     zIndex: 35,
   },
   hudCard: {
-    backgroundColor: 'rgba(16, 47, 83, 0.88)',
+    backgroundColor: 'rgba(16, 47, 83, 0.94)',
     borderRadius: shape.large,
     paddingHorizontal: 16,
     paddingVertical: 12,
     alignItems: 'center',
     width: 68,
     borderWidth: 1,
-    borderColor: '#FFB606',
+    borderColor: 'rgba(255, 255, 255, 0.25)',
     gap: 8,
   },
   hudProgressBarTrack: {
@@ -735,7 +736,7 @@ const styles = StyleSheet.create({
   },
   hudProgressBarFill: {
     width: '100%',
-    backgroundColor: '#FFB606',
+    backgroundColor: '#E34234',
     borderRadius: shape.extraSmall,
   },
   hudPercentText: {
@@ -754,7 +755,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#102F53',
-    borderColor: '#FFB606',
+    borderColor: '#E34234',
     borderWidth: 1.5,
     borderRadius: shape.full,
     paddingHorizontal: 18,

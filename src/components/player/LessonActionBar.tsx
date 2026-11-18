@@ -44,8 +44,8 @@ export const LessonActionBar: React.FC<LessonActionBarProps> = ({
           style={[
             styles.aiTutorBtn,
             {
-              backgroundColor: isDark ? 'rgba(255, 182, 6, 0.15)' : '#FEF3C7',
-              borderColor: '#FFB606',
+              backgroundColor: isDark ? 'rgba(227, 66, 52, 0.12)' : '#FEE2E2',
+              borderColor: '#E34234',
             },
           ]}
           onPress={() => {
@@ -56,8 +56,8 @@ export const LessonActionBar: React.FC<LessonActionBarProps> = ({
           accessibilityRole="button"
           accessibilityLabel={isBangla ? 'এআই টিউটরের সাথে কথা বলুন' : 'Ask SkillBot AI Tutor'}
         >
-          <Ionicons name="sparkles" size={14} color="#FFB606" />
-          <Text style={[styles.aiTutorBtnText, { color: isDark ? '#FFB606' : '#92400E' }]}>
+          <Ionicons name="sparkles" size={14} color="#E34234" />
+          <Text style={[styles.aiTutorBtnText, { color: isDark ? '#FF8A80' : '#E34234' }]}>
             {isBangla ? 'এআই টিউটর' : 'Ask AI'}
           </Text>
         </TouchableOpacity>
@@ -72,7 +72,7 @@ export const LessonActionBar: React.FC<LessonActionBarProps> = ({
           accessibilityRole="button"
           accessibilityLabel="Study active recall flashcards"
         >
-          <Ionicons name="layers-outline" size={16} color={colors.brandGold} />
+          <Ionicons name="layers-outline" size={16} color={colors.primary} />
         </TouchableOpacity>
 
         {/* Mark Complete Button */}
