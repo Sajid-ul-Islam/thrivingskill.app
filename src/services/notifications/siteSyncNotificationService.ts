@@ -359,12 +359,35 @@ export class SiteSyncNotificationService {
         thumbnail = recommended.image.src;
       }
 
-      await PushNotificationService.notifyCourseRecommendation({
-        id,
-        title,
-        reason,
-        thumbnail,
-      }, isBangla);
+      const throttle = await HabitNotificationQueue.canDeliverNotificationNow('normal');
+      const isReceptive = await HabitNotificationQueue.isReceptiveTimeNow();
+
+      if (force || (throttle.allowed && isReceptive)) {
+        await PushNotificationService.notifyCourseRecommendation({
+          id,
+          title,
+          reason,
+          thumbnail,
+        }, isBangla);
+        await HabitNotificationQueue.recordDelivery('normal');
+      } else {
+        const recomTitle = isBangla ? '✨ আপনার জন্য বিশেষ কোর্স পরামর্শ' : '✨ Recommended For You';
+        const recomBody = isBangla
+          ? `${reason}: "${title}" কোর্সটি দিয়ে আপনার দক্ষতা একধাপ এগিয়ে নিন।`
+          : `${reason}: Accelerate your learning journey with "${title}".`;
+        await HabitNotificationQueue.enqueueOrDispatch(
+          recomTitle,
+          recomBody,
+          'recommendation',
+          'normal',
+          {
+            courseId: id,
+            courseName: title,
+            recommendationReason: reason,
+            thumbnail,
+          }
+        );
+      }
 
       await AsyncStorage.setItem(STORAGE_KEY_LAST_RECOMMENDATION, now.toString());
       return true;
