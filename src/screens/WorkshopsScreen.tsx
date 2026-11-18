@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Linking, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Linking, NativeSyntheticEvent, NativeScrollEvent, LayoutAnimation } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
@@ -9,7 +9,7 @@ import { useFeedback } from '../context/FeedbackContext';
 import { Header } from '../components/Header';
 import { LiveWorkshopCard } from '../components/LiveWorkshopCard';
 import { SummitCard } from '../components/SummitCard';
-import { StateView, CourseCardSkeleton } from '../components/common';
+import { StateView, CourseCardSkeleton, AnimatedTabContent } from '../components/common';
 import { triggerHaptic } from '../utils/haptics';
 import { typography, MIN_TOUCH_TARGET } from '../theme/typography';
 import { shape } from '../theme/shapes';
@@ -253,6 +253,7 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
                 accessibilityLabel={tab.label}
                 onPress={() => {
                   triggerHaptic('selection');
+                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
                   setActiveTab(tab.id);
                 }}
               >
@@ -319,11 +320,13 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
         )}
 
         {/* Render Real Workshops */}
-        {displayedWorkshops.map((workshop) => (
-          <View key={workshop.id} style={styles.cardWrapper}>
-            <LiveWorkshopCard workshop={workshop} />
-          </View>
-        ))}
+        <AnimatedTabContent tabKey={activeTab}>
+          {displayedWorkshops.map((workshop) => (
+            <View key={workshop.id} style={styles.cardWrapper}>
+              <LiveWorkshopCard workshop={workshop} />
+            </View>
+          ))}
+        </AnimatedTabContent>
       </ScrollView>
     </View>
   );

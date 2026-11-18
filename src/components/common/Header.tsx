@@ -16,6 +16,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useSaaS } from '../../context/SaaSContext';
 import { useLearning } from '../../context/LearningContext';
 import { OfflineBanner } from './OfflineBanner';
+import { SpringPressable } from './SpringPressable';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
 
@@ -110,16 +111,17 @@ export const Header: React.FC<HeaderProps> = ({
         <View style={styles.leftRow}>
           {showBack ? (
             <View style={styles.backGroup}>
-              <TouchableOpacity
+              <SpringPressable
                 style={[styles.iconButton, { backgroundColor: colors.surfaceSubtle }]}
                 onPress={onBack}
-                activeOpacity={0.7}
                 hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                 accessibilityRole="button"
                 accessibilityLabel="Go back"
+                haptic="light"
+                activeScale={0.91}
               >
                 <Ionicons name={backIconName} size={22} color={colors.text} />
-              </TouchableOpacity>
+              </SpringPressable>
 
               <View style={styles.titleContainer}>
                 <Text style={[typography.h4, styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
@@ -172,27 +174,29 @@ export const Header: React.FC<HeaderProps> = ({
                 ],
               }}
             >
-              <TouchableOpacity
+              <SpringPressable
                 style={[styles.iconButton, { backgroundColor: colors.surfaceSubtle }]}
                 onPress={onOpenSearch}
-                activeOpacity={0.7}
                 hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
                 accessibilityRole="button"
                 accessibilityLabel="Universal Search"
+                haptic="light"
+                activeScale={0.91}
               >
                 <Ionicons name="search" size={20} color={colors.text} />
-              </TouchableOpacity>
+              </SpringPressable>
             </Animated.View>
           )}
 
           {onOpenNotifications && (
-            <TouchableOpacity
+            <SpringPressable
               style={[styles.iconButton, { backgroundColor: colors.surfaceSubtle }]}
               onPress={onOpenNotifications}
-              activeOpacity={0.7}
               hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
               accessibilityRole="button"
               accessibilityLabel="Notifications"
+              haptic="light"
+              activeScale={0.91}
             >
               <Ionicons name="notifications-outline" size={20} color={colors.text} />
               {unreadNotificationsCount > 0 && (
@@ -200,7 +204,7 @@ export const Header: React.FC<HeaderProps> = ({
                   <Text style={[styles.notifBadgeText, { color: colors.onAccent }]}>{unreadNotificationsCount}</Text>
                 </View>
               )}
-            </TouchableOpacity>
+            </SpringPressable>
           )}
         </View>
       </View>

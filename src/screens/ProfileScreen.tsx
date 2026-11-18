@@ -17,6 +17,7 @@ import {
   ActivityIndicator,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  LayoutAnimation,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -43,6 +44,7 @@ import { StorageManagerModal } from '../components/modals/StorageManagerModal';
 import { SpacedRepetitionModal } from '../components/modals/SpacedRepetitionModal';
 import { OfflineStudyDeckModal } from '../components/modals/OfflineStudyDeckModal';
 import { LocalSearchModal } from '../components/modals/LocalSearchModal';
+import { AnimatedTabContent } from '../components/common';
 import { Course, Certificate, LearnPressCourseFilter } from '../types';
 import { LearnPressStatsGrid } from '../components/cards/LearnPressStatsGrid';
 import { UserService } from '../services/api/userService';
@@ -581,6 +583,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             ]}
             onPress={() => {
               triggerHaptic('selection');
+              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
               setProfileSection('learning');
             }}
             accessibilityRole="tab"
@@ -608,6 +611,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             ]}
             onPress={() => {
               triggerHaptic('selection');
+              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
               setProfileSection('settings');
             }}
             accessibilityRole="tab"
@@ -630,7 +634,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         </View>
 
         {profileSection === 'learning' && (
-          <>
+          <AnimatedTabContent tabKey="profile-learning">
             {!isAuthenticated && (
               <View style={styles.section}>
                 <View
@@ -1121,11 +1125,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 })
               )}
             </View>
-          </>
+          </AnimatedTabContent>
         )}
 
         {profileSection === 'settings' && (
-          <>
+          <AnimatedTabContent tabKey="profile-settings">
         {/* Administrator Management Console (Section 2 Spec) */}
         {isAdmin && (
           <View style={styles.section}>
@@ -2157,7 +2161,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             )}
           </View>
         </View>
-          </>
+          </AnimatedTabContent>
         )}
 
         {/* All Rights Reserved Enterprise Footer */}

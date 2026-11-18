@@ -12,6 +12,7 @@ import {
   NativeScrollEvent,
   Platform,
   ListRenderItem,
+  LayoutAnimation,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -159,6 +160,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   // Filter Selection Handlers with React 19 Concurrent Transitions & instant scroll-to-top
   const handleCategorySelect = useCallback((catId: string) => {
     triggerHaptic('selection');
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     startTransition(() => {
       setSelectedCategory(catId);
     });
@@ -167,6 +169,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
 
   const handleLevelSelect = useCallback((lvl: LevelFilter) => {
     triggerHaptic('selection');
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     startTransition(() => {
       setSelectedLevel(lvl);
     });
@@ -175,6 +178,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
 
   const handlePriceFilterSelect = useCallback((pf: PriceFilter) => {
     triggerHaptic('selection');
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     startTransition(() => {
       setSelectedPriceFilter(pf);
     });
@@ -183,6 +187,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
 
   const handleSortToggle = useCallback(() => {
     triggerHaptic('selection');
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     const order: SortOption[] = ['popular', 'newest', 'rating', 'price-low', 'price-high'];
     const nextIdx = (order.indexOf(selectedSort) + 1) % order.length;
     startTransition(() => {
@@ -641,6 +646,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               ]}
               onPress={() => {
                 triggerHaptic('selection');
+                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
                 setViewMode('grid');
               }}
               accessibilityRole="button"
@@ -659,6 +665,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               ]}
               onPress={() => {
                 triggerHaptic('selection');
+                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
                 setViewMode('list');
               }}
               accessibilityRole="button"

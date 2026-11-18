@@ -13,6 +13,7 @@ import {
   Alert,
   Keyboard,
   Linking,
+  LayoutAnimation,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -594,6 +595,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       mode === 'login' && [styles.tabSwitchActive, { backgroundColor: colors.surfaceCard }],
                     ]}
                     onPress={() => {
+                      triggerHaptic('selection');
+                      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
                       setMode('login');
                       setTouched({});
                       setErrorMessage(null);
@@ -619,6 +622,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       mode === 'register' && [styles.tabSwitchActive, { backgroundColor: colors.surfaceCard }],
                     ]}
                     onPress={() => {
+                      triggerHaptic('selection');
+                      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
                       setMode('register');
                       setTouched({});
                       setErrorMessage(null);

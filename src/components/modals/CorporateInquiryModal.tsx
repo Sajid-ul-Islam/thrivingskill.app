@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  LayoutAnimation,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -85,17 +86,20 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
       return;
     }
     triggerHaptic('selection');
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setStep(3);
   };
 
   const handleSubmit = () => {
     if (!isStep2Valid) {
+      triggerHaptic('warning');
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setStep(2);
       setTouched({ companyName: true, contactName: true, workEmail: true, phone: true });
-      triggerHaptic('warning');
       return;
     }
     triggerHaptic('medium');
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setIsSubmitting(true);
     setSubmitted(true);
     setIsSubmitting(false);
@@ -302,6 +306,7 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
                   style={[styles.primaryBtn, { backgroundColor: colors.primary }]}
                   onPress={() => {
                     triggerHaptic('selection');
+                    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
                     setStep(2);
                   }}
                   accessibilityRole="button"
@@ -428,7 +433,11 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
                 <View style={styles.wizardNavRow}>
                   <TouchableOpacity
                     style={[styles.backBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
-                    onPress={() => setStep(1)}
+                    onPress={() => {
+                      triggerHaptic('light');
+                      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                      setStep(1);
+                    }}
                     accessibilityRole="button"
                   >
                     <Ionicons name="arrow-back" size={16} color={colors.text} />
@@ -530,7 +539,11 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
                 <View style={styles.wizardNavRow}>
                   <TouchableOpacity
                     style={[styles.backBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
-                    onPress={() => setStep(2)}
+                    onPress={() => {
+                      triggerHaptic('light');
+                      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                      setStep(2);
+                    }}
                     accessibilityRole="button"
                   >
                     <Ionicons name="arrow-back" size={16} color={colors.text} />
