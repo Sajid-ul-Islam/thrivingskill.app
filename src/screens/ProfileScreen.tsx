@@ -1269,7 +1269,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               {subscriptionTier === 'enterprise'
                 ? 'Enterprise Team Workspace'
                 : subscriptionTier === 'pro'
-                ? '৩০০+ কোর্স, AI Copilot ও সার্টিফিকেট আনলকড'
+                ? (isBangla ? '৩০০+ কোর্স ও ভেরিফায়েড সার্টিফিকেট আনলকড' : '300+ Courses & Verified Certificates Unlocked')
                 : 'Synced Account Access'}
             </Text>
             <Text style={[styles.planExpiry, { color: colors.textMuted }]}>
@@ -1402,7 +1402,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               accessibilityLabel={isBangla ? 'অ্যাক্টিভ রিকল ফ্ল্যাশকার্ড খুলুন' : 'Open Active Recall Flashcards'}
             >
               <View style={styles.settingLeft}>
-                <Ionicons name="sparkles" size={20} color={colors.primary} />
+                <Ionicons name="layers-outline" size={20} color={colors.primary} />
                 <View style={{ marginLeft: 6 }}>
                   <Text style={[styles.settingLabel, { color: colors.text }]}>
                     {isBangla ? 'অ্যাক্টিভ রিকল ফ্ল্যাশকার্ড (SM-2)' : 'Active Recall Flashcards'}

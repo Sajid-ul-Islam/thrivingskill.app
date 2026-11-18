@@ -42,8 +42,10 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
   onNavigateToCourse,
   onMinimize,
 }) => {
-  const { width: windowWidth } = useWindowDimensions();
-  const playerHeight = (windowWidth * 9) / 16;
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const [isManualLandscape, setIsManualLandscape] = useState<boolean>(false);
+  const isLandscape = windowWidth > windowHeight || isManualLandscape;
+  const playerHeight = isLandscape ? windowHeight : (windowWidth * 9) / 16;
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { courses } = useLearning();

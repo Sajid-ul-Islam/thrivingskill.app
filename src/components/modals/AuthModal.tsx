@@ -546,7 +546,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   {mode === 'login'
                     ? 'Sign in to access your masterclasses, certificates, and learning track.'
                     : mode === 'register'
-                    ? 'No phone number required. Join 50,000+ professionals across Bangladesh.'
+                    ? 'No phone number required. Join professionals and learners across Bangladesh.'
                     : mode === 'set_password'
                     ? 'The password should be at least twelve characters long as required by thrivingskill.com.'
                     : 'Enter your username or email address and we will email you a password setup link.'}

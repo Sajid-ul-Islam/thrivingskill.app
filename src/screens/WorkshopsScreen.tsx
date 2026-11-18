@@ -306,11 +306,11 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
               message={
                 activeTab === 'summits'
                   ? (isBangla
-                      ? 'বাংলাদেশ স্কিল সামিটের পরবর্তী রাউন্ডের রেজিস্ট্রেশন শীঘ্রই শুরু হবে।'
-                      : 'Registrations for the next Bangladesh Skills Summit will open soon.')
+                    ? 'বাংলাদেশ স্কিল সামিটের পরবর্তী রাউন্ডের রেজিস্ট্রেশন শীঘ্রই শুরু হবে।'
+                    : 'Registrations for the next Bangladesh Skills Summit will open soon.')
                   : (isBangla
-                      ? 'সকল আসন্ন লাইভ মাস্টারক্লাস দেখতে "সকল ইভেন্ট" ট্যাবে সুইচ করুন।'
-                      : 'Switch back to All Events to view scheduled masterclasses.')
+                    ? 'সকল আসন্ন লাইভ মাস্টারক্লাস দেখতে "সকল ইভেন্ট" ট্যাবে সুইচ করুন।'
+                    : 'Switch back to All Events to view scheduled masterclasses.')
               }
               primaryActionLabel={activeTab !== 'all' ? (isBangla ? 'সকল ইভেন্ট দেখুন' : 'Show All Events') : undefined}
               onPrimaryAction={activeTab !== 'all' ? () => setActiveTab('all') : undefined}
@@ -491,3 +491,4 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
 });
+

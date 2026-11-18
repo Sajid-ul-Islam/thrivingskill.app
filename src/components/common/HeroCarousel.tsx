@@ -53,9 +53,9 @@ const SLIDES: CarouselSlide[] = [
   {
     id: 'ai-masterclass',
     badge: 'EXECUTIVE MASTERCLASS',
-    badgeIcon: 'sparkles',
+    badgeIcon: 'school-outline',
     title: 'Generative AI & Prompt Engineering',
-    subtitle: '10x office productivity with ChatGPT, Claude & automated workflow models.',
+    subtitle: 'Master practical AI prompt frameworks and automation for modern workflows.',
     ctaText: 'Watch Video Trailer →',
     gradientColors: ['#102F53', '#1D4476', '#E34234'],
     actionType: 'trailer',

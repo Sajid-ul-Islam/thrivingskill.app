@@ -63,13 +63,13 @@ export const lightColors = {
 };
 
 export const darkColors = {
-  primary: '#38BDF8', // Cyan/Sky highlight on deep navy
+  primary: '#38BDF8', // Cyan/Sky highlight on charcoal navy
   primaryDark: '#102F53',
-  primaryLight: '#0F223D',
+  primaryLight: '#1E2430',
   primaryGradientStart: '#102F53',
   primaryGradientEnd: '#E34234',
   secondary: '#60A5FA', // Slate blue
-  secondaryLight: '#1E293B',
+  secondaryLight: '#22252E',
   accent: '#FF5A4B', // Brand Red Light for dark mode
   accentLight: '#450A0A',
   brandNavy: '#102F53',
@@ -83,13 +83,13 @@ export const darkColors = {
   success: '#34D399',
   successLight: 'rgba(52, 211, 153, 0.16)',
   onSuccess: '#0F172A',
-  background: '#070D18', // Deep Navy Black
-  surface: '#0F192C', // Navy Surface
-  surfaceCard: '#14223B', // Navy Card
-  surfaceSubtle: '#1B2B4A',
-  surfaceElevated: '#203459',
-  border: '#22365A',
-  borderSubtle: '#182844',
+  background: '#121214', // Rich Charcoal Base
+  surface: '#18181B', // Dark Charcoal Surface
+  surfaceCard: '#1F1F23', // Charcoal Card Surface
+  surfaceSubtle: '#27272D', // Subtle Charcoal Fill
+  surfaceElevated: '#2E2E36', // Elevated Charcoal Modal/Dropdown
+  border: '#2E2E36', // Clean Charcoal Border
+  borderSubtle: '#24242A', // Subtle Charcoal Divider
   text: '#F8FAFC',
   textMuted: '#CBD5E1',
   textLight: '#94A3B8',
@@ -100,11 +100,11 @@ export const darkColors = {
   onDanger: '#0F172A',
   onGold: '#102F53',
   cardShadow: 'rgba(0, 0, 0, 0.5)',
-  badgeBackground: '#1B2E4E',
+  badgeBackground: '#282830', // Charcoal Badge Background
   badgeText: '#93C5FD',
   starColor: '#FFB606',
-  tabBarBg: '#0B1322',
-  tabBarBorder: '#1B2B4A',
+  tabBarBg: '#141416', // Charcoal Navigation Bar
+  tabBarBorder: '#24242A',
   tabActive: '#38BDF8',
   tabInactive: '#94A3B8',
 };
