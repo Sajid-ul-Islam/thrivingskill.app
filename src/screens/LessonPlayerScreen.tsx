@@ -48,6 +48,7 @@ import { resolveLessonVideoData } from '../data/lessonVideosRegistry';
 import { isSystemPiPSupported, isBackgroundAudioSupported } from '../utils/pipManager';
 import { OfflineManager } from '../services/offline/offlineManager';
 import { SpacedRepetitionModal } from '../components/modals/SpacedRepetitionModal';
+import { shape } from '../theme/shapes';
 import { LessonsService, LessonDetail } from '../services/api/lessonsService';
 import { Lesson, Certificate, Note } from '../types';
 
@@ -756,44 +757,94 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
           title={course?.title || 'Course Player'}
           subtitle={currentItem?.moduleTitle}
           rightAction={
-            <TouchableOpacity
-              style={[
-                styles.commuteToggleBtn,
-                { backgroundColor: isCommuteMode ? '#102F53' : colors.surfaceSubtle },
-              ]}
-              onPress={() => {
-                triggerHaptic('light');
-                const nextMode = !isCommuteMode;
-                setIsCommuteMode(nextMode);
-                showToast({
-                  message: nextMode
-                    ? isBangla
-                      ? 'ব্যাকগ্রাউন্ড অডিও মোড সক্রিয় (স্ক্রিন বন্ধ করেও চলবে)'
-                      : 'Background Audio Mode active (listens with screen locked)'
-                    : isBangla
-                    ? 'স্ট্যান্ডার্ড প্লেয়ার সক্রিয়'
-                    : 'Standard Player active',
-                  type: 'info',
-                });
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Toggle commute background audio mode"
-            >
-              <Ionicons
-                name={isCommuteMode ? 'headset' : 'headset-outline'}
-                size={16}
-                color={isCommuteMode ? '#FFB606' : colors.text}
-              />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <TouchableOpacity
+                style={[
+                  {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                    paddingHorizontal: 8,
+                    paddingVertical: 5,
+                    borderRadius: 14,
+                    borderWidth: 1,
+                    minHeight: 32,
+                  },
+                  isFocusMode
+                    ? { backgroundColor: 'rgba(227, 66, 52, 0.12)', borderColor: '#E34234' }
+                    : { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                ]}
+                onPress={() => {
+                  triggerHaptic('light');
+                  setIsFocusMode(!isFocusMode);
+                  showToast({
+                    message: !isFocusMode
+                      ? (isBangla ? 'ফোকাস মোড সক্রিয়: ডিস্ট্রাকশন-মুক্ত ভিউ' : 'Focus Mode active: distraction-free viewing')
+                      : (isBangla ? 'সাধারণ ভিউ সক্রিয়' : 'Standard View active'),
+                    type: 'info',
+                  });
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Toggle focus mode"
+              >
+                <Ionicons
+                  name={isFocusMode ? 'scan' : 'scan-outline'}
+                  size={14}
+                  color={isFocusMode ? '#E34234' : colors.text}
+                />
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: '700',
+                    color: isFocusMode ? '#E34234' : colors.text,
+                  }}
+                >
+                  Focus
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.commuteToggleBtn,
+                  {
+                    backgroundColor: isCommuteMode ? '#102F53' : colors.surfaceSubtle,
+                    borderColor: isCommuteMode ? '#102F53' : colors.border,
+                  },
+                ]}
+                onPress={() => {
+                  triggerHaptic('light');
+                  const nextMode = !isCommuteMode;
+                  setIsCommuteMode(nextMode);
+                  showToast({
+                    message: nextMode
+                      ? isBangla
+                        ? 'ব্যাকগ্রাউন্ড অডিও মোড সক্রিয় (স্ক্রিন বন্ধ করেও চলবে)'
+                        : 'Background Audio Mode active (listens with screen locked)'
+                      : isBangla
+                      ? 'স্ট্যান্ডার্ড প্লেয়ার সক্রিয়'
+                      : 'Standard Player active',
+                    type: 'info',
+                  });
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Toggle commute background audio mode"
+              >
+                <Ionicons
+                  name={isCommuteMode ? 'headset' : 'headset-outline'}
+                  size={16}
+                  color={isCommuteMode ? '#FFFFFF' : colors.text}
+                />
+              </TouchableOpacity>
+            </View>
           }
         />
       )}
 
       {/* Administrator Access Banner */}
       {isAdmin && !isFullscreen && (
-        <View style={[styles.adminBanner, { backgroundColor: '#102F53', borderColor: '#FFB606' }]}>
+        <View style={[styles.adminBanner, { backgroundColor: '#102F53', borderColor: 'rgba(227, 66, 52, 0.4)' }]}>
           <View style={styles.adminBannerLeft}>
-            <Ionicons name="shield-checkmark" size={14} color="#FFB606" />
+            <Ionicons name="shield-checkmark" size={14} color="#E34234" />
             <Text style={styles.adminBannerTitle}>ADMINISTRATOR ACCESS ACTIVE</Text>
           </View>
           <Text style={styles.adminBannerSub}>
@@ -894,148 +945,251 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
       {/* LOWER TABBED LEARNING AREA (PORTRAIT) */}
       {!isFullscreen && (
         <View style={styles.lowerLearningArea}>
-          {/* Decomposed Lesson Action Bar with SkillBot AI Tutor trigger */}
-          <LessonActionBar
-            currentLesson={currentLesson}
-            course={course}
-            isLessonCompleted={isLessonCompleted}
-            onOpenFlashcards={() => {
-              triggerHaptic('light');
-              setIsFlashcardsVisible(true);
-            }}
-            onOpenAiTutor={() => {
-              triggerHaptic('light');
-              setAiTutorVisible(true);
-            }}
-            onMarkComplete={handleMarkComplete}
-          />
-
-          {/* SWIPEABLE BOTTOM TABS STRIP */}
-          <View style={[styles.tabsStrip, { borderBottomColor: colors.border }]}>
-            {TABS.map((tab, idx) => {
-              const isActive = activeTab === tab.id;
-              return (
-                <TouchableOpacity
-                  key={tab.id}
-                  style={[
-                    styles.tabButton,
-                    isActive && { borderBottomColor: colors.primary, borderBottomWidth: 2 },
-                  ]}
-                  onPress={() => handleTabPress(tab.id, idx)}
-                  accessibilityRole="tab"
-                  accessibilityLabel={tab.label}
-                >
-                  <Ionicons
-                    name={tab.icon}
-                    size={15}
-                    color={isActive ? colors.primary : colors.textMuted}
-                  />
-                  <Text
-                    style={[
-                      styles.tabButtonText,
-                      {
-                        color: isActive ? colors.primary : colors.textMuted,
-                        fontWeight: isActive ? '700' : '500',
-                      },
-                    ]}
-                  >
-                    {tab.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          {/* HORIZONTAL SWIPEABLE PAGING SCROLLVIEW */}
-          <ScrollView
-            ref={tabScrollViewRef}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onMomentumScrollEnd={handleTabScrollEnd}
-            style={styles.horizontalPagingScroll}
-          >
-            {/* TAB 1: LECTURES (Curriculum Playlist) */}
-            <View style={{ width: screenWidth }}>
-              <LessonPlaylistTab
-                course={course}
-                currentLessonId={currentLesson.id}
-                allLessons={allLessons}
-                completedLessonIds={progress?.completedLessonIds || []}
-                isCourseCompleted={isCourseCompleted}
-                isEnrolled={isEnrolled}
-                isAdmin={isAdmin}
-                insetsBottom={insets.bottom}
-                onSelectLesson={(lessonId) => onSelectLesson(courseId, lessonId)}
-                onOpenQuiz={(l) => {
-                  setSelectedQuizLesson(l);
-                  setQuizPlayerVisible(true);
+          {isFocusMode ? (
+            <ScrollView
+              contentContainerStyle={{ padding: 16 }}
+              showsVerticalScrollIndicator={false}
+            >
+              <View
+                style={{
+                  backgroundColor: colors.surfaceCard,
+                  borderColor: 'rgba(227, 66, 52, 0.25)',
+                  borderWidth: 1,
+                  borderRadius: shape.large,
+                  padding: 16,
                 }}
-                onOpenCertModal={() => setCertModalVisible(true)}
-              />
-            </View>
-
-            {/* TAB 2: NOTES */}
-            <View style={{ width: screenWidth }}>
-              <LessonNotesTab
-                lessonNotes={lessonNotes}
-                insetsBottom={insets.bottom}
-                onOpenNewNote={handleOpenNotesFAB}
-                onSeekTo={handleSeekTo}
-                onDeleteNote={(n) => {
-                  deleteNote(n.id);
-                  showToast({
-                    message: 'Note deleted',
-                    type: 'info',
-                    actionLabel: 'Undo',
-                    onAction: () => {
-                      restoreNote(n);
-                      showToast({ message: 'Note restored', type: 'success' });
-                    },
-                  });
-                }}
-                showToast={showToast}
-              />
-            </View>
-
-            {/* TAB 3: TRANSCRIPT */}
-            <View style={{ width: screenWidth, flex: 1, paddingHorizontal: 14 }}>
-              <LessonTranscriptTab
-                currentPositionSeconds={currentPositionSeconds}
-                lessonTitle={currentLesson.title}
-                instructorName={course.instructor.name}
-                lessonSummary={lessonDetail?.content || currentLesson.summary}
-                durationSeconds={totalLessonSeconds}
-                onSeekTo={handleSeekTo}
-              />
-            </View>
-
-            {/* TAB 4: Q&A */}
-            <View style={{ width: screenWidth }}>
-              <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={[
-                  styles.tabContentScroll,
-                  { paddingBottom: Math.max(insets.bottom, 16) + 80 },
-                ]}
-                nestedScrollEnabled
               >
-                <CourseQnATab courseId={course.id} currentLessonTitle={currentLesson.title} />
-              </ScrollView>
-            </View>
-          </ScrollView>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(227, 66, 52, 0.12)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
+                    <Ionicons name="sparkles" size={13} color="#E34234" />
+                    <Text style={{ fontSize: 11, fontWeight: '800', color: '#E34234', letterSpacing: 0.5 }}>
+                      {isBangla ? 'ফোকাস মোড সক্রিয়' : 'FOCUS MODE • DISTRACTION-FREE'}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSubtle }}
+                    onPress={() => {
+                      triggerHaptic('light');
+                      setIsFocusMode(false);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Exit focus mode"
+                  >
+                    <Ionicons name="close" size={14} color={colors.text} />
+                    <Text style={{ fontSize: 11, fontWeight: '600', color: colors.text }}>
+                      {isBangla ? 'প্রস্থান' : 'Exit Focus'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
 
-          {/* FLOATING ACTION BUTTON (FAB) FOR NOTES */}
-          <TouchableOpacity
-            style={styles.notesFAB}
-            onPress={handleOpenNotesFAB}
-            activeOpacity={0.88}
-            accessibilityRole="button"
-            accessibilityLabel="Add Note at current video timestamp"
-          >
-            <Ionicons name="create" size={18} color="#102F53" />
-            <Text style={styles.notesFABText}>+ Note</Text>
-          </TouchableOpacity>
+                {/* Progress bar */}
+                <View style={{ marginBottom: 16 }}>
+                  <View style={{ height: 6, borderRadius: 3, backgroundColor: colors.surfaceSubtle, overflow: 'hidden', marginBottom: 6 }}>
+                    <View
+                      style={{
+                        height: '100%',
+                        borderRadius: 3,
+                        width: `${totalLessonSeconds > 0 ? Math.min(100, Math.round((currentPositionSeconds / totalLessonSeconds) * 100)) : 0}%`,
+                        backgroundColor: '#E34234',
+                      }}
+                    />
+                  </View>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 11, fontWeight: '500', color: colors.textMuted }}>
+                      {formatSeconds(currentPositionSeconds)} / {formatSeconds(totalLessonSeconds)}
+                    </Text>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: '#E34234' }}>
+                      {totalLessonSeconds > 0 ? Math.min(100, Math.round((currentPositionSeconds / totalLessonSeconds) * 100)) : 0}% Complete
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Ergonomic Lesson Navigation */}
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  <TouchableOpacity
+                    style={[
+                      { flex: 1, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: shape.medium, borderWidth: 1, paddingHorizontal: 12 },
+                      currentLessonIndex === 0
+                        ? { borderColor: colors.border, opacity: 0.4 }
+                        : { borderColor: colors.border, backgroundColor: colors.surfaceSubtle },
+                    ]}
+                    disabled={currentLessonIndex === 0}
+                    onPress={handlePrevLesson}
+                    accessibilityRole="button"
+                    accessibilityLabel="Previous lesson"
+                  >
+                    <Ionicons name="arrow-back" size={14} color={colors.text} />
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text }}>
+                      {isBangla ? 'পূর্ববর্তী' : 'Previous'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      { flex: 1, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: shape.medium, borderWidth: 1, paddingHorizontal: 12 },
+                      currentLessonIndex === allLessons.length - 1
+                        ? { borderColor: colors.border, opacity: 0.4 }
+                        : { backgroundColor: colors.primary, borderColor: colors.primary },
+                    ]}
+                    disabled={currentLessonIndex === allLessons.length - 1}
+                    onPress={handleNextLesson}
+                    accessibilityRole="button"
+                    accessibilityLabel="Next lesson"
+                  >
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: colors.onPrimary }}>
+                      {isBangla ? 'পরবর্তী পাঠ' : 'Next Lesson'}
+                    </Text>
+                    <Ionicons name="arrow-forward" size={14} color={colors.onPrimary} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </ScrollView>
+          ) : (
+            <>
+              {/* Decomposed Lesson Action Bar with SkillBot AI Tutor trigger */}
+              <LessonActionBar
+                currentLesson={currentLesson}
+                course={course}
+                isLessonCompleted={isLessonCompleted}
+                onOpenFlashcards={() => {
+                  triggerHaptic('light');
+                  setIsFlashcardsVisible(true);
+                }}
+                onOpenAiTutor={() => {
+                  triggerHaptic('light');
+                  setAiTutorVisible(true);
+                }}
+                onMarkComplete={handleMarkComplete}
+              />
+
+              {/* SWIPEABLE BOTTOM TABS STRIP */}
+              <View style={[styles.tabsStrip, { borderBottomColor: colors.border }]}>
+                {TABS.map((tab, idx) => {
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <TouchableOpacity
+                      key={tab.id}
+                      style={[
+                        styles.tabButton,
+                        isActive && { borderBottomColor: colors.primary, borderBottomWidth: 2 },
+                      ]}
+                      onPress={() => handleTabPress(tab.id, idx)}
+                      accessibilityRole="tab"
+                      accessibilityLabel={tab.label}
+                    >
+                      <Ionicons
+                        name={tab.icon}
+                        size={15}
+                        color={isActive ? colors.primary : colors.textMuted}
+                      />
+                      <Text
+                        style={[
+                          styles.tabButtonText,
+                          {
+                            color: isActive ? colors.primary : colors.textMuted,
+                            fontWeight: isActive ? '700' : '500',
+                          },
+                        ]}
+                      >
+                        {tab.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {/* HORIZONTAL SWIPEABLE PAGING SCROLLVIEW */}
+              <ScrollView
+                ref={tabScrollViewRef}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onMomentumScrollEnd={handleTabScrollEnd}
+                style={styles.horizontalPagingScroll}
+              >
+                {/* TAB 1: LECTURES (Curriculum Playlist) */}
+                <View style={{ width: screenWidth }}>
+                  <LessonPlaylistTab
+                    course={course}
+                    currentLessonId={currentLesson.id}
+                    allLessons={allLessons}
+                    completedLessonIds={progress?.completedLessonIds || []}
+                    isCourseCompleted={isCourseCompleted}
+                    isEnrolled={isEnrolled}
+                    isAdmin={isAdmin}
+                    insetsBottom={insets.bottom}
+                    onSelectLesson={(lessonId) => onSelectLesson(courseId, lessonId)}
+                    onOpenQuiz={(l) => {
+                      setSelectedQuizLesson(l);
+                      setQuizPlayerVisible(true);
+                    }}
+                    onOpenCertModal={() => setCertModalVisible(true)}
+                  />
+                </View>
+
+                {/* TAB 2: NOTES */}
+                <View style={{ width: screenWidth }}>
+                  <LessonNotesTab
+                    lessonNotes={lessonNotes}
+                    insetsBottom={insets.bottom}
+                    onOpenNewNote={handleOpenNotesFAB}
+                    onSeekTo={handleSeekTo}
+                    onDeleteNote={(n) => {
+                      deleteNote(n.id);
+                      showToast({
+                        message: 'Note deleted',
+                        type: 'info',
+                        actionLabel: 'Undo',
+                        onAction: () => {
+                          restoreNote(n);
+                          showToast({ message: 'Note restored', type: 'success' });
+                        },
+                      });
+                    }}
+                    showToast={showToast}
+                  />
+                </View>
+
+                {/* TAB 3: TRANSCRIPT */}
+                <View style={{ width: screenWidth, flex: 1, paddingHorizontal: 14 }}>
+                  <LessonTranscriptTab
+                    currentPositionSeconds={currentPositionSeconds}
+                    lessonTitle={currentLesson.title}
+                    instructorName={course.instructor.name}
+                    lessonSummary={lessonDetail?.content || currentLesson.summary}
+                    durationSeconds={totalLessonSeconds}
+                    onSeekTo={handleSeekTo}
+                  />
+                </View>
+
+                {/* TAB 4: Q&A */}
+                <View style={{ width: screenWidth }}>
+                  <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={[
+                      styles.tabContentScroll,
+                      { paddingBottom: Math.max(insets.bottom, 16) + 80 },
+                    ]}
+                    nestedScrollEnabled
+                  >
+                    <CourseQnATab courseId={course.id} currentLessonTitle={currentLesson.title} />
+                  </ScrollView>
+                </View>
+              </ScrollView>
+
+              {/* FLOATING ACTION BUTTON (FAB) FOR NOTES */}
+              <TouchableOpacity
+                style={styles.notesFAB}
+                onPress={handleOpenNotesFAB}
+                activeOpacity={0.88}
+                accessibilityRole="button"
+                accessibilityLabel="Add Note at current video timestamp"
+              >
+                <Ionicons name="create" size={18} color="#FFFFFF" />
+                <Text style={styles.notesFABText}>+ Note</Text>
+              </TouchableOpacity>
+            </>
+          )}
 
           {/* Quick Note Bottom Sheet */}
           <QuickNoteBottomSheet
@@ -1232,13 +1386,13 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   adminBannerTitle: {
-    color: '#FFB606',
+    color: '#E34234',
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
   adminBannerSub: {
-    color: 'rgba(255,255,255,0.7)',
+    color: '#F8FAFC',
     fontSize: 10.5,
   },
   previewBanner: {
@@ -1284,7 +1438,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#FFB606',
+    backgroundColor: '#E34234',
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 24,
@@ -1295,7 +1449,7 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
   },
   notesFABText: {
-    color: '#102F53',
+    color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '800',
   },

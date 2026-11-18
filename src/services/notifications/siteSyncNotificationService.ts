@@ -3,6 +3,7 @@ import { HttpClient } from '../api/httpClient';
 import { Endpoints } from '../api/endpoints';
 import { Course, WpPost, UserProgress } from '../../types';
 import { PushNotificationService } from './pushNotificationService';
+import { HabitNotificationQueue } from './habitNotificationQueue';
 import { cleanHtml, parseBdtPrice } from '../api/transformers';
 
 const STORAGE_KEY_KNOWN_COURSES = '@thrivingskill_sync_known_course_ids';
@@ -151,12 +152,33 @@ export class SiteSyncNotificationService {
       // Check for New Course
       if (!isFirstRun && !knownCourseIds.includes(id)) {
         result.newCoursesCount++;
-        await PushNotificationService.notifyNewCourse({
-          id,
-          title,
-          priceBdt: price,
-          thumbnail,
-        }, isBangla);
+        const throttle = await HabitNotificationQueue.canDeliverNotificationNow('normal');
+        const isReceptive = await HabitNotificationQueue.isReceptiveTimeNow();
+        if (throttle.allowed && isReceptive) {
+          await PushNotificationService.notifyNewCourse({
+            id,
+            title,
+            priceBdt: price,
+            thumbnail,
+          }, isBangla);
+          await HabitNotificationQueue.recordDelivery('normal');
+        } else {
+          const priceText = price ? ` (৳${price})` : '';
+          await HabitNotificationQueue.enqueueOrDispatch(
+            isBangla ? '🎓 নতুন কোর্স প্রকাশিত হয়েছে!' : '🎓 New Course Published!',
+            isBangla
+              ? `"${title}" কোর্সটি এখন উপলব্ধ${priceText}। পেশাগত দক্ষতায় এক ধাপ এগিয়ে যান!`
+              : `"${title}" is now available${priceText}. Enroll now to level up your career!`,
+            'course',
+            'normal',
+            {
+              courseId: id,
+              courseName: title,
+              priceBdt: price,
+              thumbnail,
+            }
+          );
+        }
       }
 
       // Check for Discount Offer / Flash Sale
@@ -168,14 +190,39 @@ export class SiteSyncNotificationService {
         if (!knownOfferIds.includes(offerKey)) {
           if (!isFirstRun || (allowInitialHighlights && result.newOffersCount === 0)) {
             result.newOffersCount++;
-            await PushNotificationService.notifyCourseOffer({
-              id,
-              title,
-              priceBdt: price,
-              originalPriceBdt: origPrice,
-              discountPercent,
-              thumbnail,
-            }, isBangla);
+            const throttle = await HabitNotificationQueue.canDeliverNotificationNow('high');
+            if (throttle.allowed) {
+              await PushNotificationService.notifyCourseOffer({
+                id,
+                title,
+                priceBdt: price,
+                originalPriceBdt: origPrice,
+                discountPercent,
+                thumbnail,
+              }, isBangla);
+              await HabitNotificationQueue.recordDelivery('high');
+            } else {
+              const offerTitle = isBangla
+                ? `🔥 বিশেষ ছাড়: ${discountPercent}% ছাড়!`
+                : `🔥 Special Offer: ${discountPercent}% OFF!`;
+              const offerBody = isBangla
+                ? `"${title}" এখন মাত্র ৳${price} (পূর্বে ছিল ৳${origPrice})। অফারটি সীমিত সময়ের জন্য!`
+                : `Get "${title}" for only ৳${price} (Regular: ৳${origPrice}). Limited time discount!`;
+              await HabitNotificationQueue.enqueueOrDispatch(
+                offerTitle,
+                offerBody,
+                'offer',
+                'high',
+                {
+                  courseId: id,
+                  courseName: title,
+                  priceBdt: price,
+                  originalPriceBdt: origPrice,
+                  discountPercent,
+                  thumbnail,
+                }
+              );
+            }
           }
           knownOfferIds.push(offerKey);
         }
@@ -209,11 +256,30 @@ export class SiteSyncNotificationService {
         const title = cleanHtml(post.title?.rendered || 'Skill Update');
         const link = post.link || 'https://thrivingskill.com';
 
-        await PushNotificationService.notifySiteUpdate({
-          id,
-          title,
-          link,
-        }, isBangla);
+        const throttle = await HabitNotificationQueue.canDeliverNotificationNow('low');
+        const isReceptive = await HabitNotificationQueue.isReceptiveTimeNow();
+        if (throttle.allowed && isReceptive) {
+          await PushNotificationService.notifySiteUpdate({
+            id,
+            title,
+            link,
+          }, isBangla);
+          await HabitNotificationQueue.recordDelivery('low');
+        } else {
+          await HabitNotificationQueue.enqueueOrDispatch(
+            isBangla ? '📢 নতুন আর্টিকেল ও ক্যারিয়ার আপডেট' : '📢 Career Insight & Platform Update',
+            isBangla
+              ? `"${title}" – থ্রাইভিং স্কিলস-এর নতুন ব্লগ পোস্টটি পড়ুন এবং জানুন গুরুত্বপূর্ণ ইনসাইট!`
+              : `"${title}" – Read the latest expert insights and skills guide on Thriving Skills.`,
+            'update',
+            'low',
+            {
+              postId: id,
+              postTitle: title,
+              postUrl: link,
+            }
+          );
+        }
       }
     }
 

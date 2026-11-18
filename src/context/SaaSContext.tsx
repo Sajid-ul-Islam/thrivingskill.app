@@ -12,6 +12,7 @@ import {
 } from '../types';
 import { PushNotificationService } from '../services/notifications/pushNotificationService';
 import { SiteSyncNotificationService, SiteSyncResult } from '../services/notifications/siteSyncNotificationService';
+import { HabitNotificationQueue } from '../services/notifications/habitNotificationQueue';
 
 const SAAS_STORAGE_KEY = '@thriving_skill_saas_state_v1';
 
@@ -84,6 +85,8 @@ interface SaaSContextType {
   assignCourseToMember: (memberId: string, courseId: string) => void;
   markNotificationRead: (notifId: string) => void;
   markAllNotificationsRead: () => void;
+  removeNotification: (notifId: string) => void;
+  clearAllNotifications: () => void;
   addNotification: (notification: SaaSNotification) => void;
   syncSiteNotifications: (force?: boolean) => Promise<SiteSyncResult>;
   sendCopilotMessage: (text: string) => Promise<void>;
@@ -209,6 +212,21 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     saveToStorage({ notifications: updated });
   };
 
+  const removeNotification = (notifId: string) => {
+    setNotifications((prev) => {
+      const updated = prev.filter((n) => n.id !== notifId);
+      saveToStorage({ notifications: updated });
+      return updated;
+    });
+    PushNotificationService.removeNotification(notifId).catch(() => {});
+  };
+
+  const clearAllNotifications = () => {
+    setNotifications([]);
+    saveToStorage({ notifications: [] });
+    PushNotificationService.clearAllNotifications().catch(() => {});
+  };
+
   const [isSyncingSite, setIsSyncingSite] = useState(false);
 
   const addNotification = (notif: SaaSNotification) => {
@@ -248,12 +266,28 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return unsub;
   }, []);
 
-  // Background sync on app initialization
+  // Background sync on app initialization (delayed to 12s to ensure a peaceful, gentle app startup)
   useEffect(() => {
     const timer = setTimeout(() => {
       syncSiteNotifications(false).catch(() => {});
-    }, 3500);
+    }, 12000);
     return () => clearTimeout(timer);
+  }, []);
+
+  // Record user habit activity upon mounting
+  useEffect(() => {
+    HabitNotificationQueue.recordUserActivity().catch(() => {});
+  }, []);
+
+  // Periodic habit-timed queue processor (evaluates every 3 minutes for receptive habit windows)
+  useEffect(() => {
+    const queueInterval = setInterval(() => {
+      HabitNotificationQueue.processQueue().catch(() => {});
+    }, 180000);
+    return () => {
+      clearInterval(queueInterval);
+      HabitNotificationQueue.cleanup();
+    };
   }, []);
 
   const saveAssessmentResult = (result: SkillAssessmentResult) => {
@@ -362,6 +396,8 @@ Would you like a step-by-step framework, a downloadable template, or a targeted 
         assignCourseToMember,
         markNotificationRead,
         markAllNotificationsRead,
+        removeNotification,
+        clearAllNotifications,
         addNotification,
         syncSiteNotifications,
         sendCopilotMessage,

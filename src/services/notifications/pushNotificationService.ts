@@ -498,11 +498,23 @@ export class PushNotificationService {
   }
 
   /**
-   * Schedules a daily streak retention reminder
+   * Schedules a daily streak retention reminder (rate-limited to max once per calendar day)
    */
-  static async scheduleDailyStreakNudge(isBangla: boolean = false): Promise<void> {
+  static async scheduleDailyStreakNudge(isBangla: boolean = false, force: boolean = false): Promise<void> {
     const settings = await this.getSettings();
     if (!settings.streakReminders) return;
+
+    const STORAGE_KEY_LAST_NUDGE = '@thrivingskill_last_streak_nudge_date';
+    if (!force) {
+      try {
+        const lastDate = await AsyncStorage.getItem(STORAGE_KEY_LAST_NUDGE);
+        const todayStr = new Date().toDateString();
+        if (lastDate === todayStr) {
+          // Already nudged today; do not spam on startup
+          return;
+        }
+      } catch {}
+    }
 
     await this.dispatchNotification(
       isBangla ? '🔥 আপনার স্টাডি স্ট্রিক ধরে রাখুন!' : '🔥 Keep Your Daily Learning Streak!',
@@ -512,6 +524,10 @@ export class PushNotificationService {
       'streak_nudge',
       { type: 'streak_nudge' }
     );
+
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY_LAST_NUDGE, new Date().toDateString());
+    } catch {}
   }
 
   /**
@@ -549,5 +565,37 @@ export class PushNotificationService {
       const updated = list.map((item) => ({ ...item, read: true }));
       await AsyncStorage.setItem(STORAGE_KEY_INBOX, JSON.stringify(updated));
     } catch {}
+  }
+
+  /**
+   * Removes a single notification by id from the persistent inbox (Easy Remover)
+   */
+  static async removeNotification(id: string): Promise<void> {
+    try {
+      const list = await this.getNotifications();
+      const updated = list.filter((item) => item.id !== id);
+      await AsyncStorage.setItem(STORAGE_KEY_INBOX, JSON.stringify(updated));
+    } catch {}
+  }
+
+  /**
+   * Clears all notifications from persistent inbox (Easy Remover)
+   */
+  static async clearAllNotifications(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem(STORAGE_KEY_INBOX);
+    } catch {}
+  }
+
+  /**
+   * Returns unread notifications count
+   */
+  static async getUnreadCount(): Promise<number> {
+    try {
+      const list = await this.getNotifications();
+      return list.filter((item) => !item.read).length;
+    } catch {
+      return 0;
+    }
   }
 }
