@@ -164,7 +164,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
               {notifications.length > 0 && (
                 <TouchableOpacity
                   onPress={() => {
-                    triggerHaptic('impactLight');
+                    triggerHaptic('medium');
                     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
                     clearAllNotifications();
                     showToast({ message: 'All notifications cleared', type: 'info' });
@@ -397,6 +397,17 @@ const styles = StyleSheet.create({
     ...typography.caption,
     fontWeight: '700',
   },
+  clearAllBtn: {
+    minHeight: MIN_TOUCH_TARGET,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+  },
+  clearAllText: {
+    ...typography.caption,
+    fontWeight: '600',
+  },
   closeBtn: {
     width: MIN_TOUCH_TARGET,
     height: MIN_TOUCH_TARGET,
@@ -494,5 +505,18 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     alignSelf: 'center',
+  },
+  itemActionsRight: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingLeft: 4,
+  },
+  removeItemBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

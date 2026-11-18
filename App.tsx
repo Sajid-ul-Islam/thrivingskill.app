@@ -64,6 +64,7 @@ import {
 import { AppUpdateService } from './src/services/appUpdateService';
 import { TelemetryService } from './src/services/telemetry/telemetryService';
 import { PushNotificationService } from './src/services/notifications/pushNotificationService';
+import { HabitNotificationQueue } from './src/services/notifications/habitNotificationQueue';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -118,6 +119,8 @@ const MainAppContent: React.FC = () => {
   useEffect(() => {
     TelemetryService.initialize();
     PushNotificationService.registerForPushNotifications();
+    HabitNotificationQueue.resetStartupSession();
+    // Schedule daily streak reminder (guarded by once-per-calendar-day throttle)
     PushNotificationService.scheduleDailyStreakNudge();
   }, []);
 
@@ -197,6 +200,7 @@ const MainAppContent: React.FC = () => {
       category: 'navigation',
       message: `Navigated to ${activeScreen.name}`,
     });
+    HabitNotificationQueue.recordUserActivity().catch(() => {});
   }, [activeScreen.name]);
 
   // Deep-link routing when learner taps native Android status bar drop-down notification
