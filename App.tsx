@@ -417,15 +417,7 @@ const MainAppContent: React.FC = () => {
                 accessibilityState={{ selected: isActive }}
                 accessibilityLabel={tab.label}
               >
-                <View
-                  style={[
-                    styles.tabPillIndicator,
-                    Platform.OS === 'android' &&
-                      isActive && {
-                        backgroundColor: isDark ? 'rgba(255, 182, 6, 0.14)' : colors.primaryLight,
-                      },
-                  ]}
-                >
+                <View style={styles.tabPillIndicator}>
                   <Ionicons
                     name={(isActive ? tab.icon : tab.iconOutline) as any}
                     size={21}
@@ -629,6 +621,17 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 48,
     paddingVertical: 4,
+    borderRadius: shape.full,
+    overflow: 'hidden',
+    ...Platform.select({
+      web: {
+        outlineStyle: 'none' as any,
+        outlineWidth: 0 as any,
+        boxShadow: 'none' as any,
+        userSelect: 'none' as any,
+        WebkitTapHighlightColor: 'transparent' as any,
+      },
+    }),
   },
   tabPillIndicator: {
     width: 60,
