@@ -21,9 +21,12 @@ function check(title, fn) {
 
 // 1. CourseDetailScreen Bottom Bar & Enrollment Button
 check('CourseDetailScreen has useSafeAreaInsets and dynamic paddingBottom', () => {
-  const code = fs.readFileSync('src/screens/CourseDetailScreen.tsx', 'utf8');
+  const code = fs.readFileSync('src/screens/CourseDetailScreen.tsx', 'utf8') +
+    (fs.existsSync('src/components/course-detail/CourseStickyBottomBar.tsx')
+      ? fs.readFileSync('src/components/course-detail/CourseStickyBottomBar.tsx', 'utf8')
+      : '');
   assert(code.includes('useSafeAreaInsets'), 'Missing useSafeAreaInsets import');
-  assert(code.includes('paddingBottom: Math.max(insets.bottom, 12)'), 'Missing insets.bottom in bottomEnrollBar');
+  assert(code.includes('paddingBottom: Math.max(insets.bottom, 12)') || code.includes('paddingBottom: Math.max(insetsBottom, 12)'), 'Missing insets.bottom in bottomEnrollBar');
   assert(code.includes('paddingBottom: Math.max(insets.bottom, 12) + 100'), 'Missing insets.bottom in scrollContent');
   assert(code.includes('flex: 1') && code.includes('minWidth: 0'), 'Missing flex: 1 on bottomPriceCol');
   assert(code.includes('maxWidth: \'56%\'') && code.includes('flexShrink: 0'), 'Missing maxWidth or flexShrink on enrollCTAButton');
@@ -32,7 +35,10 @@ check('CourseDetailScreen has useSafeAreaInsets and dynamic paddingBottom', () =
 
 // 2. CourseDetailScreen statsBar
 check('CourseDetailScreen statsBar statCell has flex: 1', () => {
-  const code = fs.readFileSync('src/screens/CourseDetailScreen.tsx', 'utf8');
+  const code = fs.readFileSync('src/screens/CourseDetailScreen.tsx', 'utf8') +
+    (fs.existsSync('src/components/course-detail/CourseDetailHero.tsx')
+      ? fs.readFileSync('src/components/course-detail/CourseDetailHero.tsx', 'utf8')
+      : '');
   const match = code.match(/statCell:\s*\{[\s\S]*?flex:\s*1/);
   assert(match, 'statCell must have flex: 1');
 });
@@ -198,7 +204,10 @@ check('Floating badges have zIndex layering and flex rows have shrink/wrap guard
   const ccCode = fs.readFileSync('src/components/cards/CourseCard.tsx', 'utf8');
   assert(ccCode.includes("flexWrap: 'wrap'") && ccCode.includes('zIndex: 10'), 'CourseCard missing priceRow wrap or bookmark zIndex');
 
-  const profCode = fs.readFileSync('src/screens/ProfileScreen.tsx', 'utf8');
+  const profCode = fs.readFileSync('src/screens/ProfileScreen.tsx', 'utf8') +
+    (fs.existsSync('src/components/profile/ProfileHeaderCard.tsx')
+      ? fs.readFileSync('src/components/profile/ProfileHeaderCard.tsx', 'utf8')
+      : '');
   assert(profCode.includes('flexShrink: 1') && profCode.includes('flexShrink: 0'), 'ProfileScreen nameRow missing shrink protection');
 });
 
@@ -215,12 +224,18 @@ check('All input-bearing modals and sheets have KeyboardAvoidingView, statusBarT
   assert(qnaCode.includes("behavior={Platform.OS === 'ios' ? 'padding' : 'height'}"), 'CourseQnATab missing KeyboardAvoidingView');
   assert(qnaCode.includes('keyboardShouldPersistTaps="handled"'), 'CourseQnATab ScrollView missing keyboardShouldPersistTaps');
 
-  const courseDetailCode = fs.readFileSync('src/screens/CourseDetailScreen.tsx', 'utf8');
+  const courseDetailCode = fs.readFileSync('src/screens/CourseDetailScreen.tsx', 'utf8') +
+    (fs.existsSync('src/components/course-detail/CourseWriteReviewModal.tsx')
+      ? fs.readFileSync('src/components/course-detail/CourseWriteReviewModal.tsx', 'utf8')
+      : '');
   assert(courseDetailCode.includes("statusBarTranslucent={true}"), 'CourseDetailScreen Write Review Modal missing statusBarTranslucent');
   assert(courseDetailCode.includes("behavior={Platform.OS === 'ios' ? 'padding' : 'height'}"), 'CourseDetailScreen Review Modal missing KeyboardAvoidingView');
   assert(courseDetailCode.includes('keyboardShouldPersistTaps="handled"'), 'CourseDetailScreen Review ScrollView missing keyboardShouldPersistTaps');
 
-  const profileCode = fs.readFileSync('src/screens/ProfileScreen.tsx', 'utf8');
+  const profileCode = fs.readFileSync('src/screens/ProfileScreen.tsx', 'utf8') +
+    (fs.existsSync('src/components/profile/ProfileChangePasswordModal.tsx')
+      ? fs.readFileSync('src/components/profile/ProfileChangePasswordModal.tsx', 'utf8')
+      : '');
   assert(profileCode.includes("changePasswordModalVisible"), 'ProfileScreen missing changePasswordModalVisible');
   assert(profileCode.includes("keyboardShouldPersistTaps=\"handled\""), 'ProfileScreen modals missing keyboardShouldPersistTaps');
 

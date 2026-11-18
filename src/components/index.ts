@@ -4,3 +4,4 @@ export * from './modals';
 export * from './player';
 export * from './analytics';
 export * from './profile';
+export * from './course-detail';

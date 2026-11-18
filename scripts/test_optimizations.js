@@ -48,7 +48,10 @@ function runTests() {
   assert.strictEqual(courseCard.includes("cache: 'force-cache'"), true, 'CourseCard should use force-cache for thumbnail images');
   
   const courseDetail = fs.readFileSync(path.join(__dirname, '..', 'src', 'screens', 'CourseDetailScreen.tsx'), 'utf8');
-  assert.strictEqual(courseDetail.includes("cache: 'force-cache'"), true, 'CourseDetailScreen should use force-cache for hero images');
+  const courseDetailHero = fs.existsSync(path.join(__dirname, '..', 'src', 'components', 'course-detail', 'CourseDetailHero.tsx'))
+    ? fs.readFileSync(path.join(__dirname, '..', 'src', 'components', 'course-detail', 'CourseDetailHero.tsx'), 'utf8')
+    : '';
+  assert.strictEqual(courseDetail.includes("cache: 'force-cache'") || courseDetailHero.includes("cache: 'force-cache'"), true, 'CourseDetailScreen or CourseDetailHero should use force-cache for hero images');
   console.log('✓ Scope 3: Native OkHttp / iOS persistent disk cache enabled via force-cache');
 
   // Test 5: Scope 4 - In-Flight GET Request Deduplication

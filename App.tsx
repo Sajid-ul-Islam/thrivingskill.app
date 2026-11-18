@@ -60,6 +60,8 @@ import {
   AppErrorBoundary,
 } from './src/components';
 import { AppUpdateService } from './src/services/appUpdateService';
+import { TelemetryService } from './src/services/telemetry/telemetryService';
+import { PushNotificationService } from './src/services/notifications/pushNotificationService';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -109,6 +111,19 @@ const MainAppContent: React.FC = () => {
   const { celebration, clearCelebration } = useGamification();
   const { activeVideo, playerMode, closePlayer, minimizePlayer, playVideo } = useYouTube();
   const { currentToast, dismissToast, showToast } = useFeedback();
+
+  // Option D: Telemetry & Push Notification Infrastructure Initialization
+  useEffect(() => {
+    TelemetryService.initialize();
+    PushNotificationService.registerForPushNotifications();
+    PushNotificationService.scheduleDailyStreakNudge();
+  }, []);
+
+  useEffect(() => {
+    TelemetryService.setUser(
+      user ? { id: String(user.id), username: user.username, role: user.roles?.[0] } : null
+    );
+  }, [user]);
 
   // CR-1: Splash screen timer (2 seconds) with logo, wordmark, tagline
   const [isSplashVisible, setIsSplashVisible] = useState(true);
@@ -174,6 +189,13 @@ const MainAppContent: React.FC = () => {
     navigateToLesson,
     resetToTabs: navigateBackToTabs,
   } = useNavigationStack({ initialTab: 'Home' });
+
+  useEffect(() => {
+    TelemetryService.addBreadcrumb({
+      category: 'navigation',
+      message: `Navigated to ${activeScreen.name}`,
+    });
+  }, [activeScreen.name]);
 
   // Global Modals State
   const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);

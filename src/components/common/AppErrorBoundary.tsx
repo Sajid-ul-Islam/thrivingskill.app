@@ -12,6 +12,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { CacheManager } from '../../services/cache/cacheManager';
+import { TelemetryService } from '../../services/telemetry/telemetryService';
 
 interface Props {
   children: ReactNode;
@@ -47,6 +48,7 @@ export class AppErrorBoundary extends Component<Props, State> {
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('[AppErrorBoundary] Uncaught React exception caught:', error);
     console.error('[AppErrorBoundary] Component stack trace:', errorInfo?.componentStack);
+    TelemetryService.captureException(error, { componentStack: errorInfo?.componentStack });
     this.setState({ errorInfo });
   }
 

@@ -9,7 +9,9 @@ const path = require('path');
 console.log('Verifying player PiP & background audio integration...\n');
 
 const playerScreenPath = path.resolve(__dirname, '../src/screens/LessonPlayerScreen.tsx');
-const playerScreen = fs.readFileSync(playerScreenPath, 'utf8');
+const containerPath = path.resolve(__dirname, '../src/components/player/LessonVideoContainer.tsx');
+const playerScreen = fs.readFileSync(playerScreenPath, 'utf8') +
+  (fs.existsSync(containerPath) ? fs.readFileSync(containerPath, 'utf8') : '');
 
 const overlayPath = path.resolve(__dirname, '../src/components/player/VideoPlayerGestureOverlay.tsx');
 const overlay = fs.readFileSync(overlayPath, 'utf8');

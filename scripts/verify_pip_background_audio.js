@@ -81,7 +81,10 @@ test('NativeMedia3Player implements expo-video VideoView with imperative PiP ref
 
 // 5. LessonPlayerScreen Dual-Engine integration
 test('LessonPlayerScreen coordinates dual-engine playback, PiP trigger, and AppState', () => {
-  const content = fs.readFileSync(path.resolve(__dirname, '../src/screens/LessonPlayerScreen.tsx'), 'utf8');
+  const content = fs.readFileSync(path.resolve(__dirname, '../src/screens/LessonPlayerScreen.tsx'), 'utf8') +
+    (fs.existsSync(path.resolve(__dirname, '../src/components/player/LessonVideoContainer.tsx'))
+      ? fs.readFileSync(path.resolve(__dirname, '../src/components/player/LessonVideoContainer.tsx'), 'utf8')
+      : '');
   assert(content.includes('NativeMedia3Player'), 'Must use NativeMedia3Player');
   assert(content.includes('nativePlayerRef = useRef<NativeMedia3PlayerRef | null>(null)'), 'Must declare nativePlayerRef');
   assert(content.includes('isDirectStream'), 'Must compute isDirectStream');

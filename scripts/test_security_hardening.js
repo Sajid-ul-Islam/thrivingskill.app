@@ -33,14 +33,20 @@ test('SEC-01: allowBackup: false in app.json', () => {
 
 // 2. LessonPlayerScreen WebView hardening & protocol sanitization
 test('SEC-03: LessonPlayerScreen WebView enforces mixedContentMode="never" and https originWhitelist', () => {
-  const content = fs.readFileSync(path.join(__dirname, '../src/screens/LessonPlayerScreen.tsx'), 'utf8');
+  const content = fs.readFileSync(path.join(__dirname, '../src/screens/LessonPlayerScreen.tsx'), 'utf8') +
+    (fs.existsSync(path.join(__dirname, '../src/components/player/LessonVideoContainer.tsx'))
+      ? fs.readFileSync(path.join(__dirname, '../src/components/player/LessonVideoContainer.tsx'), 'utf8')
+      : '');
   assert(content.includes('mixedContentMode="never"'), 'Expected mixedContentMode="never"');
   assert(!content.includes('mixedContentMode="always"'), 'mixedContentMode="always" must not exist');
   assert(content.includes("originWhitelist={['https://*']}"), 'Expected originWhitelist https only');
 });
 
 test('SEC-04: LessonPlayerScreen sanitizes video iframe URLs against javascript: and requires https', () => {
-  const content = fs.readFileSync(path.join(__dirname, '../src/screens/LessonPlayerScreen.tsx'), 'utf8');
+  const content = fs.readFileSync(path.join(__dirname, '../src/screens/LessonPlayerScreen.tsx'), 'utf8') +
+    (fs.existsSync(path.join(__dirname, '../src/components/player/LessonVideoContainer.tsx'))
+      ? fs.readFileSync(path.join(__dirname, '../src/components/player/LessonVideoContainer.tsx'), 'utf8')
+      : '');
   assert(content.includes('isSafeIframe'), 'Expected iframe src validation logic');
   assert(content.includes('activeVideoUrl.startsWith(\'https://\')'), 'Expected https check on generic iframe fallback');
 });

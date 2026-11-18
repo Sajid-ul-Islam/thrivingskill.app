@@ -1,0 +1,503 @@
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Modal,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
+import { triggerHaptic } from '../../utils/haptics';
+import { AiTutorService, AiTutorContext, TutorMessage } from '../../services/ai/aiTutorService';
+
+interface LessonAiTutorModalProps {
+  visible: boolean;
+  context: AiTutorContext;
+  onClose: () => void;
+}
+
+export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
+  visible,
+  context,
+  onClose,
+}) => {
+  const { colors, isDark } = useTheme();
+  const { isBangla } = useLanguage();
+  const [messages, setMessages] = useState<TutorMessage[]>([]);
+  const [inputText, setInputText] = useState('');
+  const [isThinking, setIsThinking] = useState(false);
+  const scrollRef = useRef<React.ElementRef<typeof ScrollView> | null>(null);
+
+  // Load chat history when opened
+  useEffect(() => {
+    if (visible && context.lessonId) {
+      AiTutorService.getStoredHistory(context.lessonId).then((history) => {
+        if (history.length > 0) {
+          setMessages(history);
+        } else {
+          // Welcome message
+          const welcomeMsg: TutorMessage = {
+            id: 'welcome',
+            role: 'assistant',
+            content: isBangla
+              ? `স্বাগতম! আমি "SkillBot", আপনার ব্যক্তিগত এআই লার্নিং টিউটর।\n\n"${context.lessonTitle}" লেকচার নিয়ে যেকোনো প্রশ্ন বা কনসেপ্ট পরিষ্কার করতে নিচে লিখুন অথবা দ্রুত বাটনগুলোতে ট্যাপ করুন।`
+              : `Welcome! I'm "SkillBot", your personal in-lecture AI tutor.\n\nAsk me anything about "${context.lessonTitle}", or tap one of the suggested prompts below to get started!`,
+            timestamp: Date.now(),
+          };
+          setMessages([welcomeMsg]);
+        }
+      });
+    }
+  }, [visible, context.lessonId, isBangla, context.lessonTitle]);
+
+  const handleSendMessage = async (textToSend?: string) => {
+    const text = (textToSend || inputText).trim();
+    if (!text || isThinking) return;
+
+    triggerHaptic('light');
+    const userMsg: TutorMessage = {
+      id: `user-${Date.now()}`,
+      role: 'user',
+      content: text,
+      timestamp: Date.now(),
+    };
+
+    const newHistory = [...messages, userMsg];
+    setMessages(newHistory);
+    setInputText('');
+    setIsThinking(true);
+
+    setTimeout(() => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+
+    try {
+      const answer = await AiTutorService.askTutor(text, context, newHistory, isBangla);
+      const assistantMsg: TutorMessage = {
+        id: `assistant-${Date.now()}`,
+        role: 'assistant',
+        content: answer,
+        timestamp: Date.now(),
+      };
+      const finalHistory = [...newHistory, assistantMsg];
+      setMessages(finalHistory);
+      AiTutorService.saveHistory(context.lessonId, finalHistory);
+    } catch {
+      const errorMsg: TutorMessage = {
+        id: `assistant-${Date.now()}`,
+        role: 'assistant',
+        content: isBangla
+          ? 'দুঃখিত, সংযোগ সমস্যার কারণে উত্তর পেতে ব্যর্থ হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।'
+          : 'Unable to reach AI tutor service right now. Please try again.',
+        timestamp: Date.now(),
+      };
+      setMessages((prev) => [...prev, errorMsg]);
+    } finally {
+      setIsThinking(false);
+      setTimeout(() => {
+        scrollRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  };
+
+  const handleClearHistory = () => {
+    triggerHaptic('warning');
+    AiTutorService.clearHistory(context.lessonId);
+    setMessages([]);
+  };
+
+  const QUICK_PROMPTS = isBangla
+    ? [
+        { label: 'সহজ বাংলায় মূল বিষয়', query: 'সহজ বাংলায় এই লেকচারের মূল বিষয় বুঝিয়ে বলুন।' },
+        { label: '৩টি পয়েন্টে সামারি', query: '৩টি পয়েন্টে এই লেকচার সামারি করুন।' },
+        { label: 'বাস্তব কর্মক্ষেত্রে প্রয়োগ', query: 'বাস্তব কর্মক্ষেত্রে এটি কিভাবে প্রয়োগ করব?' },
+        { label: 'অনুশীলন প্রশ্ন', query: 'এই লেকচার থেকে গুরুত্বপূর্ণ কুইজ বা প্রশ্ন কী?' },
+      ]
+    : [
+        { label: 'Explain Simply', query: 'Explain the core concept of this lecture in simple terms.' },
+        { label: '3-Point Summary', query: 'Summarize this lesson in 3 actionable bullet points.' },
+        { label: 'Workplace Application', query: 'How do I apply this concept in real executive workplace scenarios?' },
+        { label: 'Practice Quiz', query: 'Give me a key self-assessment question based on this lecture.' },
+      ];
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <KeyboardAvoidingView
+        style={styles.modalOverlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        <View style={[styles.modalCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+          {/* Header */}
+          <View style={styles.modalHeader}>
+            <View style={styles.headerLeft}>
+              <View style={[styles.botIconCircle, { backgroundColor: isDark ? '#1E293B' : '#FEF3C7' }]}>
+                <Ionicons name="sparkles" size={18} color="#FFB606" />
+              </View>
+              <View style={styles.headerTitleWrap}>
+                <View style={styles.headerBadgeRow}>
+                  <Text style={[styles.botName, { color: colors.text }]}>SkillBot Copilot</Text>
+                  <View style={styles.aiBadge}>
+                    <Text style={styles.aiBadgeText}>AI TUTOR</Text>
+                  </View>
+                </View>
+                <Text style={[styles.lessonSub, { color: colors.textMuted }]} numberOfLines={1}>
+                  {context.lessonTitle}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.headerRight}>
+              <TouchableOpacity
+                onPress={handleClearHistory}
+                style={styles.headerActionBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Clear chat"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons name="trash-outline" size={18} color={colors.textMuted} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={onClose}
+                style={styles.headerActionBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Close tutor"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons name="close" size={22} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Quick Prompt Suggestions */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.quickPromptScroll}
+          >
+            {QUICK_PROMPTS.map((p, idx) => (
+              <TouchableOpacity
+                key={idx}
+                style={[
+                  styles.quickPromptPill,
+                  {
+                    backgroundColor: isDark ? '#1E293B' : '#EFF6FF',
+                    borderColor: isDark ? '#334155' : '#BFDBFE',
+                  },
+                ]}
+                onPress={() => handleSendMessage(p.query)}
+                activeOpacity={0.75}
+                accessibilityRole="button"
+                accessibilityLabel={p.label}
+              >
+                <Ionicons name="flash-outline" size={12} color={colors.primary} />
+                <Text style={[styles.quickPromptText, { color: colors.primary }]}>{p.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          {/* Message Thread */}
+          <ScrollView
+            ref={scrollRef}
+            style={styles.messagesScroll}
+            contentContainerStyle={styles.messagesContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {messages.map((m) => {
+              const isUser = m.role === 'user';
+              return (
+                <View
+                  key={m.id}
+                  style={[
+                    styles.messageRow,
+                    isUser ? styles.messageRowUser : styles.messageRowBot,
+                  ]}
+                >
+                  {!isUser && (
+                    <View style={styles.botAvatarCircle}>
+                      <Ionicons name="sparkles" size={12} color="#FFB606" />
+                    </View>
+                  )}
+                  <View
+                    style={[
+                      styles.bubble,
+                      isUser
+                        ? [styles.bubbleUser, { backgroundColor: colors.primary }]
+                        : [
+                            styles.bubbleBot,
+                            {
+                              backgroundColor: isDark ? '#1E293B' : '#F8FAFC',
+                              borderColor: colors.border,
+                            },
+                          ],
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.messageText,
+                        { color: isUser ? colors.onPrimary : colors.text },
+                      ]}
+                      selectable
+                    >
+                      {m.content}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
+
+            {isThinking && (
+              <View style={[styles.messageRow, styles.messageRowBot]}>
+                <View style={styles.botAvatarCircle}>
+                  <Ionicons name="sparkles" size={12} color="#FFB606" />
+                </View>
+                <View
+                  style={[
+                    styles.bubble,
+                    styles.bubbleBot,
+                    {
+                      backgroundColor: isDark ? '#1E293B' : '#F8FAFC',
+                      borderColor: colors.border,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 8,
+                    },
+                  ]}
+                >
+                  <ActivityIndicator size="small" color="#FFB606" />
+                  <Text style={[styles.thinkingText, { color: colors.textMuted }]}>
+                    {isBangla ? 'SkillBot বিশ্লেষণ করছে…' : 'SkillBot is thinking…'}
+                  </Text>
+                </View>
+              </View>
+            )}
+          </ScrollView>
+
+          {/* Input Bar */}
+          <View style={[styles.inputBar, { borderTopColor: colors.border }]}>
+            <TextInput
+              style={[
+                styles.textInput,
+                {
+                  backgroundColor: colors.surfaceSubtle,
+                  borderColor: colors.border,
+                  color: colors.text,
+                },
+              ]}
+              placeholder={
+                isBangla
+                  ? 'এই লেকচার নিয়ে যেকোনো প্রশ্ন লিখুন…'
+                  : 'Ask any question about this lecture…'
+              }
+              placeholderTextColor={colors.textMuted}
+              value={inputText}
+              onChangeText={setInputText}
+              onSubmitEditing={() => handleSendMessage()}
+              returnKeyType="send"
+              multiline
+              maxLength={400}
+            />
+            <TouchableOpacity
+              style={[
+                styles.sendBtn,
+                {
+                  backgroundColor: inputText.trim() ? colors.primary : colors.surfaceSubtle,
+                  opacity: inputText.trim() ? 1 : 0.6,
+                },
+              ]}
+              onPress={() => handleSendMessage()}
+              disabled={!inputText.trim() || isThinking}
+              accessibilityRole="button"
+              accessibilityLabel="Send question"
+            >
+              <Ionicons
+                name="send"
+                size={16}
+                color={inputText.trim() ? colors.onPrimary : colors.textMuted}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+};
+
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  modalCard: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderTopWidth: 1,
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    height: '82%',
+    display: 'flex',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 10,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+    minWidth: 0,
+    marginRight: 8,
+  },
+  botIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitleWrap: {
+    flex: 1,
+  },
+  headerBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  botName: {
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  aiBadge: {
+    backgroundColor: '#FFB606',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  aiBadgeText: {
+    color: '#102F53',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  lessonSub: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerActionBtn: {
+    padding: 6,
+  },
+  quickPromptScroll: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    gap: 8,
+  },
+  quickPromptPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  quickPromptText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  messagesScroll: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  messagesContent: {
+    paddingVertical: 12,
+    gap: 12,
+  },
+  messageRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+  },
+  messageRowUser: {
+    justifyContent: 'flex-end',
+  },
+  messageRowBot: {
+    justifyContent: 'flex-start',
+  },
+  botAvatarCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#102F53',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  bubble: {
+    maxWidth: '82%',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 14,
+  },
+  bubbleUser: {
+    borderBottomRightRadius: 2,
+  },
+  bubbleBot: {
+    borderBottomLeftRadius: 2,
+    borderWidth: 1,
+  },
+  messageText: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  thinkingText: {
+    fontSize: 12,
+    fontStyle: 'italic',
+  },
+  inputBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+  },
+  textInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    fontSize: 13,
+    maxHeight: 80,
+  },
+  sendBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
