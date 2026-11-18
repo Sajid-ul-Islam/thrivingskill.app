@@ -9,6 +9,7 @@ import {
   Image,
   Linking,
   ActivityIndicator,
+  LayoutAnimation,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -38,6 +39,8 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
     notifications,
     markNotificationRead,
     markAllNotificationsRead,
+    removeNotification,
+    clearAllNotifications,
     syncSiteNotifications,
     isSyncingSite,
   } = useSaaS();
@@ -157,6 +160,23 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
               >
                 <Text style={[styles.markAllText, { color: colors.primary }]}>Mark read</Text>
               </TouchableOpacity>
+
+              {notifications.length > 0 && (
+                <TouchableOpacity
+                  onPress={() => {
+                    triggerHaptic('impactLight');
+                    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                    clearAllNotifications();
+                    showToast({ message: 'All notifications cleared', type: 'info' });
+                  }}
+                  style={styles.clearAllBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear all notifications"
+                >
+                  <Ionicons name="trash-outline" size={15} color={colors.textMuted} />
+                  <Text style={[styles.clearAllText, { color: colors.textMuted }]}>Clear</Text>
+                </TouchableOpacity>
+              )}
 
               <TouchableOpacity
                 onPress={() => {
@@ -291,9 +311,26 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                       ) : null}
                     </View>
 
-                    {!item.isRead && (
-                      <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />
-                    )}
+                    <View style={styles.itemActionsRight}>
+                      {!item.isRead && (
+                        <View style={[styles.unreadDot, { backgroundColor: colors.primary }]} />
+                      )}
+                      <TouchableOpacity
+                        onPress={(e) => {
+                          e.stopPropagation?.();
+                          triggerHaptic('light');
+                          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                          removeNotification(item.id);
+                          showToast({ message: 'Notification removed', type: 'info' });
+                        }}
+                        style={styles.removeItemBtn}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Remove notification: ${item.title}`}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      >
+                        <Ionicons name="close" size={16} color={colors.textLight} />
+                      </TouchableOpacity>
+                    </View>
                   </TouchableOpacity>
                 );
               })
