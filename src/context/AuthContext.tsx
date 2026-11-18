@@ -1,8 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WpUser } from '../types';
 import { UserProfile, UserService } from '../services/api/userService';
 import { HttpClient } from '../services/api/httpClient';
+import { Endpoints } from '../services/api/endpoints';
+import { SyncQueueManager } from '../services/offline/syncQueue';
 import { CacheManager } from '../services/cache/cacheManager';
 import {
   loginWpUser,
@@ -58,7 +61,9 @@ interface AuthContextType {
   sendPhoneOtp: (phone: string) => Promise<{ success: boolean; message: string; testOtp?: string }>;
   register: (username: string, email: string, password: string, phone?: string) => Promise<void>;
   confirmPasswordReset: (login: string, key: string, newPassword: string) => Promise<void>;
-  updateUserProfile: (updates: Partial<UserProfile>) => Promise<void>;
+  updateUserProfile: (updates: Partial<UserProfile>, syncToServer?: boolean) => Promise<void>;
+  refreshUserProfile: () => Promise<UserProfile | null>;
+  isSyncingProfile: boolean;
   logout: () => Promise<void>;
   deleteAccount: (password: string) => Promise<void>;
   continueAsGuest: () => void;
@@ -108,6 +113,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               if (!savedToken) {
                 await AsyncStorage.setItem(AUTH_TOKEN_STORAGE_KEY, activeToken);
               }
+
+              // Silent background refresh from live site (https://thrivingskill.com)
+              setTimeout(() => {
+                refreshUserProfile().catch(() => {});
+              }, 1200);
             } else {
               setIsGuest(false);
             }
@@ -166,7 +176,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const updateUserProfile = async (updates: Partial<UserProfile>): Promise<void> => {
+  const [isSyncingProfile, setIsSyncingProfile] = useState<boolean>(false);
+
+  /**
+   * Refreshes user profile from https://thrivingskill.com/wp-json/wp/v2/users/me
+   * Auto-syncs any updates customer made on the actual website into the app
+   */
+  const refreshUserProfile = async (): Promise<UserProfile | null> => {
+    const currentToken = token || (await AsyncStorage.getItem(AUTH_TOKEN_STORAGE_KEY));
+    if (!currentToken) return null;
+
+    setIsSyncingProfile(true);
+    try {
+      const serverUser = await UserService.getCurrentUser();
+      if (serverUser) {
+        const mergedUser: UserProfile = {
+          ...serverUser,
+          token: currentToken,
+        };
+        setUser(mergedUser);
+        await AsyncStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(mergedUser));
+        return mergedUser;
+      }
+    } catch {
+      // Graceful offline catch
+    } finally {
+      setIsSyncingProfile(false);
+    }
+    return null;
+  };
+
+  // Auto-sync profile from site when app returns to foreground
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active' && user) {
+        refreshUserProfile().catch(() => {});
+      }
+    });
+    return () => sub.remove();
+  }, [user]);
+
+  /**
+   * Updates user profile in app and automatically synchronizes to live website
+   */
+  const updateUserProfile = async (
+    updates: Partial<UserProfile>,
+    syncToServer: boolean = true
+  ): Promise<void> => {
     if (!user) return;
     const updatedUser: UserProfile = {
       ...user,
@@ -175,10 +231,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       name: updates.name !== undefined ? updates.name : (user.name || user.displayName),
     };
     setUser(updatedUser);
+
     try {
       await AsyncStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(updatedUser));
     } catch (e) {
       console.warn('Failed to persist user profile update:', e);
+    }
+
+    if (syncToServer && token) {
+      try {
+        const serverUser = await UserService.updateProfile({
+          name: updatedUser.name || updatedUser.displayName,
+          first_name: updatedUser.first_name,
+          last_name: updatedUser.last_name,
+          description: updatedUser.description,
+          phone: updatedUser.phone,
+          city: updatedUser.city,
+          avatar: updatedUser.avatar,
+          cover_photo: updatedUser.cover_photo,
+          social: updatedUser.social,
+        });
+        if (serverUser) {
+          const syncedUser: UserProfile = {
+            ...serverUser,
+            token,
+          };
+          setUser(syncedUser);
+          await AsyncStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(syncedUser));
+        }
+      } catch (err) {
+        // Enqueue offline sync if network is down
+        try {
+          await SyncQueueManager.enqueue(
+            'UPDATE_PROFILE',
+            Endpoints.WORDPRESS.CURRENT_USER,
+            {
+              name: updatedUser.name || updatedUser.displayName,
+              first_name: updatedUser.first_name,
+              last_name: updatedUser.last_name,
+              description: updatedUser.description,
+              meta: {
+                phone: updatedUser.phone,
+                city: updatedUser.city,
+                avatar_url: updatedUser.avatar,
+                cover_photo: updatedUser.cover_photo,
+              },
+            },
+            'POST'
+          );
+        } catch {}
+      }
     }
   };
 
@@ -286,6 +388,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         register,
         confirmPasswordReset,
         updateUserProfile,
+        refreshUserProfile,
+        isSyncingProfile,
         logout,
         deleteAccount,
         continueAsGuest,

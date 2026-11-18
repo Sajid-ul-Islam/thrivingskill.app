@@ -75,16 +75,16 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
 
   const effectiveWidth = Math.min(width, 1100);
 
-  // Dynamic card width for tablets to ensure beautiful proportional layouts
+  // Dynamic card width for mobile and tablets to ensure beautiful proportional layouts
   const cardWidth = useMemo(() => {
-    if (!isTablet) return 240;
+    if (!isTablet) return Math.min(270, Math.max(240, Math.round(width * 0.68)));
     if (itemCount === 2 && !isLandscape) {
       return Math.floor((effectiveWidth - 32 - CARD_GAP) / 2);
     }
     return isLandscape
       ? Math.max(280, Math.floor((effectiveWidth - 48) / 3.2))
       : Math.max(300, Math.floor((effectiveWidth - 48) / 2.2));
-  }, [isTablet, isLandscape, effectiveWidth, itemCount]);
+  }, [isTablet, isLandscape, effectiveWidth, itemCount, width]);
 
   const cardSnap = cardWidth + CARD_GAP;
 
@@ -167,8 +167,8 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
         </SpringPressable>
       </View>
 
-      {/* If single course on tablet, render featured wide horizontal card */}
-      {isTablet && itemCount === 1 ? (
+      {/* If single course in category, render featured wide horizontal card */}
+      {itemCount === 1 ? (
         <View style={{ paddingHorizontal: 16 }}>
           <CourseCard
             course={displayCourses[0]}
@@ -1189,6 +1189,7 @@ const styles = StyleSheet.create({
   momentumValue: {
     fontSize: 11,
     fontWeight: '800',
+    fontVariant: ['tabular-nums'],
   },
   momentumDivider: {
     width: 1,
@@ -1216,11 +1217,13 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1,
     gap: 7,
-    minHeight: 40,
+    minHeight: MIN_TOUCH_TARGET,
   },
   radialCenterIcon: {
     fontSize: 9,
     fontWeight: '800',
+    includeFontPadding: false,
+    textAlign: 'center',
   },
   radialGoalTextCol: {
     justifyContent: 'center',
@@ -1230,6 +1233,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: -0.2,
     lineHeight: 14,
+    fontVariant: ['tabular-nums'],
   },
   radialGoalSub: {
     fontSize: 9,

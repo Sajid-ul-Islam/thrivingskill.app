@@ -99,6 +99,11 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     minHeight: 48,
     gap: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
   placeholderText: {
     flex: 1,
@@ -111,6 +116,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: shape.medium,
+    flexShrink: 0,
   },
   cmdKText: {
     fontSize: 10,
@@ -135,9 +141,9 @@ const styles = StyleSheet.create({
     marginRight: 2,
   },
   tagPill: {
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: shape.medium,
+    paddingHorizontal: 11,
+    paddingVertical: 5,
+    borderRadius: shape.full,
     borderWidth: 1,
   },
   tagText: {

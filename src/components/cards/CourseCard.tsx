@@ -284,15 +284,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: 'hidden',
     marginBottom: 16,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     elevation: 3,
   },
   thumbWrapper: {
     position: 'relative',
     height: 160,
     width: '100%',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0, 0, 0, 0.08)',
   },
   thumbnail: {
     width: '100%',
@@ -320,9 +322,9 @@ const styles = StyleSheet.create({
     right: 10,
     zIndex: 10,
     elevation: 4,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -336,10 +338,11 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
-    lineHeight: 22,
+    lineHeight: 21,
     marginBottom: 4,
+    letterSpacing: -0.2,
   },
   instructorName: {
     fontSize: 12,
@@ -358,9 +361,11 @@ const styles = StyleSheet.create({
   ratingNumber: {
     fontSize: 13,
     fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   reviewsCount: {
     fontSize: 12,
+    fontVariant: ['tabular-nums'],
   },
   dotSeparator: {
     marginHorizontal: 6,
@@ -368,6 +373,7 @@ const styles = StyleSheet.create({
   durationText: {
     fontSize: 12,
     flexShrink: 1,
+    fontVariant: ['tabular-nums'],
   },
   cardFooter: {
     flexDirection: 'row',
@@ -389,10 +395,13 @@ const styles = StyleSheet.create({
   currentPrice: {
     fontSize: 17,
     fontWeight: '900',
+    fontVariant: ['tabular-nums'],
+    letterSpacing: -0.3,
   },
   originalPrice: {
     fontSize: 12,
     textDecorationLine: 'line-through',
+    fontVariant: ['tabular-nums'],
   },
   discountBadge: {
     backgroundColor: '#E34234',
@@ -443,6 +452,7 @@ const styles = StyleSheet.create({
   progressLabel: {
     fontSize: 12,
     fontWeight: '600',
+    fontVariant: ['tabular-nums'],
   },
   continueText: {
     fontSize: 12,
@@ -452,7 +462,7 @@ const styles = StyleSheet.create({
   // Horizontal Card
   horizontalCard: {
     flexDirection: 'row',
-    borderRadius: 14,
+    borderRadius: 18,
     borderWidth: 1,
     overflow: 'hidden',
     marginBottom: 12,
@@ -469,15 +479,17 @@ const styles = StyleSheet.create({
   },
   horizontalThumbWrapper: {
     position: 'relative',
-    width: 100,
-    height: 90,
-    borderRadius: 10,
+    width: 104,
+    height: 92,
+    borderRadius: 12,
     overflow: 'hidden',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(0, 0, 0, 0.08)',
   },
   horizontalThumb: {
     width: '100%',
     height: '100%',
-    borderRadius: 10,
+    borderRadius: 12,
     resizeMode: 'cover',
   },
   horizontalBadgeTag: {
@@ -507,9 +519,9 @@ const styles = StyleSheet.create({
     right: 10,
     zIndex: 10,
     elevation: 3,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },

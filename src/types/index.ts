@@ -37,7 +37,9 @@ export interface WpUser {
   last_name?: string;
   description?: string;
   phone?: string;
+  city?: string;
   avatar?: string;
+  cover_photo?: string;
   token?: string;
   roles?: string[];
   social?: UserSocialLinks;

@@ -773,6 +773,7 @@ const styles = StyleSheet.create({
     lineHeight: 10,
     includeFontPadding: false,
     fontWeight: '800',
+    fontVariant: ['tabular-nums'],
   },
   tabLivePill: {
     position: 'absolute',
@@ -782,7 +783,7 @@ const styles = StyleSheet.create({
     elevation: 3,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#DC2626',
+    backgroundColor: '#E34234',
     borderRadius: shape.full,
     paddingHorizontal: 5,
     paddingVertical: 1.5,

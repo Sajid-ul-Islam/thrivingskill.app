@@ -1,8 +1,6 @@
 import { HttpClient } from './httpClient';
 import { Endpoints } from './endpoints';
-import { WpUser } from '../../types';
-
-import { UserSocialLinks } from '../../types';
+import { WpUser, UserSocialLinks } from '../../types';
 
 export interface ProfileUpdatePayload {
   name?: string;
@@ -11,6 +9,9 @@ export interface ProfileUpdatePayload {
   nickname?: string;
   description?: string;
   phone?: string;
+  city?: string;
+  avatar?: string;
+  cover_photo?: string;
   social?: UserSocialLinks;
 }
 
@@ -27,14 +28,15 @@ export interface UserProfile extends WpUser {
   nickname?: string;
   description?: string;
   phone?: string;
-  social?: UserSocialLinks;
   city?: string;
+  cover_photo?: string;
+  social?: UserSocialLinks;
   avatar_urls?: Record<string, string>;
 }
 
 export class UserService {
   /**
-   * Fetch current authenticated WordPress user profile
+   * Fetch current authenticated WordPress user profile from live backend
    */
   static async getCurrentUser(): Promise<UserProfile | null> {
     try {
@@ -42,15 +44,19 @@ export class UserService {
       if (!data) return null;
 
       let lpAvatar: string | undefined;
+      let lpCover: string | undefined;
       let lpSocial: UserSocialLinks | undefined;
       let lpPhone: string | undefined;
+      let lpCity: string | undefined;
 
       if (data.id) {
         try {
           const lpUser = await this.getLearnPressUser(data.id);
           if (lpUser) {
             if (lpUser.avatar_url) lpAvatar = lpUser.avatar_url;
+            if (lpUser.cover_url || lpUser.cover_photo) lpCover = lpUser.cover_url || lpUser.cover_photo;
             if (lpUser.social) lpSocial = lpUser.social;
+            if (lpUser.city) lpCity = lpUser.city;
             if (lpUser.custom_register) {
               const values = Object.values(lpUser.custom_register);
               if (values.length > 0 && typeof values[0] === 'string') {
@@ -64,6 +70,9 @@ export class UserService {
       }
 
       const phone = lpPhone || data.meta?.phone || data.meta?.billing_phone || '';
+      const city = lpCity || data.meta?.city || data.meta?.billing_city || data.meta?.shipping_city || '';
+      const avatar = lpAvatar || data.meta?.avatar_url || data.avatar_urls?.['96'] || data.avatar_urls?.['48'] || '';
+      const cover_photo = lpCover || data.meta?.cover_photo || data.meta?.cover_url || '';
 
       return {
         id: data.id,
@@ -71,13 +80,15 @@ export class UserService {
         email: data.email || '',
         displayName: data.name,
         name: data.name,
-        first_name: data.first_name,
-        last_name: data.last_name,
-        nickname: data.nickname,
-        description: data.description,
+        first_name: data.first_name || '',
+        last_name: data.last_name || '',
+        nickname: data.nickname || '',
+        description: data.description || '',
         phone,
+        city,
+        avatar,
+        cover_photo,
         social: lpSocial,
-        avatar: lpAvatar || data.avatar_urls?.['96'] || data.avatar_urls?.['48'],
         avatar_urls: data.avatar_urls,
         roles: data.roles || ['subscriber'],
       };
@@ -87,8 +98,7 @@ export class UserService {
   }
 
   /**
-   * Update user profile via WordPress REST API (/wp/v2/users/me)
-   * Resolves Defect DEFECT-M3-01 / test T1.3.5 in scripts/e2e_full_suite.js
+   * Update user profile via WordPress REST API (/wp/v2/users/me) and LearnPress
    */
   static async updateProfile(payload: ProfileUpdatePayload): Promise<UserProfile> {
     const body: Record<string, any> = {};
@@ -103,53 +113,59 @@ export class UserService {
       meta.phone = payload.phone;
       meta.billing_phone = payload.phone;
     }
+    if (payload.city !== undefined) {
+      meta.city = payload.city;
+      meta.billing_city = payload.city;
+    }
+    if (payload.avatar !== undefined) {
+      meta.avatar_url = payload.avatar;
+    }
+    if (payload.cover_photo !== undefined) {
+      meta.cover_photo = payload.cover_photo;
+      meta.cover_url = payload.cover_photo;
+    }
     if (Object.keys(meta).length > 0) {
       body.meta = meta;
     }
 
     const data = await HttpClient.post<any>(Endpoints.WORDPRESS.CURRENT_USER, body);
 
-    // Synchronize social profile links to LearnPress if provided
+    // Synchronize social links, avatar, and cover image to LearnPress
     let lpSocial = payload.social;
-    if (payload.social && data?.id) {
-      try {
-        await HttpClient.post(`/wp-json/learnpress/v1/users/${data.id}`, {
-          social: payload.social,
-        });
-      } catch {
-        // LearnPress social sync error fallback
-      }
-    }
-
-    // LearnPress avatar synchronization
-    let lpAvatar: string | undefined;
     if (data?.id) {
       try {
-        const lpUser = await this.getLearnPressUser(data.id);
-        if (lpUser) {
-          if (lpUser.avatar_url) lpAvatar = lpUser.avatar_url;
-          if (lpUser.social && !lpSocial) lpSocial = lpUser.social;
+        const lpPayload: Record<string, any> = {};
+        if (payload.social) lpPayload.social = payload.social;
+        if (payload.avatar) lpPayload.avatar_url = payload.avatar;
+        if (payload.cover_photo) lpPayload.cover_url = payload.cover_photo;
+        if (payload.city) lpPayload.city = payload.city;
+        if (payload.phone) lpPayload.phone = payload.phone;
+
+        if (Object.keys(lpPayload).length > 0) {
+          await HttpClient.post(`/learnpress/v1/users/${data.id}`, lpPayload);
         }
       } catch {
-        // LearnPress avatar fetch error ignored
+        // Fallback silently if LearnPress custom endpoint rejects extra fields
       }
     }
 
     const updatedUser: UserProfile = {
-      id: data.id,
-      username: data.slug || data.name,
-      email: data.email || '',
-      displayName: data.name,
-      name: data.name,
-      first_name: data.first_name,
-      last_name: data.last_name,
-      nickname: data.nickname,
-      description: data.description,
-      phone: payload.phone,
+      id: data?.id || '',
+      username: data?.slug || data?.name || '',
+      email: data?.email || '',
+      displayName: data?.name || payload.name || '',
+      name: data?.name || payload.name || '',
+      first_name: data?.first_name || payload.first_name || '',
+      last_name: data?.last_name || payload.last_name || '',
+      nickname: data?.nickname || payload.nickname || '',
+      description: data?.description || payload.description || '',
+      phone: payload.phone || data?.meta?.phone || '',
+      city: payload.city || data?.meta?.city || '',
+      avatar: payload.avatar || data?.meta?.avatar_url || data?.avatar_urls?.['96'] || '',
+      cover_photo: payload.cover_photo || data?.meta?.cover_photo || '',
       social: lpSocial,
-      avatar: lpAvatar || data.avatar_urls?.['96'] || data.avatar_urls?.['48'],
-      avatar_urls: data.avatar_urls,
-      roles: data.roles || ['subscriber'],
+      avatar_urls: data?.avatar_urls,
+      roles: data?.roles || ['subscriber'],
     };
 
     return updatedUser;
@@ -210,4 +226,3 @@ export class UserService {
     );
   }
 }
-

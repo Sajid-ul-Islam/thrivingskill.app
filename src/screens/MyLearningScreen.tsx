@@ -1007,6 +1007,7 @@ const styles = StyleSheet.create({
   },
   tabLabel: {
     fontSize: 13,
+    fontVariant: ['tabular-nums'],
   },
   tabContent: {
     padding: 16,

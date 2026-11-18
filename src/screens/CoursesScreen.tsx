@@ -429,7 +429,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
           ? isLandscape
             ? Math.max(280, Math.floor((effectiveWidth - 48) / 3.2))
             : Math.max(300, Math.floor((effectiveWidth - 48) / 2.2))
-          : 250;
+          : Math.min(270, Math.max(240, Math.round(width * 0.68)));
 
         return (
           <View style={styles.deptRowSection}>
@@ -463,7 +463,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               </TouchableOpacity>
             </View>
 
-            {isTablet && deptItemCount === 1 ? (
+            {deptItemCount === 1 ? (
               <View style={{ paddingHorizontal: 16 }}>
                 <CourseCard
                   course={dept.courses[0]}

@@ -303,5 +303,6 @@ const styles = StyleSheet.create({
     lineHeight: 11,
     includeFontPadding: false,
     fontWeight: '800',
+    fontVariant: ['tabular-nums'],
   },
 });

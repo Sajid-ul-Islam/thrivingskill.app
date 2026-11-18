@@ -775,6 +775,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#6366F1',
     marginVertical: 4,
+    fontVariant: ['tabular-nums'],
   },
   autoplayNextTitle: {
     fontSize: 13,

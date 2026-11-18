@@ -36,7 +36,8 @@ export type MutationAction =
   | 'SUBMIT_QUIZ'
   | 'ENROLL_COURSE'
   | 'ADD_NOTE'
-  | 'UPDATE_PROGRESS';
+  | 'UPDATE_PROGRESS'
+  | 'UPDATE_PROFILE';
 
 export interface OfflineMutation {
   id: string;
