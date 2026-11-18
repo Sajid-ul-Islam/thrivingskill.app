@@ -9,8 +9,6 @@ declare global {
       EXPO_PUBLIC_CACHE_TTL_MS?: string;
       EXPO_PUBLIC_ENABLE_FALLBACK?: string;
       EXPO_PUBLIC_DEBUG_API?: string;
-      EXPO_PUBLIC_WC_CONSUMER_KEY?: string;
-      EXPO_PUBLIC_WC_CONSUMER_SECRET?: string;
       EXPO_PUBLIC_GEMINI_API_KEY?: string;
       EXPO_PUBLIC_GOOGLE_API_KEY?: string;
     }

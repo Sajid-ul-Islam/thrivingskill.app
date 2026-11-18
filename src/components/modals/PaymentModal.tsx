@@ -423,7 +423,22 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           const fallbackMatch = url.match(/browser_fallback_url=([^;&]+)/);
           if (fallbackMatch && fallbackMatch[1]) {
             const decodedFallback = decodeURIComponent(fallbackMatch[1]);
-            Linking.openURL(decodedFallback).catch(() => {});
+            // SEC-06: Validate that decodedFallback is an HTTPS URL from trusted payment/site origins
+            try {
+              const parsedFallback = new URL(decodedFallback);
+              const isTrustedHost = [
+                'thrivingskill.com',
+                'sslcommerz.com',
+                'bkash.com',
+                'nagad.com.bd',
+                'shurjopay.com.bd',
+                'aamarpay.com'
+              ].some((host) => parsedFallback.hostname === host || parsedFallback.hostname.endsWith(`.${host}`));
+
+              if (parsedFallback.protocol === 'https:' && isTrustedHost) {
+                Linking.openURL(decodedFallback).catch(() => {});
+              }
+            } catch {}
           }
         }
       }).catch(() => {});
@@ -626,7 +641,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             sharedCookiesEnabled={true}
             thirdPartyCookiesEnabled={true}
             allowsBackForwardNavigationGestures={true}
-            originWhitelist={['*']}
+            originWhitelist={['https://*']}
           />
 
           {/* Bottom Safe Area Padding */}

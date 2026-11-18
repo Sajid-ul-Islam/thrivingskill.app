@@ -3,6 +3,34 @@ import { HttpClient } from '../api/httpClient';
 
 const QUEUE_STORAGE_KEY_PREFIX = '@ts_sync_mutation_queue_';
 
+/**
+ * SEC-05: Strict allowlist pattern for offline sync mutations.
+ * Prevents arbitrary endpoint execution / SSRF / path traversal via local queue tampering.
+ */
+export function isAllowedSyncEndpoint(endpoint: string): boolean {
+  if (!endpoint || typeof endpoint !== 'string') return false;
+  // Disallow any full URLs, scheme prefixes, or directory traversal
+  if (endpoint.includes('://') || endpoint.includes('..') || endpoint.includes('\\')) {
+    return false;
+  }
+
+  const normalized = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+
+  // Allowlist patterns for valid student learning mutations
+  const allowedPrefixes = [
+    '/learnpress/v1/lessons/finish',
+    '/learnpress/v1/courses/enroll',
+    '/learnpress/v1/courses/finish',
+    '/learnpress/v1/courses/retake',
+    '/learnpress/v1/quiz/start',
+    '/learnpress/v1/quiz/finish',
+    '/learnpress/v1/quiz/check_answer',
+    '/wp/v2/users/me',
+  ];
+
+  return allowedPrefixes.some((prefix) => normalized.startsWith(prefix));
+}
+
 export type MutationAction =
   | 'COMPLETE_LESSON'
   | 'SUBMIT_QUIZ'
@@ -72,6 +100,10 @@ export class SyncQueueManager {
     method: 'POST' | 'PUT' | 'PATCH' | 'DELETE' = 'POST',
     maxAttempts: number = 5
   ): Promise<OfflineMutation> {
+    if (!isAllowedSyncEndpoint(endpoint)) {
+      throw new Error(`[SyncQueue] Untrusted or disallowed endpoint for offline synchronization: ${endpoint}`);
+    }
+
     const queue = await this.getPendingMutations();
 
     // Check for existing duplicate unattempted mutation to prevent redundant duplicate calls
@@ -162,6 +194,12 @@ export class SyncQueueManager {
     const remainingQueue: OfflineMutation[] = [];
 
     for (const mutation of queue) {
+      if (!isAllowedSyncEndpoint(mutation.endpoint)) {
+        console.warn(`[SyncQueue] Skipping unauthorized endpoint in offline queue: ${mutation.endpoint}`);
+        failed++;
+        continue;
+      }
+
       try {
         if (mutation.method === 'POST') {
           await HttpClient.post(mutation.endpoint, mutation.payload);

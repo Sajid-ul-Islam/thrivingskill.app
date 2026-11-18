@@ -419,6 +419,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <WebView
               source={{ uri: `${Env.SITE_URL}/register/` }}
               style={styles.webView}
+              originWhitelist={['https://*']}
+              onShouldStartLoadWithRequest={(request) => {
+                const url = request.url || '';
+                if (!url.startsWith('https://')) return false;
+                try {
+                  const parsed = new URL(url);
+                  return parsed.hostname === 'thrivingskill.com' || parsed.hostname.endsWith('.thrivingskill.com');
+                } catch {
+                  return false;
+                }
+              }}
               injectedJavaScript={`
                 (function() {
                   var css = 'header, footer, .site-header, .site-footer, .mobile-menu-wrapper, .top_site_main, #toolbar, .page-title, .breadcrumb, .widget-area { display: none !important; } body, html, #main-content { background: #FFFFFF !important; margin: 0 !important; padding: 0 !important; } .thim-login-container, .thim-register { padding: 14px !important; margin: 0 auto !important; max-width: 100% !important; box-shadow: none !important; }';

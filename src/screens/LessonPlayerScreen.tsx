@@ -644,12 +644,17 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const buildVideoHtml = () => {
     let embedMarkup = '';
     if (activeVideoIntro && activeVideoIntro.includes('<iframe')) {
-      embedMarkup = activeVideoIntro
-        .replace(/src=["']\/\//gi, 'src="https://')
-        .replace(/width="[^"]*"/gi, 'width="100%"')
-        .replace(/height="[^"]*"/gi, 'height="100%"');
-      if (!embedMarkup.includes('allow=')) {
-        embedMarkup = embedMarkup.replace('<iframe', '<iframe allow="autoplay; fullscreen; picture-in-picture" allowfullscreen');
+      // SEC-04: Validate that iframe src uses HTTPS and does not contain javascript:
+      const iframeSrcMatch = activeVideoIntro.match(/src=["']([^"']+)["']/i);
+      const isSafeIframe = !iframeSrcMatch || (/^(https:)?\/\//i.test(iframeSrcMatch[1]) && !/javascript:/i.test(iframeSrcMatch[1]));
+      if (isSafeIframe) {
+        embedMarkup = activeVideoIntro
+          .replace(/src=["']\/\//gi, 'src="https://')
+          .replace(/width="[^"]*"/gi, 'width="100%"')
+          .replace(/height="[^"]*"/gi, 'height="100%"');
+        if (!embedMarkup.includes('allow=')) {
+          embedMarkup = embedMarkup.replace('<iframe', '<iframe allow="autoplay; fullscreen; picture-in-picture" allowfullscreen');
+        }
       }
     } else if (activeVideoUrl) {
       if (activeVideoUrl.includes('vimeo.com')) {
@@ -671,7 +676,14 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
       } else if (activeVideoUrl.match(/\.(mp4|m3u8|mpd|webm)($|\?)/i)) {
         embedMarkup = `<video id="media3Player" src="${activeVideoUrl}" playsinline webkit-playsinline autoplay style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;"></video>`;
       } else {
-        embedMarkup = `<iframe src="${activeVideoUrl}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
+        // SEC-04: Enforce https protocol for generic iframes to prevent javascript: or cleartext http injection
+        const isSafeHttps = activeVideoUrl.startsWith('https://');
+        if (isSafeHttps) {
+          const escapedUrl = activeVideoUrl.replace(/"/g, '&quot;');
+          embedMarkup = `<iframe src="${escapedUrl}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
+        } else {
+          embedMarkup = `<div style="color:#FFF;font-family:system-ui,sans-serif;text-align:center;padding:40px 20px;"><div style="font-size:32px;margin-bottom:8px;">🔒</div><div>Secure stream required (HTTPS only).</div></div>`;
+        }
       }
     } else {
       embedMarkup = `<div style="color:#FFF;font-family:system-ui,sans-serif;text-align:center;padding:40px 20px;"><div style="font-size:32px;margin-bottom:8px;">▶️</div><div>Loading lecture media stream...</div></div>`;
@@ -1086,8 +1098,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                 domStorageEnabled
                 mediaPlaybackRequiresUserAction={false}
                 allowsInlineMediaPlayback
-                originWhitelist={['*']}
-                mixedContentMode="always"
+                originWhitelist={['https://*']}
+                mixedContentMode="never"
                 androidLayerType="hardware"
                 allowsProtectedMedia={true}
                 userAgent="Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"

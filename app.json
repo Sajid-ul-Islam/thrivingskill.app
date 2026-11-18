@@ -19,6 +19,7 @@
     "android": {
       "package": "com.thrivingskill.app",
       "versionCode": 10400,
+      "allowBackup": false,
       "softwareKeyboardLayoutMode": "resize",
       "permissions": [
         "INTERNET",

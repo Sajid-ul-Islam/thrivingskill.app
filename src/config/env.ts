@@ -107,20 +107,6 @@ export const Env = {
   },
 
   /**
-   * Optional WooCommerce Consumer Key
-   */
-  get WC_CONSUMER_KEY(): string | undefined {
-    return getEnvVar('EXPO_PUBLIC_WC_CONSUMER_KEY');
-  },
-
-  /**
-   * Optional WooCommerce Consumer Secret
-   */
-  get WC_CONSUMER_SECRET(): string | undefined {
-    return getEnvVar('EXPO_PUBLIC_WC_CONSUMER_SECRET');
-  },
-
-  /**
    * Optional Google Gemini API Key
    */
   get GEMINI_API_KEY(): string | undefined {
