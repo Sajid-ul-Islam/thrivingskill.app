@@ -138,9 +138,16 @@ export class AuthService {
       body: data,
     });
 
+    if (!response.ok) {
+      throw new Error(`Password reset request failed (HTTP ${response.status}). Please try again.`);
+    }
+
     const redirectUrl = response.url || '';
     if (redirectUrl.includes('error=invalidkey') || redirectUrl.includes('error=expiredkey')) {
       throw new Error('This password reset link is invalid or has expired. Please request a new link.');
+    }
+    if (redirectUrl.includes('error=')) {
+      throw new Error('Could not reset password. Please check your reset link and try again.');
     }
 
     return true;

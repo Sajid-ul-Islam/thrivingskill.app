@@ -598,6 +598,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           <WebView
             ref={webViewRef}
             source={{ uri: checkoutWebUrl }}
+            allowFileAccess={false}
+            allowUniversalAccessFromFileURLs={false}
             onNavigationStateChange={handleWebViewNavChange}
             onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
             onLoadProgress={(syntheticEvent) => {

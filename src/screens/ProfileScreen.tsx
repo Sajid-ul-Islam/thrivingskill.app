@@ -3068,6 +3068,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   if (deleteError) setDeleteError('');
                 }}
                 secureTextEntry
+                autoCapitalize="none"
+                autoCorrect={false}
+                spellCheck={false}
+                autoComplete="current-password"
+                textContentType="password"
                 placeholder="••••••••"
                 placeholderTextColor={colors.textMuted}
                 editable={!isDeletingAccount}

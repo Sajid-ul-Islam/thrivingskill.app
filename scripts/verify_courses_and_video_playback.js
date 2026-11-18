@@ -60,8 +60,9 @@ function buildVideoMarkup(activeVideoIntro, activeVideoUrl) {
 }
 
 async function runAudit() {
+  const baseUrl = 'https://thrivingskill.com/wp-json';
   console.log('[STEP 1] Verifying Course Fetching from Live WordPress Backend...');
-  const coursesRes = await httpsGet('https://staging.thrivingskill.com/wp-json/learnpress/v1/courses?per_page=5');
+  const coursesRes = await httpsGet(`${baseUrl}/learnpress/v1/courses?per_page=5`);
   assert.strictEqual(coursesRes.status, 200, 'Courses endpoint must return status 200');
   assert.ok(Array.isArray(coursesRes.data), 'Courses response must be an array');
   assert.ok(coursesRes.data.length > 0, 'At least 1 course must be returned');
@@ -73,7 +74,7 @@ async function runAudit() {
   console.log(`    Sample Course Price: ${sampleCourse.price_rendered || sampleCourse.price}`);
 
   console.log('\n[STEP 2] Verifying Course Detail & Curriculum Fetching...');
-  const detailRes = await httpsGet(`https://staging.thrivingskill.com/wp-json/learnpress/v1/courses/${sampleCourse.id}`);
+  const detailRes = await httpsGet(`${baseUrl}/learnpress/v1/courses/${sampleCourse.id}`);
   assert.strictEqual(detailRes.status, 200, 'Course detail endpoint must return 200');
   assert.ok(Array.isArray(detailRes.data.sections), 'Course must include sections array');
   console.log(` -> Sections count: ${detailRes.data.sections.length}`);
@@ -85,7 +86,7 @@ async function runAudit() {
 
   console.log('\n[STEP 3] Verifying Real Video Extraction from Lesson Metadata...');
   // Check known course 11580 lesson 12058 (Vimeo embedded lesson)
-  const lessonRes = await httpsGet('https://staging.thrivingskill.com/wp-json/learnpress/v1/lessons/12058');
+  const lessonRes = await httpsGet(`${baseUrl}/learnpress/v1/lessons/12058`);
   assert.strictEqual(lessonRes.status, 200, 'Lesson detail endpoint must return 200');
   const rawLesson = lessonRes.data;
   console.log(` -> Lesson ID 12058 Name: "${rawLesson.name}"`);

@@ -419,6 +419,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             <WebView
               source={{ uri: `${Env.SITE_URL}/register/` }}
               style={styles.webView}
+              allowFileAccess={false}
+              allowUniversalAccessFromFileURLs={false}
+              onShouldStartLoadWithRequest={(request) => {
+                const url = (request.url || '').toLowerCase();
+                // Restrict embedded auth webview navigation strictly to thrivingskill domain
+                return (
+                  url.startsWith('https://thrivingskill.com') ||
+                  url.startsWith('https://www.thrivingskill.com') ||
+                  url.startsWith('about:blank')
+                );
+              }}
               injectedJavaScript={`
                 (function() {
                   var css = 'header, footer, .site-header, .site-footer, .mobile-menu-wrapper, .top_site_main, #toolbar, .page-title, .breadcrumb, .widget-area { display: none !important; } body, html, #main-content { background: #FFFFFF !important; margin: 0 !important; padding: 0 !important; } .thim-login-container, .thim-register { padding: 14px !important; margin: 0 auto !important; max-width: 100% !important; box-shadow: none !important; }';
@@ -848,6 +859,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           onBlur={() => setTouched((p) => ({ ...p, newPassword: true }))}
                           secureTextEntry={!showNewPassword}
                           autoCapitalize="none"
+                          autoCorrect={false}
+                          spellCheck={false}
+                          autoComplete="new-password"
+                          textContentType="newPassword"
                           returnKeyType="next"
                           onSubmitEditing={() => confirmPasswordInputRef.current?.focus()}
                         />
@@ -926,6 +941,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           onBlur={() => setTouched((p) => ({ ...p, confirmPassword: true }))}
                           secureTextEntry={!showNewPassword}
                           autoCapitalize="none"
+                          autoCorrect={false}
+                          spellCheck={false}
+                          autoComplete="new-password"
+                          textContentType="newPassword"
                           returnKeyType="done"
                           onSubmitEditing={handleSetNewPassword}
                         />
@@ -1119,6 +1138,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           onBlur={() => setTouched((p) => ({ ...p, password: true }))}
                           secureTextEntry={!showPassword}
                           autoCapitalize="none"
+                          autoCorrect={false}
+                          spellCheck={false}
                           returnKeyType="done"
                           onSubmitEditing={handleLogin}
                           autoComplete="current-password"

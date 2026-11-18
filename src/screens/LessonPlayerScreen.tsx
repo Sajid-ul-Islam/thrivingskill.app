@@ -585,21 +585,20 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     unlockedCert ||
     (isCertUnlocked
       ? certFromList || {
-          id: `cert-${course.id}`,
-          courseId: course.id,
-          courseTitle: course.title,
-          studentName: user?.displayName || user?.username || 'Executive Graduate',
-          issueDate: new Date().toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          }),
-          credentialId: progress?.certificateId || `TS-2026-${course.id.slice(-4).toUpperCase()}`,
-          verificationUrl: `https://thrivingskill.com/verify/${
-            progress?.certificateId || `TS-2026-${course.id.slice(-4).toUpperCase()}`
+        id: `cert-${course.id}`,
+        courseId: course.id,
+        courseTitle: course.title,
+        studentName: user?.displayName || user?.username || 'Executive Graduate',
+        issueDate: new Date().toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        }),
+        credentialId: progress?.certificateId || `TS-2026-${course.id.slice(-4).toUpperCase()}`,
+        verificationUrl: `https://thrivingskill.com/verify/${progress?.certificateId || `TS-2026-${course.id.slice(-4).toUpperCase()}`
           }`,
-          instructorName: course.instructor.name,
-        }
+        instructorName: course.instructor.name,
+      }
       : null);
 
   const isCourseCompleted =
@@ -865,8 +864,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                   ? 'কুইজ সম্পন্ন • জ্ঞান অর্জন সফলভাবে যাচাই করা হয়েছে'
                   : 'Quiz Passed • Knowledge Milestone Achieved'
                 : isBangla
-                ? 'অধ্যায়ভিত্তিক মূল্যায়ন পরীক্ষা • পাস মার্ক ৭০%'
-                : 'Chapter Assessment Quiz • 70% to Pass'}
+                  ? 'অধ্যায়ভিত্তিক মূল্যায়ন পরীক্ষা • পাস মার্ক ৭০%'
+                  : 'Chapter Assessment Quiz • 70% to Pass'}
             </Text>
             <TouchableOpacity
               style={[
@@ -897,8 +896,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                     ? 'পুনরায় পরীক্ষা দিন'
                     : 'Retake Chapter Quiz'
                   : isBangla
-                  ? 'কুইজ শুরু করুন'
-                  : 'Start Chapter Quiz'}
+                    ? 'কুইজ শুরু করুন'
+                    : 'Start Chapter Quiz'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -1034,7 +1033,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               }}
               onPress={() => {
                 triggerHaptic('light');
-                Linking.openURL(zoomMeetingUrl).catch(() => {});
+                Linking.openURL(zoomMeetingUrl).catch(() => { });
               }}
               accessibilityRole="button"
               accessibilityLabel={isBangla ? 'জুমে ক্লাসে যোগ দিন' : 'Launch Live Zoom Session'}
@@ -1081,6 +1080,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               <WebView
                 source={{ html: buildVideoHtml(), baseUrl: 'https://thrivingskill.com' }}
                 style={styles.videoWebView}
+                allowFileAccess={false}
+                allowUniversalAccessFromFileURLs={false}
                 allowsFullscreenVideo
                 javaScriptEnabled
                 domStorageEnabled
@@ -1102,7 +1103,10 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                         style={styles.videoFallbackBtn}
                         onPress={() => {
                           triggerHaptic('light');
-                          Linking.openURL(resolvedVideoUrl).catch(() => {});
+                          const safeUrl = resolvedVideoUrl.startsWith('//') ? `https:${resolvedVideoUrl}` : resolvedVideoUrl;
+                          if (safeUrl.startsWith('https://') || safeUrl.startsWith('http://')) {
+                            Linking.openURL(safeUrl).catch(() => { });
+                          }
                         }}
                         accessibilityRole="button"
                         accessibilityLabel={isBangla ? 'ব্রাউজারে ভিডিও চালু করুন' : 'Watch in Browser / App'}
@@ -1403,8 +1407,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                               backgroundColor: isCompleted
                                 ? colors.primaryLight
                                 : isSelected
-                                ? colors.primary
-                                : colors.surfaceSubtle,
+                                  ? colors.primary
+                                  : colors.surfaceSubtle,
                             },
                           ]}
                         >

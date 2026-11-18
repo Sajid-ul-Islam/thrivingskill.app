@@ -169,13 +169,18 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
               style={styles.liveHeroEnterBtn}
               onPress={async () => {
                 triggerHaptic('medium');
-                const url = liveWorkshopNow.joinUrl || 'https://thrivingskill.com/live-room';
+                const rawUrl = (liveWorkshopNow.joinUrl || 'https://thrivingskill.com/live-room').trim();
+                const isSafe = /^https?:\/\//i.test(rawUrl) || /^zoom(?:us|mtg):\/\//i.test(rawUrl);
+                if (!isSafe) {
+                  showToast({ message: 'Invalid live room link', type: 'error' });
+                  return;
+                }
                 try {
                   showToast({
                     message: isBangla ? 'লাইভ ক্লাসরুমে যুক্ত করা হচ্ছে...' : 'Entering live classroom...',
                     type: 'info',
                   });
-                  await Linking.openURL(url);
+                  await Linking.openURL(rawUrl);
                 } catch {
                   showToast({ message: 'Unable to open live link', type: 'error' });
                 }
