@@ -9,9 +9,13 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "build:apk": "cd android && .\\gradlew.bat assembleRelease",
+    "build:apk:local": "expo run:android --variant release",
+    "build:eas:local": "eas build --platform android --profile production --local",
     "build:preview": "eas build --profile preview --platform android",
     "build:prod": "eas build --profile production --platform android",
-    "update:prod": "eas update --channel production"
+    "update:prod": "eas update --channel production",
+    "update:eas": "eas update --channel production",
+    "export:self-hosted": "npx expo export"
   },
   "dependencies": {
     "@expo/metro-runtime": "58.0.17",

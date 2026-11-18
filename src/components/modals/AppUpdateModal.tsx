@@ -28,12 +28,18 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
   const insets = useSafeAreaInsets();
   const [isChecking, setIsChecking] = useState(false);
   const [updateReady, setUpdateReady] = useState(false);
+  const [apkUpdateReady, setApkUpdateReady] = useState(false);
+  const [apkUrl, setApkUrl] = useState<string | null>(null);
+  const [latestVersion, setLatestVersion] = useState<string | null>(null);
+  const [changelog, setChangelog] = useState<string | null>(null);
   const [checked, setChecked] = useState(false);
 
   const handleCheck = async () => {
     triggerHaptic('light');
     setIsChecking(true);
     setChecked(false);
+    setUpdateReady(false);
+    setApkUpdateReady(false);
 
     const result = await AppUpdateService.checkForUpdate();
     setIsChecking(false);
@@ -42,6 +48,14 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
     if (result.isDownloaded) {
       triggerHaptic('success');
       setUpdateReady(true);
+      showToast({ message: 'New update downloaded and ready to apply!', type: 'success' });
+    } else if (result.isApkUpdateAvailable) {
+      triggerHaptic('success');
+      setApkUpdateReady(true);
+      setApkUrl(result.apkDownloadUrl || null);
+      setLatestVersion(result.latestVersion || '1.4.1');
+      setChangelog(result.changelog || null);
+      showToast({ message: `Version ${result.latestVersion || '1.4.1'} available!`, type: 'info' });
     } else {
       showToast({ message: "You're on the latest version!", type: 'success' });
     }
@@ -55,6 +69,13 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
       Alert.alert('Restart Required', 'Please close and re-open the app to apply the update.');
     }
   };
+
+  const handleDownloadApk = async () => {
+    triggerHaptic('medium');
+    await AppUpdateService.downloadApk(apkUrl);
+  };
+
+  const updateInfo = AppUpdateService.getUpdateInfo();
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -73,7 +94,9 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
             </View>
             <View style={styles.headerText}>
               <Text style={[styles.title, { color: colors.text }]}>App Updates</Text>
-              <Text style={[styles.subtitle, { color: colors.textMuted }]}>Version 1.4.0</Text>
+              <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+                v{updateInfo.currentVersion} • Channel: {updateInfo.channel}
+              </Text>
             </View>
             <TouchableOpacity
               style={[styles.closeBtn, { backgroundColor: colors.surfaceSubtle }]}
@@ -85,13 +108,33 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
             </TouchableOpacity>
           </View>
 
+          {/* Channel Info Capsule */}
+          <View style={[styles.channelBadgeRow, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+            <View style={styles.channelBadgeItem}>
+              <Ionicons name="git-branch-outline" size={13} color={colors.primary} />
+              <Text style={[styles.channelBadgeText, { color: colors.text }]}>EAS OTA Channel: <Text style={{ fontWeight: '700' }}>{updateInfo.channel}</Text></Text>
+            </View>
+            <View style={styles.channelBadgeItem}>
+              <Ionicons name="layers-outline" size={13} color={colors.secondary} />
+              <Text style={[styles.channelBadgeText, { color: colors.text }]}>Runtime: <Text style={{ fontWeight: '700' }}>{updateInfo.runtimeVersion}</Text></Text>
+            </View>
+          </View>
+
           {/* State card */}
           {updateReady ? (
             <View style={[styles.stateCard, { backgroundColor: colors.successLight, borderColor: colors.success }]}>
               <Ionicons name="checkmark-circle" size={40} color={colors.success} />
-              <Text style={[styles.stateTitle, { color: colors.success }]}>Update Ready!</Text>
+              <Text style={[styles.stateTitle, { color: colors.success }]}>OTA Update Ready!</Text>
               <Text style={[styles.stateBody, { color: colors.text }]}>
-                A new version of Thriving Skills is downloaded and ready. Tap below to apply it now.
+                A new version of Thriving Skills is downloaded and ready over-the-air. Tap below to apply it now.
+              </Text>
+            </View>
+          ) : apkUpdateReady ? (
+            <View style={[styles.stateCard, { backgroundColor: isDark ? colors.surfaceSubtle : '#EFF6FF', borderColor: colors.primary }]}>
+              <Ionicons name="arrow-down-circle-outline" size={40} color={colors.primary} />
+              <Text style={[styles.stateTitle, { color: colors.primary }]}>New Version Available (v{latestVersion})</Text>
+              <Text style={[styles.stateBody, { color: colors.text }]}>
+                {changelog || 'A new build is published on the self-hosted distribution server. Tap below to download the latest APK.'}
               </Text>
             </View>
           ) : checked ? (
@@ -99,7 +142,7 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
               <Ionicons name="shield-checkmark-outline" size={40} color={colors.success} />
               <Text style={[styles.stateTitle, { color: colors.text }]}>You're up to date</Text>
               <Text style={[styles.stateBody, { color: colors.textMuted }]}>
-                Thriving Skills is running the latest version. We'll notify you when a new update arrives.
+                Thriving Skills is running the latest version (v{updateInfo.currentVersion}). OTA updates are active on channel "{updateInfo.channel}".
               </Text>
             </View>
           ) : (
@@ -107,7 +150,7 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
               <Ionicons name="sync-circle-outline" size={40} color={colors.primary} />
               <Text style={[styles.stateTitle, { color: colors.text }]}>Keep Your App Fresh</Text>
               <Text style={[styles.stateBody, { color: colors.textMuted }]}>
-                Get new lessons, features, and fixes instantly — no app store visit needed.
+                Get new lessons, features, and fixes instantly via OTA updates or direct self-hosted server downloads.
               </Text>
             </View>
           )}
@@ -122,6 +165,16 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
             >
               <Ionicons name="refresh" size={18} color={colors.onSuccess} />
               <Text style={[styles.btnText, { color: colors.onSuccess }]}>Apply Update & Restart</Text>
+            </TouchableOpacity>
+          ) : apkUpdateReady ? (
+            <TouchableOpacity
+              style={[styles.btn, { backgroundColor: colors.primary }]}
+              onPress={handleDownloadApk}
+              accessibilityRole="button"
+              accessibilityLabel="Download APK update"
+            >
+              <Ionicons name="download-outline" size={18} color={colors.onPrimary} />
+              <Text style={[styles.btnText, { color: colors.onPrimary }]}>Download Latest APK (v{latestVersion})</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
@@ -161,39 +214,30 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   sheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: shape.large,
+    borderTopRightRadius: shape.large,
     borderWidth: 1,
-    borderBottomWidth: 0,
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 12,
+    padding: 20,
+    gap: 16,
   },
   handle: {
-    width: 40,
+    width: 36,
     height: 4,
     borderRadius: 2,
     alignSelf: 'center',
-    marginBottom: 16,
+    marginBottom: 4,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginBottom: 20,
   },
   iconCircle: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0,
   },
   headerText: {
     flex: 1,
@@ -202,9 +246,8 @@ const styles = StyleSheet.create({
     ...typography.h3,
   },
   subtitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginTop: 1,
+    ...typography.caption,
+    marginTop: 2,
   },
   closeBtn: {
     width: MIN_TOUCH_TARGET,
@@ -212,26 +255,38 @@ const styles = StyleSheet.create({
     borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
-    flexShrink: 0,
+  },
+  channelBadgeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: shape.medium,
+    borderWidth: 1,
+  },
+  channelBadgeItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  channelBadgeText: {
+    fontSize: 11,
   },
   stateCard: {
-    borderRadius: shape.large,
+    borderRadius: shape.medium,
     borderWidth: 1,
-    padding: 20,
+    padding: 16,
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 20,
+    gap: 8,
   },
   stateTitle: {
-    fontSize: 16,
-    fontWeight: '800',
+    ...typography.h4,
     textAlign: 'center',
   },
   stateBody: {
-    fontSize: 13,
-    lineHeight: 20,
+    ...typography.body,
     textAlign: 'center',
-    fontWeight: '500',
   },
   btn: {
     flexDirection: 'row',
@@ -239,18 +294,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 14,
     borderRadius: shape.medium,
-    gap: 8,
     minHeight: MIN_TOUCH_TARGET,
-    marginBottom: 12,
+    gap: 8,
   },
   btnText: {
-    fontSize: 15,
-    fontWeight: '800',
+    ...typography.button,
   },
   hint: {
-    fontSize: 11,
+    ...typography.caption,
     textAlign: 'center',
-    lineHeight: 16,
-    marginBottom: 4,
   },
 });
