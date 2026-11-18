@@ -367,7 +367,7 @@ export const COURSES: Course[] = [
       'Build custom GPT workflows tailored for corporate productivity',
       'Manage enterprise AI safety, copyright, and confidential data protection',
     ],
-    description: 'Empower yourself with practical Generative AI capabilities. Designed specifically for working professionals, department heads, and managers looking to 10x output and streamline complex workflows.',
+    description: 'Empower yourself with practical Generative AI capabilities. Designed specifically for working professionals, department heads, and managers looking to accelerate output and streamline complex workflows.',
     prerequisites: ['No coding background required. Basic familiarity with browser and office tools.'],
     modules: [
       {
@@ -521,7 +521,7 @@ export const COURSES: Course[] = [
       'Generate employee engagement surveys and analyze sentiment in minutes',
       'Draft standardized HR policies, SOPs, and employee onboarding manuals',
     ],
-    description: 'Transform HR from administrative overhead into a strategic talent engine using cutting-edge AI tools.',
+    description: 'Transform HR from administrative overhead into a strategic talent engine using modern AI tools.',
     prerequisites: ['None.'],
     modules: [],
     reviews: [],

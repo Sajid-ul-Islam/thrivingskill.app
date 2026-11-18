@@ -188,7 +188,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
               {/* Mission Hero Banner */}
               <View style={[styles.heroCard, { backgroundColor: isDark ? colors.surfaceCard : '#F0FDF4', borderColor: '#BBF7D0' }]}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                  <Ionicons name="sparkles" size={18} color="#10B981" />
+                  <Ionicons name="shield-checkmark" size={18} color="#10B981" />
                   <Text style={[styles.heroBadge, { color: '#059669' }]}>
                     OFFICIAL CORPORATE ECOSYSTEM
                   </Text>
@@ -201,7 +201,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                 <Text style={[styles.heroDesc, { color: colors.textMuted }]}>
                   {isBangla
                     ? 'থ্রাইভিং স্কিলস লিমিটেড (TSL) একটি শীর্ষস্থানীয় স্কিলস অ্যান্ড ক্যাপাসিটি ডেভেলপমেন্ট প্ল্যাটফর্ম। ঢাকা বিশ্ববিদ্যালয় ডাকসু ও নর্থ সাউথ বিশ্ববিদ্যালয় এর সাথে যৌথভাবে জাতীয় দক্ষতা সামিট আয়োজনের পাশাপাশি দেশের লাখো পেশাজীবী ও শিক্ষার্থীকে ভবিষ্যতের জন্য প্রস্তুত করছে।'
-                    : 'Thriving Skills Limited (TSL) is a premier workforce upskilling and corporate learning ecosystem in Bangladesh. Through cutting-edge masterclasses, national summits, and strategic advisory, TSL equips executives and fresh graduates for the 4th Industrial Revolution.'}
+                    : 'Thriving Skills Limited (TSL) is a premier workforce upskilling and corporate learning ecosystem in Bangladesh. Through industry masterclasses, national summits, and strategic advisory, TSL equips executives and fresh graduates for modern professional careers.'}
                 </Text>
               </View>
 

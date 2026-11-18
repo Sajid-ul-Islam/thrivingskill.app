@@ -61,7 +61,7 @@ export class AppErrorBoundary extends Component<Props, State> {
   private handleClearCacheAndReset = async () => {
     try {
       await CacheManager.clearAll();
-    } catch {}
+    } catch { }
     this.handleReset();
   };
 
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFC',
     padding: 10,
     marginBottom: 12,
     shadowColor: '#000',
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '100%',
-    backgroundColor: '#1E293B',
+    backgroundColor: '#1F1F23',
     borderRadius: 20,
     padding: 20,
     alignItems: 'center',

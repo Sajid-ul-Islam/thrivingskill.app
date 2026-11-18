@@ -159,18 +159,36 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const isLessonCompleted = progress?.completedLessonIds.includes(currentLesson?.id || '') || false;
   const lessonNotes = currentLesson ? getNotesForLesson(courseId, currentLesson.id) : [];
 
+  const isManualLandscapeRef = useRef<boolean>(false);
+  const isDeviceLandscape = windowDimensions.width > windowDimensions.height;
+
   // Listen for screen orientation / dimension changes
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', ({ window }: { window: { width: number; height: number } }) => {
       setWindowDimensions(window as any);
-      if (window.width > window.height && !isFullscreen) {
+      if (window.width > window.height) {
         setIsFullscreen(true);
-      } else if (window.width <= window.height && isFullscreen) {
+      } else if (window.width <= window.height && !isManualLandscapeRef.current) {
         setIsFullscreen(false);
       }
     });
     return () => subscription?.remove();
-  }, [isFullscreen]);
+  }, []);
+
+  const handleToggleFullscreen = () => {
+    triggerHaptic('medium');
+    const nextFullscreen = !isFullscreen;
+    isManualLandscapeRef.current = nextFullscreen;
+    setIsFullscreen(nextFullscreen);
+
+    if (isDirectStream && nativePlayerRef.current) {
+      if (nextFullscreen) {
+        nativePlayerRef.current.enterFullscreen().catch(() => {});
+      } else {
+        nativePlayerRef.current.exitFullscreen().catch(() => {});
+      }
+    }
+  };
 
   // Fetch actual lesson details and video metadata from backend
   useEffect(() => {
@@ -585,21 +603,20 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     unlockedCert ||
     (isCertUnlocked
       ? certFromList || {
-          id: `cert-${course.id}`,
-          courseId: course.id,
-          courseTitle: course.title,
-          studentName: user?.displayName || user?.username || 'Executive Graduate',
-          issueDate: new Date().toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          }),
-          credentialId: progress?.certificateId || `TS-2026-${course.id.slice(-4).toUpperCase()}`,
-          verificationUrl: `https://thrivingskill.com/verify/${
-            progress?.certificateId || `TS-2026-${course.id.slice(-4).toUpperCase()}`
+        id: `cert-${course.id}`,
+        courseId: course.id,
+        courseTitle: course.title,
+        studentName: user?.displayName || user?.username || 'Executive Graduate',
+        issueDate: new Date().toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        }),
+        credentialId: progress?.certificateId || `TS-2026-${course.id.slice(-4).toUpperCase()}`,
+        verificationUrl: `https://thrivingskill.com/verify/${progress?.certificateId || `TS-2026-${course.id.slice(-4).toUpperCase()}`
           }`,
-          instructorName: course.instructor.name,
-        }
+        instructorName: course.instructor.name,
+      }
       : null);
 
   const isCourseCompleted =
@@ -803,19 +820,30 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
             },
           ]}
         >
-          <Ionicons name="sparkles" size={14} color={isDark ? '#93C5FD' : '#2563EB'} />
+          <Ionicons name="play-circle-outline" size={14} color={isDark ? '#93C5FD' : '#2563EB'} />
           <Text style={[styles.previewBannerText, { color: isDark ? '#93C5FD' : '#1D4ED8' }]}>
             {isBangla ? 'ফ্রি প্রিভিউ লেকচার চলছে' : 'Free Preview Lesson • Enroll for Full Access'}
           </Text>
         </View>
       )}
 
-      {/* 1. STICKY TOP 16:9 VIDEO PLAYER (ANCHORED, NEVER SCROLLS OUT OF VIEW IN PORTRAIT) */}
+      {/* 1. STICKY TOP 16:9 VIDEO PLAYER (PORTRAIT) / FULLSCREEN WIDESCREEN (LANDSCAPE) */}
       <View
         style={[
           styles.stickyPlayerFrame,
-          isFullscreen && styles.fullscreenPlayerFrame,
-          { width: isFullscreen ? windowDimensions.width : '100%' },
+          isFullscreen && (
+            isDeviceLandscape
+              ? styles.fullscreenLandscapeFrame
+              : [
+                  styles.forcedLandscapeFrame,
+                  {
+                    width: windowDimensions.height,
+                    height: windowDimensions.width,
+                    top: (windowDimensions.height - windowDimensions.width) / 2,
+                    left: -(windowDimensions.height - windowDimensions.width) / 2,
+                  },
+                ]
+          ),
         ]}
       >
         {!canPlayVideo ? (
@@ -877,8 +905,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                   ? 'কুইজ সম্পন্ন • জ্ঞান অর্জন সফলভাবে যাচাই করা হয়েছে'
                   : 'Quiz Passed • Knowledge Milestone Achieved'
                 : isBangla
-                ? 'অধ্যায়ভিত্তিক মূল্যায়ন পরীক্ষা • পাস মার্ক ৭০%'
-                : 'Chapter Assessment Quiz • 70% to Pass'}
+                  ? 'অধ্যায়ভিত্তিক মূল্যায়ন পরীক্ষা • পাস মার্ক ৭০%'
+                  : 'Chapter Assessment Quiz • 70% to Pass'}
             </Text>
             <TouchableOpacity
               style={[
@@ -909,8 +937,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                     ? 'পুনরায় পরীক্ষা দিন'
                     : 'Retake Chapter Quiz'
                   : isBangla
-                  ? 'কুইজ শুরু করুন'
-                  : 'Start Chapter Quiz'}
+                    ? 'কুইজ শুরু করুন'
+                    : 'Start Chapter Quiz'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -1046,7 +1074,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               }}
               onPress={() => {
                 triggerHaptic('light');
-                Linking.openURL(zoomMeetingUrl).catch(() => {});
+                Linking.openURL(zoomMeetingUrl).catch(() => { });
               }}
               accessibilityRole="button"
               accessibilityLabel={isBangla ? 'জুমে ক্লাসে যোগ দিন' : 'Launch Live Zoom Session'}
@@ -1093,6 +1121,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               <WebView
                 source={{ html: buildVideoHtml(), baseUrl: 'https://thrivingskill.com' }}
                 style={styles.videoWebView}
+                allowFileAccess={false}
+                allowUniversalAccessFromFileURLs={false}
                 allowsFullscreenVideo
                 javaScriptEnabled
                 domStorageEnabled
@@ -1114,7 +1144,10 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                         style={styles.videoFallbackBtn}
                         onPress={() => {
                           triggerHaptic('light');
-                          Linking.openURL(resolvedVideoUrl).catch(() => {});
+                          const safeUrl = resolvedVideoUrl.startsWith('//') ? `https:${resolvedVideoUrl}` : resolvedVideoUrl;
+                          if (safeUrl.startsWith('https://') || safeUrl.startsWith('http://')) {
+                            Linking.openURL(safeUrl).catch(() => { });
+                          }
                         }}
                         accessibilityRole="button"
                         accessibilityLabel={isBangla ? 'ব্রাউজারে ভিডিও চালু করুন' : 'Watch in Browser / App'}
@@ -1130,36 +1163,110 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               />
             )}
 
-            {/* 2. ANDROID-SPECIFIC GESTURES & CONTROLS OVERLAY */}
-            <VideoPlayerGestureOverlay
-              isPlaying={isPlaying}
-              onTogglePlay={handleTogglePlay}
-              currentPositionSeconds={currentPositionSeconds}
-              totalDurationSeconds={totalLessonSeconds}
-              onSeekTo={handleSeekTo}
-              onRewind={handleRewind}
-              onForward={handleForward}
-              playbackSpeed={playbackSpeed}
-              onCycleSpeed={cycleSpeed}
-              videoQuality={streamQuality}
-              onOpenQualityModal={handleOpenStreamQualityModal}
-              isFullscreen={isFullscreen}
-              onToggleFullscreen={() => {
-                triggerHaptic('medium');
-                setIsFullscreen(!isFullscreen);
-              }}
-              onTriggerPiP={handleTriggerPiP}
-              title={currentLesson.title}
-              subtitle={currentItem?.moduleTitle}
-              isLocked={isScreenLocked}
-              onToggleLock={() => {
-                setIsScreenLocked(!isScreenLocked);
-                showToast({
-                  message: !isScreenLocked ? 'Screen Locked' : 'Screen Unlocked',
-                  type: 'info',
-                });
-              }}
-            />
+            {/* 2. DUAL-MODE CONTROLLER ARCHITECTURE (Resolves server/app duplicate controller & duration bar clash) */}
+            {isDirectStream ? (
+              <VideoPlayerGestureOverlay
+                isPlaying={isPlaying}
+                onTogglePlay={handleTogglePlay}
+                currentPositionSeconds={currentPositionSeconds}
+                totalDurationSeconds={totalLessonSeconds}
+                onSeekTo={handleSeekTo}
+                onRewind={handleRewind}
+                onForward={handleForward}
+                playbackSpeed={playbackSpeed}
+                onCycleSpeed={cycleSpeed}
+                videoQuality={streamQuality}
+                onOpenQualityModal={handleOpenStreamQualityModal}
+                isFullscreen={isFullscreen}
+                onToggleFullscreen={handleToggleFullscreen}
+                onTriggerPiP={handleTriggerPiP}
+                title={currentLesson.title}
+                subtitle={currentItem?.moduleTitle}
+                isLocked={isScreenLocked}
+                onToggleLock={() => {
+                  setIsScreenLocked(!isScreenLocked);
+                  showToast({
+                    message: !isScreenLocked ? 'Screen Locked' : 'Screen Unlocked',
+                    type: 'info',
+                  });
+                }}
+              />
+            ) : (
+              /* Minimalist Floating Controls for Server-Driven Video (Vimeo / YouTube / LMS Iframe) */
+              /* Resolves duplicate controller / duplicate duration bar clash */
+              <View style={styles.serverPlayerControlsOverlay} pointerEvents="box-none">
+                {/* Floating Top Bar (Title + Landscape/Fullscreen Toggle + Lock) */}
+                <View style={styles.serverPlayerTopBar} pointerEvents="box-none">
+                  <View style={styles.serverPlayerTitleBadge} pointerEvents="none">
+                    <Ionicons name="play-circle" size={14} color="#FFB606" />
+                    <Text style={styles.serverPlayerTitleText} numberOfLines={1}>
+                      {currentLesson.title}
+                    </Text>
+                  </View>
+
+                  <View style={styles.serverPlayerActionsRow}>
+                    {/* Screen Lock Toggle */}
+                    <TouchableOpacity
+                      style={styles.serverPlayerActionBtn}
+                      onPress={() => {
+                        triggerHaptic('light');
+                        setIsScreenLocked(!isScreenLocked);
+                        showToast({
+                          message: !isScreenLocked ? 'Screen Touches Locked' : 'Screen Unlocked',
+                          type: 'info',
+                        });
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Lock or unlock screen touches"
+                    >
+                      <Ionicons
+                        name={isScreenLocked ? 'lock-closed' : 'lock-open-outline'}
+                        size={16}
+                        color={isScreenLocked ? '#FFB606' : '#FFFFFF'}
+                      />
+                    </TouchableOpacity>
+
+                    {/* Dedicated Landscape Mode Toggle */}
+                    <TouchableOpacity
+                      style={[
+                        styles.serverPlayerActionBtn,
+                        isFullscreen && styles.serverPlayerActionBtnActive,
+                      ]}
+                      onPress={handleToggleFullscreen}
+                      accessibilityRole="button"
+                      accessibilityLabel={isFullscreen ? 'Exit landscape mode' : 'Enter landscape mode'}
+                    >
+                      <Ionicons
+                        name={isFullscreen ? 'contract-outline' : 'scan-outline'}
+                        size={17}
+                        color="#FFFFFF"
+                      />
+                      <Text style={styles.landscapePillText}>
+                        {isFullscreen ? (isBangla ? 'প্রস্থান' : 'Exit') : (isBangla ? 'ল্যান্ডস্কেপ' : 'Landscape')}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* If Screen is Locked, full guard prevents accidental taps */}
+                {isScreenLocked && (
+                  <View style={styles.screenLockGuard} pointerEvents="auto">
+                    <TouchableOpacity
+                      style={styles.unlockPill}
+                      onPress={() => {
+                        triggerHaptic('medium');
+                        setIsScreenLocked(false);
+                      }}
+                    >
+                      <Ionicons name="lock-closed" size={18} color="#FFB606" />
+                      <Text style={styles.unlockPillText}>
+                        {isBangla ? 'আনলক করতে ট্যাপ করুন' : 'Tap to Unlock Controls'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            )}
 
             {/* Continuous Auto-Play Next Video Countdown Overlay */}
             {autoplayCountdown !== null && (
@@ -1248,7 +1355,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Study active recall flashcards"
               >
-                <Ionicons name="sparkles" size={16} color={colors.brandGold} />
+                <Ionicons name="layers-outline" size={16} color={colors.brandGold} />
               </TouchableOpacity>
 
               {/* Mark Complete Button */}
@@ -1415,8 +1522,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                               backgroundColor: isCompleted
                                 ? colors.primaryLight
                                 : isSelected
-                                ? colors.primary
-                                : colors.surfaceSubtle,
+                                  ? colors.primary
+                                  : colors.surfaceSubtle,
                             },
                           ]}
                         >
@@ -2117,6 +2224,100 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     height: '100%',
     zIndex: 9999,
+  },
+  fullscreenLandscapeFrame: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
+    aspectRatio: undefined,
+    zIndex: 99999,
+    backgroundColor: '#000000',
+  },
+  forcedLandscapeFrame: {
+    position: 'absolute',
+    aspectRatio: undefined,
+    zIndex: 99999,
+    backgroundColor: '#000000',
+  },
+  serverPlayerControlsOverlay: {
+    ...StyleSheet.absoluteFill,
+    justifyContent: 'space-between',
+    zIndex: 20,
+    padding: 10,
+  },
+  serverPlayerTopBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginTop: 4,
+  },
+  serverPlayerTitleBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(16, 47, 83, 0.85)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: shape.full,
+    maxWidth: '60%',
+  },
+  serverPlayerTitleText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  serverPlayerActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  serverPlayerActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(15, 25, 44, 0.85)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: shape.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+  },
+  serverPlayerActionBtnActive: {
+    backgroundColor: '#102F53',
+    borderColor: '#FFB606',
+  },
+  landscapePillText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  screenLockGuard: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 30,
+  },
+  unlockPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#102F53',
+    borderWidth: 1.5,
+    borderColor: '#FFB606',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: shape.full,
+  },
+  unlockPillText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
   },
   playerContainer: {
     width: '100%',

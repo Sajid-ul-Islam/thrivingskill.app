@@ -89,7 +89,7 @@ export const SpacedRepetitionModal: React.FC<SpacedRepetitionModalProps> = ({
     triggerHaptic('selection');
     try {
       await SpacedRepetitionService.reviewCard(currentCard.id, rating);
-    } catch {}
+    } catch { }
 
     const nextCount = reviewedCount + 1;
     setReviewedCount(nextCount);
@@ -129,7 +129,7 @@ export const SpacedRepetitionModal: React.FC<SpacedRepetitionModalProps> = ({
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
             <View style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Ionicons name="sparkles" size={18} color={colors.primary} style={{ marginRight: 6 }} />
+                <Ionicons name="layers-outline" size={18} color={colors.primary} style={{ marginRight: 6 }} />
                 <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>Spaced Repetition Recall</Text>
               </View>
               <Text style={[styles.headerSubtitle, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">

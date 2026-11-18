@@ -613,6 +613,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           <WebView
             ref={webViewRef}
             source={{ uri: checkoutWebUrl }}
+            allowFileAccess={false}
+            allowUniversalAccessFromFileURLs={false}
             onNavigationStateChange={handleWebViewNavChange}
             onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
             onLoadProgress={(syntheticEvent) => {
@@ -836,7 +838,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
                   {/* Bundle Sub-Courses Breakdown (CR-5) */}
                   {isBundle && bundleConfig && (
-                    <View style={{ marginVertical: 8, padding: 10, backgroundColor: isDark ? '#1E293B' : '#F1F5F9', borderRadius: shape.medium }}>
+                    <View style={{ marginVertical: 8, padding: 10, backgroundColor: colors.surfaceSubtle, borderRadius: shape.medium }}>
                       <Text style={{ fontSize: 11, fontWeight: '700', color: colors.text, marginBottom: 6 }}>
                         {isBangla ? 'বান্ডেলে অন্তর্ভুক্ত ৫টি কোর্স (সবগুলো আনলক হবে):' : 'Included 5 courses in this bundle (all unlock):'}
                       </Text>
@@ -1177,7 +1179,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <View
                   style={[
                     styles.sslCard,
-                    { backgroundColor: isDark ? '#1E293B' : '#F1F5F9', borderColor: colors.border },
+                    { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
                   ]}
                 >
                   <View style={styles.sslHeader}>

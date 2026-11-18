@@ -41,7 +41,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
           <View style={[styles.header, { borderBottomColor: colors.border, backgroundColor: colors.surfaceCard }]}>
             <View style={styles.headerTitleCol}>
               <View style={styles.titleRow}>
-                <Ionicons name="sparkles" size={20} color="#F59E0B" />
+                <Ionicons name="ribbon-outline" size={20} color="#F59E0B" />
                 <Text style={[styles.headerTitle, { color: colors.text }]}>
                   {isBangla ? 'মেম্বারশিপ ও লার্নিং অ্যাক্সেস' : 'Membership & Learning Access'}
                 </Text>

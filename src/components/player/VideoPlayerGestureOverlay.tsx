@@ -403,15 +403,18 @@ export const VideoPlayerGestureOverlay: React.FC<VideoPlayerGestureOverlayProps>
                   <Ionicons name="lock-open-outline" size={18} color="#FFFFFF" />
                 </TouchableOpacity>
 
-                {/* Fullscreen Toggle */}
+                {/* Fullscreen / Landscape Mode Toggle */}
                 <TouchableOpacity
-                  style={styles.topIconBtn}
+                  style={[
+                    styles.topIconBtn,
+                    isFullscreen && { backgroundColor: '#102F53', borderColor: '#FFB606', borderWidth: 1 },
+                  ]}
                   onPress={() => {
                     triggerHaptic('light');
                     onToggleFullscreen();
                   }}
                   accessibilityRole="button"
-                  accessibilityLabel={isFullscreen ? "Exit fullscreen" : "Enter fullscreen landscape"}
+                  accessibilityLabel={isFullscreen ? "Exit landscape mode" : "Enter landscape mode"}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
                   <Ionicons

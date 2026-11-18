@@ -115,7 +115,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
         >
           {title}
         </Text>
-        <TouchableOpacity
+        <SpringPressable
           onPress={() => {
             triggerHaptic('light');
             onNavigateTab('Courses');
@@ -128,6 +128,8 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
           }}
           accessibilityRole="button"
           accessibilityLabel={`See all ${title} courses`}
+          haptic="light"
+          activeScale={0.93}
         >
           <Text
             style={{
@@ -138,7 +140,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
           >
             See All →
           </Text>
-        </TouchableOpacity>
+        </SpringPressable>
       </View>
 
       {/* Horizontal FlatList with Safe Offset Scrolling */}
@@ -516,8 +518,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
           <View style={styles.greetingTopRow}>
             {/* Learner Avatar */}
-            <TouchableOpacity
-              activeOpacity={0.85}
+            <SpringPressable
               style={styles.avatarWrap}
               onPress={() => {
                 triggerHaptic('light');
@@ -529,6 +530,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               }}
               accessibilityRole="button"
               accessibilityLabel={isBangla ? 'প্রোফাইল ওপেন করুন' : 'Open profile'}
+              haptic="light"
+              activeScale={0.92}
             >
               {user?.avatar ? (
                 <Image
@@ -557,7 +560,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   },
                 ]}
               />
-            </TouchableOpacity>
+            </SpringPressable>
 
             {/* Greeting Text */}
             <TouchableOpacity
@@ -581,7 +584,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 </Text>
                 {(subscriptionTier === 'pro' || subscriptionTier === 'enterprise') && (
                   <View style={[styles.proBadge, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.2)' : '#FEF3C7' }]}>
-                    <Ionicons name="sparkles" size={10} color="#D97706" />
+                    <Ionicons name="star" size={10} color="#D97706" />
                     <Text style={styles.proBadgeText}>{subscriptionTier.toUpperCase()}</Text>
                   </View>
                 )}
@@ -592,8 +595,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             </TouchableOpacity>
 
             {/* Momentum Capsule */}
-            <TouchableOpacity
-              activeOpacity={0.8}
+            <SpringPressable
               style={[
                 styles.momentumCapsule,
                 {
@@ -617,6 +619,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               }}
               accessibilityRole="button"
               accessibilityLabel={isBangla ? `দৈনিক স্ট্রিক ${streakDays} দিন, আজকের স্টাডি ${dailyMinutesSpent} মিনিট` : `Daily streak ${streakDays} days, today study ${dailyMinutesSpent} minutes`}
+              haptic="selection"
+              activeScale={0.93}
             >
               <View style={styles.momentumItem}>
                 <Text style={styles.flameEmoji}>🔥</Text>
@@ -631,7 +635,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   {dailyMinutesSpent}m
                 </Text>
               </View>
-            </TouchableOpacity>
+            </SpringPressable>
           </View>
 
           {/* Subtitle + Radial Goal Ring */}
@@ -711,9 +715,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           }}
         />
 
-        {/* ── 3. Hero Banner (1 slide max) ── */}
+        {/* ── 3. Dynamic Live Hero Carousel ── */}
         <HeroCarousel
-          slides={banners.slice(0, 1)}
+          slides={banners}
           onSelectSlide={handleSelectSlide}
           onOpenSubscription={onOpenSubscription}
         />

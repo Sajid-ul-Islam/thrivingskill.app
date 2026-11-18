@@ -42,8 +42,10 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
   onNavigateToCourse,
   onMinimize,
 }) => {
-  const { width: windowWidth } = useWindowDimensions();
-  const playerHeight = (windowWidth * 9) / 16;
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const [isManualLandscape, setIsManualLandscape] = useState<boolean>(false);
+  const isLandscape = windowWidth > windowHeight || isManualLandscape;
+  const playerHeight = isLandscape ? windowHeight : (windowWidth * 9) / 16;
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { courses } = useLearning();
@@ -133,43 +135,68 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        {/* Header Bar */}
+        {/* Header Bar (Visible in portrait mode) */}
+        {!isLandscape && (
+          <View
+            style={[
+              styles.header,
+              {
+                borderBottomColor: colors.border,
+                backgroundColor: colors.surface,
+                paddingTop: Math.max(insets.top, 12),
+              },
+            ]}
+          >
+            {/* Minimize / Down Arrow */}
+            <TouchableOpacity
+              style={[styles.headerBtn, { backgroundColor: isDark ? '#333' : '#E5E7EB' }]}
+              onPress={handleMinimize}
+              accessibilityLabel="Minimize player"
+            >
+              <Ionicons name="chevron-down" size={20} color={colors.text} />
+            </TouchableOpacity>
+
+            <View style={styles.ytBadge}>
+              <Ionicons name="logo-youtube" size={18} color="#FF0000" />
+              <Text style={styles.ytBadgeText}>YouTube Player</Text>
+            </View>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              {/* Landscape Toggle Button */}
+              <TouchableOpacity
+                style={[
+                  styles.headerBtn,
+                  { backgroundColor: isDark ? '#333' : '#E5E7EB' },
+                ]}
+                onPress={() => {
+                  triggerHaptic('light');
+                  setIsManualLandscape(!isManualLandscape);
+                }}
+                accessibilityLabel="Enter landscape mode"
+              >
+                <Ionicons name="scan-outline" size={18} color={colors.text} />
+              </TouchableOpacity>
+
+              {/* Close Button */}
+              <TouchableOpacity
+                style={[styles.headerBtn, { backgroundColor: isDark ? '#333' : '#E5E7EB' }]}
+                onPress={onClose}
+                accessibilityLabel="Close player"
+              >
+                <Ionicons name="close" size={20} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* Player Section (16:9 in portrait, Full-Bleed in landscape) */}
         <View
           style={[
-            styles.header,
-            {
-              borderBottomColor: colors.border,
-              backgroundColor: colors.surface,
-              paddingTop: Math.max(insets.top, 12),
-            },
+            styles.playerContainer,
+            isLandscape && styles.playerContainerLandscape,
+            { width: windowWidth, height: playerHeight },
           ]}
         >
-          {/* Minimize / Down Arrow */}
-          <TouchableOpacity
-            style={[styles.headerBtn, { backgroundColor: isDark ? '#333' : '#E5E7EB' }]}
-            onPress={handleMinimize}
-            accessibilityLabel="Minimize player"
-          >
-            <Ionicons name="chevron-down" size={20} color={colors.text} />
-          </TouchableOpacity>
-
-          <View style={styles.ytBadge}>
-            <Ionicons name="logo-youtube" size={18} color="#FF0000" />
-            <Text style={styles.ytBadgeText}>YouTube Player</Text>
-          </View>
-
-          {/* Close Button */}
-          <TouchableOpacity
-            style={[styles.headerBtn, { backgroundColor: isDark ? '#333' : '#E5E7EB' }]}
-            onPress={onClose}
-            accessibilityLabel="Close player"
-          >
-            <Ionicons name="close" size={20} color={colors.text} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Player Section (16:9 aspect ratio) */}
-        <View style={[styles.playerContainer, { width: windowWidth, height: playerHeight }]}>
           {Platform.OS === 'web' ? (
             <iframe
               src={`https://www.youtube.com/embed/${currentVideo.id}?autoplay=1&playsinline=1`}
@@ -194,6 +221,9 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
                 onError={(error: string) => {
                   setPlayerError(error);
                   setPlayerLoading(false);
+                }}
+                onFullScreenChange={(status: boolean) => {
+                  setIsManualLandscape(status);
                 }}
                 initialPlayerParams={{
                   controls: true,
@@ -226,7 +256,7 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
                       : `Playback Alert (${playerError})`}
                   </Text>
                   <Text style={styles.playerErrorSubtext}>
-                    This YouTube video has restricted embed permissions. Tap below to watch seamlessly in the YouTube app.
+                    This YouTube video has restricted embed permissions. Tap below to watch directly in the YouTube app.
                   </Text>
                   <TouchableOpacity
                     style={styles.errorOpenBtn}
@@ -242,30 +272,46 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
               )}
             </View>
           )}
+          {/* Floating Exit Landscape button when in landscape mode */}
+          {isLandscape && (
+            <TouchableOpacity
+              style={styles.floatingLandscapeExitBtn}
+              onPress={() => {
+                triggerHaptic('light');
+                setIsManualLandscape(false);
+              }}
+              accessibilityLabel="Exit landscape mode"
+            >
+              <Ionicons name="contract-outline" size={16} color="#FFFFFF" />
+              <Text style={styles.floatingLandscapeExitText}>Exit Landscape</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
-        {/* Fast YouTube App Fallback Bar */}
-        <TouchableOpacity
-          style={[styles.quickYtFallback, { backgroundColor: isDark ? '#27272A' : '#FEF2F2' }]}
-          onPress={handleOpenYouTube}
-          activeOpacity={0.8}
-          accessibilityRole="button"
-          accessibilityLabel="Open video in external YouTube app"
-        >
-          <Ionicons name="logo-youtube" size={15} color="#FF0000" />
-          <Text style={[styles.quickYtFallbackText, { color: isDark ? '#FCA5A5' : '#DC2626' }]}>
-            Having playback trouble? Tap to open in YouTube app
-          </Text>
-          <Ionicons name="open-outline" size={13} color="#FF0000" />
-        </TouchableOpacity>
+        {!isLandscape && (
+          <>
+            {/* Fast YouTube App Fallback Bar */}
+            <TouchableOpacity
+              style={[styles.quickYtFallback, { backgroundColor: isDark ? '#27272A' : '#FEF2F2' }]}
+              onPress={handleOpenYouTube}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Open video in external YouTube app"
+            >
+              <Ionicons name="logo-youtube" size={15} color="#FF0000" />
+              <Text style={[styles.quickYtFallbackText, { color: isDark ? '#FCA5A5' : '#DC2626' }]}>
+                Having playback trouble? Tap to open in YouTube app
+              </Text>
+              <Ionicons name="open-outline" size={13} color="#FF0000" />
+            </TouchableOpacity>
 
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingBottom: Math.max(insets.bottom + 20, 40) },
-          ]}
-        >
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={[
+                styles.scrollContent,
+                { paddingBottom: Math.max(insets.bottom + 20, 40) },
+              ]}
+            >
           {/* Video Metadata Card */}
           <View style={[styles.metaCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <Text style={[styles.videoTitle, { color: colors.text }]}>{currentVideo.title}</Text>
@@ -497,6 +543,8 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
             })}
           </View>
         </ScrollView>
+          </>
+        )}
       </View>
     </Modal>
   );
@@ -538,6 +586,30 @@ const styles = StyleSheet.create({
     width: '100%',
     aspectRatio: 16 / 9,
     backgroundColor: '#000000',
+  },
+  playerContainerLandscape: {
+    width: '100%',
+    height: '100%',
+  },
+  floatingLandscapeExitBtn: {
+    position: 'absolute',
+    top: 14,
+    left: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(16, 47, 83, 0.85)',
+    borderWidth: 1,
+    borderColor: '#FFB606',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: shape.full,
+    zIndex: 100,
+  },
+  floatingLandscapeExitText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
   },
   webView: {
     flex: 1,

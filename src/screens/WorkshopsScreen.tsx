@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Linking, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Linking, NativeSyntheticEvent, NativeScrollEvent, LayoutAnimation } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
@@ -9,7 +9,7 @@ import { useFeedback } from '../context/FeedbackContext';
 import { Header } from '../components/Header';
 import { LiveWorkshopCard } from '../components/LiveWorkshopCard';
 import { SummitCard } from '../components/SummitCard';
-import { StateView, CourseCardSkeleton } from '../components/common';
+import { StateView, CourseCardSkeleton, AnimatedTabContent } from '../components/common';
 import { triggerHaptic } from '../utils/haptics';
 import { typography, MIN_TOUCH_TARGET } from '../theme/typography';
 import { shape } from '../theme/shapes';
@@ -169,13 +169,18 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
               style={styles.liveHeroEnterBtn}
               onPress={async () => {
                 triggerHaptic('medium');
-                const url = liveWorkshopNow.joinUrl || 'https://thrivingskill.com/live-room';
+                const rawUrl = (liveWorkshopNow.joinUrl || 'https://thrivingskill.com/live-room').trim();
+                const isSafe = /^https?:\/\//i.test(rawUrl) || /^zoom(?:us|mtg):\/\//i.test(rawUrl);
+                if (!isSafe) {
+                  showToast({ message: 'Invalid live room link', type: 'error' });
+                  return;
+                }
                 try {
                   showToast({
                     message: isBangla ? 'লাইভ ক্লাসরুমে যুক্ত করা হচ্ছে...' : 'Entering live classroom...',
                     type: 'info',
                   });
-                  await Linking.openURL(url);
+                  await Linking.openURL(rawUrl);
                 } catch {
                   showToast({ message: 'Unable to open live link', type: 'error' });
                 }
@@ -248,6 +253,7 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
                 accessibilityLabel={tab.label}
                 onPress={() => {
                   triggerHaptic('selection');
+                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
                   setActiveTab(tab.id);
                 }}
               >
@@ -301,11 +307,11 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
               message={
                 activeTab === 'summits'
                   ? (isBangla
-                      ? 'বাংলাদেশ স্কিল সামিটের পরবর্তী রাউন্ডের রেজিস্ট্রেশন শীঘ্রই শুরু হবে।'
-                      : 'Registrations for the next Bangladesh Skills Summit will open soon.')
+                    ? 'বাংলাদেশ স্কিল সামিটের পরবর্তী রাউন্ডের রেজিস্ট্রেশন শীঘ্রই শুরু হবে।'
+                    : 'Registrations for the next Bangladesh Skills Summit will open soon.')
                   : (isBangla
-                      ? 'সকল আসন্ন লাইভ মাস্টারক্লাস দেখতে "সকল ইভেন্ট" ট্যাবে সুইচ করুন।'
-                      : 'Switch back to All Events to view scheduled masterclasses.')
+                    ? 'সকল আসন্ন লাইভ মাস্টারক্লাস দেখতে "সকল ইভেন্ট" ট্যাবে সুইচ করুন।'
+                    : 'Switch back to All Events to view scheduled masterclasses.')
               }
               primaryActionLabel={activeTab !== 'all' ? (isBangla ? 'সকল ইভেন্ট দেখুন' : 'Show All Events') : undefined}
               onPrimaryAction={activeTab !== 'all' ? () => setActiveTab('all') : undefined}
@@ -314,11 +320,13 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
         )}
 
         {/* Render Real Workshops */}
-        {displayedWorkshops.map((workshop) => (
-          <View key={workshop.id} style={styles.cardWrapper}>
-            <LiveWorkshopCard workshop={workshop} />
-          </View>
-        ))}
+        <AnimatedTabContent tabKey={activeTab}>
+          {displayedWorkshops.map((workshop) => (
+            <View key={workshop.id} style={styles.cardWrapper}>
+              <LiveWorkshopCard workshop={workshop} />
+            </View>
+          ))}
+        </AnimatedTabContent>
       </ScrollView>
     </View>
   );
@@ -486,3 +494,4 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
 });
+

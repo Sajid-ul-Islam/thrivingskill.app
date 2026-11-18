@@ -17,6 +17,7 @@ import {
   ActivityIndicator,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  LayoutAnimation,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -43,6 +44,7 @@ import { StorageManagerModal } from '../components/modals/StorageManagerModal';
 import { SpacedRepetitionModal } from '../components/modals/SpacedRepetitionModal';
 import { OfflineStudyDeckModal } from '../components/modals/OfflineStudyDeckModal';
 import { LocalSearchModal } from '../components/modals/LocalSearchModal';
+import { AnimatedTabContent } from '../components/common';
 import { Course, Certificate, LearnPressCourseFilter } from '../types';
 import { LearnPressStatsGrid } from '../components/cards/LearnPressStatsGrid';
 import { UserService } from '../services/api/userService';
@@ -581,6 +583,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             ]}
             onPress={() => {
               triggerHaptic('selection');
+              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
               setProfileSection('learning');
             }}
             accessibilityRole="tab"
@@ -608,6 +611,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             ]}
             onPress={() => {
               triggerHaptic('selection');
+              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
               setProfileSection('settings');
             }}
             accessibilityRole="tab"
@@ -630,7 +634,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         </View>
 
         {profileSection === 'learning' && (
-          <>
+          <AnimatedTabContent tabKey="profile-learning">
             {!isAuthenticated && (
               <View style={styles.section}>
                 <View
@@ -1121,11 +1125,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 })
               )}
             </View>
-          </>
+          </AnimatedTabContent>
         )}
 
         {profileSection === 'settings' && (
-          <>
+          <AnimatedTabContent tabKey="profile-settings">
         {/* Administrator Management Console (Section 2 Spec) */}
         {isAdmin && (
           <View style={styles.section}>
@@ -1254,7 +1258,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           >
             <View style={styles.planBadgeRow}>
               <View style={[styles.tierTag, { backgroundColor: colors.primaryLight }]}>
-                <Ionicons name="sparkles" size={12} color={colors.primary} />
+                <Ionicons name="ribbon" size={12} color={colors.primary} />
                 <Text style={[styles.tierTagText, { color: colors.primary }]}>
                   {subscriptionTier === 'enterprise'
                     ? 'ENTERPRISE SCALE'
@@ -1269,7 +1273,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               {subscriptionTier === 'enterprise'
                 ? 'Enterprise Team Workspace'
                 : subscriptionTier === 'pro'
-                ? '৩০০+ কোর্স, AI Copilot ও সার্টিফিকেট আনলকড'
+                ? (isBangla ? '৩০০+ কোর্স ও ভেরিফায়েড সার্টিফিকেট আনলকড' : '300+ Courses & Verified Certificates Unlocked')
                 : 'Synced Account Access'}
             </Text>
             <Text style={[styles.planExpiry, { color: colors.textMuted }]}>
@@ -1402,7 +1406,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               accessibilityLabel={isBangla ? 'অ্যাক্টিভ রিকল ফ্ল্যাশকার্ড খুলুন' : 'Open Active Recall Flashcards'}
             >
               <View style={styles.settingLeft}>
-                <Ionicons name="sparkles" size={20} color={colors.primary} />
+                <Ionicons name="layers-outline" size={20} color={colors.primary} />
                 <View style={{ marginLeft: 6 }}>
                   <Text style={[styles.settingLabel, { color: colors.text }]}>
                     {isBangla ? 'অ্যাক্টিভ রিকল ফ্ল্যাশকার্ড (SM-2)' : 'Active Recall Flashcards'}
@@ -2157,7 +2161,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             )}
           </View>
         </View>
-          </>
+          </AnimatedTabContent>
         )}
 
         {/* All Rights Reserved Enterprise Footer */}
@@ -3068,6 +3072,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   if (deleteError) setDeleteError('');
                 }}
                 secureTextEntry
+                autoCapitalize="none"
+                autoCorrect={false}
+                spellCheck={false}
+                autoComplete="current-password"
+                textContentType="password"
                 placeholder="••••••••"
                 placeholderTextColor={colors.textMuted}
                 editable={!isDeletingAccount}

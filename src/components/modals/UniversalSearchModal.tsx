@@ -9,6 +9,7 @@ import {
   FlatList,
   Image,
   Platform,
+  LayoutAnimation,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -228,6 +229,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 }
                 onPress={() => {
                   triggerHaptic('selection');
+                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
                   setActiveFilter(tab.id);
                 }}
               >

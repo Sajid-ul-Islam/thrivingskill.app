@@ -149,7 +149,7 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
       case 'note':
         return 'document-text-outline';
       case 'flashcard':
-        return 'sparkles-outline';
+        return 'layers-outline';
     }
   };
 
@@ -242,10 +242,10 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
                   },
                 ]}
                 accessibilityRole="button"
-                accessibilityLabel="Toggle AI Semantic Search"
+                accessibilityLabel="Toggle Semantic Search"
               >
                 <Ionicons
-                  name="sparkles"
+                  name="bulb-outline"
                   size={13}
                   color={isSemanticActive ? '#7C3AED' : colors.textMuted}
                   style={{ marginRight: 4 }}
@@ -257,7 +257,7 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
                     isSemanticActive && { fontWeight: '700' },
                   ]}
                 >
-                  {isSemanticActive ? 'AI Semantic: ON' : 'AI Semantic: OFF'}
+                  {isSemanticActive ? 'Semantic Match: ON' : 'Semantic Match: OFF'}
                 </Text>
               </TouchableOpacity>
 
@@ -345,8 +345,8 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
                         </View>
                         {res.isSemanticMatch && (
                           <View style={[styles.typeBadge, { backgroundColor: '#7C3AED20' }]}>
-                            <Ionicons name="sparkles" size={11} color="#7C3AED" style={{ marginRight: 3 }} />
-                            <Text style={[styles.typeBadgeText, { color: '#7C3AED' }]}>AI SEMANTIC</Text>
+                            <Ionicons name="bulb-outline" size={11} color="#7C3AED" style={{ marginRight: 3 }} />
+                            <Text style={[styles.typeBadgeText, { color: '#7C3AED' }]}>SEMANTIC MATCH</Text>
                           </View>
                         )}
                       </View>

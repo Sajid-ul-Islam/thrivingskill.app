@@ -1,5 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, Platform, Pressable, BackHandler, UIManager, Image, ActivityIndicator } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  Platform,
+  Pressable,
+  BackHandler,
+  UIManager,
+  Image,
+  ActivityIndicator,
+  Animated,
+  Easing,
+  LayoutAnimation,
+} from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -44,6 +58,40 @@ import { ScreenTransition, CelebrationToast, ActionToast, FloatingCrmWidget, App
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
+
+const AnimatedTabIcon: React.FC<{
+  isActive: boolean;
+  name: string;
+  size: number;
+  color: string;
+}> = ({ isActive, name, size, color }) => {
+  const scaleAnim = useRef(new Animated.Value(isActive ? 1 : 0.92)).current;
+
+  useEffect(() => {
+    if (isActive) {
+      scaleAnim.setValue(0.82);
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 4,
+        tension: 180,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(scaleAnim, {
+        toValue: 0.92,
+        duration: 140,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [isActive, scaleAnim]);
+
+  return (
+    <Animated.View style={{ transform: [{ scale: scaleAnim }], alignItems: 'center', justifyContent: 'center' }}>
+      <Ionicons name={name as any} size={size} color={color} />
+    </Animated.View>
+  );
+};
 
 const MainAppContent: React.FC = () => {
   const { colors, isDark } = useTheme();
@@ -407,7 +455,11 @@ const MainAppContent: React.FC = () => {
               <Pressable
                 key={tab.id}
                 style={styles.tabButton}
-                onPress={() => navigateToTab(tab.id)}
+                onPress={() => {
+                  triggerHaptic('selection');
+                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                  navigateToTab(tab.id);
+                }}
                 android_ripple={{
                   color: isDark ? 'rgba(255, 182, 6, 0.12)' : 'rgba(16, 47, 83, 0.08)',
                   borderless: true,
@@ -417,17 +469,10 @@ const MainAppContent: React.FC = () => {
                 accessibilityState={{ selected: isActive }}
                 accessibilityLabel={tab.label}
               >
-                <View
-                  style={[
-                    styles.tabPillIndicator,
-                    Platform.OS === 'android' &&
-                      isActive && {
-                        backgroundColor: isDark ? 'rgba(255, 182, 6, 0.14)' : colors.primaryLight,
-                      },
-                  ]}
-                >
-                  <Ionicons
-                    name={(isActive ? tab.icon : tab.iconOutline) as any}
+                <View style={styles.tabPillIndicator}>
+                  <AnimatedTabIcon
+                    isActive={isActive}
+                    name={isActive ? tab.icon : tab.iconOutline}
                     size={21}
                     color={isActive ? colors.tabActive : colors.tabInactive}
                   />
@@ -629,6 +674,17 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 48,
     paddingVertical: 4,
+    borderRadius: shape.full,
+    overflow: 'hidden',
+    ...Platform.select({
+      web: {
+        outlineStyle: 'none' as any,
+        outlineWidth: 0 as any,
+        boxShadow: 'none' as any,
+        userSelect: 'none' as any,
+        WebkitTapHighlightColor: 'transparent' as any,
+      },
+    }),
   },
   tabPillIndicator: {
     width: 60,

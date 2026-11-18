@@ -158,7 +158,7 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
 
               <Text style={[styles.sectionHeading, { color: colors.text }]}>4. User Code of Conduct</Text>
               <Text style={[styles.bodyText, { color: colors.textMuted }]}>
-                Users agree not to post defamatory, offensive, or unlawful material in discussion boards, Q&A forums, or AI copilot prompts. Thriving Skills reserves the right to moderate and revoke access in cases of ethical breach or harmful conduct.
+                Users agree not to post defamatory, offensive, or unlawful material in discussion boards, Q&A forums, or course discussion prompts. Thriving Skills reserves the right to moderate and revoke access in cases of ethical breach or harmful conduct.
               </Text>
 
               <TouchableOpacity

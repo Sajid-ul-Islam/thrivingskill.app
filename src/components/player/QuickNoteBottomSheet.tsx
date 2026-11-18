@@ -8,6 +8,7 @@ import {
   Animated,
   KeyboardAvoidingView,
   Platform,
+  Easing,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
@@ -32,25 +33,46 @@ export const QuickNoteBottomSheet: React.FC<QuickNoteBottomSheetProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const [noteText, setNoteText] = useState<string>('');
-  const slideAnim = useRef(new Animated.Value(300)).current;
+  const [modalRendered, setModalRendered] = useState(visible);
+  const slideAnim = useRef(new Animated.Value(340)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (visible) {
-      Animated.spring(slideAnim, {
-        toValue: 0,
-        useNativeDriver: true,
-        bounciness: 4,
-      }).start();
+      setModalRendered(true);
+      Animated.parallel([
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          friction: 8,
+          tension: 110,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 180,
+          useNativeDriver: true,
+        }),
+      ]).start();
     } else {
-      Animated.timing(slideAnim, {
-        toValue: 300,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
+      Animated.parallel([
+        Animated.timing(slideAnim, {
+          toValue: 340,
+          duration: 200,
+          easing: Easing.in(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 180,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setModalRendered(false);
+      });
     }
-  }, [visible, slideAnim]);
+  }, [visible, slideAnim, fadeAnim]);
 
-  if (!visible) return null;
+  if (!modalRendered) return null;
 
   const handleSave = () => {
     if (!noteText.trim()) return;
@@ -80,6 +102,7 @@ export const QuickNoteBottomSheet: React.FC<QuickNoteBottomSheetProps> = ({
           {
             backgroundColor: isDark ? colors.surfaceCard : '#FFFFFF',
             borderColor: colors.border,
+            opacity: fadeAnim,
             transform: [{ translateY: slideAnim }],
           },
         ]}

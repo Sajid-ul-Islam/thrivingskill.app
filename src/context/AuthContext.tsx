@@ -232,11 +232,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setToken(null);
     setIsGuest(true);
+    setIsAdminBypass(false);
     HttpClient.setAuthToken(null);
     try {
       await Promise.all([
         AsyncStorage.removeItem(AUTH_USER_STORAGE_KEY),
         AsyncStorage.removeItem(AUTH_TOKEN_STORAGE_KEY),
+        AsyncStorage.removeItem(AUTH_ADMIN_BYPASS_KEY),
         CacheManager.clearAll(),
       ]);
     } catch {}

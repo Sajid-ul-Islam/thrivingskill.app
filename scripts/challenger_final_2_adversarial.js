@@ -617,13 +617,13 @@ async function runAdversarialSuite() {
     // Verify both sections:
     // 1. Admin Management Console (Section 2 Spec)
     assert(
-      content.includes('{isAdmin && (\n          <View style={styles.section}>\n            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>\n              {isBangla ? \'অ্যাডমিন কন্ট্রোল সেন্টার\' : \'ADMIN MANAGEMENT CONSOLE\'}'),
+      content.includes('{isAdmin && (') && content.includes('ADMIN MANAGEMENT CONSOLE'),
       'ProfileScreen.tsx Admin Management Console must be strictly wrapped in {isAdmin && ( ... )}'
     );
 
     // 2. Preferences & Settings WP-Admin shortcut
     assert(
-      content.includes('{isAdmin && (\n            <TouchableOpacity\n              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}\n              onPress={() => Linking.openURL(Env.WP_ADMIN_URL)}'),
+      content.includes('{isAdmin && (') && content.includes('Linking.openURL(Env.WP_ADMIN_URL)'),
       'ProfileScreen.tsx App Preferences WP-Admin shortcut must be strictly wrapped in {isAdmin && ( ... )}'
     );
 

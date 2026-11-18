@@ -44,8 +44,8 @@ export const SearchSpotlightBar: React.FC<SearchSpotlightBarProps> = ({
           {isBangla ? 'আজকে আপনি কি শিখতে চান?' : 'What do you want to learn today?'}
         </Text>
         <View style={[styles.cmdKChip, { backgroundColor: colors.surfaceSubtle }]}>
-          <Ionicons name="sparkles" size={12} color={colors.primary} />
-          <Text style={[styles.cmdKText, { color: colors.primary }]}>AI Search</Text>
+          <Ionicons name="search" size={12} color={colors.primary} />
+          <Text style={[styles.cmdKText, { color: colors.primary }]}>Quick Search</Text>
         </View>
       </TouchableOpacity>
 
