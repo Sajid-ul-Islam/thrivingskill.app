@@ -190,7 +190,7 @@ export const QuickNoteBottomSheet: React.FC<QuickNoteBottomSheetProps> = ({
             style={[
               styles.saveBtn,
               {
-                backgroundColor: noteText.trim().length > 0 ? '#FFB606' : colors.surfaceSubtle,
+                backgroundColor: noteText.trim().length > 0 ? '#102F53' : colors.surfaceSubtle,
                 opacity: noteText.trim().length > 0 ? 1 : 0.6,
               },
             ]}
@@ -202,12 +202,12 @@ export const QuickNoteBottomSheet: React.FC<QuickNoteBottomSheetProps> = ({
             <Ionicons
               name="checkmark"
               size={16}
-              color={noteText.trim().length > 0 ? '#102F53' : colors.textMuted}
+              color={noteText.trim().length > 0 ? '#FFFFFF' : colors.textMuted}
             />
             <Text
               style={[
                 styles.saveText,
-                { color: noteText.trim().length > 0 ? '#102F53' : colors.textMuted },
+                { color: noteText.trim().length > 0 ? '#FFFFFF' : colors.textMuted },
               ]}
             >
               Save Note
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#FFB606',
+    backgroundColor: '#102F53',
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   timestampBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFB606',
+    backgroundColor: 'rgba(227, 66, 52, 0.12)',
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 6,
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
   timestampText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#102F53',
+    color: '#E34234',
   },
   lessonSubtitle: {
     fontSize: 11,

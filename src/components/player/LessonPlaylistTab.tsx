@@ -59,7 +59,7 @@ export const LessonPlaylistTab: React.FC<LessonPlaylistTabProps> = ({
           ]}
         >
           <View style={styles.completionIconWrap}>
-            <Ionicons name="trophy" size={24} color="#F59E0B" />
+            <Ionicons name="trophy" size={24} color="#10B981" />
           </View>
           <View style={styles.completionContent}>
             <View style={styles.completionHeaderRow}>
@@ -92,21 +92,25 @@ export const LessonPlaylistTab: React.FC<LessonPlaylistTabProps> = ({
       )}
 
       <View style={styles.curriculumList}>
-        {allLessons.map((item) => {
+        {allLessons.map((item, idx) => {
           const isSelected = item.lesson.id === currentLessonId;
           const isCompleted = completedLessonIds.includes(item.lesson.id);
           const itemAccessible = isAdmin || isEnrolled || Boolean(item.lesson.isFreePreview);
+          const twoDigitIndex = String(idx + 1).padStart(2, '0');
 
           return (
             <TouchableOpacity
               key={item.lesson.id}
               style={[
                 styles.playlistRow,
-                isSelected && {
-                  backgroundColor: colors.surfaceSubtle,
-                  borderColor: colors.primary,
+                {
+                  backgroundColor: isSelected
+                    ? isDark
+                      ? 'rgba(227, 66, 52, 0.12)'
+                      : 'rgba(227, 66, 52, 0.05)'
+                    : colors.surfaceCard,
+                  borderColor: isSelected ? '#E34234' : colors.border,
                 },
-                { borderColor: colors.border },
               ]}
               onPress={() => {
                 if (itemAccessible) {
@@ -135,35 +139,53 @@ export const LessonPlaylistTab: React.FC<LessonPlaylistTabProps> = ({
                     backgroundColor: isCompleted
                       ? colors.primaryLight
                       : isSelected
-                      ? colors.primary
+                      ? '#102F53'
                       : colors.surfaceSubtle,
                   },
                 ]}
               >
                 {isCompleted ? (
-                  <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
+                  <Ionicons name="checkmark-circle" size={16} color="#10B981" />
                 ) : isSelected ? (
-                  <Ionicons name="play" size={14} color={colors.onPrimary} />
-                ) : itemAccessible ? (
-                  <Ionicons name="play-outline" size={14} color={colors.textMuted} />
+                  <Ionicons name="play" size={14} color="#FFFFFF" />
                 ) : (
-                  <Ionicons name="lock-closed" size={14} color={colors.textMuted} />
+                  <Text
+                    style={[
+                      styles.indexNumberText,
+                      { color: itemAccessible ? colors.textMuted : colors.textLight },
+                    ]}
+                  >
+                    {twoDigitIndex}
+                  </Text>
                 )}
               </View>
 
               <View style={styles.playlistInfo}>
-                <Text
-                  style={[
-                    styles.playlistTitle,
-                    {
-                      color: isSelected ? colors.primary : itemAccessible ? colors.text : colors.textMuted,
-                      fontWeight: isSelected ? '700' : '500',
-                    },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {item.lesson.title}
-                </Text>
+                <View style={styles.playlistTitleRow}>
+                  <Text
+                    style={[
+                      styles.playlistTitle,
+                      {
+                        color: isSelected
+                          ? isDark
+                            ? '#FFFFFF'
+                            : '#102F53'
+                          : itemAccessible
+                          ? colors.text
+                          : colors.textMuted,
+                        fontWeight: isSelected ? '700' : '500',
+                      },
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {item.lesson.title}
+                  </Text>
+                  {isSelected && (
+                    <View style={styles.nowPlayingTag}>
+                      <Text style={styles.nowPlayingTagText}>PLAYING</Text>
+                    </View>
+                  )}
+                </View>
                 <Text style={[styles.playlistDuration, { color: colors.textLight }]}>
                   {item.lesson.duration}
                 </Text>
@@ -226,7 +248,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   completionXpBadge: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#10B981',
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 8,
@@ -274,8 +296,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  indexNumberText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
   playlistInfo: {
     flex: 1,
+  },
+  playlistTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 2,
+    flex: 1,
+  },
+  nowPlayingTag: {
+    backgroundColor: '#E34234',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  nowPlayingTagText: {
+    fontSize: 9,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
   },
   playlistTitle: {
     fontSize: 13,

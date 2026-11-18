@@ -38,7 +38,11 @@ function runTests() {
   assert.strictEqual(coursesScreen.includes('removeClippedSubviews={Platform.OS === \'android\'}'), true, 'CoursesScreen should remove clipped subviews');
 
   const homeScreen = fs.readFileSync(path.join(__dirname, '..', 'src', 'screens', 'HomeScreen.tsx'), 'utf8');
-  assert.strictEqual(homeScreen.includes('initialNumToRender={3}'), true, 'HomeScreen should configure initialNumToRender={3}');
+  assert.strictEqual(
+    homeScreen.includes('initialNumToRender={3}') || homeScreen.includes('initialNumToRender={isTablet ? 4 : 3}'),
+    true,
+    'HomeScreen should configure initialNumToRender={3} or tablet adaptive'
+  );
   assert.strictEqual(homeScreen.includes('windowSize={3}'), true, 'HomeScreen should configure windowSize={3}');
   console.log('✓ Scope 2: Virtualization tuned to prevent memory spikes and sustain 60 FPS scrolling');
 

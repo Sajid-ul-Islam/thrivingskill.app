@@ -186,8 +186,8 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
           {/* Header */}
           <View style={styles.modalHeader}>
             <View style={styles.headerLeft}>
-              <View style={[styles.botIconCircle, { backgroundColor: isDark ? '#1E293B' : '#FEF3C7' }]}>
-                <Ionicons name="sparkles" size={18} color="#FFB606" />
+              <View style={[styles.botIconCircle, { backgroundColor: isDark ? '#1E293B' : 'rgba(227, 66, 52, 0.12)' }]}>
+                <Ionicons name="sparkles" size={18} color="#E34234" />
               </View>
               <View style={styles.headerTitleWrap}>
                 <View style={styles.headerBadgeRow}>
@@ -198,20 +198,20 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
                       {
                         backgroundColor: isNanoOfflineReady
                           ? 'rgba(16, 185, 129, 0.16)'
-                          : 'rgba(255, 182, 6, 0.16)',
+                          : 'rgba(227, 66, 52, 0.12)',
                       },
                     ]}
                   >
                     <Ionicons
                       name={isNanoOfflineReady ? 'flash' : 'sparkles'}
                       size={10}
-                      color={isNanoOfflineReady ? '#059669' : '#D97706'}
+                      color={isNanoOfflineReady ? '#059669' : '#E34234'}
                       style={{ marginRight: 3 }}
                     />
                     <Text
                       style={[
                         styles.aiBadgeText,
-                        { color: isNanoOfflineReady ? '#059669' : '#D97706' },
+                        { color: isNanoOfflineReady ? '#059669' : '#E34234' },
                       ]}
                     >
                       {nanoStatus}
@@ -312,7 +312,7 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
                 >
                   {!isUser && (
                     <View style={styles.botAvatarCircle}>
-                      <Ionicons name="sparkles" size={12} color="#FFB606" />
+                      <Ionicons name="sparkles" size={12} color="#E34234" />
                     </View>
                   )}
                   <View
@@ -346,7 +346,7 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
             {isThinking && (
               <View style={[styles.messageRow, styles.messageRowBot]}>
                 <View style={styles.botAvatarCircle}>
-                  <Ionicons name="sparkles" size={12} color="#FFB606" />
+                  <Ionicons name="sparkles" size={12} color="#E34234" />
                 </View>
                 <View
                   style={[
@@ -361,7 +361,7 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
                     },
                   ]}
                 >
-                  <ActivityIndicator size="small" color="#FFB606" />
+                  <ActivityIndicator size="small" color="#E34234" />
                   <Text style={[styles.thinkingText, { color: colors.textMuted }]}>
                     {isBangla ? 'SkillBot বিশ্লেষণ করছে…' : 'SkillBot is thinking…'}
                   </Text>
@@ -502,13 +502,13 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   aiBadge: {
-    backgroundColor: '#FFB606',
+    backgroundColor: '#E34234',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
   },
   aiBadgeText: {
-    color: '#102F53',
+    color: '#FFFFFF',
     fontSize: 9,
     fontWeight: '800',
     letterSpacing: 0.5,

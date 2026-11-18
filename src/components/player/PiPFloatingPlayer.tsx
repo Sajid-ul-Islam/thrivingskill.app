@@ -74,7 +74,7 @@ export const PiPFloatingPlayer: React.FC<PiPFloatingPlayerProps> = ({
           accessibilityRole="button"
           accessibilityLabel={`Maximize player for ${title}`}
         >
-          <Ionicons name="tv-outline" size={24} color="#FFB606" />
+          <Ionicons name="tv-outline" size={24} color="#FFFFFF" />
           <Text style={styles.previewTitle} numberOfLines={1}>
             {title}
           </Text>
@@ -93,7 +93,7 @@ export const PiPFloatingPlayer: React.FC<PiPFloatingPlayerProps> = ({
             <Ionicons
               name={isPlaying ? 'pause' : 'play'}
               size={14}
-              color="#102F53"
+              color="#FFFFFF"
             />
           </TouchableOpacity>
         </TouchableOpacity>
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     borderRadius: shape.medium,
     padding: 8,
     borderWidth: 1.5,
-    borderColor: '#FFB606',
+    borderColor: '#E34234',
     elevation: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
   pipBadgeText: {
     fontSize: 9,
     fontWeight: '800',
-    color: '#FFB606',
+    color: '#FFFFFF',
     textTransform: 'uppercase',
   },
   windowControls: {
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: '#FFB606',
+    backgroundColor: '#E34234',
     alignItems: 'center',
     justifyContent: 'center',
   },

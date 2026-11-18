@@ -100,6 +100,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const [isPiPActive, setIsPiPActive] = useState<boolean>(false);
   const [isSystemPiPActive, setIsSystemPiPActive] = useState<boolean>(false);
   const [isQuickNoteOpen, setIsQuickNoteOpen] = useState<boolean>(false);
+  const [isFocusMode, setIsFocusMode] = useState<boolean>(false);
   const [aiTutorVisible, setAiTutorVisible] = useState<boolean>(false);
   const nativePlayerRef = useRef<NativeMedia3PlayerRef | null>(null);
 

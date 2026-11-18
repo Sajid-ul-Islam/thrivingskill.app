@@ -183,10 +183,10 @@ export const LessonTranscriptTab: React.FC<LessonTranscriptTabProps> = ({
                   {
                     backgroundColor: isCurrent
                       ? isDark
-                        ? 'rgba(255, 182, 6, 0.12)'
-                        : '#FEF9C3'
+                        ? 'rgba(227, 66, 52, 0.12)'
+                        : 'rgba(227, 66, 52, 0.06)'
                       : colors.surfaceCard,
-                    borderColor: isCurrent ? '#FFB606' : colors.border,
+                    borderColor: isCurrent ? '#E34234' : colors.border,
                   },
                 ]}
                 onPress={() => {
@@ -202,19 +202,19 @@ export const LessonTranscriptTab: React.FC<LessonTranscriptTabProps> = ({
                     style={[
                       styles.timestampPill,
                       {
-                        backgroundColor: isCurrent ? '#FFB606' : colors.surfaceSubtle,
+                        backgroundColor: isCurrent ? '#E34234' : colors.surfaceSubtle,
                       },
                     ]}
                   >
                     <Ionicons
                       name="time-outline"
                       size={12}
-                      color={isCurrent ? '#102F53' : colors.primary}
+                      color={isCurrent ? '#FFFFFF' : colors.primary}
                     />
                     <Text
                       style={[
                         styles.timestampText,
-                        { color: isCurrent ? '#102F53' : colors.primary },
+                        { color: isCurrent ? '#FFFFFF' : colors.primary },
                       ]}
                     >
                       {line.timestamp}

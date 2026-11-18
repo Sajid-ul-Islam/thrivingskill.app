@@ -15,6 +15,7 @@ const SUITES = [
   { name: '5. Auth Lifecycle & Persistence Suite', script: 'scripts/test_auth_persistence.js' },
   { name: '6. Enrollment & Checkout Flow Suite', script: 'scripts/test_enrollment_transition.js' },
   { name: '7. Live Notifications & Recommendations Suite', script: 'scripts/verify_live_notifications_and_recommendations.js' },
+  { name: '8. Profile Bi-directional Sync & Checkout Autofill Suite', script: 'scripts/test_profile_and_checkout_sync.js' },
 ];
 
 console.log('====================================================');

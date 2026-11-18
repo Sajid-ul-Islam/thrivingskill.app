@@ -98,11 +98,11 @@ export const DownloadQualityModal: React.FC<DownloadQualityModalProps> = ({
           {/* Header */}
           <View style={[styles.headerRow, { borderBottomColor: colors.border }]}>
             <View style={styles.headerLeft}>
-              <View style={[styles.headerIconBg, { backgroundColor: '#FFB60620' }]}>
+              <View style={[styles.headerIconBg, { backgroundColor: isDark ? 'rgba(56, 189, 248, 0.15)' : 'rgba(16, 47, 83, 0.1)' }]}>
                 <Ionicons
                   name={mode === 'download' ? 'cloud-download' : 'options'}
                   size={20}
-                  color="#FFB606"
+                  color={isDark ? '#38BDF8' : '#102F53'}
                 />
               </View>
               <View style={styles.headerTitleCol}>
@@ -167,10 +167,10 @@ export const DownloadQualityModal: React.FC<DownloadQualityModalProps> = ({
                       {
                         backgroundColor: isSelected
                           ? isDark
-                            ? 'rgba(255, 182, 6, 0.12)'
-                            : '#FEF9C3'
+                            ? 'rgba(227, 66, 52, 0.12)'
+                            : 'rgba(227, 66, 52, 0.06)'
                           : colors.surfaceSubtle,
-                        borderColor: isSelected ? '#FFB606' : colors.border,
+                        borderColor: isSelected ? '#E34234' : colors.border,
                       },
                     ]}
                     onPress={() => {
@@ -186,7 +186,7 @@ export const DownloadQualityModal: React.FC<DownloadQualityModalProps> = ({
                       <Ionicons
                         name={isSelected ? 'radio-button-on' : 'radio-button-off'}
                         size={20}
-                        color={isSelected ? '#FFB606' : colors.textMuted}
+                        color={isSelected ? '#E34234' : colors.textMuted}
                       />
                       <View style={styles.optionTextCol}>
                         <Text

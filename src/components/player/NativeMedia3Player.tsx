@@ -174,7 +174,7 @@ export const NativeMedia3Player = forwardRef<NativeMedia3PlayerRef, NativeMedia3
 
         {isBuffering && (
           <View style={styles.loadingOverlay} pointerEvents="none">
-            <ActivityIndicator size="large" color="#FFB606" />
+            <ActivityIndicator size="large" color="#E34234" />
             <Text style={styles.loadingText}>Buffering Media3 Stream...</Text>
           </View>
         )}
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: 8,
-    color: '#FFB606',
+    color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '600',
   },

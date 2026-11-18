@@ -142,7 +142,7 @@ export class UserService {
         if (payload.phone) lpPayload.phone = payload.phone;
 
         if (Object.keys(lpPayload).length > 0) {
-          await HttpClient.post(`/learnpress/v1/users/${data.id}`, lpPayload);
+          await HttpClient.post(Endpoints.LEARNPRESS.USER_DETAIL(data.id), lpPayload);
         }
       } catch {
         // Fallback silently if LearnPress custom endpoint rejects extra fields

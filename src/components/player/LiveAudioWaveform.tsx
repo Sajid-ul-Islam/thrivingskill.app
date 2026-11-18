@@ -11,7 +11,7 @@ interface LiveAudioWaveformProps {
 export const LiveAudioWaveform: React.FC<LiveAudioWaveformProps> = ({
   isPlaying,
   barCount = 20,
-  primaryColor = '#FFB606',
+  primaryColor = '#102F53',
   accentColor = '#E34234',
 }) => {
   const animatedValues = useRef(

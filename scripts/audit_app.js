@@ -68,14 +68,13 @@ files.forEach(f => {
 
   // Check 2: Missing styles referenced in component
   if (f.endsWith('.tsx') && content.includes('StyleSheet.create')) {
-    const styleDefIndex = content.indexOf('StyleSheet.create');
-    const styleDefs = content.substring(styleDefIndex);
+    const styleDefLineIndex = lines.findIndex((l) => l.includes('StyleSheet.create'));
+    const styleDefs = lines.slice(styleDefLineIndex).join('\n');
 
-    lines.forEach((line, idx) => {
-      if (idx > styleDefIndex / 40) return; // Skip checking inside style definition
+    lines.slice(0, styleDefLineIndex).forEach((line, idx) => {
       const styleMatches = line.match(/styles\.([a-zA-Z0-9_]+)/g);
       if (styleMatches) {
-        styleMatches.forEach(sm => {
+        styleMatches.forEach((sm) => {
           const styleKey = sm.replace('styles.', '');
           // Check if key exists in styleDefs
           const keyRegex = new RegExp(`\\b${styleKey}\\s*:`);

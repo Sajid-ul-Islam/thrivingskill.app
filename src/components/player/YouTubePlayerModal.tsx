@@ -600,7 +600,7 @@ const styles = StyleSheet.create({
     gap: 6,
     backgroundColor: 'rgba(16, 47, 83, 0.85)',
     borderWidth: 1,
-    borderColor: '#FFB606',
+    borderColor: '#E34234',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: shape.full,
