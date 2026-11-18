@@ -46,79 +46,101 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
         { backgroundColor: colors.surfaceCard, borderColor: colors.border },
       ]}
     >
-      {avatarUri ? (
-        <Image source={{ uri: avatarUri }} style={styles.avatar} />
-      ) : (
-        <View
-          style={[
-            styles.avatar,
-            styles.avatarInitialsCircle,
-            { backgroundColor: colors.primary },
-          ]}
-        >
-          <Text style={styles.avatarInitialsTextBig}>
-            {displayName.charAt(0).toUpperCase()}
-          </Text>
+      {user?.cover_photo ? (
+        <View style={styles.coverPhotoContainer}>
+          <Image
+            source={{ uri: user.cover_photo }}
+            style={styles.coverPhotoImage}
+            resizeMode="cover"
+          />
+          <View style={styles.coverPhotoOverlay} />
         </View>
-      )}
+      ) : null}
 
-      <View style={styles.profileInfo}>
-        <View style={styles.nameRow}>
-          <Text style={[styles.name, { color: colors.text, flexShrink: 1 }]} numberOfLines={1}>
-            {displayName}
-          </Text>
+      <View style={styles.contentRow}>
+        {avatarUri ? (
+          <Image source={{ uri: avatarUri }} style={styles.avatar} />
+        ) : (
           <View
             style={[
-              styles.verifiedBadge,
-              {
-                backgroundColor: isAdmin
-                  ? 'rgba(239, 68, 68, 0.12)'
-                  : isAuthenticated
-                  ? colors.primaryLight
-                  : colors.surfaceSubtle,
-              },
+              styles.avatar,
+              styles.avatarInitialsCircle,
+              { backgroundColor: colors.primary },
             ]}
           >
-            <Ionicons
-              name={isAdmin ? 'shield-checkmark' : isAuthenticated ? 'school-outline' : 'person-outline'}
-              size={12}
-              color={isAdmin ? '#EF4444' : isAuthenticated ? colors.primary : colors.textMuted}
-            />
-            <Text
-              style={[
-                styles.verifiedText,
-                { color: isAdmin ? '#EF4444' : isAuthenticated ? colors.primary : colors.textMuted },
-              ]}
-            >
-              {isAdmin ? 'ADMINISTRATOR' : isAuthenticated ? 'STUDENT' : 'GUEST'}
+            <Text style={styles.avatarInitialsTextBig}>
+              {displayName.charAt(0).toUpperCase()}
             </Text>
           </View>
-        </View>
+        )}
 
-        <Text style={[styles.email, { color: colors.textMuted }]}>
-          {user?.email || (isBangla ? 'কোর্স ক্যাটালগ এক্সপ্লোর করুন' : 'Explore catalog & courses freely')}
-        </Text>
+        <View style={styles.profileInfo}>
+          <View style={styles.nameRow}>
+            <Text style={[styles.name, { color: colors.text, flexShrink: 1 }]} numberOfLines={1}>
+              {displayName}
+            </Text>
+            <View
+              style={[
+                styles.verifiedBadge,
+                {
+                  backgroundColor: isAdmin
+                    ? 'rgba(239, 68, 68, 0.12)'
+                    : isAuthenticated
+                    ? colors.primaryLight
+                    : colors.surfaceSubtle,
+                },
+              ]}
+            >
+              <Ionicons
+                name={isAdmin ? 'shield-checkmark' : isAuthenticated ? 'school-outline' : 'person-outline'}
+                size={12}
+                color={isAdmin ? '#EF4444' : isAuthenticated ? colors.primary : colors.textMuted}
+              />
+              <Text
+                style={[
+                  styles.verifiedText,
+                  { color: isAdmin ? '#EF4444' : isAuthenticated ? colors.primary : colors.textMuted },
+                ]}
+              >
+                {isAdmin ? 'ADMINISTRATOR' : isAuthenticated ? 'STUDENT' : 'GUEST'}
+              </Text>
+            </View>
+          </View>
 
-        <Text style={[styles.role, { color: colors.secondary }]} numberOfLines={2}>
-          {user?.description || customBio || (isAuthenticated
-            ? `Connected to ${Env.SITE_URL.replace(/^https?:\/\//, '')} • ${activeWorkspaceName}`
-            : 'Thriving Skills Online Platform')}
-        </Text>
-
-        <TouchableOpacity
-          style={[
-            styles.editProfileBtn,
-            { backgroundColor: colors.primaryLight, borderColor: colors.primary },
-          ]}
-          onPress={onEditProfile}
-          accessibilityRole="button"
-          accessibilityLabel="Edit profile"
-        >
-          <Ionicons name="create-outline" size={14} color={colors.primary} />
-          <Text style={[styles.editProfileBtnText, { color: colors.primary }]}>
-            {isBangla ? 'প্রোফাইল সম্পাদন' : 'Edit Profile'}
+          <Text style={[styles.email, { color: colors.textMuted }]}>
+            {user?.email || (isBangla ? 'কোর্স ক্যাটালগ এক্সপ্লোর করুন' : 'Explore catalog & courses freely')}
           </Text>
-        </TouchableOpacity>
+
+          {user?.city ? (
+            <View style={styles.locationRow}>
+              <Ionicons name="location-outline" size={12} color={colors.primary} />
+              <Text style={[styles.locationText, { color: colors.textMuted }]} numberOfLines={1}>
+                {user.city}
+              </Text>
+            </View>
+          ) : null}
+
+          <Text style={[styles.role, { color: colors.secondary }]} numberOfLines={2}>
+            {user?.description || customBio || (isAuthenticated
+              ? `Connected to ${Env.SITE_URL.replace(/^https?:\/\//, '')} • ${activeWorkspaceName}`
+              : 'Thriving Skills Online Platform')}
+          </Text>
+
+          <TouchableOpacity
+            style={[
+              styles.editProfileBtn,
+              { backgroundColor: colors.primaryLight, borderColor: colors.primary },
+            ]}
+            onPress={onEditProfile}
+            accessibilityRole="button"
+            accessibilityLabel="Edit profile"
+          >
+            <Ionicons name="create-outline" size={14} color={colors.primary} />
+            <Text style={[styles.editProfileBtnText, { color: colors.primary }]}>
+              {isBangla ? 'প্রোফাইল সম্পাদন' : 'Edit Profile'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -129,10 +151,37 @@ const styles = StyleSheet.create({
     margin: 16,
     borderRadius: 16,
     borderWidth: 1,
+    overflow: 'hidden',
+  },
+  coverPhotoContainer: {
+    width: '100%',
+    height: 84,
+    position: 'relative',
+    backgroundColor: '#102F53',
+  },
+  coverPhotoImage: {
+    width: '100%',
+    height: '100%',
+  },
+  coverPhotoOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(16, 47, 83, 0.2)',
+  },
+  contentRow: {
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
+  },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 4,
+  },
+  locationText: {
+    fontSize: 11,
+    fontWeight: '600',
   },
   avatar: {
     width: 64,
