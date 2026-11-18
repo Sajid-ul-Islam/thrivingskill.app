@@ -20,14 +20,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { useTheme } from '../context/ThemeContext';
 import { useLearning } from '../context/LearningContext';
-import { Header } from '../components/Header';
-import { QuizModal } from '../components/QuizModal';
-import { QuizPlayerModal } from '../components/QuizPlayerModal';
-import { NotesModal } from '../components/NotesModal';
-import { CertificateModal } from '../components/CertificateModal';
-import { MandatoryReviewModal } from '../components/MandatoryReviewModal';
-import { PaymentModal } from '../components/PaymentModal';
 import {
+  Header,
+  QuizModal,
+  QuizPlayerModal,
+  NotesModal,
+  CertificateModal,
+  MandatoryReviewModal,
+  PaymentModal,
   CourseQnATab,
   LiveAudioWaveform,
   VideoPlayerGestureOverlay,
@@ -37,8 +37,9 @@ import {
   PiPFloatingPlayer,
   NativeMedia3Player,
   NativeMedia3PlayerRef,
-} from '../components/player';
-import { SpringPressable, StateView } from '../components/common';
+  SpringPressable,
+  StateView,
+} from '../components';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useGamification } from '../context/GamificationContext';

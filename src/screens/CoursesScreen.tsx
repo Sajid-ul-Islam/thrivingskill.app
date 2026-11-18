@@ -19,11 +19,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useLearning } from '../context/LearningContext';
-import { Header } from '../components/Header';
-import { CategoryPills } from '../components/CategoryPills';
-import { CourseCard } from '../components/CourseCard';
-import { CourseCardSkeleton } from '../components/SkeletonLoader';
-import { StateView, ScrollToTopPill } from '../components/common';
+import {
+  Header,
+  CategoryPills,
+  CourseCard,
+  CourseCardSkeleton,
+  StateView,
+  ScrollToTopPill,
+} from '../components';
 import { triggerHaptic } from '../utils/haptics';
 import { shape } from '../theme/shapes';
 import { MIN_TOUCH_TARGET } from '../theme/typography';

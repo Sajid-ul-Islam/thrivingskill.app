@@ -22,15 +22,23 @@ import { useSaaS } from '../context/SaaSContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useGamification } from '../context/GamificationContext';
-import { Header } from '../components/Header';
-import { CourseCard } from '../components/CourseCard';
-import { HeroCarousel, CarouselSlide } from '../components/HeroCarousel';
-import { SearchSpotlightBar } from '../components/SearchSpotlightBar';
-import { CourseCardSkeleton, SpringPressable, StateView, CircularProgressRing, ScrollToTopPill } from '../components/common';
+import {
+  Header,
+  CourseCard,
+  HeroCarousel,
+  CarouselSlide,
+  SearchSpotlightBar,
+  CourseCardSkeleton,
+  SpringPressable,
+  StateView,
+  CircularProgressRing,
+  ScrollToTopPill,
+  AboutTSLModal,
+  AboutTabKey,
+} from '../components';
 import { triggerHaptic } from '../utils/haptics';
 import { useYouTube } from '../context/YouTubeContext';
 import { RootTab } from '../types';
-import { AboutTSLModal, AboutTabKey } from '../components/AboutTSLModal';
 import { typography, MIN_TOUCH_TARGET } from '../theme/typography';
 import { shape } from '../theme/shapes';
 import type { Course } from '../types';

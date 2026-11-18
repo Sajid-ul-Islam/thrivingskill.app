@@ -6,10 +6,14 @@ import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useLearning } from '../context/LearningContext';
 import { useFeedback } from '../context/FeedbackContext';
-import { Header } from '../components/Header';
-import { LiveWorkshopCard } from '../components/LiveWorkshopCard';
-import { SummitCard } from '../components/SummitCard';
-import { StateView, CourseCardSkeleton, AnimatedTabContent } from '../components/common';
+import {
+  Header,
+  LiveWorkshopCard,
+  SummitCard,
+  StateView,
+  CourseCardSkeleton,
+  AnimatedTabContent,
+} from '../components';
 import { triggerHaptic } from '../utils/haptics';
 import { typography, MIN_TOUCH_TARGET } from '../theme/typography';
 import { shape } from '../theme/shapes';

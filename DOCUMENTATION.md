@@ -123,10 +123,10 @@ graph TD
 The app utilizes Expo's native environment variable mechanism (`EXPO_PUBLIC_*` prefix).
 
 ### Configuration Files
-- **Template**: [`.env.example`](file:///h:/Repo/thrivingskill.app/.env.example)
+- **Template**: [`.env.example`](./.env.example)
 - **Active Env**: `.env` or `.env.local` (ignored by git for security)
-- **Accessor Module**: [`src/config/env.ts`](file:///h:/Repo/thrivingskill.app/src/config/env.ts)
-- **Type Definitions**: [`src/types/env.d.ts`](file:///h:/Repo/thrivingskill.app/src/types/env.d.ts)
+- **Accessor Module**: [`src/config/env.ts`](./src/config/env.ts)
+- **Type Definitions**: [`src/types/env.d.ts`](./src/types/env.d.ts)
 
 ### Supported Variables:
 
@@ -148,7 +148,7 @@ The app utilizes Expo's native environment variable mechanism (`EXPO_PUBLIC_*` p
 
 ### REST API Endpoints
 
-All routes are declared in [`src/services/api/endpoints.ts`](file:///h:/Repo/thrivingskill.app/src/services/api/endpoints.ts):
+All routes are declared in [`src/services/api/endpoints.ts`](./src/services/api/endpoints.ts):
 
 #### LearnPress LMS (`/learnpress/v1`)
 - `POST /learnpress/v1/token`: JWT login with WordPress username/password.
@@ -169,7 +169,7 @@ All routes are declared in [`src/services/api/endpoints.ts`](file:///h:/Repo/thr
 
 ### HttpClient & Error Handling
 
-Located at [`src/services/api/httpClient.ts`](file:///h:/Repo/thrivingskill.app/src/services/api/httpClient.ts):
+Located at [`src/services/api/httpClient.ts`](./src/services/api/httpClient.ts):
 - **AbortController Integration**: Enforces request timeout to prevent hanging connections.
 - **Bearer Token Injection**: Automatically pulls JWT token from `AsyncStorage` / memory and attaches `Authorization: Bearer <token>`.
 - **Exponential Backoff Retries**: Idempotent `GET` requests automatically retry up to `MAX_RETRIES` upon network drop.
@@ -188,7 +188,7 @@ export class ApiError extends Error {
 
 ### Two-Tier Cache Manager
 
-Located at [`src/services/cache/cacheManager.ts`](file:///h:/Repo/thrivingskill.app/src/services/cache/cacheManager.ts):
+Located at [`src/services/cache/cacheManager.ts`](./src/services/cache/cacheManager.ts):
 1. **Tier 1 (Memory Cache)**: Fast in-memory `Map` for immediate synchronous reads during the current app session.
 2. **Tier 2 (Disk Cache)**: Persistent storage in `@react-native-async-storage/async-storage` prefixed with `@ts_cache_*`.
 3. **Stale-While-Revalidate**: If an item is older than its TTL, stale data can be returned immediately to prevent UI blocking while a fresh network fetch occurs.
@@ -234,22 +234,22 @@ App.tsx
                            └── MainAppContent
 ```
 
-1. **`AuthProvider`** ([`src/context/AuthContext.tsx`](file:///h:/Repo/thrivingskill.app/src/context/AuthContext.tsx)):
+1. **`AuthProvider`** ([`src/context/AuthContext.tsx`](./src/context/AuthContext.tsx)):
    - Manages user login state, JWT session, and guest mode.
    - Restores session on app cold start and validates token in background.
    - Provides `login()`, `logout()`, `continueAsGuest()`.
 
-2. **`LearningContext`** ([`src/context/LearningContext.tsx`](file:///h:/Repo/thrivingskill.app/src/context/LearningContext.tsx)):
+2. **`LearningContext`** ([`src/context/LearningContext.tsx`](./src/context/LearningContext.tsx)):
    - Synchronizes courses, categories, and articles with the WordPress backend.
    - Manages user enrollments, completed lessons, notes, and certificates.
    - Persists user progress locally with `@thriving_skill_progress`.
 
-3. **`SaaSContext`** ([`src/context/SaaSContext.tsx`](file:///h:/Repo/thrivingskill.app/src/context/SaaSContext.tsx)):
+3. **`SaaSContext`** ([`src/context/SaaSContext.tsx`](./src/context/SaaSContext.tsx)):
    - Handles multi-tier subscriptions (Starter, Pro, Enterprise).
    - Manages multi-tenant enterprise team hub, seats allocation, and notifications.
 
-4. **`ThemeContext`** ([`src/context/ThemeContext.tsx`](file:///h:/Repo/thrivingskill.app/src/context/ThemeContext.tsx)):
-   - Manages sleek Light and Dark mode color palettes defined in [`src/theme/colors.ts`](file:///h:/Repo/thrivingskill.app/src/theme/colors.ts).
+4. **`ThemeContext`** ([`src/context/ThemeContext.tsx`](./src/context/ThemeContext.tsx)):
+   - Manages sleek Light and Dark mode color palettes defined in [`src/theme/colors.ts`](./src/theme/colors.ts).
 
 ---
 
@@ -334,12 +334,12 @@ npx expo start
 
 ## 9. Android & EAS Build Configuration
 
-### Android Native Settings ([`app.json`](file:///h:/Repo/thrivingskill.app/app.json))
+### Android Native Settings ([`app.json`](./app.json))
 - **Package Name**: `com.thrivingskill.app`
 - **Permissions**: `INTERNET`, `ACCESS_NETWORK_STATE`
 - **Adaptive Icons & Splash**: Configured in `./assets/` with brand background `#E6F4FE`.
 
-### EAS Build ([`eas.json`](file:///h:/Repo/thrivingskill.app/eas.json))
+### EAS Build ([`eas.json`](./eas.json))
 ```json
 {
   "build": {

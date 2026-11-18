@@ -1,20 +1,12 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  Image,
   TouchableOpacity,
-  Switch,
   Alert,
-  Linking,
-  Modal,
-  TextInput,
-  Share,
-  KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
   NativeSyntheticEvent,
   NativeScrollEvent,
   LayoutAnimation,
@@ -31,25 +23,35 @@ import { useFeedback } from '../context/FeedbackContext';
 import { triggerHaptic } from '../utils/haptics';
 import { MIN_TOUCH_TARGET } from '../theme/typography';
 import { shape } from '../theme/shapes';
-import { Header } from '../components/Header';
-import { AppUpdateModal } from '../components/AppUpdateModal';
-import { AboutTSLModal, AboutTabKey } from '../components/AboutTSLModal';
-import { LegalPolicyModal, LegalTabKey } from '../components/LegalPolicyModal';
-import { HelpFaqModal } from '../components/HelpFaqModal';
-import { BlogModal } from '../components/BlogModal';
-import { ProfileLearningAnalytics } from '../components/ProfileLearningAnalytics';
-import { CertificateModal } from '../components/CertificateModal';
-import { MandatoryReviewModal } from '../components/modals/MandatoryReviewModal';
+import {
+  Header,
+  AppUpdateModal,
+  AboutTSLModal,
+  AboutTabKey,
+  LegalPolicyModal,
+  LegalTabKey,
+  HelpFaqModal,
+  BlogModal,
+  CertificateModal,
+  MandatoryReviewModal,
+  AnimatedTabContent,
+} from '../components';
 import { StorageManagerModal } from '../components/modals/StorageManagerModal';
 import { SpacedRepetitionModal } from '../components/modals/SpacedRepetitionModal';
 import { OfflineStudyDeckModal } from '../components/modals/OfflineStudyDeckModal';
 import { LocalSearchModal } from '../components/modals/LocalSearchModal';
-import { AnimatedTabContent } from '../components/common';
 import { Course, Certificate, LearnPressCourseFilter } from '../types';
-import { LearnPressStatsGrid } from '../components/cards/LearnPressStatsGrid';
 import { UserService } from '../services/api/userService';
 import { CacheManager } from '../services/cache/cacheManager';
-import { Env } from '../config/env';
+import {
+  ProfileHeaderCard,
+  ProfileLearningPortfolio,
+  ProfilePreferencesSection,
+  ProfileSettingsModal,
+  ProfileDeleteAccountModal,
+  ProfileChangePasswordModal,
+  ProfileOrdersModal,
+} from '../components/profile';
 
 interface ProfileScreenProps {
   onOpenCorporateModal: () => void;
@@ -89,7 +91,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const isAdmin = Array.isArray(user?.roles) && user.roles.includes('administrator');
   const {
     subscriptionTier,
-    billingInterval,
     activeWorkspace,
   } = useSaaS();
 
@@ -104,6 +105,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       setIsScrolled(false);
     }
   };
+
   const [profileSection, setProfileSection] = useState<'learning' | 'settings'>('learning');
   const [portfolioTab, setPortfolioTab] = useState<LearnPressCourseFilter>('all');
   const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
@@ -128,9 +130,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [deleteError, setDeleteError] = useState('');
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
-  // Official Settings Tabs matching thrivingskill.com: General | Avatar | Cover Image | Password | Privacy
-  const [settingsActiveTab, setSettingsActiveTab] = useState<'general' | 'avatar' | 'cover' | 'password' | 'privacy'>('general');
-
   // General Settings Form (Matching thrivingskill.com live schema)
   const [firstName, setFirstName] = useState(user?.first_name || '');
   const [lastName, setLastName] = useState(user?.last_name || '');
@@ -148,9 +147,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
   // Backward compatibility state
   const [customName, setCustomName] = useState(user?.name || user?.displayName || user?.username || '');
-  const [customPhone, setCustomPhone] = useState(user?.phone || '');
   const [customBio, setCustomBio] = useState(user?.description || '');
-  const [customCity, setCustomCity] = useState(user?.city || '');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   React.useEffect(() => {
@@ -167,13 +164,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       setSocialLinkedin(user.social?.linkedin || '');
 
       setCustomName(user.name || user.displayName || user.username || '');
-      setCustomPhone(user.phone || '');
       setCustomBio(user.description || '');
-      setCustomCity(user.city || '');
     }
   }, [user]);
 
-  // Change Password Form (Section 26 Spec)
+  // Change Password Form
   const [currentPass, setCurrentPass] = useState('');
   const [newPass, setNewPass] = useState('');
   const [confirmPass, setConfirmPass] = useState('');
@@ -182,13 +177,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [showNewPass, setShowNewPass] = useState(false);
   const [showConfirmPass, setShowConfirmPass] = useState(false);
 
-  // Focus Chaining Refs
-  const tabNewPassRef = useRef<React.ElementRef<typeof TextInput>>(null);
-  const tabConfirmPassRef = useRef<React.ElementRef<typeof TextInput>>(null);
-  const modalNewPassRef = useRef<React.ElementRef<typeof TextInput>>(null);
-  const modalConfirmPassRef = useRef<React.ElementRef<typeof TextInput>>(null);
-
-  // Video Streaming Preference (Section 26 Spec)
+  // Video Streaming Preference
   const [videoQuality, setVideoQuality] = useState<'Auto' | '1080p' | '720p' | '480p'>('Auto');
 
   const cycleVideoQuality = () => {
@@ -259,12 +248,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
       setEditProfileModalVisible(false);
       showToast({
-        message: isBangla ? 'প্রোফাইল সফলভাবে আপডেট হয়েছে! ✅' : 'Profile updated successfully! ✅',
+        message: isBangla ? 'প্রোফাইল সফলভাবে আপডেট করা হয়েছে' : 'Profile updated successfully',
         type: 'success',
       });
-      triggerHaptic('success');
     } catch (err: any) {
-      console.warn('Profile update remote sync error:', err);
+      // Fallback local update
       try {
         await updateUserProfile({
           first_name: firstName.trim(),
@@ -465,111 +453,23 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >
-        {/* Profile Card */}
-        <View
-          style={[
-            styles.profileCard,
-            { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-          ]}
-        >
-          {user?.avatar || (user?.avatar_urls && (user.avatar_urls['96'] || user.avatar_urls['48'] || user.avatar_urls['24'])) ? (
-            <Image
-              source={{
-                uri:
-                  user?.avatar ||
-                  (user?.avatar_urls && (user.avatar_urls['96'] || user.avatar_urls['48'] || user.avatar_urls['24'])),
-              }}
-              style={styles.avatar}
-            />
-          ) : (
-            <View
-              style={[
-                styles.avatar,
-                styles.avatarInitialsCircle,
-                { backgroundColor: colors.primary },
-              ]}
-            >
-              <Text style={styles.avatarInitialsTextBig}>
-                {(user?.name || user?.displayName || user?.username || customName || (isBangla ? 'অ' : 'G')).charAt(0).toUpperCase()}
-              </Text>
-            </View>
-          )}
-          <View style={styles.profileInfo}>
-            <View style={styles.nameRow}>
-              <Text style={[styles.name, { color: colors.text, flexShrink: 1 }]} numberOfLines={1}>
-                {user?.name || user?.displayName || user?.username || customName || (isBangla ? 'অতিথি শিক্ষার্থী' : 'Guest Learner')}
-              </Text>
-              <View
-                style={[
-                  styles.verifiedBadge,
-                  {
-                    backgroundColor: isAdmin
-                      ? 'rgba(239, 68, 68, 0.12)'
-                      : isAuthenticated
-                      ? colors.primaryLight
-                      : colors.surfaceSubtle,
-                  },
-                ]}
-              >
-                <Ionicons
-                  name={isAdmin ? 'shield-checkmark' : isAuthenticated ? 'school-outline' : 'person-outline'}
-                  size={12}
-                  color={isAdmin ? '#EF4444' : isAuthenticated ? colors.primary : colors.textMuted}
-                />
-                <Text
-                  style={[
-                    styles.verifiedText,
-                    { color: isAdmin ? '#EF4444' : isAuthenticated ? colors.primary : colors.textMuted },
-                  ]}
-                >
-                  {isAdmin ? 'ADMINISTRATOR' : isAuthenticated ? 'STUDENT' : 'GUEST'}
-                </Text>
-              </View>
-            </View>
-            <Text style={[styles.email, { color: colors.textMuted }]}>
-              {user?.email || (isBangla ? 'কোর্স ক্যাটালগ এক্সপ্লোর করুন' : 'Explore catalog & courses freely')}
-            </Text>
-            <Text style={[styles.role, { color: colors.secondary }]} numberOfLines={2}>
-              {user?.description || customBio || (isAuthenticated
-                ? `Connected to ${Env.SITE_URL.replace(/^https?:\/\//, "")} • ${activeWorkspace.name}`
-                : 'Thriving Skills Online Platform')}
-            </Text>
+        {/* Profile Hero Header Card */}
+        <ProfileHeaderCard
+          user={user}
+          isAuthenticated={isAuthenticated}
+          isAdmin={isAdmin}
+          customName={customName}
+          customBio={customBio}
+          activeWorkspaceName={activeWorkspace?.name || 'Default Workspace'}
+          colors={colors}
+          isBangla={isBangla}
+          onEditProfile={() => {
+            triggerHaptic('light');
+            setEditProfileModalVisible(true);
+          }}
+        />
 
-            <TouchableOpacity
-              style={[
-                styles.editProfileBtn,
-                { backgroundColor: colors.primaryLight, borderColor: colors.primary },
-              ]}
-              onPress={() => {
-                if (!isAuthenticated) {
-                  setAuthModalVisible(true);
-                  return;
-                }
-                if (user) {
-                  setFirstName(user.first_name || '');
-                  setLastName(user.last_name || '');
-                  setDisplayName(user.displayName || user.name || user.username || '');
-                  setPhoneNumber(user.phone || '');
-                  setBioInfo(user.description || '');
-                  setCustomName(user.name || user.displayName || user.username || '');
-                  setCustomPhone(user.phone || '');
-                  setCustomBio(user.description || '');
-                  setCustomCity(user.city || '');
-                }
-                setEditProfileModalVisible(true);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Edit profile"
-            >
-              <Ionicons name="create-outline" size={14} color={colors.primary} />
-              <Text style={[styles.editProfileBtnText, { color: colors.primary }]}>
-                {isBangla ? 'প্রোফাইল সম্পাদন' : 'Edit Profile'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Focused Segmented Switcher (One Screen, One Job) */}
+        {/* Tab Switcher: Portfolio vs Settings */}
         <View
           style={[
             styles.profileSegmentedWrap,
@@ -579,1588 +479,168 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           <TouchableOpacity
             style={[
               styles.profileSegmentedBtn,
-              profileSection === 'learning' && { backgroundColor: colors.primary },
+              profileSection === 'learning' && {
+                backgroundColor: colors.surfaceCard,
+                elevation: 2,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.15,
+                shadowRadius: 3,
+              },
             ]}
             onPress={() => {
               triggerHaptic('selection');
-              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+              if (Platform.OS === 'ios') {
+                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+              }
               setProfileSection('learning');
             }}
             accessibilityRole="tab"
             accessibilityState={{ selected: profileSection === 'learning' }}
           >
             <Ionicons
-              name="bar-chart-outline"
+              name={profileSection === 'learning' ? 'school' : 'school-outline'}
               size={16}
-              color={profileSection === 'learning' ? colors.onPrimary : colors.textMuted}
+              color={profileSection === 'learning' ? colors.primary : colors.textMuted}
             />
             <Text
               style={[
                 styles.profileSegmentedText,
-                { color: profileSection === 'learning' ? colors.onPrimary : colors.textMuted },
+                { color: profileSection === 'learning' ? colors.text : colors.textMuted },
               ]}
             >
-              {isBangla ? 'লার্নিং ও অ্যানালিটিক্স' : 'Learning & Stats'}
+              {isBangla ? 'লার্নিং পোর্টফোলিও' : 'Learning Portfolio'}
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[
               styles.profileSegmentedBtn,
-              profileSection === 'settings' && { backgroundColor: colors.primary },
+              profileSection === 'settings' && {
+                backgroundColor: colors.surfaceCard,
+                elevation: 2,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.15,
+                shadowRadius: 3,
+              },
             ]}
             onPress={() => {
               triggerHaptic('selection');
-              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+              if (Platform.OS === 'ios') {
+                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+              }
               setProfileSection('settings');
             }}
             accessibilityRole="tab"
             accessibilityState={{ selected: profileSection === 'settings' }}
           >
             <Ionicons
-              name="settings-outline"
+              name={profileSection === 'settings' ? 'settings' : 'settings-outline'}
               size={16}
-              color={profileSection === 'settings' ? colors.onPrimary : colors.textMuted}
+              color={profileSection === 'settings' ? colors.primary : colors.textMuted}
             />
             <Text
               style={[
                 styles.profileSegmentedText,
-                { color: profileSection === 'settings' ? colors.onPrimary : colors.textMuted },
+                { color: profileSection === 'settings' ? colors.text : colors.textMuted },
               ]}
             >
-              {isBangla ? 'সেটিংস ও অ্যাকাউন্ট' : 'Settings & Account'}
+              {isBangla ? 'প্রেফারেন্সেস ও সেটিংস' : 'Preferences & Settings'}
             </Text>
           </TouchableOpacity>
         </View>
 
+        {/* Tab 1: Learning Portfolio */}
         {profileSection === 'learning' && (
           <AnimatedTabContent tabKey="profile-learning">
-            {!isAuthenticated && (
-              <View style={styles.section}>
-                <View
-                  style={[
-                    styles.guestBanner,
-                    { backgroundColor: colors.surfaceCard, borderColor: colors.primary },
-                  ]}
-                >
-                  <View style={[styles.guestBannerIconBg, { backgroundColor: colors.primaryLight }]}>
-                    <Ionicons name="person-circle-outline" size={22} color={colors.primary} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.guestBannerTitle, { color: colors.text }]}>
-                      {isBangla ? 'আপনার প্রগ্রেস সিঙ্ক করতে সাইন ইন করুন' : 'Sign in to Sync Your Learning'}
-                    </Text>
-                    <Text style={[styles.guestBannerSubtitle, { color: colors.textMuted }]}>
-                      {isBangla
-                        ? 'আপনার এনরোল করা কোর্স, সার্টিফিকেট এবং ডেইলি স্ট্রিক সংরক্ষণ করুন।'
-                        : 'Keep your enrolled courses, certificates, and daily streak synced across devices.'}
-                    </Text>
-                    <TouchableOpacity
-                      style={[styles.guestLoginBtn, { backgroundColor: colors.primary }]}
-                      onPress={() => setAuthModalVisible(true)}
-                      accessibilityRole="button"
-                    >
-                      <Ionicons name="log-in-outline" size={16} color={colors.onPrimary} />
-                      <Text style={[styles.guestLoginBtnText, { color: colors.onPrimary }]}>
-                        {isBangla ? 'সাইন ইন করুন' : 'Sign In / Register'}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            )}
-
-            {/* CR-05: Learning Analytics Data Chart */}
-            <View style={styles.section}>
-              <ProfileLearningAnalytics
-                enrolledCount={enrolledCount}
-                inProgressCount={inProgressCourses.length}
-                completedCount={completedCount}
-                totalHours={totalHoursLearned}
-                certificatesCount={certificates.length}
-                completionRate={completionRate}
-                streakDays={streakDays}
-                colors={colors}
-                isBangla={isBangla}
-                activeCourseTab={portfolioTab}
-                onSelectTab={(tab) => setPortfolioTab(tab)}
-              />
-            </View>
-
-            {/* CR-8: My Achievements (Certificates & Social Sharing) */}
-            <View style={styles.section}>
-              <View style={styles.portfolioHeaderRow}>
-                <View style={styles.titleWithIcon}>
-                  <Text style={[styles.sectionTitleMain, { color: colors.text }]}>
-                    {isBangla ? 'আমার অর্জন ও সনদ' : 'My Achievements'}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  onPress={() => {
-                    triggerHaptic('light');
-                    if (certificates.length > 0) {
-                      setSelectedCert(certificates[0]);
-                    } else {
-                      Alert.alert(
-                        isBangla ? 'অর্জন ও সার্টিফিকেট' : 'My Achievements',
-                        isBangla
-                          ? 'কোর্স সম্পন্ন করলেই আপনার ভেরিফাইড সার্টিফিকেট এখানে প্রদর্শিত হবে।'
-                          : 'Complete any course to unlock your verified digital certificate.'
-                      );
-                    }
-                  }}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  style={{ minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' }}
-                  accessibilityRole="button"
-                  accessibilityLabel="View all achievements"
-                >
-                  <Text style={[styles.seeAllText, { color: colors.primary }]}>
-                    {isBangla ? `সবগুলো দেখুন (${Math.max(1, certificates.length)}) →` : `View All (${Math.max(1, certificates.length)}) →`}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Achievements Horizontal Scroll */}
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ gap: 12, paddingBottom: 6 }}
-              >
-                {(certificates.length > 0 ? certificates : [
-                  {
-                    id: 'cert-demo-1',
-                    courseId: 'demo',
-                    courseTitle: 'Generative AI for Corporate Professionals',
-                    studentName: user?.displayName || user?.name || 'Executive Learner',
-                    issueDate: '2026-11-15',
-                    credentialId: 'TS-2026-GAI-8818',
-                    instructorName: 'Md. Abdullah Al Mahmud',
-                    verificationUrl: 'https://thrivingskill.com/certificate/TS-2026-GAI-8818',
-                    skillsEarned: ['Prompt Engineering', 'AI Strategy', 'Productivity Automation'],
-                  },
-                  {
-                    id: 'cert-demo-2',
-                    courseId: 'demo-2',
-                    courseTitle: 'Financial Modeling & Valuation Masterclass',
-                    studentName: user?.displayName || user?.name || 'Executive Learner',
-                    issueDate: '2026-10-28',
-                    credentialId: 'TS-2026-FIN-7960',
-                    instructorName: 'Thriving Skills Executive Faculty',
-                    verificationUrl: 'https://thrivingskill.com/certificate/TS-2026-FIN-7960',
-                    skillsEarned: ['Financial Modeling', 'IAS Compliance', 'Taxation'],
-                  },
-                ]).map((cert) => (
-                  <View
-                    key={cert.id}
-                    style={{
-                      width: 220,
-                      backgroundColor: isDark ? colors.surfaceCard : '#FFFFFF',
-                      borderRadius: shape.large,
-                      borderWidth: 1,
-                      borderColor: colors.border,
-                      padding: 14,
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.06,
-                      shadowRadius: 6,
-                      elevation: 2,
-                    }}
-                  >
-                    {/* Top Row: Provider & Date */}
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#102F53', justifyContent: 'center', alignItems: 'center' }}>
-                          <Ionicons name="ribbon" size={13} color="#FFB606" />
-                        </View>
-                        <Text style={{ fontSize: 11, fontWeight: '800', color: colors.text }}>
-                          Thriving Skills
-                        </Text>
-                      </View>
-                      <View style={{ backgroundColor: '#10B98118', paddingHorizontal: 6, paddingVertical: 2, borderRadius: shape.small }}>
-                        <Text style={{ fontSize: 10, fontWeight: '800', color: '#10B981' }}>
-                          96% Score
-                        </Text>
-                      </View>
-                    </View>
-
-                    {/* Course Title */}
-                    <Text
-                      style={{ fontSize: 13, fontWeight: '700', color: colors.text, marginBottom: 4, height: 36 }}
-                      numberOfLines={2}
-                    >
-                      {cert.courseTitle}
-                    </Text>
-
-                    {/* Issue Date */}
-                    <Text style={{ fontSize: 10.5, color: colors.textMuted, marginBottom: 12 }}>
-                      Issued: {cert.issueDate}
-                    </Text>
-
-                    {/* Action Row: View + Social Share Buttons */}
-                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
-                      <TouchableOpacity
-                        style={{
-                          backgroundColor: colors.primary,
-                          paddingHorizontal: 10,
-                          paddingVertical: 6,
-                          borderRadius: shape.small,
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          gap: 4,
-                          minHeight: 32,
-                        }}
-                        onPress={() => {
-                          triggerHaptic('light');
-                          setSelectedCert(cert);
-                        }}
-                        accessibilityRole="button"
-                        accessibilityLabel={`View certificate for ${cert.courseTitle}`}
-                      >
-                        <Ionicons name="eye-outline" size={12} color={colors.onPrimary} />
-                        <Text style={{ color: colors.onPrimary, fontSize: 11, fontWeight: '700' }}>
-                          {isBangla ? 'সনদ দেখুন' : 'Certificate'}
-                        </Text>
-                      </TouchableOpacity>
-
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        {/* Social FB Share */}
-                        <TouchableOpacity
-                          style={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: 16,
-                            backgroundColor: '#1877F218',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                          }}
-                          onPress={() => {
-                            triggerHaptic('light');
-                            const url = encodeURIComponent(cert.verificationUrl || 'https://thrivingskill.com');
-                            Linking.openURL(`https://www.facebook.com/sharer/sharer.php?u=${url}`).catch(() => {});
-                          }}
-                          accessibilityRole="button"
-                          accessibilityLabel="Social share certificate post"
-                        >
-                          <Ionicons name="logo-facebook" size={16} color="#1877F2" />
-                        </TouchableOpacity>
-
-                        {/* LinkedIn Share */}
-                        <TouchableOpacity
-                          style={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: 16,
-                            backgroundColor: '#0A66C218',
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                          }}
-                          onPress={() => {
-                            triggerHaptic('light');
-                            const url = encodeURIComponent(cert.verificationUrl || 'https://thrivingskill.com');
-                            const title = encodeURIComponent(`Verified Certificate: ${cert.courseTitle}`);
-                            Linking.openURL(`https://www.linkedin.com/sharing/share-offsite/?url=${url}&title=${title}`).catch(() => {});
-                          }}
-                          accessibilityRole="button"
-                          accessibilityLabel="Share on LinkedIn"
-                        >
-                          <Ionicons name="logo-linkedin" size={16} color="#0A66C2" />
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  </View>
-                ))}
-              </ScrollView>
-            </View>
-
-            {/* CR-05: Enrolled & Graduated Courses Portfolio */}
-            <View style={styles.section}>
-              <View style={styles.portfolioHeaderRow}>
-                <View style={styles.titleWithIcon}>
-                  <Text style={[styles.sectionTitleMain, { color: colors.text }]}>
-                    {isBangla ? 'আমার কোর্স পোর্টফোলিও' : 'My Course Portfolio'}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  onPress={() => onNavigateTab('MyLearning')}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  style={{ minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' }}
-                  accessibilityRole="button"
-                  accessibilityLabel={isBangla ? 'আমার লার্নিং হাব' : 'My Learning Hub'}
-                >
-                  <Text style={[styles.seeAllText, { color: colors.primary }]}>
-                    {isBangla ? 'আমার লার্নিং হাব →' : 'My Learning Hub →'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              <LearnPressStatsGrid
-                stats={lpStats}
-                activeFilter={portfolioTab}
-                onSelectFilter={(filter) => setPortfolioTab(filter)}
-                colors={colors}
-                isBangla={isBangla}
-                isDark={isDark}
-              />
-
-              {displayedCourses.length === 0 ? (
-                <View
-                  style={[
-                    styles.emptyCourseCard,
-                    { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-                  ]}
-                >
-                  <Ionicons name="school-outline" size={32} color={colors.textMuted} />
-                  <Text style={[styles.emptyCourseTitle, { color: colors.text }]}>
-                    {portfolioTab === 'passed'
-                      ? isBangla
-                        ? 'এখনো কোনো কোর্স উত্তীর্ণ হয়নি'
-                        : 'No passed courses yet'
-                      : portfolioTab === 'failed'
-                      ? isBangla
-                        ? 'কোনো অনুত্তীর্ণ কোর্স নেই (চমৎকার!)'
-                        : 'No failed courses (Great job!)'
-                      : portfolioTab === 'finished'
-                      ? isBangla
-                        ? 'এখনো কোনো কোর্স সম্পন্ন হয়নি'
-                        : 'No finished courses yet'
-                      : portfolioTab === 'in-progress'
-                      ? isBangla
-                        ? 'চলমান কোনো কোর্স নেই'
-                        : 'No courses in progress'
-                      : isBangla
-                      ? 'কোনো কোর্স এনরোল করা নেই'
-                      : 'No enrolled courses'}
-                  </Text>
-                  <Text style={[styles.emptyCourseSub, { color: colors.textMuted }]}>
-                    {isBangla
-                      ? 'নতুন কোর্স এক্সপ্লোর করুন এবং আপনার ক্যারিয়ার স্কিল উন্নত করুন।'
-                      : 'Explore the catalog to start an accredited executive masterclass.'}
-                  </Text>
-                  <TouchableOpacity
-                    style={[styles.emptyActionBtn, { backgroundColor: colors.primary }]}
-                    onPress={() => onNavigateTab('Courses')}
-                    accessibilityRole="button"
-                    accessibilityLabel={isBangla ? 'কোর্স ক্যাটালগ দেখুন' : 'Browse Catalog'}
-                  >
-                    <Text style={[styles.emptyActionBtnText, { color: colors.onPrimary }]}>
-                      {isBangla ? 'কোর্স দেখুন' : 'Browse Catalog'}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                displayedCourses.map((course) => {
-                  const prog = userProgress[course.id];
-                  const courseStatus = getCourseStatus(course.id);
-                  const isGraduated = courseStatus === 'passed' || courseStatus === 'finished';
-                  const totalLessons = course.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0) || 0;
-                  const completedCountForCourse = prog?.completedLessonIds.length || 0;
-                  const pct = totalLessons > 0 ? Math.min(100, Math.round((completedCountForCourse / totalLessons) * 100)) : 0;
-                  const targetLessonId = prog?.lastAccessedLessonId || course.modules?.[0]?.lessons?.[0]?.id || '';
-                  const cert = certificates.find((c) => c.courseId === course.id);
-
-                  // Status badge configurations matching real LearnPress
-                  const badgeConfig = {
-                    passed: {
-                      label: isBangla ? 'উত্তীর্ণ' : 'PASSED',
-                      bg: isDark ? 'rgba(22, 163, 74, 0.25)' : '#DCFCE7',
-                      color: isDark ? '#4ADE80' : '#15803D',
-                      icon: 'checkmark-circle' as const,
-                    },
-                    failed: {
-                      label: isBangla ? 'অনুত্তীর্ণ' : 'FAILED',
-                      bg: isDark ? 'rgba(239, 68, 68, 0.25)' : '#FEE2E2',
-                      color: isDark ? '#F87171' : '#B91C1C',
-                      icon: 'close-circle' as const,
-                    },
-                    finished: {
-                      label: isBangla ? 'সম্পন্ন' : 'FINISHED',
-                      bg: isDark ? 'rgba(79, 70, 229, 0.25)' : '#EEF2FF',
-                      color: isDark ? '#818CF8' : '#4338CA',
-                      icon: 'ribbon' as const,
-                    },
-                    'in-progress': {
-                      label: isBangla ? 'চলমান' : 'IN PROGRESS',
-                      bg: isDark ? 'rgba(147, 51, 234, 0.25)' : '#F5EEFD',
-                      color: isDark ? '#C084FC' : '#7E22CE',
-                      icon: 'time' as const,
-                    },
-                  }[courseStatus];
-
-                  return (
-                    <View
-                      key={course.id}
-                      style={[
-                        styles.profileCourseCard,
-                        {
-                          backgroundColor: colors.surfaceCard,
-                          borderColor:
-                            courseStatus === 'failed'
-                              ? '#EF4444'
-                              : courseStatus === 'passed'
-                              ? '#16A34A'
-                              : colors.border,
-                        },
-                      ]}
-                    >
-                      <View style={styles.graduatedThumbContainer}>
-                        <Image source={{ uri: course.thumbnail }} style={styles.courseThumb} />
-                        <View style={[styles.graduatedCapPill, { backgroundColor: badgeConfig.bg }]}>
-                          <Ionicons name={badgeConfig.icon} size={10} color={badgeConfig.color} />
-                          <Text style={[styles.graduatedCapText, { color: badgeConfig.color }]}>
-                            {badgeConfig.label}
-                          </Text>
-                        </View>
-                      </View>
-                      <View style={styles.courseDetails}>
-                        <View style={styles.courseHeaderBadgeRow}>
-                          <View style={[styles.courseCategoryTag, { backgroundColor: colors.primaryLight }]}>
-                            <Text style={[styles.courseCategoryText, { color: colors.primary }]}>
-                              {course.level}
-                            </Text>
-                          </View>
-                          <Text
-                            style={[
-                              styles.coursePercentText,
-                              {
-                                color:
-                                  courseStatus === 'passed'
-                                    ? '#16A34A'
-                                    : courseStatus === 'failed'
-                                    ? '#EF4444'
-                                    : colors.primary,
-                              },
-                            ]}
-                          >
-                            {courseStatus === 'passed' ? '100% Mastery' : `${pct}%`}
-                          </Text>
-                        </View>
-                        <Text style={[styles.courseCardTitle, { color: colors.text }]} numberOfLines={2}>
-                          {course.title}
-                        </Text>
-                        <View style={styles.courseProgressRow}>
-                          <View style={[styles.courseProgressTrack, { backgroundColor: colors.surfaceSubtle }]}>
-                            <View
-                              style={[
-                                styles.courseProgressFill,
-                                {
-                                  backgroundColor:
-                                    courseStatus === 'passed'
-                                      ? '#16A34A'
-                                      : courseStatus === 'failed'
-                                      ? '#EF4444'
-                                      : colors.primary,
-                                  width: `${Math.max(pct, isGraduated ? 100 : 8)}%`,
-                                },
-                              ]}
-                            />
-                          </View>
-                        </View>
-                        {courseStatus === 'passed' && cert && hasReviewedCourse(course.id) ? (
-                          <TouchableOpacity
-                            style={[styles.certificateActionBtn, { backgroundColor: colors.brandGold }]}
-                            onPress={() => setSelectedCert(cert)}
-                            accessibilityRole="button"
-                            accessibilityLabel={isBangla ? 'সনদপত্র দেখুন' : 'View Certificate'}
-                          >
-                            <Ionicons name="ribbon" size={14} color="#102F53" />
-                            <Text style={styles.certificateActionBtnText}>
-                              {isBangla ? 'সনদপত্র দেখুন' : 'View Certificate'}
-                            </Text>
-                          </TouchableOpacity>
-                        ) : courseStatus === 'passed' && !hasReviewedCourse(course.id) ? (
-                          <TouchableOpacity
-                            style={[styles.certificateActionBtn, { backgroundColor: '#F59E0B' }]}
-                            onPress={() => {
-                              setReviewTargetCourse(course);
-                              setMandatoryReviewVisible(true);
-                            }}
-                            accessibilityRole="button"
-                            accessibilityLabel={isBangla ? 'রিভিউ দিন (লক)' : 'Review to Unlock'}
-                          >
-                            <Ionicons name="lock-closed" size={14} color="#FFFFFF" />
-                            <Text style={[styles.certificateActionBtnText, { color: '#FFFFFF' }]}>
-                              {isBangla ? 'রিভিউ দিন (লক)' : 'Review to Unlock'}
-                            </Text>
-                          </TouchableOpacity>
-                        ) : courseStatus === 'failed' ? (
-                          <TouchableOpacity
-                            style={[styles.continueBtn, { backgroundColor: '#EF4444' }]}
-                            onPress={() => {
-                              if (targetLessonId && onNavigateToLesson) {
-                                onNavigateToLesson(course.id, targetLessonId);
-                              } else {
-                                onNavigateToCourse?.(course.id);
-                              }
-                            }}
-                            accessibilityRole="button"
-                            accessibilityLabel={isBangla ? 'পুনরায় শুরু করুন' : 'Retake Course'}
-                          >
-                            <Ionicons name="refresh" size={13} color="#FFFFFF" />
-                            <Text style={[styles.continueBtnText, { color: '#FFFFFF' }]}>
-                              {isBangla ? 'পুনরায় শুরু করুন' : 'Retake Course'}
-                            </Text>
-                          </TouchableOpacity>
-                        ) : (
-                          <TouchableOpacity
-                            style={[styles.continueBtn, { backgroundColor: colors.primary }]}
-                            onPress={() => {
-                              if (targetLessonId && onNavigateToLesson) {
-                                onNavigateToLesson(course.id, targetLessonId);
-                              } else {
-                                onNavigateToCourse?.(course.id);
-                              }
-                            }}
-                            accessibilityRole="button"
-                            accessibilityLabel={isBangla ? 'চালিয়ে যান' : 'Continue Learning'}
-                          >
-                            <Ionicons name="play" size={13} color={colors.onPrimary} />
-                            <Text style={[styles.continueBtnText, { color: colors.onPrimary }]}>
-                              {isBangla ? 'চালিয়ে যান' : 'Continue Learning'}
-                            </Text>
-                          </TouchableOpacity>
-                        )}
-                      </View>
-                    </View>
-                  );
-                })
-              )}
-            </View>
+            <ProfileLearningPortfolio
+              isAuthenticated={isAuthenticated}
+              isDark={isDark}
+              colors={colors}
+              isBangla={isBangla}
+              enrolledCount={enrolledCount}
+              inProgressCourses={inProgressCourses}
+              completedCount={completedCount}
+              totalHoursLearned={totalHoursLearned}
+              completionRate={completionRate}
+              streakDays={streakDays}
+              portfolioTab={portfolioTab}
+              setPortfolioTab={setPortfolioTab}
+              certificates={certificates}
+              displayedCourses={displayedCourses}
+              userProgress={userProgress}
+              getCourseStatus={getCourseStatus}
+              hasReviewedCourse={hasReviewedCourse}
+              lpStats={lpStats}
+              onNavigateTab={onNavigateTab}
+              onNavigateToCourse={onNavigateToCourse}
+              onNavigateToLesson={onNavigateToLesson}
+              onOpenAuthModal={() => setAuthModalVisible(true)}
+              onSelectCertificate={(cert) => setSelectedCert(cert)}
+              onOpenMandatoryReview={(course) => {
+                setReviewTargetCourse(course);
+                setMandatoryReviewVisible(true);
+              }}
+              user={user}
+            />
           </AnimatedTabContent>
         )}
 
+        {/* Tab 2: Preferences & Settings */}
         {profileSection === 'settings' && (
           <AnimatedTabContent tabKey="profile-settings">
-        {/* Administrator Management Console (Section 2 Spec) */}
-        {isAdmin && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-              {isBangla ? 'অ্যাডমিন কন্ট্রোল সেন্টার' : 'ADMIN MANAGEMENT CONSOLE'}
-            </Text>
-            <View
-              style={[
-                styles.cardGroup,
-                { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-              ]}
-            >
-              <TouchableOpacity
-                style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-                onPress={() => Linking.openURL(Env.WP_ADMIN_URL).catch(() => {})}
-                accessibilityRole="button"
-                accessibilityLabel="WordPress Admin Dashboard"
-              >
-                <View style={styles.settingLeft}>
-                  <Ionicons name="speedometer-outline" size={20} color="#EC4899" />
-                  <View style={{ marginLeft: 6 }}>
-                    <Text style={[styles.settingLabel, { color: colors.text }]}>
-                      {isBangla ? 'ওয়ার্ডপ্রেস অ্যাডমিন ড্যাশবোর্ড' : 'WordPress Admin Dashboard'}
-                    </Text>
-                    <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                      {Env.WP_ADMIN_URL}
-                    </Text>
-                  </View>
-                </View>
-                <Ionicons name="open-outline" size={16} color={colors.textMuted} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-                onPress={() => Linking.openURL(`${Env.SITE_URL}/wp-admin/edit.php?post_type=lp_course`).catch(() => {})}
-                accessibilityRole="button"
-                accessibilityLabel="Courses and Lessons Management"
-              >
-                <View style={styles.settingLeft}>
-                  <Ionicons name="book-outline" size={20} color="#3B82F6" />
-                  <View style={{ marginLeft: 6 }}>
-                    <Text style={[styles.settingLabel, { color: colors.text }]}>
-                      {isBangla ? 'কোর্স ও লেসন ম্যানেজমেন্ট' : 'Courses & Lessons Management'}
-                    </Text>
-                    <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                      {isBangla ? 'কোর্স, মডিউল ও ভিডিও কনটেন্ট পরিচালনা করুন' : 'Manage courses, modules & videos on WP'}
-                    </Text>
-                  </View>
-                </View>
-                <Ionicons name="open-outline" size={16} color={colors.textMuted} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-                onPress={() => Linking.openURL(`${Env.SITE_URL}/wp-admin/users.php`).catch(() => {})}
-                accessibilityRole="button"
-                accessibilityLabel="Students and Users Management"
-              >
-                <View style={styles.settingLeft}>
-                  <Ionicons name="people-outline" size={20} color="#10B981" />
-                  <View style={{ marginLeft: 6 }}>
-                    <Text style={[styles.settingLabel, { color: colors.text }]}>
-                      {isBangla ? 'শিক্ষার্থী ও ইউজার ম্যানেজমেন্ট' : 'Students & Users'}
-                    </Text>
-                    <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                      {isBangla ? 'স্টুডেন্ট তালিকা, অ্যাক্সেস ও প্রোগ্রেস মনিটরিং' : 'Student enrollment & progress tracking'}
-                    </Text>
-                  </View>
-                </View>
-                <Ionicons name="open-outline" size={16} color={colors.textMuted} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-                onPress={() => Linking.openURL(`${Env.SITE_URL}/wp-admin/edit.php?post_type=lp_order`).catch(() => {})}
-                accessibilityRole="button"
-                accessibilityLabel="Orders and Enrollment Management"
-              >
-                <View style={styles.settingLeft}>
-                  <Ionicons name="card-outline" size={20} color="#F59E0B" />
-                  <View style={{ marginLeft: 6 }}>
-                    <Text style={[styles.settingLabel, { color: colors.text }]}>
-                      {isBangla ? 'এনরোলমেন্ট ও অর্ডার ম্যানেজমেন্ট' : 'Orders & Enrollment Management'}
-                    </Text>
-                    <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                      {isBangla ? 'অর্ডার স্ট্যাটাস ও এনরোলমেন্ট রিভিউ করুন' : 'Review LearnPress enrollment records'}
-                    </Text>
-                  </View>
-                </View>
-                <Ionicons name="open-outline" size={16} color={colors.textMuted} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-                onPress={() => Linking.openURL(`${Env.SITE_URL}/wp-admin/admin.php?page=learnpress-statistics`).catch(() => {})}
-                accessibilityRole="button"
-                accessibilityLabel="Reports and Analytics"
-              >
-                <View style={styles.settingLeft}>
-                  <Ionicons name="analytics-outline" size={20} color="#8B5CF6" />
-                  <View style={{ marginLeft: 6 }}>
-                    <Text style={[styles.settingLabel, { color: colors.text }]}>
-                      {isBangla ? 'রিপোর্ট ও অ্যানালিটিক্স' : 'Reports & Analytics'}
-                    </Text>
-                    <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                      {isBangla ? 'লার্নিং অ্যানালিটিক্স ও কমপ্লিশন রিপোর্ট' : 'Learning stats & course performance'}
-                    </Text>
-                  </View>
-                </View>
-                <Ionicons name="open-outline" size={16} color={colors.textMuted} />
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {/* Account Membership Card */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-            {isBangla ? 'অ্যাকাউন্ট মেম্বারশিপ ও অ্যাক্সেস' : 'ACCOUNT MEMBERSHIP & ACCESS'}
-          </Text>
-          <View
-            style={[
-              styles.subscriptionCard,
-              { backgroundColor: colors.surfaceCard, borderColor: colors.primary },
-            ]}
-          >
-            <View style={styles.planBadgeRow}>
-              <View style={[styles.tierTag, { backgroundColor: colors.primaryLight }]}>
-                <Ionicons name="ribbon" size={12} color={colors.primary} />
-                <Text style={[styles.tierTagText, { color: colors.primary }]}>
-                  {subscriptionTier === 'enterprise'
-                    ? 'ENTERPRISE SCALE'
-                    : subscriptionTier === 'pro'
-                    ? 'PRO EXECUTIVE'
-                    : 'STARTER MEMBER'}
-                </Text>
-              </View>
-            </View>
-
-            <Text style={[styles.planTitle, { color: colors.text }]}>
-              {subscriptionTier === 'enterprise'
-                ? 'Enterprise Team Workspace'
-                : subscriptionTier === 'pro'
-                ? (isBangla ? '৩০০+ কোর্স ও ভেরিফায়েড সার্টিফিকেট আনলকড' : '300+ Courses & Verified Certificates Unlocked')
-                : 'Synced Account Access'}
-            </Text>
-            <Text style={[styles.planExpiry, { color: colors.textMuted }]}>
-              {isBangla
-                ? 'আপনার ওয়েব অ্যাকাউন্টের সাথে স্বয়ংক্রিয়ভাবে সিঙ্ক করা'
-                : 'Synced automatically with your Thriving Skills account'}
-            </Text>
-
-            <View style={styles.subActionRow}>
-              <TouchableOpacity
-                style={[styles.managePlanBtn, { backgroundColor: colors.primary }]}
-                onPress={onOpenSubscription}
-                accessibilityRole="button"
-                accessibilityLabel={isBangla ? 'মেম্বারশিপ তথ্য' : 'Membership Details'}
-              >
-                <Ionicons name="shield-checkmark-outline" size={16} color={colors.onPrimary} />
-                <Text style={[styles.managePlanText, { color: colors.onPrimary }]}>
-                  {isBangla ? 'মেম্বারশিপ তথ্য' : 'Membership Details'}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.invoiceBtn, { borderColor: colors.border, backgroundColor: colors.surfaceSubtle }]}
-                onPress={() => setPaymentHistoryModalVisible(true)}
-                accessibilityRole="button"
-                accessibilityLabel={isBangla ? 'অর্ডার রেকর্ড' : 'Orders'}
-              >
-                <Ionicons name="library-outline" size={16} color={colors.text} />
-                <Text style={[styles.invoiceBtnText, { color: colors.text }]}>
-                  {isBangla ? 'অর্ডার রেকর্ড' : 'Orders'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-
-        {/* Learning Stats Row */}
-        <View style={styles.statsRow}>
-          <TouchableOpacity
-            style={[
-              styles.statBox,
-              { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-            ]}
-            onPress={() => onNavigateTab('MyLearning')}
-            accessibilityRole="button"
-            accessibilityLabel={`Enrolled courses: ${enrolledCount}`}
-          >
-            <Text style={[styles.statVal, { color: colors.primary }]}>{enrolledCount}</Text>
-            <Text style={[styles.statLbl, { color: colors.textMuted }]}>Enrolled</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.statBox,
-              { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-            ]}
-            onPress={() => onNavigateTab('MyLearning')}
-            accessibilityRole="button"
-            accessibilityLabel={`Completed courses: ${completedCount}`}
-          >
-            <Text style={[styles.statVal, { color: colors.secondary }]}>{completedCount}</Text>
-            <Text style={[styles.statLbl, { color: colors.textMuted }]}>Completed</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.statBox,
-              { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-            ]}
-            onPress={() => onNavigateTab('MyLearning')}
-            accessibilityRole="button"
-            accessibilityLabel={`Earned certificates: ${certificates.length}`}
-          >
-            <Text style={[styles.statVal, { color: colors.accent }]}>{certificates.length}</Text>
-            <Text style={[styles.statLbl, { color: colors.textMuted }]}>Certificates</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Earned Badges & Achievements */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-            {isBangla ? 'অর্জিত স্কিল ব্যাজসমূহ' : 'ACHIEVEMENT BADGES'}
-          </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.badgesScroll}>
-            {badges.map((b) => (
-              <View
-                key={b.id}
-                style={[
-                  styles.badgeCard,
-                  {
-                    backgroundColor: b.isUnlocked ? colors.surfaceCard : colors.surfaceSubtle,
-                    borderColor: b.isUnlocked ? b.color : colors.border,
-                    opacity: b.isUnlocked ? 1 : 0.55,
-                  },
-                ]}
-              >
-                <View style={[styles.badgeIconBox, { backgroundColor: b.color + '20' }]}>
-                  <Ionicons name={b.icon as any} size={22} color={b.isUnlocked ? b.color : colors.textMuted} />
-                </View>
-                <Text style={[styles.badgeTitle, { color: colors.text }]} numberOfLines={1}>
-                  {isBangla ? b.banglaTitle : b.title}
-                </Text>
-                <Text style={[styles.badgeStatus, { color: b.isUnlocked ? b.color : colors.textMuted }]}>
-                  {b.isUnlocked ? (isBangla ? '✓ আনলকড' : '✓ Unlocked') : (isBangla ? '🔒 লকড' : '🔒 Locked')}
-                </Text>
-              </View>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Study & Recall Suite (Phase 2 R&D) */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-            {isBangla ? 'স্মৃতি ও অফলাইন শিক্ষা টুলস' : 'LEARNING & MEMORY SUITE'}
-          </Text>
-          <View
-            style={[
-              styles.cardGroup,
-              { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-            ]}
-          >
-            {/* Active Recall Flashcards (SM-2) */}
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => {
-                triggerHaptic('light');
-                setFlashcardsModalVisible(true);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={isBangla ? 'অ্যাক্টিভ রিকল ফ্ল্যাশকার্ড খুলুন' : 'Open Active Recall Flashcards'}
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="layers-outline" size={20} color={colors.primary} />
-                <View style={{ marginLeft: 6 }}>
-                  <Text style={[styles.settingLabel, { color: colors.text }]}>
-                    {isBangla ? 'অ্যাক্টিভ রিকল ফ্ল্যাশকার্ড (SM-2)' : 'Active Recall Flashcards'}
-                  </Text>
-                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
-                    {isBangla ? 'বৈজ্ঞানিক স্পেসড রিপিটেশন পদ্ধতি' : 'SuperMemo-2 spaced repetition memory engine'}
-                  </Text>
-                </View>
-              </View>
-              <View style={[styles.langPill, { backgroundColor: isDark ? colors.surfaceSubtle : '#FEF3C7' }]}>
-                <Text style={[styles.langPillText, { color: colors.brandGold }]}>
-                  {isBangla ? 'স্মৃতি পরীক্ষা' : 'Review Deck'}
-                </Text>
-              </View>
-            </TouchableOpacity>
-
-            {/* Offline Study Deck */}
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => {
-                triggerHaptic('light');
-                setOfflineDeckModalVisible(true);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={isBangla ? 'অফলাইন স্টাডি ডেক খুলুন' : 'Open Offline Study Deck'}
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="cloud-offline" size={20} color="#10B981" />
-                <View style={{ marginLeft: 6 }}>
-                  <Text style={[styles.settingLabel, { color: colors.text }]}>
-                    {isBangla ? 'অফলাইন স্টাডি ডেক' : 'Offline Study Deck'}
-                  </Text>
-                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
-                    {isBangla ? 'ইন্টারনেট ছাড়াই লেকচার ও নোটস পড়ুন' : 'Read saved lectures & takeaways without internet'}
-                  </Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            {/* On-Device Fast Search (Phase 3 FTS) */}
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomWidth: 0 }]}
-              onPress={() => {
-                triggerHaptic('light');
-                setLocalSearchModalVisible(true);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={isBangla ? 'অন-ডিভাইস ফাস্ট সার্চ খুলুন' : 'Open On-Device Fast Search'}
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="search" size={20} color="#3B82F6" />
-                <View style={{ marginLeft: 6 }}>
-                  <Text style={[styles.settingLabel, { color: colors.text }]}>
-                    {isBangla ? 'অন-ডিভাইস ফাস্ট সার্চ (FTS)' : 'On-Device Fast Search (FTS)'}
-                  </Text>
-                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
-                    {isBangla ? 'কোর্স, লেকচার ও নোটস নিমেষে সার্চ করুন' : 'Instant inverted index search across offline content'}
-                  </Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Preferences & Settings */}
-        {/* Experience & Playback (Miller's Law: <= 5 items per Gestalt group) */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-            {isBangla ? 'অ্যাপ অভিজ্ঞতা ও প্লেব্যাক' : 'EXPERIENCE & PLAYBACK'}
-          </Text>
-          <View
-            style={[
-              styles.cardGroup,
-              { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-            ]}
-          >
-            {/* Language Switcher */}
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => {
-                triggerHaptic('selection');
-                toggleLanguage();
-                showToast({
-                  message: language === 'en' ? 'ভাষা বাংলা (BN) নির্ধারণ করা হয়েছে' : 'Language switched to English (EN)',
-                  type: 'info',
-                });
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={isBangla ? 'ভাষা পরিবর্তন করুন' : 'Switch app language'}
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="language" size={20} color={colors.primary} />
-                <Text style={[styles.settingLabel, { color: colors.text }]}>
-                  {isBangla ? 'ভাষা (Language)' : 'Language'}
-                </Text>
-              </View>
-              <View style={[styles.langPill, { backgroundColor: colors.primaryLight }]}>
-                <Text style={[styles.langPillText, { color: colors.primary }]}>
-                  {language === 'en' ? 'English (EN)' : 'বাংলা (BN)'}
-                </Text>
-              </View>
-            </TouchableOpacity>
-
-            {/* Dark mode switch */}
-            <View style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}>
-              <View style={styles.settingLeft}>
-                <Ionicons
-                  name={isDark ? 'moon' : 'sunny'}
-                  size={20}
-                  color={isDark ? colors.accent : colors.primary}
-                />
-                <Text style={[styles.settingLabel, { color: colors.text }]}>
-                  {isBangla ? 'ডার্ক মোড' : 'Dark Mode'}
-                </Text>
-              </View>
-              <Switch
-                value={isDark}
-                accessibilityLabel={isBangla ? 'ডার্ক মোড টগল' : 'Toggle Dark Mode'}
-                onValueChange={() => {
-                  triggerHaptic('selection');
-                  toggleTheme();
-                  showToast({
-                    message: isDark ? 'Light mode enabled' : 'Dark mode enabled',
-                    type: 'info',
-                  });
-                }}
-                trackColor={{ false: '#CBD5E1', true: colors.primary }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-
-            {/* Video Streaming Resolution */}
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => {
-                triggerHaptic('selection');
-                cycleVideoQuality();
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={isBangla ? 'ভিডিও স্ট্রিমিং কোয়ালিটি পরিবর্তন করুন' : 'Cycle video streaming quality'}
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="videocam-outline" size={20} color="#3B82F6" />
-                <View style={{ marginLeft: 6 }}>
-                  <Text style={[styles.settingLabel, { color: colors.text }]}>
-                    {isBangla ? 'ভিডিও স্ট্রিমিং কোয়ালিটি' : 'Video Streaming Quality'}
-                  </Text>
-                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
-                    {isBangla ? 'ডিফল্ট রেজোলিউশন প্রেফারেন্স' : 'Preferred playback resolution'}
-                  </Text>
-                </View>
-              </View>
-              <View style={[styles.langPill, { backgroundColor: 'rgba(59, 130, 246, 0.12)' }]}>
-                <Text style={[styles.langPillText, { color: isDark ? colors.primary : '#1D4ED8', fontWeight: '800' }]}>
-                  {videoQuality}
-                </Text>
-              </View>
-            </TouchableOpacity>
-
-            {/* In-App OTA Updates */}
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomWidth: 0 }]}
-              onPress={() => {
-                triggerHaptic('light');
-                setUpdateModalVisible(true);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={isBangla ? 'ইন-অ্যাপ আপডেট দেখুন' : 'Check in-app OTA updates'}
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="cloud-download-outline" size={20} color="#10B981" />
-                <View style={{ marginLeft: 6 }}>
-                  <Text style={[styles.settingLabel, { color: colors.text }]}>
-                    {isBangla ? 'ইন-অ্যাপ আপডেট (OTA)' : 'In-App Updates (OTA)'}
-                  </Text>
-                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
-                    {isBangla ? 'APK রি-বিল্ড ছাড়াই নতুন ফিচার পান' : 'Instant updates without rebuilding APK'}
-                  </Text>
-                </View>
-              </View>
-              <View style={[styles.langPill, { backgroundColor: 'rgba(16, 185, 129, 0.14)' }]}>
-                <Text style={[styles.langPillText, { color: isDark ? '#34D399' : '#047857', fontWeight: '800' }]}>
-                  OTA Engine
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Security, Library & Storage (Miller's Law: <= 5 items per Gestalt group) */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-            {isBangla ? 'নিরাপত্তা ও লাইব্রেরি' : 'SECURITY & LIBRARY'}
-          </Text>
-          <View
-            style={[
-              styles.cardGroup,
-              { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-            ]}
-          >
-            {/* Biometric unlock toggle */}
-            <View style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}>
-              <View style={styles.settingLeft}>
-                <Ionicons name="finger-print" size={20} color={colors.secondary} />
-                <Text style={[styles.settingLabel, { color: colors.text }]}>
-                  {isBangla ? 'বায়োমেট্রিক আনলক (ফিঙ্গারপ্রিন্ট)' : 'Biometric Security'}
-                </Text>
-              </View>
-              <Switch
-                value={biometricEnabled}
-                accessibilityLabel={isBangla ? 'বায়োমেট্রিক নিরাপত্তা টগল' : 'Toggle Biometric Security'}
-                onValueChange={(val) => {
-                  triggerHaptic('selection');
-                  setBiometricEnabled(val);
-                  showToast({
-                    message: val
-                      ? 'Biometric unlock enabled'
-                      : 'Biometric unlock disabled',
-                    type: 'info',
-                  });
-                }}
-                trackColor={{ false: '#CBD5E1', true: colors.secondary }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-
-            {/* Change Account Password */}
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => {
-                triggerHaptic('light');
-                setChangePasswordModalVisible(true);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={isBangla ? 'পাসওয়ার্ড পরিবর্তন করুন' : 'Change Password'}
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="key-outline" size={20} color="#F59E0B" />
-                <View style={{ marginLeft: 6 }}>
-                  <Text style={[styles.settingLabel, { color: colors.text }]}>
-                    {isBangla ? 'পাসওয়ার্ড পরিবর্তন' : 'Change Password'}
-                  </Text>
-                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
-                    {isBangla ? 'অ্যাকাউন্ট সিকিউরিটি ক্রেডেনশিয়াল' : 'Update your account security'}
-                  </Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            {/* Enrolled Courses & Library History */}
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => {
-                triggerHaptic('light');
-                setPaymentHistoryModalVisible(true);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={isBangla ? 'অর্ডার ও কোর্স রেকর্ড দেখুন' : 'View Orders and Course Records'}
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="receipt-outline" size={20} color="#10B981" />
-                <View style={{ marginLeft: 6 }}>
-                  <Text style={[styles.settingLabel, { color: colors.text }]}>
-                    {isBangla ? 'অর্ডার ও কোর্স রেকর্ড' : 'Orders & Course Records'}
-                  </Text>
-                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
-                    {isBangla ? 'আপনার সিঙ্ক করা সকল LearnPress ও WooCommerce অর্ডার' : 'Your synced LearnPress & WooCommerce orders'}
-                  </Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            {/* Push notifications */}
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => {
-                triggerHaptic('light');
-                onOpenNotifications?.();
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={isBangla ? 'নোটিফিকেশন সেন্টার খুলুন' : 'Open Notification Center'}
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="notifications-outline" size={20} color={colors.text} />
-                <Text style={[styles.settingLabel, { color: colors.text }]}>
-                  {isBangla ? 'নোটিফিকেশন সেন্টার' : 'Notification Center'}
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            {/* Clear Storage & Cache */}
-            <TouchableOpacity
-              style={[styles.settingRow, isAdmin ? { borderBottomColor: colors.borderSubtle } : { borderBottomWidth: 0 }]}
-              onPress={() => {
-                triggerHaptic('light');
-                handleClearCache();
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={isBangla ? 'ক্যাশ মেমোরি ক্লিয়ার করুন' : 'Clear Storage and Cache'}
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="trash-outline" size={20} color={colors.danger} />
-                <View style={{ marginLeft: 6 }}>
-                  <Text style={[styles.settingLabel, { color: colors.text }]}>
-                    {isBangla ? 'ক্যাশ মেমোরি ক্লিয়ার করুন' : 'Clear Storage & Cache'}
-                  </Text>
-                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
-                    {isBangla ? 'অব্যবহৃত টেম্পোরারি ফাইল মুছুন (~38 MB)' : 'Free up temporary local storage (~38 MB)'}
-                  </Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            {/* WordPress Admin Portal Shortcut (Admin only) */}
-            {isAdmin && (
-              <TouchableOpacity
-                style={[styles.settingRow, { borderBottomWidth: 0 }]}
-                onPress={() => Linking.openURL(Env.WP_ADMIN_URL).catch(() => {})}
-                accessibilityRole="button"
-                accessibilityLabel={isBangla ? 'ওয়ার্ডপ্রেস অ্যাডমিন পোর্টাল খুলুন' : 'Open WordPress Admin Portal'}
-              >
-                <View style={styles.settingLeft}>
-                  <Ionicons name="settings-outline" size={20} color="#EC4899" />
-                  <View style={{ marginLeft: 6 }}>
-                    <Text style={[styles.settingLabel, { color: colors.text }]}>
-                      {isBangla ? 'ওয়ার্ডপ্রেস অ্যাডমিন পোর্টাল (WP-Admin)' : 'WordPress Admin Portal (WP-Admin)'}
-                    </Text>
-                    <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
-                      {Env.WP_ADMIN_URL}
-                    </Text>
-                  </View>
-                </View>
-                <Ionicons name="open-outline" size={16} color={colors.textMuted} />
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
-
-        {/* Enterprise & Corporate Upskilling */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>ENTERPRISE & B2B SOLUTIONS</Text>
-          <TouchableOpacity
-            style={[
-              styles.corporateCard,
-              { backgroundColor: colors.surfaceCard, borderColor: colors.secondary },
-            ]}
-            onPress={() => {
-              triggerHaptic('light');
-              onOpenCorporateModal();
-            }}
-            activeOpacity={0.85}
-            accessibilityRole="button"
-            accessibilityLabel="Corporate Training & SME Advisory"
-          >
-            <View style={[styles.corpIconBg, { backgroundColor: colors.secondaryLight }]}>
-              <Ionicons name="business" size={22} color={colors.secondary} />
-            </View>
-            <View style={styles.corpInfo}>
-              <Text style={[styles.corpTitle, { color: colors.text }]}>
-                Corporate Training & SME Advisory
-              </Text>
-              <Text style={[styles.corpSubtitle, { color: colors.textMuted }]}>
-                কাস্টমাইজড Corporate Training, LMS Integration এবং বিজনেস কনসালটেন্সি প্রপোজাল।
-              </Text>
-            </View>
-            <Ionicons name="arrow-forward" size={18} color={colors.secondary} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Support & Insights (Miller's Law: 4 items) */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-            {isBangla ? 'সাপোর্ট ও রিসোর্স' : 'SUPPORT & RESOURCES'}
-          </Text>
-          <View
-            style={[
-              styles.cardGroup,
-              { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-            ]}
-          >
-            {/* WhatsApp Live Support */}
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => {
-                triggerHaptic('light');
-                Linking.openURL('https://wa.me/8801312100288').catch(() => {});
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Chat on WhatsApp 01312-100288"
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="logo-whatsapp" size={20} color="#25D366" />
-                <View style={{ marginLeft: 6 }}>
-                  <Text style={[styles.settingLabel, { color: colors.text }]}>WhatsApp Live Support</Text>
-                  <Text style={[styles.settingSubtext, { color: '#25D366', fontWeight: '700' }]}>
-                    01312-100288 • Instant Response
-                  </Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            {/* Messenger */}
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => {
-                triggerHaptic('light');
-                Linking.openURL('https://m.me/thrivingskills').catch(() => {});
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Chat on Messenger"
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="logo-facebook" size={20} color="#0084FF" />
-                <View style={{ marginLeft: 6 }}>
-                  <Text style={[styles.settingLabel, { color: colors.text }]}>Messenger</Text>
-                  <Text style={[styles.settingSubtext, { color: '#0084FF', fontWeight: '700' }]}>
-                    @thrivingskills • Community CRM
-                  </Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => {
-                triggerHaptic('light');
-                Linking.openURL('tel:01312100288').catch(() => {});
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Call Hotline Support 01312100288"
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="call-outline" size={20} color={colors.primary} />
-                <Text style={[styles.settingLabel, { color: colors.text }]}>Hotline Support</Text>
-              </View>
-              <Text style={[styles.versionText, { color: colors.primary, fontWeight: '700' }]}>01312100288</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => {
-                triggerHaptic('light');
-                Linking.openURL('mailto:info@thrivingskill.com').catch(() => {});
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Email Support info@thrivingskill.com"
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="mail-outline" size={20} color={colors.text} />
-                <Text style={[styles.settingLabel, { color: colors.text }]}>Email Support</Text>
-              </View>
-              <Text style={[styles.versionText, { color: colors.textMuted }]}>info@thrivingskill.com</Text>
-            </TouchableOpacity>
-
-            {/* Help & FAQ Center */}
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => {
-                triggerHaptic('light');
-                setHelpFaqModalVisible(true);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={isBangla ? 'সাহায্য ও প্রশ্নোত্তর (FAQ) খুলুন' : 'Open Help and FAQ Center'}
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="help-circle-outline" size={20} color="#0D9488" />
-                <View style={{ marginLeft: 6 }}>
-                  <Text style={[styles.settingLabel, { color: colors.text }]}>
-                    {isBangla ? 'সাহায্য ও প্রশ্নোত্তর (FAQ)' : 'Help & FAQ Center'}
-                  </Text>
-                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
-                    {isBangla ? 'সার্টিফিকেট ও কোর্স নির্দেশিকা' : 'Certificates, sync & course guidance'}
-                  </Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            {/* Thriving Skills Blog & Articles */}
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => {
-                triggerHaptic('light');
-                setBlogModalVisible(true);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={isBangla ? 'টিএসএল ব্লগ ও আর্টিকেল খুলুন' : 'Open TSL Blog and Industry Articles'}
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="newspaper-outline" size={20} color="#8B5CF6" />
-                <View style={{ marginLeft: 6 }}>
-                  <Text style={[styles.settingLabel, { color: colors.text }]}>
-                    {isBangla ? 'টিএসএল ব্লগ ও আর্টিকেল' : 'TSL Blog & Industry Articles'}
-                  </Text>
-                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
-                    {isBangla ? 'AI, কর্পোরেট লিডারশিপ ও এক্সিকিউটিভ ইনসাইট' : 'AI, leadership & corporate insights'}
-                  </Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            {/* Storage & Offline Sync (Phase 1) */}
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomWidth: 0 }]}
-              onPress={() => {
-                triggerHaptic('light');
-                setStorageModalVisible(true);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={isBangla ? 'লোকাল স্টোরেজ ও অফলাইন সিঙ্ক' : 'Local Storage and Offline Sync'}
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="server-outline" size={20} color={colors.primary} />
-                <View style={{ marginLeft: 6 }}>
-                  <Text style={[styles.settingLabel, { color: colors.text }]}>
-                    {isBangla ? 'স্টোরেজ ও অফলাইন সিঙ্ক' : 'Storage & Offline Sync'}
-                  </Text>
-                  <Text style={[styles.settingSubtext, { color: pendingSyncCount > 0 ? colors.brandGold : colors.textMuted }]}>
-                    {pendingSyncCount > 0
-                      ? (isBangla ? `${pendingSyncCount}টি অ্যাকশন অফলাইনে অপেক্ষারত` : `${pendingSyncCount} offline actions pending sync`)
-                      : (isBangla ? 'ক্যাশ ম্যানেজমেন্ট ও ডাটা সেভার' : 'Cache, downloads & data saver')}
-                  </Text>
-                </View>
-              </View>
-              {pendingSyncCount > 0 ? (
-                <View style={{ backgroundColor: colors.brandGold, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 }}>
-                  <Text style={{ color: '#000', fontSize: 11, fontWeight: '800' }}>{pendingSyncCount}</Text>
-                </View>
-              ) : (
-                <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* About Thriving Skills (Miller's Law: 3 items) */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-            {isBangla ? 'থ্রাইভিং স্কিলস পরিচিতি' : 'ABOUT THRIVING SKILLS'}
-          </Text>
-          <View
-            style={[
-              styles.cardGroup,
-              { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-            ]}
-          >
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => {
-                triggerHaptic('light');
-                setAboutInitialTab('overview');
+            <ProfilePreferencesSection
+              isAdmin={isAdmin}
+              isBangla={isBangla}
+              isDark={isDark}
+              colors={colors}
+              subscriptionTier={subscriptionTier}
+              onOpenSubscription={onOpenSubscription}
+              onOpenOrders={() => setPaymentHistoryModalVisible(true)}
+              enrolledCount={enrolledCount}
+              completedCount={completedCount}
+              certificatesCount={certificates.length}
+              onNavigateTab={onNavigateTab}
+              badges={badges}
+              onOpenFlashcards={() => setFlashcardsModalVisible(true)}
+              onOpenOfflineDeck={() => setOfflineDeckModalVisible(true)}
+              onOpenLocalSearch={() => setLocalSearchModalVisible(true)}
+              language={language}
+              toggleLanguage={toggleLanguage}
+              toggleTheme={toggleTheme}
+              videoQuality={videoQuality}
+              cycleVideoQuality={cycleVideoQuality}
+              onOpenUpdateModal={() => setUpdateModalVisible(true)}
+              biometricEnabled={biometricEnabled}
+              setBiometricEnabled={setBiometricEnabled}
+              onChangePassword={() => setChangePasswordModalVisible(true)}
+              onOpenNotifications={onOpenNotifications}
+              onClearCache={handleClearCache}
+              onOpenCorporateModal={onOpenCorporateModal}
+              onOpenHelpFaq={() => setHelpFaqModalVisible(true)}
+              onOpenBlog={() => setBlogModalVisible(true)}
+              onOpenStorage={() => setStorageModalVisible(true)}
+              pendingSyncCount={pendingSyncCount}
+              onOpenAbout={(tab) => {
+                setAboutInitialTab(tab);
                 setAboutModalVisible(true);
               }}
-              accessibilityRole="button"
-              accessibilityLabel="About Thriving Skills Overview"
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
-                <Text style={[styles.settingLabel, { color: colors.text }]}>About Thriving Skills (TSL)</Text>
-              </View>
-              <Text style={[styles.versionText, { color: colors.primary, fontWeight: '600' }]}>Vision & Values →</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => {
-                triggerHaptic('light');
-                setAboutInitialTab('leadership');
-                setAboutModalVisible(true);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Founders and Leadership"
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="people-outline" size={20} color={isDark ? '#FBBF24' : '#B45309'} />
-                <Text style={[styles.settingLabel, { color: colors.text }]}>Founders & Leadership</Text>
-              </View>
-              <Text style={[styles.versionText, { color: isDark ? '#FBBF24' : '#B45309', fontWeight: '600' }]}>Exec Board →</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomWidth: 0 }]}
-              onPress={() => {
-                triggerHaptic('light');
-                setAboutInitialTab('partners');
-                setAboutModalVisible(true);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Trusted Partners and MoUs"
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="shield-checkmark-outline" size={20} color={isDark ? '#34D399' : '#047857'} />
-                <Text style={[styles.settingLabel, { color: colors.text }]}>Trusted Partners & MoUs</Text>
-              </View>
-              <Text style={[styles.versionText, { color: isDark ? '#34D399' : '#047857', fontWeight: '600' }]}>Universities & a2i →</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Legal & Data Privacy (Miller's Law: 3 items) */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-            {isBangla ? 'আইনগত নীতিমালা ও প্রাইভেসি' : 'LEGAL & DATA PRIVACY'}
-          </Text>
-          <View
-            style={[
-              styles.cardGroup,
-              { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-            ]}
-          >
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => {
-                triggerHaptic('light');
-                setLegalInitialTab('terms');
+              onOpenLegal={(tab) => {
+                setLegalInitialTab(tab);
                 setLegalModalVisible(true);
               }}
-              accessibilityRole="button"
-              accessibilityLabel="Terms and Conditions"
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="document-text-outline" size={20} color={colors.textMuted} />
-                <Text style={[styles.settingLabel, { color: colors.text }]}>Terms & Conditions</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => {
-                triggerHaptic('light');
-                setLegalInitialTab('privacy');
-                setLegalModalVisible(true);
+              isAuthenticated={isAuthenticated}
+              onDeleteAccount={() => {
+                setDeletePass('');
+                setDeleteError('');
+                setDeleteAccountModalVisible(true);
               }}
-              accessibilityRole="button"
-              accessibilityLabel="Privacy Policy"
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="shield-outline" size={20} color={colors.textMuted} />
-                <Text style={[styles.settingLabel, { color: colors.text }]}>Privacy Policy</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            {/* Account & Data Deletion Row (Google Play Mandatory Policy: https://thrivingskill.com/delete-account/) */}
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomWidth: 0 }]}
-              onPress={() => {
-                triggerHaptic('light');
-                Linking.openURL(Env.ACCOUNT_DELETION_URL).catch(() => {
-                  Alert.alert(
-                    isBangla ? 'ওয়েব ডাটা মুছে ফেলার ফর্ম' : 'Web Data Deletion Form',
-                    t('deleteAccountWebPrompt')
-                  );
-                });
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={t('dataDeletionRequestWeb')}
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="person-remove-outline" size={20} color={colors.textMuted} />
-                <Text style={[styles.settingLabel, { color: colors.text }]}>
-                  {t('dataDeletionRequestWeb')}
-                </Text>
-              </View>
-              <Ionicons name="open-outline" size={16} color={colors.textMuted} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Account Actions (Isolated destructive/auth controls per Fitts's Law error prevention) */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-            {isBangla ? 'অ্যাকাউন্ট অ্যাকশন' : 'ACCOUNT ACTIONS'}
-          </Text>
-          <View
-            style={[
-              styles.cardGroup,
-              { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-            ]}
-          >
-            {isAuthenticated && (
-              <TouchableOpacity
-                style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-                onPress={() => {
-                  triggerHaptic('warning');
-                  setDeletePass('');
-                  setDeleteError('');
-                  setDeleteAccountModalVisible(true);
-                }}
-                accessibilityRole="button"
-                accessibilityLabel={t('deleteAccount')}
-              >
-                <View style={styles.settingLeft}>
-                  <Ionicons name="trash-outline" size={20} color={colors.danger} />
-                  <Text style={[styles.settingLabel, { color: colors.danger, fontWeight: '700' }]}>
-                    {t('deleteAccount')}
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={colors.danger} />
-              </TouchableOpacity>
-            )}
-
-            {/* Auth Action Row */}
-            {isAuthenticated ? (
-              <TouchableOpacity
-                style={[styles.settingRow, { borderBottomWidth: 0 }]}
-                onPress={() => {
-                  triggerHaptic('warning');
-                  Alert.alert('Sign Out', 'Are you sure you want to sign out from your WordPress account?', [
-                    { text: 'Cancel', style: 'cancel' },
-                    { text: 'Sign Out', style: 'destructive', onPress: logout },
-                  ]);
-                }}
-                accessibilityRole="button"
-                accessibilityLabel="Sign Out from WordPress"
-              >
-                <View style={styles.settingLeft}>
-                  <Ionicons name="log-out-outline" size={20} color={colors.danger} />
-                  <Text style={[styles.settingLabel, { color: colors.danger, fontWeight: '700' }]}>
-                    Sign Out from WordPress
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={[styles.settingRow, { borderBottomWidth: 0 }]}
-                onPress={() => {
-                  triggerHaptic('light');
-                  setAuthModalVisible(true);
-                }}
-                accessibilityRole="button"
-                accessibilityLabel="Sign In with Thriving Skills Account"
-              >
-                <View style={styles.settingLeft}>
-                  <Ionicons name="log-in-outline" size={20} color={colors.primary} />
-                  <Text style={[styles.settingLabel, { color: colors.primary, fontWeight: '700' }]}>
-                    Sign In with Thriving Skills Account
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={colors.primary} />
-              </TouchableOpacity>
-            )}
-          </View>
-        </View>
+              onLogout={logout}
+              onOpenAuthModal={() => setAuthModalVisible(true)}
+              showToast={showToast}
+              t={t}
+            />
           </AnimatedTabContent>
         )}
 
@@ -2196,38 +676,38 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         onClose={() => setUpdateModalVisible(false)}
       />
 
-      {/* Help & FAQ Center Modal (Section 24 Spec) */}
+      {/* Help & FAQ Center Modal */}
       <HelpFaqModal
         visible={helpFaqModalVisible}
         onClose={() => setHelpFaqModalVisible(false)}
       />
 
-      {/* Blog & Articles Reader Modal (Section 22 & 4 Spec) */}
+      {/* Blog & Articles Reader Modal */}
       <BlogModal
         visible={blogModalVisible}
         onClose={() => setBlogModalVisible(false)}
       />
 
-      {/* Local Storage & Offline Sync Modal (Phase 1) */}
+      {/* Local Storage & Offline Sync Modal */}
       <StorageManagerModal
         visible={storageModalVisible}
         onClose={() => setStorageModalVisible(false)}
       />
 
-      {/* Active Recall Spaced Repetition Modal (Phase 2) */}
+      {/* Active Recall Spaced Repetition Modal */}
       <SpacedRepetitionModal
         visible={flashcardsModalVisible}
         onClose={() => setFlashcardsModalVisible(false)}
       />
 
-      {/* Offline Study Deck Modal (Phase 2) */}
+      {/* Offline Study Deck Modal */}
       <OfflineStudyDeckModal
         visible={offlineDeckModalVisible}
         onClose={() => setOfflineDeckModalVisible(false)}
         onOpenLessonInPlayer={onNavigateToLesson}
       />
 
-      {/* On-Device Local Search Modal (Phase 3) */}
+      {/* On-Device Local Search Modal */}
       <LocalSearchModal
         visible={localSearchModalVisible}
         onClose={() => setLocalSearchModalVisible(false)}
@@ -2235,910 +715,107 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         onSelectLesson={onNavigateToLesson}
       />
 
-      {/* Edit Profile Modal (Section 25 Spec) */}
-      {/* Official Profile Settings Modal (Aligned 1:1 with thrivingskill.com Settings) */}
-      <Modal
+      {/* Official Profile Settings Modal (5 tabs) */}
+      <ProfileSettingsModal
         visible={editProfileModalVisible}
-        transparent
-        animationType="slide"
-        statusBarTranslucent={true}
-        onRequestClose={() => setEditProfileModalVisible(false)}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-          style={styles.modalBackdrop}
-        >
-          <View style={[styles.modalCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border, maxHeight: '92%' }]}>
-            <View style={styles.modalHeader}>
-              <View style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
-                <Text style={[styles.modalTitle, { color: colors.text }]}>
-                  {isBangla ? 'প্রোফাইল সেটিংস' : 'Profile Settings'}
-                </Text>
-                <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
-                  thrivingskill.com • {isBangla ? 'অফিসিয়াল অ্যাকাউন্ট কন্ট্রোল' : 'Official Account Settings'}
-                </Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => setEditProfileModalVisible(false)}
-                style={styles.modalCloseBtn}
-                accessibilityRole="button"
-                accessibilityLabel="Close settings"
-              >
-                <Ionicons name="close" size={20} color={colors.text} />
-              </TouchableOpacity>
-            </View>
+        onClose={() => setEditProfileModalVisible(false)}
+        user={user}
+        colors={colors}
+        isDark={isDark}
+        isBangla={isBangla}
+        firstName={firstName}
+        setFirstName={setFirstName}
+        lastName={lastName}
+        setLastName={setLastName}
+        displayName={displayName}
+        setDisplayName={setDisplayName}
+        userEmail={userEmail}
+        bioInfo={bioInfo}
+        setBioInfo={setBioInfo}
+        phoneNumber={phoneNumber}
+        setPhoneNumber={setPhoneNumber}
+        socialFacebook={socialFacebook}
+        setSocialFacebook={setSocialFacebook}
+        socialTwitter={socialTwitter}
+        setSocialTwitter={setSocialTwitter}
+        socialYoutube={socialYoutube}
+        setSocialYoutube={setSocialYoutube}
+        socialLinkedin={socialLinkedin}
+        setSocialLinkedin={setSocialLinkedin}
+        handleSaveProfile={handleSaveProfile}
+        isSavingProfile={isSavingProfile}
+        currentPass={currentPass}
+        setCurrentPass={setCurrentPass}
+        newPass={newPass}
+        setNewPass={setNewPass}
+        confirmPass={confirmPass}
+        setConfirmPass={setConfirmPass}
+        showCurrentPass={showCurrentPass}
+        setShowCurrentPass={setShowCurrentPass}
+        showNewPass={showNewPass}
+        setShowNewPass={setShowNewPass}
+        showConfirmPass={showConfirmPass}
+        setShowConfirmPass={setShowConfirmPass}
+        handleChangePassword={handleChangePassword}
+        isChangingPass={isChangingPass}
+        privacyPublic={privacyPublic}
+        setPrivacyPublic={setPrivacyPublic}
+        privacyCourses={privacyCourses}
+        setPrivacyCourses={setPrivacyCourses}
+        privacyCertificates={privacyCertificates}
+        setPrivacyCertificates={setPrivacyCertificates}
+      />
 
-            {/* Subtabs Bar: General | Avatar | Cover Image | Password | Privacy */}
-            <View style={[styles.settingsTabBar, { borderBottomColor: colors.border }]}>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.settingsTabScroll}>
-                {[
-                  { id: 'general', label: 'General' },
-                  { id: 'avatar', label: 'Avatar' },
-                  { id: 'cover', label: 'Cover Image' },
-                  { id: 'password', label: 'Password' },
-                  { id: 'privacy', label: 'Privacy' },
-                ].map((tab) => {
-                  const isActive = settingsActiveTab === tab.id;
-                  return (
-                    <TouchableOpacity
-                      key={tab.id}
-                      style={[
-                        styles.settingsTabItem,
-                        isActive && [styles.settingsTabItemActive, { borderBottomColor: colors.primary }],
-                      ]}
-                      onPress={() => {
-                        triggerHaptic('selection');
-                        setSettingsActiveTab(tab.id as any);
-                      }}
-                      accessibilityRole="tab"
-                      accessibilityState={{ selected: isActive }}
-                    >
-                      <Text
-                        style={[
-                          styles.settingsTabText,
-                          { color: isActive ? colors.primary : colors.textMuted },
-                          isActive && { fontWeight: '700' },
-                        ]}
-                      >
-                        {tab.label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            </View>
-
-            <ScrollView
-              style={{ flexShrink: 1 }}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              keyboardDismissMode="on-drag"
-              contentContainerStyle={{ paddingBottom: 24 }}
-            >
-              {settingsActiveTab === 'general' && (
-                <View style={{ paddingVertical: 10 }}>
-                  {/* First Name & Last Name */}
-                  <View style={styles.twoColRow}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.inputLabel, { color: colors.text }]}>First name</Text>
-                      <TextInput
-                        style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
-                        value={firstName}
-                        onChangeText={setFirstName}
-                        placeholder="First name"
-                        placeholderTextColor={colors.textMuted}
-                        autoCapitalize="words"
-                        accessibilityLabel="First name"
-                      />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.inputLabel, { color: colors.text }]}>Last name</Text>
-                      <TextInput
-                        style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
-                        value={lastName}
-                        onChangeText={setLastName}
-                        placeholder="Last name"
-                        placeholderTextColor={colors.textMuted}
-                        autoCapitalize="words"
-                        accessibilityLabel="Last name"
-                      />
-                    </View>
-                  </View>
-
-                  {/* Display Name* & Email Address* */}
-                  <View style={[styles.twoColRow, { marginTop: 12 }]}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.inputLabel, { color: colors.text }]}>
-                        Display name<Text style={{ color: colors.danger }}>*</Text>
-                      </Text>
-                      <TextInput
-                        style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
-                        value={displayName}
-                        onChangeText={setDisplayName}
-                        placeholder="Display name"
-                        placeholderTextColor={colors.textMuted}
-                        accessibilityLabel="Display name"
-                      />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.inputLabel, { color: colors.text }]}>
-                        Email address<Text style={{ color: colors.danger }}>*</Text>
-                      </Text>
-                      <TextInput
-                        style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
-                        value={userEmail}
-                        editable={false}
-                        placeholder="Email address"
-                        placeholderTextColor={colors.textMuted}
-                        keyboardType="email-address"
-                        accessibilityLabel="Email address"
-                      />
-                    </View>
-                  </View>
-
-                  {/* Biographical Info */}
-                  <View style={{ marginTop: 12 }}>
-                    <Text style={[styles.inputLabel, { color: colors.text }]}>Biographical Info</Text>
-                    <TextInput
-                      style={[
-                        styles.modalInput,
-                        {
-                          backgroundColor: colors.surfaceSubtle,
-                          color: colors.text,
-                          borderColor: colors.border,
-                          minHeight: 74,
-                          textAlignVertical: 'top',
-                        },
-                      ]}
-                      value={bioInfo}
-                      onChangeText={setBioInfo}
-                      placeholder="Share a little biographical information..."
-                      placeholderTextColor={colors.textMuted}
-                      multiline
-                      accessibilityLabel="Biographical Info"
-                    />
-                    <Text style={[styles.helperText, { color: colors.textMuted }]}>
-                      Share a little biographical information to fill out your profile. This may be shown publicly.
-                    </Text>
-                  </View>
-
-                  {/* Phone Number */}
-                  <View style={{ marginTop: 12 }}>
-                    <Text style={[styles.inputLabel, { color: colors.text }]}>Phone Number</Text>
-                    <TextInput
-                      style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
-                      value={phoneNumber}
-                      onChangeText={setPhoneNumber}
-                      placeholder="Phone Number"
-                      placeholderTextColor={colors.textMuted}
-                      keyboardType="phone-pad"
-                      accessibilityLabel="Phone Number"
-                    />
-                  </View>
-
-                  {/* Social Links: Facebook & X Profile */}
-                  <View style={[styles.twoColRow, { marginTop: 12 }]}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.inputLabel, { color: colors.text }]}>Facebook Profile</Text>
-                      <TextInput
-                        style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
-                        value={socialFacebook}
-                        onChangeText={setSocialFacebook}
-                        placeholder="https://"
-                        placeholderTextColor={colors.textMuted}
-                        autoCapitalize="none"
-                        accessibilityLabel="Facebook Profile URL"
-                      />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.inputLabel, { color: colors.text }]}>X Profile</Text>
-                      <TextInput
-                        style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
-                        value={socialTwitter}
-                        onChangeText={setSocialTwitter}
-                        placeholder="https://"
-                        placeholderTextColor={colors.textMuted}
-                        autoCapitalize="none"
-                        accessibilityLabel="X Profile URL"
-                      />
-                    </View>
-                  </View>
-
-                  {/* Social Links: Youtube Channel & Linkedin Profile */}
-                  <View style={[styles.twoColRow, { marginTop: 12 }]}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.inputLabel, { color: colors.text }]}>Youtube Channel</Text>
-                      <TextInput
-                        style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
-                        value={socialYoutube}
-                        onChangeText={setSocialYoutube}
-                        placeholder="https://"
-                        placeholderTextColor={colors.textMuted}
-                        autoCapitalize="none"
-                        accessibilityLabel="Youtube Channel URL"
-                      />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.inputLabel, { color: colors.text }]}>Linkedin Profile</Text>
-                      <TextInput
-                        style={[styles.modalInput, { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border }]}
-                        value={socialLinkedin}
-                        onChangeText={setSocialLinkedin}
-                        placeholder="https://"
-                        placeholderTextColor={colors.textMuted}
-                        autoCapitalize="none"
-                        accessibilityLabel="Linkedin Profile URL"
-                      />
-                    </View>
-                  </View>
-
-                  {/* Save Changes CTA */}
-                  <TouchableOpacity
-                    style={[styles.saveChangesBtn, { backgroundColor: isDark ? colors.primary : '#102F53' }]}
-                    onPress={handleSaveProfile}
-                    disabled={isSavingProfile}
-                    activeOpacity={0.88}
-                    accessibilityRole="button"
-                    accessibilityLabel="Save profile changes"
-                  >
-                    {isSavingProfile ? (
-                      <ActivityIndicator size="small" color={isDark ? '#0F172A' : '#FFFFFF'} />
-                    ) : (
-                      <Text style={[styles.saveChangesBtnText, { color: isDark ? '#0F172A' : '#FFFFFF' }]}>SAVE CHANGES</Text>
-                    )}
-                  </TouchableOpacity>
-                </View>
-              )}
-
-              {settingsActiveTab === 'avatar' && (
-                <View style={{ paddingVertical: 18, alignItems: 'center' }}>
-                  <View style={[styles.avatarWrapBig, { borderColor: colors.primary }]}>
-                    {user?.avatar ? (
-                      <Image source={{ uri: user.avatar }} style={styles.avatarImgBig} />
-                    ) : (
-                      <Ionicons name="person" size={54} color={colors.primary} />
-                    )}
-                  </View>
-                  <Text style={[styles.avatarNameBig, { color: colors.text }]}>
-                    {displayName || 'Student Profile'}
-                  </Text>
-                  <Text style={[styles.avatarSubBig, { color: colors.textMuted }]}>
-                    Your avatar is synchronized with Gravatar and your official Thriving Skills LMS profile.
-                  </Text>
-                  <TouchableOpacity
-                    style={[styles.secondaryActionBtn, { borderColor: colors.primary, backgroundColor: colors.primaryLight }]}
-                    onPress={() => Linking.openURL('https://gravatar.com').catch(() => {})}
-                    accessibilityRole="button"
-                    accessibilityLabel="Update avatar on Gravatar"
-                  >
-                    <Ionicons name="image-outline" size={16} color={colors.primary} />
-                    <Text style={[styles.secondaryActionText, { color: colors.primary }]}>
-                      Update on Gravatar
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-
-              {settingsActiveTab === 'cover' && (
-                <View style={{ paddingVertical: 18, alignItems: 'center' }}>
-                  <View style={[styles.coverPreviewCard, { backgroundColor: '#102F53' }]}>
-                    <Ionicons name="school" size={42} color="#FFB606" />
-                    <Text style={styles.coverCardTitle}>THRIVING SKILLS</Text>
-                    <Text style={styles.coverCardSub}>Executive Learning & Career Advancement</Text>
-                  </View>
-                  <Text style={[styles.avatarSubBig, { color: colors.textMuted, marginTop: 14 }]}>
-                    Cover photos appear across your public student profile and verified completion badges.
-                  </Text>
-                </View>
-              )}
-
-              {settingsActiveTab === 'password' && (
-                <View style={{ paddingVertical: 10 }}>
-                  <Text style={[styles.inputLabel, { color: colors.text }]}>Old Password</Text>
-                  <View style={[styles.passwordInputRow, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
-                    <TextInput
-                      style={[styles.passwordInputFlex, { color: colors.text }]}
-                      value={currentPass}
-                      onChangeText={setCurrentPass}
-                      secureTextEntry={!showCurrentPass}
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                      returnKeyType="next"
-                      onSubmitEditing={() => tabNewPassRef.current?.focus()}
-                      blurOnSubmit={false}
-                      placeholder="Enter current password"
-                      placeholderTextColor={colors.textMuted}
-                      accessibilityLabel="Current password"
-                    />
-                    <TouchableOpacity
-                      style={styles.eyeToggleBtn}
-                      onPress={() => {
-                        triggerHaptic('light');
-                        setShowCurrentPass(!showCurrentPass);
-                      }}
-                      accessibilityRole="button"
-                      accessibilityLabel={showCurrentPass ? 'Hide current password' : 'Show current password'}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    >
-                      <Ionicons
-                        name={showCurrentPass ? 'eye-off-outline' : 'eye-outline'}
-                        size={18}
-                        color={colors.textMuted}
-                      />
-                    </TouchableOpacity>
-                  </View>
-
-                  <Text style={[styles.inputLabel, { color: colors.text, marginTop: 12 }]}>New Password * (Min 12 Chars)</Text>
-                  <View style={[styles.passwordInputRow, { backgroundColor: colors.surfaceSubtle, borderColor: newPass.length > 0 && newPass.length < 12 ? colors.danger : colors.border }]}>
-                    <TextInput
-                      ref={tabNewPassRef}
-                      style={[styles.passwordInputFlex, { color: colors.text }]}
-                      value={newPass}
-                      onChangeText={setNewPass}
-                      secureTextEntry={!showNewPass}
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                      autoComplete="new-password"
-                      textContentType="newPassword"
-                      returnKeyType="next"
-                      onSubmitEditing={() => tabConfirmPassRef.current?.focus()}
-                      blurOnSubmit={false}
-                      placeholder="Enter new password (min 12 chars)"
-                      placeholderTextColor={colors.textMuted}
-                      accessibilityLabel="New password"
-                    />
-                    <TouchableOpacity
-                      style={styles.eyeToggleBtn}
-                      onPress={() => {
-                        triggerHaptic('light');
-                        setShowNewPass(!showNewPass);
-                      }}
-                      accessibilityRole="button"
-                      accessibilityLabel={showNewPass ? 'Hide new password' : 'Show new password'}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    >
-                      <Ionicons
-                        name={showNewPass ? 'eye-off-outline' : 'eye-outline'}
-                        size={18}
-                        color={colors.textMuted}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                  {/* Official Password Hint from thrivingskill.com / WordPress */}
-                  <View style={[styles.siteHintBox, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
-                    <Ionicons name="information-circle" size={16} color={colors.primary} style={{ marginTop: 1 }} />
-                    <Text style={[styles.siteHintText, { color: colors.textMuted }]}>
-                      <Text style={{ fontWeight: '700', color: colors.text }}>Hint: </Text>
-                      The password should be at least twelve characters long. To make it stronger, use upper and lower case letters, numbers, and symbols like ! " ? $ % ^ & ).
-                    </Text>
-                  </View>
-
-                  <Text style={[styles.inputLabel, { color: colors.text, marginTop: 12 }]}>Confirm New Password</Text>
-                  <View style={[styles.passwordInputRow, { backgroundColor: colors.surfaceSubtle, borderColor: confirmPass.length > 0 && confirmPass !== newPass ? colors.danger : colors.border }]}>
-                    <TextInput
-                      ref={tabConfirmPassRef}
-                      style={[styles.passwordInputFlex, { color: colors.text }]}
-                      value={confirmPass}
-                      onChangeText={setConfirmPass}
-                      secureTextEntry={!showConfirmPass}
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                      returnKeyType="done"
-                      placeholder="Confirm new password"
-                      placeholderTextColor={colors.textMuted}
-                      accessibilityLabel="Confirm new password"
-                    />
-                    <TouchableOpacity
-                      style={styles.eyeToggleBtn}
-                      onPress={() => {
-                        triggerHaptic('light');
-                        setShowConfirmPass(!showConfirmPass);
-                      }}
-                      accessibilityRole="button"
-                      accessibilityLabel={showConfirmPass ? 'Hide confirm password' : 'Show confirm password'}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    >
-                      <Ionicons
-                        name={showConfirmPass ? 'eye-off-outline' : 'eye-outline'}
-                        size={18}
-                        color={colors.textMuted}
-                      />
-                    </TouchableOpacity>
-                  </View>
-
-                  <TouchableOpacity
-                    style={[
-                      styles.saveChangesBtn,
-                      {
-                        backgroundColor: isDark ? colors.primary : '#102F53',
-                        marginTop: 18,
-                      },
-                    ]}
-                    onPress={handleChangePassword}
-                    disabled={isChangingPass}
-                    activeOpacity={0.88}
-                    accessibilityRole="button"
-                    accessibilityLabel="Save password changes"
-                  >
-                    {isChangingPass ? (
-                      <ActivityIndicator size="small" color={isDark ? '#0F172A' : '#FFFFFF'} />
-                    ) : (
-                      <Text style={[styles.saveChangesBtnText, { color: isDark ? '#0F172A' : '#FFFFFF' }]}>SAVE CHANGES</Text>
-                    )}
-                  </TouchableOpacity>
-                </View>
-              )}
-
-              {settingsActiveTab === 'privacy' && (
-                <View style={{ paddingVertical: 12 }}>
-                  <View style={[styles.privacyRow, { borderBottomColor: colors.borderSubtle }]}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.privacyLabel, { color: colors.text }]}>Public Profile</Text>
-                      <Text style={[styles.privacySub, { color: colors.textMuted }]}>
-                        Allow fellow professionals and instructors to view your achievements.
-                      </Text>
-                    </View>
-                    <Switch
-                      value={privacyPublic}
-                      onValueChange={setPrivacyPublic}
-                      trackColor={{ false: '#CBD5E1', true: colors.primary }}
-                      thumbColor="#FFFFFF"
-                    />
-                  </View>
-
-                  <View style={[styles.privacyRow, { borderBottomColor: colors.borderSubtle }]}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.privacyLabel, { color: colors.text }]}>Show Enrolled Courses</Text>
-                      <Text style={[styles.privacySub, { color: colors.textMuted }]}>
-                        Display course progress on your profile.
-                      </Text>
-                    </View>
-                    <Switch
-                      value={privacyCourses}
-                      onValueChange={setPrivacyCourses}
-                      trackColor={{ false: '#CBD5E1', true: colors.primary }}
-                      thumbColor="#FFFFFF"
-                    />
-                  </View>
-
-                  <View style={styles.privacyRow}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.privacyLabel, { color: colors.text }]}>Show Certificates</Text>
-                      <Text style={[styles.privacySub, { color: colors.textMuted }]}>
-                        Display verified digital certificates on your public portfolio.
-                      </Text>
-                    </View>
-                    <Switch
-                      value={privacyCertificates}
-                      onValueChange={setPrivacyCertificates}
-                      trackColor={{ false: '#CBD5E1', true: colors.primary }}
-                      thumbColor="#FFFFFF"
-                    />
-                  </View>
-                </View>
-              )}
-            </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
-
-      {/* Change Password Modal (Section 26 Spec) */}
-      <Modal
+      {/* Standalone Change Password Modal */}
+      <ProfileChangePasswordModal
         visible={changePasswordModalVisible}
-        transparent
-        animationType="slide"
-        statusBarTranslucent={true}
-        onRequestClose={() => setChangePasswordModalVisible(false)}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-          style={styles.modalBackdrop}
-        >
-          <View style={[styles.modalCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border, maxHeight: '90%' }]}>
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              keyboardDismissMode="on-drag"
-              contentContainerStyle={{ paddingBottom: 16 }}
-            >
-            <View style={styles.modalHeader}>
-              <View style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
-                <Text style={[styles.modalTitle, { color: colors.text }]}>
-                  {isBangla ? 'পাসওয়ার্ড পরিবর্তন' : 'Change Password'}
-                </Text>
-                <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
-                  {isBangla ? 'আপনার অ্যাকাউন্টের নিরাপত্তা নিশ্চিত করুন' : 'Update your account credentials safely'}
-                </Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => setChangePasswordModalVisible(false)}
-                style={styles.modalCloseBtn}
-                accessibilityRole="button"
-                accessibilityLabel={isBangla ? 'পাসওয়ার্ড পরিবর্তন উইন্ডো বন্ধ করুন' : 'Close change password modal'}
-              >
-                <Ionicons name="close" size={20} color={colors.text} />
-              </TouchableOpacity>
-            </View>
+        onClose={() => setChangePasswordModalVisible(false)}
+        colors={colors}
+        isBangla={isBangla}
+        currentPass={currentPass}
+        setCurrentPass={setCurrentPass}
+        newPass={newPass}
+        setNewPass={setNewPass}
+        confirmPass={confirmPass}
+        setConfirmPass={setConfirmPass}
+        showCurrentPass={showCurrentPass}
+        setShowCurrentPass={setShowCurrentPass}
+        showNewPass={showNewPass}
+        setShowNewPass={setShowNewPass}
+        showConfirmPass={showConfirmPass}
+        setShowConfirmPass={setShowConfirmPass}
+        handleChangePassword={handleChangePassword}
+        isChangingPass={isChangingPass}
+      />
 
-            <View style={{ gap: 12, marginVertical: 12 }}>
-              <View>
-                <Text style={[styles.inputLabel, { color: colors.text }]}>
-                  {isBangla ? 'বর্তমান পাসওয়ার্ড' : 'Current Password'}
-                </Text>
-                <View style={[styles.passwordInputRow, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
-                  <TextInput
-                    style={[styles.passwordInputFlex, { color: colors.text }]}
-                    value={currentPass}
-                    onChangeText={setCurrentPass}
-                    secureTextEntry={!showCurrentPass}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    returnKeyType="next"
-                    onSubmitEditing={() => modalNewPassRef.current?.focus()}
-                    blurOnSubmit={false}
-                    placeholder="••••••••"
-                    placeholderTextColor={colors.textMuted}
-                    accessibilityLabel={isBangla ? 'বর্তমান পাসওয়ার্ড' : 'Current password'}
-                  />
-                  <TouchableOpacity
-                    style={styles.eyeToggleBtn}
-                    onPress={() => {
-                      triggerHaptic('light');
-                      setShowCurrentPass(!showCurrentPass);
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={showCurrentPass ? 'Hide current password' : 'Show current password'}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
-                    <Ionicons
-                      name={showCurrentPass ? 'eye-off-outline' : 'eye-outline'}
-                      size={18}
-                      color={colors.textMuted}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-
-              <View>
-                <Text style={[styles.inputLabel, { color: colors.text }]}>
-                  {isBangla ? 'নতুন পাসওয়ার্ড (কমপক্ষে ১২ অক্ষর)' : 'New Password (min 12 chars)'}
-                </Text>
-                <View style={[styles.passwordInputRow, { backgroundColor: colors.surfaceSubtle, borderColor: newPass.length > 0 && newPass.length < 12 ? colors.danger : colors.border }]}>
-                  <TextInput
-                    ref={modalNewPassRef}
-                    style={[styles.passwordInputFlex, { color: colors.text }]}
-                    value={newPass}
-                    onChangeText={setNewPass}
-                    secureTextEntry={!showNewPass}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    autoComplete="new-password"
-                    textContentType="newPassword"
-                    returnKeyType="next"
-                    onSubmitEditing={() => modalConfirmPassRef.current?.focus()}
-                    blurOnSubmit={false}
-                    placeholder="••••••••••••"
-                    placeholderTextColor={colors.textMuted}
-                    accessibilityLabel={isBangla ? 'নতুন পাসওয়ার্ড' : 'New password'}
-                  />
-                  <TouchableOpacity
-                    style={styles.eyeToggleBtn}
-                    onPress={() => {
-                      triggerHaptic('light');
-                      setShowNewPass(!showNewPass);
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={showNewPass ? 'Hide new password' : 'Show new password'}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
-                    <Ionicons
-                      name={showNewPass ? 'eye-off-outline' : 'eye-outline'}
-                      size={18}
-                      color={colors.textMuted}
-                    />
-                  </TouchableOpacity>
-                </View>
-                {newPass.length > 0 && newPass.length < 12 && (
-                  <Text style={{ fontSize: 11, color: colors.danger, marginTop: 4, fontWeight: '600' }}>
-                    {isBangla ? 'পাসওয়ার্ড কমপক্ষে ১২ অক্ষরের হতে হবে।' : 'Password should be at least 12 characters long.'}
-                  </Text>
-                )}
-                {/* Official Password Hint from thrivingskill.com / WordPress */}
-                <View style={[styles.siteHintBox, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border, marginTop: 8 }]}>
-                  <Ionicons name="information-circle" size={16} color={colors.primary} style={{ marginTop: 1 }} />
-                  <Text style={[styles.siteHintText, { color: colors.textMuted }]}>
-                    <Text style={{ fontWeight: '700', color: colors.text }}>Hint: </Text>
-                    The password should be at least twelve characters long. To make it stronger, use upper and lower case letters, numbers, and symbols like ! " ? $ % ^ & ).
-                  </Text>
-                </View>
-              </View>
-
-              <View>
-                <Text style={[styles.inputLabel, { color: colors.text }]}>
-                  {isBangla ? 'পাসওয়ার্ড নিশ্চিত করুন' : 'Confirm New Password'}
-                </Text>
-                <View style={[styles.passwordInputRow, { backgroundColor: colors.surfaceSubtle, borderColor: confirmPass.length > 0 && confirmPass !== newPass ? colors.danger : colors.border }]}>
-                  <TextInput
-                    ref={modalConfirmPassRef}
-                    style={[styles.passwordInputFlex, { color: colors.text }]}
-                    value={confirmPass}
-                    onChangeText={setConfirmPass}
-                    secureTextEntry={!showConfirmPass}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    returnKeyType="done"
-                    placeholder="••••••••"
-                    placeholderTextColor={colors.textMuted}
-                    accessibilityLabel={isBangla ? 'পাসওয়ার্ড নিশ্চিত করুন' : 'Confirm new password'}
-                  />
-                  <TouchableOpacity
-                    style={styles.eyeToggleBtn}
-                    onPress={() => {
-                      triggerHaptic('light');
-                      setShowConfirmPass(!showConfirmPass);
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={showConfirmPass ? 'Hide confirm password' : 'Show confirm password'}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
-                    <Ionicons
-                      name={showConfirmPass ? 'eye-off-outline' : 'eye-outline'}
-                      size={18}
-                      color={colors.textMuted}
-                    />
-                  </TouchableOpacity>
-                </View>
-                {confirmPass.length > 0 && confirmPass !== newPass && (
-                  <Text style={{ fontSize: 11, color: colors.danger, marginTop: 4, fontWeight: '600' }}>
-                    {isBangla ? 'পাসওয়ার্ড মেলেনি।' : 'Passwords do not match.'}
-                  </Text>
-                )}
-              </View>
-            </View>
-
-            <View style={styles.modalActionRow}>
-              <TouchableOpacity
-                style={[styles.cancelBtn, { borderColor: colors.border }]}
-                onPress={() => setChangePasswordModalVisible(false)}
-                accessibilityRole="button"
-                accessibilityLabel={isBangla ? 'বাতিল' : 'Cancel'}
-              >
-                <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>
-                  {isBangla ? 'বাতিল' : 'Cancel'}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.saveBtn, { backgroundColor: colors.primary, opacity: isChangingPass ? 0.7 : 1 }]}
-                onPress={handleChangePassword}
-                disabled={isChangingPass}
-                accessibilityRole="button"
-                accessibilityLabel={isBangla ? 'পাসওয়ার্ড আপডেট' : 'Update Password'}
-              >
-                <Ionicons name="shield-checkmark-outline" size={16} color={colors.onPrimary} />
-                <Text style={[styles.saveBtnText, { color: colors.onPrimary }]}>
-                  {isChangingPass
-                    ? (isBangla ? 'আপডেট হচ্ছে...' : 'Updating...')
-                    : (isBangla ? 'পাসওয়ার্ড আপডেট' : 'Update Password')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-            </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
-
-      {/* Payment History & Invoices Modal (Section 15 & 26 Spec) */}
-      <Modal
+      {/* Orders and Course Records Modal */}
+      <ProfileOrdersModal
         visible={paymentHistoryModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setPaymentHistoryModalVisible(false)}
-      >
-        <View style={styles.modalBackdrop}>
-          <View style={[styles.modalCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border, maxHeight: '85%' }]}>
-            <View style={styles.modalHeader}>
-              <View style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
-                <Text style={[styles.modalTitle, { color: colors.text }]}>
-                  {isBangla ? 'অর্ডার ও কোর্স রেকর্ড' : 'Orders & Course Records'}
-                </Text>
-                <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
-                  {isBangla ? 'আপনার অ্যাকাউন্টের সিঙ্ক করা LearnPress ও WooCommerce অর্ডার' : 'LearnPress & WooCommerce orders synced with your account'}
-                </Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => setPaymentHistoryModalVisible(false)}
-                style={styles.modalCloseBtn}
-                accessibilityRole="button"
-                accessibilityLabel={isBangla ? 'অর্ডার রেকর্ড উইন্ডো বন্ধ করুন' : 'Close orders modal'}
-              >
-                <Ionicons name="close" size={20} color={colors.text} />
-              </TouchableOpacity>
-            </View>
+        onClose={() => setPaymentHistoryModalVisible(false)}
+        colors={colors}
+        isBangla={isBangla}
+        enrolledOrderCourses={enrolledOrderCourses}
+        userProgress={userProgress}
+        insetsBottom={insets.bottom}
+      />
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingVertical: 8, gap: 12, paddingBottom: Math.max(insets.bottom, 16) }}>
-              {enrolledOrderCourses.length === 0 ? (
-                <View style={[styles.invoiceItemCard, { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderSubtle, alignItems: 'center', paddingVertical: 20 }]}>
-                  <Ionicons name="library-outline" size={28} color={colors.textMuted} />
-                  <Text style={[styles.invoiceItemTitle, { color: colors.text, textAlign: 'center' }]}>
-                    {isBangla ? 'কোনো সক্রিয় কোর্স এনরোলমেন্ট পাওয়া যায়নি' : 'No Active Course Records Yet'}
-                  </Text>
-                  <Text style={[styles.invoiceGateway, { color: colors.textMuted, textAlign: 'center' }]}>
-                    {isBangla
-                      ? 'আপনার থ্রাইভিং স্কিলস অ্যাকাউন্টে সাইন ইন করলে আপনার এনরোল করা কোর্সগুলো এখানে প্রদর্শিত হবে।'
-                      : 'Sign in with your Thriving Skills account to view courses synced to your member library.'}
-                  </Text>
-                </View>
-              ) : (
-                enrolledOrderCourses.map((courseItem) => {
-                  const prog = userProgress[courseItem.id];
-                  const isFree = !courseItem.price || courseItem.price === 0;
-                  return (
-                    <View
-                      key={courseItem.id}
-                      style={[
-                        styles.invoiceItemCard,
-                        { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderSubtle },
-                      ]}
-                    >
-                      <View style={styles.invoiceItemTop}>
-                        <View style={{ flex: 1 }}>
-                          <Text style={[styles.invoiceItemTitle, { color: colors.text }]} numberOfLines={2}>
-                            {courseItem.title}
-                          </Text>
-                          <Text style={[styles.invoiceMeta, { color: colors.textMuted }]}>
-                            {courseItem.instructor?.name || 'Thriving Skills'} • {prog?.isCompleted ? 'Completed' : 'In Progress'}
-                          </Text>
-                        </View>
-                        <View style={styles.invoiceStatusBadge}>
-                          <Text style={styles.invoiceStatusText}>{isFree ? 'FREE' : 'ENROLLED'}</Text>
-                        </View>
-                      </View>
-                    </View>
-                  );
-                })
-              )}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Permanent In-App Account Deletion Modal (Google Play User Data Policy) */}
-      <Modal
+      {/* Permanent Account Deletion Modal */}
+      <ProfileDeleteAccountModal
         visible={deleteAccountModalVisible}
-        transparent
-        statusBarTranslucent={true}
-        animationType="slide"
-        onRequestClose={() => {
-          if (!isDeletingAccount) setDeleteAccountModalVisible(false);
-        }}
-      >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-          style={styles.modalBackdrop}
-        >
-          <View
-            style={[
-              styles.modalCard,
-              {
-                backgroundColor: colors.surfaceCard,
-                borderColor: colors.border,
-                paddingBottom: Math.max(insets.bottom, 20) + 12,
-              },
-            ]}
-          >
-            <View style={styles.modalHeader}>
-              <View style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
-                <Text style={[styles.modalTitle, { color: colors.danger }]}>
-                  {t('deleteAccountConfirmTitle')}
-                </Text>
-                <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
-                  {user?.email || user?.username}
-                </Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => !isDeletingAccount && setDeleteAccountModalVisible(false)}
-                style={styles.modalCloseBtn}
-                disabled={isDeletingAccount}
-                accessibilityRole="button"
-                accessibilityLabel="Close account deletion modal"
-              >
-                <Ionicons name="close" size={20} color={colors.text} />
-              </TouchableOpacity>
-            </View>
+        onClose={() => setDeleteAccountModalVisible(false)}
+        user={user}
+        colors={colors}
+        isBangla={isBangla}
+        deletePass={deletePass}
+        setDeletePass={setDeletePass}
+        deleteError={deleteError}
+        setDeleteError={setDeleteError}
+        isDeletingAccount={isDeletingAccount}
+        onConfirmDelete={handleConfirmDeleteAccount}
+        insetsBottom={insets.bottom}
+        t={t}
+      />
 
-            <Text style={{ fontSize: 12, lineHeight: 18, color: colors.textMuted, marginBottom: 14 }}>
-              {t('deleteAccountConfirmMsg')}
-            </Text>
-
-            <View>
-              <Text style={[styles.inputLabel, { color: colors.text }]}>
-                {isBangla ? 'নিশ্চিত করতে বর্তমান পাসওয়ার্ড দিন' : 'Enter Current Password to Confirm'}
-              </Text>
-              <TextInput
-                style={[
-                  styles.modalInput,
-                  {
-                    backgroundColor: colors.surfaceSubtle,
-                    color: colors.text,
-                    borderColor: deleteError ? colors.danger : colors.border,
-                  },
-                ]}
-                value={deletePass}
-                onChangeText={(txt) => {
-                  setDeletePass(txt);
-                  if (deleteError) setDeleteError('');
-                }}
-                secureTextEntry
-                autoCapitalize="none"
-                autoCorrect={false}
-                spellCheck={false}
-                autoComplete="current-password"
-                textContentType="password"
-                placeholder="••••••••"
-                placeholderTextColor={colors.textMuted}
-                editable={!isDeletingAccount}
-              />
-            </View>
-
-            {!!deleteError && (
-              <Text style={{ fontSize: 12, color: colors.danger, marginTop: 8, fontWeight: '600' }}>
-                {deleteError}
-              </Text>
-            )}
-
-            <View style={styles.modalActionRow}>
-              <TouchableOpacity
-                style={[styles.cancelBtn, { borderColor: colors.border }]}
-                onPress={() => setDeleteAccountModalVisible(false)}
-                disabled={isDeletingAccount}
-                accessibilityRole="button"
-                accessibilityLabel={isBangla ? 'বাতিল' : 'Cancel'}
-              >
-                <Text style={[styles.cancelBtnText, { color: colors.textMuted }]}>
-                  {isBangla ? 'বাতিল' : 'Cancel'}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.saveBtn, { backgroundColor: colors.danger, opacity: isDeletingAccount ? 0.7 : 1 }]}
-                onPress={handleConfirmDeleteAccount}
-                disabled={isDeletingAccount}
-                accessibilityRole="button"
-                accessibilityLabel={isBangla ? 'স্থায়ীভাবে মুছুন' : 'Permanently Delete'}
-              >
-                {isDeletingAccount ? (
-                  <ActivityIndicator size="small" color={colors.onDanger} />
-                ) : (
-                  <Ionicons name="trash-outline" size={16} color={colors.onDanger} />
-                )}
-                <Text style={[styles.saveBtnText, { color: colors.onDanger }]}>
-                  {isDeletingAccount
-                    ? isBangla
-                      ? 'মুছে ফেলা হচ্ছে...'
-                      : 'Deleting...'
-                    : isBangla
-                    ? 'স্থায়ীভাবে মুছুন'
-                    : 'Permanently Delete'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity
-              style={{ marginTop: 14, alignItems: 'center' }}
-              onPress={() => Linking.openURL(Env.ACCOUNT_DELETION_URL).catch(() => {})}
-              disabled={isDeletingAccount}
-              accessibilityRole="button"
-              accessibilityLabel="Open web data deletion request page"
-            >
-              <Text style={{ fontSize: 12, color: colors.primary, fontWeight: '700' }}>
-                {t('dataDeletionRequestWeb')} →
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
       {/* Certificate Modal (CR-05) */}
       <CertificateModal
         visible={!!selectedCert}
@@ -3179,284 +856,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 40,
   },
-  profileCard: {
-    margin: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-  },
-  avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-  },
-  avatarInitialsCircle: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarInitialsTextBig: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: '800',
-  },
-  profileInfo: {
-    flex: 1,
-  },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 2,
-  },
-  name: {
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  verifiedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexShrink: 0,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    gap: 3,
-  },
-  verifiedText: {
-    fontSize: 9,
-    lineHeight: 11,
-    includeFontPadding: false,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-  },
-  email: {
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  role: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  subscriptionCard: {
-    borderRadius: 16,
-    borderWidth: 1.5,
-    padding: 16,
-    gap: 6,
-  },
-  planBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-    gap: 8,
-  },
-  tierTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    gap: 4,
-    flexShrink: 0,
-  },
-  tierTagText: {
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-  },
-  billingCycleText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  planTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  planExpiry: {
-    fontSize: 11,
-    marginBottom: 8,
-  },
-  subActionRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 6,
-  },
-  managePlanBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    borderRadius: 10,
-    gap: 6,
-  },
-  managePlanText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  invoiceBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    gap: 4,
-  },
-  invoiceBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  statsRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    gap: 12,
-    marginBottom: 16,
-  },
-  statBox: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  statVal: {
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  statLbl: {
-    fontSize: 11,
-    marginTop: 2,
-  },
-  section: {
-    paddingHorizontal: 16,
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-    marginBottom: 8,
-  },
-  badgesScroll: {
-    paddingRight: 16,
-    gap: 12,
-  },
-  badgeCard: {
-    width: 120,
-    padding: 12,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    gap: 6,
-  },
-  badgeIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
-  },
-  badgeTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  badgeStatus: {
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  langPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 10,
-  },
-  langPillText: {
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  cardGroup: {
-    borderRadius: shape.large,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  settingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 48,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    gap: 12,
-  },
-  settingLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    minWidth: 0,
-    paddingRight: 8,
-    gap: 12,
-  },
-  settingLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  settingSubtext: {
-    fontSize: 11,
-    marginTop: 1,
-  },
-  versionText: {
-    fontSize: 12,
-  },
-  corporateCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    gap: 12,
-  },
-  corpIconBg: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  corpInfo: {
-    flex: 1,
-  },
-  corpTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  corpSubtitle: {
-    fontSize: 11,
-    lineHeight: 15,
-  },
-  editProfileBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: MIN_TOUCH_TARGET,
-    gap: 5,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: shape.small,
-    borderWidth: 1,
-    alignSelf: 'flex-start',
-    marginTop: 8,
-  },
-  editProfileBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
   profileSegmentedWrap: {
     flexDirection: 'row',
     marginHorizontal: 16,
@@ -3479,586 +878,5 @@ const styles = StyleSheet.create({
   profileSegmentedText: {
     fontSize: 13,
     fontWeight: '700',
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
-    justifyContent: 'flex-end',
-  },
-  modalCard: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderWidth: 1,
-    padding: 20,
-    maxHeight: '85%',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-    gap: 8,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  modalSubtitle: {
-    fontSize: 12,
-    marginTop: 2,
-    lineHeight: 16,
-  },
-  modalCloseBtn: {
-    minWidth: MIN_TOUCH_TARGET,
-    minHeight: MIN_TOUCH_TARGET,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  inputLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    marginBottom: 6,
-  },
-  modalInput: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-  },
-  passwordInputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-  },
-  passwordInputFlex: {
-    flex: 1,
-    paddingVertical: 10,
-    fontSize: 14,
-  },
-  eyeToggleBtn: {
-    padding: 6,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalActionRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 18,
-  },
-  cancelBtn: {
-    flex: 1,
-    minHeight: 48,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-  },
-  cancelBtnText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  saveBtn: {
-    flex: 2,
-    minHeight: 48,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 10,
-    gap: 6,
-  },
-  saveBtnText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  invoiceItemCard: {
-    borderRadius: 12,
-    borderWidth: 1,
-    padding: 14,
-    gap: 10,
-  },
-  invoiceItemTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: 10,
-  },
-  invoiceItemTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  invoiceMeta: {
-    fontSize: 11,
-    marginTop: 2,
-  },
-  invoiceStatusBadge: {
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    flexShrink: 0,
-  },
-  invoiceStatusText: {
-    color: '#10B981',
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  invoiceItemBottom: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    paddingTop: 10,
-  },
-  invoiceAmount: {
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  invoiceGateway: {
-    fontSize: 11,
-    marginTop: 1,
-  },
-  invoiceReceiptBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  invoiceReceiptBtnText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  /* Guest Banner (CR-05) */
-  guestBanner: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    borderWidth: 1.5,
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 18,
-    elevation: 2,
-  },
-  guestBannerIconBg: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  guestBannerTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  guestBannerSubtitle: {
-    fontSize: 11,
-    lineHeight: 16,
-    marginBottom: 10,
-  },
-  guestLoginBtn: {
-    minHeight: MIN_TOUCH_TARGET,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    alignSelf: 'flex-start',
-    gap: 6,
-  },
-  guestLoginBtnText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-
-  /* Portfolio Section (CR-05) */
-  portfolioHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  titleWithIcon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  sectionTitleMain: {
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: -0.2,
-  },
-  seeAllText: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  portfolioTabs: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 14,
-  },
-  portfolioTabPill: {
-    minHeight: MIN_TOUCH_TARGET,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 22,
-    borderWidth: 1,
-  },
-  portfolioTabPillText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  profileCourseCard: {
-    flexDirection: 'row',
-    borderRadius: 14,
-    borderWidth: 1,
-    padding: 10,
-    marginBottom: 12,
-    elevation: 1,
-    shadowColor: '#102F53',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-  },
-  graduatedCourseCard: {
-    borderWidth: 1.5,
-  },
-  courseThumb: {
-    width: 90,
-    height: 90,
-    borderRadius: 10,
-  },
-  graduatedThumbContainer: {
-    position: 'relative',
-  },
-  graduatedCapPill: {
-    position: 'absolute',
-    bottom: 4,
-    left: 4,
-    right: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 2,
-    borderRadius: 6,
-    gap: 3,
-  },
-  graduatedCapText: {
-    fontSize: 9,
-    fontWeight: '900',
-    color: '#102F53',
-  },
-  courseDetails: {
-    flex: 1,
-    marginLeft: 12,
-    justifyContent: 'center',
-  },
-  courseHeaderBadgeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-    gap: 8,
-  },
-  courseCategoryTag: {
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 6,
-    flexShrink: 1,
-  },
-  courseCategoryText: {
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  coursePercentText: {
-    fontSize: 11,
-    fontWeight: '800',
-    flexShrink: 0,
-  },
-  graduatedBadgePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    gap: 3,
-  },
-  graduatedBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  scoreBadgePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    gap: 2,
-  },
-  scoreBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  courseCardTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    lineHeight: 18,
-    marginBottom: 2,
-  },
-  courseCardInstructor: {
-    fontSize: 11,
-    marginBottom: 6,
-  },
-  courseProgressRow: {
-    marginBottom: 8,
-  },
-  courseProgressTrack: {
-    height: 5,
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginBottom: 3,
-  },
-  courseProgressFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  courseProgressSub: {
-    fontSize: 10,
-  },
-  continueBtn: {
-    minHeight: MIN_TOUCH_TARGET,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-    gap: 5,
-  },
-  continueBtnText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  graduatedActionsRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 6,
-  },
-  certificateActionBtn: {
-    minHeight: MIN_TOUCH_TARGET,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-    gap: 5,
-  },
-  certificateActionBtnText: {
-    color: '#102F53',
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  reviewActionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderRadius: 7,
-    borderWidth: 1,
-    gap: 3,
-  },
-  reviewActionBtnText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  emptyCourseCard: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-    borderRadius: 14,
-    borderWidth: 1,
-    marginBottom: 12,
-  },
-  emptyCourseTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    marginTop: 10,
-    marginBottom: 4,
-  },
-  emptyCourseSub: {
-    fontSize: 11,
-    textAlign: 'center',
-    lineHeight: 16,
-    marginBottom: 14,
-  },
-  emptyActionBtn: {
-    minHeight: MIN_TOUCH_TARGET,
-    justifyContent: 'center',
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 10,
-  },
-  emptyActionBtnText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  settingsTabBar: {
-    borderBottomWidth: 1,
-    marginBottom: 8,
-  },
-  settingsTabScroll: {
-    flexDirection: 'row',
-    gap: 16,
-    paddingHorizontal: 4,
-  },
-  settingsTabItem: {
-    paddingVertical: 10,
-    paddingHorizontal: 4,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  settingsTabItemActive: {
-    borderBottomWidth: 2,
-  },
-  settingsTabText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  twoColRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  helperText: {
-    fontSize: 11,
-    marginTop: 4,
-    lineHeight: 15,
-  },
-  saveChangesBtn: {
-    marginTop: 18,
-    height: 44,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#102F53',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  saveChangesBtnText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  avatarWrapBig: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    marginBottom: 10,
-  },
-  avatarImgBig: {
-    width: '100%',
-    height: '100%',
-  },
-  avatarNameBig: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  avatarSubBig: {
-    fontSize: 12,
-    textAlign: 'center',
-    paddingHorizontal: 24,
-    lineHeight: 17,
-  },
-  secondaryActionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    marginTop: 14,
-  },
-  secondaryActionText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  coverPreviewCard: {
-    width: '100%',
-    height: 120,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-  },
-  coverCardTitle: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '900',
-    letterSpacing: 2,
-    marginTop: 6,
-  },
-  coverCardSub: {
-    color: '#FFB606',
-    fontSize: 11,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  privacyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-  },
-  privacyLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  privacySub: {
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  siteHintBox: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    borderRadius: 10,
-    borderWidth: 1,
-    padding: 10,
-    marginTop: 8,
-    gap: 8,
-  },
-  siteHintText: {
-    fontSize: 12,
-    lineHeight: 17,
-    flex: 1,
   },
 });

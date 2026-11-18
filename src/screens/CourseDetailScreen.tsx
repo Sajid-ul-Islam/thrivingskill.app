@@ -23,12 +23,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { useLearning } from '../context/LearningContext';
 import { useAuth } from '../context/AuthContext';
-import { Header } from '../components/Header';
-import { CurriculumAccordion } from '../components/CurriculumAccordion';
-import { AnimatedTabContent, SpringPressable, CircularProgressRing, StateView, ScrollToTopPill } from '../components/common';
-import { PaymentModal } from '../components/PaymentModal';
-import { CourseQnATab } from '../components/CourseQnATab';
-import { MandatoryReviewModal } from '../components/MandatoryReviewModal';
+import {
+  Header,
+  CurriculumAccordion,
+  PaymentModal,
+  CourseQnATab,
+  MandatoryReviewModal,
+  AnimatedTabContent,
+  SpringPressable,
+  CircularProgressRing,
+  StateView,
+  ScrollToTopPill,
+} from '../components';
 import { useLanguage } from '../context/LanguageContext';
 import { useYouTube } from '../context/YouTubeContext';
 import { useFeedback } from '../context/FeedbackContext';

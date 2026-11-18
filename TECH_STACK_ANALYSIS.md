@@ -81,7 +81,7 @@
 - **Scoring Algorithm**:
   $$\text{Relevance}(C) = w_1 \cdot \text{CategoryOverlap} + w_2 \cdot \text{SearchKeywordMatch} + w_3 \cdot \text{DifficultyFit} + w_4 \cdot \text{CourseRating} - w_5 \cdot \text{IsEnrolled}$$
 - **UI Components**:
-  - Horizontal recommendation shelf on [`HomeScreen.tsx`](file:///home/bearded/Public/thrivingskills/src/screens/HomeScreen.tsx) with personalized badge: *"Because you are studying Artificial Intelligence"*.
+  - Horizontal recommendation shelf on [`HomeScreen.tsx`](./src/screens/HomeScreen.tsx) with personalized badge: *"Because you are studying Artificial Intelligence"*.
 
 ---
 

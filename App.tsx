@@ -41,19 +41,25 @@ import { CourseDetailScreen } from './src/screens/CourseDetailScreen';
 import { LessonPlayerScreen } from './src/screens/LessonPlayerScreen';
 import { YouTubeVideosScreen } from './src/screens/YouTubeVideosScreen';
 
-import { SubscriptionModal } from './src/components/SubscriptionModal';
-import { NotificationModal } from './src/components/NotificationModal';
-import { SkillAssessmentModal } from './src/components/SkillAssessmentModal';
-import { CorporateInquiryModal } from './src/components/CorporateInquiryModal';
-import { AuthModal } from './src/components/AuthModal';
-import { YouTubeMiniPlayer } from './src/components/YouTubeMiniPlayer';
-import { YouTubePlayerModal } from './src/components/YouTubePlayerModal';
-import { UniversalSearchModal } from './src/components/UniversalSearchModal';
-import { BrandDrawer } from './src/components/BrandDrawer';
-import { AppUpdateModal } from './src/components/AppUpdateModal';
+import {
+  SubscriptionModal,
+  NotificationModal,
+  SkillAssessmentModal,
+  CorporateInquiryModal,
+  AuthModal,
+  YouTubeMiniPlayer,
+  YouTubePlayerModal,
+  UniversalSearchModal,
+  BrandDrawer,
+  AppUpdateModal,
+  SupportContactModal,
+  ScreenTransition,
+  CelebrationToast,
+  ActionToast,
+  FloatingCrmWidget,
+  AppErrorBoundary,
+} from './src/components';
 import { AppUpdateService } from './src/services/appUpdateService';
-import { SupportContactModal } from './src/components/modals/SupportContactModal';
-import { ScreenTransition, CelebrationToast, ActionToast, FloatingCrmWidget, AppErrorBoundary } from './src/components/common';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);

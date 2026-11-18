@@ -16,14 +16,19 @@ import { useLanguage } from '../context/LanguageContext';
 import { useGamification } from '../context/GamificationContext';
 import { useLearning } from '../context/LearningContext';
 import { useAuth } from '../context/AuthContext';
-import { Header } from '../components/Header';
-import { CertificateModal } from '../components/CertificateModal';
-import { MandatoryReviewModal } from '../components/modals/MandatoryReviewModal';
-import { YouTubeCard } from '../components/YouTubeCard';
-import { AnimatedTabContent, CircularProgressRing, SpringPressable, StateView } from '../components/common';
+import {
+  Header,
+  CertificateModal,
+  MandatoryReviewModal,
+  YouTubeCard,
+  AnimatedTabContent,
+  CircularProgressRing,
+  SpringPressable,
+  StateView,
+  LearnPressStatsGrid,
+} from '../components';
 import { useYouTube } from '../context/YouTubeContext';
 import { Certificate, Course, LearnPressCourseFilter } from '../types';
-import { LearnPressStatsGrid } from '../components/cards/LearnPressStatsGrid';
 import { MIN_TOUCH_TARGET } from '../theme/typography';
 import { shape } from '../theme/shapes';
 
