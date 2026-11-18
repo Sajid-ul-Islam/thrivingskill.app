@@ -8,6 +8,7 @@ import {
   Modal,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useResponsive } from '../../theme/responsive';
 import { Course, UserProgress } from '../../types';
 
 interface ProfileOrdersModalProps {
@@ -29,6 +30,7 @@ export const ProfileOrdersModal: React.FC<ProfileOrdersModalProps> = ({
   userProgress,
   insetsBottom,
 }) => {
+  const { isTablet } = useResponsive();
   return (
     <Modal
       visible={visible}
@@ -36,10 +38,11 @@ export const ProfileOrdersModal: React.FC<ProfileOrdersModalProps> = ({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View style={styles.modalBackdrop}>
+      <View style={[styles.modalBackdrop, isTablet && styles.modalBackdropTablet]}>
         <View
           style={[
             styles.modalCard,
+            isTablet && styles.modalCardTablet,
             { backgroundColor: colors.surfaceCard, borderColor: colors.border, maxHeight: '85%' },
           ]}
         >
@@ -137,12 +140,23 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.65)',
     justifyContent: 'flex-end',
   },
+  modalBackdropTablet: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   modalCard: {
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderWidth: 1,
     padding: 20,
     maxHeight: '85%',
+  },
+  modalCardTablet: {
+    maxWidth: 600,
+    width: '90%',
+    alignSelf: 'center',
+    borderRadius: 24,
+    borderBottomWidth: 1,
   },
   modalHeader: {
     flexDirection: 'row',

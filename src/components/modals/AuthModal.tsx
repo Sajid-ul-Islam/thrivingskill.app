@@ -26,6 +26,7 @@ import { Env } from '../../config/env';
 import { AuthService } from '../../services/api/authService';
 import { shape } from '../../theme/shapes';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
+import { useResponsive } from '../../theme/responsive';
 
 /**
  * CR-04: Official Native LearnPress JWT Authentication Modal for Thriving Skills.
@@ -88,6 +89,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const { isTablet } = useResponsive();
   const { showToast } = useFeedback();
   const {
     user,
@@ -373,7 +375,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.backdrop}
+        style={[styles.backdrop, isTablet && styles.backdropTablet]}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         <TouchableOpacity
@@ -393,6 +395,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             style={[
               styles.modalCard,
               styles.webViewCard,
+              isTablet && styles.webViewCardTablet,
               {
                 backgroundColor: colors.surface,
                 borderColor: colors.border,
@@ -478,6 +481,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           <View
             style={[
               styles.modalCard,
+              isTablet && styles.modalCardTablet,
               {
                 backgroundColor: colors.surface,
                 borderColor: colors.border,
@@ -1252,6 +1256,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(7, 13, 24, 0.75)',
     justifyContent: 'flex-end',
   },
+  backdropTablet: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   outsideOverlay: {
     position: 'absolute',
     top: 0,
@@ -1269,11 +1277,27 @@ const styles = StyleSheet.create({
     maxHeight: '92%',
     flexShrink: 1,
   },
+  modalCardTablet: {
+    maxWidth: 580,
+    width: '92%',
+    alignSelf: 'center',
+    borderRadius: 28,
+    borderBottomWidth: 1,
+  },
   webViewCard: {
     height: '92%',
     maxHeight: '92%',
     paddingHorizontal: 0,
     paddingTop: 8,
+  },
+  webViewCardTablet: {
+    maxWidth: 760,
+    width: '92%',
+    height: '85%',
+    maxHeight: '85%',
+    alignSelf: 'center',
+    borderRadius: 28,
+    borderBottomWidth: 1,
   },
   webViewHeader: {
     flexDirection: 'row',

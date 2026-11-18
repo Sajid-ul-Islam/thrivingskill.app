@@ -115,7 +115,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const { width: screenWidth } = useWindowDimensions();
-  const cardWidth = Math.max(280, screenWidth - 32);
+  const cardWidth = Math.min(Math.max(280, screenWidth - 32), 880);
   const slides = propSlides && propSlides.length > 0 ? propSlides : SLIDES;
 
   const [activeIndex, setActiveIndex] = useState(0);
@@ -339,6 +339,9 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
 const styles = StyleSheet.create({
   container: {
     marginVertical: 10,
+    maxWidth: 912,
+    width: '100%',
+    alignSelf: 'center',
   },
   listContent: {
     paddingHorizontal: 16,

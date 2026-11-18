@@ -16,6 +16,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { triggerHaptic } from '../../utils/haptics';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
+import { useResponsive } from '../../theme/responsive';
 
 interface SubscriptionModalProps {
   visible: boolean;
@@ -29,14 +30,21 @@ interface SubscriptionModalProps {
 export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, onClose }) => {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const { isTablet } = useResponsive();
   const { isBangla } = useLanguage();
   const { subscriptionTier } = useSaaS();
   const { user, isAuthenticated, setAuthModalVisible } = useAuth();
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <View style={[styles.modalContainer, { backgroundColor: colors.background, borderColor: colors.border }]}>
+      <View style={[styles.overlay, isTablet && styles.overlayTablet]}>
+        <View
+          style={[
+            styles.modalContainer,
+            isTablet && styles.modalContainerTablet,
+            { backgroundColor: colors.background, borderColor: colors.border },
+          ]}
+        >
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: colors.border, backgroundColor: colors.surfaceCard }]}>
             <View style={styles.headerTitleCol}>
@@ -286,12 +294,24 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'flex-end',
   },
+  overlayTablet: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   modalContainer: {
     height: '92%',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderWidth: 1,
     overflow: 'hidden',
+  },
+  modalContainerTablet: {
+    maxWidth: 620,
+    width: '90%',
+    height: '85%',
+    alignSelf: 'center',
+    borderRadius: 24,
+    borderBottomWidth: 1,
   },
   header: {
     flexDirection: 'row',

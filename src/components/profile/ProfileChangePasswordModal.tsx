@@ -13,6 +13,7 @@ import {
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { triggerHaptic } from '../../utils/haptics';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
+import { useResponsive } from '../../theme/responsive';
 
 interface ProfileChangePasswordModalProps {
   visible: boolean;
@@ -55,6 +56,7 @@ export const ProfileChangePasswordModal: React.FC<ProfileChangePasswordModalProp
   handleChangePassword,
   isChangingPass,
 }) => {
+  const { isTablet } = useResponsive();
   const modalNewPassRef = useRef<React.ElementRef<typeof TextInput>>(null);
   const modalConfirmPassRef = useRef<React.ElementRef<typeof TextInput>>(null);
 
@@ -69,11 +71,12 @@ export const ProfileChangePasswordModal: React.FC<ProfileChangePasswordModalProp
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-        style={styles.modalBackdrop}
+        style={[styles.modalBackdrop, isTablet && styles.modalBackdropTablet]}
       >
         <View
           style={[
             styles.modalCard,
+            isTablet && styles.modalCardTablet,
             { backgroundColor: colors.surfaceCard, borderColor: colors.border, maxHeight: '90%' },
           ]}
         >
@@ -311,12 +314,23 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.65)',
     justifyContent: 'flex-end',
   },
+  modalBackdropTablet: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   modalCard: {
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderWidth: 1,
     padding: 20,
     maxHeight: '90%',
+  },
+  modalCardTablet: {
+    maxWidth: 560,
+    width: '90%',
+    alignSelf: 'center',
+    borderRadius: 24,
+    borderBottomWidth: 1,
   },
   modalHeader: {
     flexDirection: 'row',

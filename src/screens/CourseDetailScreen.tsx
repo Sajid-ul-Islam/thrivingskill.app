@@ -43,6 +43,7 @@ import { CoursesService } from '../services/api/coursesService';
 import { Env } from '../config/env';
 import { MIN_TOUCH_TARGET } from '../theme/typography';
 import { shape } from '../theme/shapes';
+import { useResponsive } from '../theme/responsive';
 import { triggerHaptic } from '../utils/haptics';
 import { Lesson } from '../types';
 
@@ -59,6 +60,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const { isTablet, containerClampStyle } = useResponsive();
   const { t, isBangla } = useLanguage();
   const { showToast } = useFeedback();
   const {
@@ -336,12 +338,16 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
       <ScrollView
         ref={scrollViewRef}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 12) + 100 }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          containerClampStyle,
+          { paddingBottom: Math.max(insets.bottom, 12) + 100 },
+        ]}
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >
         {/* Thumbnail Hero with Preview Button */}
-        <View style={styles.heroWrapper}>
+        <View style={[styles.heroWrapper, isTablet && { height: 360 }]}>
           <Image source={{ uri: course.thumbnail, cache: 'force-cache' }} style={styles.heroThumbnail} />
           {course.badge && (
             <View style={[styles.badgeTag, { backgroundColor: colors.badgeBackground }]}>
@@ -862,6 +868,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
             paddingBottom: Math.max(insets.bottom, 12),
           },
         ]}>
+        <View style={styles.bottomEnrollBarInner}>
         {isAdmin ? (
           <View style={styles.bottomPriceCol}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
@@ -967,6 +974,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
               : (isBangla ? 'বিনামূল্যে ভর্তি হন' : 'Enroll for Free')}
           </Text>
         </SpringPressable>
+        </View>
       </View>
 
       {/* CR-02: Mandatory Course Review Modal before Certificate Unlock */}
@@ -1626,9 +1634,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingTop: 10,
     borderTopWidth: 1,
@@ -1636,6 +1641,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 8,
+  },
+  bottomEnrollBarInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    maxWidth: 800,
+    alignSelf: 'center',
     gap: 8,
   },
   bottomPriceCol: {

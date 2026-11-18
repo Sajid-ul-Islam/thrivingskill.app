@@ -19,6 +19,7 @@ import { useFeedback } from '../../context/FeedbackContext';
 import { triggerHaptic } from '../../utils/haptics';
 import { shape } from '../../theme/shapes';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
+import { useResponsive } from '../../theme/responsive';
 
 interface CorporateInquiryModalProps {
   visible: boolean;
@@ -43,6 +44,7 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
 }) => {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
+  const { isTablet } = useResponsive();
   const { showToast } = useFeedback();
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -133,11 +135,12 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-        style={styles.overlay}
+        style={[styles.overlay, isTablet && styles.overlayTablet]}
       >
         <View
           style={[
             styles.modalContainer,
+            isTablet && styles.modalContainerTablet,
             {
               backgroundColor: colors.surfaceCard,
               borderColor: colors.border,
@@ -583,12 +586,23 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.7)',
     justifyContent: 'flex-end',
   },
+  overlayTablet: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   modalContainer: {
     borderTopLeftRadius: shape.extraLarge,
     borderTopRightRadius: shape.extraLarge,
     borderWidth: 1,
     maxHeight: '90%',
     paddingBottom: 24,
+  },
+  modalContainerTablet: {
+    maxWidth: 600,
+    width: '90%',
+    alignSelf: 'center',
+    borderRadius: shape.extraLarge,
+    borderBottomWidth: 1,
   },
   header: {
     flexDirection: 'row',

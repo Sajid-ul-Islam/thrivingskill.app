@@ -27,6 +27,7 @@ import { CoursesService } from '../../services/api/coursesService';
 import { triggerHaptic } from '../../utils/haptics';
 import { shape } from '../../theme/shapes';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
+import { useResponsive } from '../../theme/responsive';
 import { getBundleConfig } from '../../data/bundleCoursesMap';
 
 export const MAX_SYNC_ATTEMPTS = 4;
@@ -52,6 +53,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const { isTablet } = useResponsive();
   const { t, isBangla } = useLanguage();
   const { user, isAuthenticated, setAuthModalVisible } = useAuth();
   const { userProgress, enrollInCourse, refreshCourses, loadCourseDetail } = useLearning();
@@ -663,7 +665,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
-        style={styles.backdrop}
+        style={[styles.backdrop, isTablet && styles.backdropTablet]}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
@@ -677,6 +679,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         <View
           style={[
             styles.modalCard,
+            isTablet && styles.modalCardTablet,
             {
               backgroundColor: colors.surface,
               borderColor: colors.border,
@@ -1503,6 +1506,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.65)',
     justifyContent: 'flex-end',
   },
+  backdropTablet: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   overlayClose: {
     flex: 1,
   },
@@ -1514,6 +1521,13 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: Platform.OS === 'ios' ? 36 : 24,
     maxHeight: '92%',
+  },
+  modalCardTablet: {
+    maxWidth: 620,
+    width: '92%',
+    alignSelf: 'center',
+    borderRadius: 28,
+    borderBottomWidth: 1,
   },
   handle: {
     width: 44,

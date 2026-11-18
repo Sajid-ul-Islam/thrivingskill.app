@@ -23,6 +23,7 @@ import { useFeedback } from '../context/FeedbackContext';
 import { triggerHaptic } from '../utils/haptics';
 import { MIN_TOUCH_TARGET } from '../theme/typography';
 import { shape } from '../theme/shapes';
+import { useResponsive } from '../theme/responsive';
 import {
   Header,
   AppUpdateModal,
@@ -76,6 +77,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 }) => {
   const { colors, isDark, toggleTheme } = useTheme();
   const insets = useSafeAreaInsets();
+  const { isTablet, containerClampStyle } = useResponsive();
   const { language, toggleLanguage, isBangla, t } = useLanguage();
   const { badges, streakDays } = useGamification();
   const { showToast } = useFeedback();
@@ -449,7 +451,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          containerClampStyle,
+          { paddingBottom: Math.max(insets.bottom, 16) + 84 },
+        ]}
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >

@@ -21,6 +21,7 @@ import { useLearning } from '../../context/LearningContext';
 import { triggerHaptic } from '../../utils/haptics';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
+import { useResponsive } from '../../theme/responsive';
 
 import { LegalPolicyModal, LegalTabKey } from './LegalPolicyModal';
 
@@ -52,6 +53,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
   const { isBangla } = useLanguage();
   const { siteBranding } = useLearning();
   const insets = useSafeAreaInsets();
+  const { isTablet, containerClampStyle } = useResponsive();
   const [activeTab, setActiveTab] = useState<AboutTabKey>(initialTab);
   const [legalModalVisible, setLegalModalVisible] = useState(false);
   const [legalInitialTab, setLegalInitialTab] = useState<LegalTabKey>('terms');
@@ -180,7 +182,11 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
         {/* Content Body */}
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={[styles.contentBody, { paddingBottom: Math.max(insets.bottom, 24) + 20 }]}
+          contentContainerStyle={[
+            styles.contentBody,
+            containerClampStyle,
+            { paddingBottom: Math.max(insets.bottom, 24) + 20 },
+          ]}
         >
           {/* TAB 1: OVERVIEW */}
           {activeTab === 'overview' && (

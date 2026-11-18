@@ -53,8 +53,10 @@ check(
 );
 
 // 3. Miller's Law: ProfileScreen cardGroups each have <= 7 interactive rows
-const profileSrc = read('src/screens/ProfileScreen.tsx');
-const lines = profileSrc.split('\n');
+const profileScreenSrc = read('src/screens/ProfileScreen.tsx');
+const profilePrefSrc = read('src/components/profile/ProfilePreferencesSection.tsx');
+const profileSrc = profileScreenSrc + '\n' + profilePrefSrc;
+const lines = profilePrefSrc.split('\n');
 let maxGroupRows = 0;
 let currentGroupRows = 0;
 let inGroup = false;

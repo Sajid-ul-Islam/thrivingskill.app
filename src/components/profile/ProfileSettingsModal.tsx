@@ -18,6 +18,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { UserProfile } from '../../services/api/userService';
 import { triggerHaptic } from '../../utils/haptics';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
+import { useResponsive } from '../../theme/responsive';
 
 export type SettingsTabId = 'general' | 'avatar' | 'cover' | 'password' | 'privacy';
 
@@ -127,6 +128,7 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   setPrivacyCertificates,
 }) => {
   const [activeTab, setActiveTab] = useState<SettingsTabId>('general');
+  const { isTablet } = useResponsive();
   const tabNewPassRef = useRef<React.ElementRef<typeof TextInput>>(null);
   const tabConfirmPassRef = useRef<React.ElementRef<typeof TextInput>>(null);
 
@@ -149,11 +151,12 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-        style={styles.modalBackdrop}
+        style={[styles.modalBackdrop, isTablet && styles.modalBackdropTablet]}
       >
         <View
           style={[
             styles.modalCard,
+            isTablet && styles.modalCardTablet,
             { backgroundColor: colors.surfaceCard, borderColor: colors.border, maxHeight: '92%' },
           ]}
         >
@@ -695,12 +698,23 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.65)',
     justifyContent: 'flex-end',
   },
+  modalBackdropTablet: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   modalCard: {
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderWidth: 1,
     padding: 20,
     maxHeight: '92%',
+  },
+  modalCardTablet: {
+    maxWidth: 600,
+    width: '90%',
+    alignSelf: 'center',
+    borderRadius: 24,
+    borderBottomWidth: 1,
   },
   modalHeader: {
     flexDirection: 'row',

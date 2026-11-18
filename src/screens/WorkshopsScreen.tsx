@@ -17,6 +17,7 @@ import {
 import { triggerHaptic } from '../utils/haptics';
 import { typography, MIN_TOUCH_TARGET } from '../theme/typography';
 import { shape } from '../theme/shapes';
+import { useResponsive } from '../theme/responsive';
 import { Workshop } from '../types';
 
 interface WorkshopsScreenProps {
@@ -38,6 +39,7 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
   const { isBangla } = useLanguage();
   const { showToast } = useFeedback();
   const insets = useSafeAreaInsets();
+  const { isTablet, containerClampStyle } = useResponsive();
   const { workshops, isLoadingCourses, coursesError, refreshCourses } = useLearning();
 
   const [activeTab, setActiveTab] = useState<TabType>('all');
@@ -119,7 +121,11 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
             tintColor={colors.primary}
           />
         }
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          containerClampStyle,
+          { paddingBottom: Math.max(insets.bottom, 16) + 84 },
+        ]}
       >
         {/* Real-Time Live Broadcast Hero Card */}
         {liveWorkshopNow && (
@@ -325,11 +331,16 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
 
         {/* Render Real Workshops */}
         <AnimatedTabContent tabKey={activeTab}>
-          {displayedWorkshops.map((workshop) => (
-            <View key={workshop.id} style={styles.cardWrapper}>
-              <LiveWorkshopCard workshop={workshop} />
-            </View>
-          ))}
+          <View style={isTablet ? styles.tabletGridContainer : undefined}>
+            {displayedWorkshops.map((workshop) => (
+              <View
+                key={workshop.id}
+                style={[styles.cardWrapper, isTablet && styles.cardWrapperTablet]}
+              >
+                <LiveWorkshopCard workshop={workshop} />
+              </View>
+            ))}
+          </View>
         </AnimatedTabContent>
       </ScrollView>
     </View>
@@ -496,6 +507,15 @@ const styles = StyleSheet.create({
   },
   cardWrapper: {
     marginBottom: 16,
+  },
+  tabletGridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  cardWrapperTablet: {
+    width: '48.5%',
+    marginBottom: 0,
   },
 });
 

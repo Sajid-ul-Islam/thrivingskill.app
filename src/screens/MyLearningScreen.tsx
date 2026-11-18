@@ -31,6 +31,7 @@ import { useYouTube } from '../context/YouTubeContext';
 import { Certificate, Course, LearnPressCourseFilter } from '../types';
 import { MIN_TOUCH_TARGET } from '../theme/typography';
 import { shape } from '../theme/shapes';
+import { useResponsive } from '../theme/responsive';
 
 interface MyLearningScreenProps {
   onNavigateToCourse: (courseId: string) => void;
@@ -59,6 +60,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
   const { isBangla } = useLanguage();
   const { streakDays } = useGamification();
   const insets = useSafeAreaInsets();
+  const { isTablet, containerClampStyle } = useResponsive();
   const { user } = useAuth();
   const { savedVideos, playVideo } = useYouTube();
   const {
@@ -157,7 +159,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
     }
 
     return (
-      <>
+      <View style={isTablet ? styles.tabletGridContainer : undefined}>
         {list.map((course) => {
           const percent = getCourseProgressPercentage(course.id);
           const progress = userProgress[course.id];
@@ -198,6 +200,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
               key={course.id}
               style={[
                 styles.learningCard,
+                isTablet && styles.learningCardTablet,
                 {
                   backgroundColor: colors.surfaceCard,
                   borderColor:
@@ -363,7 +366,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
             </View>
           );
         })}
-      </>
+      </View>
     );
   };
 
@@ -382,7 +385,11 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          containerClampStyle,
+          { paddingBottom: Math.max(insets.bottom, 16) + 84 },
+        ]}
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >
@@ -1009,6 +1016,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: 'hidden',
     marginBottom: 16,
+  },
+  tabletGridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  learningCardTablet: {
+    width: '48.5%',
+    marginBottom: 0,
   },
   cardImage: {
     height: 120,

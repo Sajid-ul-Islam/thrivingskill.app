@@ -22,6 +22,7 @@ import { YouTubeVideo, YOUTUBE_CHANNEL } from '../data/youtubeVideos';
 import { triggerHaptic } from '../utils/haptics';
 import { shape } from '../theme/shapes';
 import { MIN_TOUCH_TARGET } from '../theme/typography';
+import { useResponsive } from '../theme/responsive';
 
 interface YouTubeVideosScreenProps {
   onBack: () => void;
@@ -46,6 +47,12 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<VideoCategory>('all');
   const [viewMode, setViewMode] = useState<'card' | 'horizontal'>('card');
+  const { isTablet, isLandscape, numColumns, containerClampStyle } = useResponsive();
+
+  const effectiveColumns = useMemo(() => {
+    if (viewMode === 'horizontal') return isTablet && isLandscape ? 2 : 1;
+    return numColumns;
+  }, [viewMode, isTablet, isLandscape, numColumns]);
 
   const categories: { id: VideoCategory; label: string; icon: string; count?: number }[] = [
     { id: 'all', label: `${isBangla ? 'সব' : 'All'} (${videos.length})`, icon: 'apps-outline' },
@@ -266,9 +273,16 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
 
       {/* Video List with Pull-to-Refresh (Live RSS Sync) */}
       <FlatList
+        key={`yt-flatlist-cols-${effectiveColumns}-${viewMode}`}
         data={filteredVideos}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={[styles.listContent, { paddingBottom: Math.max(insets.bottom, 16) + 40 }]}
+        numColumns={effectiveColumns}
+        columnWrapperStyle={effectiveColumns > 1 ? styles.gridColumnWrapper : undefined}
+        contentContainerStyle={[
+          styles.listContent,
+          containerClampStyle,
+          { paddingBottom: Math.max(insets.bottom, 16) + 40 },
+        ]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -303,11 +317,13 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
           </View>
         }
         renderItem={({ item }) => (
-          <YouTubeCard
-            video={item}
-            layout={viewMode}
-            onPress={handlePlay}
-          />
+          <View style={effectiveColumns > 1 ? styles.cardWrapperTablet : undefined}>
+            <YouTubeCard
+              video={item}
+              layout={viewMode}
+              onPress={handlePlay}
+            />
+          </View>
         )}
         ListEmptyComponent={
           <StateView
@@ -455,6 +471,13 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 16,
     paddingBottom: 40,
+  },
+  gridColumnWrapper: {
+    paddingHorizontal: 12,
+    gap: 12,
+  },
+  cardWrapperTablet: {
+    flex: 1,
   },
   resultsInfoRow: {
     flexDirection: 'row',

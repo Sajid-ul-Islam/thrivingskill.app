@@ -22,6 +22,7 @@ import { useSaaS } from '../context/SaaSContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { useGamification } from '../context/GamificationContext';
+import { useResponsive } from '../theme';
 import {
   Header,
   CourseCard,
@@ -228,6 +229,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const { isTablet, isLandscape, containerClampStyle } = useResponsive();
   const [aboutModalVisible, setAboutModalVisible] = useState(false);
   const [aboutInitialTab, setAboutInitialTab] = useState<AboutTabKey>('overview');
   const [showHeaderSearch, setShowHeaderSearch] = useState(false);
@@ -487,7 +489,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       <ScrollView
         ref={scrollViewRef}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          containerClampStyle,
+          { paddingBottom: Math.max(insets.bottom, 16) + 84 },
+        ]}
         onScroll={handleScroll}
         scrollEventThrottle={16}
         refreshControl={

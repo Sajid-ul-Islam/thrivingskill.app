@@ -30,6 +30,7 @@ import {
 import { triggerHaptic } from '../utils/haptics';
 import { shape } from '../theme/shapes';
 import { MIN_TOUCH_TARGET } from '../theme/typography';
+import { useResponsive } from '../theme/responsive';
 import { Course } from '../types';
 
 interface CoursesScreenProps {
@@ -56,6 +57,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
   const insets = useSafeAreaInsets();
+  const { isTablet, isLandscape, numColumns, containerClampStyle } = useResponsive();
   const {
     courses,
     totalCourseCount,
@@ -383,6 +385,12 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
 
   const isBrowsingDepartments = selectedCategory === 'all' && !hasActiveFilters;
 
+  const effectiveColumns = useMemo(() => {
+    if (isBrowsingDepartments) return 1;
+    if (viewMode === 'list') return isTablet && isLandscape ? 2 : 1;
+    return numColumns;
+  }, [isBrowsingDepartments, viewMode, isTablet, isLandscape, numColumns]);
+
   const handleDeptCardPress = useCallback(
     (deptId: string) => {
       triggerHaptic('selection');
@@ -473,7 +481,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
       }
 
       return (
-        <View style={styles.cardItemWrapper}>
+        <View style={[styles.cardItemWrapper, effectiveColumns > 1 && styles.gridCardItem]}>
           <CourseCard
             course={item as Course}
             horizontal={viewMode === 'list'}
@@ -484,7 +492,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
         </View>
       );
     },
-    [isBrowsingDepartments, colors, isDark, isBangla, handleCategorySelect, onNavigateToCourse, viewMode, bookmarks, userProgress]
+    [isBrowsingDepartments, colors, isDark, isBangla, handleCategorySelect, onNavigateToCourse, viewMode, bookmarks, userProgress, effectiveColumns]
   );
 
   const keyExtractor = useCallback(
@@ -991,14 +999,21 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
       />
 
       <FlatList
+        key={`courses-flatlist-cols-${effectiveColumns}-${viewMode}`}
         ref={flatListRef}
         data={isBrowsingDepartments ? (departmentSections as any[]) : filtered}
         keyExtractor={keyExtractor}
         renderItem={renderItem}
+        numColumns={effectiveColumns}
+        columnWrapperStyle={effectiveColumns > 1 ? styles.gridColumnWrapper : undefined}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={renderEmpty}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) + 84 }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          containerClampStyle,
+          { paddingBottom: Math.max(insets.bottom, 16) + 84 },
+        ]}
         onScroll={handleScroll}
         scrollEventThrottle={16}
         initialNumToRender={6}
@@ -1221,6 +1236,14 @@ const styles = StyleSheet.create({
   },
   cardItemWrapper: {
     paddingHorizontal: 16,
+  },
+  gridColumnWrapper: {
+    paddingHorizontal: 12,
+    gap: 12,
+  },
+  gridCardItem: {
+    flex: 1,
+    paddingHorizontal: 0,
   },
   coursesContainer: {
     paddingHorizontal: 16,

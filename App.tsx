@@ -455,60 +455,62 @@ const MainAppContent: React.FC = () => {
             },
           ]}
         >
-          {tabItems.map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <Pressable
-                key={tab.id}
-                style={styles.tabButton}
-                onPress={() => {
-                  triggerHaptic('selection');
-                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-                  navigateToTab(tab.id);
-                }}
-                android_ripple={{
-                  color: isDark ? 'rgba(255, 182, 6, 0.12)' : 'rgba(16, 47, 83, 0.08)',
-                  borderless: true,
-                  radius: 32,
-                }}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: isActive }}
-                accessibilityLabel={tab.label}
-              >
-                <View style={styles.tabPillIndicator}>
-                  <AnimatedTabIcon
-                    isActive={isActive}
-                    name={isActive ? tab.icon : tab.iconOutline}
-                    size={21}
-                    color={isActive ? colors.tabActive : colors.tabInactive}
-                  />
-                  {tab.isLiveBadge ? (
-                    <View style={styles.tabLivePill}>
-                      <View style={styles.tabLiveDot} />
-                      <Text style={styles.tabLiveText}>LIVE</Text>
-                    </View>
-                  ) : tab.badgeCount && tab.badgeCount > 0 ? (
-                    <View style={[styles.tabBadge, { backgroundColor: colors.accent }]}>
-                      <Text style={[styles.tabBadgeText, { color: colors.onAccent }]}>{tab.badgeCount}</Text>
-                    </View>
-                  ) : null}
-                </View>
-                <Text
-                  style={[
-                    styles.tabButtonLabel,
-                    {
-                      color: isActive ? colors.tabActive : colors.tabInactive,
-                      fontWeight: isActive ? '700' : '500',
-                    },
-                  ]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
+          <View style={styles.tabBarInner}>
+            {tabItems.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <Pressable
+                  key={tab.id}
+                  style={styles.tabButton}
+                  onPress={() => {
+                    triggerHaptic('selection');
+                    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                    navigateToTab(tab.id);
+                  }}
+                  android_ripple={{
+                    color: isDark ? 'rgba(255, 182, 6, 0.12)' : 'rgba(16, 47, 83, 0.08)',
+                    borderless: true,
+                    radius: 32,
+                  }}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: isActive }}
+                  accessibilityLabel={tab.label}
                 >
-                  {tab.label}
-                </Text>
-              </Pressable>
-            );
-          })}
+                  <View style={styles.tabPillIndicator}>
+                    <AnimatedTabIcon
+                      isActive={isActive}
+                      name={isActive ? tab.icon : tab.iconOutline}
+                      size={21}
+                      color={isActive ? colors.tabActive : colors.tabInactive}
+                    />
+                    {tab.isLiveBadge ? (
+                      <View style={styles.tabLivePill}>
+                        <View style={styles.tabLiveDot} />
+                        <Text style={styles.tabLiveText}>LIVE</Text>
+                      </View>
+                    ) : tab.badgeCount && tab.badgeCount > 0 ? (
+                      <View style={[styles.tabBadge, { backgroundColor: colors.accent }]}>
+                        <Text style={[styles.tabBadgeText, { color: colors.onAccent }]}>{tab.badgeCount}</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                  <Text
+                    style={[
+                      styles.tabButtonLabel,
+                      {
+                        color: isActive ? colors.tabActive : colors.tabInactive,
+                        fontWeight: isActive ? '700' : '500',
+                      },
+                    ]}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {tab.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
         </View>
       )}
 
@@ -663,9 +665,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   tabBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
     paddingVertical: 8,
     borderTopWidth: 1,
     shadowOffset: { width: 0, height: -3 },
@@ -673,6 +672,14 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 8,
     paddingBottom: Platform.OS === 'ios' ? 12 : 8,
+  },
+  tabBarInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    width: '100%',
+    maxWidth: 640,
+    alignSelf: 'center',
   },
   tabButton: {
     alignItems: 'center',

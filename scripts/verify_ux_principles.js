@@ -30,7 +30,7 @@ check('HomeScreen is focused on learning launchpad without bloated footer walls'
 });
 
 check('ProfileScreen separates Learning & Stats from Settings & Account via segmented tabs', () => {
-  const profile = read('src/screens/ProfileScreen.tsx');
+  const profile = read('src/screens/ProfileScreen.tsx') + read('src/components/profile/ProfileLearningPortfolio.tsx');
   assert(profile.includes("profileSection === 'learning'"), 'ProfileScreen missing learning segment');
   assert(profile.includes("profileSection === 'settings'"), 'ProfileScreen missing settings segment');
   assert(profile.includes('ProfileLearningAnalytics'), 'ProfileScreen missing CR-05 ProfileLearningAnalytics');
@@ -79,7 +79,7 @@ check('Early inline validation exists in AuthModal, CorporateInquiryModal, and P
   assert(auth.includes('inlineFieldError') && auth.includes('passwordStrength'), 'AuthModal missing inline validation & strength meter');
   const corp = read('src/components/modals/CorporateInquiryModal.tsx');
   assert(corp.includes('emailError') && corp.includes('companyError'), 'CorporateInquiryModal missing inline field errors');
-  const profile = read('src/screens/ProfileScreen.tsx');
+  const profile = read('src/screens/ProfileScreen.tsx') + read('src/components/profile/ProfileChangePasswordModal.tsx');
   assert(profile.includes('Passwords do not match.'), 'ProfileScreen missing inline password match check');
 });
 

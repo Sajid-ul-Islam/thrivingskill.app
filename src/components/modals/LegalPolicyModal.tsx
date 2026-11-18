@@ -15,6 +15,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { triggerHaptic } from '../../utils/haptics';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
+import { useResponsive } from '../../theme/responsive';
 
 export type LegalTabKey = 'terms' | 'privacy';
 
@@ -32,6 +33,7 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
   const insets = useSafeAreaInsets();
+  const { isTablet, containerClampStyle } = useResponsive();
   const [activeTab, setActiveTab] = useState<LegalTabKey>(initialTab);
   const [privacyLang, setPrivacyLang] = useState<'en' | 'bn'>(isBangla ? 'bn' : 'en');
 
@@ -128,7 +130,11 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
 
         <ScrollView
           style={styles.scrollArea}
-          contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
+          contentContainerStyle={[
+            styles.scrollContent,
+            containerClampStyle,
+            { paddingBottom: insets.bottom + 40 },
+          ]}
           showsVerticalScrollIndicator={false}
         >
           {/* TAB 1: TERMS AND CONDITIONS */}
