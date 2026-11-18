@@ -276,14 +276,39 @@ export interface TeamMember {
   skillsMastered: string[];
 }
 
+export type NotificationType =
+  | 'assignment'
+  | 'workshop'
+  | 'certificate'
+  | 'system'
+  | 'ai'
+  | 'course'
+  | 'offer'
+  | 'recommendation'
+  | 'update';
+
 export interface SaaSNotification {
   id: string;
   title: string;
   message: string;
-  type: 'assignment' | 'workshop' | 'certificate' | 'system' | 'ai';
+  type: NotificationType;
   timestamp: string;
   isRead: boolean;
   actionRoute?: { tab: RootTab; courseId?: string };
+  data?: {
+    courseId?: string;
+    courseName?: string;
+    priceBdt?: number;
+    originalPriceBdt?: number;
+    originalPrice?: number;
+    salePrice?: number;
+    discountPercent?: number;
+    thumbnail?: string;
+    badge?: string;
+    actionType?: 'view_course' | 'enroll' | 'bookmark' | 'open_post';
+    postUrl?: string;
+    recommendationReason?: string;
+  };
 }
 
 export interface CopilotMessage {

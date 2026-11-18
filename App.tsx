@@ -58,6 +58,7 @@ import {
   ActionToast,
   FloatingCrmWidget,
   AppErrorBoundary,
+  IosActionNotificationPanel,
 } from './src/components';
 import { AppUpdateService } from './src/services/appUpdateService';
 import { TelemetryService } from './src/services/telemetry/telemetryService';
@@ -105,7 +106,7 @@ const MainAppContent: React.FC = () => {
   const { colors, isDark } = useTheme();
   const { t } = useLanguage();
   const insets = useSafeAreaInsets();
-  const { userProgress, hasActiveLiveWorkshop } = useLearning();
+  const { userProgress, hasActiveLiveWorkshop, toggleBookmark } = useLearning();
   const { activeWorkspace, unreadNotificationsCount } = useSaaS();
   const { user, isAuthenticated, isLoading: isAuthLoading, isAuthModalVisible, setAuthModalVisible } = useAuth();
   const { celebration, clearCelebration } = useGamification();
@@ -646,6 +647,16 @@ const MainAppContent: React.FC = () => {
             ? 74 + Math.max(insets.bottom, Platform.OS === 'ios' ? 12 : 8)
             : Math.max(insets.bottom, 16) + 12
         }
+      />
+
+      {/* Interactive iOS & Android Action Notification Panel */}
+      <IosActionNotificationPanel
+        onNavigateToCourse={navigateToCourse}
+        onBookmarkCourse={(courseId) => {
+          toggleBookmark(courseId);
+          showToast({ message: 'Course saved to Bookmarks', type: 'success' });
+        }}
+        onOpenNotifications={() => setNotificationModalVisible(true)}
       />
     </SafeAreaView>
   );

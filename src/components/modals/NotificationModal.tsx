@@ -6,6 +6,9 @@ import {
   Modal,
   TouchableOpacity,
   ScrollView,
+  Image,
+  Linking,
+  ActivityIndicator,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -31,16 +34,36 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
 }) => {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
-  const { notifications, markNotificationRead, markAllNotificationsRead } = useSaaS();
+  const {
+    notifications,
+    markNotificationRead,
+    markAllNotificationsRead,
+    syncSiteNotifications,
+    isSyncingSite,
+  } = useSaaS();
   const { showToast } = useFeedback();
   const [filterType, setFilterType] = useState<string>('all');
 
-  const filtered = notifications.filter(
-    (n) => filterType === 'all' || n.type === filterType
-  );
+  const filtered = notifications.filter((n) => {
+    if (filterType === 'all') return true;
+    if (filterType === 'offers') return n.type === 'offer';
+    if (filterType === 'courses') return n.type === 'course';
+    if (filterType === 'recommendations') return n.type === 'recommendation';
+    if (filterType === 'updates') return n.type === 'update';
+    if (filterType === 'campus') return n.type === 'workshop' || n.type === 'assignment' || n.type === 'certificate';
+    return n.type === filterType;
+  });
 
   const getIconForType = (type: SaaSNotification['type']) => {
     switch (type) {
+      case 'offer':
+        return { name: 'flame', color: '#DC2626', bg: '#FEE2E2' };
+      case 'course':
+        return { name: 'school', color: '#4F46E5', bg: '#EEF2FF' };
+      case 'recommendation':
+        return { name: 'sparkles', color: '#D97706', bg: '#FEF3C7' };
+      case 'update':
+        return { name: 'megaphone', color: '#16A34A', bg: '#DCFCE7' };
       case 'assignment':
         return { name: 'calendar', color: '#6366F1', bg: '#EEF2FF' };
       case 'workshop':
@@ -56,9 +79,32 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
 
   const handleNotificationPress = (notif: SaaSNotification) => {
     markNotificationRead(notif.id);
-    if (notif.actionRoute && onNavigateToTab) {
+    const targetCourseId = notif.data?.courseId || notif.actionRoute?.courseId;
+
+    if (targetCourseId && onNavigateToTab) {
+      onClose();
+      onNavigateToTab('Courses', targetCourseId);
+    } else if (notif.data?.postUrl) {
+      Linking.openURL(notif.data.postUrl).catch(() => {});
+    } else if (notif.actionRoute && onNavigateToTab) {
       onClose();
       onNavigateToTab(notif.actionRoute.tab, notif.actionRoute.courseId);
+    }
+  };
+
+  const handleSyncWithSite = async () => {
+    triggerHaptic('light');
+    try {
+      const result = await syncSiteNotifications(true);
+      const parts: string[] = [];
+      if (result.newOffersCount > 0) parts.push(`${result.newOffersCount} offers`);
+      if (result.newCoursesCount > 0) parts.push(`${result.newCoursesCount} courses`);
+      if (result.newPostsCount > 0) parts.push(`${result.newPostsCount} updates`);
+
+      const summary = parts.length > 0 ? parts.join(', ') : 'Catalog up to date';
+      showToast({ message: `Synced with thrivingskill.com (${summary})`, type: 'success' });
+    } catch {
+      showToast({ message: 'Live site sync temporarily unavailable', type: 'error' });
     }
   };
 
@@ -68,17 +114,37 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
         <View
           style={[
             styles.modalContainer,
-            { backgroundColor: colors.surfaceCard, borderColor: colors.border, paddingBottom: Math.max(insets.bottom, 20) + 12 },
+            {
+              backgroundColor: colors.surfaceCard,
+              borderColor: colors.border,
+              paddingBottom: Math.max(insets.bottom, 20) + 12,
+            },
           ]}
         >
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
             <View style={styles.headerTitleRow}>
               <Ionicons name="notifications" size={20} color={colors.primary} style={{ flexShrink: 0 }} />
-              <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>Notifications</Text>
+              <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
+                Notifications & Offers
+              </Text>
             </View>
 
             <View style={styles.headerRight}>
+              <TouchableOpacity
+                onPress={handleSyncWithSite}
+                disabled={isSyncingSite}
+                style={[styles.syncBtn, { backgroundColor: colors.surfaceSubtle }]}
+                accessibilityRole="button"
+                accessibilityLabel="Sync notifications from live website"
+              >
+                {isSyncingSite ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <Ionicons name="sync" size={16} color={colors.primary} />
+                )}
+              </TouchableOpacity>
+
               <TouchableOpacity
                 onPress={() => {
                   triggerHaptic('selection');
@@ -89,8 +155,9 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Mark all notifications as read"
               >
-                <Text style={[styles.markAllText, { color: colors.primary }]}>Mark all read</Text>
+                <Text style={[styles.markAllText, { color: colors.primary }]}>Mark read</Text>
               </TouchableOpacity>
+
               <TouchableOpacity
                 onPress={() => {
                   triggerHaptic('light');
@@ -105,13 +172,20 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
             </View>
           </View>
 
-          {/* Filter Pills (Hick's Law: 4 tabs) */}
-          <View style={styles.filterRow} accessibilityRole="tablist">
+          {/* Filter Pills Horizontal Scroll */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterRow}
+            accessibilityRole="tablist"
+          >
             {[
               { id: 'all', label: 'All' },
-              { id: 'assignment', label: 'Assignments' },
-              { id: 'workshop', label: 'Live Sessions' },
-              { id: 'certificate', label: 'Credentials' },
+              { id: 'offers', label: '🔥 Offers' },
+              { id: 'courses', label: '🎓 Courses' },
+              { id: 'recommendations', label: '✨ For You' },
+              { id: 'updates', label: '📢 Insights' },
+              { id: 'campus', label: '📅 Sessions' },
             ].map((f) => (
               <TouchableOpacity
                 key={f.id}
@@ -141,7 +215,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                 </Text>
               </TouchableOpacity>
             ))}
-          </View>
+          </ScrollView>
 
           {/* Notifications List */}
           <ScrollView contentContainerStyle={styles.listContent}>
@@ -149,13 +223,17 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
               <StateView
                 mode="empty"
                 icon="notifications-off-outline"
-                title="No notifications in this category"
-                message="You're all caught up on learning updates and credentials."
+                title="No updates in this category"
+                message="You're all caught up on courses, promotional offers, and platform insights."
                 compact
               />
             ) : (
               filtered.map((item) => {
                 const icon = getIconForType(item.type);
+                const discount = item.data?.discountPercent;
+                const salePrice = item.data?.salePrice || item.data?.priceBdt;
+                const thumbnail = item.data?.thumbnail;
+
                 return (
                   <TouchableOpacity
                     key={item.id}
@@ -171,9 +249,13 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                     accessibilityRole="button"
                     accessibilityLabel={`${item.title}, ${item.isRead ? 'read' : 'unread'}`}
                   >
-                    <View style={[styles.iconBg, { backgroundColor: icon.bg }]}>
-                      <Ionicons name={icon.name as any} size={18} color={icon.color} />
-                    </View>
+                    {thumbnail ? (
+                      <Image source={{ uri: thumbnail }} style={styles.thumbnail} resizeMode="cover" />
+                    ) : (
+                      <View style={[styles.iconBg, { backgroundColor: icon.bg }]}>
+                        <Ionicons name={icon.name as any} size={18} color={icon.color} />
+                      </View>
+                    )}
 
                     <View style={styles.contentCol}>
                       <View style={styles.notifTopRow}>
@@ -182,6 +264,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                             styles.notifTitle,
                             { color: colors.text, fontWeight: item.isRead ? '600' : '800' },
                           ]}
+                          numberOfLines={1}
                         >
                           {item.title}
                         </Text>
@@ -190,9 +273,22 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                         </Text>
                       </View>
 
-                      <Text style={[styles.message, { color: colors.textMuted }]}>
+                      <Text style={[styles.message, { color: colors.textMuted }]} numberOfLines={2}>
                         {item.message}
                       </Text>
+
+                      {discount ? (
+                        <View style={styles.discountRow}>
+                          <View style={styles.discountBadge}>
+                            <Text style={styles.discountBadgeText}>-{discount}% OFF</Text>
+                          </View>
+                          {salePrice ? (
+                            <Text style={[styles.salePriceText, { color: colors.primary }]}>
+                              ৳{salePrice}
+                            </Text>
+                          ) : null}
+                        </View>
+                      ) : null}
                     </View>
 
                     {!item.isRead && (
@@ -216,7 +312,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    maxHeight: '80%',
+    maxHeight: '82%',
     borderTopLeftRadius: shape.extraLarge,
     borderTopRightRadius: shape.extraLarge,
     borderWidth: 1,
@@ -226,10 +322,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    paddingHorizontal: 18,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    gap: 10,
+    gap: 8,
   },
   headerTitleRow: {
     flexDirection: 'row',
@@ -237,7 +333,6 @@ const styles = StyleSheet.create({
     gap: 8,
     flex: 1,
     minWidth: 0,
-    marginRight: 8,
   },
   headerTitle: {
     ...typography.h3,
@@ -246,13 +341,20 @@ const styles = StyleSheet.create({
   headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
     flexShrink: 0,
+  },
+  syncBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: shape.full,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   markAllBtn: {
     minHeight: MIN_TOUCH_TARGET,
     justifyContent: 'center',
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
   },
   markAllText: {
     ...typography.caption,
@@ -266,51 +368,56 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   filterRow: {
-    flexDirection: 'row',
     paddingHorizontal: 16,
     paddingVertical: 12,
     gap: 8,
   },
   filterPill: {
-    minHeight: 40,
+    minHeight: 38,
     justifyContent: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: shape.small,
     borderWidth: 1,
   },
   filterText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   listContent: {
     paddingHorizontal: 16,
-    paddingBottom: 20,
+    paddingBottom: 24,
     gap: 10,
   },
   notifItem: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     padding: 12,
     borderRadius: 14,
     borderWidth: 1,
     gap: 12,
   },
+  thumbnail: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+  },
   iconBg: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   contentCol: {
     flex: 1,
+    minWidth: 0,
   },
   notifTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 3,
   },
   notifTitle: {
     fontSize: 13,
@@ -324,18 +431,31 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
   },
+  discountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 4,
+  },
+  discountBadge: {
+    backgroundColor: '#DC2626',
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 4,
+  },
+  discountBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  salePriceText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
   unreadDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
     alignSelf: 'center',
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    paddingVertical: 40,
-    gap: 8,
-  },
-  emptyText: {
-    fontSize: 13,
   },
 });

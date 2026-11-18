@@ -5,17 +5,92 @@ export interface NotificationSettings {
   streakReminders: boolean;
   liveClassAlerts: boolean;
   courseUpdates: boolean;
+  promotionalOffers: boolean;
+  recommendations: boolean;
   reminderHour: number; // 0-23 (default: 20 -> 8:00 PM)
 }
+
+export type InAppNotificationType =
+  | 'assignment'
+  | 'workshop'
+  | 'certificate'
+  | 'system'
+  | 'ai'
+  | 'course'
+  | 'offer'
+  | 'recommendation'
+  | 'update'
+  | 'streak_nudge'
+  | 'cert_ready';
 
 export interface InAppNotification {
   id: string;
   title: string;
   body: string;
+  type: InAppNotificationType;
   data?: Record<string, any>;
   timestamp: number;
   read: boolean;
+  actionCategory?: string;
 }
+
+export const ANDROID_NOTIFICATION_CHANNELS = {
+  OFFERS: {
+    id: 'thrivingskill_offers',
+    name: 'Discounts & Promotional Offers',
+    importance: 4, // High
+    vibration: true,
+    sound: true,
+  },
+  COURSES: {
+    id: 'thrivingskill_courses',
+    name: 'New Courses Published',
+    importance: 4,
+    vibration: true,
+    sound: true,
+  },
+  RECOMMENDATIONS: {
+    id: 'thrivingskill_recommendations',
+    name: 'Automated Recommendations',
+    importance: 3, // Default
+    vibration: false,
+    sound: true,
+  },
+  UPDATES: {
+    id: 'thrivingskill_updates',
+    name: 'Platform Updates & Articles',
+    importance: 3,
+    vibration: false,
+    sound: true,
+  },
+} as const;
+
+export const IOS_NOTIFICATION_CATEGORIES = {
+  RECOMMENDATION: {
+    identifier: 'TS_RECOMMENDATION_ACTION_CATEGORY',
+    actions: [
+      { identifier: 'VIEW_COURSE', title: 'View Course 🚀', options: { foreground: true } },
+      { identifier: 'BOOKMARK', title: 'Save for Later 🔖', options: { foreground: false } },
+      { identifier: 'DISMISS', title: 'Dismiss ✕', options: { destructive: true } },
+    ],
+  },
+  OFFER: {
+    identifier: 'TS_OFFER_ACTION_CATEGORY',
+    actions: [
+      { identifier: 'CLAIM_OFFER', title: 'Claim Offer 🔥', options: { foreground: true } },
+      { identifier: 'BOOKMARK', title: 'Bookmark 🔖', options: { foreground: false } },
+      { identifier: 'DISMISS', title: 'Dismiss ✕', options: { destructive: true } },
+    ],
+  },
+  COURSE: {
+    identifier: 'TS_COURSE_ACTION_CATEGORY',
+    actions: [
+      { identifier: 'EXPLORE_COURSE', title: 'Explore 🎓', options: { foreground: true } },
+      { identifier: 'BOOKMARK', title: 'Save 🔖', options: { foreground: false } },
+      { identifier: 'DISMISS', title: 'Dismiss ✕', options: { destructive: true } },
+    ],
+  },
+} as const;
 
 const STORAGE_KEY_TOKEN = '@thrivingskill_push_token';
 const STORAGE_KEY_SETTINGS = '@thrivingskill_notification_settings';
@@ -25,11 +100,32 @@ const DEFAULT_SETTINGS: NotificationSettings = {
   streakReminders: true,
   liveClassAlerts: true,
   courseUpdates: true,
+  promotionalOffers: true,
+  recommendations: true,
   reminderHour: 20,
 };
 
 export class PushNotificationService {
   private static cachedToken: string | null = null;
+  private static listeners = new Set<(notif: InAppNotification) => void>();
+
+  /**
+   * Subscribe to live in-app notifications (e.g. for iOS action panel banner)
+   */
+  static subscribe(listener: (notif: InAppNotification) => void): () => void {
+    this.listeners.add(listener);
+    return () => {
+      this.listeners.delete(listener);
+    };
+  }
+
+  private static notifySubscribers(notif: InAppNotification): void {
+    this.listeners.forEach((fn) => {
+      try {
+        fn(notif);
+      } catch {}
+    });
+  }
 
   /**
    * Registers the device for push notifications and returns the active push token
@@ -46,6 +142,16 @@ export class PushNotificationService {
       const deviceId = `ts_push_${Platform.OS}_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 8)}`;
       await AsyncStorage.setItem(STORAGE_KEY_TOKEN, deviceId);
       this.cachedToken = deviceId;
+
+      // In browser environment, request Web Notification permission if available
+      if (Platform.OS === 'web' && typeof window !== 'undefined' && 'Notification' in window) {
+        try {
+          if (Notification.permission === 'default') {
+            await Notification.requestPermission();
+          }
+        } catch {}
+      }
+
       return deviceId;
     } catch {
       return null;
@@ -77,29 +183,180 @@ export class PushNotificationService {
   }
 
   /**
-   * Dispatches or schedules a local notifications nudge (e.g., streak retention)
+   * Dispatches or schedules an in-app or native notification
    */
   static async dispatchNotification(
     title: string,
     body: string,
-    data?: Record<string, any>
-  ): Promise<void> {
-    try {
-      const notification: InAppNotification = {
-        id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-        title,
-        body,
-        data,
-        timestamp: Date.now(),
-        read: false,
-      };
+    type: InAppNotificationType = 'system',
+    data?: Record<string, any>,
+    actionCategory?: string
+  ): Promise<InAppNotification> {
+    const notification: InAppNotification = {
+      id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      title,
+      body,
+      type,
+      data,
+      timestamp: Date.now(),
+      read: false,
+      actionCategory,
+    };
 
+    try {
       const raw = await AsyncStorage.getItem(STORAGE_KEY_INBOX);
       const list: InAppNotification[] = raw ? JSON.parse(raw) : [];
       list.unshift(notification);
-      // Keep last 30 notifications in student inbox
-      await AsyncStorage.setItem(STORAGE_KEY_INBOX, JSON.stringify(list.slice(0, 30)));
+      // Keep last 40 notifications in student inbox
+      await AsyncStorage.setItem(STORAGE_KEY_INBOX, JSON.stringify(list.slice(0, 40)));
     } catch {}
+
+    // Dispatch to Web Notifications API if supported and granted
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && 'Notification' in window) {
+      try {
+        if (Notification.permission === 'granted') {
+          new Notification(title, {
+            body,
+            icon: data?.thumbnail || '/favicon.png',
+            tag: notification.id,
+          });
+        }
+      } catch {}
+    }
+
+    // Broadcast to UI subscribers (Action Notification Panel, Modals, Badges)
+    this.notifySubscribers(notification);
+    return notification;
+  }
+
+  /**
+   * Dispatches a notification for newly published courses on https://thrivingskill.com
+   */
+  static async notifyNewCourse(
+    course: { id: string; title: string; priceBdt?: number; thumbnail?: string },
+    isBangla: boolean = false
+  ): Promise<InAppNotification | null> {
+    const settings = await this.getSettings();
+    if (!settings.courseUpdates) return null;
+
+    const priceText = course.priceBdt ? ` (৳${course.priceBdt})` : '';
+    const title = isBangla ? '🎓 নতুন কোর্স প্রকাশিত হয়েছে!' : '🎓 New Course Published!';
+    const body = isBangla
+      ? `"${course.title}" কোর্সটি এখন উপলব্ধ${priceText}। পেশাগত দক্ষতায় এক ধাপ এগিয়ে যান!`
+      : `"${course.title}" is now available${priceText}. Enroll now to level up your career!`;
+
+    return this.dispatchNotification(
+      title,
+      body,
+      'course',
+      {
+        courseId: course.id,
+        courseName: course.title,
+        priceBdt: course.priceBdt,
+        thumbnail: course.thumbnail,
+        channelId: ANDROID_NOTIFICATION_CHANNELS.COURSES.id,
+      },
+      IOS_NOTIFICATION_CATEGORIES.COURSE.identifier
+    );
+  }
+
+  /**
+   * Dispatches a notification for promotional discount offers & flash sales on the site
+   */
+  static async notifyCourseOffer(
+    course: {
+      id: string;
+      title: string;
+      priceBdt: number;
+      originalPriceBdt: number;
+      discountPercent: number;
+      thumbnail?: string;
+    },
+    isBangla: boolean = false
+  ): Promise<InAppNotification | null> {
+    const settings = await this.getSettings();
+    if (!settings.promotionalOffers) return null;
+
+    const title = isBangla
+      ? `🔥 বিশেষ ছাড়: ${course.discountPercent}% ছাড়!`
+      : `🔥 Special Offer: ${course.discountPercent}% OFF!`;
+    const body = isBangla
+      ? `"${course.title}" এখন মাত্র ৳${course.priceBdt} (পূর্বে ছিল ৳${course.originalPriceBdt})। অফারটি সীমিত সময়ের জন্য!`
+      : `Get "${course.title}" for only ৳${course.priceBdt} (Regular: ৳${course.originalPriceBdt}). Limited time discount!`;
+
+    return this.dispatchNotification(
+      title,
+      body,
+      'offer',
+      {
+        courseId: course.id,
+        courseName: course.title,
+        priceBdt: course.priceBdt,
+        originalPriceBdt: course.originalPriceBdt,
+        discountPercent: course.discountPercent,
+        thumbnail: course.thumbnail,
+        channelId: ANDROID_NOTIFICATION_CHANNELS.OFFERS.id,
+      },
+      IOS_NOTIFICATION_CATEGORIES.OFFER.identifier
+    );
+  }
+
+  /**
+   * Dispatches a notification for new platform articles & updates from the site
+   */
+  static async notifySiteUpdate(
+    post: { id: number; title: string; link?: string },
+    isBangla: boolean = false
+  ): Promise<InAppNotification | null> {
+    const settings = await this.getSettings();
+    if (!settings.courseUpdates) return null;
+
+    const title = isBangla ? '📢 নতুন আর্টিকেল ও ক্যারিয়ার আপডেট' : '📢 Career Insight & Platform Update';
+    const body = isBangla
+      ? `"${post.title}" – থ্রাইভিং স্কিলস-এর নতুন ব্লগ পোস্টটি পড়ুন এবং জানুন গুরুত্বপূর্ণ ইনসাইট!`
+      : `"${post.title}" – Read the latest expert insights and skills guide on Thriving Skills.`;
+
+    return this.dispatchNotification(
+      title,
+      body,
+      'update',
+      {
+        postId: post.id,
+        postTitle: post.title,
+        postUrl: post.link,
+        channelId: ANDROID_NOTIFICATION_CHANNELS.UPDATES.id,
+      }
+    );
+  }
+
+  /**
+   * Dispatches an automated personalized course recommendation
+   */
+  static async notifyCourseRecommendation(
+    course: { id: string; title: string; reason: string; thumbnail?: string },
+    isBangla: boolean = false
+  ): Promise<InAppNotification | null> {
+    const settings = await this.getSettings();
+    if (!settings.recommendations) return null;
+
+    const title = isBangla ? '✨ আপনার জন্য বিশেষ কোর্স পরামর্শ' : '✨ Recommended For You';
+    const body = isBangla
+      ? `${course.reason}: "${course.title}" কোর্সটি দিয়ে আপনার দক্ষতা একধাপ এগিয়ে নিন।`
+      : `${course.reason}: Accelerate your learning journey with "${course.title}".`;
+
+    return this.dispatchNotification(
+      title,
+      body,
+      'recommendation',
+      {
+        courseId: course.id,
+        courseName: course.title,
+        recommendationReason: course.reason,
+        thumbnail: course.thumbnail,
+        channelId: ANDROID_NOTIFICATION_CHANNELS.RECOMMENDATIONS.id,
+      },
+      IOS_NOTIFICATION_CATEGORIES.RECOMMENDATION.identifier
+    );
   }
 
   /**
@@ -114,6 +371,7 @@ export class PushNotificationService {
       isBangla
         ? 'প্রতিদিন মাত্র ১০ মিনিট শিখে পেশাগত দক্ষতার শীর্ষে থাকুন। আজকের লেকচার শুরু করুন!'
         : 'Dedicate just 10 minutes today to maintain your executive learning streak.',
+      'streak_nudge',
       { type: 'streak_nudge' }
     );
   }
@@ -127,6 +385,7 @@ export class PushNotificationService {
       isBangla
         ? `অভিনন্দন! "${courseTitle}" কোর্সের অফিসিয়াল সার্টিফিকেট এখন লিংকডইনে শেয়ারের জন্য প্রস্তুত।`
         : `Congratulations! Your verified credential for "${courseTitle}" is ready to share on LinkedIn.`,
+      'cert_ready',
       { type: 'cert_ready', courseTitle }
     );
   }

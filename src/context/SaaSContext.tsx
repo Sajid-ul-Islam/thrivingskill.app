@@ -10,6 +10,8 @@ import {
   SkillAssessmentResult,
   PlanFeature,
 } from '../types';
+import { PushNotificationService } from '../services/notifications/pushNotificationService';
+import { SiteSyncNotificationService, SiteSyncResult } from '../services/notifications/siteSyncNotificationService';
 
 const SAAS_STORAGE_KEY = '@thriving_skill_saas_state_v1';
 
@@ -73,6 +75,7 @@ interface SaaSContextType {
   copilotMessages: CopilotMessage[];
   assessmentResult: SkillAssessmentResult | null;
   unreadNotificationsCount: number;
+  isSyncingSite: boolean;
   // Actions
   setSubscriptionTier: (tier: SubscriptionTier) => void;
   setBillingInterval: (interval: BillingInterval) => void;
@@ -81,6 +84,8 @@ interface SaaSContextType {
   assignCourseToMember: (memberId: string, courseId: string) => void;
   markNotificationRead: (notifId: string) => void;
   markAllNotificationsRead: () => void;
+  addNotification: (notification: SaaSNotification) => void;
+  syncSiteNotifications: (force?: boolean) => Promise<SiteSyncResult>;
   sendCopilotMessage: (text: string) => Promise<void>;
   clearCopilotHistory: () => void;
   saveAssessmentResult: (result: SkillAssessmentResult) => void;
@@ -204,6 +209,53 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
     saveToStorage({ notifications: updated });
   };
 
+  const [isSyncingSite, setIsSyncingSite] = useState(false);
+
+  const addNotification = (notif: SaaSNotification) => {
+    setNotifications((prev) => {
+      if (prev.some((n) => n.id === notif.id)) return prev;
+      const updated = [notif, ...prev];
+      saveToStorage({ notifications: updated.slice(0, 50) });
+      return updated.slice(0, 50);
+    });
+  };
+
+  const syncSiteNotifications = async (force: boolean = false): Promise<SiteSyncResult> => {
+    setIsSyncingSite(true);
+    try {
+      const res = await SiteSyncNotificationService.syncWithLiveSite({ forceRefresh: force });
+      return res;
+    } finally {
+      setIsSyncingSite(false);
+    }
+  };
+
+  // Connect live PushNotificationService events into SaaS notifications state
+  useEffect(() => {
+    const unsub = PushNotificationService.subscribe((inApp) => {
+      const saasNotif: SaaSNotification = {
+        id: inApp.id,
+        title: inApp.title,
+        message: inApp.body,
+        type: inApp.type as any,
+        timestamp: 'Just now',
+        isRead: false,
+        actionRoute: inApp.data?.courseId ? { tab: 'Courses', courseId: inApp.data.courseId } : undefined,
+        data: inApp.data,
+      };
+      addNotification(saasNotif);
+    });
+    return unsub;
+  }, []);
+
+  // Background sync on app initialization
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      syncSiteNotifications(false).catch(() => {});
+    }, 3500);
+    return () => clearTimeout(timer);
+  }, []);
+
   const saveAssessmentResult = (result: SkillAssessmentResult) => {
     setAssessmentResult(result);
     saveToStorage({ assessmentResult: result });
@@ -302,6 +354,7 @@ Would you like a step-by-step framework, a downloadable template, or a targeted 
         copilotMessages,
         assessmentResult,
         unreadNotificationsCount,
+        isSyncingSite,
         setSubscriptionTier,
         setBillingInterval,
         switchWorkspace,
@@ -309,6 +362,8 @@ Would you like a step-by-step framework, a downloadable template, or a targeted 
         assignCourseToMember,
         markNotificationRead,
         markAllNotificationsRead,
+        addNotification,
+        syncSiteNotifications,
         sendCopilotMessage,
         clearCopilotHistory,
         saveAssessmentResult,

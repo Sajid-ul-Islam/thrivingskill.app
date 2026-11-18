@@ -17,3 +17,4 @@ export * from './StateView';
 export * from './FloatingCrmWidget';
 export * from './ScrollToTopPill';
 export * from './AppErrorBoundary';
+export * from './IosActionNotificationPanel';
