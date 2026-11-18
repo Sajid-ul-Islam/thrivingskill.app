@@ -353,7 +353,7 @@ export class PushNotificationService {
     listener: (data: Record<string, any>) => void
   ): () => void {
     try {
-      const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      const subscription = Notifications.addNotificationResponseReceivedListener((response: Notifications.NotificationResponse) => {
         const data = response?.notification?.request?.content?.data;
         if (data) {
           listener(data);
