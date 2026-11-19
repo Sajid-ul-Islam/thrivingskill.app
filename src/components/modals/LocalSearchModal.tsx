@@ -50,6 +50,7 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isSemanticActive, setIsSemanticActive] = useState<boolean>(LiteRtService.isSemanticEnabled());
   const [suggestedEnhancement, setSuggestedEnhancement] = useState<string | null>(null);
+  const [autoSuggestions, setAutoSuggestions] = useState<string[]>([]);
   const inputRef = useRef<React.ElementRef<typeof TextInput>>(null);
 
   const handleToggleSemantic = async () => {
@@ -99,8 +100,13 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
       if (!clean) {
         setResults([]);
         setSuggestedEnhancement(null);
+        setAutoSuggestions([]);
         return;
       }
+
+      // Fast In-Memory Prefix Trie suggestions (<1ms)
+      const suggestions = LocalSearchEngine.getAutoSuggestions(clean, 5);
+      setAutoSuggestions(suggestions.filter((s) => s.toLowerCase() !== clean.toLowerCase()));
 
       // Check on-device Gemini Nano query proofreading / semantic expansion
       if (clean.length >= 2) {
@@ -275,6 +281,46 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
                 <Text style={styles.nanoBadgeText}>Nano AI</Text>
               </View>
             </TouchableOpacity>
+          )}
+
+          {/* Prefix Trie Predictive Autocomplete Bar */}
+          {autoSuggestions.length > 0 && (
+            <View style={styles.suggestionsBar}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={styles.suggestionsScroll}
+              >
+                <Text style={[styles.suggestionHeader, { color: colors.textMuted }]}>
+                  Predictions:
+                </Text>
+                {autoSuggestions.map((suggestion) => (
+                  <TouchableOpacity
+                    key={suggestion}
+                    style={[
+                      styles.suggestionPill,
+                      {
+                        backgroundColor: isDark ? 'rgba(56, 189, 248, 0.15)' : 'rgba(16, 47, 83, 0.08)',
+                        borderColor: isDark ? 'rgba(56, 189, 248, 0.3)' : 'rgba(16, 47, 83, 0.15)',
+                      },
+                    ]}
+                    onPress={() => {
+                      triggerHaptic('light');
+                      handleSearch(suggestion, filterType);
+                    }}
+                    hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Auto-complete query: ${suggestion}`}
+                  >
+                    <Ionicons name="sparkles-outline" size={11} color={isDark ? '#38BDF8' : '#102F53'} />
+                    <Text style={[styles.suggestionPillText, { color: isDark ? '#38BDF8' : '#102F53' }]}>
+                      {suggestion}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
           )}
 
           {/* Filter Chips Bar */}
@@ -497,6 +543,36 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '800',
+  },
+  suggestionsBar: {
+    paddingVertical: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0,0,0,0.06)',
+  },
+  suggestionsScroll: {
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    gap: 8,
+  },
+  suggestionHeader: {
+    fontSize: 11,
+    fontWeight: '700',
+    marginRight: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  suggestionPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: shape.full,
+    borderWidth: 1,
+  },
+  suggestionPillText: {
+    fontSize: 12,
+    fontWeight: '600',
   },
   filterBar: {
     paddingVertical: 10,

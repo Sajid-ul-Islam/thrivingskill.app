@@ -25,6 +25,99 @@ export interface SearchResult {
   snippet: string;
 }
 
+export interface TrieNode {
+  children: Map<string, TrieNode>;
+  isEndOfWord: boolean;
+  frequency: number;
+  word?: string;
+  matchedDocIds: Set<string>;
+}
+
+export class PrefixTrie {
+  private root: TrieNode = {
+    children: new Map(),
+    isEndOfWord: false,
+    frequency: 0,
+    matchedDocIds: new Set(),
+  };
+
+  insert(word: string, docId?: string): void {
+    if (!word) return;
+    const clean = word.toLowerCase().trim();
+    if (clean.length < 2) return;
+
+    let current = this.root;
+    for (const char of clean) {
+      if (!current.children.has(char)) {
+        current.children.set(char, {
+          children: new Map(),
+          isEndOfWord: false,
+          frequency: 0,
+          matchedDocIds: new Set(),
+        });
+      }
+      current = current.children.get(char)!;
+      if (docId) {
+        current.matchedDocIds.add(docId);
+      }
+    }
+    current.isEndOfWord = true;
+    current.frequency += 1;
+    current.word = clean;
+  }
+
+  getSuggestions(prefix: string, limit: number = 6): string[] {
+    if (!prefix) return [];
+    const clean = prefix.toLowerCase().trim();
+    let current = this.root;
+
+    for (const char of clean) {
+      if (!current.children.has(char)) {
+        return [];
+      }
+      current = current.children.get(char)!;
+    }
+
+    const results: { word: string; frequency: number }[] = [];
+    const traverse = (node: TrieNode) => {
+      if (node.isEndOfWord && node.word) {
+        results.push({ word: node.word, frequency: node.frequency });
+      }
+      for (const child of node.children.values()) {
+        traverse(child);
+      }
+    };
+
+    traverse(current);
+    results.sort((a, b) => b.frequency - a.frequency);
+    return results.slice(0, limit).map((r) => r.word);
+  }
+
+  getTopKeywords(limit: number = 8): string[] {
+    const results: { word: string; frequency: number }[] = [];
+    const traverse = (node: TrieNode) => {
+      if (node.isEndOfWord && node.word) {
+        results.push({ word: node.word, frequency: node.frequency });
+      }
+      for (const child of node.children.values()) {
+        traverse(child);
+      }
+    };
+    traverse(this.root);
+    results.sort((a, b) => b.frequency - a.frequency);
+    return results.slice(0, limit).map((r) => r.word);
+  }
+
+  clear(): void {
+    this.root = {
+      children: new Map(),
+      isEndOfWord: false,
+      frequency: 0,
+      matchedDocIds: new Set(),
+    };
+  }
+}
+
 export class LocalSearchEngine {
   private static documents = new Map<string, SearchDocument>();
   // Inverted index: term -> Map<docId, termFrequency>
@@ -33,6 +126,8 @@ export class LocalSearchEngine {
   private static titleIndex = new Map<string, Map<string, number>>();
   // LiteRT Dense Vector Embeddings (Phase 4 AI Hybrid Search)
   private static documentEmbeddings = new Map<string, number[]>();
+  // High-performance In-Memory Prefix Trie for instant sub-millisecond search auto-complete
+  private static prefixTrie = new PrefixTrie();
 
   /**
    * Tokenize text into normalized search terms (supports English & Bengali unicode)
@@ -76,6 +171,31 @@ export class LocalSearchEngine {
     // 3. Generate and index dense vector embedding for LiteRT Semantic Search (Phase 4)
     const embedding = LiteRtService.generateEmbedding(`${doc.title} ${doc.body}`);
     this.documentEmbeddings.set(doc.id, embedding);
+
+    // 4. Index in Prefix Trie for sub-millisecond instant auto-complete
+    for (const token of titleTokens) {
+      this.prefixTrie.insert(token, doc.id);
+    }
+    if (doc.badge) {
+      const badgeTokens = this.tokenize(doc.badge);
+      for (const token of badgeTokens) {
+        this.prefixTrie.insert(token, doc.id);
+      }
+    }
+  }
+
+  /**
+   * Fast In-Memory Prefix Trie suggestions for instant auto-complete (<1ms)
+   */
+  static getAutoSuggestions(prefix: string, limit: number = 6): string[] {
+    return this.prefixTrie.getSuggestions(prefix, limit);
+  }
+
+  /**
+   * Top indexed keywords from courses and modules
+   */
+  static getTopKeywords(limit: number = 8): string[] {
+    return this.prefixTrie.getTopKeywords(limit);
   }
 
   /**
@@ -96,6 +216,7 @@ export class LocalSearchEngine {
     this.titleIndex.clear();
     this.invertedIndex.clear();
     this.documentEmbeddings.clear();
+    this.prefixTrie.clear();
   }
 
   /**

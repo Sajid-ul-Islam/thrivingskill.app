@@ -16,6 +16,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { triggerHaptic } from '../../utils/haptics';
 import { AiTutorService, AiTutorContext, TutorMessage } from '../../services/ai/aiTutorService';
+import { AiAssessmentService } from '../../services/ai/aiAssessmentService';
 
 interface LessonAiTutorModalProps {
   visible: boolean;
@@ -150,6 +151,78 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
     }
   };
 
+  const handleGenerateCheatSheet = () => {
+    if (isThinking) return;
+    triggerHaptic('medium');
+    const sheet = AiAssessmentService.generateCheatSheet(context, isBangla);
+    const content = isBangla
+      ? `📋 **"${sheet.lessonTitle}" লেকচার চিটশিট:**\n\n` +
+        `**মূল পয়েন্টসমূহ:**\n${sheet.takeaways.map((t) => `• ${t}`).join('\n')}\n\n` +
+        `**কাজের সূত্র:**\n${sheet.practicalFormula}\n\n` +
+        `**অ্যাকশন স্টেপ:**\n${sheet.actionItem}`
+      : `📋 **"${sheet.lessonTitle}" Executive Cheat-Sheet:**\n\n` +
+        `**Key Takeaways:**\n${sheet.takeaways.map((t) => `• ${t}`).join('\n')}\n\n` +
+        `**Practical Formula:**\n${sheet.practicalFormula}\n\n` +
+        `**Immediate Action Item:**\n${sheet.actionItem}`;
+
+    const cheatMsg: TutorMessage = {
+      id: `cheat-${Date.now()}`,
+      role: 'assistant',
+      content,
+      timestamp: Date.now(),
+    };
+    const finalHistory = [...messages, cheatMsg];
+    setMessages(finalHistory);
+    AiTutorService.saveHistory(context.lessonId, finalHistory);
+    setTimeout(() => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  };
+
+  const handleDiagnosticQuiz = async () => {
+    if (isThinking) return;
+    triggerHaptic('medium');
+    setIsThinking(true);
+    try {
+      const quiz = await AiAssessmentService.generateDiagnosticQuiz(context, isBangla);
+      const quizContent = isBangla
+        ? `🎯 **"${context.lessonTitle}" ডায়াগনস্টিক কুইজ (${quiz.length}টি প্রশ্ন):**\n\n` +
+          quiz
+            .map(
+              (q, i) =>
+                `**প্রশ্ন ${i + 1}: ${q.question}**\n` +
+                q.options.map((opt, oi) => `  ${String.fromCharCode(65 + oi)}) ${opt}`).join('\n') +
+                `\n*সঠিক উত্তর:* ${String.fromCharCode(65 + q.correctIndex)}) ${q.options[q.correctIndex]}\n*ব্যাখ্যা:* ${q.explanation}`
+            )
+            .join('\n\n')
+        : `🎯 **"${context.lessonTitle}" Comprehension Check (${quiz.length} Questions):**\n\n` +
+          quiz
+            .map(
+              (q, i) =>
+                `**Question ${i + 1}: ${q.question}**\n` +
+                q.options.map((opt, oi) => `  ${String.fromCharCode(65 + oi)}) ${opt}`).join('\n') +
+                `\n*Answer:* ${String.fromCharCode(65 + q.correctIndex)}) ${q.options[q.correctIndex]}\n*Rationale:* ${q.explanation}`
+            )
+            .join('\n\n');
+
+      const quizMsg: TutorMessage = {
+        id: `quiz-${Date.now()}`,
+        role: 'assistant',
+        content: quizContent,
+        timestamp: Date.now(),
+      };
+      const finalHistory = [...messages, quizMsg];
+      setMessages(finalHistory);
+      AiTutorService.saveHistory(context.lessonId, finalHistory);
+    } catch {
+    } finally {
+      setIsThinking(false);
+      setTimeout(() => {
+        scrollRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  };
+
   const handleClearHistory = () => {
     triggerHaptic('warning');
     AiTutorService.clearHistory(context.lessonId);
@@ -268,7 +341,47 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
             >
               <Ionicons name="sparkles" size={12} color="#059669" />
               <Text style={[styles.quickPromptText, { color: '#059669', fontWeight: '700' }]}>
-                {isBangla ? '⚡ লেকচার সামারি (অন-ডিভাইস)' : '⚡ Summarize (On-Device)'}
+                {isBangla ? '⚡ লেকচার সামারি' : '⚡ Summarize'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* AI Executive Cheat-Sheet Button */}
+            <TouchableOpacity
+              style={[
+                styles.quickPromptPill,
+                {
+                  backgroundColor: isDark ? '#312E81' : '#EEF2FF',
+                  borderColor: isDark ? '#4338CA' : '#C7D2FE',
+                },
+              ]}
+              onPress={handleGenerateCheatSheet}
+              activeOpacity={0.75}
+              accessibilityRole="button"
+              accessibilityLabel={isBangla ? 'লেকচার চিটশিট' : 'Lecture Cheat-Sheet'}
+            >
+              <Ionicons name="document-text" size={12} color="#6366F1" />
+              <Text style={[styles.quickPromptText, { color: '#6366F1', fontWeight: '700' }]}>
+                {isBangla ? '📋 চিটশিট' : '📋 Cheat-Sheet'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* AI Diagnostic Comprehension Quiz Button */}
+            <TouchableOpacity
+              style={[
+                styles.quickPromptPill,
+                {
+                  backgroundColor: isDark ? '#4C1D95' : '#F5F3FF',
+                  borderColor: isDark ? '#6D28D9' : '#DDD6FE',
+                },
+              ]}
+              onPress={handleDiagnosticQuiz}
+              activeOpacity={0.75}
+              accessibilityRole="button"
+              accessibilityLabel={isBangla ? 'ডায়াগনস্টিক কুইজ' : 'Diagnostic Quiz'}
+            >
+              <Ionicons name="help-circle" size={12} color="#8B5CF6" />
+              <Text style={[styles.quickPromptText, { color: '#8B5CF6', fontWeight: '700' }]}>
+                {isBangla ? '🎯 টেস্ট কুইজ' : '🎯 Quick Quiz'}
               </Text>
             </TouchableOpacity>
 

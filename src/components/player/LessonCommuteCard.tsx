@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
@@ -26,12 +26,20 @@ interface LessonCommuteCardProps {
   formatSeconds: (sec: number) => string;
 }
 
+type SleepTimerOption = 'off' | '15m' | '30m' | '45m' | 'end';
+
+const toBanglaNum = (str: string | number): string => {
+  const banglaDigits = ['০', '১', '২', '৩', '৪', '৫', '৬', '৭', '৮', '৯'];
+  return String(str).replace(/[0-9]/g, (w) => banglaDigits[+w]);
+};
+
 export const LessonCommuteCard: React.FC<LessonCommuteCardProps> = ({
   currentLesson,
   course,
   moduleTitle,
   isPlaying,
   currentPositionSeconds,
+  totalLessonSeconds,
   playbackSpeed,
   hasPrevLesson,
   hasNextLesson,
@@ -46,6 +54,90 @@ export const LessonCommuteCard: React.FC<LessonCommuteCardProps> = ({
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
 
+  const [sleepTimerOption, setSleepTimerOption] = useState<SleepTimerOption>('off');
+  const [sleepRemainingSec, setSleepRemainingSec] = useState<number | null>(null);
+  const sleepIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (sleepIntervalRef.current) {
+      clearInterval(sleepIntervalRef.current);
+      sleepIntervalRef.current = null;
+    }
+
+    if (sleepTimerOption === 'off' || sleepRemainingSec === null) {
+      return;
+    }
+
+    if (isPlaying && sleepRemainingSec > 0) {
+      sleepIntervalRef.current = setInterval(() => {
+        setSleepRemainingSec((prev) => {
+          if (prev === null || prev <= 1) {
+            if (sleepIntervalRef.current) {
+              clearInterval(sleepIntervalRef.current);
+              sleepIntervalRef.current = null;
+            }
+            onTogglePlay();
+            triggerHaptic('medium');
+            setSleepTimerOption('off');
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (sleepIntervalRef.current) {
+        clearInterval(sleepIntervalRef.current);
+        sleepIntervalRef.current = null;
+      }
+    };
+  }, [sleepTimerOption, isPlaying, onTogglePlay]);
+
+  const cycleSleepTimer = () => {
+    triggerHaptic('selection');
+    const options: SleepTimerOption[] = ['off', '15m', '30m', '45m', 'end'];
+    const currentIdx = options.indexOf(sleepTimerOption);
+    const nextOption = options[(currentIdx + 1) % options.length];
+    setSleepTimerOption(nextOption);
+
+    if (nextOption === '15m') setSleepRemainingSec(15 * 60);
+    else if (nextOption === '30m') setSleepRemainingSec(30 * 60);
+    else if (nextOption === '45m') setSleepRemainingSec(45 * 60);
+    else if (nextOption === 'end') {
+      const remainingSec = Math.max(30, totalLessonSeconds - currentPositionSeconds);
+      setSleepRemainingSec(remainingSec);
+    } else {
+      setSleepRemainingSec(null);
+    }
+  };
+
+  const getSleepTimerLabel = (): string => {
+    if (sleepTimerOption === 'off') {
+      return isBangla ? 'স্লিপ' : 'Sleep';
+    }
+    if (sleepRemainingSec !== null) {
+      const mins = Math.floor(sleepRemainingSec / 60);
+      const secs = sleepRemainingSec % 60;
+      const formatted = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+      return isBangla ? toBanglaNum(formatted) : formatted;
+    }
+    switch (sleepTimerOption) {
+      case '15m': return isBangla ? '১৫ মি.' : '15m';
+      case '30m': return isBangla ? '৩০ মি.' : '30m';
+      case '45m': return isBangla ? '৪৫ মি.' : '45m';
+      case 'end': return isBangla ? 'পাঠ শেষে' : 'End';
+      default: return isBangla ? 'স্লিপ' : 'Sleep';
+    }
+  };
+
+  // Bandwidth calculation: 1080p stream ~ 3.5 MB/min vs 64k AAC ~ 0.3 MB/min => 3.2 MB saved per min
+  const minutesPlayed = Math.max(0, currentPositionSeconds) / 60;
+  const mbSaved = (minutesPlayed * 3.2).toFixed(1);
+  const mbSavedText = isBangla
+    ? `সাশ্রয়: ${toBanglaNum(mbSaved)} MB (-৮৫%)`
+    : `Saved: ${mbSaved} MB (-85%)`;
+
   return (
     <View
       style={[
@@ -53,13 +145,40 @@ export const LessonCommuteCard: React.FC<LessonCommuteCardProps> = ({
         { backgroundColor: isDark ? colors.surfaceCard : '#102F53' },
       ]}
     >
-      <View style={styles.commuteHeaderBadge}>
-        <Ionicons name="leaf" size={13} color="#10B981" />
-        <Text style={styles.commuteHeaderBadgeText}>
-          {isBangla
-            ? 'কমিউট মোড সক্রিয় • ব্যান্ডউইথ সাশ্রয় (-৮৫%)'
-            : 'Commute Mode Active • Bandwidth Saver (-85%)'}
-        </Text>
+      <View style={styles.commuteTopRow}>
+        <View style={styles.commuteHeaderBadge}>
+          <Ionicons name="leaf" size={12} color="#10B981" />
+          <Text style={styles.commuteHeaderBadgeText}>{mbSavedText}</Text>
+        </View>
+
+        <TouchableOpacity
+          style={[
+            styles.sleepTimerPill,
+            sleepTimerOption !== 'off' && styles.sleepTimerPillActive,
+          ]}
+          onPress={cycleSleepTimer}
+          accessibilityRole="button"
+          accessibilityLabel={
+            sleepTimerOption === 'off'
+              ? 'Configure sleep timer'
+              : `Sleep timer active: ${getSleepTimerLabel()}`
+          }
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons
+            name={sleepTimerOption !== 'off' ? 'moon' : 'moon-outline'}
+            size={12}
+            color={sleepTimerOption !== 'off' ? '#FFB606' : '#FFFFFF'}
+          />
+          <Text
+            style={[
+              styles.sleepTimerText,
+              sleepTimerOption !== 'off' && { color: '#FFB606', fontWeight: '800' },
+            ]}
+          >
+            {getSleepTimerLabel()}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <LiveAudioWaveform isPlaying={isPlaying} primaryColor={isDark ? '#38BDF8' : '#102F53'} accentColor="#E34234" />
@@ -67,7 +186,7 @@ export const LessonCommuteCard: React.FC<LessonCommuteCardProps> = ({
       <Text style={styles.commuteLessonTitle} numberOfLines={1}>
         {currentLesson.title}
       </Text>
-      <Text style={styles.commuteInstructorText}>
+      <Text style={styles.commuteInstructorText} numberOfLines={1}>
         {course.instructor.name} • {moduleTitle}
       </Text>
 
@@ -150,7 +269,7 @@ export const LessonCommuteCard: React.FC<LessonCommuteCardProps> = ({
         <View style={styles.bgPlaybackNotice}>
           <Ionicons name="radio" size={12} color="#10B981" />
           <Text style={styles.bgPlaybackText}>
-            {isBangla ? 'ব্যাকগ্রাউন্ড অডিও সক্রিয়' : 'Background Playback Active'}
+            {isBangla ? 'ব্যাকগ্রাউন্ড সক্রিয়' : 'Background Active'}
           </Text>
         </View>
         <TouchableOpacity
@@ -174,41 +293,66 @@ const styles = StyleSheet.create({
   commutePlayerCard: {
     width: '100%',
     height: '100%',
-    padding: 16,
+    padding: 14,
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  commuteTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
   },
   commuteHeaderBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
     backgroundColor: 'rgba(16, 185, 129, 0.15)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
+    borderRadius: 10,
   },
   commuteHeaderBadgeText: {
     color: '#10B981',
-    fontSize: 10.5,
+    fontSize: 10,
     fontWeight: '700',
+  },
+  sleepTimerPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
+    borderRadius: 10,
+  },
+  sleepTimerPillActive: {
+    backgroundColor: 'rgba(255, 182, 6, 0.2)',
+    borderColor: 'rgba(255, 182, 6, 0.4)',
+    borderWidth: 1,
+  },
+  sleepTimerText: {
+    color: '#FFFFFF',
+    fontSize: 10.5,
+    fontWeight: '600',
   },
   commuteLessonTitle: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 14.5,
     fontWeight: '800',
     textAlign: 'center',
     marginHorizontal: 12,
   },
   commuteInstructorText: {
     color: 'rgba(255,255,255,0.7)',
-    fontSize: 12,
+    fontSize: 11.5,
     textAlign: 'center',
   },
   commuteControlsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 18,
+    gap: 16,
   },
   commuteSkipBtn: {
     alignItems: 'center',
@@ -222,9 +366,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   commuteMainPlayBtn: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -247,7 +391,7 @@ const styles = StyleSheet.create({
   },
   bgPlaybackText: {
     color: '#10B981',
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: '700',
   },
   speedPill: {
