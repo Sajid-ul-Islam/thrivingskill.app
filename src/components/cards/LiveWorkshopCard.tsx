@@ -227,7 +227,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
     gap: 6,
+    rowGap: 4,
   },
   liveBadge: {
     backgroundColor: '#DC2626',

@@ -12,6 +12,31 @@ interface CourseReviewsSectionProps {
   onOpenWriteReview: () => void;
 }
 
+const ReviewAvatar: React.FC<{
+  uri?: string;
+  name?: string;
+  primaryColor: string;
+}> = ({ uri, name, primaryColor }) => {
+  const [error, setError] = React.useState(false);
+  const initial = (name || 'L').charAt(0).toUpperCase();
+
+  if (!uri || error) {
+    return (
+      <View style={[styles.reviewAvatar, styles.avatarInitialsCircle, { backgroundColor: primaryColor }]}>
+        <Text style={styles.avatarInitialsText}>{initial}</Text>
+      </View>
+    );
+  }
+
+  return (
+    <Image
+      source={{ uri }}
+      style={styles.reviewAvatar}
+      onError={() => setError(true)}
+    />
+  );
+};
+
 export const CourseReviewsSection: React.FC<CourseReviewsSectionProps> = ({
   reviews,
   isEnrolled,
@@ -98,21 +123,7 @@ export const CourseReviewsSection: React.FC<CourseReviewsSectionProps> = ({
             ]}
           >
             <View style={styles.reviewTop}>
-              {rev.userAvatar ? (
-                <Image source={{ uri: rev.userAvatar }} style={styles.reviewAvatar} />
-              ) : (
-                <View
-                  style={[
-                    styles.reviewAvatar,
-                    styles.avatarInitialsCircle,
-                    { backgroundColor: colors.primary },
-                  ]}
-                >
-                  <Text style={styles.avatarInitialsText}>
-                    {(rev.userName || 'L').charAt(0).toUpperCase()}
-                  </Text>
-                </View>
-              )}
+              <ReviewAvatar uri={rev.userAvatar} name={rev.userName} primaryColor={colors.primary} />
               <View style={styles.reviewMeta}>
                 <Text style={[styles.reviewUser, { color: colors.text }]} numberOfLines={1} ellipsizeMode="tail">
                   {rev.userName}

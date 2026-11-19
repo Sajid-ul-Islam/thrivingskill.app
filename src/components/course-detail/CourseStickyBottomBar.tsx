@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 16,
+    gap: 10,
   },
   bottomPriceCol: {
     flex: 1,
@@ -218,30 +218,32 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
   },
   bottomPrice: {
-    fontSize: 20,
+    fontSize: 19,
     fontWeight: '800',
   },
   bottomPriceLabel: {
     fontSize: 11,
+    lineHeight: 15,
     marginTop: 2,
   },
   enrolledStatus: {
     fontSize: 11,
+    lineHeight: 15,
     marginTop: 2,
   },
   enrollCTAButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingHorizontal: 22,
-    paddingVertical: 13,
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderRadius: 10,
-    minWidth: 150,
+    minWidth: 120,
     maxWidth: '56%',
-    flexShrink: 0,
+    flexShrink: 1,
   },
   enrollCTAText: {
-    fontSize: 14,
+    fontSize: 13.5,
   },
 });

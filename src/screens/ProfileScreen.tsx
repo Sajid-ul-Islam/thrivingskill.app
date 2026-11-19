@@ -530,6 +530,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 shadowRadius: 3,
               },
             ]}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             onPress={() => {
               triggerHaptic('selection');
               if (Platform.OS === 'ios') {
@@ -569,6 +570,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 shadowRadius: 3,
               },
             ]}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             onPress={() => {
               triggerHaptic('selection');
               if (Platform.OS === 'ios') {

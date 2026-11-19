@@ -9,7 +9,6 @@ import { useFeedback } from '../context/FeedbackContext';
 import {
   Header,
   LiveWorkshopCard,
-  SummitCard,
   StateView,
   CourseCardSkeleton,
   AnimatedTabContent,

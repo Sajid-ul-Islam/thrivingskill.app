@@ -243,6 +243,7 @@ export const ProfileLearningPortfolio: React.FC<ProfileLearningPortfolioProps> =
                     triggerHaptic('light');
                     onSelectCertificate(cert);
                   }}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   accessibilityRole="button"
                   accessibilityLabel={`View certificate for ${cert.courseTitle}`}
                 >
@@ -267,6 +268,7 @@ export const ProfileLearningPortfolio: React.FC<ProfileLearningPortfolioProps> =
                       const url = encodeURIComponent(cert.verificationUrl || 'https://thrivingskill.com');
                       Linking.openURL(`https://www.facebook.com/sharer/sharer.php?u=${url}`).catch(() => {});
                     }}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     accessibilityRole="button"
                     accessibilityLabel="Social share certificate post"
                   >
@@ -288,6 +290,7 @@ export const ProfileLearningPortfolio: React.FC<ProfileLearningPortfolioProps> =
                       const title = encodeURIComponent(`Verified Certificate: ${cert.courseTitle}`);
                       Linking.openURL(`https://www.linkedin.com/sharing/share-offsite/?url=${url}&title=${title}`).catch(() => {});
                     }}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     accessibilityRole="button"
                     accessibilityLabel="Share on LinkedIn"
                   >

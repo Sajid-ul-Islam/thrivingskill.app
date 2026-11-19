@@ -1193,9 +1193,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    flexWrap: 'wrap',
     paddingHorizontal: 16,
     marginVertical: 10,
     gap: 8,
+    rowGap: 8,
   },
   resultCount: {
     fontSize: 13,

@@ -359,6 +359,8 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    rowGap: 4,
     marginBottom: 12,
   },
   ratingBadge: {
@@ -387,7 +389,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
     gap: 8,
+    rowGap: 6,
     paddingTop: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(150, 150, 150, 0.2)',
@@ -397,7 +401,7 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     flexWrap: 'wrap',
     flex: 1,
-    minWidth: 0,
+    minWidth: 80,
     gap: 6,
   },
   currentPrice: {
@@ -429,7 +433,7 @@ const styles = StyleSheet.create({
   certBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexShrink: 0,
+    flexShrink: 1,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
