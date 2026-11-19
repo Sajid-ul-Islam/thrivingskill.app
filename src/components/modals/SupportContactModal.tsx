@@ -24,6 +24,7 @@ import {
 } from '../../config/crm';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
+import { MessengerIcon } from '../common/MessengerIcon';
 
 export interface SupportContactModalProps {
   visible: boolean;
@@ -267,7 +268,7 @@ export const SupportContactModal: React.FC<SupportContactModalProps> = ({
             accessibilityLabel="Chat on Messenger"
           >
             <View style={styles.channelIconWrap}>
-              <Ionicons name="logo-facebook" size={28} color="#FFFFFF" />
+              <MessengerIcon size={28} color="#FFFFFF" />
             </View>
             <View style={styles.channelTextCol}>
               <View style={[styles.channelBadgeRow, { backgroundColor: 'rgba(255, 255, 255, 0.25)' }]}>

@@ -607,6 +607,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    flex: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   sectionTitleMain: {
     fontSize: 16,
@@ -615,6 +618,7 @@ const styles = StyleSheet.create({
   seeAllText: {
     fontSize: 13,
     fontWeight: '700',
+    flexShrink: 0,
   },
   emptyCourseCard: {
     alignItems: 'center',

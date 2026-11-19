@@ -114,10 +114,10 @@ export const CourseReviewsSection: React.FC<CourseReviewsSectionProps> = ({
                 </View>
               )}
               <View style={styles.reviewMeta}>
-                <Text style={[styles.reviewUser, { color: colors.text }]}>
+                <Text style={[styles.reviewUser, { color: colors.text }]} numberOfLines={1} ellipsizeMode="tail">
                   {rev.userName}
                 </Text>
-                <Text style={[styles.reviewRole, { color: colors.textMuted }]}>
+                <Text style={[styles.reviewRole, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
                   {rev.userRole}
                 </Text>
               </View>
@@ -128,7 +128,14 @@ export const CourseReviewsSection: React.FC<CourseReviewsSectionProps> = ({
                 </Text>
               </View>
             </View>
-            <Text style={[styles.reviewComment, { color: colors.text }]}>{rev.comment}</Text>
+            <Text
+              style={[
+                styles.reviewComment,
+                { color: colors.text, lineHeight: isBangla ? 22 : 19 },
+              ]}
+            >
+              {rev.comment}
+            </Text>
           </View>
         ))
       )}
@@ -188,6 +195,7 @@ const styles = StyleSheet.create({
   },
   reviewMeta: {
     flex: 1,
+    minWidth: 0,
   },
   reviewUser: {
     fontSize: 13,

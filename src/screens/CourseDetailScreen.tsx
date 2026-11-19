@@ -345,7 +345,12 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
 
         {/* Navigation Tabs (Curriculum / Q&A / Instructor / Reviews) */}
         <View style={styles.tabsContainer}>
-          <View style={[styles.tabsBar, { borderBottomColor: colors.border }]} accessibilityRole="tablist">
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={[styles.tabsBar, { borderBottomColor: colors.border }]}
+            accessibilityRole="tablist"
+          >
             {[
               {
                 id: 'curriculum',
@@ -353,7 +358,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                   ? `কারিকুলাম (${course.modules.length})`
                   : `Curriculum (${course.modules.length})`,
               },
-              { id: 'qna', label: isBangla ? 'প্রশ্নোত্তর ফোরাম' : 'Q&A Forum' },
+              { id: 'qna', label: isBangla ? 'প্রশ্নোত্তর' : 'Q&A' },
               { id: 'instructor', label: isBangla ? 'মেন্টর' : 'Instructor' },
               {
                 id: 'reviews',
@@ -383,13 +388,14 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                         fontWeight: isActive ? '700' : '500',
                       },
                     ]}
+                    numberOfLines={1}
                   >
                     {tab.label}
                   </Text>
                 </TouchableOpacity>
               );
             })}
-          </View>
+          </ScrollView>
 
           {/* Tab Content */}
           <AnimatedTabContent tabKey={activeTab}>
@@ -518,11 +524,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderBottomWidth: 1,
     marginBottom: 16,
+    minWidth: '100%',
   },
   tabItem: {
-    flex: 1,
     alignItems: 'center',
     paddingVertical: 12,
+    paddingHorizontal: 14,
+    minWidth: 80,
   },
   tabLabel: {
     fontSize: 12.5,

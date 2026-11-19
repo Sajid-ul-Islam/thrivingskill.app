@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { SpringPressable, CircularProgressRing } from '../common';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { Course } from '../../types';
 
 interface ResumeLearningCardProps {
@@ -19,6 +20,7 @@ export const ResumeLearningCard: React.FC<ResumeLearningCardProps> = ({
   onResume,
 }) => {
   const { colors, isDark } = useTheme();
+  const { isBangla } = useLanguage();
 
   return (
     <View style={styles.container}>
@@ -36,7 +38,7 @@ export const ResumeLearningCard: React.FC<ResumeLearningCardProps> = ({
           <View style={[styles.statusBadge, { backgroundColor: `${colors.primary}18` }]}>
             <View style={[styles.pulseDot, { backgroundColor: colors.primary }]} />
             <Text style={[styles.statusBadgeText, { color: colors.primary }]}>
-              JUMP BACK IN
+              {isBangla ? 'চালিয়ে যান' : 'JUMP BACK IN'}
             </Text>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -49,7 +51,7 @@ export const ResumeLearningCard: React.FC<ResumeLearningCardProps> = ({
               showText={false}
             />
             <Text style={[styles.progressRatio, { color: colors.textMuted }]}>
-              {progressPercent}% Complete
+              {progressPercent}% {isBangla ? 'সম্পন্ন' : 'Complete'}
             </Text>
           </View>
         </View>
@@ -68,7 +70,7 @@ export const ResumeLearningCard: React.FC<ResumeLearningCardProps> = ({
               {course.title}
             </Text>
             <Text style={[styles.lessonSub, { color: colors.textMuted }]} numberOfLines={1}>
-              Lesson: {lastLessonTitle || course.modules[0]?.lessons[0]?.title || 'Next Lecture'}
+              {isBangla ? 'লেসন: ' : 'Lesson: '}{lastLessonTitle || course.modules[0]?.lessons[0]?.title || (isBangla ? 'পরবর্তী লেকচার' : 'Next Lecture')}
             </Text>
           </View>
         </View>
@@ -92,7 +94,9 @@ export const ResumeLearningCard: React.FC<ResumeLearningCardProps> = ({
           accessibilityLabel={`Resume lesson for ${course.title}`}
         >
           <Ionicons name="play-circle" size={18} color={colors.onPrimary} />
-          <Text style={[styles.resumeBtnText, { color: colors.onPrimary }]}>Resume Lesson</Text>
+          <Text style={[styles.resumeBtnText, { color: colors.onPrimary }]}>
+            {isBangla ? 'লেসনে ফিরে যান' : 'Resume Lesson'}
+          </Text>
           <Ionicons name="arrow-forward" size={14} color={colors.onPrimary} style={{ marginLeft: 'auto' }} />
         </SpringPressable>
       </View>

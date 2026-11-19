@@ -550,6 +550,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 styles.profileSegmentedText,
                 { color: profileSection === 'learning' ? colors.text : colors.textMuted },
               ]}
+              numberOfLines={1}
+              ellipsizeMode="tail"
             >
               {isBangla ? 'লার্নিং পোর্টফোলিও' : 'Learning Portfolio'}
             </Text>
@@ -587,8 +589,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 styles.profileSegmentedText,
                 { color: profileSection === 'settings' ? colors.text : colors.textMuted },
               ]}
+              numberOfLines={1}
+              ellipsizeMode="tail"
             >
-              {isBangla ? 'প্রেফারেন্সেস ও সেটিংস' : 'Preferences & Settings'}
+              {isBangla ? 'সেটিংস ও প্রেফারেন্স' : 'Preferences & Settings'}
             </Text>
           </TouchableOpacity>
         </View>

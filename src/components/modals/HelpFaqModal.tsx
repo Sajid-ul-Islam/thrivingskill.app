@@ -19,6 +19,7 @@ import { triggerHaptic } from '../../utils/haptics';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
 import { openWhatsAppChat, openFacebookMessenger, openCallHelpline, CRM_CHANNELS } from '../../config/crm';
+import { MessengerIcon } from '../common/MessengerIcon';
 
 export interface HelpFaqModalProps {
   visible: boolean;
@@ -390,7 +391,7 @@ export const HelpFaqModal: React.FC<HelpFaqModalProps> = ({ visible, onClose }) 
                 accessibilityRole="button"
                 accessibilityLabel="Chat on Messenger"
               >
-                <Ionicons name="logo-facebook" size={16} color="#FFFFFF" />
+                <MessengerIcon size={16} color="#FFFFFF" />
                 <Text style={styles.contactBtnText}>Messenger</Text>
               </TouchableOpacity>
 

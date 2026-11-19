@@ -438,7 +438,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                 <View style={[styles.deptIconCircle, { backgroundColor: dept.color + '18' }]}>
                   <Ionicons name={dept.icon as any} size={15} color={dept.color} />
                 </View>
-                <Text style={[styles.deptRowTitle, { color: colors.text }]}>
+                <Text style={[styles.deptRowTitle, { color: colors.text }]} numberOfLines={1}>
                   {dept.title}
                 </Text>
                 <View style={[styles.deptCountBadge, { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' }]}>
@@ -1355,16 +1355,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     flex: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   deptRowTitle: {
     fontSize: 16,
     fontWeight: '800',
     letterSpacing: -0.2,
+    flexShrink: 1,
   },
   deptCountBadge: {
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 10,
+    flexShrink: 0,
   },
   deptCountText: {
     fontSize: 11,
@@ -1375,6 +1379,7 @@ const styles = StyleSheet.create({
     minWidth: MIN_TOUCH_TARGET,
     justifyContent: 'center',
     alignItems: 'flex-end',
+    flexShrink: 0,
   },
   seeAllDeptText: {
     fontSize: 12,

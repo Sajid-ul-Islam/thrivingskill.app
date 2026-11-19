@@ -57,8 +57,8 @@ export const LessonActionBar: React.FC<LessonActionBarProps> = ({
           accessibilityLabel={isBangla ? 'এআই টিউটরের সাথে কথা বলুন' : 'Ask SkillBot AI Tutor'}
         >
           <Ionicons name="sparkles" size={14} color="#E34234" />
-          <Text style={[styles.aiTutorBtnText, { color: isDark ? '#FF8A80' : '#E34234' }]}>
-            {isBangla ? 'এআই টিউটর' : 'Ask AI'}
+          <Text style={[styles.aiTutorBtnText, { color: isDark ? '#FF8A80' : '#E34234' }]} numberOfLines={1}>
+            {isBangla ? 'এআই' : 'Ask AI'}
           </Text>
         </TouchableOpacity>
 
@@ -98,13 +98,14 @@ export const LessonActionBar: React.FC<LessonActionBarProps> = ({
               styles.completeBtnText,
               { color: isLessonCompleted ? colors.primary : colors.onPrimary },
             ]}
+            numberOfLines={1}
           >
             {isLessonCompleted
               ? isBangla
                 ? 'সম্পন্ন'
                 : 'Completed'
               : isBangla
-              ? 'সম্পন্ন করুন'
+              ? 'সম্পন্ন'
               : 'Complete'}
           </Text>
         </SpringPressable>

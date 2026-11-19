@@ -97,7 +97,9 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop }) 
                 color="#FFFFFF"
               />
               <Text style={styles.seatsText} numberOfLines={1}>
-                {workshop.seatsLeft <= 5 ? `Only ${workshop.seatsLeft} seats left!` : `${workshop.seatsLeft} seats left`}
+                {workshop.seatsLeft <= 5
+                  ? (isBangla ? `বাকি মাত্র ${workshop.seatsLeft}টি সিট!` : `Only ${workshop.seatsLeft} seats left!`)
+                  : (isBangla ? `${workshop.seatsLeft}টি সিট খালি` : `${workshop.seatsLeft} seats left`)}
               </Text>
             </View>
           )}
@@ -182,8 +184,11 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop }) 
                   styles.rsvpText,
                   { color: registered ? colors.primary : colors.onPrimary },
                 ]}
+                numberOfLines={1}
               >
-                {registered ? 'Seat Reserved' : 'Reserve Seat'}
+                {registered
+                  ? (isBangla ? 'বুকিং নিশ্চিত' : 'Seat Reserved')
+                  : (isBangla ? 'সিট বুক করুন' : 'Reserve Seat')}
               </Text>
             </SpringPressable>
           )}
@@ -303,6 +308,7 @@ const styles = StyleSheet.create({
   },
   speakerCol: {
     flex: 1,
+    minWidth: 0,
   },
   speakerName: {
     fontSize: 13,

@@ -223,7 +223,13 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
               </View>
               <View style={styles.cardBody}>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-                  <Text style={[styles.cardTitle, { color: colors.text, flex: 1 }]} numberOfLines={2}>
+                  <Text
+                    style={[
+                      styles.cardTitle,
+                      { color: colors.text, flex: 1, minWidth: 0, marginRight: 8, lineHeight: isBangla ? 22 : 20 },
+                    ]}
+                    numberOfLines={2}
+                  >
                     {course.title}
                   </Text>
                   <CircularProgressRing

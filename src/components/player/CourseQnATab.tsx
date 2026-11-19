@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,10 +12,12 @@ import {
   KeyboardAvoidingView,
   ScrollView,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { useFeedback } from '../../context/FeedbackContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { triggerHaptic } from '../../utils/haptics';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
@@ -39,48 +41,38 @@ export interface QnAItem {
   };
 }
 
-const INITIAL_QNA: QnAItem[] = [
-  {
-    id: 'qna-1',
-    courseId: 'default',
-    authorName: 'Tanvir Hossain',
-    authorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200',
-    question:
-      'When using XLOOKUP across multiple sheets, what is the best practice to handle #N/A errors if an employee ID is missing?',
-    date: '2 days ago',
-    upvotes: 24,
-    hasUpvoted: false,
-    lessonReference: 'Module 1 • Modern Lookup Formulas',
-    answer: {
-      instructorName: 'Humaira Sharim',
-      instructorAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=300',
-      answerText:
-        'Great question Tanvir! XLOOKUP has a built-in 4th argument `if_not_found`. Instead of wrapping with `IFERROR`, pass `"ID Not Found"` directly: `=XLOOKUP(A2, Sheet2!A:A, Sheet2!B:B, "ID Not Found")`. This is much cleaner and faster!',
-      date: '1 day ago',
-      isVerified: true,
-    },
-  },
-  {
-    id: 'qna-2',
-    courseId: 'default',
-    authorName: 'Nusrat Jahan',
-    authorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200',
-    question:
-      'Can we export the fine-tuned system prompt template from the Generative AI workspace directly into production APIs?',
-    date: '3 days ago',
-    upvotes: 16,
-    hasUpvoted: false,
-    lessonReference: 'Module 3 • System Prompt Architecture',
-    answer: {
-      instructorName: 'Lead AI Engineer',
-      instructorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200',
-      answerText:
-        'Yes! You can copy the exact XML tags from lesson 3.4. We recommend keeping the temperature under 0.2 and including few-shot examples for structured JSON output.',
-      date: '2 days ago',
-      isVerified: true,
-    },
-  },
-];
+const INITIAL_QNA: QnAItem[] = [];
+const QNA_STORAGE_PREFIX = '@thriving_skill_qna_';
+
+const sanitizeQnAItem = (item: any): QnAItem | null => {
+  if (!item || !item.id || !item.question) return null;
+  // Discard legacy mock QnA items
+  if (
+    item.id === 'qna-1' ||
+    item.id === 'qna-2' ||
+    item.authorName === 'Tanvir Hossain' ||
+    item.authorName === 'Nusrat Jahan' ||
+    (typeof item.authorAvatar === 'string' && item.authorAvatar.includes('unsplash.com'))
+  ) {
+    return null;
+  }
+  return {
+    ...item,
+    authorAvatar:
+      item.authorAvatar && !item.authorAvatar.includes('unsplash.com')
+        ? item.authorAvatar
+        : 'https://secure.gravatar.com/avatar/?d=mp&s=192',
+    answer: item.answer
+      ? {
+          ...item.answer,
+          instructorAvatar:
+            item.answer.instructorAvatar && !item.answer.instructorAvatar.includes('unsplash.com')
+              ? item.answer.instructorAvatar
+              : 'https://secure.gravatar.com/avatar/?d=mp&s=300',
+        }
+      : undefined,
+  };
+};
 
 interface CourseQnATabProps {
   courseId: string;
@@ -91,54 +83,100 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
   const { colors, isDark } = useTheme();
   const { user } = useAuth();
   const { showToast } = useFeedback();
+  const { isBangla } = useLanguage();
 
   const [questions, setQuestions] = useState<QnAItem[]>(INITIAL_QNA);
   const [askModalVisible, setAskModalVisible] = useState<boolean>(false);
   const [newQuestionText, setNewQuestionText] = useState<string>('');
 
+  // Load and sanitize course-specific questions from AsyncStorage
+  useEffect(() => {
+    let isMounted = true;
+    const loadQnA = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(`${QNA_STORAGE_PREFIX}${courseId}`);
+        if (stored && isMounted) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            const valid = parsed
+              .map(sanitizeQnAItem)
+              .filter((q): q is QnAItem => q !== null);
+            setQuestions(valid);
+            // Re-persist sanitized list if mock items were stripped
+            if (valid.length !== parsed.length) {
+              await AsyncStorage.setItem(`${QNA_STORAGE_PREFIX}${courseId}`, JSON.stringify(valid));
+            }
+          }
+        }
+      } catch {}
+    };
+    loadQnA();
+    return () => {
+      isMounted = false;
+    };
+  }, [courseId]);
+
+  const persistQuestions = async (updated: QnAItem[]) => {
+    try {
+      await AsyncStorage.setItem(`${QNA_STORAGE_PREFIX}${courseId}`, JSON.stringify(updated));
+    } catch {}
+  };
+
   const handleToggleUpvote = (id: string) => {
     triggerHaptic('selection');
-    setQuestions((prev) =>
-      prev.map((item) => {
+    setQuestions((prev) => {
+      const next = prev.map((item) => {
         if (item.id === id) {
           const hasUpvoted = !item.hasUpvoted;
           return {
             ...item,
             hasUpvoted,
-            upvotes: hasUpvoted ? item.upvotes + 1 : item.upvotes - 1,
+            upvotes: hasUpvoted ? item.upvotes + 1 : Math.max(0, item.upvotes - 1),
           };
         }
         return item;
-      })
-    );
+      });
+      persistQuestions(next);
+      return next;
+    });
   };
 
   const handlePostQuestion = () => {
     if (!newQuestionText.trim()) {
       triggerHaptic('warning');
-      showToast({ message: 'Please write your question before submitting.', type: 'error' });
+      showToast({
+        message: isBangla ? 'অনুগ্রহ করে প্রশ্ন লিখুন।' : 'Please write your question before submitting.',
+        type: 'error',
+      });
       return;
     }
+
+    const defaultAvatar = 'https://secure.gravatar.com/avatar/?d=mp&s=192';
+    const authorAvatar =
+      user?.avatar && !user.avatar.includes('unsplash.com') ? user.avatar : defaultAvatar;
 
     const newQ: QnAItem = {
       id: `qna-user-${Date.now()}`,
       courseId,
-      authorName: user?.displayName || 'Active Learner',
-      authorAvatar:
-        user?.avatar ||
-        'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200',
+      authorName: user?.displayName || user?.username || (isBangla ? 'লার্নার' : 'Active Learner'),
+      authorAvatar,
       question: newQuestionText.trim(),
-      date: 'Just now',
+      date: isBangla ? 'এইমাত্র' : 'Just now',
       upvotes: 1,
       hasUpvoted: true,
-      lessonReference: currentLessonTitle || 'General Course Q&A',
+      lessonReference: currentLessonTitle || (isBangla ? 'সাধারণ প্রশ্নোত্তর' : 'General Course Q&A'),
     };
 
-    setQuestions([newQ, ...questions]);
+    const nextList = [newQ, ...questions];
+    setQuestions(nextList);
+    persistQuestions(nextList);
     setNewQuestionText('');
     setAskModalVisible(false);
     triggerHaptic('success');
-    showToast({ message: 'Question posted to instructor Q&A', type: 'success' });
+    showToast({
+      message: isBangla ? 'প্রশ্ন সফলভাবে পোস্ট করা হয়েছে' : 'Question posted to instructor Q&A',
+      type: 'success',
+    });
   };
 
   return (
@@ -164,22 +202,63 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
         </TouchableOpacity>
       </View>
 
-      {/* Questions Feed */}
-      <View style={styles.listContainer}>
-        {questions.map((item) => (
-          <View
-            key={item.id}
-            style={[
-              styles.qnaCard,
-              {
-                backgroundColor: colors.surfaceCard,
-                borderColor: colors.border,
-              },
-            ]}
+      {/* Questions Feed or Authentic Empty State */}
+      {questions.length === 0 ? (
+        <View
+          style={[
+            styles.emptyStateCard,
+            {
+              backgroundColor: colors.surfaceCard,
+              borderColor: colors.border,
+            },
+          ]}
+        >
+          <View style={[styles.emptyIconCircle, { backgroundColor: colors.surfaceSubtle }]}>
+            <Ionicons name="chatbubbles-outline" size={32} color={colors.textMuted} />
+          </View>
+          <Text style={[styles.emptyStateTitle, { color: colors.text }]}>
+            {isBangla ? 'এখনও কোনো প্রশ্নোত্তর নেই' : 'No questions yet'}
+          </Text>
+          <Text style={[styles.emptyStateSubtitle, { color: colors.textMuted }]}>
+            {isBangla
+              ? 'কোর্স বা কোনো লেকচার নিয়ে প্রশ্ন থাকলে প্রথম প্রশ্নটি আপনিই করুন।'
+              : 'Have a question about this course or lecture? Ask your mentors and join the discussion!'}
+          </Text>
+          <TouchableOpacity
+            style={[styles.emptyAskBtn, { backgroundColor: colors.accent }]}
+            onPress={() => setAskModalVisible(true)}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={isBangla ? 'প্রশ্ন করুন' : 'Ask Question'}
           >
-            {/* Student Header */}
-            <View style={styles.authorRow}>
-              <Image source={{ uri: item.authorAvatar }} style={styles.authorAvatar} />
+            <Ionicons name="create-outline" size={16} color={colors.onAccent} style={{ marginRight: 6 }} />
+            <Text style={[styles.askBtnText, { color: colors.onAccent }]}>
+              {isBangla ? 'প্রথম প্রশ্নটি করুন' : 'Ask the First Question'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={styles.listContainer}>
+          {questions.map((item) => {
+            const authorImgUri =
+              item.authorAvatar && !item.authorAvatar.includes('unsplash.com')
+                ? item.authorAvatar
+                : 'https://secure.gravatar.com/avatar/?d=mp&s=192';
+
+            return (
+              <View
+                key={item.id}
+                style={[
+                  styles.qnaCard,
+                  {
+                    backgroundColor: colors.surfaceCard,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                {/* Student Header */}
+                <View style={styles.authorRow}>
+                  <Image source={{ uri: authorImgUri }} style={styles.authorAvatar} />
               <View style={styles.authorMeta}>
                 <Text style={[styles.authorName, { color: colors.text }]}>{item.authorName}</Text>
                 <Text style={[styles.questionDate, { color: colors.textMuted }]}>
@@ -235,7 +314,13 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
               >
                 <View style={styles.instructorHeaderRow}>
                   <Image
-                    source={{ uri: item.answer.instructorAvatar }}
+                    source={{
+                      uri:
+                        item.answer.instructorAvatar &&
+                        !item.answer.instructorAvatar.includes('unsplash.com')
+                          ? item.answer.instructorAvatar
+                          : 'https://secure.gravatar.com/avatar/?d=mp&s=300',
+                    }}
                     style={styles.instructorAvatar}
                   />
                   <View style={{ flex: 1 }}>
@@ -261,13 +346,17 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
               <View style={[styles.pendingAnswerBox, { backgroundColor: colors.surfaceSubtle }]}>
                 <Ionicons name="time-outline" size={14} color={colors.textMuted} />
                 <Text style={[styles.pendingText, { color: colors.textMuted }]}>
-                  Instructor review pending. You will receive a notification when answered.
+                  {isBangla
+                    ? 'মেন্টরের উত্তর অপেক্ষমাণ। উত্তর দেওয়া হলে আপনি নোটিফিকেশন পাবেন।'
+                    : 'Instructor review pending. You will receive a notification when answered.'}
                 </Text>
               </View>
             )}
           </View>
-        ))}
-      </View>
+        );
+      })}
+    </View>
+  )}
 
       {/* Ask Question Modal */}
       <Modal
@@ -594,5 +683,42 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',
+  },
+  emptyStateCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 12,
+  },
+  emptyIconCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  emptyStateTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  emptyStateSubtitle: {
+    fontSize: 12.5,
+    lineHeight: 18,
+    textAlign: 'center',
+    marginBottom: 16,
+    maxWidth: 280,
+  },
+  emptyAskBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
   },
 });

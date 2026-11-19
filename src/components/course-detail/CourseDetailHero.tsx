@@ -269,7 +269,7 @@ export const CourseDetailHero: React.FC<CourseDetailHeroProps> = ({
             <View style={[styles.certIconBg, { backgroundColor: isDark ? 'rgba(217, 119, 6, 0.2)' : '#FEF3C7' }]}>
               <Ionicons name="ribbon" size={20} color={isDark ? '#FBBF24' : '#D97706'} />
             </View>
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={[styles.certPromoTitle, { color: colors.text }]}>
                 {isBangla ? 'অফিসিয়াল সার্টিফিকেট অন্তর্ভুক্ত' : 'Official Certificate Included'}
               </Text>
@@ -575,6 +575,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     flex: 1,
+    minWidth: 0,
   },
   certIconBg: {
     width: 38,

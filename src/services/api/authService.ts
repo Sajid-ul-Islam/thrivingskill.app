@@ -47,7 +47,7 @@ export class AuthService {
       username: userProfile?.slug || userProfile?.name || username.trim(),
       email: userProfile?.email || data.user_email || `${username.trim()}@${siteHost}`,
       displayName: userProfile?.name || data.user_display_name || username.trim(),
-      avatar: userProfile?.avatar_urls?.['96'] || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200',
+      avatar: userProfile?.avatar_urls?.['96'] || userProfile?.avatar_urls?.['48'] || '',
       token,
       roles,
     };
@@ -203,7 +203,7 @@ export class AuthService {
         username: cleanPhone,
         email: data.user_email || `${cleanPhone.replace(/\+/g, '')}@thrivingskill.com`,
         displayName: data.user_display_name || fullName || `Student (${cleanPhone.slice(-4)})`,
-        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200',
+        avatar: '',
         token,
         roles: ['subscriber'],
       };

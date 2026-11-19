@@ -1090,6 +1090,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                             fontWeight: isActive ? '700' : '500',
                           },
                         ]}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
                       >
                         {tab.label}
                       </Text>
@@ -1419,8 +1421,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 4,
     paddingVertical: 12,
+    paddingHorizontal: 4,
+    minWidth: 0,
   },
   tabButtonText: {
     fontSize: 12,

@@ -24,6 +24,7 @@ import {
 } from '../../config/crm';
 import { shape } from '../../theme/shapes';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
+import { MessengerIcon } from './MessengerIcon';
 
 const FAB_SIZE = 50;
 const DISMISS_TARGET_SIZE = 58;
@@ -397,11 +398,15 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
                 { backgroundColor: activeChannel === 'whatsapp' ? '#25D366' : '#0084FF' },
               ]}
             />
-            <Ionicons
-              name={activeChannel === 'whatsapp' ? 'logo-whatsapp' : 'logo-facebook'}
-              size={17}
-              color={activeChannel === 'whatsapp' ? '#25D366' : '#0084FF'}
-            />
+            {activeChannel === 'whatsapp' ? (
+              <Ionicons
+                name="logo-whatsapp"
+                size={17}
+                color="#25D366"
+              />
+            ) : (
+              <MessengerIcon size={17} color="#0084FF" />
+            )}
             <Text style={[styles.dockedRestoreText, { color: colors.text }]}>
               {isBangla ? 'সাপোর্ট' : 'Support'}
             </Text>
@@ -522,7 +527,7 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
               accessibilityLabel="Chat on Facebook Messenger"
             >
               <View style={styles.menuIconBg}>
-                <Ionicons name="logo-facebook" size={22} color="#FFFFFF" />
+                <MessengerIcon size={22} color="#FFFFFF" />
               </View>
               <View style={styles.menuTextCol}>
                 <View style={styles.titleBadgeRow}>
@@ -676,7 +681,7 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
                     },
                   ]}
                 >
-                  <Ionicons name="logo-facebook" size={26} color="#FFFFFF" />
+                  <MessengerIcon size={26} color="#FFFFFF" />
                 </Animated.View>
 
                 {/* 3. Close State Overlay (Smoothly slides & fades over button when expanded) */}

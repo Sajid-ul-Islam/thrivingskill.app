@@ -15,6 +15,7 @@ import { triggerHaptic } from '../../utils/haptics';
 import { Env } from '../../config/env';
 import { AboutTabKey } from '../modals/AboutTSLModal';
 import { LegalTabKey } from '../modals/LegalPolicyModal';
+import { MessengerIcon } from '../common/MessengerIcon';
 
 export interface GamificationBadge {
   id: string;
@@ -130,7 +131,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="speedometer-outline" size={20} color="#EC4899" />
-                <View style={{ marginLeft: 6 }}>
+                <View style={styles.settingTextCol}>
                   <Text style={[styles.settingLabel, { color: colors.text }]}>
                     {isBangla ? 'ওয়ার্ডপ্রেস অ্যাডমিন ড্যাশবোর্ড' : 'WordPress Admin Dashboard'}
                   </Text>
@@ -150,7 +151,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="book-outline" size={20} color="#3B82F6" />
-                <View style={{ marginLeft: 6 }}>
+                <View style={styles.settingTextCol}>
                   <Text style={[styles.settingLabel, { color: colors.text }]}>
                     {isBangla ? 'কোর্স ও লেসন ম্যানেজমেন্ট' : 'Courses & Lessons Management'}
                   </Text>
@@ -170,7 +171,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="people-outline" size={20} color="#10B981" />
-                <View style={{ marginLeft: 6 }}>
+                <View style={styles.settingTextCol}>
                   <Text style={[styles.settingLabel, { color: colors.text }]}>
                     {isBangla ? 'শিক্ষার্থী ও ইউজার ম্যানেজমেন্ট' : 'Students & Users'}
                   </Text>
@@ -190,7 +191,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="card-outline" size={20} color="#F59E0B" />
-                <View style={{ marginLeft: 6 }}>
+                <View style={styles.settingTextCol}>
                   <Text style={[styles.settingLabel, { color: colors.text }]}>
                     {isBangla ? 'এনরোলমেন্ট ও অর্ডার ম্যানেজমেন্ট' : 'Orders & Enrollment Management'}
                   </Text>
@@ -210,7 +211,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="analytics-outline" size={20} color="#8B5CF6" />
-                <View style={{ marginLeft: 6 }}>
+                <View style={styles.settingTextCol}>
                   <Text style={[styles.settingLabel, { color: colors.text }]}>
                     {isBangla ? 'রিপোর্ট ও অ্যানালিটিক্স' : 'Reports & Analytics'}
                   </Text>
@@ -302,7 +303,9 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
           accessibilityLabel={`Enrolled courses: ${enrolledCount}`}
         >
           <Text style={[styles.statVal, { color: colors.primary }]}>{enrolledCount}</Text>
-          <Text style={[styles.statLbl, { color: colors.textMuted }]}>Enrolled</Text>
+          <Text style={[styles.statLbl, { color: colors.textMuted }]} numberOfLines={1}>
+            {isBangla ? 'এনরোল্ড' : 'Enrolled'}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -315,7 +318,9 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
           accessibilityLabel={`Completed courses: ${completedCount}`}
         >
           <Text style={[styles.statVal, { color: colors.secondary }]}>{completedCount}</Text>
-          <Text style={[styles.statLbl, { color: colors.textMuted }]}>Completed</Text>
+          <Text style={[styles.statLbl, { color: colors.textMuted }]} numberOfLines={1}>
+            {isBangla ? 'সম্পন্ন' : 'Completed'}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -328,7 +333,9 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
           accessibilityLabel={`Earned certificates: ${certificatesCount}`}
         >
           <Text style={[styles.statVal, { color: colors.accent }]}>{certificatesCount}</Text>
-          <Text style={[styles.statLbl, { color: colors.textMuted }]}>Certificates</Text>
+          <Text style={[styles.statLbl, { color: colors.textMuted }]} numberOfLines={1}>
+            {isBangla ? 'সার্টিফিকেট' : 'Certificates'}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -387,7 +394,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
           >
             <View style={styles.settingLeft}>
               <Ionicons name="layers-outline" size={20} color={colors.primary} />
-              <View style={{ marginLeft: 6 }}>
+              <View style={styles.settingTextCol}>
                 <Text style={[styles.settingLabel, { color: colors.text }]}>
                   {isBangla ? 'অ্যাক্টিভ রিকল ফ্ল্যাশকার্ড (SM-2)' : 'Active Recall Flashcards'}
                 </Text>
@@ -415,7 +422,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
           >
             <View style={styles.settingLeft}>
               <Ionicons name="cloud-offline" size={20} color="#10B981" />
-              <View style={{ marginLeft: 6 }}>
+              <View style={styles.settingTextCol}>
                 <Text style={[styles.settingLabel, { color: colors.text }]}>
                   {isBangla ? 'অফলাইন স্টাডি ডেক' : 'Offline Study Deck'}
                 </Text>
@@ -439,7 +446,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
           >
             <View style={styles.settingLeft}>
               <Ionicons name="search" size={20} color="#3B82F6" />
-              <View style={{ marginLeft: 6 }}>
+              <View style={styles.settingTextCol}>
                 <Text style={[styles.settingLabel, { color: colors.text }]}>
                   {isBangla ? 'অন-ডিভাইস ফাস্ট সার্চ (FTS)' : 'On-Device Fast Search (FTS)'}
                 </Text>
@@ -531,7 +538,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
           >
             <View style={styles.settingLeft}>
               <Ionicons name="videocam-outline" size={20} color="#3B82F6" />
-              <View style={{ marginLeft: 6 }}>
+              <View style={styles.settingTextCol}>
                 <Text style={[styles.settingLabel, { color: colors.text }]}>
                   {isBangla ? 'ভিডিও স্ট্রিমিং কোয়ালিটি' : 'Video Streaming Quality'}
                 </Text>
@@ -559,7 +566,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
           >
             <View style={styles.settingLeft}>
               <Ionicons name="cloud-download-outline" size={20} color="#10B981" />
-              <View style={{ marginLeft: 6 }}>
+              <View style={styles.settingTextCol}>
                 <Text style={[styles.settingLabel, { color: colors.text }]}>
                   {isBangla ? 'ইন-অ্যাপ আপডেট (OTA)' : 'In-App Updates (OTA)'}
                 </Text>
@@ -626,7 +633,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
           >
             <View style={styles.settingLeft}>
               <Ionicons name="key-outline" size={20} color="#F59E0B" />
-              <View style={{ marginLeft: 6 }}>
+              <View style={styles.settingTextCol}>
                 <Text style={[styles.settingLabel, { color: colors.text }]}>
                   {isBangla ? 'পাসওয়ার্ড পরিবর্তন' : 'Change Password'}
                 </Text>
@@ -650,7 +657,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
           >
             <View style={styles.settingLeft}>
               <Ionicons name="receipt-outline" size={20} color="#10B981" />
-              <View style={{ marginLeft: 6 }}>
+              <View style={styles.settingTextCol}>
                 <Text style={[styles.settingLabel, { color: colors.text }]}>
                   {isBangla ? 'অর্ডার ও কোর্স রেকর্ড' : 'Orders & Course Records'}
                 </Text>
@@ -693,7 +700,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
           >
             <View style={styles.settingLeft}>
               <Ionicons name="trash-outline" size={20} color={colors.danger} />
-              <View style={{ marginLeft: 6 }}>
+              <View style={styles.settingTextCol}>
                 <Text style={[styles.settingLabel, { color: colors.text }]}>
                   {isBangla ? 'ক্যাশ মেমোরি ক্লিয়ার করুন' : 'Clear Storage & Cache'}
                 </Text>
@@ -715,7 +722,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="settings-outline" size={20} color="#EC4899" />
-                <View style={{ marginLeft: 6 }}>
+                <View style={styles.settingTextCol}>
                   <Text style={[styles.settingLabel, { color: colors.text }]}>
                     {isBangla ? 'ওয়ার্ডপ্রেস অ্যাডমিন পোর্টাল (WP-Admin)' : 'WordPress Admin Portal (WP-Admin)'}
                   </Text>
@@ -784,7 +791,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
           >
             <View style={styles.settingLeft}>
               <Ionicons name="logo-whatsapp" size={20} color="#25D366" />
-              <View style={{ marginLeft: 6 }}>
+              <View style={styles.settingTextCol}>
                 <Text style={[styles.settingLabel, { color: colors.text }]}>WhatsApp Live Support</Text>
                 <Text style={[styles.settingSubtext, { color: '#25D366', fontWeight: '700' }]}>
                   01312-100288 • Instant Response
@@ -805,8 +812,8 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
             accessibilityLabel="Chat on Messenger"
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="logo-facebook" size={20} color="#0084FF" />
-              <View style={{ marginLeft: 6 }}>
+              <MessengerIcon size={20} color="#0084FF" />
+              <View style={styles.settingTextCol}>
                 <Text style={[styles.settingLabel, { color: colors.text }]}>Messenger</Text>
                 <Text style={[styles.settingSubtext, { color: '#0084FF', fontWeight: '700' }]}>
                   @thrivingskills • Community CRM
@@ -860,7 +867,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
           >
             <View style={styles.settingLeft}>
               <Ionicons name="help-circle-outline" size={20} color="#0D9488" />
-              <View style={{ marginLeft: 6 }}>
+              <View style={styles.settingTextCol}>
                 <Text style={[styles.settingLabel, { color: colors.text }]}>
                   {isBangla ? 'সাহায্য ও প্রশ্নোত্তর (FAQ)' : 'Help & FAQ Center'}
                 </Text>
@@ -884,7 +891,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
           >
             <View style={styles.settingLeft}>
               <Ionicons name="newspaper-outline" size={20} color="#8B5CF6" />
-              <View style={{ marginLeft: 6 }}>
+              <View style={styles.settingTextCol}>
                 <Text style={[styles.settingLabel, { color: colors.text }]}>
                   {isBangla ? 'টিএসএল ব্লগ ও আর্টিকেল' : 'TSL Blog & Industry Articles'}
                 </Text>
@@ -908,7 +915,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
           >
             <View style={styles.settingLeft}>
               <Ionicons name="server-outline" size={20} color={colors.primary} />
-              <View style={{ marginLeft: 6 }}>
+              <View style={styles.settingTextCol}>
                 <Text style={[styles.settingLabel, { color: colors.text }]}>
                   {isBangla ? 'স্টোরেজ ও অফলাইন সিঙ্ক' : 'Storage & Offline Sync'}
                 </Text>
@@ -1097,19 +1104,25 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
               style={[styles.settingRow, { borderBottomWidth: 0 }]}
               onPress={() => {
                 triggerHaptic('warning');
-                Alert.alert('Sign Out', 'Are you sure you want to sign out from your WordPress account?', [
-                  { text: 'Cancel', style: 'cancel' },
-                  { text: 'Sign Out', style: 'destructive', onPress: onLogout },
-                ]);
+                Alert.alert(
+                  isBangla ? 'সাইন আউট' : 'Sign Out',
+                  isBangla ? 'আপনি কি নিশ্চিত যে আপনি সাইন আউট করতে চান?' : 'Are you sure you want to sign out?',
+                  [
+                    { text: isBangla ? 'বাতিল' : 'Cancel', style: 'cancel' },
+                    { text: isBangla ? 'সাইন আউট' : 'Sign Out', style: 'destructive', onPress: onLogout },
+                  ]
+                );
               }}
               accessibilityRole="button"
-              accessibilityLabel="Sign Out from WordPress"
+              accessibilityLabel={isBangla ? 'সাইন আউট' : 'Sign Out'}
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="log-out-outline" size={20} color={colors.danger} />
-                <Text style={[styles.settingLabel, { color: colors.danger, fontWeight: '700' }]}>
-                  Sign Out from WordPress
-                </Text>
+                <View style={styles.settingTextCol}>
+                  <Text style={[styles.settingLabel, { color: colors.danger, fontWeight: '700' }]} numberOfLines={1}>
+                    {isBangla ? 'সাইন আউট' : 'Sign Out'}
+                  </Text>
+                </View>
               </View>
             </TouchableOpacity>
           ) : (
@@ -1120,13 +1133,15 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                 onOpenAuthModal();
               }}
               accessibilityRole="button"
-              accessibilityLabel="Sign In with Thriving Skills Account"
+              accessibilityLabel={isBangla ? 'থ্রাইভিং স্কিলস অ্যাকাউন্টে সাইন ইন' : 'Sign In with Thriving Skills Account'}
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="log-in-outline" size={20} color={colors.primary} />
-                <Text style={[styles.settingLabel, { color: colors.primary, fontWeight: '700' }]}>
-                  Sign In with Thriving Skills Account
-                </Text>
+                <View style={styles.settingTextCol}>
+                  <Text style={[styles.settingLabel, { color: colors.primary, fontWeight: '700' }]} numberOfLines={1}>
+                    {isBangla ? 'থ্রাইভিং স্কিলস অ্যাকাউন্টে সাইন ইন' : 'Sign In with Thriving Skills Account'}
+                  </Text>
+                </View>
               </View>
               <Ionicons name="chevron-forward" size={16} color={colors.primary} />
             </TouchableOpacity>
@@ -1170,6 +1185,10 @@ const styles = StyleSheet.create({
     minWidth: 0,
     paddingRight: 8,
     gap: 12,
+  },
+  settingTextCol: {
+    flex: 1,
+    minWidth: 0,
   },
   settingLabel: {
     fontSize: 14,
@@ -1265,6 +1284,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     paddingVertical: 14,
+    paddingHorizontal: 6,
     borderRadius: 14,
     borderWidth: 1,
   },

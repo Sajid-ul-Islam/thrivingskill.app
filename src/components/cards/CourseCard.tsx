@@ -92,7 +92,10 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
             )}
           </View>
           <View style={styles.horizontalContent}>
-            <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
+            <Text
+              style={[styles.cardTitle, { color: colors.text, lineHeight: isBangla ? 23 : 21 }]}
+              numberOfLines={2}
+            >
               {course.title}
             </Text>
             <Text style={[styles.instructorName, { color: colors.textMuted }]} numberOfLines={1}>
@@ -201,7 +204,10 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
           <Text style={[styles.categoryTag, { color: colors.secondary }]}>
             {course.level.toUpperCase()}
           </Text>
-          <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
+          <Text
+            style={[styles.cardTitle, { color: colors.text, lineHeight: isBangla ? 23 : 21 }]}
+            numberOfLines={2}
+          >
             {course.title}
           </Text>
           <Text style={[styles.instructorName, { color: colors.textMuted }]} numberOfLines={1}>
@@ -253,7 +259,9 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
               </View>
               <View style={[styles.certBadge, { backgroundColor: colors.surfaceSubtle }]}>
                 <Ionicons name="ribbon-outline" size={13} color={colors.primary} />
-                <Text style={[styles.certText, { color: colors.textMuted }]}>Certificate</Text>
+                <Text style={[styles.certText, { color: colors.textMuted }]} numberOfLines={1}>
+                  {isBangla ? 'সনদ' : 'Certificate'}
+                </Text>
               </View>
             </View>
           )}

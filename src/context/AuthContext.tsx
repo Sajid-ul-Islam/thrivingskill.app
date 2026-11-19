@@ -98,6 +98,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           try {
             const parsedUser: UserProfile = JSON.parse(savedUser);
             if (parsedUser && (parsedUser.id || parsedUser.email || parsedUser.username)) {
+              // Sanitize legacy mock avatar from local storage
+              if (
+                parsedUser.avatar &&
+                (parsedUser.avatar.includes('unsplash.com') ||
+                  parsedUser.avatar.includes('randomuser.me') ||
+                  parsedUser.avatar.includes('i.pravatar.cc') ||
+                  parsedUser.avatar.includes('mock'))
+              ) {
+                parsedUser.avatar = '';
+                AsyncStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(parsedUser)).catch(() => {});
+              }
+
               // Extract persistent session token or generate durable session id
               const activeToken = savedToken || parsedUser.token || `ts_session_${parsedUser.id}`;
               const userWithToken: UserProfile = {

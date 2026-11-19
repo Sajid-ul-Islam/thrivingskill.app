@@ -47,7 +47,8 @@ console.log('  ✅ [PASS] Timer hygiene verified: ReturnType<typeof setInterval>
 // Test 3: Dual 3D Morphing Icon Layers & Color Interpolation
 console.log('\nTest 3: Verifying 3D Morphing Icon Layers & Dual Channel Branding...');
 assert(widgetContent.includes('name="logo-whatsapp"'), 'Must render WhatsApp logo');
-assert(widgetContent.includes('name="logo-facebook"'), 'Must render Messenger logo');
+assert(widgetContent.includes('<MessengerIcon'), 'Must render actual Meta Messenger icon');
+assert(!widgetContent.includes('name="logo-facebook"'), 'FloatingCrmWidget must NOT use logo-facebook for Messenger');
 assert(widgetContent.includes('#25D366'), 'Must use official WhatsApp green (#25D366)');
 assert(widgetContent.includes('#0084FF'), 'Must use official Messenger blue (#0084FF)');
 assert(widgetContent.includes('idleBgColor'), 'Must dynamically interpolate idle background color between WhatsApp and Messenger');

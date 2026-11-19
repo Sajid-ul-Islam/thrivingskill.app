@@ -18,3 +18,4 @@ export * from './FloatingCrmWidget';
 export * from './ScrollToTopPill';
 export * from './AppErrorBoundary';
 export * from './IosActionNotificationPanel';
+export * from './MessengerIcon';

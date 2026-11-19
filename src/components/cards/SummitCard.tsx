@@ -4,6 +4,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { SpringPressable } from '../common';
 import { SkillsSummit } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { useLearning } from '../../context/LearningContext';
 
 interface SummitCardProps {
@@ -12,6 +13,7 @@ interface SummitCardProps {
 
 export const SummitCard: React.FC<SummitCardProps> = ({ summit }) => {
   const { colors } = useTheme();
+  const { isBangla } = useLanguage();
   const { rsvpForWorkshop, isRsvpd } = useLearning();
   const reserved = isRsvpd(summit.id);
 
@@ -20,7 +22,11 @@ export const SummitCard: React.FC<SummitCardProps> = ({ summit }) => {
     Alert.alert(
       `${summit.title} 🎟️`,
       reserved
-        ? 'Your summit seat reservation is already saved on this device.'
+        ? isBangla
+          ? 'এই সামিটের সিট ইতিমধ্যে সংরক্ষিত আছে।'
+          : 'Your summit seat reservation is already saved on this device.'
+        : isBangla
+        ? 'সামিট সিট সফলভাবে সংরক্ষিত হয়েছে!'
         : 'Seat reservation saved to your device schedule!'
     );
   };
@@ -60,7 +66,7 @@ export const SummitCard: React.FC<SummitCardProps> = ({ summit }) => {
         <View style={styles.metaRow}>
           <View style={styles.attendeesBox}>
             <Ionicons name="people" size={14} color={colors.textMuted} />
-            <Text style={[styles.metaText, { color: colors.textMuted }]}>
+            <Text style={[styles.metaText, { color: colors.textMuted }]} numberOfLines={1}>
               {summit.attendeesCount}
             </Text>
           </View>
@@ -75,8 +81,8 @@ export const SummitCard: React.FC<SummitCardProps> = ({ summit }) => {
             accessibilityRole="button"
             accessibilityLabel={reserved ? `Reserved for ${summit.title}` : `RSVP Free for ${summit.title}`}
           >
-            <Text style={[styles.rsvpBtnText, { color: reserved ? colors.primary : colors.onPrimary }]}>
-              {reserved ? 'Reserved ✓' : 'RSVP Free'}
+            <Text style={[styles.rsvpBtnText, { color: reserved ? colors.primary : colors.onPrimary }]} numberOfLines={1}>
+              {reserved ? (isBangla ? 'সংরক্ষিত ✓' : 'Reserved ✓') : (isBangla ? 'ফ্রি সিট' : 'RSVP Free')}
             </Text>
             <Ionicons name={reserved ? 'checkmark-circle' : 'arrow-forward'} size={13} color={reserved ? colors.primary : colors.onPrimary} />
           </SpringPressable>

@@ -85,19 +85,19 @@ interface ProfileSettingsModalProps {
 }
 
 const AVATAR_PRESETS = [
-  { id: 'av1', label: 'Executive Male', uri: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=256&h=256&fit=crop&crop=faces' },
-  { id: 'av2', label: 'Executive Female', uri: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=256&h=256&fit=crop&crop=faces' },
-  { id: 'av3', label: 'Tech Specialist', uri: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=256&h=256&fit=crop&crop=faces' },
-  { id: 'av4', label: 'Scholar', uri: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=256&h=256&fit=crop&crop=faces' },
-  { id: 'av5', label: 'Creative', uri: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=256&h=256&fit=crop&crop=faces' },
-  { id: 'av6', label: 'Strategist', uri: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=256&h=256&fit=crop&crop=faces' },
+  { id: 'av1', label: 'Classic Silhouette', uri: 'https://secure.gravatar.com/avatar/?d=mp&s=256' },
+  { id: 'av2', label: 'Geometric Identicon', uri: 'https://secure.gravatar.com/avatar/?d=identicon&s=256' },
+  { id: 'av3', label: 'Retro Pixel', uri: 'https://secure.gravatar.com/avatar/?d=retro&s=256' },
+  { id: 'av4', label: 'Robo Avatar', uri: 'https://secure.gravatar.com/avatar/?d=robohash&s=256' },
+  { id: 'av5', label: 'Wavatar', uri: 'https://secure.gravatar.com/avatar/?d=wavatar&s=256' },
+  { id: 'av6', label: 'Monster ID', uri: 'https://secure.gravatar.com/avatar/?d=monsterid&s=256' },
 ];
 
 const COVER_PRESETS = [
-  { id: 'cov1', label: 'Executive Workspace', uri: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&h=300&fit=crop' },
-  { id: 'cov2', label: 'Tech Innovation', uri: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&h=300&fit=crop' },
-  { id: 'cov3', label: 'Corporate Tower', uri: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=300&fit=crop' },
-  { id: 'cov4', label: 'Grand Academy', uri: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&h=300&fit=crop' },
+  { id: 'cov1', label: 'TSL Executive', uri: 'https://thrivingskill.com/wp-content/uploads/2026/05/cover2.jpg2_.jpeg' },
+  { id: 'cov2', label: 'AI Era Innovation', uri: 'https://thrivingskill.com/wp-content/uploads/2026/10/sty-ai-era.png' },
+  { id: 'cov3', label: 'Skills Bundle', uri: 'https://thrivingskill.com/wp-content/uploads/2026/05/bundle.jpeg' },
+  { id: 'cov4', label: 'AI Enterprise', uri: 'https://thrivingskill.com/wp-content/uploads/2026/05/AI-Bundle-Promotional-Poster.jpg' },
 ];
 
 export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({

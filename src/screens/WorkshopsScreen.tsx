@@ -230,7 +230,12 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
         </View>
 
         {/* Tab Pills (Hick's Law: 3 focused filters, stationary and user-controlled) */}
-        <View style={styles.filterRow} accessibilityRole="tablist">
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterRow}
+          accessibilityRole="tablist"
+        >
           {[
             {
               id: 'all' as TabType,
@@ -275,13 +280,14 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
                       fontWeight: isActive ? '700' : '500',
                     },
                   ]}
+                  numberOfLines={1}
                 >
                   {tab.label}
                 </Text>
               </TouchableOpacity>
             );
           })}
-        </View>
+        </ScrollView>
 
         {/* Loading Skeletons */}
         {isLoadingCourses && workshops.length === 0 && (
@@ -474,6 +480,7 @@ const styles = StyleSheet.create({
   },
   bannerCol: {
     flex: 1,
+    minWidth: 0,
   },
   bannerTitle: {
     ...typography.h3,

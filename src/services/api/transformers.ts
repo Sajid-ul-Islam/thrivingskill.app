@@ -151,7 +151,7 @@ export function transformWpCourse(raw: any): Course {
     name: cleanHtml(instructorRaw.name || 'Thriving Skills Mentor'),
     title: 'Lead Industry Specialist',
     company: 'Thriving Skills Bangladesh',
-    avatar: instructorRaw.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=300',
+    avatar: instructorRaw.avatar || 'https://secure.gravatar.com/avatar/?d=mp&s=300',
     bio: cleanHtml(instructorRaw.bio || 'Experienced practitioner and instructor at Thriving Skills.'),
     rating: 4.8 + ((seed % 3) / 10),
     studentsCount: 200 + (seed % 650),

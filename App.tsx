@@ -65,6 +65,7 @@ import { AppUpdateService } from './src/services/appUpdateService';
 import { TelemetryService } from './src/services/telemetry/telemetryService';
 import { PushNotificationService } from './src/services/notifications/pushNotificationService';
 import { HabitNotificationQueue } from './src/services/notifications/habitNotificationQueue';
+import { StorageSanitizer } from './src/services/storage/storageSanitizer';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -135,6 +136,9 @@ const MainAppContent: React.FC = () => {
   const splashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    // Sanitize local storage of any legacy mock avatars or comments
+    StorageSanitizer.runStartupSanitization().catch(() => {});
+
     splashTimerRef.current = setTimeout(() => {
       setIsSplashVisible(false);
     }, 2000);

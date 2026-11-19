@@ -43,7 +43,7 @@ export const SpecialBundleCard: React.FC<SpecialBundleCardProps> = ({ bundle, on
       </View>
 
       <View style={styles.cardContent}>
-        <Text style={[styles.banglaTitle, { color: colors.secondary }]}>
+        <Text style={[styles.banglaTitle, { color: colors.secondary }]} numberOfLines={1}>
           {bundle.banglaTitle}
         </Text>
         <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>

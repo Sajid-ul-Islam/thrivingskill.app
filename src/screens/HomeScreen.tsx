@@ -64,6 +64,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
   colors,
 }) => {
   const { isTablet, isLandscape, width } = useResponsive();
+  const { isBangla } = useLanguage();
   const flatRef = useRef<FlatList<Course> | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const indexRef = useRef<number>(0);
@@ -134,6 +135,8 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
             color: colors.text,
             letterSpacing: -0.3,
             flex: 1,
+            minWidth: 0,
+            marginRight: 8,
           }}
           numberOfLines={1}
         >
@@ -149,6 +152,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
             minWidth: MIN_TOUCH_TARGET,
             justifyContent: 'center',
             alignItems: 'flex-end',
+            flexShrink: 0,
           }}
           accessibilityRole="button"
           accessibilityLabel={`See all ${title} courses`}
@@ -159,10 +163,10 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
             style={{
               fontSize: 12,
               fontWeight: '700',
-              color: '#102F53',
+              color: colors.primary,
             }}
           >
-            See All →
+            {isBangla ? 'সব দেখুন →' : 'See All →'}
           </Text>
         </SpringPressable>
       </View>
@@ -891,7 +895,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
               {/* Subtitle + Radial Goal Ring */}
               <View style={styles.greetingBottomRow}>
-                <View style={{ flex: 1, marginRight: 10 }}>
+                <View style={{ flex: 1, minWidth: 0, marginRight: 10 }}>
                   <Text style={[styles.greetingSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
                     {greetingSubtitleText}
                   </Text>
@@ -1131,6 +1135,7 @@ const styles = StyleSheet.create({
   },
   greetingTextCol: {
     flex: 1,
+    minWidth: 0,
     justifyContent: 'center',
     paddingRight: 6,
   },

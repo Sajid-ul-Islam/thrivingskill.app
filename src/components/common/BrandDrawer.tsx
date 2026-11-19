@@ -26,6 +26,7 @@ import { BlogModal } from '../modals/BlogModal';
 import { RootTab } from '../../types';
 import { shape } from '../../theme/shapes';
 import { Env } from '../../config/env';
+import { MessengerIcon } from './MessengerIcon';
 
 interface BrandDrawerProps {
   visible: boolean;
@@ -463,17 +464,17 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
             <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>SUPPORT & CONTACT</Text>
 
             <TouchableOpacity style={styles.actionRow} onPress={handleCallHelpline}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <View style={styles.actionLeft}>
                 <Ionicons name="call-outline" size={18} color={colors.primary} />
-                <Text style={[styles.actionLabel, { color: colors.text }]}>Call Helpline</Text>
+                <Text style={[styles.actionLabel, { color: colors.text }]} numberOfLines={1}>Call Helpline</Text>
               </View>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary }}>01312 100288</Text>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary, flexShrink: 0 }}>01312 100288</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.actionRow} onPress={handleOpenWebsite}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <View style={styles.actionLeft}>
                 <Ionicons name="globe" size={18} color={colors.textMuted} />
-                <Text style={[styles.actionLabel, { color: colors.text }]}>{'Visit ' + Env.SITE_URL.replace(/^https?:\/\//, '')}</Text>
+                <Text style={[styles.actionLabel, { color: colors.text }]} numberOfLines={1}>{'Visit ' + Env.SITE_URL.replace(/^https?:\/\//, '')}</Text>
               </View>
               <Ionicons name="open-outline" size={14} color={colors.textMuted} />
             </TouchableOpacity>
@@ -482,9 +483,9 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               style={styles.actionRow}
               onPress={() => setHelpFaqModalVisible(true)}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <View style={styles.actionLeft}>
                 <Ionicons name="help-circle-outline" size={18} color="#6366F1" />
-                <Text style={[styles.actionLabel, { color: colors.text }]}>
+                <Text style={[styles.actionLabel, { color: colors.text }]} numberOfLines={1}>
                   {isBangla ? 'হেল্প ও এফএকিউ (FAQ)' : 'Help & FAQ Center'}
                 </Text>
               </View>
@@ -495,9 +496,9 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               style={styles.actionRow}
               onPress={() => setBlogModalVisible(true)}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <View style={styles.actionLeft}>
                 <Ionicons name="newspaper-outline" size={18} color="#8B5CF6" />
-                <Text style={[styles.actionLabel, { color: colors.text }]}>
+                <Text style={[styles.actionLabel, { color: colors.text }]} numberOfLines={1}>
                   {isBangla ? 'টিএসএল ব্লগ ও আর্টিকেল' : 'Articles & Industry Insights'}
                 </Text>
               </View>
@@ -508,22 +509,22 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               style={styles.actionRow}
               onPress={() => Linking.openURL('https://wa.me/8801312100288').catch(() => {})}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <View style={styles.actionLeft}>
                 <Ionicons name="logo-whatsapp" size={18} color="#25D366" />
-                <Text style={[styles.actionLabel, { color: colors.text }]}>WhatsApp Live Support</Text>
+                <Text style={[styles.actionLabel, { color: colors.text }]} numberOfLines={1}>WhatsApp Live Support</Text>
               </View>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: '#25D366' }}>Active</Text>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: '#25D366', flexShrink: 0 }}>Active</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.actionRow}
               onPress={() => Linking.openURL('https://m.me/thrivingskills').catch(() => {})}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <Ionicons name="logo-facebook" size={18} color="#0084FF" />
-                <Text style={[styles.actionLabel, { color: colors.text }]}>Messenger</Text>
+              <View style={styles.actionLeft}>
+                <MessengerIcon size={18} color="#0084FF" />
+                <Text style={[styles.actionLabel, { color: colors.text }]} numberOfLines={1}>Messenger</Text>
               </View>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: '#0084FF' }}>@thrivingskills</Text>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: '#0084FF', flexShrink: 0 }}>@thrivingskills</Text>
             </TouchableOpacity>
 
             {onOpenSupport && (
@@ -534,9 +535,9 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
                   onOpenSupport();
                 }}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={styles.actionLeft}>
                   <Ionicons name="headset" size={18} color={colors.primary} />
-                  <Text style={[styles.actionLabel, { color: colors.text }]}>
+                  <Text style={[styles.actionLabel, { color: colors.text }]} numberOfLines={1}>
                     {isBangla ? 'সিআরএম সাপোর্ট ডেস্ক' : 'Official CRM Helpdesk'}
                   </Text>
                 </View>
@@ -802,9 +803,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     minHeight: 48,
   },
+  actionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+    minWidth: 0,
+    marginRight: 8,
+  },
   actionLabel: {
     fontSize: 13,
     fontWeight: '600',
+    flexShrink: 1,
   },
   pillState: {
     paddingHorizontal: 8,
