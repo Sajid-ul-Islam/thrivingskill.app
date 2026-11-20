@@ -24,7 +24,7 @@ const requiredCategories = [
   'business',
 ];
 
-console.log('[TEST 1] Verifying all 8 department categories in CategoryIllustrationIcon:');
+console.log('[TEST 1] Verifying all 8 department icon cases in CategoryIllustrationIcon:');
 requiredCategories.forEach(cat => {
   const found = iconContent.includes(`normCat === '${cat}'`);
   if (!found) {
@@ -34,7 +34,7 @@ requiredCategories.forEach(cat => {
   console.log(`   ✓ Icon vector case found for '${cat}'`);
 });
 
-// 2. Verify DepartmentCategoryGrid.tsx exists and exports DEPARTMENTS_CATALOG
+// 2. Verify DepartmentCategoryGrid.tsx uses DYNAMIC categories (no hardcoded DEPARTMENTS_CATALOG)
 const gridFile = path.join(__dirname, '../src/components/common/DepartmentCategoryGrid.tsx');
 if (!fs.existsSync(gridFile)) {
   console.error('❌ DepartmentCategoryGrid.tsx does not exist');
@@ -42,15 +42,28 @@ if (!fs.existsSync(gridFile)) {
 }
 const gridContent = fs.readFileSync(gridFile, 'utf8');
 
-console.log('\n[TEST 2] Verifying DepartmentCategoryGrid structure:');
-requiredCategories.forEach(cat => {
-  const found = gridContent.includes(`id: '${cat}'`);
-  if (!found) {
-    console.error(`❌ DepartmentCategoryGrid catalog missing: ${cat}`);
-    process.exit(1);
-  }
-  console.log(`   ✓ Catalog entry found for '${cat}'`);
-});
+console.log('\n[TEST 2] Verifying DepartmentCategoryGrid is fully dynamic:');
+
+// Must NOT have hardcoded DEPARTMENTS_CATALOG
+if (gridContent.includes('DEPARTMENTS_CATALOG')) {
+  console.error('❌ DepartmentCategoryGrid still contains hardcoded DEPARTMENTS_CATALOG — must be removed!');
+  process.exit(1);
+}
+console.log('   ✓ No hardcoded DEPARTMENTS_CATALOG found (purged)');
+
+// Must use dynamic context categories
+if (!gridContent.includes('useLearning')) {
+  console.error('❌ DepartmentCategoryGrid not sourcing from useLearning() context');
+  process.exit(1);
+}
+console.log('   ✓ Sources categories dynamically from useLearning() context');
+
+// Must have getIconForCategory dynamic mapper
+if (!gridContent.includes('getIconForCategory')) {
+  console.error('❌ DepartmentCategoryGrid missing getIconForCategory dynamic mapper');
+  process.exit(1);
+}
+console.log('   ✓ getIconForCategory dynamic slug→icon mapper present');
 
 // Check styling tokens
 const hasSpringPressable = gridContent.includes('SpringPressable');
@@ -92,6 +105,29 @@ if (!usesIconInHeader) {
 }
 console.log('   ✓ CoursesScreen renders CategoryIllustrationIcon in department row headers');
 
+// 4. Verify NO mock categories anywhere in the data pipeline
+console.log('\n[TEST 4] Verifying zero mock category data in pipeline:');
+
+const mockData = fs.readFileSync(path.join(__dirname, '../src/data/mockData.ts'), 'utf8');
+if (mockData.includes('export const CATEGORIES')) {
+  console.error('❌ mockData.ts still exports hardcoded CATEGORIES — must be removed!');
+  process.exit(1);
+}
+console.log('   ✓ mockData.ts has no exported CATEGORIES array');
+
+const coursesService = fs.readFileSync(path.join(__dirname, '../src/services/api/coursesService.ts'), 'utf8');
+if (coursesService.includes("from '../../data/mockData'")) {
+  console.error('❌ coursesService.ts still imports from mockData — must be removed!');
+  process.exit(1);
+}
+console.log('   ✓ coursesService.ts does not import from mockData');
+
+if (coursesService.includes('Math.max(totalCount, 382)')) {
+  console.error('❌ coursesService.ts still has hardcoded 382 fallback count');
+  process.exit(1);
+}
+console.log('   ✓ coursesService.ts uses live totalCount (no hardcoded 382)');
+
 console.log('\n================================================================');
-console.log('✅ ALL 3 DEPARTMENT CATEGORY GRID TESTS PASSED!');
+console.log('✅ ALL 4 DEPARTMENT CATEGORY GRID TESTS PASSED!');
 console.log('================================================================');

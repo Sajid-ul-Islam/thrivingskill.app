@@ -9,23 +9,6 @@ import { triggerHaptic } from '../../utils/haptics';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
 import { Category } from '../../types';
 
-export interface DepartmentItem {
-  id: CategoryDepartmentId;
-  titleEn: string;
-  titleBn: string;
-  courseCount?: number;
-}
-
-export const DEPARTMENTS_CATALOG: DepartmentItem[] = [
-  { id: 'design', titleEn: 'Design', titleBn: 'ডিজাইন' },
-  { id: 'software', titleEn: 'Software', titleBn: 'সফটওয়্যার' },
-  { id: 'networking', titleEn: 'Networking', titleBn: 'নেটওয়ার্কিং' },
-  { id: 'marketing', titleEn: 'Marketing', titleBn: 'মার্কেটিং' },
-  { id: 'hacking', titleEn: 'Hacking', titleBn: 'হ্যাকিং' },
-  { id: 'development', titleEn: 'Development', titleBn: 'ডেভেলপমেন্ট' },
-  { id: 'fitness', titleEn: 'Fitness', titleBn: 'ফিটনেস' },
-  { id: 'business', titleEn: 'Business', titleBn: 'বিজনেস' },
-];
 
 export const getIconForCategory = (slug: string = '', name: string = ''): CategoryDepartmentId => {
   const s = slug.toLowerCase();
@@ -130,16 +113,6 @@ export const DepartmentCategoryGrid: React.FC<DepartmentCategoryGridProps> = ({
       const countB = departmentCounts[b.id] ?? b.count ?? 0;
       return countB - countA;
     });
-
-    if (uniqueList.length === 0) {
-      return DEPARTMENTS_CATALOG.map((d) => ({
-        id: d.id,
-        name: d.titleEn,
-        slug: d.id,
-        banglaName: d.titleBn,
-        count: departmentCounts[d.id] || 0,
-      }));
-    }
 
     return uniqueList.slice(0, maxItems);
   }, [sourceCategories, departmentCounts, maxItems]);

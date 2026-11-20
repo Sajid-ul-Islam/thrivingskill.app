@@ -5,7 +5,6 @@ import { Course, Category, CategoryId, Workshop } from '../../types';
 import { transformWpCourse, cleanHtml } from './transformers';
 import { Env } from '../../config/env';
 import { INITIAL_COURSES_SEED } from '../../data/coursesCatalogSeed';
-import { CATEGORIES } from '../../data/mockData';
 
 // Eagerly pre-seed in-memory cache with the verified catalog for 0ms startup
 CacheManager.set(
@@ -68,7 +67,7 @@ export class CoursesService {
   static getCachedCategoriesSync(): Category[] {
     const memory = CacheManager.getSync<Category[]>(this.CATEGORIES_CACHE_KEY);
     if (memory && memory.length > 0) return memory;
-    return CATEGORIES;
+    return [];
   }
 
   /**
@@ -391,7 +390,7 @@ export class CoursesService {
           name: 'All Courses',
           banglaName: 'সব কোর্স',
           icon: 'grid',
-          count: Math.max(totalCount, 382),
+          count: totalCount,
           color: '#059669',
           slug: 'all',
         },

@@ -1,6 +1,5 @@
 import {
   Course,
-  Category,
   Workshop,
   Instructor,
   Certificate,
@@ -9,22 +8,9 @@ import {
   Review,
 } from '../types';
 
-export const CATEGORIES: Category[] = [
-  { id: 'all', name: 'All Courses', banglaName: 'সব কোর্স', icon: 'apps', count: 382, color: '#059669', slug: 'all' },
-  { id: 'business', name: 'Business', banglaName: 'বিজনেস ও প্রশাসন', icon: 'briefcase', count: 64, color: '#F59E0B', slug: 'business' },
-  { id: 'microsoft-excel-courses', name: 'Microsoft Excel Courses', banglaName: 'মাইক্রোসফট এক্সেল', icon: 'grid', count: 46, color: '#059669', slug: 'microsoft-excel-courses' },
-  { id: 'finance-accounting-legal', name: 'Finance Accounting & Legal', banglaName: 'ফাইন্যান্স ও অ্যাকাউন্টিং', icon: 'stats-chart', count: 34, color: '#0EA5E9', slug: 'finance-accounting-legal' },
-  { id: 'generative-ai', name: 'Generative AI', banglaName: 'জেনারেটিভ এআই', icon: 'sparkles', count: 25, color: '#6366F1', slug: 'generative-ai' },
-  { id: 'sales-marketing', name: 'Sales & Marketing', banglaName: 'সেলস ও মার্কেটিং', icon: 'megaphone', count: 25, color: '#EC4899', slug: 'sales-marketing' },
-  { id: 'human-resource-management', name: 'Human Resource Management', banglaName: 'হিউম্যান রিসোর্স (HR)', icon: 'people', count: 24, color: '#10B981', slug: 'human-resource-management' },
-  { id: 'personal-development', name: 'Personal Development', banglaName: 'পার্সোনাল ডেভেলপমেন্ট', icon: 'heart', count: 23, color: '#8B5CF6', slug: 'personal-development' },
-  { id: 'leadership-management', name: 'Leadership & Management', banglaName: 'লিডারশিপ ও ম্যানেজমেন্ট', icon: 'ribbon', count: 22, color: '#F97316', slug: 'leadership-management' },
-  { id: 'supply-chain-management', name: 'Supply Chain Management', banglaName: 'সাপ্লাই চেইন ম্যানেজমেন্ট', icon: 'cube', count: 21, color: '#14B8A6', slug: 'supply-chain-management' },
-  { id: 'data_science', name: 'Data Science & Analytics', banglaName: 'ডেটা সায়েন্স ও অ্যানালিটিক্স', icon: 'analytics', count: 26, color: '#3B82F6', slug: 'data_science' },
-  { id: 'job-seekers-skills', name: 'Job Seekers Skills', banglaName: 'চাকরিপ্রার্থীদের দক্ষতা', icon: 'school', count: 20, color: '#D97706', slug: 'job-seekers-skills' },
-  { id: 'research-courses', name: 'Research Courses', banglaName: 'রিসার্চ ও অ্যাকাডেমিয়া', icon: 'book', count: 15, color: '#3B82F6', slug: 'research-courses' },
-  { id: 'career-track', name: 'Special Bundles', banglaName: 'স্পেশাল বান্ডেল', icon: 'layers', count: 6, color: '#E11D48', slug: 'career-track' },
-];
+// NOTE: Categories are fetched EXCLUSIVELY from the live WordPress API.
+// No hardcoded/mock category data exists in this file.
+// Source of truth: https://thrivingskill.com/wp-json/wp/v2/course_category
 
 export const INSTRUCTORS: Record<string, Instructor> = {
   humaira: {

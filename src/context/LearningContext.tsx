@@ -145,7 +145,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [courses, setCourses] = useState<Course[]>(() => CoursesService.getCachedCoursesSync());
   const [totalCourseCount, setTotalCourseCount] = useState<number>(() => {
     const initial = CoursesService.getCachedCoursesSync();
-    return initial && initial.length > 0 ? initial.length : 382;
+    return initial && initial.length > 0 ? initial.length : 0;
   });
   const [categories, setCategories] = useState<Category[]>(() => {
     const initial = CoursesService.getCachedCategoriesSync();
@@ -156,7 +156,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         name: 'All Courses',
         banglaName: 'সব কোর্স',
         icon: 'grid',
-        count: 382,
+        count: 0,
         color: '#059669',
         slug: 'all',
       },
@@ -258,7 +258,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
 
       if (wpCategories.status === 'fulfilled' && wpCategories.value.length > 0) {
-        const liveCount = wpCourses.status === 'fulfilled' ? wpCourses.value.length : 382;
+        const liveCount = wpCourses.status === 'fulfilled' ? wpCourses.value.length : 0;
         const updatedCats = wpCategories.value.map((c) => {
           if (c.id === 'all') {
             return {
