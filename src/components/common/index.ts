@@ -22,3 +22,5 @@ export * from './ScrollToTopPill';
 export * from './AppErrorBoundary';
 export * from './IosActionNotificationPanel';
 export * from './MessengerIcon';
+export * from './CategoryIllustrationIcon';
+export * from './DepartmentCategoryGrid';

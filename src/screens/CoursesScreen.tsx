@@ -26,6 +26,9 @@ import {
   CourseCardSkeleton,
   StateView,
   ScrollToTopPill,
+  DepartmentCategoryGrid,
+  CategoryIllustrationIcon,
+  CategoryDepartmentId,
 } from '../components';
 import { triggerHaptic } from '../utils/haptics';
 import { shape } from '../theme/shapes';
@@ -82,44 +85,157 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [localSearch, setLocalSearch] = useState<string>(searchQuery);
 
-  const departments = useMemo(() => [
-    { id: 'generative-ai', title: isBangla ? 'জেনারেটিভ এআই' : 'Generative AI', icon: 'sparkles', color: '#6366F1' },
-    { id: 'sales-marketing', title: isBangla ? 'মার্কেটিং' : 'Marketing', icon: 'megaphone', color: '#EC4899' },
-    { id: 'supply-chain-management', title: isBangla ? 'সাপ্লাই চেইন' : 'Supply Chain', icon: 'cube', color: '#F59E0B' },
-    { id: 'human-resource-management', title: isBangla ? 'এইচআর ম্যানেজমেন্ট' : 'Human Resource', icon: 'people', color: '#10B981' },
-    { id: 'finance-accounting-legal', title: isBangla ? 'ফাইন্যান্স ও ট্যাক্স' : 'Finance & Accounts', icon: 'calculator', color: '#0EA5E9' },
-    { id: 'microsoft-excel-courses', title: isBangla ? 'এক্সেল ও ডেটা' : 'Excel & Analytics', icon: 'stats-chart', color: '#8B5CF6' },
-    { id: 'leadership-management', title: isBangla ? 'লিডারশিপ' : 'Leadership', icon: 'trophy', color: '#F97316' },
-    { id: 'bundle', title: isBangla ? 'স্পেশাল বান্ডেল' : 'Special Bundles', icon: 'layers', color: '#E11D48' },
+  // Helper to match courses against the 8 primary client department categories
+  const matchesDepartment = useCallback((c: Course, deptId: string): boolean => {
+    const lowerCat = (c.category || '').toLowerCase();
+    const lowerTitle = (c.title || '').toLowerCase();
+    const lowerSub = (c.subtitle || '').toLowerCase();
+    const slugs = (c.categorySlugs || []).map((s) => s.toLowerCase());
+
+    switch (deptId) {
+      case 'design':
+        return (
+          lowerCat.includes('design') ||
+          lowerCat.includes('creative') ||
+          lowerTitle.includes('design') ||
+          lowerTitle.includes('ui') ||
+          lowerTitle.includes('ux') ||
+          lowerTitle.includes('presentation') ||
+          lowerTitle.includes('creator') ||
+          lowerTitle.includes('canva') ||
+          lowerTitle.includes('video') ||
+          slugs.some((s) => s.includes('design') || s.includes('creative'))
+        );
+      case 'software':
+        return (
+          lowerCat.includes('software') ||
+          lowerCat.includes('excel') ||
+          lowerCat.includes('microsoft') ||
+          lowerTitle.includes('excel') ||
+          lowerTitle.includes('workspace') ||
+          lowerTitle.includes('power bi') ||
+          lowerTitle.includes('google') ||
+          lowerTitle.includes('word') ||
+          slugs.some((s) => s.includes('excel') || s.includes('software'))
+        );
+      case 'networking':
+        return (
+          lowerCat.includes('network') ||
+          lowerCat.includes('cloud') ||
+          lowerCat.includes('infrastructure') ||
+          lowerTitle.includes('network') ||
+          lowerTitle.includes('cloud') ||
+          lowerTitle.includes('ccna') ||
+          lowerTitle.includes('devops') ||
+          lowerTitle.includes('system') ||
+          slugs.some((s) => s.includes('network') || s.includes('cloud'))
+        );
+      case 'marketing':
+        return (
+          lowerCat.includes('market') ||
+          lowerCat.includes('sales') ||
+          lowerTitle.includes('market') ||
+          lowerTitle.includes('sales') ||
+          lowerTitle.includes('brand') ||
+          lowerTitle.includes('seo') ||
+          lowerTitle.includes('social') ||
+          lowerTitle.includes('prompt') ||
+          slugs.some((s) => s.includes('market') || s.includes('sales'))
+        );
+      case 'hacking':
+        return (
+          lowerCat.includes('hack') ||
+          lowerCat.includes('cyber') ||
+          lowerCat.includes('security') ||
+          lowerTitle.includes('hack') ||
+          lowerTitle.includes('cyber') ||
+          lowerTitle.includes('security') ||
+          lowerTitle.includes('penetration') ||
+          slugs.some((s) => s.includes('hack') || s.includes('security'))
+        );
+      case 'development':
+        return (
+          lowerCat.includes('dev') ||
+          lowerCat.includes('program') ||
+          lowerCat.includes('agentic') ||
+          lowerTitle.includes('dev') ||
+          lowerTitle.includes('python') ||
+          lowerTitle.includes('web') ||
+          lowerTitle.includes('code') ||
+          lowerTitle.includes('javascript') ||
+          lowerTitle.includes('agentic') ||
+          lowerTitle.includes('full-stack') ||
+          slugs.some((s) => s.includes('dev') || s.includes('program'))
+        );
+      case 'fitness':
+        return (
+          lowerCat.includes('fitness') ||
+          lowerCat.includes('health') ||
+          lowerCat.includes('wellness') ||
+          lowerTitle.includes('health') ||
+          lowerTitle.includes('fitness') ||
+          lowerTitle.includes('stress') ||
+          lowerTitle.includes('emotional') ||
+          lowerTitle.includes('productivity') ||
+          lowerTitle.includes('mindset') ||
+          lowerTitle.includes('habit') ||
+          lowerSub.includes('health') ||
+          lowerSub.includes('emotional intelligence') ||
+          slugs.some((s) => s.includes('fitness') || s.includes('health'))
+        );
+      case 'business':
+        return (
+          lowerCat.includes('business') ||
+          lowerCat.includes('finance') ||
+          lowerCat.includes('hr') ||
+          lowerCat.includes('lead') ||
+          lowerCat.includes('supply') ||
+          lowerTitle.includes('business') ||
+          lowerTitle.includes('finance') ||
+          lowerTitle.includes('tax') ||
+          lowerTitle.includes('accounting') ||
+          lowerTitle.includes('valuation') ||
+          lowerTitle.includes('leadership') ||
+          lowerTitle.includes('supply chain') ||
+          lowerTitle.includes('real estate') ||
+          lowerTitle.includes('bundle') ||
+          slugs.some((s) => s.includes('finance') || s.includes('business') || s.includes('leadership') || s.includes('hr'))
+        );
+      default:
+        return false;
+    }
+  }, []);
+
+  const departments: { id: CategoryDepartmentId; title: string }[] = useMemo(() => [
+    { id: 'design', title: isBangla ? 'ডিজাইন' : 'Design' },
+    { id: 'software', title: isBangla ? 'সফটওয়্যার' : 'Software' },
+    { id: 'networking', title: isBangla ? 'নেটওয়ার্কিং' : 'Networking' },
+    { id: 'marketing', title: isBangla ? 'মার্কেটিং' : 'Marketing' },
+    { id: 'hacking', title: isBangla ? 'হ্যাকিং' : 'Hacking' },
+    { id: 'development', title: isBangla ? 'ডেভেলপমেন্ট' : 'Development' },
+    { id: 'fitness', title: isBangla ? 'ফিটনেস' : 'Fitness' },
+    { id: 'business', title: isBangla ? 'বিজনেস' : 'Business' },
   ], [isBangla]);
+
+  const departmentCountsMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    departments.forEach((dept) => {
+      map[dept.id] = courses.filter((c) => matchesDepartment(c, dept.id)).length;
+    });
+    return map;
+  }, [departments, courses, matchesDepartment]);
 
   const departmentSections = useMemo(() => {
     return departments
       .map((dept) => {
-        const deptCourses = courses.filter((c) => {
-          if (dept.id === 'bundle') {
-            return c.category === 'bundle' || c.title.toLowerCase().includes('bundle');
-          }
-          if (c.category === dept.id) return true;
-          if (c.categorySlugs && c.categorySlugs.some((s) => s.includes(dept.id) || dept.id.includes(s))) return true;
-          const lowerCat = (c.category || '').toLowerCase();
-          const lowerTitle = (c.title || '').toLowerCase();
-          if (dept.id === 'generative-ai' && (lowerCat.includes('ai') || lowerTitle.includes('ai') || lowerCat.includes('prompt'))) return true;
-          if (dept.id === 'sales-marketing' && (lowerCat.includes('market') || lowerCat.includes('sales') || lowerTitle.includes('marketing'))) return true;
-          if (dept.id === 'supply-chain-management' && (lowerCat.includes('supply') || lowerCat.includes('logistics') || lowerTitle.includes('supply chain'))) return true;
-          if (dept.id === 'human-resource-management' && (lowerCat.includes('hr') || lowerCat.includes('human') || lowerCat.includes('resource') || lowerTitle.includes('hr'))) return true;
-          if (dept.id === 'finance-accounting-legal' && (lowerCat.includes('finan') || lowerCat.includes('account') || lowerCat.includes('tax') || lowerTitle.includes('tax') || lowerTitle.includes('financial'))) return true;
-          if (dept.id === 'microsoft-excel-courses' && (lowerCat.includes('excel') || lowerTitle.includes('excel') || lowerCat.includes('data'))) return true;
-          if (dept.id === 'leadership-management' && (lowerCat.includes('leader') || lowerCat.includes('manage') || lowerTitle.includes('leadership'))) return true;
-          return false;
-        });
+        const deptCourses = courses.filter((c) => matchesDepartment(c, dept.id));
         return {
           ...dept,
           courses: deptCourses,
         };
       })
       .filter((d) => d.courses.length > 0);
-  }, [departments, courses]);
+  }, [departments, courses, matchesDepartment]);
 
   const flatListRef = useRef<FlatList<any> | null>(null);
   const searchInputRef = useRef<React.ElementRef<typeof TextInput> | null>(null);
@@ -269,8 +385,11 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
 
     // Fast-path: O(1) candidate category pool
     let candidateList: Course[];
+    const isDeptFilter = departments.some((d) => d.id === cat);
     if (cat === 'all') {
       candidateList = courses;
+    } else if (isDeptFilter) {
+      candidateList = courses.filter((c) => matchesDepartment(c, cat));
     } else if (cat === 'bundle') {
       candidateList = courses.filter((c) => c.isCareerBundle === true || c.title.includes('Bundle') || c.category === 'special-bundle');
     } else {
@@ -417,10 +536,8 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     ({ item }: { item: any }) => {
       if (isBrowsingDepartments) {
         const dept = item as {
-          id: string;
+          id: CategoryDepartmentId;
           title: string;
-          icon: string;
-          color: string;
           courses: Course[];
         };
         const deptItemCount = dept.courses.length;
@@ -435,9 +552,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
           <View style={styles.deptRowSection}>
             <View style={styles.deptRowHeader}>
               <View style={styles.deptRowTitleRow}>
-                <View style={[styles.deptIconCircle, { backgroundColor: dept.color + '18' }]}>
-                  <Ionicons name={dept.icon as any} size={15} color={dept.color} />
-                </View>
+                <CategoryIllustrationIcon category={dept.id} size={28} />
                 <Text style={[styles.deptRowTitle, { color: colors.text }]} numberOfLines={1}>
                   {dept.title}
                 </Text>
@@ -567,67 +682,16 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
           </View>
         </View>
 
-        {/* CR-4: Department-wise Category Navigation Grid */}
-        <View style={styles.deptGridSection}>
-          <View style={styles.deptHeaderRow}>
-            <Text style={[styles.deptSectionTitle, { color: colors.text }]}>
-              {isBangla ? 'ক্যাটাগরি বিভাগ' : 'Department Categories'}
-            </Text>
-            {selectedCategory !== 'all' && (
-              <TouchableOpacity
-                onPress={() => handleCategorySelect('all')}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                accessibilityRole="button"
-                accessibilityLabel="Show all categories"
-              >
-                <Text style={[styles.resetCatText, { color: colors.primary }]}>
-                  {isBangla ? 'সকল কোর্স দেখুন →' : 'View All →'}
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
-          <View style={styles.deptGridCards}>
-            {departments.map((dept) => {
-              const isSelected = selectedCategory === dept.id;
-              return (
-                <TouchableOpacity
-                  key={dept.id}
-                  style={[
-                    styles.deptCard,
-                    {
-                      backgroundColor: isSelected ? colors.primaryLight : (isDark ? colors.surfaceCard : '#FFFFFF'),
-                      borderColor: isSelected ? colors.primary : colors.border,
-                    },
-                  ]}
-                  onPress={() => handleDeptCardPress(dept.id)}
-                  activeOpacity={0.8}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Filter or jump to ${dept.title}`}
-                >
-                  <View style={[styles.deptIconCircle, { backgroundColor: dept.color + '18' }]}>
-                    <Ionicons name={dept.icon as any} size={18} color={dept.color} />
-                  </View>
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text
-                      style={[
-                        styles.deptCardTitle,
-                        { color: isSelected ? colors.primary : colors.text },
-                      ]}
-                      numberOfLines={1}
-                    >
-                      {dept.title}
-                    </Text>
-                  </View>
-                  <Ionicons
-                    name={isSelected ? 'checkmark-circle' : 'chevron-forward'}
-                    size={14}
-                    color={isSelected ? colors.primary : colors.textMuted}
-                  />
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </View>
+        {/* CR-4: Department-wise Category Navigation Grid with Custom Illustrative Icons */}
+        <DepartmentCategoryGrid
+          selectedDeptId={selectedCategory === 'all' ? null : selectedCategory}
+          onSelectDepartment={(deptId) => {
+            handleDeptCardPress(deptId);
+          }}
+          departmentCounts={departmentCountsMap}
+          onReset={() => handleCategorySelect('all')}
+          showHeader={true}
+        />
 
         {/* Categories Pills */}
         <CategoryPills
