@@ -85,148 +85,71 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [localSearch, setLocalSearch] = useState<string>(searchQuery);
 
-  // Helper to match courses against the 8 primary client department categories
+  // Helper to match courses against dynamic site categories
   const matchesDepartment = useCallback((c: Course, deptId: string): boolean => {
+    const dId = (deptId || '').toLowerCase();
     const lowerCat = (c.category || '').toLowerCase();
-    const lowerTitle = (c.title || '').toLowerCase();
-    const lowerSub = (c.subtitle || '').toLowerCase();
     const slugs = (c.categorySlugs || []).map((s) => s.toLowerCase());
 
-    switch (deptId) {
-      case 'design':
-        return (
-          lowerCat.includes('design') ||
-          lowerCat.includes('creative') ||
-          lowerTitle.includes('design') ||
-          lowerTitle.includes('ui') ||
-          lowerTitle.includes('ux') ||
-          lowerTitle.includes('presentation') ||
-          lowerTitle.includes('creator') ||
-          lowerTitle.includes('canva') ||
-          lowerTitle.includes('video') ||
-          slugs.some((s) => s.includes('design') || s.includes('creative'))
-        );
-      case 'software':
-        return (
-          lowerCat.includes('software') ||
-          lowerCat.includes('excel') ||
-          lowerCat.includes('microsoft') ||
-          lowerTitle.includes('excel') ||
-          lowerTitle.includes('workspace') ||
-          lowerTitle.includes('power bi') ||
-          lowerTitle.includes('google') ||
-          lowerTitle.includes('word') ||
-          slugs.some((s) => s.includes('excel') || s.includes('software'))
-        );
-      case 'networking':
-        return (
-          lowerCat.includes('network') ||
-          lowerCat.includes('cloud') ||
-          lowerCat.includes('infrastructure') ||
-          lowerTitle.includes('network') ||
-          lowerTitle.includes('cloud') ||
-          lowerTitle.includes('ccna') ||
-          lowerTitle.includes('devops') ||
-          lowerTitle.includes('system') ||
-          slugs.some((s) => s.includes('network') || s.includes('cloud'))
-        );
-      case 'marketing':
-        return (
-          lowerCat.includes('market') ||
-          lowerCat.includes('sales') ||
-          lowerTitle.includes('market') ||
-          lowerTitle.includes('sales') ||
-          lowerTitle.includes('brand') ||
-          lowerTitle.includes('seo') ||
-          lowerTitle.includes('social') ||
-          lowerTitle.includes('prompt') ||
-          slugs.some((s) => s.includes('market') || s.includes('sales'))
-        );
-      case 'hacking':
-        return (
-          lowerCat.includes('hack') ||
-          lowerCat.includes('cyber') ||
-          lowerCat.includes('security') ||
-          lowerTitle.includes('hack') ||
-          lowerTitle.includes('cyber') ||
-          lowerTitle.includes('security') ||
-          lowerTitle.includes('penetration') ||
-          slugs.some((s) => s.includes('hack') || s.includes('security'))
-        );
-      case 'development':
-        return (
-          lowerCat.includes('dev') ||
-          lowerCat.includes('program') ||
-          lowerCat.includes('agentic') ||
-          lowerTitle.includes('dev') ||
-          lowerTitle.includes('python') ||
-          lowerTitle.includes('web') ||
-          lowerTitle.includes('code') ||
-          lowerTitle.includes('javascript') ||
-          lowerTitle.includes('agentic') ||
-          lowerTitle.includes('full-stack') ||
-          slugs.some((s) => s.includes('dev') || s.includes('program'))
-        );
-      case 'fitness':
-        return (
-          lowerCat.includes('fitness') ||
-          lowerCat.includes('health') ||
-          lowerCat.includes('wellness') ||
-          lowerTitle.includes('health') ||
-          lowerTitle.includes('fitness') ||
-          lowerTitle.includes('stress') ||
-          lowerTitle.includes('emotional') ||
-          lowerTitle.includes('productivity') ||
-          lowerTitle.includes('mindset') ||
-          lowerTitle.includes('habit') ||
-          lowerSub.includes('health') ||
-          lowerSub.includes('emotional intelligence') ||
-          slugs.some((s) => s.includes('fitness') || s.includes('health'))
-        );
-      case 'business':
-        return (
-          lowerCat.includes('business') ||
-          lowerCat.includes('finance') ||
-          lowerCat.includes('hr') ||
-          lowerCat.includes('lead') ||
-          lowerCat.includes('supply') ||
-          lowerTitle.includes('business') ||
-          lowerTitle.includes('finance') ||
-          lowerTitle.includes('tax') ||
-          lowerTitle.includes('accounting') ||
-          lowerTitle.includes('valuation') ||
-          lowerTitle.includes('leadership') ||
-          lowerTitle.includes('supply chain') ||
-          lowerTitle.includes('real estate') ||
-          lowerTitle.includes('bundle') ||
-          slugs.some((s) => s.includes('finance') || s.includes('business') || s.includes('leadership') || s.includes('hr'))
-        );
-      default:
-        return false;
-    }
+    if (lowerCat === dId || slugs.includes(dId)) return true;
+
+    // Dynamic alias & keyword mapping for live platform categories
+    if (dId.includes('excel') && (lowerCat.includes('excel') || slugs.some((s) => s.includes('excel')))) return true;
+    if (dId.includes('generative-ai') && (lowerCat.includes('ai') || slugs.some((s) => s.includes('ai')))) return true;
+    if (dId.includes('finance') && (lowerCat.includes('finance') || slugs.some((s) => s.includes('finance')))) return true;
+    if (dId.includes('marketing') && (lowerCat.includes('marketing') || lowerCat.includes('sales') || slugs.some((s) => s.includes('marketing') || s.includes('sales')))) return true;
+    if (dId.includes('human-resource') && (lowerCat.includes('hr') || lowerCat.includes('human') || slugs.some((s) => s.includes('hr') || s.includes('human')))) return true;
+    if (dId.includes('supply-chain') && (lowerCat.includes('supply') || slugs.some((s) => s.includes('supply')))) return true;
+    if (dId.includes('personal-development') && (lowerCat.includes('personal') || slugs.some((s) => s.includes('personal')))) return true;
+    if (dId.includes('leadership') && (lowerCat.includes('leadership') || slugs.some((s) => s.includes('leadership')))) return true;
+    if (dId.includes('data') && (lowerCat.includes('data') || slugs.some((s) => s.includes('data')))) return true;
+    if (dId.includes('business') && (lowerCat.includes('business') || slugs.some((s) => s.includes('business')))) return true;
+    if (dId.includes('bundle') && (c.isCareerBundle || c.title.toLowerCase().includes('bundle') || lowerCat.includes('bundle'))) return true;
+    if (dId.includes('research') && (lowerCat.includes('research') || slugs.some((s) => s.includes('research')))) return true;
+    if (dId.includes('job') && (lowerCat.includes('job') || slugs.some((s) => s.includes('job')))) return true;
+
+    return false;
   }, []);
 
-  const departments: { id: CategoryDepartmentId; title: string }[] = useMemo(() => [
-    { id: 'design', title: isBangla ? 'ডিজাইন' : 'Design' },
-    { id: 'software', title: isBangla ? 'সফটওয়্যার' : 'Software' },
-    { id: 'networking', title: isBangla ? 'নেটওয়ার্কিং' : 'Networking' },
-    { id: 'marketing', title: isBangla ? 'মার্কেটিং' : 'Marketing' },
-    { id: 'hacking', title: isBangla ? 'হ্যাকিং' : 'Hacking' },
-    { id: 'development', title: isBangla ? 'ডেভেলপমেন্ট' : 'Development' },
-    { id: 'fitness', title: isBangla ? 'ফিটনেস' : 'Fitness' },
-    { id: 'business', title: isBangla ? 'বিজনেস' : 'Business' },
-  ], [isBangla]);
+  // Dynamically source departments from the authentic live site categories
+  const dynamicDepartments = useMemo(() => {
+    const excluded = new Set([
+      'all',
+      'published',
+      'get-offer',
+      '60-off',
+      'get-tickets',
+      'siam-city-cement',
+      'homemakers-skills',
+      'ebook',
+      'courses',
+      'physical-training',
+    ]);
+
+    const valid = (categories || []).filter((c) => {
+      const slug = (c.slug || c.id || '').toLowerCase();
+      return !excluded.has(slug);
+    });
+
+    return valid.map((cat) => ({
+      id: cat.slug || cat.id,
+      title: isBangla ? (cat.banglaName || cat.name) : cat.name,
+      slug: cat.slug || cat.id,
+      count: cat.count,
+    }));
+  }, [categories, isBangla]);
 
   const departmentCountsMap = useMemo(() => {
     const map: Record<string, number> = {};
-    departments.forEach((dept) => {
-      map[dept.id] = courses.filter((c) => matchesDepartment(c, dept.id)).length;
+    dynamicDepartments.forEach((dept) => {
+      const liveCount = courses.filter((c) => matchesDepartment(c, dept.id)).length;
+      map[dept.id] = liveCount > 0 ? liveCount : dept.count || 0;
     });
     return map;
-  }, [departments, courses, matchesDepartment]);
+  }, [dynamicDepartments, courses, matchesDepartment]);
 
   const departmentSections = useMemo(() => {
-    return departments
+    return dynamicDepartments
       .map((dept) => {
         const deptCourses = courses.filter((c) => matchesDepartment(c, dept.id));
         return {
@@ -235,7 +158,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
         };
       })
       .filter((d) => d.courses.length > 0);
-  }, [departments, courses, matchesDepartment]);
+  }, [dynamicDepartments, courses, matchesDepartment]);
 
   const flatListRef = useRef<FlatList<any> | null>(null);
   const searchInputRef = useRef<React.ElementRef<typeof TextInput> | null>(null);
@@ -385,7 +308,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
 
     // Fast-path: O(1) candidate category pool
     let candidateList: Course[];
-    const isDeptFilter = departments.some((d) => d.id === cat);
+    const isDeptFilter = dynamicDepartments.some((d) => d.id === cat || d.slug === cat);
     if (cat === 'all') {
       candidateList = courses;
     } else if (isDeptFilter) {
@@ -536,7 +459,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     ({ item }: { item: any }) => {
       if (isBrowsingDepartments) {
         const dept = item as {
-          id: CategoryDepartmentId;
+          id: string;
           title: string;
           courses: Course[];
         };

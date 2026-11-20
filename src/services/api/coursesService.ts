@@ -307,28 +307,83 @@ export class CoursesService {
    * Fetch course categories from LearnPress.
    * Returns valid categories with live course counts.
    */
+  /**
+   * Fetch course categories from WordPress / LearnPress.
+   * Returns valid categories with live course counts and bilingual names.
+   */
   static async getCategories(forceRefresh: boolean = false): Promise<Category[]> {
     const fetchCatsFromNetwork = async (): Promise<Category[]> => {
-      const rawCats = await HttpClient.get<any[]>(
-        Endpoints.LEARNPRESS.COURSE_CATEGORIES,
-        {
-          per_page: 100,
-          _t: Date.now(),
-        },
-        {
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            Pragma: 'no-cache',
+      let rawCats: any[] | null = null;
+
+      // Primary: WordPress Core course_category taxonomy (public, zero auth required)
+      try {
+        rawCats = await HttpClient.get<any[]>(
+          Endpoints.WORDPRESS.COURSE_CATEGORIES,
+          {
+            per_page: 100,
+            _t: Date.now(),
           },
+          {
+            headers: {
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              Pragma: 'no-cache',
+            },
+          }
+        );
+      } catch (err) {
+        if (Env.DEBUG_API) console.warn('[CoursesService] WP course_category fetch failed, falling back:', err);
+      }
+
+      // Fallback: LearnPress v1 endpoint
+      if (!Array.isArray(rawCats) || rawCats.length === 0) {
+        try {
+          rawCats = await HttpClient.get<any[]>(
+            Endpoints.LEARNPRESS.COURSE_CATEGORIES,
+            {
+              per_page: 100,
+              _t: Date.now(),
+            },
+            {
+              headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                Pragma: 'no-cache',
+              },
+            }
+          );
+        } catch (err) {
+          if (Env.DEBUG_API) console.warn('[CoursesService] LearnPress course_category fetch failed:', err);
         }
-      );
+      }
 
       if (!Array.isArray(rawCats)) {
         throw new Error('Expected array of categories');
       }
 
-      const validCats = rawCats.filter((c: any) => c.count > 0 && c.slug !== 'published');
+      // Filter out internal metadata/offer tags
+      const excludedSlugs = new Set(['published', 'get-offer', '60-off', 'get-tickets', 'courses']);
+      const validCats = rawCats.filter((c: any) => c.count > 0 && !excludedSlugs.has(c.slug));
       const totalCount = validCats.reduce((acc: number, c: any) => acc + (c.count || 0), 0);
+
+      const getCategoryBanglaName = (slug: string, name: string): string => {
+        const s = (slug || '').toLowerCase();
+        const n = (name || '').toLowerCase();
+        if (s.includes('generative-ai') || s.includes('4ir') || n.includes('ai')) return 'জেনারেটিভ এআই';
+        if (s.includes('excel') || n.includes('excel')) return 'মাইক্রোসফট এক্সেল';
+        if (s.includes('finance') || s.includes('accounting') || n.includes('finance')) return 'ফাইন্যান্স ও অ্যাকাউন্টিং';
+        if (s.includes('marketing') || s.includes('sales') || n.includes('marketing')) return 'সেলস ও মার্কেটিং';
+        if (s.includes('human-resource') || s.includes('hr') || n.includes('human')) return 'হিউম্যান রিসোর্স (HR)';
+        if (s.includes('supply-chain') || n.includes('supply')) return 'সাপ্লাই চেইন ম্যানেজমেন্ট';
+        if (s.includes('leadership') || n.includes('leadership')) return 'লিডারশিপ ও ম্যানেজমেন্ট';
+        if (s.includes('personal-development') || n.includes('personal')) return 'পার্সোনাল ডেভেলপমেন্ট';
+        if (s.includes('data') || n.includes('data')) return 'ডেটা সায়েন্স ও অ্যানালিটিক্স';
+        if (s.includes('job-seeker') || n.includes('job')) return 'চাকরিপ্রার্থীদের দক্ষতা';
+        if (s.includes('research') || n.includes('research')) return 'রিসার্চ ও অ্যাকাডেমিয়া';
+        if (s.includes('business') || n.includes('business')) return 'বিজনেস ও প্রশাসন';
+        if (s.includes('upcoming') || n.includes('upcoming')) return 'আসন্ন লাইভ ট্রেনিং';
+        if (s.includes('master') || n.includes('master')) return 'মাস্টারক্লাস';
+        if (s.includes('bundle')) return 'স্পেশাল বান্ডেল';
+        return name;
+      };
 
       const mapped: Category[] = [
         {
@@ -340,14 +395,19 @@ export class CoursesService {
           color: '#059669',
           slug: 'all',
         },
-        ...validCats.map((c: any) => ({
-          id: c.slug || String(c.id),
-          name: cleanHtml(c.name),
-          count: c.count,
-          icon: 'book',
-          color: '#4F46E5',
-          slug: c.slug,
-        })),
+        ...validCats.map((c: any) => {
+          const cleanName = cleanHtml(c.name);
+          const slug = c.slug || String(c.id);
+          return {
+            id: slug,
+            name: cleanName,
+            banglaName: getCategoryBanglaName(slug, cleanName),
+            count: c.count,
+            icon: 'book',
+            color: '#4F46E5',
+            slug: slug,
+          };
+        }),
       ];
 
       return mapped;

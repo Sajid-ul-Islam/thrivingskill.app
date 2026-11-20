@@ -52,6 +52,7 @@ export const Endpoints = {
     POSTS: '/wp/v2/posts',
     POST_DETAIL: (id: string | number) => `/wp/v2/posts/${id}`,
     CATEGORIES: '/wp/v2/categories',
+    COURSE_CATEGORIES: '/wp/v2/course_category',
     TAGS: '/wp/v2/tags',
     PAGES: '/wp/v2/pages',
     MEDIA: '/wp/v2/media',
