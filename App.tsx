@@ -57,6 +57,9 @@ import {
   ScreenTransition,
   CelebrationToast,
   ActionToast,
+  ModernSnackbar,
+  ModernBanner,
+  ModernPopup,
   FloatingCrmWidget,
   AppErrorBoundary,
   IosActionNotificationPanel,
@@ -114,7 +117,20 @@ const MainAppContent: React.FC = () => {
   const { user, isAuthenticated, isLoading: isAuthLoading, isAuthModalVisible, setAuthModalVisible } = useAuth();
   const { celebration, clearCelebration } = useGamification();
   const { activeVideo, playerMode, closePlayer, minimizePlayer, playVideo } = useYouTube();
-  const { currentToast, dismissToast, showToast } = useFeedback();
+  const {
+    currentToast,
+    dismissToast,
+    showToast,
+    currentSnackbar,
+    dismissSnackbar,
+    showSnackbar,
+    currentBanner,
+    dismissBanner,
+    showBanner,
+    currentPopup,
+    dismissPopup,
+    showPopup,
+  } = useFeedback();
 
   // Option D: Telemetry & Push Notification Infrastructure Initialization
   useEffect(() => {
@@ -670,12 +686,41 @@ const MainAppContent: React.FC = () => {
         }
       />
 
+      {/* Global Interactive Bottom Snackbar with Undo & Duration Progress */}
+      <ModernSnackbar
+        snackbar={currentSnackbar}
+        onDismiss={dismissSnackbar}
+        bottomOffset={
+          activeScreen.name === 'MainTabs'
+            ? 74 + Math.max(insets.bottom, Platform.OS === 'ios' ? 12 : 8)
+            : Math.max(insets.bottom, 16) + 12
+        }
+      />
+
+      {/* Global In-App Sticky Announcement & System Banner */}
+      <ModernBanner
+        banner={currentBanner}
+        onDismiss={dismissBanner}
+        sticky
+      />
+
+      {/* Global Modern Confirmation & Alert Popup Dialog */}
+      <ModernPopup
+        popup={currentPopup}
+        onDismiss={dismissPopup}
+      />
+
       {/* Interactive iOS & Android Action Notification Panel */}
       <IosActionNotificationPanel
         onNavigateToCourse={navigateToCourse}
         onBookmarkCourse={(courseId) => {
           toggleBookmark(courseId);
-          showToast({ message: 'Course saved to Bookmarks', type: 'success' });
+          showSnackbar({
+            message: 'Course saved to Bookmarks',
+            actionLabel: 'Undo',
+            onAction: () => toggleBookmark(courseId),
+            type: 'success',
+          });
         }}
         onOpenNotifications={() => setNotificationModalVisible(true)}
       />

@@ -16,6 +16,7 @@ import { Env } from '../../config/env';
 import { AboutTabKey } from '../modals/AboutTSLModal';
 import { LegalTabKey } from '../modals/LegalPolicyModal';
 import { MessengerIcon } from '../common/MessengerIcon';
+import { useFeedback } from '../../context/FeedbackContext';
 
 export interface GamificationBadge {
   id: string;
@@ -109,6 +110,8 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
   showToast,
   t,
 }) => {
+  const { showPopup } = useFeedback();
+
   return (
     <>
       {/* Administrator Management Console (Section 2 Spec) */}
@@ -1104,14 +1107,17 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
               style={[styles.settingRow, { borderBottomWidth: 0 }]}
               onPress={() => {
                 triggerHaptic('warning');
-                Alert.alert(
-                  isBangla ? 'সাইন আউট' : 'Sign Out',
-                  isBangla ? 'আপনি কি নিশ্চিত যে আপনি সাইন আউট করতে চান?' : 'Are you sure you want to sign out?',
-                  [
-                    { text: isBangla ? 'বাতিল' : 'Cancel', style: 'cancel' },
-                    { text: isBangla ? 'সাইন আউট' : 'Sign Out', style: 'destructive', onPress: onLogout },
-                  ]
-                );
+                showPopup({
+                  title: isBangla ? 'সাইন আউট করবেন?' : 'Sign Out?',
+                  message: isBangla
+                    ? 'আপনি কি নিশ্চিত যে আপনার অ্যাকাউন্ট থেকে সাইন আউট করতে চান?'
+                    : 'Are you sure you want to sign out of your account on this device?',
+                  primaryLabel: isBangla ? 'সাইন আউট' : 'Sign Out',
+                  secondaryLabel: isBangla ? 'বাতিল' : 'Cancel',
+                  isDestructive: true,
+                  icon: 'log-out-outline',
+                  onConfirm: onLogout,
+                });
               }}
               accessibilityRole="button"
               accessibilityLabel={isBangla ? 'সাইন আউট' : 'Sign Out'}

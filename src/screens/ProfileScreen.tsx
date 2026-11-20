@@ -81,7 +81,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const { isTablet, containerClampStyle } = useResponsive();
   const { language, toggleLanguage, isBangla, t } = useLanguage();
   const { badges, streakDays } = useGamification();
-  const { showToast } = useFeedback();
+  const { showToast, showSnackbar, showPopup, showBanner } = useFeedback();
   const {
     courses,
     userProgress,
@@ -209,10 +209,24 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   };
 
   const handleClearCache = async () => {
-    await CacheManager.clearAll();
-    showToast({
-      message: isBangla ? 'অ্যাপ ক্যাশ ক্লিয়ার হয়েছে' : 'App cache cleared successfully',
-      type: 'success',
+    showPopup({
+      title: isBangla ? 'ক্যাশ মেমোরি খালি করবেন?' : 'Clear App Cache?',
+      message: isBangla
+        ? 'সাময়িক ক্যাশ ডেটা মুছে যাবে, তবে আপনার কোর্স অগ্রগতি সুরক্ষিত থাকবে।'
+        : 'Temporary cache will be cleared. Your course enrollments and progress remain completely safe.',
+      primaryLabel: isBangla ? 'ক্যাশ মুছুন' : 'Clear Cache',
+      secondaryLabel: isBangla ? 'বাতিল' : 'Cancel',
+      isDestructive: true,
+      icon: 'trash-outline',
+      onConfirm: async () => {
+        await CacheManager.clearAll();
+        showSnackbar({
+          message: isBangla ? 'অ্যাপ ক্যাশ সফলভাবে ক্লিয়ার হয়েছে' : 'App cache cleared successfully',
+          actionLabel: isBangla ? 'ঠিক আছে' : 'Dismiss',
+          onAction: () => {},
+          type: 'success',
+        });
+      },
     });
   };
 
@@ -224,10 +238,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     }
 
     if (!displayName.trim()) {
-      Alert.alert(
-        isBangla ? 'প্রয়োজনীয় তথ্য' : 'Required Field',
-        isBangla ? 'ডিসপ্লে নেম দেওয়া বাধ্যতামূলক।' : 'Display name is required.'
-      );
+      showToast({
+        title: isBangla ? 'প্রয়োজনীয় তথ্য' : 'Required Field',
+        message: isBangla ? 'ডিসপ্লে নেম দেওয়া বাধ্যতামূলক।' : 'Display name is required.',
+        type: 'warning',
+        position: 'top',
+      });
       return;
     }
 
