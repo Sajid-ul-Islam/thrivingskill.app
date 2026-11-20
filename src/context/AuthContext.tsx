@@ -7,6 +7,7 @@ import { HttpClient } from '../services/api/httpClient';
 import { Endpoints } from '../services/api/endpoints';
 import { SyncQueueManager } from '../services/offline/syncQueue';
 import { CacheManager } from '../services/cache/cacheManager';
+import { SecureStorageService } from '../services/storage/secureStorage';
 import {
   loginWpUser,
   registerWpUser,
@@ -82,9 +83,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     (async () => {
       try {
-        const [savedUser, savedToken, savedBypass] = await Promise.all([
+        const [savedUser, secureToken, savedBypass] = await Promise.all([
           AsyncStorage.getItem(AUTH_USER_STORAGE_KEY),
-          AsyncStorage.getItem(AUTH_TOKEN_STORAGE_KEY),
+          SecureStorageService.getAuthToken(),
           AsyncStorage.getItem(AUTH_ADMIN_BYPASS_KEY),
         ]);
 
@@ -110,8 +111,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 AsyncStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(parsedUser)).catch(() => {});
               }
 
-              // Extract persistent session token or generate durable session id
-              const activeToken = savedToken || parsedUser.token || `ts_session_${parsedUser.id}`;
+              // Extract persistent session token from hardware SecureStore or durable session id
+              const activeToken = secureToken || parsedUser.token || `ts_session_${parsedUser.id}`;
               const userWithToken: UserProfile = {
                 ...parsedUser,
                 token: activeToken,
@@ -121,9 +122,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               HttpClient.setAuthToken(activeToken);
               setIsGuest(false);
 
-              // Keep storage keys synchronized
-              if (!savedToken) {
-                await AsyncStorage.setItem(AUTH_TOKEN_STORAGE_KEY, activeToken);
+              // Ensure hardware-backed SecureStore is populated
+              if (!secureToken && activeToken) {
+                await SecureStorageService.setAuthToken(activeToken);
               }
 
               // Silent background refresh from live site (https://thrivingskill.com)
@@ -181,7 +182,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await Promise.all([
         AsyncStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(userWithToken)),
-        AsyncStorage.setItem(AUTH_TOKEN_STORAGE_KEY, userToken),
+        SecureStorageService.setAuthToken(userToken),
       ]);
     } catch (e) {
       console.warn('Failed to persist user session:', e);
@@ -195,7 +196,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
    * Auto-syncs any updates customer made on the actual website into the app
    */
   const refreshUserProfile = async (): Promise<UserProfile | null> => {
-    const currentToken = token || (await AsyncStorage.getItem(AUTH_TOKEN_STORAGE_KEY));
+    const currentToken = token || (await SecureStorageService.getAuthToken());
     if (!currentToken) return null;
 
     setIsSyncingProfile(true);
@@ -352,6 +353,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await Promise.all([
         AsyncStorage.removeItem(AUTH_USER_STORAGE_KEY),
         AsyncStorage.removeItem(AUTH_TOKEN_STORAGE_KEY),
+        SecureStorageService.removeAuthToken(),
         AsyncStorage.removeItem(AUTH_ADMIN_BYPASS_KEY),
         CacheManager.clearAll(),
       ]);

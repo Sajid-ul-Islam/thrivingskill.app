@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CacheManager } from '../cache/cacheManager';
+import { SecureStorageService } from './secureStorage';
 
 const STORAGE_CLEANUP_VERSION = '@ts_storage_sanitized_v2';
 const AUTH_USER_KEY = '@thriving_skill_user';
@@ -36,7 +37,10 @@ export class StorageSanitizer {
       await CacheManager.remove('courses_full_catalog');
       await CacheManager.remove('courses_list_all');
 
-      // 5. Mark sanitization as complete for this build version
+      // 5. Migrate any plaintext auth tokens to hardware-backed SecureStore
+      await SecureStorageService.getAuthToken().catch(() => {});
+
+      // 6. Mark sanitization as complete for this build version
       await AsyncStorage.setItem(STORAGE_CLEANUP_VERSION, new Date().toISOString());
       console.log('[StorageSanitizer] Local storage successfully sanitized of all mock data.');
     } catch (err) {

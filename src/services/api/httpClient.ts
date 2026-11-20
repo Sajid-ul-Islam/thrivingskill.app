@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Env } from '../../config/env';
+import { SecureStorageService } from '../storage/secureStorage';
 
 const AUTH_TOKEN_KEY = '@thrivingskill_auth_token';
 
@@ -67,12 +68,12 @@ export class HttpClient {
   }
 
   /**
-   * Retrieve active authentication token from memory or persistent storage
+   * Retrieve active authentication token from memory or hardware-backed secure storage
    */
   static async getAuthToken(): Promise<string | null> {
     if (this.activeToken) return this.activeToken;
     try {
-      const stored = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
+      const stored = await SecureStorageService.getAuthToken();
       this.activeToken = stored;
       return stored;
     } catch {

@@ -494,7 +494,9 @@ async function runChallengerSuite() {
 
   // Test 3.5: ProfileScreen Admin Link Complete Invisibility for Non-Admin
   {
-    const profileScreen = fs.readFileSync(path.join(PROJECT_ROOT, 'src', 'screens', 'ProfileScreen.tsx'), 'utf8');
+    const profileScreenPath = path.join(PROJECT_ROOT, 'src', 'screens', 'ProfileScreen.tsx');
+    const profilePrefPath = path.join(PROJECT_ROOT, 'src', 'components', 'profile', 'ProfilePreferencesSection.tsx');
+    const profileScreen = fs.readFileSync(profileScreenPath, 'utf8') + (fs.existsSync(profilePrefPath) ? fs.readFileSync(profilePrefPath, 'utf8') : '');
     const hasStrictAdminDef = profileScreen.includes("const isAdmin = Array.isArray(user?.roles) && user.roles.includes('administrator');");
     const hasAdminSectionGuard = profileScreen.includes('{isAdmin && (');
     const hasWpAdminUrl = profileScreen.includes('Linking.openURL(Env.WP_ADMIN_URL)');
