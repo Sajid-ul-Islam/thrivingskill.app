@@ -9,6 +9,7 @@ import {
   BackHandler,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useTheme } from '../../context/ThemeContext';
 import { PopupPayload, PopupType } from '../../context/FeedbackContext';
 import { shape } from '../../theme/shapes';
 import { typography } from '../../theme/typography';
@@ -68,6 +69,7 @@ const POPUP_THEME: Record<
 };
 
 export const ModernPopup: React.FC<ModernPopupProps> = ({ popup, onDismiss }) => {
+  const { colors, isDark } = useTheme();
   const [modalVisible, setModalVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -166,6 +168,9 @@ export const ModernPopup: React.FC<ModernPopupProps> = ({ popup, onDismiss }) =>
           style={[
             styles.dialogContainer,
             {
+              backgroundColor: isDark ? colors.surfaceCard : '#FFFFFF',
+              borderColor: isDark ? colors.border : '#E2E8F0',
+              borderWidth: isDark ? 1 : 0,
               opacity: opacityAnim,
               transform: [{ scale: scaleAnim }],
             },
@@ -183,8 +188,10 @@ export const ModernPopup: React.FC<ModernPopupProps> = ({ popup, onDismiss }) =>
           </View>
 
           {/* Title & Description */}
-          <Text style={[typography.h4, styles.title]}>{popup?.title}</Text>
-          <Text style={[typography.bodyMedium, styles.message]}>
+          <Text style={[typography.h4, styles.title, { color: isDark ? colors.text : '#102F53' }]}>
+            {popup?.title}
+          </Text>
+          <Text style={[typography.bodyMedium, styles.message, { color: isDark ? colors.textMuted : '#64748B' }]}>
             {popup?.message}
           </Text>
 
@@ -192,12 +199,20 @@ export const ModernPopup: React.FC<ModernPopupProps> = ({ popup, onDismiss }) =>
           <View style={styles.actionsRow}>
             {popup?.secondaryLabel && (
               <SpringPressable
-                style={styles.cancelBtn}
+                style={[
+                  styles.cancelBtn,
+                  {
+                    backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9',
+                    borderColor: isDark ? colors.border : '#E2E8F0',
+                  },
+                ]}
                 onPress={handleCancel}
                 accessibilityRole="button"
                 accessibilityLabel={popup.secondaryLabel}
               >
-                <Text style={styles.cancelText}>{popup.secondaryLabel}</Text>
+                <Text style={[styles.cancelText, { color: isDark ? colors.text : '#475569' }]}>
+                  {popup.secondaryLabel}
+                </Text>
               </SpringPressable>
             )}
 

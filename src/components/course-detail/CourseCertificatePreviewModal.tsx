@@ -11,6 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { Env } from '../../config/env';
@@ -41,6 +42,7 @@ export const CourseCertificatePreviewModal: React.FC<CourseCertificatePreviewMod
 }) => {
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
+  const insets = useSafeAreaInsets();
 
   const certId = certificateId || `TSL-CERT-${course.id}-2026`;
   const verifyUrl = `${Env.SITE_URL.replace(/\/+$/, '')}/verify/${certId}`;
@@ -68,7 +70,15 @@ export const CourseCertificatePreviewModal: React.FC<CourseCertificatePreviewMod
       animationType="fade"
       onRequestClose={onClose}
     >
-      <View style={styles.certModalOverlay}>
+      <View
+        style={[
+          styles.certModalOverlay,
+          {
+            paddingTop: Math.max(16, insets.top),
+            paddingBottom: Math.max(16, insets.bottom),
+          },
+        ]}
+      >
         <View style={[styles.certModalCard, { backgroundColor: isDark ? '#1C1D22' : '#FFFDF9' }]}>
           {/* Modal Header */}
           <View style={styles.certModalHeader}>

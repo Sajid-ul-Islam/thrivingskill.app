@@ -12,6 +12,7 @@ import {
   Linking,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { UserProfile } from '../../services/api/userService';
 import { Env } from '../../config/env';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
@@ -48,6 +49,8 @@ export const ProfileDeleteAccountModal: React.FC<ProfileDeleteAccountModalProps>
   insetsBottom,
   t,
 }) => {
+  const insets = useSafeAreaInsets();
+  const effectiveBottom = Math.max(insets.bottom, insetsBottom || 0);
   const { isTablet } = useResponsive();
   return (
     <Modal
@@ -62,7 +65,11 @@ export const ProfileDeleteAccountModal: React.FC<ProfileDeleteAccountModalProps>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-        style={[styles.modalBackdrop, isTablet && styles.modalBackdropTablet]}
+        style={[
+          styles.modalBackdrop,
+          isTablet && styles.modalBackdropTablet,
+          { paddingTop: Math.max(16, insets.top) },
+        ]}
       >
         <View
           style={[
@@ -71,7 +78,7 @@ export const ProfileDeleteAccountModal: React.FC<ProfileDeleteAccountModalProps>
             {
               backgroundColor: colors.surfaceCard,
               borderColor: colors.border,
-              paddingBottom: Math.max(insetsBottom, 20) + 12,
+              paddingBottom: Math.max(effectiveBottom, 20) + 12,
             },
           ]}
         >

@@ -11,6 +11,7 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { triggerHaptic } from '../../utils/haptics';
@@ -40,6 +41,7 @@ export const CourseWriteReviewModal: React.FC<CourseWriteReviewModalProps> = ({
 }) => {
   const { colors } = useTheme();
   const { isBangla } = useLanguage();
+  const insets = useSafeAreaInsets();
 
   return (
     <Modal
@@ -50,7 +52,13 @@ export const CourseWriteReviewModal: React.FC<CourseWriteReviewModalProps> = ({
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
-        style={styles.reviewModalOverlay}
+        style={[
+          styles.reviewModalOverlay,
+          {
+            paddingTop: Math.max(16, insets.top),
+            paddingBottom: Math.max(16, insets.bottom),
+          },
+        ]}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >

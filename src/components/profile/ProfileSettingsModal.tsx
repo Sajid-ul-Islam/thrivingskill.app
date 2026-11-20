@@ -15,6 +15,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { UserProfile } from '../../services/api/userService';
 import { triggerHaptic } from '../../utils/haptics';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
@@ -155,6 +156,7 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
   privacyCertificates,
   setPrivacyCertificates,
 }) => {
+  const insets = useSafeAreaInsets();
   const [activeTab, setActiveTab] = useState<SettingsTabId>('general');
   const { isTablet } = useResponsive();
   const tabNewPassRef = useRef<React.ElementRef<typeof TextInput>>(null);
@@ -179,7 +181,14 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-        style={[styles.modalBackdrop, isTablet && styles.modalBackdropTablet]}
+        style={[
+          styles.modalBackdrop,
+          isTablet && styles.modalBackdropTablet,
+          {
+            paddingTop: Math.max(16, insets.top),
+            paddingBottom: Math.max(16, insets.bottom),
+          },
+        ]}
       >
         <View
           style={[

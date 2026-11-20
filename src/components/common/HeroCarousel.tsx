@@ -16,6 +16,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
+import { triggerHaptic } from '../../utils/haptics';
 import { shape } from '../../theme/shapes';
 import { useResponsive } from '../../theme/responsive';
 
@@ -316,13 +317,22 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
         decelerationRate="fast"
       />
 
-      {/* Pagination Dots */}
+      {/* Interactive Pagination Dots */}
       <View style={styles.paginationRow}>
         {slides.map((_, i) => {
           const isActive = i === activeIndex;
           return (
-            <View
+            <TouchableOpacity
               key={i}
+              onPress={() => {
+                triggerHaptic('selection');
+                flatListRef.current?.scrollToIndex({ index: i, animated: true });
+                setActiveIndex(i);
+              }}
+              hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel={`Go to slide ${i + 1}`}
+              activeOpacity={0.8}
               style={[
                 styles.dot,
                 isActive

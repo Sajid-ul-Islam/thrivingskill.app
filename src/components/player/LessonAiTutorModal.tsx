@@ -12,6 +12,7 @@ import {
   Platform,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { triggerHaptic } from '../../utils/haptics';
@@ -31,6 +32,7 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
+  const insets = useSafeAreaInsets();
   const [messages, setMessages] = useState<TutorMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isThinking, setIsThinking] = useState(false);
@@ -38,6 +40,25 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
   const [isNanoOfflineReady, setIsNanoOfflineReady] = useState(false);
   const [smartReplies, setSmartReplies] = useState<string[]>([]);
   const scrollRef = useRef<React.ElementRef<typeof ScrollView> | null>(null);
+  const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+        scrollTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  const scheduleScrollToEnd = () => {
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+    scrollTimeoutRef.current = setTimeout(() => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  };
 
   // Load chat history & on-device Gemini Nano status when opened
   useEffect(() => {
@@ -91,9 +112,7 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
     setInputText('');
     setIsThinking(true);
 
-    setTimeout(() => {
-      scrollRef.current?.scrollToEnd({ animated: true });
-    }, 100);
+    scheduleScrollToEnd();
 
     try {
       const answer = await AiTutorService.askTutor(text, context, newHistory, isBangla);
@@ -119,9 +138,7 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
       setIsThinking(false);
-      setTimeout(() => {
-        scrollRef.current?.scrollToEnd({ animated: true });
-      }, 100);
+      scheduleScrollToEnd();
     }
   };
 
@@ -174,9 +191,7 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
     const finalHistory = [...messages, cheatMsg];
     setMessages(finalHistory);
     AiTutorService.saveHistory(context.lessonId, finalHistory);
-    setTimeout(() => {
-      scrollRef.current?.scrollToEnd({ animated: true });
-    }, 100);
+    scheduleScrollToEnd();
   };
 
   const handleDiagnosticQuiz = async () => {
@@ -217,9 +232,7 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
     } catch {
     } finally {
       setIsThinking(false);
-      setTimeout(() => {
-        scrollRef.current?.scrollToEnd({ animated: true });
-      }, 100);
+      scheduleScrollToEnd();
     }
   };
 
@@ -515,7 +528,7 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
           )}
 
           {/* Input Bar */}
-          <View style={[styles.inputBar, { borderTopColor: colors.border }]}>
+          <View style={[styles.inputBar, { borderTopColor: colors.border, paddingBottom: Math.max(12, insets.bottom) }]}>
             <TextInput
               style={[
                 styles.textInput,
@@ -548,6 +561,7 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
               ]}
               onPress={() => handleSendMessage()}
               disabled={!inputText.trim() || isThinking}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               accessibilityRole="button"
               accessibilityLabel="Send question"
             >

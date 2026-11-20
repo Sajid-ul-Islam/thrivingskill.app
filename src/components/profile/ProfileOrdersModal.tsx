@@ -8,6 +8,7 @@ import {
   Modal,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '../../theme/responsive';
 import { Course, UserProgress } from '../../types';
 
@@ -30,6 +31,8 @@ export const ProfileOrdersModal: React.FC<ProfileOrdersModalProps> = ({
   userProgress,
   insetsBottom,
 }) => {
+  const insets = useSafeAreaInsets();
+  const effectiveBottom = Math.max(insets.bottom, insetsBottom || 0);
   const { isTablet } = useResponsive();
   return (
     <Modal
@@ -38,7 +41,16 @@ export const ProfileOrdersModal: React.FC<ProfileOrdersModalProps> = ({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View style={[styles.modalBackdrop, isTablet && styles.modalBackdropTablet]}>
+      <View
+        style={[
+          styles.modalBackdrop,
+          isTablet && styles.modalBackdropTablet,
+          {
+            paddingTop: Math.max(16, insets.top),
+            paddingBottom: Math.max(16, effectiveBottom),
+          },
+        ]}
+      >
         <View
           style={[
             styles.modalCard,

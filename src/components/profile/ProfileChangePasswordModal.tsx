@@ -11,6 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { triggerHaptic } from '../../utils/haptics';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
 import { useResponsive } from '../../theme/responsive';
@@ -56,6 +57,7 @@ export const ProfileChangePasswordModal: React.FC<ProfileChangePasswordModalProp
   handleChangePassword,
   isChangingPass,
 }) => {
+  const insets = useSafeAreaInsets();
   const { isTablet } = useResponsive();
   const modalNewPassRef = useRef<React.ElementRef<typeof TextInput>>(null);
   const modalConfirmPassRef = useRef<React.ElementRef<typeof TextInput>>(null);
@@ -71,7 +73,14 @@ export const ProfileChangePasswordModal: React.FC<ProfileChangePasswordModalProp
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-        style={[styles.modalBackdrop, isTablet && styles.modalBackdropTablet]}
+        style={[
+          styles.modalBackdrop,
+          isTablet && styles.modalBackdropTablet,
+          {
+            paddingTop: Math.max(16, insets.top),
+            paddingBottom: Math.max(16, insets.bottom),
+          },
+        ]}
       >
         <View
           style={[

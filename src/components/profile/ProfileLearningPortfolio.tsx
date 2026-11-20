@@ -145,57 +145,35 @@ export const ProfileLearningPortfolio: React.FC<ProfileLearningPortfolioProps> =
             accessibilityLabel="View all achievements"
           >
             <Text style={[styles.seeAllText, { color: colors.primary }]}>
-              {isBangla ? `সবগুলো দেখুন (${Math.max(1, certificates.length)}) →` : `View All (${Math.max(1, certificates.length)}) →`}
+              {isBangla ? `সবগুলো দেখুন (${certificates.length}) →` : `View All (${certificates.length}) →`}
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Achievements Horizontal Scroll */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 12, paddingBottom: 6 }}
-        >
-          {(certificates.length > 0 ? certificates : [
-            {
-              id: 'cert-demo-1',
-              courseId: 'demo',
-              courseTitle: 'Generative AI for Corporate Professionals',
-              studentName: user?.displayName || user?.name || 'Executive Learner',
-              issueDate: '2026-11-15',
-              credentialId: 'TS-2026-GAI-8818',
-              instructorName: 'Md. Abdullah Al Mahmud',
-              verificationUrl: 'https://thrivingskill.com/certificate/TS-2026-GAI-8818',
-              skillsEarned: ['Prompt Engineering', 'AI Strategy', 'Productivity Automation'],
-            },
-            {
-              id: 'cert-demo-2',
-              courseId: 'demo-2',
-              courseTitle: 'Financial Modeling & Valuation Masterclass',
-              studentName: user?.displayName || user?.name || 'Executive Learner',
-              issueDate: '2026-10-28',
-              credentialId: 'TS-2026-FIN-7960',
-              instructorName: 'Thriving Skills Executive Faculty',
-              verificationUrl: 'https://thrivingskill.com/certificate/TS-2026-FIN-7960',
-              skillsEarned: ['Financial Modeling', 'IAS Compliance', 'Taxation'],
-            },
-          ]).map((cert) => (
-            <View
-              key={cert.id}
-              style={{
-                width: 220,
-                backgroundColor: isDark ? colors.surfaceCard : '#FFFFFF',
-                borderRadius: shape.large,
-                borderWidth: 1,
-                borderColor: colors.border,
-                padding: 14,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.06,
-                shadowRadius: 6,
-                elevation: 2,
-              }}
-            >
+        {/* Achievements Section: Real Earned Certificates or Clean Empty State */}
+        {certificates.length > 0 ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 12, paddingBottom: 6 }}
+          >
+            {certificates.map((cert) => (
+              <View
+                key={cert.id}
+                style={{
+                  width: 220,
+                  backgroundColor: isDark ? colors.surfaceCard : '#FFFFFF',
+                  borderRadius: shape.large,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  padding: 14,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.06,
+                  shadowRadius: 6,
+                  elevation: 2,
+                }}
+              >
               {/* Top Row: Provider & Date */}
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -301,6 +279,57 @@ export const ProfileLearningPortfolio: React.FC<ProfileLearningPortfolioProps> =
             </View>
           ))}
         </ScrollView>
+        ) : (
+          <View
+            style={{
+              padding: 20,
+              backgroundColor: isDark ? colors.surfaceCard : '#FFFFFF',
+              borderRadius: shape.large,
+              borderWidth: 1,
+              borderColor: colors.border,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <View
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 24,
+                backgroundColor: colors.primaryLight,
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginBottom: 10,
+              }}
+            >
+              <Ionicons name="ribbon-outline" size={24} color={colors.primary} />
+            </View>
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: '700',
+                color: colors.text,
+                textAlign: 'center',
+                marginBottom: 4,
+              }}
+            >
+              {isBangla ? 'এখনো কোনো সার্টিফিকেট অর্জিত হয়নি' : 'No Certificates Earned Yet'}
+            </Text>
+            <Text
+              style={{
+                fontSize: 12,
+                color: colors.textMuted,
+                textAlign: 'center',
+                lineHeight: 18,
+                maxWidth: 280,
+              }}
+            >
+              {isBangla
+                ? 'আপনার এনরোল করা কোর্সটি ১০০% সম্পন্ন করুন এবং ভেরিফাইড সার্টিফিকেট অর্জন করুন।'
+                : 'Complete 100% of any enrolled course to unlock your verified digital certificate.'}
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* CR-05: Enrolled & Graduated Courses Portfolio */}
