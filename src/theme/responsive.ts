@@ -1,4 +1,4 @@
-import { useWindowDimensions, StyleSheet, ViewStyle } from 'react-native';
+import { useWindowDimensions, ViewStyle } from 'react-native';
 
 export const BREAKPOINTS = {
   phone: 0,

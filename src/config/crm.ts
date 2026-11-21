@@ -1,4 +1,4 @@
-import { Linking, Platform } from 'react-native';
+import { Linking } from 'react-native';
 
 /**
  * Official CRM & Support Channels for Thriving Skills

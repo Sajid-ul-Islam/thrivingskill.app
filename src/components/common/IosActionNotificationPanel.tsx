@@ -15,7 +15,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import { PushNotificationService, InAppNotification } from '../../services/notifications/pushNotificationService';
 import { triggerHaptic } from '../../utils/haptics';
-import { MIN_TOUCH_TARGET, typography } from '../../theme/typography';
+import { MIN_TOUCH_TARGET } from '../../theme/typography';
 
 interface IosActionNotificationPanelProps {
   onNavigateToCourse?: (courseId: string) => void;

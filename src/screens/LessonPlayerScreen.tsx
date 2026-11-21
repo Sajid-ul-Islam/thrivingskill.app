@@ -30,7 +30,6 @@ import {
   DownloadQualityModal,
   QuickNoteBottomSheet,
   PiPFloatingPlayer,
-  NativeMedia3Player,
   NativeMedia3PlayerRef,
   StateView,
   LessonActionBar,
@@ -45,12 +44,11 @@ import { useGamification } from '../context/GamificationContext';
 import { useFeedback } from '../context/FeedbackContext';
 import { triggerHaptic } from '../utils/haptics';
 import { resolveLessonVideoData } from '../data/lessonVideosRegistry';
-import { isSystemPiPSupported, isBackgroundAudioSupported } from '../utils/pipManager';
 import { OfflineManager } from '../services/offline/offlineManager';
 import { SpacedRepetitionModal } from '../components/modals/SpacedRepetitionModal';
 import { shape } from '../theme/shapes';
 import { LessonsService, LessonDetail } from '../services/api/lessonsService';
-import { Lesson, Certificate, Note } from '../types';
+import { Lesson, Certificate } from '../types';
 
 interface LessonPlayerScreenProps {
   courseId: string;
@@ -69,7 +67,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const { t, isBangla } = useLanguage();
+  const { isBangla } = useLanguage();
   const { user, isAdmin } = useAuth();
   const { showToast } = useFeedback();
   const { recordStudyTime, unlockBadge, triggerCelebration } = useGamification();
@@ -421,12 +419,6 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     const mins = Math.floor(sec / 60);
     const remainder = sec % 60;
     return `${mins < 10 ? '0' : ''}${mins}:${remainder < 10 ? '0' : ''}${remainder}`;
-  };
-
-  const handleOpenDownloadModal = () => {
-    triggerHaptic('light');
-    setQualityModalMode('download');
-    setQualityModalVisible(true);
   };
 
   const handleOpenStreamQualityModal = () => {

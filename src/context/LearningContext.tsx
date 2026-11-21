@@ -23,7 +23,6 @@ import {
   fetchWpCourseDetail,
   fetchWpLiveWorkshops,
 } from '../services/wordpressApi';
-import { GeminiNanoService } from '../services/ai/geminiNanoService';
 
 function areDataEqual(a: any, b: any): boolean {
   if (a === b) return true;

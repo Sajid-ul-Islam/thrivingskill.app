@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   StyleSheet,
-  TouchableOpacity,
   Text,
   Platform,
   Pressable,
@@ -22,7 +21,7 @@ import { shape } from './src/theme/shapes';
 
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { LearningProvider, useLearning } from './src/context/LearningContext';
-import { SaaSProvider, useSaaS } from './src/context/SaaSContext';
+import { SaaSProvider } from './src/context/SaaSContext';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { LanguageProvider, useLanguage } from './src/context/LanguageContext';
 import { GamificationProvider, useGamification } from './src/context/GamificationContext';
@@ -30,7 +29,7 @@ import { YouTubeProvider, useYouTube } from './src/context/YouTubeContext';
 import { FeedbackProvider, useFeedback } from './src/context/FeedbackContext';
 import { NetworkProvider } from './src/context/NetworkContext';
 import { triggerHaptic } from './src/utils/haptics';
-import { RootTab, ActiveScreen } from './src/types';
+import { RootTab } from './src/types';
 import { useNavigationStack } from './src/hooks';
 
 import { HomeScreen } from './src/screens/HomeScreen';
@@ -113,7 +112,6 @@ const MainAppContent: React.FC = () => {
   const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const { userProgress, hasActiveLiveWorkshop, toggleBookmark } = useLearning();
-  const { activeWorkspace, unreadNotificationsCount } = useSaaS();
   const { user, isAuthenticated, isLoading: isAuthLoading, isAuthModalVisible, setAuthModalVisible } = useAuth();
   const { celebration, clearCelebration } = useGamification();
   const { activeVideo, playerMode, closePlayer, minimizePlayer, playVideo } = useYouTube();
@@ -126,10 +124,8 @@ const MainAppContent: React.FC = () => {
     showSnackbar,
     currentBanner,
     dismissBanner,
-    showBanner,
     currentPopup,
     dismissPopup,
-    showPopup,
   } = useFeedback();
 
   // Option D: Telemetry & Push Notification Infrastructure Initialization
@@ -212,7 +208,6 @@ const MainAppContent: React.FC = () => {
     navigateToTab,
     navigateToCourse,
     navigateToLesson,
-    resetToTabs: navigateBackToTabs,
   } = useNavigationStack({ initialTab: 'Home' });
 
   useEffect(() => {

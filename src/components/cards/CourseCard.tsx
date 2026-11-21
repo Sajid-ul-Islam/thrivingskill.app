@@ -1,6 +1,6 @@
 import { SpringPressable } from '../common';
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Course } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
@@ -74,7 +74,7 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
         >
           <View style={[styles.horizontalThumbWrapper, { backgroundColor: colors.surfaceSubtle }]}>
             <Image
-              source={{ uri: course.thumbnail, cache: 'force-cache' }}
+              source={thumbError || !course.thumbnail ? require('../../../assets/icon.png') : { uri: course.thumbnail, cache: 'force-cache' }}
               style={styles.horizontalThumb}
               fadeDuration={150}
               onError={() => setThumbError(true)}
@@ -182,7 +182,7 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
       >
         <View style={[styles.thumbWrapper, { backgroundColor: colors.surfaceSubtle }]}>
           <Image
-            source={{ uri: course.thumbnail, cache: 'force-cache' }}
+            source={thumbError || !course.thumbnail ? require('../../../assets/icon.png') : { uri: course.thumbnail, cache: 'force-cache' }}
             style={styles.thumbnail}
             fadeDuration={150}
             onError={() => setThumbError(true)}

@@ -12,7 +12,6 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { triggerHaptic } from '../../utils/haptics';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
 import { useResponsive } from '../../theme/responsive';
@@ -33,7 +32,7 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
   const insets = useSafeAreaInsets();
-  const { isTablet, containerClampStyle } = useResponsive();
+  const { containerClampStyle } = useResponsive();
   const [activeTab, setActiveTab] = useState<LegalTabKey>(initialTab);
   const [privacyLang, setPrivacyLang] = useState<'en' | 'bn'>(isBangla ? 'bn' : 'en');
 

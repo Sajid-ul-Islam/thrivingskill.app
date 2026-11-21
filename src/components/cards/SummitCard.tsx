@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, Alert } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { SpringPressable } from '../common';
 import { SkillsSummit } from '../../types';

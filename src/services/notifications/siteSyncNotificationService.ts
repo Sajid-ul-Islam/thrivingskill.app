@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { HttpClient } from '../api/httpClient';
 import { Endpoints } from '../api/endpoints';
-import { Course, WpPost, UserProgress } from '../../types';
+import { UserProgress } from '../../types';
 import { PushNotificationService } from './pushNotificationService';
 import { HabitNotificationQueue } from './habitNotificationQueue';
 import { cleanHtml, parseBdtPrice } from '../api/transformers';

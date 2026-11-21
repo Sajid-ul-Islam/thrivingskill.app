@@ -9,7 +9,7 @@ import {
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { Course, Lesson } from '../../types';
+import { Course } from '../../types';
 import { YouTubeVideo } from '../../data/youtubeVideos';
 
 interface CourseDetailHeroProps {

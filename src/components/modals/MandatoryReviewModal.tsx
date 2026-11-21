@@ -17,7 +17,6 @@ import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { triggerHaptic } from '../../utils/haptics';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
-import { shape } from '../../theme/shapes';
 
 interface MandatoryReviewModalProps {
   visible: boolean;

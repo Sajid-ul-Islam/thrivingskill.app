@@ -183,22 +183,18 @@ export const QuizModal: React.FC<QuizModalProps> = ({ visible, questions, onClos
                     const isSelected = selectedOption === idx;
                     let optionBg = colors.surfaceSubtle;
                     let optionBorder = colors.border;
-                    let iconColor = colors.textMuted;
 
                     if (isSubmitted) {
                       if (idx === currentQ.correctAnswerIndex) {
                         optionBg = colors.primaryLight;
                         optionBorder = colors.primary;
-                        iconColor = colors.primary;
                       } else if (isSelected) {
                         optionBg = colors.dangerLight;
                         optionBorder = colors.danger;
-                        iconColor = colors.danger;
                       }
                     } else if (isSelected) {
                       optionBg = colors.surfaceElevated;
                       optionBorder = colors.secondary;
-                      iconColor = colors.secondary;
                     }
 
                     return (

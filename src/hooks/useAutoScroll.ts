@@ -1,6 +1,5 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
 import {
-  ScrollView,
   NativeSyntheticEvent,
   NativeScrollEvent,
   LayoutChangeEvent,

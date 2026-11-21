@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -277,7 +277,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const { isTablet, isLandscape, containerClampStyle } = useResponsive();
+  const { isTablet, containerClampStyle } = useResponsive();
   const [aboutModalVisible, setAboutModalVisible] = useState(false);
   const [aboutInitialTab, setAboutInitialTab] = useState<AboutTabKey>('overview');
   const [showHeaderSearch, setShowHeaderSearch] = useState(false);
@@ -285,7 +285,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const [showScrollTop, setShowScrollTop] = useState(false);
   const scrollViewRef = useRef<React.ElementRef<typeof ScrollView> | null>(null);
 
-  const { t, isBangla } = useLanguage();
+  const { isBangla } = useLanguage();
   const { streakDays, dailyMinutesSpent, dailyGoalMinutes } = useGamification();
   const dailyTargetMinutes = dailyGoalMinutes && dailyGoalMinutes > 0 ? dailyGoalMinutes : 30;
   const currentGoalPercent = Math.min(100, Math.round((dailyMinutesSpent / dailyTargetMinutes) * 100));
@@ -295,18 +295,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     isLoadingCourses,
     coursesError,
     refreshCourses,
-    searchQuery,
     setSearchQuery,
     userProgress,
     getCourseProgressPercentage,
-    recordCategoryInteraction,
     recordSearchKeyword,
-    getRecommendedCourses,
     banners,
-    siteBranding,
   } = useLearning();
 
-  const { activeWorkspace, subscriptionTier, assessmentResult } = useSaaS();
+  const { subscriptionTier } = useSaaS();
   const { lastWatchedVideo, playVideo } = useYouTube();
   const { user, isAuthenticated, isGuest, setAuthModalVisible } = useAuth();
 
@@ -359,7 +355,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     return activeCourseId ? courses.find((c) => c.id === activeCourseId) : undefined;
   }, [userProgress, courses]);
 
-  const activeProgress = activeCourse ? userProgress[activeCourse.id] : undefined;
   const activeProgressPercent = activeCourse ? getCourseProgressPercentage(activeCourse.id) : 0;
 
   // Subtitle / Momentum context

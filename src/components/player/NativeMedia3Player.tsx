@@ -1,8 +1,7 @@
-import React, { useRef, useImperativeHandle, forwardRef, useEffect, useState } from 'react';
+import { useRef, useImperativeHandle, forwardRef, useEffect, useState } from 'react';
 import { View, StyleSheet, ActivityIndicator, StyleProp, ViewStyle, Text } from 'react-native';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useEventListener } from 'expo';
-import { formatNowPlayingMetadata } from '../../utils/pipManager';
 
 export interface NativeMedia3PlayerProps {
   sourceUrl: string;
@@ -51,8 +50,6 @@ export const NativeMedia3Player = forwardRef<NativeMedia3PlayerRef, NativeMedia3
     const videoViewRef = useRef<VideoView>(null);
     const [isBuffering, setIsBuffering] = useState<boolean>(true);
     const [hasError, setHasError] = useState<boolean>(false);
-
-    const nowPlayingMeta = formatNowPlayingMetadata(title, courseTitle);
 
     const player = useVideoPlayer(sourceUrl, (p) => {
       p.loop = false;

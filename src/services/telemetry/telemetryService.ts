@@ -1,6 +1,5 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Env } from '../../config/env';
 
 export interface TelemetryBreadcrumb {
   category: 'navigation' | 'auth' | 'video' | 'checkout' | 'system' | 'network';

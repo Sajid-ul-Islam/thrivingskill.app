@@ -27,7 +27,6 @@ import { Course } from '../../types';
 import { CoursesService } from '../../services/api/coursesService';
 import { triggerHaptic } from '../../utils/haptics';
 import { shape } from '../../theme/shapes';
-import { MIN_TOUCH_TARGET } from '../../theme/typography';
 import { useResponsive } from '../../theme/responsive';
 import { getBundleConfig } from '../../data/bundleCoursesMap';
 

@@ -1,4 +1,4 @@
-import { Course, Note, Lesson } from '../../types';
+import { Course, Note } from '../../types';
 import { Flashcard } from '../study/spacedRepetitionService';
 import { LiteRtService } from '../ai/liteRtService';
 

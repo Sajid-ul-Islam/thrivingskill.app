@@ -18,6 +18,9 @@ const SUITES = [
   { name: '8. Profile Bi-directional Sync & Checkout Autofill Suite', script: 'scripts/test_profile_and_checkout_sync.js' },
   { name: '9. Multi-Channel Floating CRM Speed-Dial Suite', script: 'scripts/test_floating_crm_widget.js' },
   { name: '10. R&D Breakthrough Innovations Suite', script: 'scripts/test_rd_innovations.js' },
+  { name: '11. Secure Hardware Token Storage Suite', script: 'scripts/test_secure_storage.js' },
+  { name: '12. Department Category Grid & Icon Suite', script: 'scripts/test_department_grid.js' },
+  { name: '13. Modern Accessibility Feedback Suite', script: 'scripts/test_feedback_suite.js' },
 ];
 
 console.log('====================================================');

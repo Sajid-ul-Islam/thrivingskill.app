@@ -119,7 +119,7 @@ By designing dashboards with high data-to-ink ratios and neutral corporate palet
 ];
 
 export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelectCourse }) => {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { isBangla } = useLanguage();
   const { blogPosts } = useLearning();
   const { showToast } = useFeedback();

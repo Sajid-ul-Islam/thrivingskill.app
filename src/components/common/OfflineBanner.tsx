@@ -16,7 +16,7 @@ export const OfflineBanner: React.FC<OfflineBannerProps> = ({
   onRetry,
   onOpenOfflineContent,
 }) => {
-  const { colors, isDark } = useTheme();
+  const { isDark } = useTheme();
   const { isBangla } = useLanguage();
   const { isOffline, isChecking, retryConnection } = useNetwork();
 

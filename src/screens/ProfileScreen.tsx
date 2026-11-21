@@ -78,10 +78,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 }) => {
   const { colors, isDark, toggleTheme } = useTheme();
   const insets = useSafeAreaInsets();
-  const { isTablet, containerClampStyle } = useResponsive();
+  const { containerClampStyle } = useResponsive();
   const { language, toggleLanguage, isBangla, t } = useLanguage();
   const { badges, streakDays } = useGamification();
-  const { showToast, showSnackbar, showPopup, showBanner } = useFeedback();
+  const { showToast, showSnackbar, showPopup } = useFeedback();
   const {
     courses,
     userProgress,

@@ -8,7 +8,6 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Linking,
   Platform,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -149,7 +148,7 @@ const FAQ_DATA: FaqItem[] = [
 ];
 
 export const HelpFaqModal: React.FC<HelpFaqModalProps> = ({ visible, onClose }) => {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { isBangla } = useLanguage();
   const insets = useSafeAreaInsets();
 

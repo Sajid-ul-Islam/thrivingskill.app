@@ -30,7 +30,6 @@ import {
 import { useYouTube } from '../context/YouTubeContext';
 import { Certificate, Course, LearnPressCourseFilter } from '../types';
 import { MIN_TOUCH_TARGET } from '../theme/typography';
-import { shape } from '../theme/shapes';
 import { useResponsive } from '../theme/responsive';
 
 interface MyLearningScreenProps {

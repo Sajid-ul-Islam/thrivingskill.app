@@ -10,7 +10,6 @@ import {
   FlatList,
   NativeSyntheticEvent,
   NativeScrollEvent,
-  useWindowDimensions,
   AccessibilityInfo,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -115,7 +114,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
   slides: propSlides,
   onSelectSlide,
 }) => {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { isTablet, width: screenWidth } = useResponsive();
   const cardWidth = Math.min(Math.max(280, screenWidth - 32), 880);
   const slides = propSlides && propSlides.length > 0 ? propSlides : SLIDES;

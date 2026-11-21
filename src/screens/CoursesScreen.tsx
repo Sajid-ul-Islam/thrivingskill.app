@@ -11,7 +11,6 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   Platform,
-  ListRenderItem,
   LayoutAnimation,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -28,7 +27,6 @@ import {
   ScrollToTopPill,
   DepartmentCategoryGrid,
   CategoryIllustrationIcon,
-  CategoryDepartmentId,
 } from '../components';
 import { triggerHaptic } from '../utils/haptics';
 import { shape } from '../theme/shapes';

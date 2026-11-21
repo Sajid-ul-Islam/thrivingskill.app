@@ -22,7 +22,7 @@ import { useYouTube } from '../../context/YouTubeContext';
 import { YouTubeVideo, YOUTUBE_CHANNEL } from '../../data/youtubeVideos';
 import { findRelatedCourse } from '../../services/youtubeService';
 import { triggerHaptic } from '../../utils/haptics';
-import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
+import { MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
 
 interface YouTubePlayerModalProps {

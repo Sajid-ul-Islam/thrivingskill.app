@@ -1,4 +1,4 @@
-import { Course, CourseModule, Lesson, Category, WpUser, WpPost, CategoryId, Workshop } from '../types';
+import { Course, Category, WpUser, WpPost, Workshop } from '../types';
 import { Env } from '../config/env';
 import { CoursesService } from './api/coursesService';
 import { PostsService } from './api/postsService';

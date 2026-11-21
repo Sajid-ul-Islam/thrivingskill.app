@@ -1,7 +1,7 @@
 import { HttpClient } from './httpClient';
 import { Endpoints } from './endpoints';
 import { CacheManager } from '../cache/cacheManager';
-import { Course, Category, CategoryId, Workshop } from '../../types';
+import { Course, Category, Workshop } from '../../types';
 import { transformWpCourse, cleanHtml } from './transformers';
 import { Env } from '../../config/env';
 import { INITIAL_COURSES_SEED } from '../../data/coursesCatalogSeed';

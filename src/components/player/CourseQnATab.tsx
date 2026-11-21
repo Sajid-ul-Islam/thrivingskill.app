@@ -7,7 +7,6 @@ import {
   TextInput,
   Image,
   Modal,
-  Alert,
   Platform,
   KeyboardAvoidingView,
   ScrollView,
@@ -19,7 +18,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useFeedback } from '../../context/FeedbackContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { triggerHaptic } from '../../utils/haptics';
-import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
+import { MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
 
 export interface QnAItem {

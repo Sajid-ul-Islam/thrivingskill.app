@@ -35,38 +35,6 @@ export const DownloadQualityModal: React.FC<DownloadQualityModalProps> = ({
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
 
-  const downloadOptions: {
-    id: '360p' | '720p' | '1080p';
-    label: string;
-    sublabel: string;
-    size: string;
-    icon: string;
-    recommended?: boolean;
-  }[] = [
-    {
-      id: '360p',
-      label: '360p Data Saver',
-      sublabel: 'Optimized for mobile data & quick downloads',
-      size: '~25 MB',
-      icon: 'cellular-outline',
-    },
-    {
-      id: '720p',
-      label: '720p HD Video',
-      sublabel: 'Standard crisp high-definition quality',
-      size: '~65 MB',
-      icon: 'videocam-outline',
-      recommended: true,
-    },
-    {
-      id: '1080p',
-      label: '1080p Full HD',
-      sublabel: 'Maximum studio fidelity for tablets & desk study',
-      size: '~140 MB',
-      icon: 'tv-outline',
-    },
-  ];
-
   const streamOptions = [
     { id: 'Auto', label: 'Auto (Media3 Adaptive)', sublabel: 'Dynamically adapts to network speed' },
     { id: '1080p', label: '1080p Full HD', sublabel: 'Requires fast Wi-Fi connection' },

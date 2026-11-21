@@ -1,8 +1,5 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Env } from '../../config/env';
 import { SecureStorageService } from '../storage/secureStorage';
-
-const AUTH_TOKEN_KEY = '@thrivingskill_auth_token';
 
 export interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined | null>;

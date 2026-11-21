@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { SpringPressable } from '../common';
 import { SpecialBundle } from '../../types';
@@ -12,7 +12,7 @@ interface SpecialBundleCardProps {
 }
 
 export const SpecialBundleCard: React.FC<SpecialBundleCardProps> = ({ bundle, onPress }) => {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
 
   return (
     <SpringPressable

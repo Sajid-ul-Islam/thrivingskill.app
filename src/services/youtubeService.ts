@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { YouTubeVideo, YOUTUBE_VIDEOS, YOUTUBE_CHANNEL } from '../data/youtubeVideos';
+import { YouTubeVideo, YOUTUBE_VIDEOS } from '../data/youtubeVideos';
 import { Course } from '../types';
 
 const STORAGE_KEY_CACHED_VIDEOS = '@ts_cached_youtube_videos';

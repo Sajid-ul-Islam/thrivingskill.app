@@ -8,11 +8,8 @@ import {
   TouchableOpacity,
   Image,
   Linking,
-  Platform,
-  Dimensions,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { Env } from '../../config/env';
@@ -53,7 +50,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
   const { isBangla } = useLanguage();
   const { siteBranding } = useLearning();
   const insets = useSafeAreaInsets();
-  const { isTablet, containerClampStyle } = useResponsive();
+  const { containerClampStyle } = useResponsive();
   const [activeTab, setActiveTab] = useState<AboutTabKey>(initialTab);
   const [legalModalVisible, setLegalModalVisible] = useState(false);
   const [legalInitialTab, setLegalInitialTab] = useState<LegalTabKey>('terms');

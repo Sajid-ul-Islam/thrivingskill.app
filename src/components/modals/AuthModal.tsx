@@ -92,7 +92,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const { isTablet } = useResponsive();
   const { showToast } = useFeedback();
   const {
-    user,
     isAuthenticated,
     login,
     confirmPasswordReset,

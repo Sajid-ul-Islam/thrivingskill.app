@@ -19,7 +19,6 @@ import { useLearning } from '../../context/LearningContext';
 import { useFeedback } from '../../context/FeedbackContext';
 import { triggerHaptic } from '../../utils/haptics';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
-import { shape } from '../../theme/shapes';
 
 interface NotesModalProps {
   visible: boolean;

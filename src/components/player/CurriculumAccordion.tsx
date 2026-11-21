@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert , LayoutAnimation } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, LayoutAnimation } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { CourseModule, Lesson } from '../../types';
 import { useTheme } from '../../context/ThemeContext';

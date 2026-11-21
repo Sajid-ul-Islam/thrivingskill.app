@@ -10,7 +10,6 @@ import {
   Animated,
   useWindowDimensions,
   Linking,
-  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -126,10 +125,6 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
 
   const handleCallHelpline = () => {
     Linking.openURL('tel:01312100288').catch(() => {});
-  };
-
-  const handleOpenWpAdmin = () => {
-    Linking.openURL(Env.WP_ADMIN_URL).catch(() => {});
   };
 
   const handleOpenWebsite = () => {
