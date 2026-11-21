@@ -228,78 +228,78 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
           </View>
         </View>
 
-        {/* Tab Pills Segmented Filter Row (Bounded & Immune to Flex Stretch) */}
-        <View style={styles.filterContainer}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.filterScrollView}
-            contentContainerStyle={styles.filterRow}
-            accessibilityRole="tablist"
-          >
-            {[
-              {
-                id: 'all' as TabType,
-                label: isBangla
-                  ? `সকল ইভেন্ট (${workshops.length})`
-                  : `All Events (${workshops.length})`,
-                icon: 'calendar-outline' as const,
-              },
-              {
-                id: 'live-classes' as TabType,
-                label: isBangla ? `লাইভ ক্লাস (${liveClasses.length})` : `Live Class (${liveClasses.length})`,
-                icon: 'videocam-outline' as const,
-              },
-              {
-                id: 'summits' as TabType,
-                label: isBangla ? `সামিট (${summits.length})` : `Summit (${summits.length})`,
-                icon: 'ribbon-outline' as const,
-              },
-            ].map((tab) => {
-              const isActive = activeTab === tab.id;
-              return (
-                <TouchableOpacity
-                  key={tab.id}
+        {/* Modern Segmented Tab Bar (Rock-solid, bounded, zero horizontal scrollview glitch) */}
+        <View
+          style={[
+            styles.segmentedContainer,
+            {
+              backgroundColor: isDark ? colors.surfaceCard : colors.surfaceSubtle,
+              borderColor: colors.border,
+            },
+          ]}
+          accessibilityRole="tablist"
+        >
+          {[
+            {
+              id: 'all' as TabType,
+              label: isBangla
+                ? `সকল (${workshops.length})`
+                : `All Events (${workshops.length})`,
+              icon: 'calendar-outline' as const,
+            },
+            {
+              id: 'live-classes' as TabType,
+              label: isBangla ? `লাইভ (${liveClasses.length})` : `Live Class (${liveClasses.length})`,
+              icon: 'videocam-outline' as const,
+            },
+            {
+              id: 'summits' as TabType,
+              label: isBangla ? `সামিট (${summits.length})` : `Summit (${summits.length})`,
+              icon: 'ribbon-outline' as const,
+            },
+          ].map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <TouchableOpacity
+                key={tab.id}
+                style={[
+                  styles.segmentedTab,
+                  isActive && [
+                    styles.segmentedTabActive,
+                    { backgroundColor: colors.primary },
+                  ],
+                ]}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: isActive }}
+                accessibilityLabel={tab.label}
+                onPress={() => {
+                  triggerHaptic('selection');
+                  LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                  setActiveTab(tab.id);
+                }}
+                activeOpacity={0.85}
+              >
+                <Ionicons
+                  name={tab.icon}
+                  size={14}
+                  color={isActive ? colors.onPrimary : colors.textMuted}
+                  style={{ marginRight: 5 }}
+                />
+                <Text
                   style={[
-                    styles.filterPill,
+                    styles.segmentedTabText,
                     {
-                      backgroundColor: isActive ? colors.primary : colors.surfaceCard,
-                      borderColor: isActive ? colors.primary : colors.border,
+                      color: isActive ? colors.onPrimary : colors.text,
+                      fontWeight: isActive ? '700' : '600',
                     },
-                    isActive && styles.filterPillActive,
                   ]}
-                  accessibilityRole="tab"
-                  accessibilityState={{ selected: isActive }}
-                  accessibilityLabel={tab.label}
-                  onPress={() => {
-                    triggerHaptic('selection');
-                    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-                    setActiveTab(tab.id);
-                  }}
-                  activeOpacity={0.82}
+                  numberOfLines={1}
                 >
-                  <Ionicons
-                    name={tab.icon}
-                    size={14}
-                    color={isActive ? colors.onPrimary : colors.textMuted}
-                    style={{ marginRight: 6 }}
-                  />
-                  <Text
-                    style={[
-                      styles.filterPillText,
-                      {
-                        color: isActive ? colors.onPrimary : colors.text,
-                        fontWeight: isActive ? '700' : '600',
-                      },
-                    ]}
-                    numberOfLines={1}
-                  >
-                    {tab.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+                  {tab.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         {/* Loading Skeletons */}
@@ -504,46 +504,38 @@ const styles = StyleSheet.create({
     ...typography.caption,
     lineHeight: 18,
   },
-  filterContainer: {
-    marginVertical: 12,
-    alignSelf: 'stretch',
-    minHeight: MIN_TOUCH_TARGET,
-    justifyContent: 'center',
-  },
-  filterScrollView: {
-    flexGrow: 0,
-    flexShrink: 0,
-    maxHeight: 52,
-  },
-  filterRow: {
+  segmentedContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingVertical: 2,
-    paddingHorizontal: 2,
-  },
-  filterPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    height: 40,
-    minHeight: 40,
-    maxHeight: 44,
-    borderRadius: shape.full,
+    padding: 4,
+    borderRadius: shape.large,
     borderWidth: 1,
-    alignSelf: 'center',
+    marginVertical: 14,
+    height: 48,
+    minHeight: 48,
+    maxHeight: 48,
   },
-  filterPillActive: {
+  segmentedTab: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 38,
+    minHeight: 38,
+    maxHeight: 38,
+    borderRadius: shape.medium,
+    paddingHorizontal: 4,
+  },
+  segmentedTabActive: {
     elevation: 2,
     shadowColor: '#102F53',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.16,
+    shadowOpacity: 0.18,
     shadowRadius: 4,
   },
-  filterPillText: {
-    fontSize: 13,
+  segmentedTabText: {
+    fontSize: 12.5,
     fontVariant: ['tabular-nums'],
   },
   listContainer: {
