@@ -1,9 +1,9 @@
 /**
  * Automated Verification Suite for Support Chat Floating CRM Widget
  * Verifies:
- * 1. Single Iconic Meta Messenger button (no confusing morphing/flip timers)
- * 2. Cross-platform timer hygiene (no NodeJS.Timeout in client code)
- * 3. Authentic Meta Messenger Branding (#0084FF) & Multi-Channel Speed Dial (WhatsApp, Messenger, Helpline)
+ * 1. Default docking to left edge of screen (SNAP_MARGIN) while remaining movable
+ * 2. Auto-alternates between WhatsApp (#25D366) and Messenger (#0084FF) icons after some time
+ * 3. Cross-platform timer hygiene (ReturnType<typeof setInterval> + clearInterval teardown, no NodeJS.Timeout)
  * 4. 1-Tap ON / 1-Tap OFF toggle (no 'X' needed on the button)
  * 5. Reliable touch-through: onStartShouldSetPanResponder: () => false for guaranteed tap response
  * 6. Official CRM constants integration (01312-100288, https://m.me/thrivingskills) & App.tsx mounting
@@ -14,7 +14,7 @@ const path = require('path');
 const assert = require('assert');
 
 console.log('====================================================');
-console.log('   SUPPORT CHAT FLOATING WIDGET (1-TAP ON/OFF) SUITE ');
+console.log('   SUPPORT CHAT FLOATING WIDGET (LEFT DOCKED) SUITE ');
 console.log('====================================================\n');
 
 const widgetPath = path.resolve(__dirname, '../src/components/common/FloatingCrmWidget.tsx');
@@ -29,26 +29,29 @@ const widgetContent = fs.readFileSync(widgetPath, 'utf8');
 const crmContent = fs.readFileSync(crmConfigPath, 'utf8');
 const appContent = fs.readFileSync(appPath, 'utf8');
 
-// Test 1: Single Iconic Button & State Definition
-console.log('Test 1: Verifying Single Iconic Button & Clean State Definition...');
-assert(widgetContent.includes('const [expanded, setExpanded] = useState'), 'Must track expanded state');
-assert(widgetContent.includes('toggleExpand'), 'Must define toggleExpand for 1-tap on/off');
-assert(widgetContent.includes('FAB_SIZE'), 'Must define standard FAB_SIZE');
-console.log('  ✅ [PASS] Single iconic button state & toggle definition verified');
+// Test 1: Left Edge Docking & Movable Setup
+console.log('Test 1: Verifying Left Edge Docking & Movable Setup...');
+assert(widgetContent.includes("useState<'left' | 'right'>('left')"), 'Must default to left edge docked');
+assert(widgetContent.includes('const defaultX = SNAP_MARGIN'), 'Must position defaultX at left SNAP_MARGIN');
+assert(widgetContent.includes('panResponder'), 'Must be movable via panResponder');
+console.log('  ✅ [PASS] Left edge docking (defaultX = SNAP_MARGIN) & movable panResponder verified');
 
-// Test 2: Cross-Platform Timer Hygiene (AGENTS.md Rule 3)
-console.log('\nTest 2: Verifying Cross-Platform Timer Hygiene (AGENTS.md Rule 3)...');
+// Test 2: Auto-Changing Icons & Cross-Platform Timer Hygiene (AGENTS.md Rule 3)
+console.log('\nTest 2: Verifying Auto-Changing Icons & Timer Hygiene (AGENTS.md Rule 3)...');
+assert(widgetContent.includes('AUTO_CHANGE_INTERVAL'), 'Must define AUTO_CHANGE_INTERVAL for auto-switching');
+assert(widgetContent.includes('ReturnType<typeof setInterval>'), 'Must use ReturnType<typeof setInterval>');
 assert(!widgetContent.includes('NodeJS.Timeout'), 'Must NOT use NodeJS.Timeout in client code');
-console.log('  ✅ [PASS] Timer hygiene verified: No NodeJS.Timeout in client code');
+assert(widgetContent.includes('clearInterval(cycleTimerRef.current)'), 'Must clean up interval timer on unmount and state changes');
+console.log('  ✅ [PASS] Auto-change timer & hygiene verified: ReturnType<typeof setInterval> + clearInterval teardown');
 
-// Test 3: Authentic Meta Messenger Branding & Multi-Channel Speed Dial
-console.log('\nTest 3: Verifying Authentic Messenger Branding & Multi-Channel Speed Dial...');
+// Test 3: Dual Channel Branding & Icons
+console.log('\nTest 3: Verifying WhatsApp and Messenger Dual Branding & Assets...');
 assert(widgetContent.includes('<MessengerIcon'), 'Must render authentic Meta Messenger icon');
 assert(!widgetContent.includes('name="logo-facebook"'), 'FloatingCrmWidget must NOT use logo-facebook for Messenger');
-assert(widgetContent.includes('name="logo-whatsapp"'), 'Must provide WhatsApp option in menu');
+assert(widgetContent.includes('name="logo-whatsapp"'), 'Must render WhatsApp logo');
 assert(widgetContent.includes('#25D366'), 'Must use official WhatsApp green (#25D366)');
 assert(widgetContent.includes('#0084FF'), 'Must use official Messenger blue (#0084FF)');
-console.log('  ✅ [PASS] Dual channel branding (#25D366, #0084FF) and authentic Messenger icon verified');
+console.log('  ✅ [PASS] Dual channel branding (#25D366, #0084FF) and authentic icons verified');
 
 // Test 4: 1-Tap ON / 1-Tap OFF Speed Dial
 console.log('\nTest 4: Verifying 1-Tap ON / 1-Tap OFF Speed Dial Menu...');
@@ -66,7 +69,7 @@ console.log('  ✅ [PASS] Speed-dial actions (WhatsApp, Messenger, Helpline, Mor
 console.log('\nTest 5: Verifying Reliable Touch-Through & No X Needed...');
 assert(widgetContent.includes('styles.backdrop'), 'Must have semi-transparent backdrop when menu is expanded');
 assert(widgetContent.includes('onStartShouldSetPanResponder: () => false'), 'Must NOT capture touch on start so taps immediately fire TouchableOpacity onPress');
-assert(!widgetContent.includes('styles.closeOverlay'), 'Must NOT replace button icon with X overlay (keeps Messenger identity)');
+assert(!widgetContent.includes('styles.closeOverlay'), 'Must NOT replace button icon with X overlay (keeps chat identity)');
 assert(!widgetContent.includes('dismissTargetContainer'), 'Must NOT show confusing bottom drop-to-dismiss X target');
 console.log('  ✅ [PASS] Reliable touch-through and clean 1-tap on/off (no X needed) verified');
 

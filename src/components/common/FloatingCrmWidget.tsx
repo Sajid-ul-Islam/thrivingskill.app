@@ -27,7 +27,8 @@ import { MIN_TOUCH_TARGET } from '../../theme/typography';
 import { MessengerIcon } from './MessengerIcon';
 
 const FAB_SIZE = 52;
-const SNAP_MARGIN = 10;
+const SNAP_MARGIN = 8;
+const AUTO_CHANGE_INTERVAL = 3800; // Auto-cycle between WhatsApp & Messenger every 3.8s
 
 export interface FloatingCrmWidgetProps {
   bottomOffset?: number;
@@ -41,8 +42,10 @@ export type CrmChannel = 'whatsapp' | 'messenger';
 
 /**
  * Omnipresent Support Chat Widget
- * - Single iconic Meta Messenger button (no confusing morphing or disappearing)
- * - 1-Tap ON / 1-Tap OFF toggle (no 'X' needed, button stays as the recognizable Messenger icon)
+ * - Sticks to the left edge of the screen by default while remaining smoothly movable/draggable
+ * - Auto-alternates between official WhatsApp (#25D366) and Messenger (#0084FF) icons after some time
+ * - 1-Tap ON / 1-Tap OFF toggle (no 'X' needed, button stays as the recognizable chat icon)
+ * - Guaranteed instant touch response (onStartShouldSetPanResponder: () => false ensures taps directly hit TouchableOpacity)
  * - Smooth edge-snapping drag support without stealing touch events from taps
  * - Instant access to WhatsApp live chat, Facebook Messenger inbox, and 24/7 hotline helpline
  */
@@ -58,11 +61,13 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
   const insets = useSafeAreaInsets();
 
   const [expanded, setExpanded] = useState(false);
+  const [activeChannel, setActiveChannel] = useState<CrmChannel>('whatsapp');
   const [isDragging, setIsDragging] = useState(false);
-  const [snappedSide, setSnappedSide] = useState<'left' | 'right'>('right');
+  // Sticks to left edge by default
+  const [snappedSide, setSnappedSide] = useState<'left' | 'right'>('left');
 
-  // Initial positioning at bottom-right
-  const defaultX = screenWidth - FAB_SIZE - SNAP_MARGIN;
+  // Initial positioning: sticking to the left edge of screen
+  const defaultX = SNAP_MARGIN;
   const defaultY = screenHeight - bottomOffset - FAB_SIZE;
 
   const pan = useRef(new Animated.ValueXY({ x: defaultX, y: defaultY })).current;
@@ -71,7 +76,11 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
 
   // Animated values
   const animValue = useRef(new Animated.Value(0)).current; // 0 = collapsed, 1 = expanded
+  const flipAnim = useRef(new Animated.Value(0)).current; // 0 = WhatsApp, 1 = Messenger
   const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // Auto-change timer ref (WhatsApp <-> Messenger)
+  const cycleTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Track coordinates
   useEffect(() => {
@@ -83,10 +92,10 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
     };
   }, [pan]);
 
-  // Adjust default Y when mini player or bottom offset changes
+  // Adjust default position when mini player or bottom offset changes (only if user hasn't moved it)
   useEffect(() => {
     if (!hasUserMovedRef.current) {
-      const targetX = screenWidth - FAB_SIZE - SNAP_MARGIN;
+      const targetX = SNAP_MARGIN;
       const targetY = screenHeight - bottomOffset - FAB_SIZE;
       Animated.spring(pan, {
         toValue: { x: targetX, y: targetY },
@@ -96,7 +105,7 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
       }).start();
       currentPos.current = { x: targetX, y: targetY };
     }
-  }, [bottomOffset, screenWidth, screenHeight, pan]);
+  }, [bottomOffset, screenHeight, pan]);
 
   // Subtle breathing pulse on the FAB when idle
   useEffect(() => {
@@ -119,7 +128,38 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
     return () => pulse.stop();
   }, [expanded, isDragging, pulseAnim]);
 
-  // 1-Tap ON / OFF Toggle
+  // Auto-change: Alternate between WhatsApp (#25D366) and Messenger (#0084FF) every 3.8s
+  // Pauses when user has opened the menu or is dragging
+  useEffect(() => {
+    if (expanded || isDragging) {
+      if (cycleTimerRef.current) {
+        clearInterval(cycleTimerRef.current);
+        cycleTimerRef.current = null;
+      }
+      return;
+    }
+
+    cycleTimerRef.current = setInterval(() => {
+      setActiveChannel((prev) => {
+        const next: CrmChannel = prev === 'whatsapp' ? 'messenger' : 'whatsapp';
+        Animated.timing(flipAnim, {
+          toValue: next === 'messenger' ? 1 : 0,
+          duration: 480,
+          useNativeDriver: false,
+        }).start();
+        return next;
+      });
+    }, AUTO_CHANGE_INTERVAL);
+
+    return () => {
+      if (cycleTimerRef.current) {
+        clearInterval(cycleTimerRef.current);
+        cycleTimerRef.current = null;
+      }
+    };
+  }, [expanded, isDragging, flipAnim]);
+
+  // 1-Tap ON / OFF Toggle (no 'X' needed)
   const toggleExpand = useCallback(() => {
     triggerHaptic('light');
     if (expanded) {
@@ -186,9 +226,9 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
     }
   };
 
-  // PanResponder tuned for reliable touch-through:
-  // onStartShouldSetPanResponder is FALSE so taps immediately go to TouchableOpacity
-  // onMoveShouldSetPanResponder only activates if user actually drags > 10 pixels
+  // PanResponder tuned for movable drag while keeping 100% reliable tap response:
+  // onStartShouldSetPanResponder is FALSE so taps directly fire TouchableOpacity.onPress
+  // onMoveShouldSetPanResponder activates when user drags > 10 pixels
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
@@ -220,7 +260,7 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
           closeMenu();
         }
 
-        // Snap to nearest side edge (left or right)
+        // Snap to nearest edge (left or right)
         const currentCenterX = currentPos.current.x + FAB_SIZE / 2;
         const isLeft = currentCenterX < screenWidth / 2;
         const targetX = isLeft ? SNAP_MARGIN : screenWidth - FAB_SIZE - SNAP_MARGIN;
@@ -261,6 +301,12 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
     outputRange: [0.92, 1],
   });
 
+  // Dynamic background color that smoothly morphs between WhatsApp Green and Messenger Blue
+  const buttonBgColor = flipAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['#25D366', '#0084FF'],
+  });
+
   return (
     <>
       {/* Semi-transparent backdrop when menu is expanded */}
@@ -270,7 +316,7 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
         </TouchableWithoutFeedback>
       )}
 
-      {/* Main Draggable Floating Support Widget */}
+      {/* Main Movable Floating Support Widget */}
       <Animated.View
         style={[
           styles.draggableWrapper,
@@ -410,7 +456,7 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
           )}
         </Animated.View>
 
-        {/* Floating Circular FAB - Single Iconic Button (1-Tap ON / 1-Tap OFF) */}
+        {/* Floating Circular FAB - Sticks to left edge by default, movable, 1-Tap ON / 1-Tap OFF */}
         <View
           style={[
             styles.fabRow,
@@ -424,13 +470,6 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
             }}
           >
             <TouchableOpacity
-              style={[
-                styles.fabButton,
-                {
-                  backgroundColor: '#0084FF',
-                  shadowColor: '#0084FF',
-                },
-              ]}
               onPress={toggleExpand}
               activeOpacity={0.82}
               accessibilityRole="button"
@@ -440,11 +479,66 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
                   : (isBangla ? 'সাপোর্ট চ্যাট খুলুন' : 'Open support chat')
               }
             >
-              {/* Single Iconic Meta Messenger Brand Asset */}
-              <MessengerIcon size={27} color="#FFFFFF" />
+              <Animated.View
+                style={[
+                  styles.fabButton,
+                  {
+                    backgroundColor: buttonBgColor,
+                    shadowColor: buttonBgColor,
+                  },
+                ]}
+              >
+                {/* 1. WhatsApp Icon Layer */}
+                <Animated.View
+                  pointerEvents="none"
+                  style={[
+                    styles.iconLayer,
+                    {
+                      opacity: flipAnim.interpolate({
+                        inputRange: [0, 0.45, 0.55, 1],
+                        outputRange: [1, 0, 0, 0],
+                      }),
+                      transform: [
+                        {
+                          scale: flipAnim.interpolate({
+                            inputRange: [0, 0.5, 1],
+                            outputRange: [1, 0.3, 0],
+                          }),
+                        },
+                      ],
+                    },
+                  ]}
+                >
+                  <Ionicons name="logo-whatsapp" size={26} color="#FFFFFF" />
+                </Animated.View>
 
-              {/* Online Availability Dot Indicator */}
-              <View style={styles.bubbleStatusDot} />
+                {/* 2. Messenger Icon Layer */}
+                <Animated.View
+                  pointerEvents="none"
+                  style={[
+                    styles.iconLayer,
+                    {
+                      opacity: flipAnim.interpolate({
+                        inputRange: [0, 0.45, 0.55, 1],
+                        outputRange: [0, 0, 1, 1],
+                      }),
+                      transform: [
+                        {
+                          scale: flipAnim.interpolate({
+                            inputRange: [0, 0.5, 1],
+                            outputRange: [0, 0.3, 1],
+                          }),
+                        },
+                      ],
+                    },
+                  ]}
+                >
+                  <MessengerIcon size={26} color="#FFFFFF" />
+                </Animated.View>
+
+                {/* Online Availability Dot Indicator */}
+                <View style={styles.bubbleStatusDot} />
+              </Animated.View>
             </TouchableOpacity>
           </Animated.View>
         </View>
@@ -614,7 +708,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   fabRowLeft: {
-    flexDirection: 'row-reverse',
+    flexDirection: 'row',
   },
   fabButton: {
     width: FAB_SIZE,
@@ -626,6 +720,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.32,
     shadowRadius: 6,
+  },
+  iconLayer: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: FAB_SIZE,
+    height: FAB_SIZE,
   },
   bubbleStatusDot: {
     position: 'absolute',
