@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     minWidth: 120,
     maxWidth: '56%',
-    flexShrink: 1,
+    flexShrink: 0,
   },
   enrollCTAText: {
     fontSize: 13.5,

@@ -267,6 +267,7 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     color: '#FFFFFF',
+    fontVariant: ['tabular-nums'],
   },
   content: {
     padding: 16,
@@ -335,6 +336,7 @@ const styles = StyleSheet.create({
   priceValue: {
     fontSize: 18,
     fontWeight: '800',
+    fontVariant: ['tabular-nums'],
   },
   rsvpBtn: {
     minHeight: MIN_TOUCH_TARGET,
