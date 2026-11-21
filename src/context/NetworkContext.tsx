@@ -27,24 +27,8 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [isChecking, setIsChecking] = useState<boolean>(false);
   const [lastErrorMessage, setLastErrorMessage] = useState<string | null>(null);
   const isMountedRef = useRef<boolean>(true);
-
-  useEffect(() => {
-    isMountedRef.current = true;
-    HttpClient.setConnectivityListener((online, errorMsg) => {
-      if (!isMountedRef.current) return;
-      setIsOffline(!online);
-      setLastErrorMessage(online ? null : errorMsg || null);
-      if (online) {
-        // Silently drain offline mutation queue when network recovers
-        SyncQueueManager.processQueue().catch(() => {});
-      }
-    });
-
-    return () => {
-      isMountedRef.current = false;
-      HttpClient.setConnectivityListener(null);
-    };
-  }, []);
+  const reachabilityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const checkReachability = useCallback(async (): Promise<boolean> => {
     if (Platform.OS === 'web' && typeof navigator !== 'undefined' && !navigator.onLine) {
@@ -56,32 +40,119 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
 
     if (isMountedRef.current) setIsChecking(true);
+
+    if (reachabilityTimerRef.current) {
+      clearTimeout(reachabilityTimerRef.current);
+      reachabilityTimerRef.current = null;
+    }
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 5000);
+    abortControllerRef.current = controller;
+    reachabilityTimerRef.current = setTimeout(() => {
+      try {
+        controller.abort();
+      } catch {}
+    }, 8000); // 8-second safety window for mobile 3G/4G connections
 
     try {
-      const response = await fetch(`${Env.API_URL}/wp/v2/types`, {
+      // 1. Primary check: Root WP-JSON index (standard, fast discovery endpoint ~300ms vs 5200ms on /wp/v2/types)
+      const response = await fetch(Env.API_URL, {
         method: 'GET',
         signal: controller.signal,
+        headers: {
+          Accept: 'application/json',
+          'Cache-Control': 'no-cache',
+        },
       });
-      clearTimeout(timer);
-      const ok = response.status > 0;
+
+      if (reachabilityTimerRef.current) {
+        clearTimeout(reachabilityTimerRef.current);
+        reachabilityTimerRef.current = null;
+      }
+
+      const ok = response.status >= 200 && response.status < 400;
       if (isMountedRef.current) {
         setIsOffline(!ok);
         if (ok) setLastErrorMessage(null);
       }
       return ok;
     } catch {
-      clearTimeout(timer);
-      if (isMountedRef.current) {
-        setIsOffline(true);
-        setLastErrorMessage('Unable to reach Thriving Skills servers.');
+      if (reachabilityTimerRef.current) {
+        clearTimeout(reachabilityTimerRef.current);
+        reachabilityTimerRef.current = null;
       }
-      return false;
+
+      // 2. Secondary fallback ping to SITE_URL before concluding complete offline state
+      try {
+        const fallbackController = new AbortController();
+        const fallbackTimer: ReturnType<typeof setTimeout> = setTimeout(() => {
+          try {
+            fallbackController.abort();
+          } catch {}
+        }, 4000);
+
+        const fallbackRes = await fetch(Env.SITE_URL, {
+          method: 'HEAD',
+          signal: fallbackController.signal,
+        });
+        clearTimeout(fallbackTimer);
+        const fallbackOk = fallbackRes.status >= 200 && fallbackRes.status < 400;
+        if (isMountedRef.current) {
+          setIsOffline(!fallbackOk);
+          if (fallbackOk) setLastErrorMessage(null);
+        }
+        return fallbackOk;
+      } catch {
+        // Both primary API and site root were unreachable
+        if (isMountedRef.current) {
+          setIsOffline(true);
+          setLastErrorMessage('Unable to reach Thriving Skills servers.');
+        }
+        return false;
+      }
     } finally {
       if (isMountedRef.current) setIsChecking(false);
     }
   }, []);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    HttpClient.setConnectivityListener((online, errorMsg) => {
+      if (!isMountedRef.current) return;
+      if (online) {
+        setIsOffline(false);
+        setLastErrorMessage(null);
+        // Silently drain offline mutation queue when network recovers
+        SyncQueueManager.processQueue().catch(() => {});
+      } else {
+        // Double-check reachability before immediately locking into offline mode from transient errors
+        checkReachability().then((reachable) => {
+          if (!isMountedRef.current) return;
+          if (!reachable) {
+            setIsOffline(true);
+            setLastErrorMessage(errorMsg || 'Limited connectivity.');
+          }
+        }).catch(() => {});
+      }
+    });
+
+    return () => {
+      isMountedRef.current = false;
+      if (reachabilityTimerRef.current) {
+        clearTimeout(reachabilityTimerRef.current);
+        reachabilityTimerRef.current = null;
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+      HttpClient.setConnectivityListener(null);
+    };
+  }, [checkReachability]);
 
   // Re-check when browser comes back online or app returns to foreground while offline
   useEffect(() => {
