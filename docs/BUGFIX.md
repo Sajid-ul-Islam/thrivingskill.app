@@ -133,6 +133,22 @@ This document records all software bugs, architectural edge cases, and runtime i
   - Introduced `pdfTimerRef` and `copyTimerRef` using `useRef<ReturnType<typeof setTimeout> | null>(null)`.
   - Registered `useEffect` unmount cleanup to clear active timers.
 
+### 13. Sign Out Crash & Blank White Screen Resolution
+* **Status**: Resolved
+* **Symptom**: Clicking "Sign Out" in ProfileScreen caused the app to freeze, crash ("App has stopped"), or display an empty blank white screen.
+* **Root Causes**:
+  1. *Destructive Tree Unmounting in `App.tsx`*: `App.tsx` had an early return `if (!isAuthenticated && !isAuthLoading)` that tore down the entire component tree (navigation stack, active screens, header, tabs, and open modal transitions) and rendered a bare white `SafeAreaView` with an undismissible `AuthModal`.
+  2. *Native Dialog Collisions*: `ModernPopup.tsx` executed the confirmation action `await popup.onConfirm()` before dismissing its own native `Modal`. When `logout()` triggered a root re-render, the Android `Dialog` became unmounted while dismissing, causing native window manager token exceptions (`BadTokenException`).
+  3. *Unintended Cancellation Execution in FeedbackContext*: `FeedbackContext.dismissPopup` unconditionally fired `currentPopup.onCancel()`, executing cancel side-effects even on confirm dismissals.
+  4. *Overzealous Cache Purging*: `logout()` in `AuthContext` called `CacheManager.clearAll()`, deleting the entire public 370+ course catalog from memory and disk.
+* **Resolution**:
+  1. Re-anchored `AuthModal` inside the persistent layout shell in `App.tsx` (`visible={isAuthModalVisible || (!isAuthenticated && !isGuest && !isAuthLoading && !isSplashVisible)}`), eliminating the bare `SafeAreaView` early return so screens and tabs remain mounted.
+  2. Updated `ModernPopup.tsx` to dismiss the dialog before executing the async `confirmAction()`, preventing native modal collision.
+  3. Cleaned `FeedbackContext.dismissPopup` to only clear popup state without invoking `onCancel()`.
+  4. Preserved public course caches by removing `CacheManager.clearAll()` from `AuthContext.logout()`.
+  5. Updated `ProfileScreen.tsx` with `handleLogout` to notify the learner with a toast and smoothly transition to the `Home` tab in guest mode.
+  6. Added automated regression suite `scripts/verify_signout_flow.js` (8/8 passing tests).
+
 ---
 
 ## 🔍 Verification Protocol
