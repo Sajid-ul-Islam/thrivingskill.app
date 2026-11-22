@@ -6,6 +6,8 @@ export interface RequestOptions extends RequestInit {
   timeoutMs?: number;
   skipAuth?: boolean;
   retries?: number;
+  allowFallback?: boolean;
+  baseUrl?: string;
 }
 
 export interface ApiResponseMeta<T> {
@@ -81,8 +83,8 @@ export class HttpClient {
   /**
    * Build complete URL with query parameters
    */
-  private static buildUrl(endpoint: string, params?: RequestOptions['params']): string {
-    const base = Env.API_URL;
+  private static buildUrl(endpoint: string, params?: RequestOptions['params'], customBase?: string): string {
+    const base = customBase || Env.API_URL;
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     let url = `${base}${cleanEndpoint}`;
 

@@ -1,10 +1,54 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 /**
  * Application Environment Configuration
- * 
- * Supports Expo SDK 49+ EXPO_PUBLIC_* environment variables.
- * When environment variables are defined in .env, they are embedded at build time.
- * If not defined, sensible staging defaults are applied automatically.
+ *
+ * Supports dual-environment operation for:
+ * 1. Live Production Site: https://thrivingskill.com
+ * 2. Staging Testing Site: https://staging.thrivingskill.com
+ *
+ * Provides:
+ * - Dynamic runtime environment switching with persistence in AsyncStorage
+ * - Automatic dual-host network fallback/failover in HttpClient
+ * - Reactive environment listeners for cache invalidation & UI updates
+ * - Full backward-compatible static property getters
  */
+
+export type ApiEnvironment = 'production' | 'staging';
+
+export interface EnvironmentConfig {
+  name: ApiEnvironment;
+  label: string;
+  labelBn: string;
+  siteUrl: string;
+  apiUrl: string;
+  wpAdminUrl: string;
+  accountDeletionUrl: string;
+  companionRegisterUrl: string;
+}
+
+export const ENVIRONMENTS: Record<ApiEnvironment, EnvironmentConfig> = {
+  production: {
+    name: 'production',
+    label: 'Live Production',
+    labelBn: 'লাইভ প্রোডাকশন',
+    siteUrl: 'https://thrivingskill.com',
+    apiUrl: 'https://thrivingskill.com/wp-json',
+    wpAdminUrl: 'https://thrivingskill.com/wp-admin/',
+    accountDeletionUrl: 'https://thrivingskill.com/delete-account/',
+    companionRegisterUrl: 'https://thrivingskill.com/wp-json/thrivingskill/v1/register',
+  },
+  staging: {
+    name: 'staging',
+    label: 'Staging Server',
+    labelBn: 'স্টেজিং সার্ভার',
+    siteUrl: 'https://staging.thrivingskill.com',
+    apiUrl: 'https://staging.thrivingskill.com/wp-json',
+    wpAdminUrl: 'https://staging.thrivingskill.com/wp-admin/',
+    accountDeletionUrl: 'https://staging.thrivingskill.com/delete-account/',
+    companionRegisterUrl: 'https://staging.thrivingskill.com/wp-json/thrivingskill/v1/register',
+  },
+};
 
 const normalizeUrl = (url?: string): string => {
   if (!url) return '';
@@ -19,42 +63,170 @@ const getEnvVar = (key: string): string | undefined => {
   return undefined;
 };
 
+// Initial environment determination from build-time vars or sensible live default
+const determineInitialEnvironment = (): ApiEnvironment => {
+  const explicitApi = getEnvVar('EXPO_PUBLIC_API_URL');
+  const explicitSite = getEnvVar('EXPO_PUBLIC_SITE_URL');
+  if (
+    (explicitApi && explicitApi.includes('staging.thrivingskill.com')) ||
+    (explicitSite && explicitSite.includes('staging.thrivingskill.com'))
+  ) {
+    return 'staging';
+  }
+  return 'production';
+};
+
+const ACTIVE_ENV_STORAGE_KEY = '@thrivingskill_active_environment';
+let activeEnvironment: ApiEnvironment = determineInitialEnvironment();
+let hasExplicitUserSelection = false;
+let isInitialized = false;
+const environmentListeners = new Set<(env: ApiEnvironment) => void>();
+
 export const Env = {
   /**
+   * Available environment registry
+   */
+  ENVIRONMENTS,
+
+  /**
+   * Active environment identifier ('production' | 'staging')
+   */
+  get currentEnvironment(): ApiEnvironment {
+    return activeEnvironment;
+  },
+
+  /**
+   * Complete configuration object for active environment
+   */
+  get environmentConfig(): EnvironmentConfig {
+    return ENVIRONMENTS[activeEnvironment];
+  },
+
+  /**
+   * Alternate environment used for automatic failover/fallback
+   */
+  get fallbackEnvironment(): ApiEnvironment {
+    return activeEnvironment === 'production' ? 'staging' : 'production';
+  },
+
+  /**
+   * Fallback base REST API URL
+   */
+  get FALLBACK_API_URL(): string {
+    return ENVIRONMENTS[this.fallbackEnvironment].apiUrl;
+  },
+
+  /**
+   * Fallback main website URL
+   */
+  get FALLBACK_SITE_URL(): string {
+    return ENVIRONMENTS[this.fallbackEnvironment].siteUrl;
+  },
+
+  /**
+   * Initialize and restore persisted environment preference from AsyncStorage
+   */
+  async init(): Promise<ApiEnvironment> {
+    if (isInitialized) return activeEnvironment;
+    try {
+      if (AsyncStorage && typeof AsyncStorage.getItem === 'function') {
+        const stored = await AsyncStorage.getItem(ACTIVE_ENV_STORAGE_KEY);
+        if (stored === 'production' || stored === 'staging') {
+          activeEnvironment = stored;
+          hasExplicitUserSelection = true;
+        }
+      }
+    } catch {
+      // In tests or headless environments, keep initial default
+    }
+    isInitialized = true;
+    return activeEnvironment;
+  },
+
+  /**
+   * Dynamically switch server environment at runtime
+   */
+  async setEnvironment(newEnv: ApiEnvironment): Promise<void> {
+    if (newEnv !== 'production' && newEnv !== 'staging') return;
+    activeEnvironment = newEnv;
+    hasExplicitUserSelection = true;
+
+    try {
+      if (AsyncStorage && typeof AsyncStorage.setItem === 'function') {
+        await AsyncStorage.setItem(ACTIVE_ENV_STORAGE_KEY, newEnv);
+      }
+    } catch {}
+
+    // Notify all active subscribers
+    environmentListeners.forEach((listener) => {
+      try {
+        listener(newEnv);
+      } catch (err) {
+        if (this.DEBUG_API) {
+          console.warn('[Env] Error in environment subscriber:', err);
+        }
+      }
+    });
+  },
+
+  /**
+   * Toggle between production and staging
+   */
+  async toggleEnvironment(): Promise<ApiEnvironment> {
+    const nextEnv: ApiEnvironment = activeEnvironment === 'production' ? 'staging' : 'production';
+    await this.setEnvironment(nextEnv);
+    return nextEnv;
+  },
+
+  /**
+   * Subscribe to server environment changes
+   */
+  subscribeEnvironment(listener: (env: ApiEnvironment) => void): () => void {
+    environmentListeners.add(listener);
+    return () => {
+      environmentListeners.delete(listener);
+    };
+  },
+
+  /**
    * Base REST API URL (WordPress / LearnPress REST API)
-   * e.g. https://thrivingskill.com/wp-json
+   * Dynamically resolves to active environment
    */
   get API_URL(): string {
-    return normalizeUrl(getEnvVar('EXPO_PUBLIC_API_URL')) || 'https://thrivingskill.com/wp-json';
+    if (hasExplicitUserSelection) {
+      return ENVIRONMENTS[activeEnvironment].apiUrl;
+    }
+    const explicit = normalizeUrl(getEnvVar('EXPO_PUBLIC_API_URL'));
+    if (explicit) return explicit;
+    return ENVIRONMENTS[activeEnvironment].apiUrl;
   },
 
   /**
    * Main Website URL
-   * e.g. https://thrivingskill.com
+   * Dynamically resolves to active environment
    */
   get SITE_URL(): string {
-    return normalizeUrl(getEnvVar('EXPO_PUBLIC_SITE_URL')) || 'https://thrivingskill.com';
+    if (hasExplicitUserSelection) {
+      return ENVIRONMENTS[activeEnvironment].siteUrl;
+    }
+    const explicit = normalizeUrl(getEnvVar('EXPO_PUBLIC_SITE_URL'));
+    if (explicit) return explicit;
+    return ENVIRONMENTS[activeEnvironment].siteUrl;
   },
 
   /**
    * WordPress Admin Console URL
-   * e.g. https://staging.thrivingskill.com/wp-admin/
+   * e.g. https://thrivingskill.com/wp-admin/ or https://staging.thrivingskill.com/wp-admin/
    */
   get WP_ADMIN_URL(): string {
-    const raw = getEnvVar('EXPO_PUBLIC_WP_ADMIN_URL');
-    if (raw) return raw.endsWith('/') ? raw : `${raw}/`;
-    return `${this.SITE_URL}/wp-admin/`;
+    return ENVIRONMENTS[activeEnvironment].wpAdminUrl;
   },
 
   /**
    * Google Play Mandatory Account & Data Deletion Public URL
-   * Official public link where users can submit account and data deletion requests.
-   * e.g. https://thrivingskill.com/delete-account/
    */
   get ACCOUNT_DELETION_URL(): string {
-    const raw = getEnvVar('EXPO_PUBLIC_ACCOUNT_DELETION_URL');
-    if (raw) return raw.endsWith('/') ? raw : `${raw}/`;
-    return 'https://thrivingskill.com/delete-account/';
+    return ENVIRONMENTS[activeEnvironment].accountDeletionUrl;
   },
 
   /**
@@ -85,7 +257,7 @@ export const Env = {
   },
 
   /**
-   * Whether to fallback to local seed data if network is unavailable
+   * Whether to fallback to alternate host or local seed data if network is unavailable
    */
   get ENABLE_FALLBACK(): boolean {
     const raw = getEnvVar('EXPO_PUBLIC_ENABLE_FALLBACK');
