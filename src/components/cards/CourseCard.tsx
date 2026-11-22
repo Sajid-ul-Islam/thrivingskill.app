@@ -8,10 +8,12 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useLearning } from '../../context/LearningContext';
 import { useFeedback } from '../../context/FeedbackContext';
 import { getSafeImageSource } from '../../utils/imageUtils';
+import { triggerHaptic } from '../../utils/haptics';
 
-interface CourseCardProps {
+export interface CourseCardProps {
   course: Course;
   onPress: () => void;
+  onLongPress?: () => void;
   horizontal?: boolean;
   isBookmarked?: boolean;
   isEnrolled?: boolean;
@@ -21,6 +23,7 @@ interface CourseCardProps {
 const CourseCardComponent: React.FC<CourseCardProps> = ({
   course,
   onPress,
+  onLongPress,
   horizontal = false,
   isBookmarked: propIsBookmarked,
   isEnrolled: propIsEnrolled,
@@ -81,6 +84,10 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
         <SpringPressable
           style={styles.horizontalCardBody}
           onPress={onPress}
+          onLongPress={onLongPress ? () => {
+            triggerHaptic('medium');
+            onLongPress();
+          } : undefined}
           activeScale={0.97}
           accessibilityRole="button"
           accessibilityLabel={`${course.title} by ${course.instructor?.name || "Thriving Skills"}`}
@@ -193,6 +200,10 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
     >
       <SpringPressable
         onPress={onPress}
+        onLongPress={onLongPress ? () => {
+          triggerHaptic('medium');
+          onLongPress();
+        } : undefined}
         activeScale={0.97}
         accessibilityRole="button"
         accessibilityLabel={`${course.title} by ${course.instructor?.name || "Thriving Skills"}`}

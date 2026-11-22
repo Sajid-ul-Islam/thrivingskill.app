@@ -27,6 +27,7 @@ import {
   ScrollToTopPill,
   DepartmentCategoryGrid,
   CategoryIllustrationIcon,
+  CourseQuickPeekModal,
   CANONICAL_DEPARTMENTS_MAP,
   getCanonicalDepartmentId,
 } from '../components';
@@ -48,6 +49,25 @@ interface CoursesScreenProps {
 type LevelFilter = 'All' | 'Beginner' | 'Intermediate' | 'Advanced';
 type PriceFilter = 'all' | 'free' | 'paid';
 type SortOption = 'popular' | 'newest' | 'rating' | 'price-low' | 'price-high';
+
+interface HotTopicItem {
+  id: string;
+  label: string;
+  bnLabel: string;
+  icon: string;
+  type: 'dept' | 'price_free' | 'all';
+}
+
+const HOT_TOPICS: HotTopicItem[] = [
+  { id: 'all', label: 'All Courses', bnLabel: 'সব কোর্স', icon: 'sparkles', type: 'all' },
+  { id: 'generative-ai', label: 'AI & ChatGPT', bnLabel: 'এআই ও চ্যাটজিপিটি', icon: 'hardware-chip-outline', type: 'dept' },
+  { id: 'microsoft-excel-courses', label: 'Excel Mastery', bnLabel: 'এক্সেল স্প্রেডশিট', icon: 'grid-outline', type: 'dept' },
+  { id: 'free-offer', label: '100% Free', bnLabel: 'সম্পূর্ণ ফ্রি', icon: 'gift-outline', type: 'price_free' },
+  { id: 'human-resource-management', label: 'HR Management', bnLabel: 'এইচআর ম্যানেজমেন্ট', icon: 'people-outline', type: 'dept' },
+  { id: 'supply-chain-management', label: 'Supply Chain', bnLabel: 'সাপ্লাই চেইন', icon: 'cube-outline', type: 'dept' },
+  { id: 'leadership-management', label: 'Leadership', bnLabel: 'লিডারশিপ', icon: 'compass-outline', type: 'dept' },
+  { id: 'job-seekers-skills', label: 'Career & Jobs', bnLabel: 'চাকরি ও ক্যারিয়ার', icon: 'briefcase-outline', type: 'dept' },
+];
 
 export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   onNavigateToCourse,
@@ -73,6 +93,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     searchQuery,
     setSearchQuery,
     bookmarks,
+    toggleBookmark,
     userProgress,
   } = useLearning();
 
@@ -84,6 +105,18 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   const [isScrolled, setIsScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [localSearch, setLocalSearch] = useState<string>(searchQuery);
+  const [quickPeekCourse, setQuickPeekCourse] = useState<Course | null>(null);
+  const [isQuickPeekVisible, setIsQuickPeekVisible] = useState(false);
+
+  const handleOpenQuickPeek = useCallback((c: Course) => {
+    triggerHaptic('medium');
+    setQuickPeekCourse(c);
+    setIsQuickPeekVisible(true);
+  }, []);
+
+  const handleCloseQuickPeek = useCallback(() => {
+    setIsQuickPeekVisible(false);
+  }, []);
 
   // Helper to match courses against dynamic site categories
   const matchesDepartment = useCallback((c: Course, deptId: string): boolean => {
@@ -247,7 +280,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   }, [dynamicDepartments, courses, matchesDepartment]);
 
   const departmentSections = useMemo(() => {
-    return dynamicDepartments
+    const list = dynamicDepartments
       .map((dept) => {
         const deptCourses = courses.filter((c) => matchesDepartment(c, dept.id));
         return {
@@ -256,7 +289,27 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
         };
       })
       .filter((d) => d.courses.length > 0);
-  }, [dynamicDepartments, courses, matchesDepartment]);
+
+    // Dynamic R&D: Add "🌟 Bestsellers & Top Rated" as the leading curated spotlight ribbon
+    if (courses.length > 0) {
+      const bestsellers = [...courses]
+        .filter((c) => (c.rating >= 4.5 || c.enrolledCount > 50 || c.badge))
+        .sort((a, b) => (b.enrolledCount || 0) - (a.enrolledCount || 0))
+        .slice(0, 8);
+
+      if (bestsellers.length >= 3) {
+        list.unshift({
+          id: 'bestsellers-spotlight',
+          title: isBangla ? '🌟 জনপ্রিয় ও টপ-রেটেড কোর্স' : '🌟 Bestsellers & Top Rated',
+          slug: 'bestsellers',
+          count: bestsellers.length,
+          courses: bestsellers,
+        });
+      }
+    }
+
+    return list;
+  }, [dynamicDepartments, courses, matchesDepartment, isBangla]);
 
   // Clean canonical category pills for filter bar
   const canonicalCategoryPills = useMemo(() => {
@@ -565,6 +618,11 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   const handleDeptCardPress = useCallback(
     (deptId: string) => {
       triggerHaptic('selection');
+      if (deptId === 'bestsellers-spotlight') {
+        setSelectedSort('popular');
+        handleCategorySelect('all');
+        return;
+      }
       if (isBrowsingDepartments) {
         const idx = departmentSections.findIndex((d) => d.id === deptId);
         if (idx !== -1 && flatListRef.current) {
@@ -638,6 +696,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                   isBookmarked={bookmarks.includes(dept.courses[0].id)}
                   isEnrolled={!!userProgress[dept.courses[0].id]}
                   onPress={() => onNavigateToCourse(dept.courses[0].id)}
+                  onLongPress={() => handleOpenQuickPeek(dept.courses[0])}
                 />
               </View>
             ) : isTablet && deptItemCount === 2 && !isLandscape ? (
@@ -649,6 +708,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                       isBookmarked={bookmarks.includes(courseItem.id)}
                       isEnrolled={!!userProgress[courseItem.id]}
                       onPress={() => onNavigateToCourse(courseItem.id)}
+                      onLongPress={() => handleOpenQuickPeek(courseItem)}
                     />
                   </View>
                 ))}
@@ -671,6 +731,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                       isBookmarked={bookmarks.includes(courseItem.id)}
                       isEnrolled={!!userProgress[courseItem.id]}
                       onPress={() => onNavigateToCourse(courseItem.id)}
+                      onLongPress={() => handleOpenQuickPeek(courseItem)}
                     />
                   </View>
                 )}
@@ -688,11 +749,12 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
             isBookmarked={bookmarks.includes((item as Course).id)}
             isEnrolled={!!userProgress[(item as Course).id]}
             onPress={() => onNavigateToCourse(item.id)}
+            onLongPress={() => handleOpenQuickPeek(item as Course)}
           />
         </View>
       );
     },
-    [isBrowsingDepartments, colors, isDark, isBangla, handleCategorySelect, onNavigateToCourse, viewMode, bookmarks, userProgress, effectiveColumns, width, isTablet, isLandscape]
+    [isBrowsingDepartments, colors, isDark, isBangla, handleCategorySelect, onNavigateToCourse, viewMode, bookmarks, userProgress, effectiveColumns, width, isTablet, isLandscape, handleOpenQuickPeek]
   );
 
   const keyExtractor = useCallback(
@@ -732,9 +794,69 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               </TouchableOpacity>
             )}
           </View>
+
+          {/* Dynamic Hot Topic Discovery Strip */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.hotTopicsScroll}
+            accessibilityRole="tablist"
+          >
+            {HOT_TOPICS.map((topic) => {
+              const isSelected =
+                (topic.type === 'dept' && selectedCategory === topic.id) ||
+                (topic.type === 'price_free' && selectedPriceFilter === 'free') ||
+                (topic.type === 'all' && selectedCategory === 'all' && selectedPriceFilter === 'all' && !searchQuery);
+
+              return (
+                <TouchableOpacity
+                  key={`hot-topic-${topic.id}`}
+                  style={[
+                    styles.hotTopicChip,
+                    {
+                      backgroundColor: isSelected ? colors.primary : (isDark ? colors.surfaceCard : '#F1F5F9'),
+                      borderColor: isSelected ? colors.primary : (isDark ? colors.border : '#E2E8F0'),
+                    },
+                    isSelected && { shadowColor: colors.primary, elevation: 2 },
+                  ]}
+                  onPress={() => {
+                    triggerHaptic('selection');
+                    if (topic.type === 'price_free') {
+                      setSelectedPriceFilter(selectedPriceFilter === 'free' ? 'all' : 'free');
+                    } else if (topic.type === 'dept') {
+                      handleCategorySelect(topic.id);
+                    } else {
+                      handleClearAllFilters();
+                    }
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={isBangla ? topic.bnLabel : topic.label}
+                  hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
+                >
+                  <Ionicons
+                    name={topic.icon as any}
+                    size={13}
+                    color={isSelected ? '#FFFFFF' : (isDark ? colors.textLight : colors.textMuted)}
+                    style={{ marginRight: 5 }}
+                  />
+                  <Text
+                    style={[
+                      styles.hotTopicText,
+                      {
+                        color: isSelected ? '#FFFFFF' : (isDark ? colors.text : '#334155'),
+                        fontWeight: isSelected ? '800' : '600',
+                      },
+                    ]}
+                  >
+                    {isBangla ? topic.bnLabel : topic.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
         </View>
 
-        {/* CR-4: Department-wise Category Navigation Grid with Custom Illustrative Icons */}
+        {/* CR-4: Department-wise Category Navigation Grid with Custom Illustrative Icons & Collapsible Mode */}
         <DepartmentCategoryGrid
           selectedDeptId={selectedCategory === 'all' ? null : selectedCategory}
           onSelectDepartment={(deptId) => {
@@ -743,6 +865,8 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
           departmentCounts={departmentCountsMap}
           onReset={() => handleCategorySelect('all')}
           showHeader={true}
+          isCollapsible={true}
+          initialVisibleCount={4}
         />
 
         {/* Categories Pills */}
@@ -1004,12 +1128,16 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     );
   }, [
     colors,
+    isDark,
     isBangla,
     localSearch,
     handleSearchChange,
     handleClearSearch,
     selectedCategory,
     categories,
+    canonicalCategoryPills,
+    departmentCountsMap,
+    handleDeptCardPress,
     handleCategorySelect,
     selectedLevel,
     handleLevelSelect,
@@ -1199,6 +1327,16 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
         onPress={() => flatListRef.current?.scrollToOffset({ offset: 0, animated: true })}
         bottomOffset={Math.max(insets.bottom, 16) + 72}
       />
+
+      {/* Dynamic Course Quick Peek Modal */}
+      <CourseQuickPeekModal
+        visible={isQuickPeekVisible}
+        course={quickPeekCourse}
+        onClose={handleCloseQuickPeek}
+        onNavigateToCourse={onNavigateToCourse}
+        isBookmarked={quickPeekCourse ? bookmarks.includes(quickPeekCourse.id) : false}
+        onToggleBookmark={toggleBookmark}
+      />
     </View>
   );
 };
@@ -1222,6 +1360,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     gap: 10,
+  },
+  hotTopicsScroll: {
+    paddingTop: 10,
+    paddingBottom: 2,
+    gap: 8,
+    flexDirection: 'row',
+  },
+  hotTopicChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 16,
+    borderWidth: 1,
+    minHeight: MIN_TOUCH_TARGET,
+  },
+  hotTopicText: {
+    fontSize: 12,
   },
   deptGridSection: {
     paddingHorizontal: 16,

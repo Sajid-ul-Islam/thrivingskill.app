@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, StyleSheet, LayoutAnimation, Platform, UIManager } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useLearning } from '../../context/LearningContext';
@@ -8,6 +9,10 @@ import { CategoryIllustrationIcon, CategoryDepartmentId } from './CategoryIllust
 import { triggerHaptic } from '../../utils/haptics';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
 import { Category } from '../../types';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 
 export const getIconForCategory = (slug: string = '', name: string = ''): CategoryDepartmentId => {
@@ -208,6 +213,8 @@ interface DepartmentCategoryGridProps {
   onReset?: () => void;
   showHeader?: boolean;
   maxItems?: number;
+  isCollapsible?: boolean;
+  initialVisibleCount?: number;
 }
 
 export const DepartmentCategoryGrid: React.FC<DepartmentCategoryGridProps> = ({
@@ -218,10 +225,13 @@ export const DepartmentCategoryGrid: React.FC<DepartmentCategoryGridProps> = ({
   onReset,
   showHeader = true,
   maxItems = 12,
+  isCollapsible = true,
+  initialVisibleCount = 4,
 }) => {
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
   const { categories: contextCategories } = useLearning();
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
   // 1. Source categories dynamically from props or context
   const sourceCategories = propCategories || contextCategories;
@@ -272,6 +282,19 @@ export const DepartmentCategoryGrid: React.FC<DepartmentCategoryGridProps> = ({
     return uniqueList.slice(0, maxItems);
   }, [sourceCategories, departmentCounts, maxItems]);
 
+  const displayedDepartments = useMemo(() => {
+    if (!isCollapsible || isExpanded) return validDepartments;
+    const topSlice = validDepartments.slice(0, initialVisibleCount);
+    if (selectedDeptId && selectedDeptId !== 'all') {
+      const isSelectedInTop = topSlice.some((d) => d.id === selectedDeptId || d.slug === selectedDeptId);
+      if (!isSelectedInTop) {
+        const found = validDepartments.find((d) => d.id === selectedDeptId || d.slug === selectedDeptId);
+        if (found) return [...topSlice.slice(0, Math.max(1, initialVisibleCount - 1)), found];
+      }
+    }
+    return topSlice;
+  }, [validDepartments, isCollapsible, isExpanded, initialVisibleCount, selectedDeptId]);
+
   return (
     <View style={styles.container}>
       {showHeader && (
@@ -304,7 +327,7 @@ export const DepartmentCategoryGrid: React.FC<DepartmentCategoryGridProps> = ({
 
       {/* 2-Column Grid of Dynamic Site Categories */}
       <View style={styles.grid}>
-        {validDepartments.map((dept) => {
+        {displayedDepartments.map((dept) => {
           const isSelected = selectedDeptId === dept.id || selectedDeptId === dept.slug;
           const count = departmentCounts[dept.id] ?? dept.count ?? 0;
           const displayName = isBangla
@@ -382,6 +405,45 @@ export const DepartmentCategoryGrid: React.FC<DepartmentCategoryGridProps> = ({
           );
         })}
       </View>
+
+      {/* Dynamic Expand/Collapse Toggle */}
+      {isCollapsible && validDepartments.length > initialVisibleCount && (
+        <View style={styles.expandToggleWrapper}>
+          <SpringPressable
+            onPress={() => {
+              triggerHaptic('light');
+              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+              setIsExpanded((prev) => !prev);
+            }}
+            style={[
+              styles.expandToggleBtn,
+              {
+                backgroundColor: isDark ? colors.surfaceCard : '#F8FAFC',
+                borderColor: isDark ? colors.border : '#E2E8F0',
+              },
+            ]}
+            activeScale={0.97}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isExpanded
+                ? (isBangla ? 'বিভাগ সংক্ষেপ করুন' : 'Collapse department categories')
+                : (isBangla ? `সবগুলো (${validDepartments.length}) বিভাগ দেখুন` : `Explore all (${validDepartments.length}) departments`)
+            }
+          >
+            <Ionicons
+              name={isExpanded ? 'chevron-up-circle' : 'grid-outline'}
+              size={15}
+              color={colors.primary}
+              style={{ marginRight: 6 }}
+            />
+            <Text style={[styles.expandToggleText, { color: colors.primary }]}>
+              {isExpanded
+                ? (isBangla ? 'সংক্ষেপ করুন ▴' : 'Show Less ▴')
+                : (isBangla ? `সবগুলো (${validDepartments.length}) বিভাগ দেখুন ▾` : `Explore All (${validDepartments.length}) Departments ▾`)}
+            </Text>
+          </SpringPressable>
+        </View>
+      )}
     </View>
   );
 };
@@ -463,5 +525,29 @@ const styles = StyleSheet.create({
   countText: {
     fontSize: 10.5,
     fontWeight: '600',
+  },
+  expandToggleWrapper: {
+    marginTop: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  expandToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 22,
+    borderWidth: 1,
+    minHeight: MIN_TOUCH_TARGET,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  expandToggleText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    letterSpacing: -0.2,
   },
 });

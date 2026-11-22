@@ -3,6 +3,7 @@ export * from './AppUpdateModal';
 export * from './AuthModal';
 export * from './BlogModal';
 export * from './CertificateModal';
+export * from './CourseQuickPeekModal';
 export * from './CorporateInquiryModal';
 export * from './HelpFaqModal';
 export * from './LegalPolicyModal';
