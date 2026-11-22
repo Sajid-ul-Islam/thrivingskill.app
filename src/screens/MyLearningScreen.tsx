@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
+  Platform,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
@@ -16,6 +17,7 @@ import { useLanguage } from '../context/LanguageContext';
 import { useGamification } from '../context/GamificationContext';
 import { useLearning } from '../context/LearningContext';
 import { useAuth } from '../context/AuthContext';
+import { getSafeImageSource } from '../utils/imageUtils';
 import {
   Header,
   CertificateModal,
@@ -212,7 +214,11 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
               ]}
             >
               <View style={{ position: 'relative' }}>
-                <Image source={{ uri: course.thumbnail }} style={styles.cardImage} />
+                <Image
+                  source={getSafeImageSource(course.thumbnail)}
+                  style={styles.cardImage}
+                  {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+                />
                 <View style={[styles.statusPill, { backgroundColor: badgeConfig.bg }]}>
                   <Ionicons name={badgeConfig.icon} size={10} color={badgeConfig.color} />
                   <Text style={[styles.statusPillText, { color: badgeConfig.color }]}>
@@ -570,7 +576,11 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                       { backgroundColor: colors.surfaceCard, borderColor: colors.border },
                     ]}
                   >
-                    <Image source={{ uri: item.course.thumbnail }} style={styles.cardImage} />
+                    <Image
+                      source={getSafeImageSource(item.course.thumbnail)}
+                      style={styles.cardImage}
+                      {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+                    />
                     <View style={styles.cardBody}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4, gap: 8 }}>
                         <View style={[styles.completedBadge, { backgroundColor: colors.primaryLight, flexShrink: 1, minWidth: 0, marginRight: 8 }]}>
@@ -836,7 +846,11 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                               : `View details for ${course.title}`
                           }
                         >
-                          <Image source={{ uri: course.thumbnail }} style={styles.savedThumb} />
+                          <Image
+                            source={getSafeImageSource(course.thumbnail)}
+                            style={styles.savedThumb}
+                            {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+                          />
                           <View style={styles.savedInfo}>
                             <Text style={[styles.savedTitle, { color: colors.text }]} numberOfLines={2}>
                               {course.title}

@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { SpringPressable } from '../common';
 import { SpecialBundle } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { shape } from '../../theme/shapes';
+import { getSafeImageSource } from '../../utils/imageUtils';
 
 interface SpecialBundleCardProps {
   bundle: SpecialBundle;
@@ -30,7 +31,11 @@ export const SpecialBundleCard: React.FC<SpecialBundleCardProps> = ({ bundle, on
       accessibilityLabel={`Special bundle: ${bundle.title}`}
     >
       <View style={styles.imageWrapper}>
-        <Image source={{ uri: bundle.thumbnail }} style={styles.thumbnail} />
+        <Image
+          source={getSafeImageSource(bundle.thumbnail)}
+          style={styles.thumbnail}
+          {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+        />
         <View style={styles.badgeRow}>
           <View style={styles.bundleBadge}>
             <Ionicons name="cube" size={12} color="#102F53" />

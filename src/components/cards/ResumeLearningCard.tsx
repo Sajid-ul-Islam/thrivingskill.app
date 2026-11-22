@@ -1,10 +1,11 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { SpringPressable, CircularProgressRing } from '../common';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { Course } from '../../types';
+import { getSafeImageSource } from '../../utils/imageUtils';
 
 interface ResumeLearningCardProps {
   course: Course;
@@ -21,6 +22,16 @@ export const ResumeLearningCard: React.FC<ResumeLearningCardProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
+  const [thumbError, setThumbError] = useState(false);
+
+  useEffect(() => {
+    setThumbError(false);
+  }, [course.thumbnail]);
+
+  const fallbackIcon = require('../../../assets/icon.png');
+  const imageSource = thumbError || !course.thumbnail
+    ? fallbackIcon
+    : getSafeImageSource(course.thumbnail, fallbackIcon);
 
   return (
     <View style={styles.container}>
@@ -59,7 +70,12 @@ export const ResumeLearningCard: React.FC<ResumeLearningCardProps> = ({
         {/* Middle Course Info Row */}
         <View style={styles.mainRow}>
           <View style={styles.thumbWrapper}>
-            <Image source={{ uri: course.thumbnail }} style={styles.thumbnail} />
+            <Image
+              source={imageSource}
+              style={[styles.thumbnail, (thumbError || !course.thumbnail) && { resizeMode: 'contain' }]}
+              onError={() => setThumbError(true)}
+              {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+            />
             <View style={[styles.thumbPlayIcon, { backgroundColor: colors.primary }]}>
               <Ionicons name="play" size={10} color={colors.onPrimary} />
             </View>

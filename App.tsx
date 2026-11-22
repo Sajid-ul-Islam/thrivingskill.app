@@ -69,6 +69,21 @@ import { PushNotificationService } from './src/services/notifications/pushNotifi
 import { HabitNotificationQueue } from './src/services/notifications/habitNotificationQueue';
 import { StorageSanitizer } from './src/services/storage/storageSanitizer';
 
+// Ensure browser omits external Referer on Web to prevent CDN hotlink blocks (Cloudflare 403)
+if (Platform.OS === 'web' && typeof document !== 'undefined') {
+  try {
+    let meta = document.querySelector('meta[name="referrer"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'referrer');
+      meta.setAttribute('content', 'no-referrer');
+      document.head.appendChild(meta);
+    } else {
+      meta.setAttribute('content', 'no-referrer');
+    }
+  } catch {}
+}
+
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }

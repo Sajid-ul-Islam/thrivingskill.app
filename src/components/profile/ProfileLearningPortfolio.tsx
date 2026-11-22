@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Linking, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Linking, Alert, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { shape } from '../../theme/shapes';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
@@ -7,6 +7,7 @@ import { triggerHaptic } from '../../utils/haptics';
 import { ProfileLearningAnalytics } from '../analytics/ProfileLearningAnalytics';
 import { LearnPressStatsGrid } from '../cards/LearnPressStatsGrid';
 import { Course, Certificate, LearnPressCourseFilter, UserProgress } from '../../types';
+import { getSafeImageSource } from '../../utils/imageUtils';
 
 interface ProfileLearningPortfolioProps {
   isAuthenticated: boolean;
@@ -462,7 +463,11 @@ export const ProfileLearningPortfolio: React.FC<ProfileLearningPortfolioProps> =
                 ]}
               >
                 <View style={styles.graduatedThumbContainer}>
-                  <Image source={{ uri: course.thumbnail }} style={styles.courseThumb} />
+                  <Image
+                    source={getSafeImageSource(course.thumbnail)}
+                    style={styles.courseThumb}
+                    {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+                  />
                   <View style={[styles.graduatedCapPill, { backgroundColor: badgeConfig.bg }]}>
                     <Ionicons name={badgeConfig.icon} size={10} color={badgeConfig.color} />
                     <Text style={[styles.graduatedCapText, { color: badgeConfig.color }]}>

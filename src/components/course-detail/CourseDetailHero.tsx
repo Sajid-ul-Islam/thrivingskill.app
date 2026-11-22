@@ -1,16 +1,18 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Image,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { Course } from '../../types';
 import { YouTubeVideo } from '../../data/youtubeVideos';
+import { getSafeImageSource } from '../../utils/imageUtils';
 
 interface CourseDetailHeroProps {
   course: Course;
@@ -43,6 +45,16 @@ export const CourseDetailHero: React.FC<CourseDetailHeroProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
+  const [heroThumbError, setHeroThumbError] = useState(false);
+
+  useEffect(() => {
+    setHeroThumbError(false);
+  }, [course.thumbnail]);
+
+  const fallbackHeroIcon = require('../../../assets/icon.png');
+  const heroImageSource = heroThumbError || !course.thumbnail
+    ? fallbackHeroIcon
+    : getSafeImageSource(course.thumbnail, fallbackHeroIcon);
 
   const previewLesson =
     course.modules?.flatMap((m) => m.lessons || []).find((l) => l.isFreePreview) ||
@@ -69,8 +81,10 @@ export const CourseDetailHero: React.FC<CourseDetailHeroProps> = ({
       {/* Thumbnail Hero with Preview Button */}
       <View style={[styles.heroWrapper, isTablet && { maxHeight: 380, aspectRatio: 16 / 9 }]}>
         <Image
-          source={{ uri: course.thumbnail, cache: 'force-cache' }}
+          source={heroImageSource}
           style={styles.heroThumbnail}
+          onError={() => setHeroThumbError(true)}
+          {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
         />
         {course.badge && (
           <View style={[styles.badgeTag, { backgroundColor: colors.badgeBackground }]}>

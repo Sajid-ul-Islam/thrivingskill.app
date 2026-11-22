@@ -1,12 +1,13 @@
 import { SpringPressable } from '../common';
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Course } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useLearning } from '../../context/LearningContext';
 import { useFeedback } from '../../context/FeedbackContext';
+import { getSafeImageSource } from '../../utils/imageUtils';
 
 interface CourseCardProps {
   course: Course;
@@ -31,6 +32,15 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
   const { showToast } = useFeedback();
 
   const [thumbError, setThumbError] = React.useState(false);
+
+  React.useEffect(() => {
+    setThumbError(false);
+  }, [course.thumbnail]);
+
+  const fallbackIcon = require('../../../assets/icon.png');
+  const imageSource = thumbError || !course.thumbnail
+    ? fallbackIcon
+    : getSafeImageSource(course.thumbnail, fallbackIcon);
 
   const bookmarked = propIsBookmarked !== undefined ? propIsBookmarked : contextIsBookmarked(course.id);
   const isEnrolled = propIsEnrolled !== undefined ? propIsEnrolled : !!userProgress[course.id];
@@ -74,13 +84,14 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
         >
           <View style={[styles.horizontalThumbWrapper, { backgroundColor: colors.surfaceSubtle }]}>
             <Image
-              source={thumbError || !course.thumbnail ? require('../../../assets/icon.png') : { uri: course.thumbnail, cache: 'force-cache' }}
+              source={imageSource}
               style={[
                 styles.horizontalThumb,
                 (thumbError || !course.thumbnail) && { resizeMode: 'contain' }
               ]}
               fadeDuration={150}
               onError={() => setThumbError(true)}
+              {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
             />
             {course.badge && (
               <View style={[styles.horizontalBadgeTag, { backgroundColor: colors.badgeBackground }]}>
@@ -185,13 +196,14 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
       >
         <View style={[styles.thumbWrapper, { backgroundColor: colors.surfaceSubtle }]}>
           <Image
-            source={thumbError || !course.thumbnail ? require('../../../assets/icon.png') : { uri: course.thumbnail, cache: 'force-cache' }}
+            source={imageSource}
             style={[
               styles.thumbnail,
               (thumbError || !course.thumbnail) && { resizeMode: 'contain' }
             ]}
             fadeDuration={150}
             onError={() => setThumbError(true)}
+            {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
           />
           {course.badge && (
             <View style={[styles.badgeTag, { backgroundColor: colors.badgeBackground }]}>

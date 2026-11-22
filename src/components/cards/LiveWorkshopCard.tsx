@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, Linking } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, Linking, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { SpringPressable } from '../common';
 import { Workshop } from '../../types';
@@ -8,6 +8,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { useLearning } from '../../context/LearningContext';
 import { useFeedback } from '../../context/FeedbackContext';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
+import { getSafeImageSource } from '../../utils/imageUtils';
 
 interface LiveWorkshopCardProps {
   workshop: Workshop;
@@ -20,6 +21,16 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop }) 
   const { isRsvpd, toggleWorkshopRsvp } = useLearning();
   const { showToast } = useFeedback();
   const registered = isRsvpd(workshop.id);
+  const [thumbError, setThumbError] = useState(false);
+
+  useEffect(() => {
+    setThumbError(false);
+  }, [workshop.thumbnail]);
+
+  const fallbackIcon = require('../../../assets/icon.png');
+  const imageSource = thumbError || !workshop.thumbnail
+    ? fallbackIcon
+    : getSafeImageSource(workshop.thumbnail, fallbackIcon);
 
   const bdtPrice = workshop.priceBdt || (workshop.price > 0 ? Math.round(workshop.price * 120) : 0);
   const isFree = bdtPrice === 0 && (!workshop.price || workshop.price === 0);
@@ -66,7 +77,12 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop }) 
       ]}
     >
       <View style={styles.imageWrapper}>
-        <Image source={{ uri: workshop.thumbnail }} style={styles.thumbnail} />
+        <Image
+          source={imageSource}
+          style={[styles.thumbnail, (thumbError || !workshop.thumbnail) && { resizeMode: 'contain' }]}
+          onError={() => setThumbError(true)}
+          {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+        />
         <View style={styles.badgeRow}>
           <View style={[styles.liveBadge, workshop.isLive && styles.liveBadgeActive]}>
             <View style={[styles.pulseDot, workshop.isLive && styles.pulseDotLive]} />

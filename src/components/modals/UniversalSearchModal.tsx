@@ -8,6 +8,7 @@ import {
   TextInput,
   FlatList,
   Image,
+  Platform,
   LayoutAnimation,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -22,6 +23,7 @@ import { GeminiNanoService } from '../../services/ai/geminiNanoService';
 import { triggerHaptic } from '../../utils/haptics';
 import { shape } from '../../theme/shapes';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
+import { getSafeImageSource } from '../../utils/imageUtils';
 
 interface UniversalSearchModalProps {
   visible: boolean;
@@ -338,7 +340,11 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
             >
               {item.thumbnail ? (
                 <View style={styles.thumbWrapper}>
-                  <Image source={{ uri: item.thumbnail }} style={styles.thumb} />
+                  <Image
+                    source={getSafeImageSource(item.thumbnail)}
+                    style={styles.thumb}
+                    {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+                  />
                   {item.type === 'youtube' && (
                     <View style={styles.ytBadge}>
                       <Ionicons name="play" size={10} color="#FFFFFF" />
