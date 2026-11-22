@@ -17,6 +17,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { shape } from './src/theme/shapes';
 
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
@@ -119,6 +120,102 @@ const AnimatedTabIcon: React.FC<{
     <Animated.View style={{ transform: [{ scale: scaleAnim }], alignItems: 'center', justifyContent: 'center' }}>
       <Ionicons name={name as any} size={size} color={color} />
     </Animated.View>
+  );
+};
+
+/**
+ * CR-01: BrandSplashScreen - Dynamic startup splash screen showcasing
+ * the learner hero portrait, ambient brand backdrop, official wordmark,
+ * national motto, and interactive LMS workspace loader.
+ */
+const BrandSplashScreen: React.FC = () => {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.92)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 550,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 7,
+        tension: 40,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fadeAnim, scaleAnim]);
+
+  return (
+    <View style={splashStyles.container}>
+      <StatusBar style="light" />
+
+      {/* Ambient glowing background with photo backdrop */}
+      <Image
+        source={require('./assets/splash-hero.jpg')}
+        style={splashStyles.ambientBackground}
+        resizeMode="cover"
+        blurRadius={Platform.OS === 'ios' ? 16 : 10}
+      />
+      <LinearGradient
+        colors={['rgba(16, 47, 83, 0.72)', 'rgba(16, 47, 83, 0.94)', '#0A1C33']}
+        style={StyleSheet.absoluteFill}
+      />
+
+      <Animated.View
+        style={[
+          splashStyles.content,
+          {
+            opacity: fadeAnim,
+            transform: [{ scale: scaleAnim }],
+          },
+        ]}
+      >
+        {/* Featured Hero Portrait with Glowing Gold Border & Brand Emblem */}
+        <View style={splashStyles.heroContainer}>
+          <View style={splashStyles.heroFrame}>
+            <Image
+              source={require('./assets/splash-hero.jpg')}
+              style={splashStyles.heroImage}
+              resizeMode="cover"
+            />
+          </View>
+          <View style={splashStyles.brandBadge}>
+            <Image
+              source={require('./assets/icon.png')}
+              style={splashStyles.brandBadgeImage}
+              resizeMode="contain"
+            />
+          </View>
+        </View>
+
+        {/* Brand Wordmark */}
+        <Text style={splashStyles.wordmark}>
+          Thriving <Text style={{ color: '#FFB606' }}>Skills</Text>
+        </Text>
+
+        {/* Feature Pill */}
+        <View style={splashStyles.badgePill}>
+          <Ionicons name="sparkles" size={13} color="#FFB606" style={{ marginRight: 6 }} />
+          <Text style={splashStyles.badgePillText}>জাতির দক্ষতা বিনির্মাণে</Text>
+        </View>
+
+        {/* National Motto / Tagline */}
+        <Text style={splashStyles.tagline}>
+          Building a Skilled Nation • Learn, Grow & Lead
+        </Text>
+      </Animated.View>
+
+      {/* Footer loading indicator */}
+      <View style={splashStyles.footer}>
+        <ActivityIndicator size="small" color="#FFB606" />
+        <Text style={splashStyles.footerText}>Loading LMS Workspace...</Text>
+        <Text style={splashStyles.versionText}>v1.4.0 • Thriving Skills Ltd.</Text>
+      </View>
+    </View>
   );
 };
 
@@ -352,30 +449,7 @@ const MainAppContent: React.FC = () => {
 
   // CR-1: Brand splash screen on startup (holds until both 2s splash timer and auth session restore complete)
   if (isSplashVisible || isAuthLoading) {
-    return (
-      <View style={splashStyles.container}>
-        <StatusBar style="light" />
-        <View style={splashStyles.content}>
-          <View style={splashStyles.logoWrap}>
-            <Image
-              source={require('./assets/icon.png')}
-              style={splashStyles.logoImage}
-              resizeMode="contain"
-            />
-          </View>
-          <Text style={splashStyles.wordmark}>
-            Thriving <Text style={{ color: '#FFB606' }}>Skills</Text>
-          </Text>
-          <Text style={splashStyles.tagline}>
-            জাতির দক্ষতা বিনির্মাণে • Building a Skilled Nation
-          </Text>
-        </View>
-        <View style={splashStyles.footer}>
-          <ActivityIndicator size="small" color="#FFB606" />
-          <Text style={splashStyles.footerText}>Loading LMS Workspace...</Text>
-        </View>
-      </View>
-    );
+    return <BrandSplashScreen />;
   }
 
   // CR-1: Mandatory login access control - without logging in, no content is accessible
@@ -879,51 +953,119 @@ const splashStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
+    overflow: 'hidden',
+  },
+  ambientBackground: {
+    ...StyleSheet.absoluteFill,
+    width: '100%',
+    height: '100%',
+    opacity: 0.2,
   },
   content: {
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 2,
+    paddingHorizontal: 20,
+    marginTop: -28,
   },
-  logoWrap: {
-    width: 90,
-    height: 90,
-    borderRadius: 24,
+  heroContainer: {
+    position: 'relative',
+    marginBottom: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroFrame: {
+    width: 176,
+    height: 176,
+    borderRadius: 88,
+    overflow: 'hidden',
+    borderWidth: 3,
+    borderColor: '#FFB606',
+    backgroundColor: '#0F192C',
+    shadowColor: '#FFB606',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
+    elevation: 10,
+  },
+  heroImage: {
+    width: '100%',
+    height: '100%',
+  },
+  brandBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: 4,
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     backgroundColor: '#FFFFFF',
-    padding: 12,
-    marginBottom: 16,
+    padding: 6,
+    borderWidth: 2,
+    borderColor: '#FFB606',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  logoImage: {
+  brandBadgeImage: {
     width: '100%',
     height: '100%',
   },
   wordmark: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: '900',
     color: '#FFFFFF',
     letterSpacing: -0.5,
-    marginBottom: 6,
+    marginBottom: 8,
+    textAlign: 'center',
   },
-  tagline: {
-    fontSize: 14,
-    fontWeight: '600',
+  badgePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 182, 6, 0.12)',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 182, 6, 0.35)',
+    marginBottom: 8,
+  },
+  badgePillText: {
+    fontSize: 12,
+    fontWeight: '700',
     color: '#FFB606',
     letterSpacing: 0.2,
+  },
+  tagline: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.85)',
+    letterSpacing: 0.2,
     textAlign: 'center',
+    maxWidth: 290,
+    lineHeight: 18,
   },
   footer: {
     position: 'absolute',
-    bottom: 48,
+    bottom: 36,
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
+    zIndex: 2,
   },
   footerText: {
     fontSize: 11,
     color: 'rgba(255, 255, 255, 0.7)',
     fontWeight: '600',
+    letterSpacing: 0.3,
+  },
+  versionText: {
+    fontSize: 10,
+    color: 'rgba(255, 255, 255, 0.4)',
+    fontWeight: '500',
+    letterSpacing: 0.2,
   },
 });
