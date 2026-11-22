@@ -647,7 +647,8 @@ const MainAppContent: React.FC = () => {
                       },
                     ]}
                     numberOfLines={1}
-                    ellipsizeMode="tail"
+                    adjustsFontSizeToFit={true}
+                    minimumFontScale={0.8}
                   >
                     {tab.label}
                   </Text>
@@ -869,9 +870,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flex: 1,
     minHeight: 48,
-    paddingVertical: 4,
+    paddingVertical: 3,
+    paddingHorizontal: 0,
     borderRadius: shape.full,
-    overflow: 'hidden',
     ...Platform.select({
       web: {
         outlineStyle: 'none' as any,
@@ -941,8 +942,12 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   tabButtonLabel: {
-    fontSize: 10.5,
-    marginTop: 3,
+    fontSize: 10,
+    marginTop: 2,
+    letterSpacing: -0.2,
+    textAlign: 'center',
+    includeFontPadding: false,
+    maxWidth: '100%',
   },
 });
 

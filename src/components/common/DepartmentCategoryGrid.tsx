@@ -366,41 +366,47 @@ export const DepartmentCategoryGrid: React.FC<DepartmentCategoryGridProps> = ({
                 <CategoryIllustrationIcon category={iconType} size={48} />
               </View>
 
-              <Text
-                style={[
-                  styles.cardTitle,
-                  {
-                    color: isSelected ? colors.primary : colors.text,
-                    fontWeight: isSelected ? '800' : '700',
-                  },
-                ]}
-                numberOfLines={2}
-                ellipsizeMode="tail"
-              >
-                {displayName}
-              </Text>
-
-              {count > 0 && (
-                <View
+              <View style={styles.titleContainer}>
+                <Text
                   style={[
-                    styles.countPill,
+                    styles.cardTitle,
                     {
-                      backgroundColor: isSelected
-                        ? colors.primaryLight
-                        : (isDark ? colors.surfaceSubtle : '#F8FAFC'),
+                      color: isSelected ? colors.primary : colors.text,
+                      fontWeight: isSelected ? '800' : '700',
                     },
                   ]}
+                  numberOfLines={2}
+                  ellipsizeMode="tail"
                 >
-                  <Text
+                  {displayName}
+                </Text>
+              </View>
+
+              <View style={styles.countPillContainer}>
+                {count > 0 ? (
+                  <View
                     style={[
-                      styles.countText,
-                      { color: isSelected ? colors.primary : colors.textMuted },
+                      styles.countPill,
+                      {
+                        backgroundColor: isSelected
+                          ? colors.primaryLight
+                          : (isDark ? colors.surfaceSubtle : '#F8FAFC'),
+                      },
                     ]}
                   >
-                    {count} {isBangla ? 'কোর্স' : 'Courses'}
-                  </Text>
-                </View>
-              )}
+                    <Text
+                      style={[
+                        styles.countText,
+                        { color: isSelected ? colors.primary : colors.textMuted },
+                      ]}
+                    >
+                      {count} {isBangla ? 'কোর্স' : 'Courses'}
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.countPillPlaceholder} />
+                )}
+              </View>
             </SpringPressable>
           );
         })}
@@ -493,12 +499,12 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '48.2%',
+    height: 154,
     borderRadius: 18,
-    paddingVertical: 18,
+    paddingVertical: 14,
     paddingHorizontal: 10,
     alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 128,
+    justifyContent: 'space-between',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
@@ -507,20 +513,33 @@ const styles = StyleSheet.create({
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
-    height: 50,
+    height: 48,
+  },
+  titleContainer: {
+    height: 38,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cardTitle: {
-    fontSize: 14,
+    fontSize: 13.5,
     textAlign: 'center',
     letterSpacing: -0.2,
     lineHeight: 18,
   },
+  countPillContainer: {
+    height: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
   countPill: {
-    marginTop: 6,
     paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingVertical: 2.5,
     borderRadius: 10,
+  },
+  countPillPlaceholder: {
+    height: 20,
   },
   countText: {
     fontSize: 10.5,

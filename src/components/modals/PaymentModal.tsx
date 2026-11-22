@@ -285,7 +285,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   };
 
   // Handle message from WebView (Bi-directional field auto-detection & synchronization)
-  const handleWebViewMessagePayload = (event: any) => {
+  const handleWebViewMessage = (event: any) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
       if (data && data.type === 'CHECKOUT_FIELD_AUTO_DETECT') {
@@ -802,7 +802,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 setLoadProgress(syntheticEvent.nativeEvent.progress);
               }}
               injectedJavaScript={injectedCheckoutJs}
-              onMessage={handleWebViewMessagePayload}
+              onMessage={handleWebViewMessage}
               startInLoadingState={true}
               renderLoading={() => (
                 <View style={[styles.drawerLoadingState, { backgroundColor: isDark ? '#0F172A' : '#FFFFFF' }]}>
