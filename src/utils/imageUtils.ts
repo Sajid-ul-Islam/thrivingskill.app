@@ -1,19 +1,19 @@
 import { Platform, ImageSourcePropType } from 'react-native';
+import { Env } from '../config/env';
 
 /**
  * Normalizes and sanitizes image URIs for cross-platform reliability.
  * - Handles non-ASCII / Unicode characters (such as Bengali script) via encodeURI.
  * - Trims whitespaces and ensures secure https protocol for WordPress media.
+ * - Supports both live (thrivingskill.com) and staging (staging.thrivingskill.com).
  */
 export function getSafeImageUri(rawUri?: string | null): string {
   if (!rawUri || typeof rawUri !== 'string') return '';
   let trimmed = rawUri.trim();
   if (!trimmed) return '';
 
-  // Ensure https for thrivingskill.com images
-  if (trimmed.startsWith('http://thrivingskill.com')) {
-    trimmed = trimmed.replace('http://thrivingskill.com', 'https://thrivingskill.com');
-  }
+  // Ensure https for both live and staging thrivingskill.com media
+  trimmed = trimmed.replace(/^http:\/\/(staging\.)?thrivingskill\.com/i, 'https://$1thrivingskill.com');
 
   try {
     // Decode first to avoid double-encoding already encoded parts, then encodeURI
@@ -42,11 +42,12 @@ export function getSafeImageSource(
     return { uri: safeUri };
   }
 
-  // On native mobile (Android/iOS), include Referer header to prevent CDN hotlink blocks
+  // On native mobile (Android/iOS), include Referer matching the active server to prevent CDN hotlink blocks
+  const activeReferer = Env.SITE_URL ? `${Env.SITE_URL}/` : 'https://thrivingskill.com/';
   return {
     uri: safeUri,
     headers: {
-      Referer: 'https://thrivingskill.com/',
+      Referer: activeReferer,
     },
   };
 }

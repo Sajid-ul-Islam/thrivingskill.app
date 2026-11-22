@@ -425,6 +425,28 @@ export class HttpClient {
           continue;
         }
 
+        // Dual-host failover: if primary host encounters network failure or gateway error, try fallback host
+        const isServerOutage =
+          err instanceof ApiError &&
+          (err.status === 502 || err.status === 503 || err.status === 504 || err.status === 521 || err.status === 522);
+        if (canAttemptFallback && (isNetworkErr || isServerOutage)) {
+          if (Env.DEBUG_API) {
+            console.log(`[API Failover withMeta] Primary ${fullUrl} failed. Attempting failover to ${Env.FALLBACK_API_URL}...`);
+          }
+          try {
+            return await this.requestWithMeta<T>(endpoint, {
+              ...options,
+              baseUrl: Env.FALLBACK_API_URL,
+              allowFallback: false,
+              retries: 1,
+            });
+          } catch (fallbackErr) {
+            if (Env.DEBUG_API) {
+              console.warn(`[API Failover withMeta] Fallback host also failed:`, fallbackErr);
+            }
+          }
+        }
+
         if (isAbort) {
           this.connectivityListener?.(false, 'Connection timed out.');
           throw new ApiError(`Request timeout after ${timeoutMs}ms`, 408, 'REQUEST_TIMEOUT');
