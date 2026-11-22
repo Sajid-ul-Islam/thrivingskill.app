@@ -69,6 +69,9 @@ import { TelemetryService } from './src/services/telemetry/telemetryService';
 import { PushNotificationService } from './src/services/notifications/pushNotificationService';
 import { HabitNotificationQueue } from './src/services/notifications/habitNotificationQueue';
 import { StorageSanitizer } from './src/services/storage/storageSanitizer';
+import { SPLASH_HERO_IMAGE_URI } from './src/data/splashHeroData';
+
+const SPLASH_HERO_SOURCE = { uri: SPLASH_HERO_IMAGE_URI };
 
 // Ensure browser omits external Referer on Web to prevent CDN hotlink blocks (Cloudflare 403)
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
@@ -155,7 +158,7 @@ const BrandSplashScreen: React.FC = () => {
 
       {/* Ambient glowing background with photo backdrop */}
       <Image
-        source={require('./assets/splash-hero.jpg')}
+        source={SPLASH_HERO_SOURCE}
         style={splashStyles.ambientBackground}
         resizeMode="cover"
         blurRadius={Platform.OS === 'ios' ? 18 : 12}
@@ -191,7 +194,7 @@ const BrandSplashScreen: React.FC = () => {
         {/* Featured Official Widescreen Hero Banner */}
         <View style={splashStyles.bannerCard}>
           <Image
-            source={require('./assets/splash-hero.jpg')}
+            source={SPLASH_HERO_SOURCE}
             style={splashStyles.bannerImage}
             resizeMode="cover"
           />
@@ -1010,6 +1013,7 @@ const splashStyles = StyleSheet.create({
   bannerImage: {
     width: '100%',
     height: '100%',
+    aspectRatio: 1024 / 384,
   },
   badgePill: {
     flexDirection: 'row',
