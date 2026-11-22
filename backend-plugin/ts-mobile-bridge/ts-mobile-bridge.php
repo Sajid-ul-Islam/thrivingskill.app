@@ -2,9 +2,9 @@
 /**
  * Plugin Name: TS Mobile Bridge
  * Plugin URI: https://thrivingskill.com
- * Description: High-speed mobile API bridge, remote configuration, and push notification engine for Thriving Skills.
- * Version: 1.0.0
- * Author: Thriving Skills
+ * Description: High-speed mobile API bridge, remote configuration, push notification engine, and Mobile App Command Center for Thriving Skills.
+ * Version: 1.1.0
+ * Author: Thriving Skills Engineering
  * Author URI: https://thrivingskill.com
  * License: GPLv2 or later
  * Text Domain: ts-mobile-bridge
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('TSMB_VERSION', '1.0.0');
+define('TSMB_VERSION', '1.1.0');
 
 /* ==========================================================================
    1. REST API CONTROLLER
@@ -64,11 +64,53 @@ class TSMB_Rest_API {
 
     public static function get_config() {
         $min_version     = get_option('tsmb_min_app_version', '1.0.0');
-        $latest_version  = get_option('tsmb_latest_app_version', '1.0.0');
+        $latest_version  = get_option('tsmb_latest_app_version', '1.1.0');
         $maintenance     = (bool) get_option('tsmb_maintenance_mode', false);
         $banner_active   = (bool) get_option('tsmb_banner_active', true);
         $banner_text     = get_option('tsmb_banner_text', 'Bangladesh Skills Summit 2026 registration is live!');
         $banner_link     = get_option('tsmb_banner_link', 'summit');
+
+        // Hero Carousel Slides
+        $default_slides = [
+            [
+                'id'          => 1,
+                'tag'         => 'FLAGSHIP CONFERENCE 2026',
+                'title'       => 'Bangladesh Skills Summit 2026',
+                'subtitle'    => 'Decoding 4IR employability, AI workforce transformation, & leadership.',
+                'button_text' => 'Reserve Summit Pass →',
+                'image_url'   => 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?q=80&w=800',
+                'target'      => 'summit',
+            ],
+            [
+                'id'          => 2,
+                'tag'         => 'POPULAR SKILL',
+                'title'       => 'AI for Teachers & Educators',
+                'subtitle'    => 'Master lesson planning, automated grading, and personalized learning.',
+                'button_text' => 'Explore Course →',
+                'image_url'   => 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=800',
+                'target'      => 'course',
+            ],
+        ];
+        $hero_slides = get_option('tsmb_hero_slides', $default_slides);
+        if (!is_array($hero_slides)) {
+            $hero_slides = $default_slides;
+        }
+
+        // Flash Sale & Countdown
+        $flash_active   = (bool) get_option('tsmb_flash_active', true);
+        $flash_title    = get_option('tsmb_flash_title', 'Cyber Skills Flash Sale 50% Off');
+        $flash_code     = get_option('tsmb_flash_code', 'THRIVE50');
+        $flash_discount = intval(get_option('tsmb_flash_discount', 50));
+        $flash_end      = get_option('tsmb_flash_end', date('Y-m-d H:i:s', strtotime('+7 days')));
+
+        // Trending Search Chips
+        $trending_raw = get_option('tsmb_trending_keywords', 'Agentic AI, AI for Business, Power BI Data, Financial Modeling, ESG Strategy, Growth Marketing');
+        $trending_keywords = array_values(array_filter(array_map('trim', explode(',', $trending_raw))));
+
+        // Learner Support Hotline
+        $support_whatsapp = get_option('tsmb_support_whatsapp', '+8801700000000');
+        $support_email    = get_option('tsmb_support_email', 'support@thrivingskill.com');
+        $support_helpline = get_option('tsmb_support_helpline', '+88029876543');
 
         return rest_ensure_response([
             'status' => 'success',
@@ -86,6 +128,21 @@ class TSMB_Rest_API {
                 'active'  => $banner_active,
                 'message' => $banner_text,
                 'target'  => $banner_link,
+            ],
+            'hero_slides' => $hero_slides,
+            'flash_sale' => [
+                'active'           => $flash_active,
+                'title'            => $flash_title,
+                'coupon_code'      => $flash_code,
+                'discount_percent' => $flash_discount,
+                'end_time'         => $flash_end,
+                'end_timestamp'    => strtotime($flash_end),
+            ],
+            'trending_keywords' => $trending_keywords,
+            'support' => [
+                'whatsapp' => $support_whatsapp,
+                'email'    => $support_email,
+                'helpline' => $support_helpline,
             ],
             'server_time' => current_time('mysql'),
         ]);
@@ -236,38 +293,22 @@ class TSMB_Rest_API {
         $username = sanitize_user($params['username'] ?? '', true);
 
         if (empty($email) || !is_email($email)) {
-            return new WP_Error(
-                'registration-error-invalid-email',
-                __('Please provide a valid email address.', 'ts-mobile-bridge'),
-                ['status' => 400]
-            );
+            return new WP_Error('registration-error-invalid-email', 'Please provide a valid email address.', ['status' => 400]);
         }
 
         if (email_exists($email)) {
-            return new WP_Error(
-                'registration-error-email-exists',
-                __('An account is already registered with your email address. Please log in.', 'ts-mobile-bridge'),
-                ['status' => 400]
-            );
+            return new WP_Error('registration-error-email-exists', 'An account is already registered with your email address. Please log in.', ['status' => 400]);
         }
 
         if (empty($password) || strlen($password) < 6) {
-            return new WP_Error(
-                'registration-error-missing-password',
-                __('Password must be at least 6 characters long.', 'ts-mobile-bridge'),
-                ['status' => 400]
-            );
+            return new WP_Error('registration-error-missing-password', 'Password must be at least 6 characters long.', ['status' => 400]);
         }
 
         if (empty($username)) {
             $base_user = sanitize_user(explode('@', $email)[0], true);
-            if (empty($base_user) || strlen($base_user) < 3) {
-                $base_user = 'student';
-            }
+            if (empty($base_user) || strlen($base_user) < 3) $base_user = 'student';
             $username = $base_user . rand(100, 999);
-            while (username_exists($username)) {
-                $username = $base_user . rand(1000, 9999);
-            }
+            while (username_exists($username)) $username = $base_user . rand(1000, 9999);
         } elseif (username_exists($username)) {
             $username = $username . rand(100, 999);
         }
@@ -298,7 +339,7 @@ class TSMB_Rest_API {
         return rest_ensure_response([
             'status'   => 'success',
             'code'     => 200,
-            'message'  => __('Registration complete! You may now sign in.', 'ts-mobile-bridge'),
+            'message'  => 'Registration complete! You may now sign in.',
             'user_id'  => $user_id,
             'username' => $username,
             'email'    => $email,
@@ -387,6 +428,43 @@ class TSMB_Notifications {
         }
     }
 
+    public static function send_broadcast($title, $body, $data = []) {
+        $tokens_data = get_option(self::OPTION_TOKENS, []);
+        if (empty($tokens_data) || !is_array($tokens_data)) {
+            return ['success' => false, 'count' => 0, 'error' => 'No registered devices found.'];
+        }
+
+        $push_tokens = array_keys($tokens_data);
+        $total = count($push_tokens);
+        $batches = array_chunk($push_tokens, 100);
+
+        foreach ($batches as $batch) {
+            $messages = [];
+            foreach ($batch as $token) {
+                $messages[] = [
+                    'to'       => $token,
+                    'sound'    => 'default',
+                    'title'    => $title,
+                    'body'     => $body,
+                    'data'     => $data,
+                    'priority' => 'high',
+                ];
+            }
+
+            wp_remote_post('https://exp.host/--/api/v2/push/send', [
+                'headers'  => [
+                    'Accept'       => 'application/json',
+                    'Content-Type' => 'application/json',
+                ],
+                'body'     => wp_json_encode($messages),
+                'timeout'  => 10,
+                'blocking' => true,
+            ]);
+        }
+
+        return ['success' => true, 'count' => $total];
+    }
+
     public static function send_expo_push($payload) {
         $tokens_data = get_option(self::OPTION_TOKENS, []);
         if (empty($tokens_data) || !is_array($tokens_data)) {
@@ -394,10 +472,6 @@ class TSMB_Notifications {
         }
 
         $push_tokens = array_keys($tokens_data);
-        if (empty($push_tokens)) {
-            return;
-        }
-
         $batches = array_chunk($push_tokens, 100);
 
         foreach ($batches as $batch) {
@@ -427,7 +501,7 @@ class TSMB_Notifications {
 }
 
 /* ==========================================================================
-   3. WP ADMIN SETTINGS DASHBOARD
+   3. WP ADMIN SETTINGS DASHBOARD (MOBILE APP COMMAND CENTER)
    ========================================================================== */
 
 class TSMB_Admin {
@@ -439,7 +513,7 @@ class TSMB_Admin {
 
     public static function add_menu() {
         add_menu_page(
-            'Thriving Skills App',
+            'Thriving Skills Mobile App Command Center',
             'Mobile App',
             'manage_options',
             'thriving-skills-app',
@@ -450,122 +524,366 @@ class TSMB_Admin {
     }
 
     public static function handle_actions() {
-        if (!isset($_POST['tsmb_save_settings'])) {
+        // 1. Handle Broadcast Push Notification
+        if (isset($_POST['tsmb_send_push_broadcast'])) {
+            check_admin_referer('tsmb_push_broadcast_nonce');
+            if (!current_user_can('manage_options')) return;
+
+            $title  = sanitize_text_field($_POST['push_title'] ?? '');
+            $body   = sanitize_textarea_field($_POST['push_message'] ?? '');
+            $screen = sanitize_text_field($_POST['push_screen'] ?? 'home');
+            $target = sanitize_text_field($_POST['push_target_id'] ?? '');
+
+            if (empty($title) || empty($body)) {
+                add_settings_error('tsmb_notices', 'push_empty', 'Please enter both Title and Message for the push notification.', 'error');
+                return;
+            }
+
+            $data = ['screen' => $screen];
+            if (!empty($target)) {
+                $data['course_id'] = $target;
+                $data['url'] = $target;
+            }
+
+            $res = TSMB_Notifications::send_broadcast($title, $body, $data);
+            if ($res['success']) {
+                add_settings_error('tsmb_notices', 'push_sent', "🚀 Push broadcast successfully dispatched to {$res['count']} active devices!", 'updated');
+            } else {
+                add_settings_error('tsmb_notices', 'push_err', "Notice: {$res['error']}", 'warning');
+            }
             return;
         }
 
-        check_admin_referer('tsmb_save_settings_nonce');
+        // 2. Handle Settings Save
+        if (isset($_POST['tsmb_save_settings'])) {
+            check_admin_referer('tsmb_save_settings_nonce');
+            if (!current_user_can('manage_options')) return;
 
-        if (!current_user_can('manage_options')) {
-            return;
-        }
+            // General & Version
+            update_option('tsmb_min_app_version', sanitize_text_field($_POST['min_version'] ?? '1.0.0'));
+            update_option('tsmb_latest_app_version', sanitize_text_field($_POST['latest_version'] ?? '1.1.0'));
+            update_option('tsmb_maintenance_mode', isset($_POST['maintenance_mode']) ? 1 : 0);
+            update_option('tsmb_banner_active', isset($_POST['banner_active']) ? 1 : 0);
+            update_option('tsmb_banner_text', sanitize_text_field($_POST['banner_text'] ?? ''));
+            update_option('tsmb_banner_link', sanitize_text_field($_POST['banner_link'] ?? 'summit'));
 
-        update_option('tsmb_min_app_version', sanitize_text_field($_POST['min_version'] ?? '1.0.0'));
-        update_option('tsmb_latest_app_version', sanitize_text_field($_POST['latest_version'] ?? '1.0.0'));
-        update_option('tsmb_maintenance_mode', isset($_POST['maintenance_mode']) ? 1 : 0);
-        update_option('tsmb_banner_active', isset($_POST['banner_active']) ? 1 : 0);
-        update_option('tsmb_banner_text', sanitize_text_field($_POST['banner_text'] ?? ''));
-        update_option('tsmb_banner_link', sanitize_text_field($_POST['banner_link'] ?? 'summit'));
+            // Flash Sale
+            update_option('tsmb_flash_active', isset($_POST['flash_active']) ? 1 : 0);
+            update_option('tsmb_flash_title', sanitize_text_field($_POST['flash_title'] ?? ''));
+            update_option('tsmb_flash_code', sanitize_text_field($_POST['flash_code'] ?? ''));
+            update_option('tsmb_flash_discount', intval($_POST['flash_discount'] ?? 50));
+            update_option('tsmb_flash_end', sanitize_text_field($_POST['flash_end'] ?? ''));
 
-        if (isset($_POST['purge_cache'])) {
-            delete_transient('tsmb_mobile_feed_v1');
-            add_settings_error('tsmb_notices', 'cache_purged', 'Mobile feed cache purged successfully!', 'updated');
-        } else {
-            add_settings_error('tsmb_notices', 'settings_saved', 'Mobile app settings saved successfully!', 'updated');
+            // Trending search chips & support hotlines
+            update_option('tsmb_trending_keywords', sanitize_text_field($_POST['trending_keywords'] ?? ''));
+            update_option('tsmb_support_whatsapp', sanitize_text_field($_POST['support_whatsapp'] ?? ''));
+            update_option('tsmb_support_email', sanitize_email($_POST['support_email'] ?? ''));
+            update_option('tsmb_support_helpline', sanitize_text_field($_POST['support_helpline'] ?? ''));
+
+            // Hero Slides
+            if (isset($_POST['hero_slides_json'])) {
+                $raw_json = wp_unslash($_POST['hero_slides_json']);
+                $decoded = json_decode($raw_json, true);
+                if (is_array($decoded)) {
+                    update_option('tsmb_hero_slides', $decoded);
+                }
+            }
+
+            if (isset($_POST['purge_cache'])) {
+                delete_transient('tsmb_mobile_feed_v1');
+                add_settings_error('tsmb_notices', 'cache_purged', 'Mobile feed cache purged successfully!', 'updated');
+            } else {
+                add_settings_error('tsmb_notices', 'settings_saved', 'Mobile App Command Center settings saved successfully!', 'updated');
+            }
         }
     }
 
     public static function render_page() {
+        $active_tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'broadcast';
+
         $min_version     = get_option('tsmb_min_app_version', '1.0.0');
-        $latest_version  = get_option('tsmb_latest_app_version', '1.0.0');
+        $latest_version  = get_option('tsmb_latest_app_version', '1.1.0');
         $maintenance     = (bool) get_option('tsmb_maintenance_mode', false);
         $banner_active   = (bool) get_option('tsmb_banner_active', true);
         $banner_text     = get_option('tsmb_banner_text', 'Bangladesh Skills Summit 2026 registration is live!');
         $banner_link     = get_option('tsmb_banner_link', 'summit');
 
+        $flash_active    = (bool) get_option('tsmb_flash_active', true);
+        $flash_title     = get_option('tsmb_flash_title', 'Cyber Skills Flash Sale 50% Off');
+        $flash_code      = get_option('tsmb_flash_code', 'THRIVE50');
+        $flash_discount  = intval(get_option('tsmb_flash_discount', 50));
+        $flash_end       = get_option('tsmb_flash_end', date('Y-m-d H:i:s', strtotime('+7 days')));
+
+        $trending_raw    = get_option('tsmb_trending_keywords', 'Agentic AI, AI for Business, Power BI Data, Financial Modeling, ESG Strategy, Growth Marketing');
+        $support_wa      = get_option('tsmb_support_whatsapp', '+8801700000000');
+        $support_mail    = get_option('tsmb_support_email', 'support@thrivingskill.com');
+        $support_phone   = get_option('tsmb_support_helpline', '+88029876543');
+
+        $hero_slides     = get_option('tsmb_hero_slides', []);
         $tokens_data     = get_option(TSMB_Notifications::OPTION_TOKENS, []);
         $total_devices   = is_array($tokens_data) ? count($tokens_data) : 0;
         ?>
         <div class="wrap">
-            <h1><span class="dashicons dashicons-smartphone" style="font-size:28px;line-height:1;margin-right:8px;"></span> Thriving Skills Mobile App Settings</h1>
+            <h1><span class="dashicons dashicons-smartphone" style="font-size:32px;line-height:1;margin-right:10px;color:#102F53;"></span> Thriving Skills Mobile Command Center</h1>
+            <p style="color:#64748b;margin-bottom:16px;">Live real-time control over mobile banners, push notifications, flash sales, search keywords, and remote configuration.</p>
+            
             <?php settings_errors('tsmb_notices'); ?>
 
-            <div style="display:flex;gap:20px;margin-top:20px;flex-wrap:wrap;">
-                <!-- Main Settings Form -->
-                <div style="flex:2;min-width:320px;background:#fff;padding:24px;border:1px solid #ccd0d4;border-radius:8px;">
-                    <form method="post" action="">
-                        <?php wp_nonce_field('tsmb_save_settings_nonce'); ?>
+            <!-- Navigation Tabs -->
+            <h2 class="nav-tab-wrapper" style="margin-bottom:20px;">
+                <a href="?page=thriving-skills-app&tab=broadcast" class="nav-tab <?php echo $active_tab === 'broadcast' ? 'nav-tab-active' : ''; ?>">📢 1-Click Push Broadcast</a>
+                <a href="?page=thriving-skills-app&tab=banners" class="nav-tab <?php echo $active_tab === 'banners' ? 'nav-tab-active' : ''; ?>">🖼️ Hero Slides & Banners</a>
+                <a href="?page=thriving-skills-app&tab=flash" class="nav-tab <?php echo $active_tab === 'flash' ? 'nav-tab-active' : ''; ?>">⚡ Flash Sale & Countdown</a>
+                <a href="?page=thriving-skills-app&tab=chips" class="nav-tab <?php echo $active_tab === 'chips' ? 'nav-tab-active' : ''; ?>">🔍 Trending Search & Support</a>
+                <a href="?page=thriving-skills-app&tab=version" class="nav-tab <?php echo $active_tab === 'version' ? 'nav-tab-active' : ''; ?>">⚙️ App Version & System</a>
+            </h2>
 
-                        <h2>App Version Control & Remote Flags</h2>
-                        <table class="form-table">
-                            <tr>
-                                <th scope="row"><label for="min_version">Minimum Supported App Version</label></th>
-                                <td>
-                                    <input name="min_version" type="text" id="min_version" value="<?php echo esc_attr($min_version); ?>" class="regular-text" placeholder="1.0.0" />
-                                    <p class="description">Devices running below this version will be politely prompted to update.</p>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th scope="row"><label for="latest_version">Latest Store Version</label></th>
-                                <td>
-                                    <input name="latest_version" type="text" id="latest_version" value="<?php echo esc_attr($latest_version); ?>" class="regular-text" placeholder="1.0.0" />
-                                </td>
-                            </tr>
-                            <tr>
-                                <th scope="row">Maintenance Mode</th>
-                                <td>
-                                    <label>
-                                        <input name="maintenance_mode" type="checkbox" value="1" <?php checked($maintenance, true); ?> />
-                                        Temporarily notify mobile learners of scheduled server maintenance.
-                                    </label>
-                                </td>
-                            </tr>
-                        </table>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;">
+                <div style="flex:2.5;min-width:320px;background:#fff;padding:24px;border:1px solid #ccd0d4;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
 
-                        <hr style="margin:24px 0;border:0;border-top:1px solid #eee;" />
+                    <!-- TAB 1: PUSH NOTIFICATION BROADCAST -->
+                    <?php if ($active_tab === 'broadcast') : ?>
+                        <h2 style="margin-top:0;">📢 1-Click Push Notification Broadcaster</h2>
+                        <p style="color:#64748b;">Instantly send high-priority push alerts to all <?php echo intval($total_devices); ?> registered Android and iOS devices.</p>
+                        
+                        <form method="post" action="?page=thriving-skills-app&tab=broadcast">
+                            <?php wp_nonce_field('tsmb_push_broadcast_nonce'); ?>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row"><label for="push_title">Notification Title *</label></th>
+                                    <td>
+                                        <input name="push_title" type="text" id="push_title" class="large-text" placeholder="e.g. 🚨 Live Workshop Starting in 1 Hour!" required />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><label for="push_message">Message Body *</label></th>
+                                    <td>
+                                        <textarea name="push_message" id="push_message" rows="3" class="large-text" placeholder="e.g. Join Humaira Sharmeen live on Zoom to master Prompt Engineering. Tap to join now." required></textarea>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><label for="push_screen">Target Screen on Tap</label></th>
+                                    <td>
+                                        <select name="push_screen" id="push_screen">
+                                            <option value="home">Home Feed (Default)</option>
+                                            <option value="CourseDetail">Specific Course (Requires Course ID)</option>
+                                            <option value="summit">Bangladesh Skills Summit</option>
+                                            <option value="catalog">Browse Courses Catalog</option>
+                                            <option value="url">External Link / Web Page</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><label for="push_target_id">Course ID or URL (Optional)</label></th>
+                                    <td>
+                                        <input name="push_target_id" type="text" id="push_target_id" class="regular-text" placeholder="e.g. 1284 or https://..." />
+                                        <p class="description">If you selected 'Specific Course', enter the LearnPress Course Post ID.</p>
+                                    </td>
+                                </tr>
+                            </table>
 
-                        <h2>In-App Announcement Banner</h2>
-                        <table class="form-table">
-                            <tr>
-                                <th scope="row">Enable In-App Banner</th>
-                                <td>
-                                    <label>
-                                        <input name="banner_active" type="checkbox" value="1" <?php checked($banner_active, true); ?> />
-                                        Display top highlight banner on the mobile Home feed.
-                                    </label>
-                                </td>
-                            </tr>
-                            <tr>
-                                <th scope="row"><label for="banner_text">Banner Message</label></th>
-                                <td>
-                                    <input name="banner_text" type="text" id="banner_text" value="<?php echo esc_attr($banner_text); ?>" class="large-text" />
-                                </td>
-                            </tr>
-                            <tr>
-                                <th scope="row"><label for="banner_link">Action Target / Screen</label></th>
-                                <td>
-                                    <input name="banner_link" type="text" id="banner_link" value="<?php echo esc_attr($banner_link); ?>" class="regular-text" placeholder="summit or https://..." />
-                                </td>
-                            </tr>
-                        </table>
+                            <p class="submit">
+                                <button type="submit" name="tsmb_send_push_broadcast" class="button button-primary button-hero" onclick="return confirm('Broadcast this notification to all active devices now?');" style="background:#102F53;border-color:#102F53;">
+                                    🚀 Broadcast Push Alert Now
+                                </button>
+                            </p>
+                        </form>
 
-                        <p class="submit" style="display:flex;gap:12px;align-items:center;">
-                            <input type="submit" name="tsmb_save_settings" id="submit" class="button button-primary" value="Save App Settings">
-                            <input type="submit" name="purge_cache" class="button button-secondary" value="Purge Mobile Feed Cache">
-                        </p>
-                    </form>
+                    <!-- TAB 2: HERO SLIDES & BANNERS -->
+                    <?php elseif ($active_tab === 'banners') : ?>
+                        <h2 style="margin-top:0;">🖼️ Hero Slides & Announcement Banner</h2>
+                        <form method="post" action="?page=thriving-skills-app&tab=banners">
+                            <?php wp_nonce_field('tsmb_save_settings_nonce'); ?>
+                            
+                            <h3>Top Highlight Announcement</h3>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row">Enable Banner</th>
+                                    <td>
+                                        <label><input name="banner_active" type="checkbox" value="1" <?php checked($banner_active, true); ?> /> Display highlight bar at the very top of the mobile Home feed.</label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Banner Text</th>
+                                    <td>
+                                        <input name="banner_text" type="text" value="<?php echo esc_attr($banner_text); ?>" class="large-text" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Target Action</th>
+                                    <td>
+                                        <input name="banner_link" type="text" value="<?php echo esc_attr($banner_link); ?>" class="regular-text" placeholder="summit or https://..." />
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <hr style="margin:24px 0;" />
+
+                            <h3>Home Feed Hero Carousel Slides</h3>
+                            <p class="description">Configure the promotional slides displayed at the top of the Home Screen.</p>
+                            
+                            <textarea name="hero_slides_json" id="hero_slides_json" rows="8" class="large-text code" style="font-family:monospace;"><?php echo esc_textarea(wp_json_encode($hero_slides, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)); ?></textarea>
+                            <p class="description">Edit the JSON array above with custom slide titles, badges, and background banner image URLs.</p>
+
+                            <p class="submit">
+                                <input type="submit" name="tsmb_save_settings" class="button button-primary" value="Save Banner Settings" />
+                            </p>
+                        </form>
+
+                    <!-- TAB 3: FLASH SALE & COUNTDOWN -->
+                    <?php elseif ($active_tab === 'flash') : ?>
+                        <h2 style="margin-top:0;">⚡ Flash Sale & Live Countdown Campaign</h2>
+                        <form method="post" action="?page=thriving-skills-app&tab=flash">
+                            <?php wp_nonce_field('tsmb_save_settings_nonce'); ?>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row">Enable Flash Sale</th>
+                                    <td>
+                                        <label><input name="flash_active" type="checkbox" value="1" <?php checked($flash_active, true); ?> /> Display live countdown timer banner on the mobile app.</label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Campaign Title</th>
+                                    <td>
+                                        <input name="flash_title" type="text" value="<?php echo esc_attr($flash_title); ?>" class="large-text" placeholder="e.g. Cyber Skills Flash Sale 50% Off" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Coupon Code</th>
+                                    <td>
+                                        <input name="flash_code" type="text" value="<?php echo esc_attr($flash_code); ?>" class="regular-text" placeholder="e.g. THRIVE50" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Discount Percentage (%)</th>
+                                    <td>
+                                        <input name="flash_discount" type="number" min="1" max="100" value="<?php echo esc_attr($flash_discount); ?>" class="small-text" /> %
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Sale End Date & Time</th>
+                                    <td>
+                                        <input name="flash_end" type="text" value="<?php echo esc_attr($flash_end); ?>" class="regular-text" placeholder="YYYY-MM-DD HH:MM:SS" />
+                                        <p class="description">Format: YYYY-MM-DD HH:MM:SS (e.g. 2026-12-31 23:59:59)</p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p class="submit">
+                                <input type="submit" name="tsmb_save_settings" class="button button-primary" value="Save Flash Sale Campaign" />
+                            </p>
+                        </form>
+
+                    <!-- TAB 4: TRENDING SEARCH & SUPPORT -->
+                    <?php elseif ($active_tab === 'chips') : ?>
+                        <h2 style="margin-top:0;">🔍 Trending Search Chips & Learner Support</h2>
+                        <form method="post" action="?page=thriving-skills-app&tab=chips">
+                            <?php wp_nonce_field('tsmb_save_settings_nonce'); ?>
+                            
+                            <h3>Trending Search Keywords</h3>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row">Search Pills</th>
+                                    <td>
+                                        <input name="trending_keywords" type="text" value="<?php echo esc_attr($trending_raw); ?>" class="large-text" />
+                                        <p class="description">Enter comma-separated keywords that appear as clickable chips below the search bar.</p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <hr style="margin:24px 0;" />
+
+                            <h3>Learner Support & Hotlines</h3>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row">WhatsApp Hotline</th>
+                                    <td>
+                                        <input name="support_whatsapp" type="text" value="<?php echo esc_attr($support_wa); ?>" class="regular-text" placeholder="+8801700000000" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Support Email</th>
+                                    <td>
+                                        <input name="support_email" type="email" value="<?php echo esc_attr($support_mail); ?>" class="regular-text" placeholder="support@thrivingskill.com" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Helpline Phone</th>
+                                    <td>
+                                        <input name="support_helpline" type="text" value="<?php echo esc_attr($support_phone); ?>" class="regular-text" placeholder="+88029876543" />
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p class="submit">
+                                <input type="submit" name="tsmb_save_settings" class="button button-primary" value="Save Search & Support Settings" />
+                            </p>
+                        </form>
+
+                    <!-- TAB 5: APP VERSION & SYSTEM -->
+                    <?php elseif ($active_tab === 'version') : ?>
+                        <h2 style="margin-top:0;">⚙️ App Version Control & System Hygiene</h2>
+                        <form method="post" action="?page=thriving-skills-app&tab=version">
+                            <?php wp_nonce_field('tsmb_save_settings_nonce'); ?>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row">Minimum Supported Version</th>
+                                    <td>
+                                        <input name="min_version" type="text" value="<?php echo esc_attr($min_version); ?>" class="regular-text" placeholder="1.0.0" />
+                                        <p class="description">Devices running below this version will be prompted to update.</p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Latest Store Version</th>
+                                    <td>
+                                        <input name="latest_version" type="text" value="<?php echo esc_attr($latest_version); ?>" class="regular-text" placeholder="1.1.0" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Maintenance Mode</th>
+                                    <td>
+                                        <label><input name="maintenance_mode" type="checkbox" value="1" <?php checked($maintenance, true); ?> /> Temporarily display a maintenance notice on mobile.</label>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <p class="submit" style="display:flex;gap:12px;align-items:center;">
+                                <input type="submit" name="tsmb_save_settings" class="button button-primary" value="Save Version Settings" />
+                                <input type="submit" name="purge_cache" class="button button-secondary" value="Purge Mobile Feed Cache" />
+                            </p>
+                        </form>
+                    <?php endif; ?>
+
                 </div>
 
-                <!-- Status Sidebar -->
+                <!-- Live Ecosystem Sidebar -->
                 <div style="flex:1;min-width:260px;background:#f8fafc;padding:24px;border:1px solid #e2e8f0;border-radius:8px;height:fit-content;">
-                    <h3 style="margin-top:0;">📱 Mobile Ecosystem Status</h3>
-                    <p><strong>Active Push Devices:</strong> <?php echo intval($total_devices); ?></p>
-                    <p><strong>Checkout Mode:</strong> <span style="background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:4px;font-weight:600;">WebView (Google Play Safe)</span></p>
-                    <p><strong>Mobile Feed Cache:</strong> <?php echo (get_transient('tsmb_mobile_feed_v1') !== false) ? '<span style="color:#15803d;font-weight:600;">Active (Cached)</span>' : '<span style="color:#64748b;">Not cached</span>'; ?></p>
+                    <h3 style="margin-top:0;display:flex;align-items:center;gap:8px;">
+                        <span class="dashicons dashicons-admin-generic" style="color:#102F53;"></span> Ecosystem Status
+                    </h3>
+                    
+                    <div style="background:#fff;padding:12px 16px;border-radius:6px;border:1px solid #e2e8f0;margin-bottom:12px;">
+                        <div style="font-size:12px;color:#64748b;">Registered Push Devices</div>
+                        <div style="font-size:24px;font-weight:700;color:#102F53;"><?php echo intval($total_devices); ?></div>
+                    </div>
+
+                    <div style="background:#fff;padding:12px 16px;border-radius:6px;border:1px solid #e2e8f0;margin-bottom:12px;">
+                        <div style="font-size:12px;color:#64748b;">Checkout Policy</div>
+                        <div style="font-weight:600;color:#0369a1;margin-top:2px;">WebView (Google Play Safe)</div>
+                    </div>
+
+                    <div style="background:#fff;padding:12px 16px;border-radius:6px;border:1px solid #e2e8f0;margin-bottom:16px;">
+                        <div style="font-size:12px;color:#64748b;">Transient Cache</div>
+                        <div style="margin-top:2px;">
+                            <?php echo (get_transient('tsmb_mobile_feed_v1') !== false) 
+                                ? '<span style="color:#15803d;font-weight:600;">Active (Cached)</span>' 
+                                : '<span style="color:#64748b;">Not cached</span>'; ?>
+                        </div>
+                    </div>
 
                     <hr style="margin:16px 0;border:0;border-top:1px solid #cbd5e1;" />
-                    <h4>REST API Diagnostics</h4>
-                    <ul style="font-size:12px;color:#475569;line-height:1.6;padding-left:16px;">
+                    <h4 style="margin:0 0 8px 0;font-size:13px;">API Diagnostics</h4>
+                    <ul style="font-size:11px;color:#475569;line-height:1.7;padding-left:14px;margin:0;">
                         <li><code>/wp-json/thrivingskill/v1/config</code></li>
                         <li><code>/wp-json/thrivingskill/v1/feed</code></li>
                         <li><code>/wp-json/thrivingskill/v1/lessons/{id}</code></li>
