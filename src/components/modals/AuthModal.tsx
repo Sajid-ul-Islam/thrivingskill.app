@@ -1271,7 +1271,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 28,
     borderTopWidth: 1,
     paddingHorizontal: 22,
-    paddingTop: 12,
+    paddingTop: 14,
     paddingBottom: Platform.OS === 'ios' ? 36 : 24,
     maxHeight: '92%',
     flexShrink: 1,
@@ -1551,7 +1551,7 @@ const styles = StyleSheet.create({
   },
   inputGroup: {
     width: '100%',
-    marginBottom: 12,
+    marginBottom: 14,
   },
   inputLabel: {
     fontSize: 12,
@@ -1564,7 +1564,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 14,
     borderWidth: 1,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     height: 48,
   },
   inputIcon: {

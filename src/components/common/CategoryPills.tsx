@@ -159,7 +159,8 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
+    paddingLeft: 16,
+    paddingRight: 24,
     paddingVertical: 8,
     gap: 8,
     alignItems: 'center',

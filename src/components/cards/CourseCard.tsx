@@ -344,7 +344,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   content: {
-    padding: 14,
+    padding: 16,
+    paddingTop: 13,
   },
   categoryTag: {
     fontSize: 11,
@@ -494,7 +495,7 @@ const styles = StyleSheet.create({
   horizontalCardBody: {
     flex: 1,
     flexDirection: 'row',
-    padding: 10,
+    padding: 12,
   },
   horizontalThumbWrapper: {
     position: 'relative',
@@ -530,7 +531,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 12,
     justifyContent: 'center',
-    paddingRight: 32, // Ensures title & text never collide with bookmark button
+    paddingRight: 36, // Ensures title & text never collide with bookmark button
   },
   bookmarkBtn: {
     position: 'absolute',

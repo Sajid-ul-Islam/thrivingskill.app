@@ -1228,6 +1228,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     paddingVertical: 2,
+    paddingRight: 24,
   },
   activeFilterChip: {
     flexDirection: 'row',
@@ -1373,7 +1374,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   deptCarouselContent: {
-    paddingHorizontal: 16,
+    paddingLeft: 16,
+    paddingRight: 24,
     gap: 12,
     paddingBottom: 4,
   },

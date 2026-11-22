@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     marginVertical: 6,
   },
   card: {
-    padding: 14,
+    padding: 16,
     borderRadius: 18,
     borderWidth: 1,
     shadowColor: '#000',

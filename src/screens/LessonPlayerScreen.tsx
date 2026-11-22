@@ -1153,7 +1153,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                 </View>
 
                 {/* TAB 3: TRANSCRIPT */}
-                <View style={{ width: screenWidth, flex: 1, paddingHorizontal: 14 }}>
+                <View style={{ width: screenWidth, flex: 1, paddingHorizontal: 16, paddingTop: 10 }}>
                   <LessonTranscriptTab
                     currentPositionSeconds={currentPositionSeconds}
                     lessonTitle={currentLesson.title}
