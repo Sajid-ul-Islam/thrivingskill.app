@@ -13,21 +13,26 @@ console.log('====================================================\n');
 
 console.log(`[PATH] Build working directory: ${androidDir}`);
 
-// 1. Clean stale caches so Gradle resolves current project directories
-const cleanDirs = [
-  path.join(androidDir, '.gradle'),
-  path.join(androidDir, 'build'),
-  path.join(androidDir, 'app', 'build'),
-  path.join(androidDir, 'app', '.cxx'),
-];
+// 1. Clean stale caches if --full-clean requested, otherwise perform fast incremental build
+const isFullClean = process.argv.includes('--full-clean');
+if (isFullClean) {
+  const cleanDirs = [
+    path.join(androidDir, '.gradle'),
+    path.join(androidDir, 'build'),
+    path.join(androidDir, 'app', 'build'),
+    path.join(androidDir, 'app', '.cxx'),
+  ];
 
-for (const dir of cleanDirs) {
-  if (fs.existsSync(dir)) {
-    console.log(`[CLEAN] Purging ${dir} ...`);
-    try {
-      execSync(`cmd /c "rmdir /s /q \\\\?\\${dir}"`, { stdio: 'ignore' });
-    } catch (_) {}
+  for (const dir of cleanDirs) {
+    if (fs.existsSync(dir)) {
+      console.log(`[CLEAN] Purging ${dir} ...`);
+      try {
+        execSync(`cmd /c "rmdir /s /q \\\\?\\${dir}"`, { stdio: 'ignore' });
+      } catch (_) {}
+    }
   }
+} else {
+  console.log('[INCREMENTAL] Preserving native C++ and Gradle build cache for fast compilation...');
 }
 
 const releaseApkPath = path.join(androidDir, 'app', 'build', 'outputs', 'apk', 'release', 'app-release.apk');
@@ -98,6 +103,6 @@ console.log(`   Build Time: ${duration} seconds`);
 console.log('====================================================\n');
 
 // 5. Copy to Root for clean GitHub Release attachment
-const targetReleaseApk = path.join(realRootDir, 'thrivingskill-v1.4.0-preview.apk');
+const targetReleaseApk = path.join(realRootDir, 'thrivingskill-v4.0.5-preview.apk');
 fs.copyFileSync(finalApk, targetReleaseApk);
 console.log(`[ARTIFACT] Copied to root: ${targetReleaseApk} (${sizeMb} MB)`);
