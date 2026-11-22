@@ -369,7 +369,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         AsyncStorage.removeItem(AUTH_TOKEN_STORAGE_KEY),
         SecureStorageService.removeAuthToken(),
         AsyncStorage.removeItem(AUTH_ADMIN_BYPASS_KEY),
-        CacheManager.clearAll(),
       ]);
     } catch {}
   };

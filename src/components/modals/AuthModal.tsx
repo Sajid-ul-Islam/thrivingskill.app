@@ -95,6 +95,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const { showToast } = useFeedback();
   const {
     isAuthenticated,
+    isGuest,
     login,
     register,
     confirmPasswordReset,
@@ -103,7 +104,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setAuthModalVisible,
   } = useAuth();
 
-  const isDismissible = dismissible !== undefined ? dismissible : isAuthenticated;
+  const isDismissible = dismissible !== undefined ? dismissible : (isAuthenticated || isGuest);
 
   const [mode, setMode] = useState<AuthMode>(initialMode || 'login');
   const [regStep, setRegStep] = useState<1 | 2>(initialMode === 'set_password' ? 2 : 1);
@@ -1507,8 +1508,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 )}
               </View>
 
-              {/* Guest Action (Only available if dismissible / already logged in) */}
-              {isDismissible && mode !== 'forgot_password' && mode !== 'set_password' && (
+              {/* Guest Action - Always allows users to browse catalog without mandatory trap */}
+              {mode !== 'forgot_password' && mode !== 'set_password' && (
                 <TouchableOpacity
                   style={[
                     styles.guestButton,

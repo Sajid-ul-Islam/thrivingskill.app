@@ -230,6 +230,19 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     });
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      showToast({
+        message: isBangla ? 'সফলভাবে সাইন আউট করা হয়েছে' : 'Signed out successfully',
+        type: 'info',
+      });
+      onNavigateTab('Home');
+    } catch (e) {
+      console.warn('[ProfileScreen] Logout error:', e);
+    }
+  };
+
   const handleSaveProfile = async () => {
     if (!isAuthenticated) {
       setEditProfileModalVisible(false);
@@ -700,7 +713,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 setDeleteError('');
                 setDeleteAccountModalVisible(true);
               }}
-              onLogout={logout}
+              onLogout={handleLogout}
               onOpenAuthModal={() => setAuthModalVisible(true)}
               showToast={showToast}
               t={t}

@@ -309,11 +309,8 @@ export const FeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // POPUP HANDLERS (Modal dialog for confirmation / alert)
   // ---------------------------------------------------------------------------
   const dismissPopup = useCallback(() => {
-    if (currentPopup?.onCancel) {
-      currentPopup.onCancel();
-    }
     setCurrentPopup(null);
-  }, [currentPopup]);
+  }, []);
 
   const showPopup = useCallback(
     ({

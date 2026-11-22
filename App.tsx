@@ -224,7 +224,7 @@ const MainAppContent: React.FC = () => {
   const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const { userProgress, hasActiveLiveWorkshop, toggleBookmark } = useLearning();
-  const { user, isAuthenticated, isLoading: isAuthLoading, isAuthModalVisible, setAuthModalVisible } = useAuth();
+  const { user, isAuthenticated, isGuest, isLoading: isAuthLoading, isAuthModalVisible, setAuthModalVisible } = useAuth();
   const { celebration, clearCelebration } = useGamification();
   const { activeVideo, playerMode, closePlayer, minimizePlayer, playVideo } = useYouTube();
   const {
@@ -450,20 +450,6 @@ const MainAppContent: React.FC = () => {
   // CR-1: Brand splash screen on startup (holds until both 2s splash timer and auth session restore complete)
   if (isSplashVisible || isAuthLoading) {
     return <BrandSplashScreen />;
-  }
-
-  // CR-1: Mandatory login access control - without logging in, no content is accessible
-  if (!isAuthenticated && !isAuthLoading) {
-    return (
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['top', 'left', 'right', 'bottom']}>
-        <StatusBar style={isDark ? "light" : "dark"} />
-        <AuthModal
-          visible={true}
-          dismissible={false}
-          onClose={() => {}}
-        />
-      </SafeAreaView>
-    );
   }
 
   return (
@@ -711,7 +697,8 @@ const MainAppContent: React.FC = () => {
 
       {/* WordPress LearnPress Auth Modal */}
       <AuthModal
-        visible={isAuthModalVisible}
+        visible={isAuthModalVisible || (!isAuthenticated && !isGuest && !isAuthLoading && !isSplashVisible)}
+        dismissible={isAuthenticated || isGuest}
         onClose={() => setAuthModalVisible(false)}
       />
 

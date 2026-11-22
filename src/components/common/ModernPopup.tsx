@@ -140,11 +140,15 @@ export const ModernPopup: React.FC<ModernPopupProps> = ({ popup, onDismiss }) =>
     }
     triggerHaptic(type === 'destructive' ? 'error' : 'medium');
     setIsSubmitting(true);
+    const confirmFn = popup.onConfirm;
+    // Dismiss popup dialog first so native modal teardown does not conflict with state transitions
+    onDismiss();
     try {
-      await popup.onConfirm();
+      await confirmFn();
+    } catch (err) {
+      console.warn('[ModernPopup] Confirm handler error:', err);
     } finally {
       setIsSubmitting(false);
-      onDismiss();
     }
   };
 
