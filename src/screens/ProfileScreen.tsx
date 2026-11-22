@@ -253,6 +253,46 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     }
   };
 
+  const handleSwitchServerEnvironment = () => {
+    const isProd = serverEnv === 'production';
+    const targetEnv: ApiEnvironment = isProd ? 'staging' : 'production';
+    const targetLabel = targetEnv === 'production' ? 'Live Production (thrivingskill.com)' : 'Staging Server (staging.thrivingskill.com)';
+    const targetLabelBn = targetEnv === 'production' ? 'লাইভ প্রোডাকশন (thrivingskill.com)' : 'স্টেজিং সার্ভার (staging.thrivingskill.com)';
+
+    showPopup({
+      title: isBangla ? 'সার্ভার পরিবর্তন করবেন?' : 'Switch Server Environment?',
+      message: isBangla
+        ? `আপনি কি ${targetLabelBn}-এ পরিবর্তন করতে চান? ক্যাশ মেমোরি স্বয়ংক্রিয়ভাবে রিফ্রেশ হবে এবং নতুন সার্ভার থেকে কোর্স ডেটা লোড হবে।`
+        : `Do you want to switch to ${targetLabel}? Local cache will be refreshed and content reloaded from the selected server.`,
+      primaryLabel: isBangla ? 'পরিবর্তন করুন' : 'Switch Server',
+      secondaryLabel: isBangla ? 'বাতিল' : 'Cancel',
+      icon: 'server-outline',
+      onConfirm: async () => {
+        await Env.setEnvironment(targetEnv);
+        setServerEnv(targetEnv);
+        await CacheManager.clearAll();
+        CoursesService.notifyCatalogUpdated();
+
+        if (isAuthenticated) {
+          await logout();
+          showToast({
+            message: isBangla
+              ? 'সার্ভার পরিবর্তিত হয়েছে। নতুন সার্ভারে সাইন ইন করুন।'
+              : 'Server switched. Please sign in with your account on the new server.',
+            type: 'info',
+          });
+        } else {
+          showToast({
+            message: isBangla
+              ? `সার্ভার সফলভাবে পরিবর্তিত হয়েছে: ${targetEnv === 'production' ? 'লাইভ' : 'স্টেজিং'}`
+              : `Connected to ${targetEnv === 'production' ? 'Live Production' : 'Staging Server'}`,
+            type: 'success',
+          });
+        }
+      },
+    });
+  };
+
   const handleSaveProfile = async () => {
     if (!isAuthenticated) {
       setEditProfileModalVisible(false);
@@ -704,6 +744,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               onChangePassword={() => setChangePasswordModalVisible(true)}
               onOpenNotifications={onOpenNotifications}
               onClearCache={handleClearCache}
+              serverEnvironment={serverEnv}
+              onSwitchServerEnvironment={handleSwitchServerEnvironment}
               onOpenCorporateModal={onOpenCorporateModal}
               onOpenHelpFaq={() => setHelpFaqModalVisible(true)}
               onOpenBlog={() => setBlogModalVisible(true)}
