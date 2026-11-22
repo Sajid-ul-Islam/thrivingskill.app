@@ -649,6 +649,15 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               footer.style.display = 'none';
             }
 
+            // Hide any SSLCommerz promotional links, logos, or external gateway banners
+            var sslElements = document.querySelectorAll('a[href*="sslcommerz"], a[href*="sslcommerz.com"], .sslcommerz-logo, #sslcommerz_logo, .payment_method_sslcommerz a, img[src*="sslcommerz"]');
+            sslElements.forEach(function(el) {
+              el.style.display = 'none';
+              if (el.tagName === 'A') {
+                el.removeAttribute('href');
+              }
+            });
+
             // Inject responsive CSS
             var style = document.getElementById('ts-app-custom-style');
             if (!style) {
@@ -661,6 +670,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 .woocommerce-checkout-review-order { background: #F8FAFC !important; border-radius: 14px !important; padding: 16px !important; border: 1px solid #E2E8F0 !important; }
                 #place_order { background-color: #102F53 !important; color: #FFFFFF !important; font-size: 16px !important; padding: 14px 20px !important; border-radius: 10px !important; width: 100% !important; font-weight: 800 !important; cursor: pointer !important; margin-top: 14px !important; }
                 #place_order:hover { background-color: #0b223d !important; }
+                a[href*="sslcommerz"], a[href*="sslcommerz.com"], .sslcommerz-logo, #sslcommerz_logo, .payment_method_sslcommerz a, img[src*="sslcommerz"] { display: none !important; pointer-events: none !important; }
               \`;
               document.head.appendChild(style);
             }
@@ -720,10 +730,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             <View style={styles.headerTitleCol}>
               <View style={styles.headerSecurityRow}>
                 <Ionicons name="lock-closed" size={13} color="#10B981" />
-                <Text style={styles.headerSecurityText}>SSLCommerz 256-Bit SSL</Text>
+                <Text style={styles.headerSecurityText}>
+                  {isBangla ? 'নিরাপদ ২৫৬-বিট এসএসএল' : '256-Bit SSL Secured'}
+                </Text>
               </View>
               <Text style={styles.headerHostText} numberOfLines={1}>
-                thrivingskill.com/checkout
+                {isBangla ? 'থ্রাইভিং স্কিলস চেকআউট' : 'Thriving Skills Checkout'}
               </Text>
             </View>
 
@@ -735,15 +747,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 accessibilityLabel="Reload checkout"
               >
                 <Ionicons name="reload" size={19} color="#FFFFFF" />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.headerActionBtn}
-                onPress={handleOpenInExternalBrowser}
-                accessibilityRole="button"
-                accessibilityLabel="Open in external browser"
-              >
-                <Ionicons name="open-outline" size={20} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           </View>
@@ -777,15 +780,15 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             renderLoading={() => (
               <View style={[styles.fullScreenLoading, { backgroundColor: isDark ? '#0F172A' : '#FFFFFF' }]}>
                 <View style={styles.loadingSpinnerBadge}>
-                  <ActivityIndicator size="large" color="#FFB606" />
+                  <ActivityIndicator size="large" color="#102F53" />
                 </View>
                 <Text style={[styles.loadingTitle, { color: colors.text }]}>
                   {isBangla ? 'নিরাপদ চেকআউট লোড হচ্ছে...' : 'Connecting to Secure Checkout...'}
                 </Text>
                 <Text style={[styles.loadingSubtitle, { color: colors.textMuted }]}>
                   {isBangla
-                    ? 'এসএসএলকমার্জ ও থ্রাইভিং স্কিলস গেটওয়ে প্রস্তুত হচ্ছে...'
-                    : 'Preparing SSLCommerz Payment Gateway, please wait...'}
+                    ? 'নিরাপদ পেমেন্ট গেটওয়ে প্রস্তুত হচ্ছে...'
+                    : 'Preparing Secure Payment Gateway, please wait...'}
                 </Text>
               </View>
             )}
@@ -868,7 +871,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   {isBangla ? 'কোর্স ভর্তি ও চেকআউট' : 'Checkout & Enrollment'}
                 </Text>
                 <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                  {isBangla ? 'এসএসএলকমার্জ এর মাধ্যমে নিরাপদ পেমেন্ট' : 'Secure payment via SSLCommerz'}
+                  {isBangla ? 'বিকাশ, নগদ, কার্ড ও ব্যাংকিং এর মাধ্যমে নিরাপদ পেমেন্ট' : 'Secure payment via Mobile Banking, Cards & Net Banking'}
                 </Text>
               </View>
             </View>
@@ -1397,7 +1400,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   <View style={styles.sslHeader}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                       <Ionicons name="shield-checkmark" size={16} color="#059669" />
-                      <Text style={[styles.sslTitle, { color: colors.text }]}>SSLCommerz Gateway</Text>
+                      <Text style={[styles.sslTitle, { color: colors.text }]}>
+                        {isBangla ? 'নিরাপদ পেমেন্ট গেটওয়ে' : 'Secure Payment Gateway'}
+                      </Text>
                     </View>
                     <View style={styles.sslBadge}>
                       <Text style={styles.sslBadgeText}>22+ Payment Methods</Text>
@@ -1481,26 +1486,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     </>
                   ) : (
                     <>
-                      <Ionicons name="shield-checkmark" size={18} color="#FFB606" style={{ marginRight: 8 }} />
+                      <Ionicons name="shield-checkmark" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
                       <Text style={styles.placeOrderBtnText}>
                         {isBangla ? 'নিরাপদ চেকআউট শুরু করুন (PROCEED)' : 'PROCEED TO SECURE CHECKOUT'}
                       </Text>
                     </>
                   )}
-                </TouchableOpacity>
-
-                {/* SECONDARY ACTION: Open Directly in External Web Browser */}
-                <TouchableOpacity
-                  style={[styles.openBrowserBtn, { borderColor: colors.border, backgroundColor: colors.surface }]}
-                  onPress={handleOpenInExternalBrowser}
-                  activeOpacity={0.8}
-                  accessibilityRole="button"
-                  accessibilityLabel="Open in external browser"
-                >
-                  <Ionicons name="globe-outline" size={16} color={colors.text} style={{ marginRight: 6 }} />
-                  <Text style={[styles.openBrowserBtnText, { color: colors.text }]}>
-                    {isBangla ? 'ওয়েব ব্রাউজারে খুলুন (Chrome / Safari)' : 'Open in Web Browser (Chrome / Safari)'}
-                  </Text>
                 </TouchableOpacity>
               </>
             ) : (
@@ -1602,7 +1593,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             <View style={styles.guaranteeContainer}>
               <Ionicons name="lock-closed" size={14} color="#059669" style={{ marginRight: 6 }} />
               <Text style={[styles.guaranteeText, { color: colors.textMuted }]}>
-                SSLCommerz Encrypted 256-Bit Bank Grade Payment Security
+                {isBangla
+                  ? '২৫৬-বিট ব্যাংক গ্রেড নিরাপদ পেমেন্ট এনক্রিপশন'
+                  : '256-Bit Bank Grade Secure Payment Encryption'}
               </Text>
             </View>
           </ScrollView>
