@@ -45,7 +45,8 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const [isManualLandscape, setIsManualLandscape] = useState<boolean>(false);
   const isLandscape = windowWidth > windowHeight || isManualLandscape;
-  const playerHeight = isLandscape ? windowHeight : (windowWidth * 9) / 16;
+  const playerWidth = isLandscape ? windowWidth : windowWidth - 24;
+  const playerHeight = isLandscape ? windowHeight : Math.round((playerWidth * 9) / 16);
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { courses } = useLearning();
@@ -189,28 +190,29 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
           </View>
         )}
 
-        {/* Player Section (16:9 in portrait, Full-Bleed in landscape) */}
-        <View
-          style={[
-            styles.playerContainer,
-            isLandscape && styles.playerContainerLandscape,
-            { width: windowWidth, height: playerHeight },
-          ]}
-        >
-          {Platform.OS === 'web' ? (
-            <iframe
-              src={`https://www.youtube.com/embed/${currentVideo.id}?autoplay=1&playsinline=1`}
-              style={{ width: '100%', height: '100%', border: 'none' }}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          ) : (
-            <View style={{ width: windowWidth, height: playerHeight, position: 'relative' }}>
-              <YoutubePlayer
-                height={playerHeight}
-                width={windowWidth}
-                play={isPlaying}
-                videoId={cleanVideoId}
+        {/* Player Section (16:9 in portrait with padding, Full-Bleed in landscape) */}
+        <View style={!isLandscape && styles.playerWrapperPortrait}>
+          <View
+            style={[
+              styles.playerContainer,
+              isLandscape ? styles.playerContainerLandscape : styles.playerContainerPortrait,
+              { width: playerWidth, height: playerHeight },
+            ]}
+          >
+            {Platform.OS === 'web' ? (
+              <iframe
+                src={`https://www.youtube.com/embed/${currentVideo.id}?autoplay=1&playsinline=1`}
+                style={{ width: '100%', height: '100%', border: 'none' }}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              <View style={{ width: playerWidth, height: playerHeight, position: 'relative' }}>
+                <YoutubePlayer
+                  height={playerHeight}
+                  width={playerWidth}
+                  play={isPlaying}
+                  videoId={cleanVideoId}
                 playbackRate={playbackSpeed}
                 useLocalHTML={false}
                 baseUrlOverride="https://thrivingskill.com"
@@ -287,8 +289,9 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
             </TouchableOpacity>
           )}
         </View>
+      </View>
 
-        {!isLandscape && (
+      {!isLandscape && (
           <>
             {/* Fast YouTube App Fallback Bar */}
             <TouchableOpacity
@@ -582,14 +585,26 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FF0000',
   },
+  playerWrapperPortrait: {
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 8,
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
   playerContainer: {
     width: '100%',
     aspectRatio: 16 / 9,
     backgroundColor: '#000000',
   },
+  playerContainerPortrait: {
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
   playerContainerLandscape: {
     width: '100%',
     height: '100%',
+    borderRadius: 0,
   },
   floatingLandscapeExitBtn: {
     position: 'absolute',

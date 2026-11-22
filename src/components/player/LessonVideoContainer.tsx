@@ -504,6 +504,7 @@ const styles = StyleSheet.create({
     aspectRatio: 16 / 9,
     backgroundColor: '#000000',
     overflow: 'hidden',
+    borderRadius: 14,
   },
   fullscreenLandscapeFrame: {
     width: '100%',
@@ -514,11 +515,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+    borderRadius: 0,
     zIndex: 9999,
   },
   forcedLandscapeFrame: {
     position: 'absolute',
     transform: [{ rotate: '90deg' }],
+    borderRadius: 0,
     zIndex: 9999,
   },
   playerContainer: {

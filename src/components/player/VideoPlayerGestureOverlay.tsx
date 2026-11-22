@@ -544,8 +544,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingTop: 8,
+    paddingHorizontal: 14,
+    paddingTop: 10,
     gap: 8,
   },
   topTitleCol: {
@@ -609,8 +609,8 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   bottomControlBar: {
-    paddingHorizontal: 12,
-    paddingBottom: 8,
+    paddingHorizontal: 14,
+    paddingBottom: 10,
   },
   progressTrackContainer: {
     height: 14,

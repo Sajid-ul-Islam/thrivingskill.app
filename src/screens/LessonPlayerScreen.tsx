@@ -866,73 +866,81 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
       )}
 
       {/* Decomposed Video Container (Sticky top 16:9 / Fullscreen landscape / Media3 / WebView) */}
-      <LessonVideoContainer
-        course={course}
-        currentLesson={currentLesson}
-        moduleTitle={currentItem?.moduleTitle}
-        canPlayVideo={canPlayVideo}
-        isLessonCompleted={isLessonCompleted}
-        isCommuteMode={isCommuteMode}
-        isPlaying={isPlaying}
-        playbackSpeed={playbackSpeed}
-        streamQuality={streamQuality}
-        isFullscreen={isFullscreen}
-        isDeviceLandscape={isDeviceLandscape}
-        isScreenLocked={isScreenLocked}
-        isLoadingVideo={isLoadingVideo}
-        isDirectStream={isDirectStream}
-        activeVideoUrl={activeVideoUrl}
-        resolvedVideoUrl={resolvedVideoUrl}
-        zoomMeetingUrl={zoomMeetingUrl}
-        videoHtml={buildVideoHtml()}
-        windowDimensions={windowDimensions}
-        currentPositionSeconds={currentPositionSeconds}
-        totalLessonSeconds={totalLessonSeconds}
-        autoplayCountdown={autoplayCountdown}
-        nextLessonTitle={allLessons[currentLessonIndex + 1]?.lesson.title}
-        hasPrevLesson={currentLessonIndex > 0}
-        hasNextLesson={currentLessonIndex < allLessons.length - 1}
-        nativePlayerRef={nativePlayerRef}
-        previewLesson={previewLesson}
-        onSelectLesson={onSelectLesson}
-        onOpenPaymentModal={() => setPaymentModalVisible(true)}
-        onOpenQuizPlayer={(l) => {
-          setSelectedQuizLesson(l);
-          setQuizPlayerVisible(true);
-        }}
-        onTogglePlay={handleTogglePlay}
-        onSeekTo={handleSeekTo}
-        onRewind={handleRewind}
-        onForward={handleForward}
-        onPrevLesson={handlePrevLesson}
-        onNextLesson={handleNextLesson}
-        onCycleSpeed={cycleSpeed}
-        onToggleFullscreen={handleToggleFullscreen}
-        onToggleScreenLock={() => {
-          triggerHaptic('light');
-          setIsScreenLocked(!isScreenLocked);
-          showToast({
-            message: !isScreenLocked ? 'Screen Touches Locked' : 'Screen Unlocked',
-            type: 'info',
-          });
-        }}
-        onOpenStreamQualityModal={handleOpenStreamQualityModal}
-        onTriggerPiP={handleTriggerPiP}
-        onCancelAutoplay={() => {
-          triggerHaptic('light');
-          setAutoplayCountdown(null);
-        }}
-        onMarkComplete={handleMarkComplete}
-        onPictureInPictureStart={() => setIsSystemPiPActive(true)}
-        onPictureInPictureStop={() => setIsSystemPiPActive(false)}
-        onProgressUpdate={(curr) => {
-          const sec = Math.floor(curr);
-          currentPosRef.current = sec;
-          setCurrentPositionSeconds(sec);
-        }}
-        onPlayStateChange={setIsPlaying}
-        formatSeconds={formatSeconds}
-      />
+      <View
+        style={
+          !isFullscreen
+            ? [styles.videoPlayerWrapper, { backgroundColor: colors.background }]
+            : styles.fullscreenWrapper
+        }
+      >
+        <LessonVideoContainer
+          course={course}
+          currentLesson={currentLesson}
+          moduleTitle={currentItem?.moduleTitle}
+          canPlayVideo={canPlayVideo}
+          isLessonCompleted={isLessonCompleted}
+          isCommuteMode={isCommuteMode}
+          isPlaying={isPlaying}
+          playbackSpeed={playbackSpeed}
+          streamQuality={streamQuality}
+          isFullscreen={isFullscreen}
+          isDeviceLandscape={isDeviceLandscape}
+          isScreenLocked={isScreenLocked}
+          isLoadingVideo={isLoadingVideo}
+          isDirectStream={isDirectStream}
+          activeVideoUrl={activeVideoUrl}
+          resolvedVideoUrl={resolvedVideoUrl}
+          zoomMeetingUrl={zoomMeetingUrl}
+          videoHtml={buildVideoHtml()}
+          windowDimensions={windowDimensions}
+          currentPositionSeconds={currentPositionSeconds}
+          totalLessonSeconds={totalLessonSeconds}
+          autoplayCountdown={autoplayCountdown}
+          nextLessonTitle={allLessons[currentLessonIndex + 1]?.lesson.title}
+          hasPrevLesson={currentLessonIndex > 0}
+          hasNextLesson={currentLessonIndex < allLessons.length - 1}
+          nativePlayerRef={nativePlayerRef}
+          previewLesson={previewLesson}
+          onSelectLesson={onSelectLesson}
+          onOpenPaymentModal={() => setPaymentModalVisible(true)}
+          onOpenQuizPlayer={(l) => {
+            setSelectedQuizLesson(l);
+            setQuizPlayerVisible(true);
+          }}
+          onTogglePlay={handleTogglePlay}
+          onSeekTo={handleSeekTo}
+          onRewind={handleRewind}
+          onForward={handleForward}
+          onPrevLesson={handlePrevLesson}
+          onNextLesson={handleNextLesson}
+          onCycleSpeed={cycleSpeed}
+          onToggleFullscreen={handleToggleFullscreen}
+          onToggleScreenLock={() => {
+            triggerHaptic('light');
+            setIsScreenLocked(!isScreenLocked);
+            showToast({
+              message: !isScreenLocked ? 'Screen Touches Locked' : 'Screen Unlocked',
+              type: 'info',
+            });
+          }}
+          onOpenStreamQualityModal={handleOpenStreamQualityModal}
+          onTriggerPiP={handleTriggerPiP}
+          onCancelAutoplay={() => {
+            triggerHaptic('light');
+            setAutoplayCountdown(null);
+          }}
+          onMarkComplete={handleMarkComplete}
+          onPictureInPictureStart={() => setIsSystemPiPActive(true)}
+          onPictureInPictureStop={() => setIsSystemPiPActive(false)}
+          onProgressUpdate={(curr) => {
+            const sec = Math.floor(curr);
+            currentPosRef.current = sec;
+            setCurrentPositionSeconds(sec);
+          }}
+          onPlayStateChange={setIsPlaying}
+          formatSeconds={formatSeconds}
+        />
+      </View>
 
       {/* LOWER TABBED LEARNING AREA (PORTRAIT) */}
       {!isFullscreen && (
@@ -1196,6 +1204,9 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
             }}
             onClose={() => setIsQuickNoteOpen(false)}
           />
+
+          {/* Bottom Safe Area Padding in Portrait */}
+          <View style={{ height: Math.max(insets.bottom, 10) }} />
         </View>
       )}
 
@@ -1355,6 +1366,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  videoPlayerWrapper: {
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 8,
+  },
+  fullscreenWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 9999,
+  },
   centerContainer: {
     flex: 1,
     alignItems: 'center',
@@ -1369,9 +1393,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   adminBanner: {
-    paddingHorizontal: 16,
+    marginHorizontal: 12,
+    marginTop: 6,
+    marginBottom: 2,
+    borderRadius: shape.medium,
+    borderWidth: 1,
+    paddingHorizontal: 14,
     paddingVertical: 8,
-    borderBottomWidth: 1,
   },
   adminBannerLeft: {
     flexDirection: 'row',
@@ -1390,12 +1418,16 @@ const styles = StyleSheet.create({
     fontSize: 10.5,
   },
   previewBanner: {
+    marginHorizontal: 12,
+    marginTop: 6,
+    marginBottom: 2,
+    borderRadius: shape.medium,
+    borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 8,
-    borderBottomWidth: 1,
   },
   previewBannerText: {
     fontSize: 12,
@@ -1407,6 +1439,7 @@ const styles = StyleSheet.create({
   tabsStrip: {
     flexDirection: 'row',
     borderBottomWidth: 1,
+    paddingHorizontal: 6,
   },
   tabButton: {
     flex: 1,
