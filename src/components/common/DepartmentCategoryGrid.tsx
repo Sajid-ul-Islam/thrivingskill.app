@@ -14,35 +14,79 @@ export const getIconForCategory = (slug: string = '', name: string = ''): Catego
   const s = slug.toLowerCase();
   const n = name.toLowerCase();
 
-  // Excel & Software
-  if (s.includes('excel') || s.includes('software') || n.includes('excel') || n.includes('software')) {
-    return 'software';
+  // 1. Supply Chain & Logistics (check early before any substrings)
+  if (s.includes('supply') || s.includes('logistics') || s.includes('procurement') || n.includes('supply') || n.includes('logistics')) {
+    return 'supply-chain-management';
   }
-  // Generative AI, Data Science & Tech Development
-  if (s.includes('ai') || s.includes('generative') || s.includes('4ir') || s.includes('data') || s.includes('python') || n.includes('ai') || n.includes('data') || n.includes('tech')) {
-    return 'development';
+  // 2. Generative AI & 4IR
+  if (s.includes('generative') || s.includes('4ir') || /\bai\b/i.test(s) || /\bai\b/i.test(n) || s.includes('artificial')) {
+    return 'generative-ai';
   }
-  // Sales & Marketing
+  // 3. Microsoft Excel & Spreadsheets
+  if (s.includes('excel') || s.includes('spreadsheet') || n.includes('excel')) {
+    return 'excel';
+  }
+  // 4. Finance, Accounting & Legal
+  if (s.includes('finance') || s.includes('account') || s.includes('legal') || s.includes('tax') || n.includes('finance') || n.includes('account') || n.includes('legal')) {
+    return 'finance-accounting-legal';
+  }
+  // 5. Human Resource Management (HRM)
+  if (s.includes('human-resource') || s.includes('hrm') || s.includes('recruitment') || s.includes('talent') || n.includes('human resource') || /\bhr\b/i.test(s) || /\bhr\b/i.test(n)) {
+    return 'human-resource-management';
+  }
+  // 6. Data Science & Big Data
+  if (s.includes('data') || s.includes('analytics') || s.includes('bi') || n.includes('data science') || n.includes('analytics')) {
+    return 'data-science';
+  }
+  // 7. Leadership & Executive Management
+  if (s.includes('leadership') || n.includes('leadership')) {
+    return 'leadership-management';
+  }
+  // 8. Personal Development & Soft Skills
+  if (s.includes('personal') || s.includes('habit') || s.includes('soft-skill') || s.includes('productivity') || n.includes('personal') || n.includes('self')) {
+    return 'personal-development';
+  }
+  // 9. Job Seekers Skills & Career
+  if (s.includes('job') || s.includes('career') || s.includes('resume') || s.includes('interview') || n.includes('job') || n.includes('career')) {
+    return 'job-seekers-skills';
+  }
+  // 10. Research & Academic
+  if (s.includes('research') || s.includes('academic') || s.includes('thesis') || n.includes('research') || n.includes('academic')) {
+    return 'research-courses';
+  }
+  // 11. Business Strategy & Consulting
+  if (s.includes('strategy') || s.includes('consulting') || n.includes('strategy')) {
+    return 'business-strategy';
+  }
+  // 12. Sales & Marketing
   if (s.includes('market') || s.includes('sales') || s.includes('brand') || s.includes('seo') || n.includes('market') || n.includes('sales')) {
     return 'marketing';
   }
-  // Supply Chain & Network Logistics
-  if (s.includes('supply') || s.includes('network') || s.includes('cloud') || s.includes('infrastructure') || n.includes('supply') || n.includes('network')) {
-    return 'networking';
-  }
-  // Personal Development, Leadership & Wellbeing
-  if (s.includes('personal') || s.includes('leadership') || s.includes('fitness') || s.includes('health') || s.includes('habit') || n.includes('personal') || n.includes('lead')) {
-    return 'fitness';
-  }
-  // Design, Presentation & Creative
+  // 13. Design, Presentation & Creative
   if (s.includes('design') || s.includes('creative') || s.includes('presentation') || s.includes('ui') || s.includes('ux') || n.includes('design')) {
     return 'design';
   }
-  // Cyber Security & Hacking
+  // 14. Cyber Security & Hacking
   if (s.includes('hack') || s.includes('cyber') || s.includes('security') || n.includes('cyber') || n.includes('security')) {
     return 'hacking';
   }
-  // Business, Finance, Accounts & Legal (Default)
+  // 15. Software & Tech Tools
+  if (s.includes('software') || s.includes('tool') || n.includes('software')) {
+    return 'software';
+  }
+  // 16. Development, Coding & Programming
+  if (s.includes('dev') || s.includes('python') || s.includes('code') || s.includes('programming') || n.includes('dev') || n.includes('code')) {
+    return 'development';
+  }
+  // 17. Networking & Cloud Infrastructure
+  if (s.includes('network') || s.includes('cloud') || s.includes('infrastructure') || n.includes('network')) {
+    return 'networking';
+  }
+  // 18. Fitness & Health
+  if (s.includes('fitness') || s.includes('health') || s.includes('wellness') || n.includes('fitness') || n.includes('health')) {
+    return 'fitness';
+  }
+  // 19. Business, Management & Corporate (Default)
   return 'business';
 };
 
@@ -63,7 +107,7 @@ export const DepartmentCategoryGrid: React.FC<DepartmentCategoryGridProps> = ({
   departmentCounts = {},
   onReset,
   showHeader = true,
-  maxItems = 10,
+  maxItems = 12,
 }) => {
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
