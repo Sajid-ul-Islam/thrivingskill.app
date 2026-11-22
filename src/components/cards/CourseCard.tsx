@@ -38,9 +38,12 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
   }, [course.thumbnail]);
 
   const fallbackIcon = require('../../../assets/icon.png');
+  const safeSource = getSafeImageSource(course.thumbnail, fallbackIcon);
   const imageSource = thumbError || !course.thumbnail
     ? fallbackIcon
-    : getSafeImageSource(course.thumbnail, fallbackIcon);
+    : typeof safeSource === 'object' && safeSource !== null && 'uri' in safeSource
+    ? { ...safeSource, cache: 'force-cache' as const }
+    : safeSource;
 
   const bookmarked = propIsBookmarked !== undefined ? propIsBookmarked : contextIsBookmarked(course.id);
   const isEnrolled = propIsEnrolled !== undefined ? propIsEnrolled : !!userProgress[course.id];

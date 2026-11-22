@@ -27,12 +27,14 @@ import {
   ScrollToTopPill,
   DepartmentCategoryGrid,
   CategoryIllustrationIcon,
+  CANONICAL_DEPARTMENTS_MAP,
+  getCanonicalDepartmentId,
 } from '../components';
 import { triggerHaptic } from '../utils/haptics';
 import { shape } from '../theme/shapes';
 import { MIN_TOUCH_TARGET } from '../theme/typography';
 import { useResponsive } from '../theme/responsive';
-import { Course } from '../types';
+import { Course, Category } from '../types';
 
 interface CoursesScreenProps {
   onNavigateToCourse: (courseId: string) => void;
@@ -91,50 +93,148 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
 
     if (lowerCat === dId || slugs.includes(dId)) return true;
 
-    // Dynamic alias & keyword mapping for live platform categories
-    if (dId.includes('excel') && (lowerCat.includes('excel') || slugs.some((s) => s.includes('excel')))) return true;
-    if (dId.includes('generative-ai') && (lowerCat.includes('ai') || slugs.some((s) => s.includes('ai')))) return true;
-    if (dId.includes('finance') && (lowerCat.includes('finance') || slugs.some((s) => s.includes('finance')))) return true;
-    if (dId.includes('marketing') && (lowerCat.includes('marketing') || lowerCat.includes('sales') || slugs.some((s) => s.includes('marketing') || s.includes('sales')))) return true;
-    if (dId.includes('human-resource') && (lowerCat.includes('hr') || lowerCat.includes('human') || slugs.some((s) => s.includes('hr') || s.includes('human')))) return true;
-    if (dId.includes('supply-chain') && (lowerCat.includes('supply') || slugs.some((s) => s.includes('supply')))) return true;
-    if (dId.includes('personal-development') && (lowerCat.includes('personal') || slugs.some((s) => s.includes('personal')))) return true;
-    if (dId.includes('leadership') && (lowerCat.includes('leadership') || slugs.some((s) => s.includes('leadership')))) return true;
-    if (dId.includes('data') && (lowerCat.includes('data') || slugs.some((s) => s.includes('data')))) return true;
-    if (dId.includes('business') && (lowerCat.includes('business') || slugs.some((s) => s.includes('business')))) return true;
-    if (dId.includes('bundle') && (c.isCareerBundle || c.title.toLowerCase().includes('bundle') || lowerCat.includes('bundle'))) return true;
-    if (dId.includes('research') && (lowerCat.includes('research') || slugs.some((s) => s.includes('research')))) return true;
-    if (dId.includes('job') && (lowerCat.includes('job') || slugs.some((s) => s.includes('job')))) return true;
+    // 1. Business Strategy & Consulting (must precede general business check)
+    if (dId === 'business-strategy' || dId.includes('strategy')) {
+      return lowerCat.includes('strategy') || slugs.some((s) => s.includes('strategy'));
+    }
+
+    // 2. Microsoft Excel & Spreadsheets
+    if (dId.includes('excel')) {
+      return lowerCat.includes('excel') || slugs.some((s) => s.includes('excel'));
+    }
+
+    // 3. Generative AI & 4IR
+    if (dId.includes('generative') || dId.includes('ai') || dId === '4ir') {
+      return (
+        lowerCat.includes('generative') ||
+        lowerCat.includes('4ir') ||
+        /\bai\b/i.test(lowerCat) ||
+        slugs.some((s) => s.includes('generative') || s.includes('4ir') || /\bai\b/i.test(s))
+      );
+    }
+
+    // 4. Finance, Accounting & Legal
+    if (dId.includes('finance') || dId.includes('account') || dId.includes('legal')) {
+      return (
+        lowerCat.includes('finance') ||
+        lowerCat.includes('account') ||
+        lowerCat.includes('legal') ||
+        slugs.some((s) => s.includes('finance') || s.includes('account') || s.includes('legal'))
+      );
+    }
+
+    // 5. Sales & Marketing
+    if (dId.includes('marketing') || dId.includes('sales')) {
+      return (
+        lowerCat.includes('marketing') ||
+        lowerCat.includes('sales') ||
+        slugs.some((s) => s.includes('marketing') || s.includes('sales'))
+      );
+    }
+
+    // 6. Human Resource Management (HRM)
+    if (dId.includes('human-resource') || dId.includes('hrm') || dId.includes('hr')) {
+      return (
+        lowerCat.includes('human') ||
+        /\bhr\b/i.test(lowerCat) ||
+        slugs.some((s) => s.includes('human') || /\bhr\b/i.test(s) || s.includes('hrm'))
+      );
+    }
+
+    // 7. Supply Chain & Logistics
+    if (dId.includes('supply-chain') || dId.includes('supply') || dId.includes('logistics')) {
+      return (
+        lowerCat.includes('supply') ||
+        lowerCat.includes('logistics') ||
+        slugs.some((s) => s.includes('supply') || s.includes('logistics'))
+      );
+    }
+
+    // 8. Personal Development & Soft Skills
+    if (dId.includes('personal-development') || dId.includes('personal')) {
+      return (
+        lowerCat.includes('personal') ||
+        lowerCat.includes('habit') ||
+        slugs.some((s) => s.includes('personal') || s.includes('habit') || s.includes('productivity'))
+      );
+    }
+
+    // 9. Leadership & Management
+    if (dId.includes('leadership')) {
+      return lowerCat.includes('leadership') || slugs.some((s) => s.includes('leadership'));
+    }
+
+    // 10. Data Science & Big Data
+    if (dId.includes('data')) {
+      return (
+        lowerCat.includes('data') ||
+        lowerCat.includes('analytics') ||
+        slugs.some((s) => s.includes('data') || s.includes('analytics'))
+      );
+    }
+
+    // 11. General Business & Administration (excluding strategy)
+    if (dId.includes('business')) {
+      const isStrategy = lowerCat.includes('strategy') || slugs.some((s) => s.includes('strategy'));
+      if (isStrategy) return false;
+      return lowerCat.includes('business') || slugs.some((s) => s.includes('business'));
+    }
+
+    // 12. Career Bundles
+    if (dId.includes('bundle')) {
+      return c.isCareerBundle || c.title.toLowerCase().includes('bundle') || lowerCat.includes('bundle');
+    }
+
+    // 13. Research & Academic
+    if (dId.includes('research') || dId.includes('academic')) {
+      return (
+        lowerCat.includes('research') ||
+        lowerCat.includes('academic') ||
+        slugs.some((s) => s.includes('research') || s.includes('academic'))
+      );
+    }
+
+    // 14. Job Seekers Skills
+    if (dId.includes('job') || dId.includes('career')) {
+      return (
+        lowerCat.includes('job') ||
+        lowerCat.includes('career') ||
+        slugs.some((s) => s.includes('job') || s.includes('career'))
+      );
+    }
 
     return false;
   }, []);
 
-  // Dynamically source departments from the authentic live site categories
+  // Dynamically source canonical departments from the authentic live site categories
   const dynamicDepartments = useMemo(() => {
-    const excluded = new Set([
-      'all',
-      'published',
-      'get-offer',
-      '60-off',
-      'get-tickets',
-      'siam-city-cement',
-      'homemakers-skills',
-      'ebook',
-      'courses',
-      'physical-training',
-    ]);
+    const canonicalMap = new Map<string, { id: string; title: string; slug: string; count: number }>();
 
-    const valid = (categories || []).filter((c) => {
-      const slug = (c.slug || c.id || '').toLowerCase();
-      return !excluded.has(slug);
+    (categories || []).forEach((cat) => {
+      const slug = (cat.slug || cat.id || '').toLowerCase();
+      const canonicalId = getCanonicalDepartmentId(slug, cat.name);
+      if (!canonicalId || !CANONICAL_DEPARTMENTS_MAP[canonicalId]) return;
+
+      const conf = CANONICAL_DEPARTMENTS_MAP[canonicalId];
+      const title = isBangla ? conf.banglaName : conf.name;
+      const count = cat.count || 0;
+
+      if (!canonicalMap.has(canonicalId)) {
+        canonicalMap.set(canonicalId, {
+          id: canonicalId,
+          title,
+          slug: canonicalId,
+          count,
+        });
+      } else {
+        const existing = canonicalMap.get(canonicalId)!;
+        existing.count = Math.max(existing.count, count);
+      }
     });
 
-    return valid.map((cat) => ({
-      id: cat.slug || cat.id,
-      title: isBangla ? (cat.banglaName || cat.name) : cat.name,
-      slug: cat.slug || cat.id,
-      count: cat.count,
-    }));
+    const list = Array.from(canonicalMap.values());
+    list.sort((a, b) => b.count - a.count);
+    return list;
   }, [categories, isBangla]);
 
   const departmentCountsMap = useMemo(() => {
@@ -157,6 +257,37 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
       })
       .filter((d) => d.courses.length > 0);
   }, [dynamicDepartments, courses, matchesDepartment]);
+
+  // Clean canonical category pills for filter bar
+  const canonicalCategoryPills = useMemo(() => {
+    const totalCount = totalCourseCount || courses.length;
+    const list: Category[] = [
+      {
+        id: 'all',
+        name: 'All Courses',
+        banglaName: 'সব কোর্স',
+        icon: 'grid',
+        count: totalCount,
+        color: '#059669',
+        slug: 'all',
+      },
+    ];
+
+    dynamicDepartments.forEach((dept) => {
+      const conf = CANONICAL_DEPARTMENTS_MAP[dept.id];
+      list.push({
+        id: dept.id,
+        name: conf ? conf.name : dept.title,
+        banglaName: conf ? conf.banglaName : dept.title,
+        count: departmentCountsMap[dept.id] ?? dept.count,
+        icon: 'book',
+        color: '#4F46E5',
+        slug: dept.slug,
+      });
+    });
+
+    return list;
+  }, [dynamicDepartments, departmentCountsMap, totalCourseCount, courses.length]);
 
   const flatListRef = useRef<FlatList<any> | null>(null);
   const searchInputRef = useRef<React.ElementRef<typeof TextInput> | null>(null);
@@ -617,7 +748,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
         {/* Categories Pills */}
         <CategoryPills
           selectedId={selectedCategory}
-          categories={categories}
+          categories={canonicalCategoryPills}
           onSelect={handleCategorySelect}
         />
 
@@ -818,7 +949,11 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                   hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
                 >
                   <Text style={[styles.activeFilterChipText, { color: colors.text }]}>
-                    {categories.find((c) => c.id === selectedCategory)?.name || selectedCategory}
+                    {(() => {
+                      const active = canonicalCategoryPills.find((c) => c.id === selectedCategory);
+                      if (!active) return selectedCategory;
+                      return isBangla && active.banglaName ? active.banglaName : active.name;
+                    })()}
                   </Text>
                   <Ionicons name="close-circle" size={14} color={colors.textMuted} />
                 </TouchableOpacity>

@@ -1,6 +1,7 @@
 import { Course, CourseModule, CategoryId } from '../../types';
 import { resolveLessonVideoData } from '../../data/lessonVideosRegistry';
 import { getLiveReviewsForCourse } from '../../data/liveReviews';
+import { getSafeImageUri } from '../../utils/imageUtils';
 
 // Clean HTML tags and HTML entities from WordPress text
 export function cleanHtml(text?: string): string {
@@ -94,6 +95,7 @@ export function transformWpCourse(raw: any): Course {
   } else if (raw.image?.src) {
     thumbnail = raw.image.src;
   }
+  thumbnail = getSafeImageUri(thumbnail) || thumbnail;
 
   // Categories & Taxonomy Slugs
   const categorySlugs: string[] = [];
@@ -151,7 +153,7 @@ export function transformWpCourse(raw: any): Course {
     name: cleanHtml(instructorRaw.name || 'Thriving Skills Mentor'),
     title: 'Lead Industry Specialist',
     company: 'Thriving Skills Bangladesh',
-    avatar: instructorRaw.avatar || 'https://secure.gravatar.com/avatar/?d=mp&s=300',
+    avatar: getSafeImageUri(instructorRaw.avatar) || 'https://secure.gravatar.com/avatar/?d=mp&s=300',
     bio: cleanHtml(instructorRaw.bio || 'Experienced practitioner and instructor at Thriving Skills.'),
     rating: 4.8 + ((seed % 3) / 10),
     studentsCount: 200 + (seed % 650),

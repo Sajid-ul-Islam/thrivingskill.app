@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Alert, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { triggerHaptic } from '../../utils/haptics';
 import { Review } from '../../types';
+import { getSafeImageSource } from '../../utils/imageUtils';
 
 interface CourseReviewsSectionProps {
   reviews: Review[];
@@ -20,6 +21,10 @@ const ReviewAvatar: React.FC<{
   const [error, setError] = React.useState(false);
   const initial = (name || 'L').charAt(0).toUpperCase();
 
+  React.useEffect(() => {
+    setError(false);
+  }, [uri]);
+
   if (!uri || error) {
     return (
       <View style={[styles.reviewAvatar, styles.avatarInitialsCircle, { backgroundColor: primaryColor }]}>
@@ -30,9 +35,10 @@ const ReviewAvatar: React.FC<{
 
   return (
     <Image
-      source={{ uri }}
+      source={getSafeImageSource(uri)}
       style={styles.reviewAvatar}
       onError={() => setError(true)}
+      {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
     />
   );
 };

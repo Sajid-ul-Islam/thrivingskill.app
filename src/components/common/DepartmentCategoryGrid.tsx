@@ -90,6 +90,116 @@ export const getIconForCategory = (slug: string = '', name: string = ''): Catego
   return 'business';
 };
 
+export interface CanonicalDepartmentConfig {
+  name: string;
+  banglaName: string;
+}
+
+export const CANONICAL_DEPARTMENTS_MAP: Record<string, CanonicalDepartmentConfig> = {
+  'generative-ai': { name: 'Generative AI', banglaName: 'জেনারেটিভ এআই' },
+  'business': { name: 'Business', banglaName: 'ব্যবসা ও বাণিজ্য' },
+  'microsoft-excel-courses': { name: 'Microsoft Excel', banglaName: 'মাইক্রোসফট এক্সেল' },
+  'finance-accounting-legal': { name: 'Finance & Legal', banglaName: 'অর্থনীতি ও আইন' },
+  'human-resource-management': { name: 'Human Resource Management', banglaName: 'মানব সম্পদ ব্যবস্থাপনা' },
+  'leadership-management': { name: 'Leadership & Management', banglaName: 'নেতৃত্ব ও ব্যবস্থাপনা' },
+  'personal-development': { name: 'Personal Development', banglaName: 'ব্যক্তিগত দক্ষতা উন্নয়ন' },
+  'sales-marketing': { name: 'Sales & Marketing', banglaName: 'বিক্রয় ও বিপণন' },
+  'supply-chain-management': { name: 'Supply Chain Management', banglaName: 'সাপ্লাই চেইন ম্যানেজমেন্ট' },
+  'data-science': { name: 'Data Science', banglaName: 'ডাটা সায়েন্স' },
+  'job-seekers-skills': { name: 'Job Seekers Skills', banglaName: 'চাকরি প্রত্যাশীদের দক্ষতা' },
+  'research-courses': { name: 'Research & Academic', banglaName: 'গবেষণা ও শিক্ষায়তনিক' },
+  'business-strategy': { name: 'Business Strategy', banglaName: 'ব্যবসায়িক কৌশল' },
+};
+
+export const getCanonicalDepartmentId = (slug: string = '', name: string = ''): string | null => {
+  const s = slug.toLowerCase();
+  const n = name.toLowerCase();
+
+  const excluded = [
+    'all',
+    'all-courses',
+    'published',
+    'get-offer',
+    '60-off',
+    'offer',
+    'get-tickets',
+    'siam-city-cement',
+    'bayer-cropscience',
+    'homemakers-skills',
+    'ebook',
+    'courses',
+    'physical-training',
+    'upcoming',
+    'upcoming-live-training',
+    'our-popular-courses',
+    'our-exclusive-free-course',
+    'master-classes',
+    'bundle-courses',
+    '4ir_skills_summit',
+    'blockchain-summit',
+    'a-guide-to-real-estate-business',
+  ];
+
+  if (excluded.includes(s) || excluded.some((ex) => s === ex || s.startsWith(`${ex}-`))) {
+    return null;
+  }
+
+  // Supply Chain & Logistics
+  if (s.includes('supply') || s.includes('logistics') || s.includes('procurement') || n.includes('supply') || n.includes('logistics')) {
+    return 'supply-chain-management';
+  }
+  // Generative AI & 4IR
+  if (s.includes('generative') || s.includes('4ir') || /\bai\b/i.test(s) || /\bai\b/i.test(n) || s.includes('artificial')) {
+    return 'generative-ai';
+  }
+  // Microsoft Excel
+  if (s.includes('excel') || s.includes('spreadsheet') || n.includes('excel')) {
+    return 'microsoft-excel-courses';
+  }
+  // Finance, Accounting & Legal
+  if (s.includes('finance') || s.includes('account') || s.includes('legal') || s.includes('tax') || n.includes('finance') || n.includes('account') || n.includes('legal')) {
+    return 'finance-accounting-legal';
+  }
+  // Human Resource Management (HRM)
+  if (s.includes('human-resource') || s.includes('hrm') || s.includes('recruitment') || s.includes('talent') || n.includes('human resource') || /\bhr\b/i.test(s) || /\bhr\b/i.test(n)) {
+    return 'human-resource-management';
+  }
+  // Data Science & Big Data
+  if (s.includes('data') || s.includes('analytics') || s === 'python' || s === 'r' || s.includes('bi') || n.includes('data science') || n.includes('analytics')) {
+    return 'data-science';
+  }
+  // Leadership & Executive Management
+  if (s.includes('leadership') || n.includes('leadership')) {
+    return 'leadership-management';
+  }
+  // Personal Development & Soft Skills
+  if (s.includes('personal') || s.includes('habit') || s.includes('soft-skill') || s.includes('productivity') || n.includes('personal') || n.includes('self')) {
+    return 'personal-development';
+  }
+  // Job Seekers Skills & Career
+  if (s.includes('job') || s.includes('career') || s.includes('resume') || s.includes('interview') || n.includes('job') || n.includes('career')) {
+    return 'job-seekers-skills';
+  }
+  // Research & Academic
+  if (s.includes('research') || s.includes('academic') || s.includes('thesis') || n.includes('research') || n.includes('academic')) {
+    return 'research-courses';
+  }
+  // Business Strategy & Consulting
+  if (s.includes('strategy') || s.includes('consulting') || n.includes('strategy')) {
+    return 'business-strategy';
+  }
+  // Sales & Marketing
+  if (s.includes('market') || s.includes('sales') || s.includes('brand') || s.includes('seo') || n.includes('market') || n.includes('sales')) {
+    return 'sales-marketing';
+  }
+  // General Business & Management
+  if (s === 'business' || s.startsWith('business-essentials') || n === 'business' || n.startsWith('business essentials')) {
+    return 'business';
+  }
+
+  return null;
+};
+
 interface DepartmentCategoryGridProps {
   categories?: Category[];
   selectedDeptId?: string | null;
@@ -116,40 +226,41 @@ export const DepartmentCategoryGrid: React.FC<DepartmentCategoryGridProps> = ({
   // 1. Source categories dynamically from props or context
   const sourceCategories = propCategories || contextCategories;
 
-  // 2. Filter out administrative and non-department metadata tags
+  // 2. Filter out non-department metadata tags and canonicalize into distinct departments
   const validDepartments = useMemo(() => {
-    const excluded = new Set([
-      'all',
-      'published',
-      'get-offer',
-      '60-off',
-      'get-tickets',
-      'siam-city-cement',
-      'homemakers-skills',
-      'ebook',
-      'courses',
-      'physical-training',
-    ]);
+    const rawList = sourceCategories || [];
+    const canonicalMap = new Map<string, Category>();
 
-    const filtered = (sourceCategories || []).filter((c) => {
-      const slug = (c.slug || c.id || '').toLowerCase();
-      if (excluded.has(slug)) return false;
-      // Must have at least 1 course or count > 0
-      const count = departmentCounts[c.id] ?? c.count ?? 0;
-      return count > 0 || c.id === 'business' || c.id === 'generative-ai';
-    });
-
-    // Deduplicate by normalized slug
-    const seen = new Set<string>();
-    const uniqueList: Category[] = [];
-
-    for (const cat of filtered) {
+    for (const cat of rawList) {
       const slug = (cat.slug || cat.id || '').toLowerCase();
-      if (!seen.has(slug)) {
-        seen.add(slug);
-        uniqueList.push(cat);
+      const canonicalId = getCanonicalDepartmentId(slug, cat.name);
+      if (!canonicalId || !CANONICAL_DEPARTMENTS_MAP[canonicalId]) continue;
+
+      const conf = CANONICAL_DEPARTMENTS_MAP[canonicalId];
+      const count =
+        departmentCounts[canonicalId] ??
+        departmentCounts[cat.id] ??
+        departmentCounts[slug] ??
+        cat.count ??
+        0;
+
+      if (!canonicalMap.has(canonicalId)) {
+        canonicalMap.set(canonicalId, {
+          id: canonicalId,
+          slug: canonicalId,
+          name: conf.name,
+          banglaName: conf.banglaName,
+          count: count,
+          icon: 'book',
+          color: '#4F46E5',
+        });
+      } else {
+        const existing = canonicalMap.get(canonicalId)!;
+        existing.count = Math.max(existing.count || 0, count);
       }
     }
+
+    const uniqueList = Array.from(canonicalMap.values());
 
     // Sort by course count descending so top site departments appear first
     uniqueList.sort((a, b) => {

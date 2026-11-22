@@ -22,15 +22,21 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop }) 
   const { showToast } = useFeedback();
   const registered = isRsvpd(workshop.id);
   const [thumbError, setThumbError] = useState(false);
+  const [speakerAvatarError, setSpeakerAvatarError] = useState(false);
 
   useEffect(() => {
     setThumbError(false);
-  }, [workshop.thumbnail]);
+    setSpeakerAvatarError(false);
+  }, [workshop.thumbnail, workshop.speaker.avatar]);
 
   const fallbackIcon = require('../../../assets/icon.png');
   const imageSource = thumbError || !workshop.thumbnail
     ? fallbackIcon
     : getSafeImageSource(workshop.thumbnail, fallbackIcon);
+
+  const speakerAvatarSource = speakerAvatarError || !workshop.speaker.avatar
+    ? fallbackIcon
+    : getSafeImageSource(workshop.speaker.avatar, fallbackIcon);
 
   const bdtPrice = workshop.priceBdt || (workshop.price > 0 ? Math.round(workshop.price * 120) : 0);
   const isFree = bdtPrice === 0 && (!workshop.price || workshop.price === 0);
@@ -142,7 +148,12 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop }) 
         </View>
 
         <View style={styles.speakerRow}>
-          <Image source={{ uri: workshop.speaker.avatar }} style={styles.speakerAvatar} />
+          <Image
+            source={speakerAvatarSource}
+            style={[styles.speakerAvatar, (speakerAvatarError || !workshop.speaker.avatar) && { resizeMode: 'contain' }]}
+            onError={() => setSpeakerAvatarError(true)}
+            {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+          />
           <View style={styles.speakerCol}>
             <Text style={[styles.speakerName, { color: colors.text }]}>
               {workshop.speaker.name}

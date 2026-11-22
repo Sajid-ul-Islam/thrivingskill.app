@@ -8,6 +8,7 @@ import {
   ScrollView,
   Image,
   Linking,
+  Platform,
   ActivityIndicator,
   LayoutAnimation,
 } from 'react-native';
@@ -21,6 +22,7 @@ import { triggerHaptic } from '../../utils/haptics';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
 import { SaaSNotification } from '../../types';
+import { getSafeImageSource } from '../../utils/imageUtils';
 
 interface NotificationModalProps {
   visible: boolean;
@@ -270,7 +272,12 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                     accessibilityLabel={`${item.title}, ${item.isRead ? 'read' : 'unread'}`}
                   >
                     {thumbnail ? (
-                      <Image source={{ uri: thumbnail }} style={styles.thumbnail} resizeMode="cover" />
+                      <Image
+                        source={getSafeImageSource(thumbnail)}
+                        style={styles.thumbnail}
+                        resizeMode="cover"
+                        {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+                      />
                     ) : (
                       <View style={[styles.iconBg, { backgroundColor: icon.bg }]}>
                         <Ionicons name={icon.name as any} size={18} color={icon.color} />

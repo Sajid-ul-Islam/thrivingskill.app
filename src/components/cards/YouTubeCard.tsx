@@ -1,6 +1,6 @@
 import { SpringPressable } from '../common';
-import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import { useLearning } from '../../context/LearningContext';
@@ -9,6 +9,7 @@ import { useFeedback } from '../../context/FeedbackContext';
 import { YouTubeVideo } from '../../data/youtubeVideos';
 import { findRelatedCourse } from '../../services/youtubeService';
 import { shape } from '../../theme/shapes';
+import { getSafeImageSource } from '../../utils/imageUtils';
 
 interface YouTubeCardProps {
   video: YouTubeVideo;
@@ -30,6 +31,16 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
 
   const saved = isSaved(video.id);
   const relatedCourse = findRelatedCourse(video, courses);
+  const [thumbError, setThumbError] = useState(false);
+
+  useEffect(() => {
+    setThumbError(false);
+  }, [video.thumbnail]);
+
+  const fallbackThumb = require('../../../assets/icon.png');
+  const imageSource = thumbError || !video.thumbnail
+    ? fallbackThumb
+    : getSafeImageSource(video.thumbnail, fallbackThumb);
 
   const handleToggleSave = (e?: any) => {
     e?.stopPropagation?.();
@@ -57,7 +68,12 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
           activeScale={0.97}
         >
           <View style={styles.horizontalThumbWrapper}>
-            <Image source={{ uri: video.thumbnail }} style={styles.horizontalThumb} />
+            <Image
+              source={imageSource}
+              style={[styles.horizontalThumb, (thumbError || !video.thumbnail) && { resizeMode: 'contain' }]}
+              onError={() => setThumbError(true)}
+              {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+            />
             {video.duration ? (
               <View style={styles.durationBadge}>
                 <Text style={styles.durationText}>{video.duration}</Text>
@@ -123,7 +139,12 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
         activeOpacity={0.85}
       >
         <View style={styles.thumbWrapper}>
-          <Image source={{ uri: video.thumbnail }} style={styles.thumbImage} />
+          <Image
+            source={imageSource}
+            style={[styles.thumbImage, (thumbError || !video.thumbnail) && { resizeMode: 'contain' }]}
+            onError={() => setThumbError(true)}
+            {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+          />
           {video.duration ? (
             <View style={styles.durationBadge}>
               <Text style={styles.durationText}>{video.duration}</Text>

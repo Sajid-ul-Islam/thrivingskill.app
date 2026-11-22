@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
+  Platform,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,6 +20,7 @@ import { MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
 import { SkillAssessmentQuestion, SkillAssessmentResult, Course } from '../../types';
 import { SkillRadarChart } from '../analytics/SkillRadarChart';
+import { getSafeImageSource } from '../../utils/imageUtils';
 
 interface SkillAssessmentModalProps {
   visible: boolean;
@@ -437,7 +439,11 @@ export const SkillAssessmentModal: React.FC<SkillAssessmentModalProps> = ({
                           accessibilityRole="button"
                           accessibilityLabel={`View recommended course: ${c.title}`}
                         >
-                          <Image source={{ uri: c.thumbnail }} style={styles.recommendCourseThumb} />
+                          <Image
+                            source={getSafeImageSource(c.thumbnail)}
+                            style={styles.recommendCourseThumb}
+                            {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+                          />
                           <View style={styles.recommendCourseInfo}>
                             <Text style={[styles.recommendCourseTitle, { color: colors.text }]} numberOfLines={2}>
                               {c.title}

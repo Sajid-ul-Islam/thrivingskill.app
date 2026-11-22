@@ -1,11 +1,12 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, Alert, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { SpringPressable } from '../common';
 import { SkillsSummit } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useLearning } from '../../context/LearningContext';
+import { getSafeImageSource } from '../../utils/imageUtils';
 
 interface SummitCardProps {
   summit: SkillsSummit;
@@ -16,6 +17,16 @@ export const SummitCard: React.FC<SummitCardProps> = ({ summit }) => {
   const { isBangla } = useLanguage();
   const { rsvpForWorkshop, isRsvpd } = useLearning();
   const reserved = isRsvpd(summit.id);
+  const [bannerError, setBannerError] = useState(false);
+
+  useEffect(() => {
+    setBannerError(false);
+  }, [summit.bannerImage]);
+
+  const fallbackBanner = require('../../../assets/icon.png');
+  const bannerSource = bannerError || !summit.bannerImage
+    ? fallbackBanner
+    : getSafeImageSource(summit.bannerImage, fallbackBanner);
 
   const handleRegister = () => {
     rsvpForWorkshop(summit.id);
@@ -43,7 +54,12 @@ export const SummitCard: React.FC<SummitCardProps> = ({ summit }) => {
       ]}
     >
       <View style={styles.imageContainer}>
-        <Image source={{ uri: summit.bannerImage }} style={styles.bannerImage} />
+        <Image
+          source={bannerSource}
+          style={[styles.bannerImage, (bannerError || !summit.bannerImage) && { resizeMode: 'contain' }]}
+          onError={() => setBannerError(true)}
+          {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+        />
         <View
           style={[
             styles.statusBadge,

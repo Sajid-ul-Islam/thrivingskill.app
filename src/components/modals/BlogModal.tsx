@@ -23,6 +23,7 @@ import { triggerHaptic } from '../../utils/haptics';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
 import { Env } from '../../config/env';
+import { getSafeImageSource } from '../../utils/imageUtils';
 
 export interface BlogModalProps {
   visible: boolean;
@@ -323,7 +324,11 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
         {activeArticle ? (
           /* Full Article Reader View */
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.readerContent}>
-            <Image source={{ uri: activeArticle.imageUrl }} style={styles.articleHero} />
+            <Image
+              source={getSafeImageSource(activeArticle.imageUrl)}
+              style={styles.articleHero}
+              {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+            />
 
             <View style={styles.readerBody}>
               <View style={[styles.categoryTag, { backgroundColor: colors.primaryLight }]}>
@@ -407,7 +412,11 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
                   accessibilityRole="button"
                   accessibilityLabel={`Read article: ${article.title}`}
                 >
-                  <Image source={{ uri: article.imageUrl }} style={styles.cardThumb} />
+                  <Image
+                    source={getSafeImageSource(article.imageUrl)}
+                    style={styles.cardThumb}
+                    {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+                  />
                   <View style={styles.cardContent}>
                     <View style={styles.cardBadgeRow}>
                       <Text style={[styles.cardCatText, { color: colors.primary }]} numberOfLines={1} ellipsizeMode="tail">

@@ -1,8 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, Platform } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { Instructor } from '../../types';
+import { getSafeImageSource } from '../../utils/imageUtils';
 
 interface CourseInstructorSectionProps {
   instructor: Instructor;
@@ -13,6 +14,11 @@ export const CourseInstructorSection: React.FC<CourseInstructorSectionProps> = (
 }) => {
   const { colors } = useTheme();
   const { isBangla } = useLanguage();
+  const [avatarError, setAvatarError] = useState(false);
+
+  useEffect(() => {
+    setAvatarError(false);
+  }, [instructor.avatar]);
 
   return (
     <View
@@ -22,8 +28,13 @@ export const CourseInstructorSection: React.FC<CourseInstructorSectionProps> = (
       ]}
     >
       <View style={styles.instructorHeader}>
-        {instructor.avatar ? (
-          <Image source={{ uri: instructor.avatar }} style={styles.instructorAvatar} />
+        {instructor.avatar && !avatarError ? (
+          <Image
+            source={getSafeImageSource(instructor.avatar)}
+            style={styles.instructorAvatar}
+            onError={() => setAvatarError(true)}
+            {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+          />
         ) : (
           <View
             style={[

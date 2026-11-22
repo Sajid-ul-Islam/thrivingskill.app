@@ -4,6 +4,7 @@ import {
   View,
   Text,
   Image,
+  Platform,
   LayoutAnimation,
   StyleSheet,
   TouchableOpacity,
@@ -19,6 +20,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { triggerHaptic } from '../../utils/haptics';
 import { shape } from '../../theme/shapes';
 import { useResponsive } from '../../theme/responsive';
+import { getSafeImageSource } from '../../utils/imageUtils';
 
 export interface CarouselSlide {
   id: string;
@@ -224,10 +226,11 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
         {/* Remote Server Banner Image with onError fallback */}
         {hasImage && (
           <Image
-            source={{ uri: item.imageUrl }}
+            source={getSafeImageSource(item.imageUrl)}
             style={StyleSheet.absoluteFill}
             resizeMode="cover"
             onError={() => setImageErrors((prev) => ({ ...prev, [item.id]: true }))}
+            {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
           />
         )}
 
