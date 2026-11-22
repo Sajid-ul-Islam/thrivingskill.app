@@ -135,10 +135,15 @@ export class HttpClient {
       skipAuth = false,
       retries = options.method && options.method !== 'GET' ? 0 : Env.MAX_RETRIES,
       headers: customHeaders,
+      allowFallback = true,
+      baseUrl,
       ...fetchOptions
     } = options;
 
-    const fullUrl = this.buildUrl(endpoint, params);
+    const isGet = !options.method || options.method.toUpperCase() === 'GET';
+    const canAttemptFallback = allowFallback && isGet && Env.ENABLE_FALLBACK && !baseUrl;
+
+    const fullUrl = this.buildUrl(endpoint, params, baseUrl);
     const headers: Record<string, string> = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
@@ -210,6 +215,28 @@ export class HttpClient {
           }
           await new Promise((res) => setTimeout(res, delay));
           continue;
+        }
+
+        // Dual-host failover: if primary host encounters network failure or gateway error, try fallback host
+        const isServerOutage =
+          err instanceof ApiError &&
+          (err.status === 502 || err.status === 503 || err.status === 504 || err.status === 521 || err.status === 522);
+        if (canAttemptFallback && (isNetworkErr || isServerOutage)) {
+          if (Env.DEBUG_API) {
+            console.log(`[API Failover] Primary ${fullUrl} failed. Attempting failover to ${Env.FALLBACK_API_URL}...`);
+          }
+          try {
+            return await this.executeRequest<T>(endpoint, {
+              ...options,
+              baseUrl: Env.FALLBACK_API_URL,
+              allowFallback: false,
+              retries: 1,
+            });
+          } catch (fallbackErr) {
+            if (Env.DEBUG_API) {
+              console.warn(`[API Failover] Fallback host also failed:`, fallbackErr);
+            }
+          }
         }
 
         if (isAbort) {
@@ -291,10 +318,15 @@ export class HttpClient {
       skipAuth = false,
       retries = options.method && options.method !== 'GET' ? 0 : Env.MAX_RETRIES,
       headers: customHeaders,
+      allowFallback = true,
+      baseUrl,
       ...fetchOptions
     } = options;
 
-    const fullUrl = this.buildUrl(endpoint, params);
+    const isGet = !options.method || options.method.toUpperCase() === 'GET';
+    const canAttemptFallback = allowFallback && isGet && Env.ENABLE_FALLBACK && !baseUrl;
+
+    const fullUrl = this.buildUrl(endpoint, params, baseUrl);
     const headers: Record<string, string> = {
       Accept: 'application/json',
       'Content-Type': 'application/json',
