@@ -103,6 +103,6 @@ console.log(`   Build Time: ${duration} seconds`);
 console.log('====================================================\n');
 
 // 5. Copy to Root for clean GitHub Release attachment
-const targetReleaseApk = path.join(realRootDir, 'thrivingskill-v4.0.5-preview.apk');
+const targetReleaseApk = path.join(realRootDir, 'thrivingskill-v4.0.6-preview.apk');
 fs.copyFileSync(finalApk, targetReleaseApk);
 console.log(`[ARTIFACT] Copied to root: ${targetReleaseApk} (${sizeMb} MB)`);
