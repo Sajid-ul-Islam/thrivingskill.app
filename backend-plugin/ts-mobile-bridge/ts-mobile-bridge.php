@@ -3,7 +3,7 @@
  * Plugin Name: TS Mobile Bridge
  * Plugin URI: https://thrivingskill.com
  * Description: High-speed mobile API bridge, remote configuration, push notification engine, and Mobile App Command Center for Thriving Skills.
- * Version: 1.1.0
+ * Version: 1.1.1
  * Author: Thriving Skills Engineering
  * Author URI: https://thrivingskill.com
  * License: GPLv2 or later
@@ -14,7 +14,7 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('TSMB_VERSION', '1.1.0');
+define('TSMB_VERSION', '1.1.1');
 
 /* ==========================================================================
    1. REST API CONTROLLER
@@ -898,12 +898,105 @@ class TSMB_Admin {
 }
 
 /* ==========================================================================
-   4. BOOTSTRAP INITIALIZATION
+   4. AUTO-UPDATES ENGINE
+   ========================================================================== */
+
+class TSMB_Auto_Updates {
+
+    public static function init() {
+        add_filter('site_transient_update_plugins', [__CLASS__, 'inject_update_info']);
+        add_filter('pre_set_site_transient_update_plugins', [__CLASS__, 'inject_update_info']);
+        add_filter('auto_update_plugin', [__CLASS__, 'should_auto_update'], 10, 2);
+        add_filter('plugin_auto_update_setting_html', [__CLASS__, 'custom_auto_update_html'], 10, 3);
+        add_action('admin_init', [__CLASS__, 'ensure_auto_update_active']);
+    }
+
+    public static function get_plugin_file() {
+        return plugin_basename(__FILE__);
+    }
+
+    public static function inject_update_info($transient) {
+        if (!is_object($transient)) {
+            $transient = new stdClass();
+        }
+        $plugin_file = self::get_plugin_file();
+
+        if (!isset($transient->response[$plugin_file]) && !isset($transient->no_update[$plugin_file])) {
+            $transient->no_update[$plugin_file] = (object) [
+                'id'            => 'ts-mobile-bridge',
+                'slug'          => 'ts-mobile-bridge',
+                'plugin'        => $plugin_file,
+                'new_version'   => TSMB_VERSION,
+                'url'           => 'https://thrivingskill.com',
+                'package'       => '',
+                'icons'         => [],
+                'banners'       => [],
+                'banners_rtl'   => [],
+                'tested'        => '6.7',
+                'requires_php'  => '7.4',
+            ];
+        }
+        return $transient;
+    }
+
+    public static function should_auto_update($update, $item) {
+        $plugin_file = self::get_plugin_file();
+        if (isset($item->plugin) && $item->plugin === $plugin_file) {
+            return true;
+        }
+        return $update;
+    }
+
+    public static function custom_auto_update_html($html, $plugin_file, $plugin_data) {
+        if ($plugin_file === self::get_plugin_file()) {
+            $auto_updates = (array) get_option('auto_update_plugins', []);
+            $is_enabled = in_array($plugin_file, $auto_updates, true);
+            
+            if ($is_enabled) {
+                $disable_url = wp_nonce_url(
+                    self_admin_url('plugins.php?action=disable-auto-update&plugin=' . urlencode($plugin_file)),
+                    'updates'
+                );
+                return sprintf(
+                    '<a href="%s" class="toggle-auto-update aria-button-if-js" role="button" aria-expanded="true"><span class="dashicons dashicons-update-alt" style="color:#15803d;font-size:16px;line-height:1.2;margin-right:4px;"></span>%s</a><div class="auto-update-time">%s</div>',
+                    esc_url($disable_url),
+                    esc_html__('Disable auto-updates', 'ts-mobile-bridge'),
+                    esc_html__('Auto-updates enabled', 'ts-mobile-bridge')
+                );
+            } else {
+                $enable_url = wp_nonce_url(
+                    self_admin_url('plugins.php?action=enable-auto-update&plugin=' . urlencode($plugin_file)),
+                    'updates'
+                );
+                return sprintf(
+                    '<a href="%s" class="toggle-auto-update aria-button-if-js" role="button" aria-expanded="false">%s</a><div class="auto-update-time">%s</div>',
+                    esc_url($enable_url),
+                    esc_html__('Enable auto-updates', 'ts-mobile-bridge'),
+                    esc_html__('Auto-updates disabled', 'ts-mobile-bridge')
+                );
+            }
+        }
+        return $html;
+    }
+
+    public static function ensure_auto_update_active() {
+        $plugin_file = self::get_plugin_file();
+        $auto_updates = (array) get_option('auto_update_plugins', []);
+        if (!in_array($plugin_file, $auto_updates, true)) {
+            $auto_updates[] = $plugin_file;
+            update_option('auto_update_plugins', array_values(array_unique($auto_updates)));
+        }
+    }
+}
+
+/* ==========================================================================
+   5. BOOTSTRAP INITIALIZATION
    ========================================================================== */
 
 function tsmb_init_plugin() {
     TSMB_Rest_API::init();
     TSMB_Notifications::init();
+    TSMB_Auto_Updates::init();
     if (is_admin()) {
         TSMB_Admin::init();
     }
