@@ -16,6 +16,7 @@ import {
   DEFAULT_SITE_BRANDING,
   DEFAULT_CURATED_SLIDES,
 } from '../services/api/brandingService';
+import { CompanionService, AppRemoteConfig } from '../services/api/companionService';
 import {
   fetchWpCourses,
   fetchWpCategories,
@@ -125,6 +126,7 @@ interface LearningContextType {
   // Dynamic Site Branding & Banners
   siteBranding: SiteBrandingInfo;
   banners: DynamicCarouselSlide[];
+  appRemoteConfig: AppRemoteConfig | null;
   isBrandingLoading: boolean;
   refreshBranding: (forceRefresh?: boolean) => Promise<void>;
 
@@ -194,18 +196,23 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Dynamic Site Branding & Hero Banners State
   const [siteBranding, setSiteBranding] = useState<SiteBrandingInfo>(DEFAULT_SITE_BRANDING);
   const [banners, setBanners] = useState<DynamicCarouselSlide[]>(DEFAULT_CURATED_SLIDES);
+  const [appRemoteConfig, setAppRemoteConfig] = useState<AppRemoteConfig | null>(null);
   const [isBrandingLoading, setIsBrandingLoading] = useState<boolean>(false);
 
   const refreshBranding = useCallback(async (forceRefresh: boolean = false) => {
     try {
       setIsBrandingLoading(true);
-      const [brandingInfo, bannerSlides] = await Promise.all([
+      const [brandingInfo, bannerSlides, remoteConfig] = await Promise.all([
         BrandingService.getSiteBranding(forceRefresh),
         BrandingService.getDynamicBanners(forceRefresh),
+        CompanionService.fetchAppConfig(forceRefresh),
       ]);
       setSiteBranding(brandingInfo);
       if (bannerSlides && bannerSlides.length > 0) {
         setBanners(bannerSlides);
+      }
+      if (remoteConfig) {
+        setAppRemoteConfig(remoteConfig);
       }
     } catch (err) {
       if (Env.DEBUG_API) {
@@ -907,6 +914,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         syncOfflineData,
         siteBranding,
         banners,
+        appRemoteConfig,
         isBrandingLoading,
         refreshBranding,
         lastSyncedAt,

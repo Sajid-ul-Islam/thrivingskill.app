@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
+import { CompanionService } from '../api/companionService';
 
 export interface NotificationSettings {
   streakReminders: boolean;
@@ -231,6 +232,11 @@ export class PushNotificationService {
 
         await AsyncStorage.setItem(STORAGE_KEY_TOKEN, deviceToken);
         this.cachedToken = deviceToken;
+      }
+
+      if (this.cachedToken) {
+        const platform = Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : 'web';
+        CompanionService.registerPushToken(this.cachedToken, platform).catch(() => {});
       }
 
       return this.cachedToken;

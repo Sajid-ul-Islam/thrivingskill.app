@@ -1,6 +1,7 @@
 import { HttpClient } from './httpClient';
 import { CacheManager } from '../cache/cacheManager';
 import { Env } from '../../config/env';
+import { CompanionService } from './companionService';
 
 export interface SiteBrandingInfo {
   siteName: string;
@@ -219,6 +220,33 @@ export class BrandingService {
     ];
 
     try {
+      // 0. Primary Source: Live Hero Slides from TS Mobile Bridge Command Center
+      const companionConfig = await CompanionService.fetchAppConfig();
+      if (companionConfig?.hero_slides && Array.isArray(companionConfig.hero_slides)) {
+        companionConfig.hero_slides.forEach((slide, idx) => {
+          if (slide.title) {
+            dynamicSlides.push({
+              id: `companion-slide-${slide.id || idx}`,
+              badge: slide.tag || 'FEATURED',
+              badgeIcon: 'star',
+              title: sanitizeWpText(slide.title),
+              subtitle: sanitizeWpText(slide.subtitle) || 'Empower your career with certified industry tracks.',
+              ctaText: slide.button_text ? `${slide.button_text} →` : 'Enroll Now →',
+              gradientColors: paletteList[idx % paletteList.length],
+              actionType: 'course',
+              targetId: slide.target || undefined,
+              imageUrl: slide.image_url || undefined,
+            });
+          }
+        });
+      }
+    } catch (err) {
+      if (Env.DEBUG_API) {
+        console.warn('[BrandingService] Could not fetch companion hero slides:', err);
+      }
+    }
+
+    try {
       // 1. Fetch LearnPress Collections with featured media
       const collections = await HttpClient.get<any[]>(
         '/wp/v2/lp_collection',
@@ -303,16 +331,18 @@ export class BrandingService {
     const heroCover = DEFAULT_CURATED_SLIDES.find(s => s.id === 'skills-growth-2026');
 
     const finalSlides: DynamicCarouselSlide[] = [];
-    if (heroCover) finalSlides.push(heroCover);
-    if (flagshipSummit) finalSlides.push(flagshipSummit);
-    if (aiTrailer) finalSlides.push(aiTrailer);
 
-    // Merge in dynamic items from server, ensuring no duplicates
+    // Prioritize dynamic slides explicitly managed from the TS Mobile Bridge Command Center
     for (const d of dynamicSlides) {
       if (!finalSlides.some(s => s.title.toLowerCase() === d.title.toLowerCase())) {
         finalSlides.push(d);
       }
     }
+
+    // Always ensure flagship items are present as fallbacks
+    if (heroCover && !finalSlides.some(s => s.title.toLowerCase() === heroCover.title.toLowerCase())) finalSlides.push(heroCover);
+    if (flagshipSummit && !finalSlides.some(s => s.title.toLowerCase() === flagshipSummit.title.toLowerCase())) finalSlides.push(flagshipSummit);
+    if (aiTrailer && !finalSlides.some(s => s.title.toLowerCase() === aiTrailer.title.toLowerCase())) finalSlides.push(aiTrailer);
 
     // Limit to top 6 slides for optimal carousel performance & memory
     const trimmed = finalSlides.slice(0, 6);
