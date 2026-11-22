@@ -70,4 +70,14 @@ export const Endpoints = {
     CART: '/wc/store/v1/cart',
     CHECKOUT: '/wc/store/v1/checkout',
   },
+
+  // --------------------------------------------------------------------------
+  // Thriving Skills Mobile Bridge (Companion Plugin Endpoints)
+  // --------------------------------------------------------------------------
+  COMPANION: {
+    CONFIG: '/thrivingskill/v1/config',
+    FEED: '/thrivingskill/v1/feed',
+    LESSON_DETAIL: (id: string | number) => `/thrivingskill/v1/lessons/${id}`,
+    REGISTER_PUSH_TOKEN: '/thrivingskill/v1/register-push-token',
+  },
 } as const;

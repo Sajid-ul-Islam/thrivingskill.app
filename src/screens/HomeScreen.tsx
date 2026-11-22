@@ -186,9 +186,9 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
         </View>
       ) : isTablet && itemCount === 2 && !isLandscape ? (
         /* If 2 courses on tablet portrait, display both side-by-side filling the width */
-        <View style={{ flexDirection: 'row', paddingHorizontal: 16, gap: CARD_GAP }}>
+        <View style={{ flexDirection: 'row', paddingHorizontal: 16, gap: CARD_GAP, alignItems: 'stretch' }}>
           {displayCourses.map((item) => (
-            <View key={`cat-row-${title}-${item.id}`} style={{ flex: 1 }}>
+            <View key={`cat-row-${title}-${item.id}`} style={{ flex: 1, alignSelf: 'stretch' }}>
               <CourseCard
                 course={item}
                 onPress={() => {
@@ -211,7 +211,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
           maxToRenderPerBatch={4}
           windowSize={3}
           removeClippedSubviews={Platform.OS === 'android'}
-          contentContainerStyle={{ paddingHorizontal: 16, gap: CARD_GAP, paddingBottom: 4 }}
+          contentContainerStyle={{ paddingHorizontal: 16, gap: CARD_GAP, paddingBottom: 4, alignItems: 'stretch' }}
           getItemLayout={(_, index) => ({
             length: cardSnap,
             offset: cardSnap * index,
@@ -229,7 +229,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
             indexRef.current = Math.round(offX / cardSnap);
           }}
           renderItem={({ item }) => (
-            <View style={{ width: cardWidth }}>
+            <View style={{ width: cardWidth, alignSelf: 'stretch' }}>
               <CourseCard
                 course={item}
                 onPress={() => {

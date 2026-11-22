@@ -700,9 +700,9 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                 />
               </View>
             ) : isTablet && deptItemCount === 2 && !isLandscape ? (
-              <View style={{ flexDirection: 'row', paddingHorizontal: 16, gap: 12 }}>
+              <View style={{ flexDirection: 'row', paddingHorizontal: 16, gap: 12, alignItems: 'stretch' }}>
                 {dept.courses.map((courseItem) => (
-                  <View key={`dept-course-${dept.id}-${courseItem.id}`} style={{ flex: 1 }}>
+                  <View key={`dept-course-${dept.id}-${courseItem.id}`} style={{ flex: 1, alignSelf: 'stretch' }}>
                     <CourseCard
                       course={courseItem}
                       isBookmarked={bookmarks.includes(courseItem.id)}
@@ -725,7 +725,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                 windowSize={3}
                 removeClippedSubviews={Platform.OS === 'android'}
                 renderItem={({ item: courseItem }) => (
-                  <View style={{ width: deptCardWidth }}>
+                  <View style={{ width: deptCardWidth, alignSelf: 'stretch' }}>
                     <CourseCard
                       course={courseItem}
                       isBookmarked={bookmarks.includes(courseItem.id)}
@@ -1552,10 +1552,12 @@ const styles = StyleSheet.create({
   gridColumnWrapper: {
     paddingHorizontal: 12,
     gap: 12,
+    alignItems: 'stretch',
   },
   gridCardItem: {
     flex: 1,
     paddingHorizontal: 0,
+    alignSelf: 'stretch',
   },
   coursesContainer: {
     paddingHorizontal: 16,
@@ -1669,6 +1671,7 @@ const styles = StyleSheet.create({
     paddingRight: 24,
     gap: 12,
     paddingBottom: 4,
+    alignItems: 'stretch',
   },
   deptCardItemWrap: {
     width: 250,

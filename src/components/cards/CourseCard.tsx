@@ -1,6 +1,6 @@
 import { SpringPressable } from '../common';
 import React from 'react';
-import { View, Text, StyleSheet, Image, Platform } from 'react-native';
+import { View, Text, StyleSheet, Image, Platform, StyleProp, ViewStyle } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Course } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
@@ -18,6 +18,7 @@ export interface CourseCardProps {
   isBookmarked?: boolean;
   isEnrolled?: boolean;
   progressPercent?: number;
+  style?: StyleProp<ViewStyle>;
 }
 
 const CourseCardComponent: React.FC<CourseCardProps> = ({
@@ -28,6 +29,7 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
   isBookmarked: propIsBookmarked,
   isEnrolled: propIsEnrolled,
   progressPercent: propProgressPercent,
+  style,
 }) => {
   const { colors } = useTheme();
   const { isBangla } = useLanguage();
@@ -79,6 +81,7 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
             borderColor: colors.border,
             shadowColor: colors.cardShadow,
           },
+          style,
         ]}
       >
         <SpringPressable
@@ -117,7 +120,7 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
           </View>
           <View style={styles.horizontalContent}>
             <Text
-              style={[styles.cardTitle, { color: colors.text, lineHeight: isBangla ? 23 : 21 }]}
+              style={[styles.horizontalCardTitle, { color: colors.text, lineHeight: isBangla ? 21 : 19 }]}
               numberOfLines={2}
             >
               {course.title}
@@ -196,9 +199,11 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
           borderColor: colors.border,
           shadowColor: colors.cardShadow,
         },
+        style,
       ]}
     >
       <SpringPressable
+        style={styles.cardPressable}
         onPress={onPress}
         onLongPress={onLongPress ? () => {
           triggerHaptic('medium');
@@ -233,31 +238,40 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
         </View>
 
         <View style={styles.content}>
-          <Text style={[styles.categoryTag, { color: colors.secondary }]}>
-            {course.level.toUpperCase()}
-          </Text>
-          <Text
-            style={[styles.cardTitle, { color: colors.text, lineHeight: isBangla ? 23 : 21 }]}
-            numberOfLines={2}
-          >
-            {course.title}
-          </Text>
-          <Text style={[styles.instructorName, { color: colors.textMuted }]} numberOfLines={1}>
-            {course.instructor?.name || 'Thriving Skills Instructor'}{course.instructor?.company ? ` • ${course.instructor.company}` : ''}
-          </Text>
+          <View style={styles.topInfo}>
+            <Text style={[styles.categoryTag, { color: colors.secondary }]}>
+              {course.level.toUpperCase()}
+            </Text>
+            <Text
+              style={[
+                styles.cardTitle,
+                {
+                  color: colors.text,
+                  lineHeight: isBangla ? 23 : 21,
+                  minHeight: isBangla ? 46 : 42,
+                },
+              ]}
+              numberOfLines={2}
+            >
+              {course.title}
+            </Text>
+            <Text style={[styles.instructorName, { color: colors.textMuted }]} numberOfLines={1}>
+              {course.instructor?.name || 'Thriving Skills Instructor'}{course.instructor?.company ? ` • ${course.instructor.company}` : ''}
+            </Text>
 
-          <View style={styles.statsRow}>
-            <View style={styles.ratingBadge}>
-              <Ionicons name="star" size={13} color={colors.starColor} />
-              <Text style={[styles.ratingNumber, { color: colors.text }]}>{course.rating}</Text>
-              <Text style={[styles.reviewsCount, { color: colors.textMuted }]}>
-                ({course.reviewsCount})
+            <View style={styles.statsRow}>
+              <View style={styles.ratingBadge}>
+                <Ionicons name="star" size={13} color={colors.starColor} />
+                <Text style={[styles.ratingNumber, { color: colors.text }]}>{course.rating}</Text>
+                <Text style={[styles.reviewsCount, { color: colors.textMuted }]}>
+                  ({course.reviewsCount})
+                </Text>
+              </View>
+              <Text style={[styles.dotSeparator, { color: colors.textMuted }]}>•</Text>
+              <Text style={[styles.durationText, { color: colors.textMuted }]} numberOfLines={1}>
+                {course.durationHours}h ({course.lecturesCount} lectures)
               </Text>
             </View>
-            <Text style={[styles.dotSeparator, { color: colors.textMuted }]}>•</Text>
-            <Text style={[styles.durationText, { color: colors.textMuted }]} numberOfLines={1}>
-              {course.durationHours}h ({course.lecturesCount} lectures)
-            </Text>
           </View>
 
           {isEnrolled ? (
@@ -320,6 +334,8 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
+    flex: 1,
+    height: '100%',
     borderRadius: 16,
     borderWidth: 1,
     overflow: 'hidden',
@@ -328,6 +344,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
+  },
+  cardPressable: {
+    flex: 1,
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
   },
   thumbWrapper: {
     position: 'relative',
@@ -370,37 +392,49 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   content: {
+    flex: 1,
     padding: 16,
     paddingTop: 13,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+  },
+  topInfo: {
+    flexShrink: 0,
   },
   categoryTag: {
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.5,
+    height: 16,
+    lineHeight: 16,
     marginBottom: 4,
   },
   cardTitle: {
     fontSize: 15,
     fontWeight: '700',
-    lineHeight: 21,
     marginBottom: 4,
     letterSpacing: -0.2,
   },
   instructorName: {
     fontSize: 12,
+    height: 16,
+    lineHeight: 16,
     marginBottom: 8,
   },
   statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap',
-    rowGap: 4,
+    flexWrap: 'nowrap',
+    height: 20,
     marginBottom: 12,
+    overflow: 'hidden',
   },
   ratingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    flexShrink: 0,
   },
   ratingNumber: {
     fontSize: 13,
@@ -413,6 +447,7 @@ const styles = StyleSheet.create({
   },
   dotSeparator: {
     marginHorizontal: 6,
+    flexShrink: 0,
   },
   durationText: {
     fontSize: 12,
@@ -423,9 +458,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    flexWrap: 'wrap',
-    gap: 8,
-    rowGap: 6,
+    flexWrap: 'nowrap',
+    height: 38,
+    minHeight: 38,
+    maxHeight: 38,
     paddingTop: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(150, 150, 150, 0.2)',
@@ -439,7 +475,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   currentPrice: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '900',
     fontVariant: ['tabular-nums'],
     letterSpacing: -0.3,
@@ -467,7 +503,7 @@ const styles = StyleSheet.create({
   certBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexShrink: 1,
+    flexShrink: 0,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
@@ -478,7 +514,13 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   progressContainer: {
-    marginTop: 4,
+    height: 38,
+    minHeight: 38,
+    maxHeight: 38,
+    justifyContent: 'center',
+    paddingTop: 4,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(150, 150, 150, 0.2)',
   },
   progressBarTrack: {
     height: 6,
@@ -508,6 +550,9 @@ const styles = StyleSheet.create({
   // Horizontal Card
   horizontalCard: {
     flexDirection: 'row',
+    minHeight: 112,
+    height: 112,
+    maxHeight: 116,
     borderRadius: 18,
     borderWidth: 1,
     overflow: 'hidden',
@@ -522,6 +567,8 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     padding: 12,
+    alignItems: 'center',
+    height: '100%',
   },
   horizontalThumbWrapper: {
     position: 'relative',
@@ -531,6 +578,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(0, 0, 0, 0.08)',
+    flexShrink: 0,
   },
   horizontalThumb: {
     width: '100%',
@@ -556,8 +604,14 @@ const styles = StyleSheet.create({
   horizontalContent: {
     flex: 1,
     marginLeft: 12,
-    justifyContent: 'center',
-    paddingRight: 36, // Ensures title & text never collide with bookmark button
+    justifyContent: 'space-between',
+    paddingRight: 36,
+    height: 78,
+  },
+  horizontalCardTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: -0.2,
   },
   bookmarkBtn: {
     position: 'absolute',
