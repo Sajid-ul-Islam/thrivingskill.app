@@ -301,10 +301,10 @@ export const DepartmentCategoryGrid: React.FC<DepartmentCategoryGridProps> = ({
         <View style={styles.headerRow}>
           <View style={styles.titleCol}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
-              {isBangla ? 'ক্যাটাগরি বিভাগ' : 'Department Categories'}
+              {isBangla ? 'ক্যাটাগরি' : 'Categories'}
             </Text>
             <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
-              {isBangla ? 'লাইভ সাইটের বিভাগ অনুযায়ী কোর্স ব্রাউজ করুন' : 'Browse courses by live site departments'}
+              {isBangla ? 'ক্যাটাগরি অনুযায়ী কোর্স ব্রাউজ করুন' : 'Browse courses by categories'}
             </Text>
           </View>
           {selectedDeptId && selectedDeptId !== 'all' && onReset && (
@@ -432,8 +432,8 @@ export const DepartmentCategoryGrid: React.FC<DepartmentCategoryGridProps> = ({
             accessibilityRole="button"
             accessibilityLabel={
               isExpanded
-                ? (isBangla ? 'বিভাগ সংক্ষেপ করুন' : 'Collapse department categories')
-                : (isBangla ? `সবগুলো (${validDepartments.length}) বিভাগ দেখুন` : `Explore all (${validDepartments.length}) departments`)
+                ? (isBangla ? 'ক্যাটাগরি সংক্ষেপ করুন' : 'Collapse categories')
+                : (isBangla ? `সবগুলো (${validDepartments.length}) ক্যাটাগরি দেখুন` : `Explore all (${validDepartments.length}) categories`)
             }
           >
             <Ionicons
@@ -445,7 +445,7 @@ export const DepartmentCategoryGrid: React.FC<DepartmentCategoryGridProps> = ({
             <Text style={[styles.expandToggleText, { color: colors.primary }]}>
               {isExpanded
                 ? (isBangla ? 'সংক্ষেপ করুন ▴' : 'Show Less ▴')
-                : (isBangla ? `সবগুলো (${validDepartments.length}) বিভাগ দেখুন ▾` : `Explore All (${validDepartments.length}) Departments ▾`)}
+                : (isBangla ? `সবগুলো (${validDepartments.length}) ক্যাটাগরি দেখুন ▾` : `Explore All (${validDepartments.length}) Categories ▾`)}
             </Text>
           </SpringPressable>
         </View>

@@ -24,6 +24,27 @@ export class LessonsService {
     if (cached) return cached;
 
     try {
+      // Strategy 1: Attempt Companion Plugin clean lesson stream endpoint
+      try {
+        const companionRaw = await HttpClient.get<any>(Endpoints.COMPANION.LESSON_DETAIL(lessonId));
+        if (companionRaw && companionRaw.id) {
+          const detail: LessonDetail = {
+            id: companionRaw.id,
+            name: cleanHtml(companionRaw.title),
+            content: cleanHtml(companionRaw.content),
+            videoUrl: companionRaw.video_url || undefined,
+            videoIntro: undefined,
+            videoType: companionRaw.video_type || 'none',
+            duration: companionRaw.duration,
+            completed: false,
+          };
+          await CacheManager.set(cacheKey, detail, 300000);
+          return detail;
+        }
+      } catch (companionErr) {
+        // Fallback to standard LearnPress endpoint
+      }
+
       const raw = await HttpClient.get<any>(Endpoints.LEARNPRESS.LESSON_DETAIL(lessonId));
       
       const videoIntro = raw.video_intro || raw.meta_data?._lp_lesson_video_intro || '';

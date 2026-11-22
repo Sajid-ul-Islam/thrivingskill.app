@@ -21,6 +21,7 @@ const SUITES = [
   { name: '11. Secure Hardware Token Storage Suite', script: 'scripts/test_secure_storage.js' },
   { name: '12. Department Category Grid & Icon Suite', script: 'scripts/test_department_grid.js' },
   { name: '13. Modern Accessibility Feedback Suite', script: 'scripts/test_feedback_suite.js' },
+  { name: '14. Dual-Environment (Live & Staging) Architecture Suite', script: 'scripts/verify_dual_environment.js' },
 ];
 
 console.log('====================================================');

@@ -2,7 +2,8 @@ import { HttpClient } from './httpClient';
 import { Endpoints } from './endpoints';
 import { CacheManager } from '../cache/cacheManager';
 import { Course, Category, Workshop } from '../../types';
-import { transformWpCourse, cleanHtml } from './transformers';
+import { transformWpCourse, transformCompanionCourse, cleanHtml } from './transformers';
+import { CompanionService } from './companionService';
 import { Env } from '../../config/env';
 import { INITIAL_COURSES_SEED } from '../../data/coursesCatalogSeed';
 
@@ -86,10 +87,29 @@ export class CoursesService {
    */
   static async getAllCourses(forceRefresh: boolean = false): Promise<Course[]> {
     const fetchAllFromNetwork = async (): Promise<Course[]> => {
+      // Strategy 1: Attempt high-speed Companion Plugin feed (/thrivingskill/v1/feed)
+      try {
+        const leanCourses = await CompanionService.fetchLeanFeed(100);
+        if (Array.isArray(leanCourses) && leanCourses.length > 0) {
+          if (Env.DEBUG_API) {
+            console.log(`[CoursesService] Loaded ${leanCourses.length} courses via TS Mobile Bridge feed.`);
+          }
+          const transformed = leanCourses.map(transformCompanionCourse);
+          await CacheManager.set(CoursesService.ALL_COURSES_CACHE_KEY, transformed, 1800000);
+          CoursesService.notifyCatalogUpdated();
+          return transformed;
+        }
+      } catch (companionErr) {
+        if (Env.DEBUG_API) {
+          console.warn('[CoursesService] Companion feed unavailable, proceeding with standard LearnPress sync:', companionErr);
+        }
+      }
+
       if (Env.DEBUG_API) {
         console.log('[CoursesService] Starting full catalog sync from LearnPress...');
       }
 
+      // Strategy 2: Standard LearnPress pagination sync
       // Step 1: Fetch Page 1 with per_page=100 and extract pagination metadata
       const p1 = await HttpClient.getWithMeta<any[]>(
         Endpoints.LEARNPRESS.COURSES,
