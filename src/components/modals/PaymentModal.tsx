@@ -285,7 +285,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   };
 
   // Handle message from WebView (Bi-directional field auto-detection & synchronization)
-  const handleWebViewMessage = (event: any) => {
+  const handleWebViewMessagePayload = (event: any) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
       if (data && data.type === 'CHECKOUT_FIELD_AUTO_DETECT') {
@@ -639,15 +639,17 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               });
             }
 
-            // Remove distracting desktop header/footer for clean mobile checkout UX
-            var masthead = document.getElementById('masthead') || document.querySelector('.site-header, header');
-            if (masthead) {
-              masthead.style.display = 'none';
-            }
-            var footer = document.querySelector('footer');
-            if (footer) {
-              footer.style.display = 'none';
-            }
+            // Remove distracting desktop header/footer and any breadcrumb/links for clean native drawer UX
+            var hideSelectors = [
+              '#masthead', '.site-header', 'header', '.header-wrap', '.main-header',
+              '#top-bar', '.top-bar', '#top-header', '.top-header',
+              '.breadcrumb', '.woocommerce-breadcrumb', '.entry-header', '.page-header',
+              'footer', '.site-footer', '#colophon'
+            ];
+            hideSelectors.forEach(function(sel) {
+              var els = document.querySelectorAll(sel);
+              els.forEach(function(el) { el.style.display = 'none'; });
+            });
 
             // Hide any SSLCommerz promotional links, logos, or external gateway banners
             var sslElements = document.querySelectorAll('a[href*="sslcommerz"], a[href*="sslcommerz.com"], .sslcommerz-logo, #sslcommerz_logo, .payment_method_sslcommerz a, img[src*="sslcommerz"]');
@@ -664,7 +666,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               style = document.createElement('style');
               style.id = 'ts-app-custom-style';
               style.innerHTML = \`
-                body { padding-top: 10px !important; margin: 0 !important; }
+                #masthead, .site-header, header, .header-wrap, .main-header, #top-bar, .top-bar, #top-header, .top-header, .breadcrumb, .woocommerce-breadcrumb, .entry-header, .page-header, footer, .site-footer, #colophon { display: none !important; }
+                body { padding-top: 6px !important; margin: 0 !important; }
                 .woocommerce-NoticeGroup, .woocommerce-error { margin: 10px !important; border-radius: 8px !important; }
                 #customer_details { margin-bottom: 20px !important; }
                 .woocommerce-checkout-review-order { background: #F8FAFC !important; border-radius: 14px !important; padding: 16px !important; border: 1px solid #E2E8F0 !important; }
@@ -705,104 +708,129 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   if (!course) return null;
 
-  // View Mode 1: Dedicated Full-Screen Secure In-App Checkout Browser
+  // View Mode 1: Native Bottom Drawer In-App Checkout Sheet
   if (checkoutWebUrl) {
     return (
       <Modal
         visible={visible}
+        transparent={true}
         animationType="slide"
         statusBarTranslucent={true}
         onRequestClose={handleBackOrExitCheckout}
       >
         <StatusBar style="light" />
-        <View style={[styles.fullScreenContainer, { backgroundColor: isDark ? '#0F172A' : '#F8FAFC' }]}>
-          {/* Native-Grade Top App Bar */}
-          <View style={[styles.fullScreenHeader, { paddingTop: Math.max(insets.top, 14) + 6 }]}>
-            <TouchableOpacity
-              style={styles.headerActionBtn}
-              onPress={handleBackOrExitCheckout}
-              accessibilityRole="button"
-              accessibilityLabel={canGoBack ? 'Go back' : 'Cancel checkout'}
-            >
-              <Ionicons name={canGoBack ? 'arrow-back' : 'close'} size={24} color="#FFFFFF" />
-            </TouchableOpacity>
+        <View style={styles.drawerBackdrop}>
+          {/* Dimmed backdrop area above the drawer - tap to dismiss */}
+          <TouchableOpacity
+            style={styles.drawerBackdropDismiss}
+            activeOpacity={1}
+            onPress={handleBackOrExitCheckout}
+            accessibilityRole="button"
+            accessibilityLabel="Dismiss checkout sheet"
+          />
 
-            <View style={styles.headerTitleCol}>
-              <View style={styles.headerSecurityRow}>
-                <Ionicons name="lock-closed" size={13} color="#10B981" />
-                <Text style={styles.headerSecurityText}>
-                  {isBangla ? 'নিরাপদ ২৫৬-বিট এসএসএল' : '256-Bit SSL Secured'}
-                </Text>
-              </View>
-              <Text style={styles.headerHostText} numberOfLines={1}>
-                {isBangla ? 'থ্রাইভিং স্কিলস চেকআউট' : 'Thriving Skills Checkout'}
-              </Text>
+          {/* Bottom Drawer Container */}
+          <View
+            style={[
+              styles.drawerSheet,
+              {
+                backgroundColor: isDark ? '#0F172A' : '#FFFFFF',
+                height: isTablet ? '88%' : '92%',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
+              },
+            ]}
+          >
+            {/* Tactile Drag Handle */}
+            <View style={styles.drawerHandleRow}>
+              <View style={[styles.drawerHandle, { backgroundColor: isDark ? '#334155' : '#CBD5E1' }]} />
             </View>
 
-            <View style={styles.headerRightActions}>
+            {/* Native Sheet Header - Clean, No Browser URL / Links */}
+            <View style={[styles.drawerHeader, { borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F1F5F9' }]}>
               <TouchableOpacity
-                style={styles.headerActionBtn}
+                style={[styles.drawerCloseBtn, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' }]}
+                onPress={handleBackOrExitCheckout}
+                accessibilityRole="button"
+                accessibilityLabel={canGoBack ? 'Go back' : 'Cancel checkout'}
+              >
+                <Ionicons name={canGoBack ? 'arrow-back' : 'close'} size={18} color={colors.text} />
+              </TouchableOpacity>
+
+              <View style={styles.drawerTitleCenter}>
+                <Text style={[styles.drawerTitleText, { color: colors.text }]} numberOfLines={1}>
+                  {isBangla ? 'নিরাপদ চেকআউট' : 'Complete Payment'}
+                </Text>
+                <View style={styles.drawerSecurityTag}>
+                  <Ionicons name="shield-checkmark" size={11} color="#10B981" />
+                  <Text style={styles.drawerSecurityTagText}>
+                    {isBangla ? 'SSL সুরক্ষিত গেটওয়ে' : 'Secure SSL Gateway'}
+                  </Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.drawerCloseBtn, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' }]}
                 onPress={() => webViewRef.current?.reload()}
                 accessibilityRole="button"
                 accessibilityLabel="Reload checkout"
               >
-                <Ionicons name="reload" size={19} color="#FFFFFF" />
+                <Ionicons name="reload" size={16} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
-          </View>
 
-          {/* Slim Animated Loading Progress Bar */}
-          {loadProgress < 1 && (
-            <View style={styles.progressBarTrack}>
-              <View
-                style={[
-                  styles.progressBarFill,
-                  { width: `${Math.max(8, Math.round(loadProgress * 100))}%` },
-                ]}
-              />
-            </View>
-          )}
-
-          {/* Full-Screen Web View */}
-          <WebView
-            ref={webViewRef}
-            source={{ uri: checkoutWebUrl }}
-            allowFileAccess={false}
-            allowUniversalAccessFromFileURLs={false}
-            onNavigationStateChange={handleWebViewNavChange}
-            onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
-            onLoadProgress={(syntheticEvent) => {
-              setLoadProgress(syntheticEvent.nativeEvent.progress);
-            }}
-            injectedJavaScript={injectedCheckoutJs}
-            onMessage={handleWebViewMessage}
-            startInLoadingState={true}
-            renderLoading={() => (
-              <View style={[styles.fullScreenLoading, { backgroundColor: isDark ? '#0F172A' : '#FFFFFF' }]}>
-                <View style={styles.loadingSpinnerBadge}>
-                  <ActivityIndicator size="large" color="#102F53" />
-                </View>
-                <Text style={[styles.loadingTitle, { color: colors.text }]}>
-                  {isBangla ? 'নিরাপদ চেকআউট লোড হচ্ছে...' : 'Connecting to Secure Checkout...'}
-                </Text>
-                <Text style={[styles.loadingSubtitle, { color: colors.textMuted }]}>
-                  {isBangla
-                    ? 'নিরাপদ পেমেন্ট গেটওয়ে প্রস্তুত হচ্ছে...'
-                    : 'Preparing Secure Payment Gateway, please wait...'}
-                </Text>
+            {/* Slim Animated Loading Progress Bar */}
+            {loadProgress < 1 && (
+              <View style={styles.progressBarTrack}>
+                <View
+                  style={[
+                    styles.progressBarFill,
+                    { width: `${Math.max(8, Math.round(loadProgress * 100))}%` },
+                  ]}
+                />
               </View>
             )}
-            style={styles.fullScreenWebView}
-            domStorageEnabled={true}
-            javaScriptEnabled={true}
-            sharedCookiesEnabled={true}
-            thirdPartyCookiesEnabled={true}
-            allowsBackForwardNavigationGestures={true}
-            originWhitelist={['https://*']}
-          />
 
-          {/* Bottom Safe Area Padding */}
-          <View style={{ height: insets.bottom, backgroundColor: isDark ? '#0F172A' : '#FFFFFF' }} />
+            {/* Embedded Web View inside Native Drawer */}
+            <WebView
+              ref={webViewRef}
+              source={{ uri: checkoutWebUrl }}
+              allowFileAccess={false}
+              allowUniversalAccessFromFileURLs={false}
+              onNavigationStateChange={handleWebViewNavChange}
+              onShouldStartLoadWithRequest={handleShouldStartLoadWithRequest}
+              onLoadProgress={(syntheticEvent) => {
+                setLoadProgress(syntheticEvent.nativeEvent.progress);
+              }}
+              injectedJavaScript={injectedCheckoutJs}
+              onMessage={handleWebViewMessagePayload}
+              startInLoadingState={true}
+              renderLoading={() => (
+                <View style={[styles.drawerLoadingState, { backgroundColor: isDark ? '#0F172A' : '#FFFFFF' }]}>
+                  <View style={styles.drawerLoadingIconWrap}>
+                    <ActivityIndicator size="large" color="#FFB606" />
+                  </View>
+                  <Text style={[styles.drawerLoadingTitle, { color: colors.text }]}>
+                    {isBangla ? 'নিরাপদ চেকআউট লোড হচ্ছে...' : 'Connecting to Secure Checkout...'}
+                  </Text>
+                  <Text style={[styles.drawerLoadingSubtitle, { color: colors.textMuted }]}>
+                    {isBangla
+                      ? 'নিরাপদ পেমেন্ট গেটওয়ে প্রস্তুত হচ্ছে...'
+                      : 'Preparing Secure Payment Gateway, please wait...'}
+                  </Text>
+                </View>
+              )}
+              style={styles.drawerWebView}
+              domStorageEnabled={true}
+              javaScriptEnabled={true}
+              sharedCookiesEnabled={true}
+              thirdPartyCookiesEnabled={true}
+              allowsBackForwardNavigationGestures={true}
+              originWhitelist={['https://*']}
+            />
+
+            {/* Bottom Safe Area Padding */}
+            <View style={{ height: Math.max(insets.bottom, 16), backgroundColor: isDark ? '#0F172A' : '#FFFFFF' }} />
+          </View>
         </View>
       </Modal>
     );
@@ -1606,7 +1634,126 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 };
 
 const styles = StyleSheet.create({
-  // Dedicated Full-Screen Checkout Viewer Styles
+  // Native Bottom Drawer Checkout Viewer Styles
+  drawerBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    justifyContent: 'flex-end',
+  },
+  drawerBackdropDismiss: {
+    flex: 1,
+  },
+  drawerSheet: {
+    width: '100%',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderTopWidth: 1,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 18,
+    elevation: 24,
+  },
+  drawerHandleRow: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 10,
+    paddingBottom: 6,
+  },
+  drawerHandle: {
+    width: 44,
+    height: 5,
+    borderRadius: 3,
+  },
+  drawerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+  },
+  drawerCloseBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  drawerTitleCenter: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 8,
+  },
+  drawerTitleText: {
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: -0.2,
+  },
+  drawerSecurityTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  drawerSecurityTagText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#10B981',
+  },
+  progressBarTrack: {
+    height: 2.5,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    width: '100%',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#FFB606',
+  },
+  drawerWebView: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  drawerLoadingState: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 20,
+    paddingHorizontal: 24,
+  },
+  drawerLoadingIconWrap: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#102F53',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  drawerLoadingTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  drawerLoadingSubtitle: {
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+
+  // Legacy fullScreen aliases
   fullScreenContainer: {
     flex: 1,
     width: '100%',
@@ -1618,8 +1765,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   headerActionBtn: {
     width: 40,
@@ -1646,24 +1791,13 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '800',
-    marginTop: 1,
   },
   headerRightActions: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  progressBarTrack: {
-    height: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    width: '100%',
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: '#FFB606',
-  },
   fullScreenWebView: {
     flex: 1,
-    backgroundColor: 'transparent',
   },
   fullScreenLoading: {
     position: 'absolute',
@@ -1673,33 +1807,19 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 20,
-    paddingHorizontal: 24,
   },
   loadingSpinnerBadge: {
     width: 64,
     height: 64,
     borderRadius: 32,
     backgroundColor: '#102F53',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
   },
   loadingTitle: {
     fontSize: 16,
     fontWeight: '800',
-    textAlign: 'center',
-    marginBottom: 6,
   },
   loadingSubtitle: {
     fontSize: 13,
-    textAlign: 'center',
-    lineHeight: 19,
   },
 
   // Bottom Sheet Modal Styles
