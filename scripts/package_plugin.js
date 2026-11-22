@@ -26,18 +26,10 @@ if (fs.existsSync(outputZip)) {
 }
 
 try {
-  // Use PowerShell Compress-Archive on Windows
-  const psCommand = `powershell -NoProfile -Command "Compress-Archive -Path '${pluginDir}' -DestinationPath '${outputZip}' -Force"`;
-  execSync(psCommand, { stdio: 'inherit' });
-
-  if (fs.existsSync(outputZip)) {
-    const stats = fs.statSync(outputZip);
-    console.log(`✅ Successfully packaged plugin!`);
-    console.log(`Size: ${(stats.size / 1024).toFixed(2)} KB`);
-    console.log(`Ready to install via WP Admin -> Plugins -> Add New -> Upload Plugin.`);
-  } else {
-    throw new Error('Zip file was not generated.');
-  }
+  // Use Python script to guarantee POSIX forward slashes ('/') in the zip archive
+  // This avoids Windows backslash directory separator bugs on Linux WordPress servers
+  const pyScript = path.resolve(__dirname, 'package_plugin.py');
+  execSync(`python "${pyScript}"`, { stdio: 'inherit' });
 } catch (err) {
   console.error('❌ Packaging failed:', err.message);
   process.exit(1);
