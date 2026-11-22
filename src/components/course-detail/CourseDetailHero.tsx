@@ -67,7 +67,7 @@ export const CourseDetailHero: React.FC<CourseDetailHeroProps> = ({
   return (
     <View style={styles.container}>
       {/* Thumbnail Hero with Preview Button */}
-      <View style={[styles.heroWrapper, isTablet && { height: 360 }]}>
+      <View style={[styles.heroWrapper, isTablet && { maxHeight: 380, aspectRatio: 16 / 9 }]}>
         <Image
           source={{ uri: course.thumbnail, cache: 'force-cache' }}
           style={styles.heroThumbnail}
@@ -338,8 +338,11 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   heroWrapper: {
-    height: 220,
+    width: '100%',
+    aspectRatio: 4 / 3,
     position: 'relative',
+    backgroundColor: '#000000',
+    overflow: 'hidden',
   },
   heroThumbnail: {
     width: '100%',

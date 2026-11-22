@@ -1033,8 +1033,8 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   cardImage: {
-    height: 120,
     width: '100%',
+    aspectRatio: 4 / 3,
     resizeMode: 'cover',
   },
   cardBody: {

@@ -106,8 +106,9 @@ const styles = StyleSheet.create({
   },
   imageWrapper: {
     position: 'relative',
-    height: 130,
     width: '100%',
+    aspectRatio: 16 / 10,
+    overflow: 'hidden',
   },
   thumbnail: {
     width: '100%',

@@ -6,6 +6,7 @@ import { useTheme } from '../../context/ThemeContext';
 interface SkeletonBoxProps {
   width?: DimensionValue;
   height?: DimensionValue;
+  aspectRatio?: number;
   borderRadius?: number;
   style?: ViewStyle;
 }
@@ -13,6 +14,7 @@ interface SkeletonBoxProps {
 export const SkeletonBox: React.FC<SkeletonBoxProps> = ({
   width = '100%',
   height = 16,
+  aspectRatio,
   borderRadius = 8,
   style,
 }) => {
@@ -44,7 +46,8 @@ export const SkeletonBox: React.FC<SkeletonBoxProps> = ({
       style={[
         {
           width,
-          height,
+          height: aspectRatio !== undefined ? undefined : height,
+          aspectRatio,
           borderRadius,
           backgroundColor: baseColor,
           overflow: 'hidden',
@@ -78,7 +81,7 @@ export const CourseCardSkeleton: React.FC<{ horizontal?: boolean }> = ({ horizon
   if (horizontal) {
     return (
       <View style={[styles.horizontalCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
-        <SkeletonBox width={120} height={100} borderRadius={12} />
+        <SkeletonBox width={104} height={78} borderRadius={12} />
         <View style={styles.horizontalInfo}>
           <SkeletonBox width={60} height={14} borderRadius={4} style={{ marginBottom: 6 }} />
           <SkeletonBox width="90%" height={16} borderRadius={4} style={{ marginBottom: 6 }} />
@@ -94,7 +97,7 @@ export const CourseCardSkeleton: React.FC<{ horizontal?: boolean }> = ({ horizon
 
   return (
     <View style={[styles.verticalCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
-      <SkeletonBox width="100%" height={140} borderRadius={12} style={{ marginBottom: 12 }} />
+      <SkeletonBox width="100%" aspectRatio={4 / 3} borderRadius={12} style={{ marginBottom: 12 }} />
       <View style={{ paddingHorizontal: 4 }}>
         <SkeletonBox width={75} height={16} borderRadius={4} style={{ marginBottom: 8 }} />
         <SkeletonBox width="100%" height={18} borderRadius={4} style={{ marginBottom: 6 }} />

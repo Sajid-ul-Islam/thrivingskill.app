@@ -75,7 +75,10 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
           <View style={[styles.horizontalThumbWrapper, { backgroundColor: colors.surfaceSubtle }]}>
             <Image
               source={thumbError || !course.thumbnail ? require('../../../assets/icon.png') : { uri: course.thumbnail, cache: 'force-cache' }}
-              style={styles.horizontalThumb}
+              style={[
+                styles.horizontalThumb,
+                (thumbError || !course.thumbnail) && { resizeMode: 'contain' }
+              ]}
               fadeDuration={150}
               onError={() => setThumbError(true)}
             />
@@ -183,7 +186,10 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
         <View style={[styles.thumbWrapper, { backgroundColor: colors.surfaceSubtle }]}>
           <Image
             source={thumbError || !course.thumbnail ? require('../../../assets/icon.png') : { uri: course.thumbnail, cache: 'force-cache' }}
-            style={styles.thumbnail}
+            style={[
+              styles.thumbnail,
+              (thumbError || !course.thumbnail) && { resizeMode: 'contain' }
+            ]}
             fadeDuration={150}
             onError={() => setThumbError(true)}
           />
@@ -299,10 +305,11 @@ const styles = StyleSheet.create({
   },
   thumbWrapper: {
     position: 'relative',
-    height: 160,
     width: '100%',
+    aspectRatio: 4 / 3,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: 'rgba(0, 0, 0, 0.08)',
+    overflow: 'hidden',
   },
   thumbnail: {
     width: '100%',
@@ -492,7 +499,7 @@ const styles = StyleSheet.create({
   horizontalThumbWrapper: {
     position: 'relative',
     width: 104,
-    height: 92,
+    height: 78,
     borderRadius: 12,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
