@@ -16,6 +16,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { PushNotificationService, InAppNotification } from '../../services/notifications/pushNotificationService';
 import { triggerHaptic } from '../../utils/haptics';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
+import { getSafeImageSource } from '../../utils/imageUtils';
 
 interface IosActionNotificationPanelProps {
   onNavigateToCourse?: (courseId: string) => void;
@@ -31,6 +32,7 @@ export const IosActionNotificationPanel: React.FC<IosActionNotificationPanelProp
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const [activeNotification, setActiveNotification] = useState<InAppNotification | null>(null);
+  const [thumbError, setThumbError] = useState(false);
 
   const translateY = useRef(new Animated.Value(-240)).current;
   const opacity = useRef(new Animated.Value(0)).current;
@@ -45,6 +47,7 @@ export const IosActionNotificationPanel: React.FC<IosActionNotificationPanelProp
       }
 
       setActiveNotification(notif);
+      setThumbError(false);
       triggerHaptic('success');
 
       // Animate entry from top
@@ -208,11 +211,13 @@ export const IosActionNotificationPanel: React.FC<IosActionNotificationPanelProp
           accessibilityRole="button"
           accessibilityLabel={`${title}, ${body}`}
         >
-          {thumbnail ? (
+          {thumbnail && !thumbError ? (
             <Image
-              source={{ uri: thumbnail }}
+              source={getSafeImageSource(thumbnail)}
               style={styles.thumbnail}
               resizeMode="cover"
+              onError={() => setThumbError(true)}
+              {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
             />
           ) : (
             <View style={[styles.fallbackIcon, { backgroundColor: badge.bg }]}>

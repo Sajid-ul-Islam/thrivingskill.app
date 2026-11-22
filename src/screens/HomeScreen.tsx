@@ -43,6 +43,7 @@ import { RootTab } from '../types';
 import { typography, MIN_TOUCH_TARGET } from '../theme/typography';
 import { shape } from '../theme/shapes';
 import type { Course } from '../types';
+import { getSafeImageSource } from '../utils/imageUtils';
 
 // ─── Category Carousel Row ───────────────────────────────────────────────────
 
@@ -283,6 +284,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const [showHeaderSearch, setShowHeaderSearch] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
   const scrollViewRef = useRef<React.ElementRef<typeof ScrollView> | null>(null);
 
   const { isBangla } = useLanguage();
@@ -305,6 +307,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const { subscriptionTier } = useSaaS();
   const { lastWatchedVideo, playVideo } = useYouTube();
   const { user, isAuthenticated, isGuest, setAuthModalVisible } = useAuth();
+
+  useEffect(() => {
+    setAvatarError(false);
+  }, [user?.avatar]);
 
   // Dynamic Time-aware greeting
   const greetingInfo = useMemo(() => {
@@ -593,10 +599,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   haptic="light"
                   activeScale={0.92}
                 >
-                  {user?.avatar ? (
+                  {user?.avatar && !avatarError ? (
                     <Image
-                      source={{ uri: user.avatar }}
+                      source={getSafeImageSource(user.avatar)}
                       style={styles.learnerAvatar}
+                      onError={() => setAvatarError(true)}
+                      {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
                     />
                   ) : (
                     <View
@@ -783,10 +791,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   haptic="light"
                   activeScale={0.92}
                 >
-                  {user?.avatar ? (
+                  {user?.avatar && !avatarError ? (
                     <Image
-                      source={{ uri: user.avatar }}
+                      source={getSafeImageSource(user.avatar)}
                       style={styles.learnerAvatar}
+                      onError={() => setAvatarError(true)}
+                      {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
                     />
                   ) : (
                     <View

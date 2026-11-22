@@ -1,11 +1,12 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Animated, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import { useYouTube } from '../../context/YouTubeContext';
 import { SpringPressable } from '../common/SpringPressable';
 import { shape } from '../../theme/shapes';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
+import { getSafeImageSource } from '../../utils/imageUtils';
 
 interface YouTubeMiniPlayerProps {
   bottomOffset?: number;
@@ -89,7 +90,11 @@ export const YouTubeMiniPlayer: React.FC<YouTubeMiniPlayerProps> = ({ bottomOffs
         accessibilityLabel={`Resume watching ${activeVideo.title}`}
       >
         <View style={styles.thumbnailWrapper}>
-          <Image source={{ uri: activeVideo.thumbnail }} style={styles.thumbnail} />
+          <Image
+            source={getSafeImageSource(activeVideo.thumbnail)}
+            style={styles.thumbnail}
+            {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+          />
           <View style={styles.playDot}>
             <Ionicons name="play" size={10} color="#FFFFFF" />
           </View>

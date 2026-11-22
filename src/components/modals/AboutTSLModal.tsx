@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Image,
   Linking,
+  Platform,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,6 +20,7 @@ import { triggerHaptic } from '../../utils/haptics';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
 import { useResponsive } from '../../theme/responsive';
+import { getSafeImageSource } from '../../utils/imageUtils';
 
 import { LegalPolicyModal, LegalTabKey } from './LegalPolicyModal';
 
@@ -658,9 +660,10 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                 >
                   <View style={styles.leaderAvatarContainer}>
                     <Image
-                      source={leader.localAvatar || { uri: leader.webAvatar }}
+                      source={leader.localAvatar || getSafeImageSource(leader.webAvatar)}
                       style={styles.leaderAvatar}
                       resizeMode="cover"
+                      {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
                     />
                     {leader.isFounder ? (
                       <View style={styles.founderStarBadge}>

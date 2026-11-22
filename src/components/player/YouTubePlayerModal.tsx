@@ -23,6 +23,7 @@ import { YouTubeVideo, YOUTUBE_CHANNEL } from '../../data/youtubeVideos';
 import { findRelatedCourse } from '../../services/youtubeService';
 import { triggerHaptic } from '../../utils/haptics';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
+import { getSafeImageSource } from '../../utils/imageUtils';
 import { shape } from '../../theme/shapes';
 
 interface YouTubePlayerModalProps {
@@ -520,7 +521,11 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
                   accessibilityLabel={`Play masterclass: ${rel.title}`}
                 >
                   <View style={styles.relatedThumbContainer}>
-                    <Image source={{ uri: rel.thumbnail }} style={styles.relatedThumb} />
+                    <Image
+                      source={getSafeImageSource(rel.thumbnail)}
+                      style={styles.relatedThumb}
+                      {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+                    />
                     {rel.duration ? (
                       <View style={styles.relatedDurationBadge}>
                         <Text style={styles.durationBadgeText}>{rel.duration}</Text>

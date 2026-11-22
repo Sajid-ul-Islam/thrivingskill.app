@@ -20,6 +20,7 @@ import { UserProfile } from '../../services/api/userService';
 import { triggerHaptic } from '../../utils/haptics';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
 import { useResponsive } from '../../theme/responsive';
+import { getSafeImageSource } from '../../utils/imageUtils';
 
 export type SettingsTabId = 'general' | 'avatar' | 'cover' | 'password' | 'privacy';
 
@@ -486,7 +487,11 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
               <View style={{ paddingVertical: 18, alignItems: 'center' }}>
                 <View style={[styles.avatarWrapBig, { borderColor: colors.primary }]}>
                   {avatarUrl || user?.avatar ? (
-                    <Image source={{ uri: avatarUrl || user?.avatar }} style={styles.avatarImgBig} />
+                    <Image
+                      source={getSafeImageSource(avatarUrl || user?.avatar)}
+                      style={styles.avatarImgBig}
+                      {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+                    />
                   ) : (
                     <Ionicons name="person" size={54} color={colors.primary} />
                   )}
@@ -521,7 +526,11 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                           accessibilityRole="button"
                           accessibilityLabel={p.label}
                         >
-                          <Image source={{ uri: p.uri }} style={styles.presetAvatarImg} />
+                          <Image
+                            source={getSafeImageSource(p.uri)}
+                            style={styles.presetAvatarImg}
+                            {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+                          />
                           {isSelected && (
                             <View style={[styles.presetCheckmark, { backgroundColor: colors.primary }]}>
                               <Ionicons name="checkmark" size={12} color="#FFFFFF" />
@@ -591,9 +600,10 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                 <View style={[styles.coverPreviewCard, { backgroundColor: '#102F53', overflow: 'hidden' }]}>
                   {coverPhotoUrl || user?.cover_photo ? (
                     <Image
-                      source={{ uri: coverPhotoUrl || user?.cover_photo }}
+                      source={getSafeImageSource(coverPhotoUrl || user?.cover_photo)}
                       style={StyleSheet.absoluteFill}
                       resizeMode="cover"
+                      {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
                     />
                   ) : null}
                   <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(16, 47, 83, 0.4)' }]} />
@@ -628,7 +638,11 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                           accessibilityRole="button"
                           accessibilityLabel={p.label}
                         >
-                          <Image source={{ uri: p.uri }} style={styles.presetCoverImg} />
+                          <Image
+                            source={getSafeImageSource(p.uri)}
+                            style={styles.presetCoverImg}
+                            {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+                          />
                           <View style={styles.presetCoverOverlay}>
                             <Text style={styles.presetCoverText} numberOfLines={1}>{p.label}</Text>
                           </View>

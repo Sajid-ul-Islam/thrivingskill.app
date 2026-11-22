@@ -20,6 +20,7 @@ import { useLanguage } from '../../context/LanguageContext';
 import { triggerHaptic } from '../../utils/haptics';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
+import { getSafeImageSource } from '../../utils/imageUtils';
 
 export interface QnAItem {
   id: string;
@@ -257,7 +258,11 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
               >
                 {/* Student Header */}
                 <View style={styles.authorRow}>
-                  <Image source={{ uri: authorImgUri }} style={styles.authorAvatar} />
+                  <Image
+                    source={getSafeImageSource(authorImgUri)}
+                    style={styles.authorAvatar}
+                    {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+                  />
               <View style={styles.authorMeta}>
                 <Text style={[styles.authorName, { color: colors.text }]}>{item.authorName}</Text>
                 <Text style={[styles.questionDate, { color: colors.textMuted }]}>
@@ -313,14 +318,14 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
               >
                 <View style={styles.instructorHeaderRow}>
                   <Image
-                    source={{
-                      uri:
-                        item.answer.instructorAvatar &&
+                    source={getSafeImageSource(
+                      item.answer.instructorAvatar &&
                         !item.answer.instructorAvatar.includes('unsplash.com')
-                          ? item.answer.instructorAvatar
-                          : 'https://secure.gravatar.com/avatar/?d=mp&s=300',
-                    }}
+                        ? item.answer.instructorAvatar
+                        : 'https://secure.gravatar.com/avatar/?d=mp&s=300'
+                    )}
                     style={styles.instructorAvatar}
+                    {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
                   />
                   <View style={{ flex: 1 }}>
                     <View style={styles.verifiedRow}>

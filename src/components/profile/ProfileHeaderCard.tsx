@@ -1,8 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { UserProfile } from '../../services/api/userService';
 import { Env } from '../../config/env';
+import { getSafeImageSource } from '../../utils/imageUtils';
 
 interface ProfileHeaderCardProps {
   user: UserProfile | null;
@@ -39,6 +40,17 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
     customName ||
     (isBangla ? 'অতিথি শিক্ষার্থী' : 'Guest Learner');
 
+  const [avatarError, setAvatarError] = useState(false);
+  const [coverError, setCoverError] = useState(false);
+
+  useEffect(() => {
+    setAvatarError(false);
+  }, [avatarUri]);
+
+  useEffect(() => {
+    setCoverError(false);
+  }, [user?.cover_photo]);
+
   return (
     <View
       style={[
@@ -46,20 +58,27 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
         { backgroundColor: colors.surfaceCard, borderColor: colors.border },
       ]}
     >
-      {user?.cover_photo ? (
+      {user?.cover_photo && !coverError ? (
         <View style={styles.coverPhotoContainer}>
           <Image
-            source={{ uri: user.cover_photo }}
+            source={getSafeImageSource(user.cover_photo)}
             style={styles.coverPhotoImage}
             resizeMode="cover"
+            onError={() => setCoverError(true)}
+            {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
           />
           <View style={styles.coverPhotoOverlay} />
         </View>
       ) : null}
 
       <View style={styles.contentRow}>
-        {avatarUri ? (
-          <Image source={{ uri: avatarUri }} style={styles.avatar} />
+        {avatarUri && !avatarError ? (
+          <Image
+            source={getSafeImageSource(avatarUri)}
+            style={styles.avatar}
+            onError={() => setAvatarError(true)}
+            {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+          />
         ) : (
           <View
             style={[
