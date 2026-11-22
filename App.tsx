@@ -69,6 +69,7 @@ import { TelemetryService } from './src/services/telemetry/telemetryService';
 import { PushNotificationService } from './src/services/notifications/pushNotificationService';
 import { HabitNotificationQueue } from './src/services/notifications/habitNotificationQueue';
 import { StorageSanitizer } from './src/services/storage/storageSanitizer';
+import { Env } from './src/config/env';
 import { SPLASH_HERO_IMAGE_URI } from './src/data/splashHeroData';
 
 const SPLASH_HERO_SOURCE = { uri: SPLASH_HERO_IMAGE_URI };
@@ -245,6 +246,7 @@ const MainAppContent: React.FC = () => {
 
   // Option D: Telemetry & Push Notification Infrastructure Initialization
   useEffect(() => {
+    Env.init().catch(() => {});
     TelemetryService.initialize();
     PushNotificationService.registerForPushNotifications();
     HabitNotificationQueue.resetStartupSession();

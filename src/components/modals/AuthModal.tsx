@@ -45,7 +45,10 @@ import { useResponsive } from '../../theme/responsive';
 export function parseResetPasswordUrl(url: string): { key: string; login: string } | null {
   if (!url) return null;
   try {
-    const cleanUrl = url.trim().replace(/^thrivingskill:\/\//i, 'https://thrivingskill.com/');
+    let cleanUrl = url.trim().replace(/^thrivingskill:\/\//i, `${Env.SITE_URL}/`);
+    if (cleanUrl.startsWith('/')) {
+      cleanUrl = `${Env.SITE_URL}${cleanUrl}`;
+    }
     const parsed = new URL(cleanUrl);
     const key = parsed.searchParams.get('key') || parsed.searchParams.get('rp_key');
     const login =
@@ -559,10 +562,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               allowUniversalAccessFromFileURLs={false}
               onShouldStartLoadWithRequest={(request) => {
                 const url = (request.url || '').toLowerCase();
-                // Restrict embedded auth webview navigation strictly to thrivingskill domain
+                // Restrict embedded auth webview navigation strictly to authorized Thriving Skills domains
                 return (
                   url.startsWith('https://thrivingskill.com') ||
                   url.startsWith('https://www.thrivingskill.com') ||
+                  url.startsWith('https://staging.thrivingskill.com') ||
+                  (Env.SITE_URL ? url.startsWith(Env.SITE_URL.toLowerCase()) : false) ||
                   url.startsWith('about:blank')
                 );
               }}

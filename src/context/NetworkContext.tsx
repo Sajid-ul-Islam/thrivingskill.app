@@ -86,7 +86,7 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
         reachabilityTimerRef.current = null;
       }
 
-      // 2. Secondary fallback ping to SITE_URL before concluding complete offline state
+      // 2. Secondary fallback ping to SITE_URL, then alternate fallback server before concluding offline state
       try {
         const fallbackController = new AbortController();
         const fallbackTimer: ReturnType<typeof setTimeout> = setTimeout(() => {
@@ -95,12 +95,25 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
           } catch {}
         }, 4000);
 
-        const fallbackRes = await fetch(Env.SITE_URL, {
-          method: 'HEAD',
-          signal: fallbackController.signal,
-        });
+        let fallbackOk = false;
+        try {
+          const fallbackRes = await fetch(Env.SITE_URL, {
+            method: 'HEAD',
+            signal: fallbackController.signal,
+          });
+          fallbackOk = fallbackRes.status >= 200 && fallbackRes.status < 400;
+        } catch {
+          // If primary site URL failed, test connectivity against alternate fallback host
+          try {
+            const altRes = await fetch(Env.FALLBACK_SITE_URL, {
+              method: 'HEAD',
+              signal: fallbackController.signal,
+            });
+            fallbackOk = altRes.status >= 200 && altRes.status < 400;
+          } catch {}
+        }
+
         clearTimeout(fallbackTimer);
-        const fallbackOk = fallbackRes.status >= 200 && fallbackRes.status < 400;
         if (isMountedRef.current) {
           setIsOffline(!fallbackOk);
           if (fallbackOk) setLastErrorMessage(null);

@@ -45,6 +45,8 @@ import { LocalSearchModal } from '../components/modals/LocalSearchModal';
 import { Course, Certificate, LearnPressCourseFilter } from '../types';
 import { UserService } from '../services/api/userService';
 import { CacheManager } from '../services/cache/cacheManager';
+import { CoursesService } from '../services/api/coursesService';
+import { Env, ApiEnvironment } from '../config/env';
 import {
   ProfileHeaderCard,
   ProfileLearningPortfolio,
@@ -164,6 +166,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [customName, setCustomName] = useState(user?.name || user?.displayName || user?.username || '');
   const [customBio, setCustomBio] = useState(user?.description || '');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [serverEnv, setServerEnv] = useState<ApiEnvironment>(Env.currentEnvironment);
+
+  React.useEffect(() => {
+    const unsub = Env.subscribeEnvironment((newEnv) => {
+      setServerEnv(newEnv);
+    });
+    return unsub;
+  }, []);
 
   React.useEffect(() => {
     if (user) {
