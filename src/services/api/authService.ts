@@ -84,13 +84,28 @@ export class AuthService {
     password: string;
     confirm_password?: string;
     phone?: string;
+    name?: string;
+    first_name?: string;
+    last_name?: string;
   }): Promise<any> {
+    const nameParts = (userData.name || '').trim().split(/\s+/);
+    const firstName = userData.first_name || nameParts[0] || '';
+    const lastName = userData.last_name || nameParts.slice(1).join(' ') || '';
+
     const payload: Record<string, any> = {
       username: userData.username.trim(),
       email: userData.email.trim(),
       password: userData.password,
       confirm_password: userData.confirm_password || userData.password,
     };
+
+    if (firstName) payload.first_name = firstName;
+    if (lastName) payload.last_name = lastName;
+    if (userData.name) {
+      payload.name = userData.name.trim();
+      payload.display_name = userData.name.trim();
+    }
+
     if (userData.phone) {
       payload.phone = userData.phone;
       payload.phone_number = userData.phone;
@@ -101,9 +116,16 @@ export class AuthService {
         'Phone Number': userData.phone,
       };
     }
-    return HttpClient.post(Endpoints.LEARNPRESS.TOKEN_REGISTER, payload, {
-      skipAuth: true,
-    });
+
+    try {
+      return await HttpClient.post(Endpoints.COMPANION.REGISTER, payload, {
+        skipAuth: true,
+      });
+    } catch {
+      return await HttpClient.post(Endpoints.LEARNPRESS.TOKEN_REGISTER, payload, {
+        skipAuth: true,
+      });
+    }
   }
 
   /**

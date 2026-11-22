@@ -60,7 +60,7 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<void>;
   loginWithPhone: (phone: string, otp: string, fullName?: string) => Promise<void>;
   sendPhoneOtp: (phone: string) => Promise<{ success: boolean; message: string; testOtp?: string }>;
-  register: (username: string, email: string, password: string, phone?: string) => Promise<void>;
+  register: (username: string, email: string, password: string, phone?: string, fullName?: string) => Promise<void>;
   confirmPasswordReset: (login: string, key: string, newPassword: string) => Promise<void>;
   updateUserProfile: (updates: Partial<UserProfile>, syncToServer?: boolean) => Promise<void>;
   refreshUserProfile: () => Promise<UserProfile | null>;
@@ -321,12 +321,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return sendWpPhoneOtp(phone);
   };
 
-  const register = async (username: string, email: string, password: string, phone?: string) => {
+  const register = async (username: string, email: string, password: string, phone?: string, fullName?: string) => {
     setIsLoading(true);
     try {
-      await registerWpUser({ username, email, password, confirm_password: password, phone });
+      await registerWpUser({
+        username,
+        email,
+        password,
+        confirm_password: password,
+        phone,
+        name: fullName,
+      });
       // Immediately log in new user
       await login(username, password);
+      // Ensure user profile locally reflects their chosen full name and phone number
+      if (fullName || phone) {
+        await updateUserProfile({
+          name: fullName || undefined,
+          phone: phone || undefined,
+        }, false);
+      }
     } finally {
       setIsLoading(false);
     }

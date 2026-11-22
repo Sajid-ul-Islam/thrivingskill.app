@@ -79,5 +79,6 @@ export const Endpoints = {
     FEED: '/thrivingskill/v1/feed',
     LESSON_DETAIL: (id: string | number) => `/thrivingskill/v1/lessons/${id}`,
     REGISTER_PUSH_TOKEN: '/thrivingskill/v1/register-push-token',
+    REGISTER: '/thrivingskill/v1/register',
   },
 } as const;

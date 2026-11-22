@@ -90,6 +90,9 @@ export async function registerWpUser(userData: {
   password: string;
   confirm_password?: string;
   phone?: string;
+  name?: string;
+  first_name?: string;
+  last_name?: string;
 }): Promise<any> {
   return AuthService.register(userData);
 }

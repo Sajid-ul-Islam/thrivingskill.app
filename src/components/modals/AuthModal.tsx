@@ -19,6 +19,7 @@ import { WebView } from 'react-native-webview';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 import { useFeedback } from '../../context/FeedbackContext';
 import { triggerHaptic } from '../../utils/haptics';
@@ -88,12 +89,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   dismissible,
 }) => {
   const { colors, isDark } = useTheme();
+  const { isBangla } = useLanguage();
   const insets = useSafeAreaInsets();
   const { isTablet } = useResponsive();
   const { showToast } = useFeedback();
   const {
     isAuthenticated,
     login,
+    register,
     confirmPasswordReset,
     continueAsGuest,
     isLoading,
@@ -114,6 +117,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
+  // 4-Field Direct Registration State
+  const [regFullName, setRegFullName] = useState('');
+  const [regEmail, setRegEmail] = useState('');
+  const [regPhone, setRegPhone] = useState('');
+  const [regPassword, setRegPassword] = useState('');
+  const [showRegPassword, setShowRegPassword] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
+
   // Set Password State (For email verification & password setup)
   const [resetLogin, setResetLogin] = useState(initialResetLogin || '');
   const [resetKey, setResetKey] = useState(initialResetKey || '');
@@ -127,6 +138,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const usernameInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
   const passwordInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
   const forgotEmailInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
+  const regNameInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
+  const regEmailInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
+  const regPhoneInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
+  const regPasswordInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
   const resetLoginInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
   const resetKeyInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
   const newPasswordInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
@@ -271,6 +286,122 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       } else {
         setErrorMessage(message || 'Authentication failed. Please check your credentials.');
       }
+    }
+  };
+
+  const generateUsernameFromEmail = (emailStr: string): string => {
+    const raw = emailStr.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+    const base = raw.length >= 3 ? raw : `student${raw}`;
+    const rand = Math.floor(100 + Math.random() * 900);
+    return `${base}${rand}`;
+  };
+
+  const handleRegister = async () => {
+    const trimmedName = regFullName.trim();
+    const trimmedEmail = regEmail.trim().toLowerCase();
+    const trimmedPhone = regPhone.trim().replace(/[\s\-()]/g, '');
+    const trimmedPassword = regPassword;
+
+    setTouched((p) => ({
+      ...p,
+      regFullName: true,
+      regEmail: true,
+      regPhone: true,
+      regPassword: true,
+    }));
+
+    if (!trimmedName || trimmedName.length < 2) {
+      setErrorMessage(isBangla ? 'অনুগ্রহ করে আপনার পুরো নাম লিখুন।' : 'Please enter your full name.');
+      triggerHaptic('warning');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!trimmedEmail || !emailRegex.test(trimmedEmail)) {
+      setErrorMessage(isBangla ? 'সঠিক ইমেইল এড্রেস প্রদান করুন।' : 'Please enter a valid email address.');
+      triggerHaptic('warning');
+      return;
+    }
+
+    const phoneDigits = trimmedPhone.replace(/\D/g, '');
+    if (!trimmedPhone || phoneDigits.length < 10) {
+      setErrorMessage(
+        isBangla
+          ? 'অনুগ্রহ করে সঠিক মোবাইল নম্বর লিখুন (যেমন: 017xxxxxxxx)।'
+          : 'Please enter a valid mobile number (e.g. 017xxxxxxxx).'
+      );
+      triggerHaptic('warning');
+      return;
+    }
+
+    if (!trimmedPassword || trimmedPassword.length < 6) {
+      setErrorMessage(
+        isBangla
+          ? 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।'
+          : 'Password must be at least 6 characters long.'
+      );
+      triggerHaptic('warning');
+      return;
+    }
+
+    setErrorMessage(null);
+    setIsRegistering(true);
+
+    const autoUsername = generateUsernameFromEmail(trimmedEmail);
+
+    try {
+      await register(autoUsername, trimmedEmail, trimmedPassword, trimmedPhone, trimmedName);
+      showToast({
+        message: isBangla
+          ? 'অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে! স্বাগতম 🎉'
+          : 'Account created successfully! Welcome 🎉',
+        type: 'success',
+      });
+      triggerHaptic('success');
+      setRegFullName('');
+      setRegEmail('');
+      setRegPhone('');
+      setRegPassword('');
+      setTouched({});
+      onClose();
+    } catch (err: any) {
+      triggerHaptic('error');
+      const code = String(err?.code || err?.data?.code || '');
+      const msg = String(err?.message || '');
+
+      if (code.includes('email-exists') || msg.toLowerCase().includes('already registered')) {
+        setErrorMessage(
+          isBangla
+            ? 'এই ইমেইল দিয়ে ইতিমধ্যে একটি অ্যাকাউন্ট রয়েছে। অনুগ্রহ করে সাইন ইন করুন।'
+            : 'An account with this email is already registered. Please sign in.'
+        );
+      } else if (code.includes('invalid-email') || msg.toLowerCase().includes('valid email')) {
+        setErrorMessage(
+          isBangla ? 'অনুগ্রহ করে সঠিক ইমেইল এড্রেস লিখুন।' : 'Please provide a valid email address.'
+        );
+      } else if (code.includes('username-exists') || msg.toLowerCase().includes('username already')) {
+        try {
+          const retryUsername = `${autoUsername}${Math.floor(10 + Math.random() * 90)}`;
+          await register(retryUsername, trimmedEmail, trimmedPassword, trimmedPhone, trimmedName);
+          showToast({
+            message: isBangla ? 'অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে! 🎉' : 'Account created successfully! 🎉',
+            type: 'success',
+          });
+          triggerHaptic('success');
+          setRegFullName('');
+          setRegEmail('');
+          setRegPhone('');
+          setRegPassword('');
+          onClose();
+          return;
+        } catch (retryErr: any) {
+          setErrorMessage(retryErr?.message || (isBangla ? 'রেজিস্ট্রেশন সম্পন্ন করা যায়নি।' : 'Registration failed. Please try again.'));
+        }
+      } else {
+        setErrorMessage(msg || (isBangla ? 'রেজিস্ট্রেশন সম্পন্ন করা যায়নি। আবার চেষ্টা করুন।' : 'Registration could not be completed. Please try again.'));
+      }
+    } finally {
+      setIsRegistering(false);
     }
   };
 
@@ -539,27 +670,27 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 ]}
               >
                 {mode === 'login'
-                  ? 'Welcome Back, Professional'
+                  ? (isBangla ? 'স্বাগতম, পেশাদার শিক্ষার্থী' : 'Welcome Back, Professional')
                   : mode === 'register'
-                  ? 'Create Your Free Account'
+                  ? (isBangla ? 'ফ্রি অ্যাকাউন্ট তৈরি করুন' : 'Create Your Free Account')
                   : mode === 'set_password'
-                  ? 'Set Your Account Password'
-                  : 'Reset Your Password'}
+                  ? (isBangla ? 'পাসওয়ার্ড সেট করুন' : 'Set Your Account Password')
+                  : (isBangla ? 'পাসওয়ার্ড রিসেট' : 'Reset Your Password')}
               </Text>
               {!isKeyboardVisible && (
                 <Text style={[styles.subtitle, { color: colors.textMuted }]}>
                   {mode === 'login'
-                    ? 'Sign in to access your masterclasses, certificates, and learning track.'
+                    ? (isBangla ? 'আপনার কোর্স, সার্টিফিকেট এবং লার্নিং ট্র্যাক এক্সেস করতে সাইন ইন করুন।' : 'Sign in to access your masterclasses, certificates, and learning track.')
                     : mode === 'register'
-                    ? 'No phone number required. Join professionals and learners across Bangladesh.'
+                    ? (isBangla ? 'নাম, ইমেইল, মোবাইল নম্বর ও পাসওয়ার্ড দিয়ে সহজে যুক্ত হোন।' : 'Fast 4-field registration. Join learners and professionals across Bangladesh.')
                     : mode === 'set_password'
-                    ? 'The password should be at least twelve characters long as required by thrivingskill.com.'
-                    : 'Enter your username or email address and we will email you a password setup link.'}
+                    ? (isBangla ? 'ভেরিফিকেশন লিংক থেকে পাসওয়ার্ড সেট করুন।' : 'Enter your email link details to set your new password.')
+                    : (isBangla ? 'আপনার ইমেইল বা ইউজারনেম লিখুন।' : 'Enter your username or email address and we will email you a password setup link.')}
                 </Text>
               )}
 
-              {/* Progressive 2-Step Registration Flow Bar */}
-              {(mode === 'register' || mode === 'set_password') && (
+              {/* Progressive 2-Step Registration Flow Bar (Only when setting password from email link) */}
+              {mode === 'set_password' && (
                 <View style={styles.regStepBar}>
                   <View style={styles.regStepMeta}>
                     <Text style={[styles.regStepLabel, { color: colors.primary }]} numberOfLines={1} ellipsizeMode="tail">
@@ -614,7 +745,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         mode === 'login' && { fontWeight: '700' },
                       ]}
                     >
-                      Email Login
+                      {isBangla ? 'সাইন ইন' : 'Sign In'}
                     </Text>
                   </TouchableOpacity>
 
@@ -641,7 +772,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         mode === 'register' && { fontWeight: '700' },
                       ]}
                     >
-                      Register
+                      {isBangla ? 'রেজিস্ট্রেশন' : 'Register'}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -1000,78 +1131,232 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </TouchableOpacity>
                   </>
                 ) : mode === 'register' ? (
-                  /* Official Registration Guidance & In-App Web Trigger */
+                  /* 4-Field Direct In-App Fast Registration (Name + Email + Phone + Password) */
                   <>
-                    <View style={[styles.regGuideCard, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
-                      <View style={styles.regGuideHeader}>
-                        <Ionicons name="shield-checkmark" size={22} color={colors.primary} />
-                        <Text style={[styles.regGuideTitle, { color: colors.text }]}>
-                          Official Account Registration
-                        </Text>
-                      </View>
-                      <Text style={[styles.regGuideDesc, { color: colors.textMuted }]}>
-                        No mobile phone number needed. Just choose a username & email. Thriving Skills will email you a secure link to set your password.
+                    {/* Full Name Input */}
+                    <View style={styles.inputGroup}>
+                      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
+                        {isBangla ? 'আপনার নাম *' : 'Full Name *'}
                       </Text>
-
-                      <View style={styles.stepsContainer}>
-                        <View style={styles.stepRow}>
-                          <View style={[styles.stepNumberBadge, { backgroundColor: colors.primary }]}>
-                            <Text style={styles.stepNumberText}>1</Text>
-                          </View>
-                          <Text style={[styles.stepItemText, { color: colors.text }]}>
-                            Submit your Username & Email.
-                          </Text>
-                        </View>
-
-                        <View style={styles.stepRow}>
-                          <View style={[styles.stepNumberBadge, { backgroundColor: colors.primary }]}>
-                            <Text style={styles.stepNumberText}>2</Text>
-                          </View>
-                          <Text style={[styles.stepItemText, { color: colors.text }]}>
-                            Check inbox for the verification email.
-                          </Text>
-                        </View>
-
-                        <View style={styles.stepRow}>
-                          <View style={[styles.stepNumberBadge, { backgroundColor: colors.primary }]}>
-                            <Text style={styles.stepNumberText}>3</Text>
-                          </View>
-                          <Text style={[styles.stepItemText, { color: colors.text }]}>
-                            Tap link to open app & set your password!
-                          </Text>
-                        </View>
+                      <View
+                        style={[
+                          styles.inputWrapper,
+                          {
+                            backgroundColor: colors.surfaceSubtle,
+                            borderColor: touched.regFullName && !regFullName.trim() ? colors.danger : colors.border,
+                          },
+                        ]}
+                      >
+                        <Ionicons name="person-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                        <TextInput
+                          ref={regNameInputRef}
+                          style={[styles.input, { color: colors.text }]}
+                          placeholder={isBangla ? 'যেমন: সাজিদ ইসলাম' : 'e.g. Sajid Islam'}
+                          placeholderTextColor={colors.textLight}
+                          value={regFullName}
+                          onChangeText={(t) => {
+                            setRegFullName(t);
+                            if (errorMessage) setErrorMessage(null);
+                          }}
+                          onFocus={() => scrollToInput(20)}
+                          onBlur={() => setTouched((p) => ({ ...p, regFullName: true }))}
+                          autoCapitalize="words"
+                          autoCorrect={false}
+                          returnKeyType="next"
+                          onSubmitEditing={() => regEmailInputRef.current?.focus()}
+                        />
                       </View>
+                      {touched.regFullName && !regFullName.trim() && (
+                        <Text style={[styles.inlineFieldError, { color: colors.danger }]}>
+                          {isBangla ? 'অনুগ্রহ করে আপনার পুরো নাম লিখুন।' : 'Please enter your full name.'}
+                        </Text>
+                      )}
                     </View>
 
+                    {/* Email Address Input */}
+                    <View style={styles.inputGroup}>
+                      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
+                        {isBangla ? 'ইমেইল এড্রেস *' : 'Email Address *'}
+                      </Text>
+                      <View
+                        style={[
+                          styles.inputWrapper,
+                          {
+                            backgroundColor: colors.surfaceSubtle,
+                            borderColor: touched.regEmail && !regEmail.trim() ? colors.danger : colors.border,
+                          },
+                        ]}
+                      >
+                        <Ionicons name="mail-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                        <TextInput
+                          ref={regEmailInputRef}
+                          style={[styles.input, { color: colors.text }]}
+                          placeholder="student@example.com"
+                          placeholderTextColor={colors.textLight}
+                          value={regEmail}
+                          onChangeText={(t) => {
+                            setRegEmail(t);
+                            if (errorMessage) setErrorMessage(null);
+                          }}
+                          onFocus={() => scrollToInput(80)}
+                          onBlur={() => setTouched((p) => ({ ...p, regEmail: true }))}
+                          keyboardType="email-address"
+                          autoCapitalize="none"
+                          autoCorrect={false}
+                          returnKeyType="next"
+                          onSubmitEditing={() => regPhoneInputRef.current?.focus()}
+                        />
+                      </View>
+                      {touched.regEmail && !regEmail.trim() && (
+                        <Text style={[styles.inlineFieldError, { color: colors.danger }]}>
+                          {isBangla ? 'সঠিক ইমেইল এড্রেস লিখুন।' : 'Please enter a valid email address.'}
+                        </Text>
+                      )}
+                    </View>
+
+                    {/* Phone Number Input */}
+                    <View style={styles.inputGroup}>
+                      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
+                        {isBangla ? 'মোবাইল নম্বর *' : 'Phone Number *'}
+                      </Text>
+                      <View
+                        style={[
+                          styles.inputWrapper,
+                          {
+                            backgroundColor: colors.surfaceSubtle,
+                            borderColor: touched.regPhone && !regPhone.trim() ? colors.danger : colors.border,
+                          },
+                        ]}
+                      >
+                        <Ionicons name="call-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                        <TextInput
+                          ref={regPhoneInputRef}
+                          style={[styles.input, { color: colors.text }]}
+                          placeholder="017xxxxxxxx"
+                          placeholderTextColor={colors.textLight}
+                          value={regPhone}
+                          onChangeText={(t) => {
+                            setRegPhone(t);
+                            if (errorMessage) setErrorMessage(null);
+                          }}
+                          onFocus={() => scrollToInput(140)}
+                          onBlur={() => setTouched((p) => ({ ...p, regPhone: true }))}
+                          keyboardType="phone-pad"
+                          returnKeyType="next"
+                          onSubmitEditing={() => regPasswordInputRef.current?.focus()}
+                        />
+                      </View>
+                      {touched.regPhone && !regPhone.trim() && (
+                        <Text style={[styles.inlineFieldError, { color: colors.danger }]}>
+                          {isBangla ? 'অনুগ্রহ করে আপনার মোবাইল নম্বর লিখুন।' : 'Please enter your mobile phone number.'}
+                        </Text>
+                      )}
+                    </View>
+
+                    {/* Password Input */}
+                    <View style={styles.inputGroup}>
+                      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
+                        {isBangla ? 'পাসওয়ার্ড * (কমপক্ষে ৬ অক্ষর)' : 'Password * (Min 6 characters)'}
+                      </Text>
+                      <View
+                        style={[
+                          styles.inputWrapper,
+                          {
+                            backgroundColor: colors.surfaceSubtle,
+                            borderColor: touched.regPassword && regPassword.length < 6 ? colors.danger : colors.border,
+                          },
+                        ]}
+                      >
+                        <Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                        <TextInput
+                          ref={regPasswordInputRef}
+                          style={[styles.input, { color: colors.text }]}
+                          placeholder={isBangla ? 'পাসওয়ার্ড নির্ধারণ করুন' : 'Create an account password'}
+                          placeholderTextColor={colors.textLight}
+                          value={regPassword}
+                          onChangeText={(t) => {
+                            setRegPassword(t);
+                            if (errorMessage) setErrorMessage(null);
+                          }}
+                          onFocus={() => scrollToInput(200)}
+                          onBlur={() => setTouched((p) => ({ ...p, regPassword: true }))}
+                          secureTextEntry={!showRegPassword}
+                          autoCapitalize="none"
+                          autoCorrect={false}
+                          returnKeyType="done"
+                          onSubmitEditing={handleRegister}
+                        />
+                        <TouchableOpacity
+                          onPress={() => setShowRegPassword(!showRegPassword)}
+                          style={styles.eyeButton}
+                          accessibilityRole="button"
+                          accessibilityLabel={showRegPassword ? 'Hide password' : 'Show password'}
+                        >
+                          <Ionicons
+                            name={showRegPassword ? 'eye-off-outline' : 'eye-outline'}
+                            size={20}
+                            color={colors.textMuted}
+                          />
+                        </TouchableOpacity>
+                      </View>
+                      {touched.regPassword && regPassword.length > 0 && regPassword.length < 6 && (
+                        <Text style={[styles.inlineFieldError, { color: colors.danger }]}>
+                          {isBangla ? 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।' : 'Password must be at least 6 characters long.'}
+                        </Text>
+                      )}
+                    </View>
+
+                    {/* Submit Button */}
                     <TouchableOpacity
                       style={[styles.submitButton, { backgroundColor: colors.primary }]}
-                      onPress={() => setMode('register_webview')}
+                      onPress={handleRegister}
+                      disabled={isRegistering}
                       activeOpacity={0.88}
                       accessibilityRole="button"
-                      accessibilityLabel="Open Official Registration Form"
+                      accessibilityLabel={isBangla ? 'অ্যাকাউন্ট তৈরি করুন' : 'Create Account'}
                     >
-                      <Text style={[styles.submitButtonText, { color: colors.onPrimary }]}>
-                        Open Official Registration Form
-                      </Text>
-                      <Ionicons name="open-outline" size={18} color={colors.onPrimary} style={{ marginLeft: 8 }} />
+                      {isRegistering ? (
+                        <ActivityIndicator color={colors.onPrimary} size="small" />
+                      ) : (
+                        <>
+                          <Text style={[styles.submitButtonText, { color: colors.onPrimary }]}>
+                            {isBangla ? 'অ্যাকাউন্ট তৈরি করুন' : 'Create Account'}
+                          </Text>
+                          <Ionicons name="arrow-forward" size={18} color={colors.onPrimary} style={{ marginLeft: 8 }} />
+                        </>
+                      )}
                     </TouchableOpacity>
 
-                    {/* Quick Link to Set Password if user already received email */}
-                    <View style={styles.alreadyReceivedCard}>
-                      <Text style={[styles.alreadyReceivedLabel, { color: colors.textMuted }]}>
-                        Already registered and have your verification link?
+                    {/* Switch to Login Link */}
+                    <View style={styles.switchRow}>
+                      <Text style={[styles.switchText, { color: colors.textMuted }]}>
+                        {isBangla ? 'ইতিমধ্যে অ্যাকাউন্ট রয়েছে?' : 'Already have an account?'}
                       </Text>
                       <TouchableOpacity
-                        style={[styles.enterKeyBtn, { borderColor: colors.primary }]}
+                        onPress={() => {
+                          setMode('login');
+                          setErrorMessage(null);
+                          setInfoMessage(null);
+                        }}
+                        accessibilityRole="button"
+                      >
+                        <Text style={[styles.switchActionText, { color: colors.primary }]}>
+                          {isBangla ? ' সাইন ইন করুন' : ' Sign In'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* Secondary Link for existing users with email reset/verification link */}
+                    <View style={{ marginTop: 14, alignItems: 'center' }}>
+                      <TouchableOpacity
                         onPress={() => {
                           setMode('set_password');
                           setErrorMessage(null);
                         }}
                         accessibilityRole="button"
                       >
-                        <Ionicons name="key-outline" size={16} color={colors.primary} />
-                        <Text style={[styles.enterKeyBtnText, { color: colors.primary }]}>
-                          Enter Link / Set Password →
+                        <Text style={{ fontSize: 12, color: colors.textMuted, textDecorationLine: 'underline' }}>
+                          {isBangla ? 'ইমেইল ভেরিফিকেশন বা পাসওয়ার্ড রিসেট লিংক রয়েছে?' : 'Have a verification or reset link? Enter here'}
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -1721,5 +2006,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 16,
     lineHeight: 16,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingVertical: 6,
+    gap: 4,
+  },
+  switchText: {
+    fontSize: 13,
+  },
+  switchActionText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
 });
