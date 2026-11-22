@@ -125,7 +125,7 @@ const AnimatedTabIcon: React.FC<{
 
 /**
  * CR-01: BrandSplashScreen - Dynamic startup splash screen showcasing
- * the learner hero portrait, ambient brand backdrop, official wordmark,
+ * the official widescreen hero banner, ambient brand backdrop, official wordmark,
  * national motto, and interactive LMS workspace loader.
  */
 const BrandSplashScreen: React.FC = () => {
@@ -158,7 +158,7 @@ const BrandSplashScreen: React.FC = () => {
         source={require('./assets/splash-hero.jpg')}
         style={splashStyles.ambientBackground}
         resizeMode="cover"
-        blurRadius={Platform.OS === 'ios' ? 16 : 10}
+        blurRadius={Platform.OS === 'ios' ? 18 : 12}
       />
       <LinearGradient
         colors={['rgba(16, 47, 83, 0.72)', 'rgba(16, 47, 83, 0.94)', '#0A1C33']}
@@ -174,38 +174,38 @@ const BrandSplashScreen: React.FC = () => {
           },
         ]}
       >
-        {/* Featured Hero Portrait with Glowing Gold Border & Brand Emblem */}
-        <View style={splashStyles.heroContainer}>
-          <View style={splashStyles.heroFrame}>
-            <Image
-              source={require('./assets/splash-hero.jpg')}
-              style={splashStyles.heroImage}
-              resizeMode="cover"
-            />
-          </View>
-          <View style={splashStyles.brandBadge}>
+        {/* Top Brand Logo & Wordmark */}
+        <View style={splashStyles.headerBrand}>
+          <View style={splashStyles.logoWrap}>
             <Image
               source={require('./assets/icon.png')}
-              style={splashStyles.brandBadgeImage}
+              style={splashStyles.logoImage}
               resizeMode="contain"
             />
           </View>
+          <Text style={splashStyles.wordmark}>
+            Thriving <Text style={{ color: '#FFB606' }}>Skills</Text>
+          </Text>
         </View>
 
-        {/* Brand Wordmark */}
-        <Text style={splashStyles.wordmark}>
-          Thriving <Text style={{ color: '#FFB606' }}>Skills</Text>
-        </Text>
+        {/* Featured Official Widescreen Hero Banner */}
+        <View style={splashStyles.bannerCard}>
+          <Image
+            source={require('./assets/splash-hero.jpg')}
+            style={splashStyles.bannerImage}
+            resizeMode="cover"
+          />
+        </View>
 
         {/* Feature Pill */}
         <View style={splashStyles.badgePill}>
           <Ionicons name="sparkles" size={13} color="#FFB606" style={{ marginRight: 6 }} />
-          <Text style={splashStyles.badgePillText}>জাতির দক্ষতা বিনির্মাণে</Text>
+          <Text style={splashStyles.badgePillText}>জাতির দক্ষতা বিনির্মাণে • Building a Skilled Nation</Text>
         </View>
 
-        {/* National Motto / Tagline */}
+        {/* National Motto / Pillars */}
         <Text style={splashStyles.tagline}>
-          Building a Skilled Nation • Learn, Grow & Lead
+          Expert-Led Courses • Practical Skills • Career Growth • Learn Anytime
         </Text>
       </Animated.View>
 
@@ -952,83 +952,79 @@ const splashStyles = StyleSheet.create({
     backgroundColor: '#102F53',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: 20,
     overflow: 'hidden',
   },
   ambientBackground: {
     ...StyleSheet.absoluteFill,
     width: '100%',
     height: '100%',
-    opacity: 0.2,
+    opacity: 0.22,
   },
   content: {
+    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 2,
-    paddingHorizontal: 20,
-    marginTop: -28,
+    paddingHorizontal: 12,
+    marginTop: -20,
   },
-  heroContainer: {
-    position: 'relative',
-    marginBottom: 20,
+  headerBrand: {
     alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: 16,
   },
-  heroFrame: {
-    width: 176,
-    height: 176,
-    borderRadius: 88,
-    overflow: 'hidden',
-    borderWidth: 3,
-    borderColor: '#FFB606',
-    backgroundColor: '#0F192C',
-    shadowColor: '#FFB606',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 14,
-    elevation: 10,
-  },
-  heroImage: {
-    width: '100%',
-    height: '100%',
-  },
-  brandBadge: {
-    position: 'absolute',
-    bottom: -2,
-    right: 4,
-    width: 48,
-    height: 48,
-    borderRadius: 14,
+  logoWrap: {
+    width: 68,
+    height: 68,
+    borderRadius: 20,
     backgroundColor: '#FFFFFF',
-    padding: 6,
-    borderWidth: 2,
-    borderColor: '#FFB606',
+    padding: 10,
+    marginBottom: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  brandBadgeImage: {
+  logoImage: {
     width: '100%',
     height: '100%',
   },
   wordmark: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: '900',
     color: '#FFFFFF',
     letterSpacing: -0.5,
-    marginBottom: 8,
     textAlign: 'center',
+  },
+  bannerCard: {
+    width: '100%',
+    maxWidth: 380,
+    aspectRatio: 1024 / 384,
+    borderRadius: 16,
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 182, 6, 0.55)',
+    backgroundColor: '#0F192C',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
+    elevation: 10,
+    marginBottom: 16,
+  },
+  bannerImage: {
+    width: '100%',
+    height: '100%',
   },
   badgePill: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 182, 6, 0.12)',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: 'rgba(255, 182, 6, 0.35)',
@@ -1039,19 +1035,20 @@ const splashStyles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFB606',
     letterSpacing: 0.2,
+    textAlign: 'center',
   },
   tagline: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     color: 'rgba(255, 255, 255, 0.85)',
     letterSpacing: 0.2,
     textAlign: 'center',
-    maxWidth: 290,
+    maxWidth: 330,
     lineHeight: 18,
   },
   footer: {
     position: 'absolute',
-    bottom: 36,
+    bottom: 32,
     alignItems: 'center',
     gap: 6,
     zIndex: 2,

@@ -118,6 +118,29 @@
   - Added native-driven spring and fade entrance animations across all bottom tabs and sub-screens.
 - [x] **Physical Spring Pressables (`SpringPressable.tsx`)**:
   - Added tactile scale physics (`scale: 0.96-0.97`) to all major CTAs (Enroll Now, Mark Complete, Submit Quiz, Live Workshops, Bundles).
+
+### Phase 11: Simplified 4-Field Registration & Bi-directional Live DB Sync
+- [x] **Native 4-Field Onboarding Form (`AuthModal.tsx`)**:
+  - Replaced cumbersome registration requirements with 4 simple fields: Full Name, Email, Phone, Password.
+  - Implemented automatic username generator (`generateUsernameFromEmail`) converting emails to clean handles (e.g. `sajidislam582`).
+  - Added direct token exchange auto-login on registration completion without email confirmation link blocks.
+- [x] **In-App Profile Management & Live Sync (`ProfileScreen.tsx`, `userService.ts`, `AuthContext.tsx`)**:
+  - In-app editing for Name, Bio, Phone, City, Social Links, and Avatar persisting to `/wp/v2/users/me` and `/learnpress/v1/users/{id}`.
+  - Automatic `AppState` foreground synchronization pulling web changes down to the mobile app on resume.
+  - Pull-to-refresh on profile screen for on-demand live database sync.
+- [x] **Companion Plugin Registration Endpoint**:
+  - Integrated `/wp-json/thrivingskill/v1/register` companion endpoint with LearnPress fallback.
+
+### Phase 12: Habit Notifications, Uniform Course Cards & Repository Restructuring
+- [x] **Habit-Based Notification Queue (`habitNotificationQueue.ts`)**:
+  - Scheduled contextual study reminders tuned to learner habit hours with 1-tap dismiss/clear action.
+- [x] **Uniform Course Cards Layout**:
+  - Standardized card heights (332dp), 16:9 thumbnail ratios, 2-line clamped titles (40dp), and aligned action footers across all screens and carousels.
+- [x] **Centralized Documentation & Root Cleanup**:
+  - Consolidated all 24+ markdown documents, proposals (.docx), and review PDFs into `docs/` with structured subfolders.
+  - Moved local preview APK builds into `builds/`.
+  - Cleaned root directory to only contain essential config and entry files.
+
 - [x] **Living Commuter Mode Audio Waveform (`LiveAudioWaveform.tsx`)**:
   - 20-bar native-driven oscillating frequency visualizer running at 60 FPS.
 - [x] **Circular Radial Progress Rings (`CircularProgressRing.tsx`)**:

@@ -102,7 +102,11 @@ console.log(`   File Size: ${sizeMb} MB (${stats.size} bytes)`);
 console.log(`   Build Time: ${duration} seconds`);
 console.log('====================================================\n');
 
-// 5. Copy to Root for clean GitHub Release attachment
-const targetReleaseApk = path.join(realRootDir, 'thrivingskill-v4.0.6-preview.apk');
+// 5. Copy to builds/ directory for clean GitHub Release attachment
+const buildsDir = path.join(realRootDir, 'builds');
+if (!fs.existsSync(buildsDir)) {
+  fs.mkdirSync(buildsDir, { recursive: true });
+}
+const targetReleaseApk = path.join(buildsDir, 'thrivingskill-v4.0.6-preview.apk');
 fs.copyFileSync(finalApk, targetReleaseApk);
-console.log(`[ARTIFACT] Copied to root: ${targetReleaseApk} (${sizeMb} MB)`);
+console.log(`[ARTIFACT] Copied to builds/: ${targetReleaseApk} (${sizeMb} MB)`);

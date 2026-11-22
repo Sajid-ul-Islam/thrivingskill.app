@@ -56,22 +56,27 @@ The mobile app maintains bidirectional synchronization with the live WordPress/L
   2. Displays sleek 5-second countdown banner with "Play Now" and "Cancel / Pause" controls.
   3. Automatically marks lesson complete, syncs progress, and boots the next video lesson seamlessly.
 
-### CR-04: Native LearnPress JWT Authentication
-* **Objective**: Secure, authentic authentication directly matching `https://thrivingskill.com` with zero external SMS dependencies or recurring telco charges.
+### CR-04: Native LearnPress JWT Authentication & Simplified 4-Field Onboarding
+* **Objective**: Frictionless, secure user onboarding and authentication directly synchronized with `https://thrivingskill.com`.
 * **Business Logic**:
-  1. Direct JWT token generation (`POST /learnpress/v1/token`) using WordPress username or email and password.
-  2. In-app student registration (`POST /learnpress/v1/token/register`) instantly provisioning accounts in WordPress.
-  3. Token freshness validation (`POST /learnpress/v1/token/validate`) and persistent encrypted session hydration.
-  4. Native WordPress password recovery via `action=lostpassword` with deep link handling.
+  1. **Simplified 4-Field Registration**: Full Name, Email, Phone Number, and Password. Replaced cumbersome multi-step webview links with instant in-app account provisioning.
+  2. **Auto-Generated Usernames**: Automatically extracts a unique, clean username from the student's email (e.g. `sajidislam582`), completely eliminating registration friction.
+  3. **Instant Auto-Login**: Automatically acquires JWT session token upon registration and authenticates the user immediately.
+  4. **Dual Endpoint Support**: Primary integration via companion plugin `/thrivingskill/v1/register` with fallback to native `/learnpress/v1/token/register`.
+  5. **Direct JWT Login**: Authenticates via `POST /learnpress/v1/token` with username/email and password.
+  6. **Token Freshness Validation**: Token validation via `POST /learnpress/v1/token/validate` and encrypted local credential hydration.
+  7. **Native Password Recovery**: Password recovery via `action=lostpassword` directly connected to WordPress.
 
-### CR-05: Authenticated Learner Profile & Analytics Dashboard
-* **Objective**: Transform the student profile into an executive learning dashboard showcasing progress, certificates, and data visualization.
+### CR-05: Authenticated Learner Profile & Bi-directional Live Sync
+* **Objective**: Transform the student profile into an executive learning dashboard with real-time bi-directional synchronization with `https://thrivingskill.com`.
 * **Key Modules**:
-  1. *Circular Skill Mastery Donut Chart*: SVG gauge showing aggregate percentage mastery across all enrolled courses.
-  2. *Weekly Velocity Bar Chart*: 7-day activity tracking (Mon–Sun) with active study streak indicator (`🔥 X-Day Streak`).
-  3. *KPI Cards*: Total Enrolled Courses, Graduated Courses, Total Study Hours, and Verified Certificates.
-  4. *Active Enrolled Courses Shelf*: In-progress courses with quick "Continue Learning" CTA.
-  5. *Graduated Courses Shelf*: 100% completed courses with one-tap "View Certificate" action and Sunshine Gold (`#FFB606`) graduate ribbon.
+  1. *In-App Profile Editing*: Direct editing of Name, Bio, Phone, City, Social Links, and Avatar with instant persistence to `/wp/v2/users/me` and `/learnpress/v1/users/{id}`.
+  2. *Web-to-App Automatic Sync*: Background `AppState` listener and pull-to-refresh pulling live website changes down to the mobile app seamlessly.
+  3. *Circular Skill Mastery Donut Chart*: SVG gauge showing aggregate percentage mastery across all enrolled courses.
+  4. *Weekly Velocity Bar Chart*: 7-day activity tracking (Mon–Sun) with active study streak indicator (`🔥 X-Day Streak`).
+  5. *KPI Cards*: Total Enrolled Courses, Graduated Courses, Total Study Hours, and Verified Certificates.
+  6. *Active Enrolled Courses Shelf*: In-progress courses with quick "Continue Learning" CTA.
+  7. *Graduated Courses Shelf*: 100% completed courses with one-tap "View Certificate" action and Sunshine Gold (`#FFB606`) graduate ribbon.
 
 ---
 

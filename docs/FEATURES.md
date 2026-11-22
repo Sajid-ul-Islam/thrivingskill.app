@@ -27,6 +27,11 @@ This document provides a comprehensive inventory of all features, capabilities, 
 | **F-16** | B2B Enterprise Team Hub & Corporate Inquiry | `EnterpriseScreen.tsx`, `InquiryModal.tsx` | ✅ Production Ready |
 | **F-17** | Verified Digital Certificates & Social Share | `CertificateModal.tsx` | ✅ Production Ready |
 | **F-18** | Dark & Light Mode Theme Engine | `ThemeContext.tsx`, `theme/colors.ts` | ✅ Production Ready |
+| **F-19** | Simplified 4-Field Registration & Auto-Username | `AuthModal.tsx`, `authService.ts` | ✅ Production Ready |
+| **F-20** | Bi-directional Profile Sync & In-App Profile Editing | `ProfileScreen.tsx`, `userService.ts` | ✅ Production Ready |
+| **F-21** | Habit-Based Smart Notification Queue | `habitNotificationQueue.ts` | ✅ Production Ready |
+| **F-22** | Continuous Background PiP Audio Streaming | `PiPFloatingPlayer.tsx`, `NativeMedia3Player.tsx` | ✅ Production Ready |
+| **F-23** | Uniform Pixel-Perfect Course Cards | `CourseCard.tsx` | ✅ Production Ready |
 
 ---
 

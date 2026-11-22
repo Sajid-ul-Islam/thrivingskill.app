@@ -87,10 +87,13 @@ The application isolates concerns into six (6) React Context Providers:
 
 The application connects to `https://thrivingskill.com/wp-json` with fallbacks for staging environments:
 
-### Core LearnPress LMS Endpoints
+### Core LMS & WordPress Endpoints
+* `POST /thrivingskill/v1/register`: Companion REST API endpoint for streamlined 4-field registration (`name`, `email`, `phone`, `password`) with automated username generation and billing phone persistence.
 * `POST /learnpress/v1/token`: Issues user JWT bearer token for valid credentials.
 * `POST /learnpress/v1/token/validate`: Verifies existing session token integrity.
-* `POST /learnpress/v1/token/register`: Registers a new student account (`username`, `email`, `password`).
+* `POST /learnpress/v1/token/register`: LearnPress fallback registration endpoint (`username`, `email`, `password`, `phone`).
+* `POST /wp/v2/users/me`: Updates authenticated student profile (Name, Bio, Phone, City, Social, Avatar).
+* `GET /wp/v2/users/me?context=edit`: Retrieves complete authenticated student profile and metadata.
 * `GET /learnpress/v1/courses`: Fetches course catalog with pagination, search, and category filters.
 * `GET /learnpress/v1/courses/:id`: Returns full curriculum hierarchy (sections, lessons, quizzes).
 * `POST /learnpress/v1/courses/enroll`: Enrolls the authenticated student into a course.

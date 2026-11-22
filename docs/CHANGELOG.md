@@ -7,6 +7,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.4.3] - 2026-11-22
+
+### 🚀 Simplified 4-Field Registration & Auto-Login
+- **Native 4-Field Onboarding Form**:
+  - Replaced complex registration requirements and external email link barriers with a streamlined 4-field native form in `AuthModal.tsx`:
+    1. Full Name (`fullName` split cleanly into `first_name` and `last_name`).
+    2. Email Address (`email`).
+    3. Mobile Phone Number (`phone` saved to billing metadata).
+    4. Password (`password` with show/hide toggle).
+- **Auto-Generated Clean Usernames**:
+  - Added `generateUsernameFromEmail` logic generating unique, clean usernames (e.g., `sajid.islam.lead@gmail.com` $\rightarrow$ `sajidislamlead582`) so learners never need to guess or create an available username.
+- **Instant Tokenized Auto-Login**:
+  - Automatically acquires JWT session token upon registration and logs the user straight into the mobile platform without forcing email link verification.
+
+### 🔄 In-App Profile Editing & Live Database Sync
+- **Full In-App Profile Management**:
+  - Enabled live editing of Full Name, Bio, Phone Number, City, Social Links, and Avatar directly inside `ProfileScreen.tsx`.
+  - Persists edits to WordPress Core REST API (`/wp/v2/users/me`) and LearnPress (`/learnpress/v1/users/{id}`).
+- **Web-to-App Bi-directional Sync**:
+  - Integrated `AppState` foreground listener in `AuthContext.tsx` that re-fetches and syncs user profile data whenever the app returns from background.
+  - Added pull-to-refresh on `ProfileScreen.tsx` for immediate on-demand profile synchronization.
+
+### 🔔 Habit-Based Notification Queue
+- **Smart Notification Scheduling**:
+  - Added `habitNotificationQueue.ts` to schedule study prompts tailored to user activity patterns and active study hours.
+  - Added 1-tap dismiss/clear action to prevent notification clutter and fatigue.
+
+### 🎨 Uniform Course Cards & UI/UX Consistency
+- **Pixel-Perfect Course Cards**:
+  - Standardized `CourseCard.tsx` height (332dp), 16:9 thumbnail ratio, 2-line clamped title height (40dp), and fixed footer alignment across grid, carousel, and list views.
+- **Event Tab Layout Stabilization**:
+  - Fixed segmented event tab layouts in `WorkshopsScreen.tsx` to prevent vertical column stretching and ensure responsive tab bar rendering.
+
+### 📁 Clean Repository & Centralized Documentation
+- **Consolidated `docs/` Directory**:
+  - Moved all 24+ loose markdown files, 4 client proposal Word documents, and client review PDF into `docs/` with dedicated `proposals/` and `releases/` subdirectories.
+  - Relocated local preview APK binaries to `builds/`.
+  - Cleaned repository root to contain only essential project configuration and source files.
+
+
 ## [1.4.2] - 2026-11-07
 
 ### ♿ Accessibility & Modern Web Guidance Implementation
