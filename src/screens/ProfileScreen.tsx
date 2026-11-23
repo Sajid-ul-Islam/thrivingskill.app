@@ -38,6 +38,9 @@ import {
   CertificateModal,
   MandatoryReviewModal,
   AnimatedTabContent,
+  EbookModal,
+  ServicesModal,
+  InstructorsModal,
 } from '../components';
 import { StorageManagerModal } from '../components/modals/StorageManagerModal';
 import { SpacedRepetitionModal } from '../components/modals/SpacedRepetitionModal';
@@ -133,6 +136,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [legalInitialTab, setLegalInitialTab] = useState<LegalTabKey>('terms');
   const [helpFaqModalVisible, setHelpFaqModalVisible] = useState(false);
   const [blogModalVisible, setBlogModalVisible] = useState(false);
+  const [ebookModalVisible, setEbookModalVisible] = useState(false);
+  const [servicesModalVisible, setServicesModalVisible] = useState(false);
+  const [instructorsModalVisible, setInstructorsModalVisible] = useState(false);
   const [storageModalVisible, setStorageModalVisible] = useState(false);
   const [flashcardsModalVisible, setFlashcardsModalVisible] = useState(false);
   const [offlineDeckModalVisible, setOfflineDeckModalVisible] = useState(false);
@@ -794,6 +800,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               onOpenHelpFaq={() => setHelpFaqModalVisible(true)}
               onOpenBlog={() => setBlogModalVisible(true)}
               onOpenStorage={() => setStorageModalVisible(true)}
+              onOpenEbook={() => setEbookModalVisible(true)}
+              onOpenServices={() => setServicesModalVisible(true)}
+              onOpenInstructors={() => setInstructorsModalVisible(true)}
               pendingSyncCount={pendingSyncCount}
               onOpenAbout={(tab) => {
                 setAboutInitialTab(tab);
@@ -870,6 +879,28 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       <BlogModal
         visible={blogModalVisible}
         onClose={() => setBlogModalVisible(false)}
+      />
+
+      {/* eBook Library Modal */}
+      <EbookModal
+        visible={ebookModalVisible}
+        onClose={() => setEbookModalVisible(false)}
+      />
+
+      {/* Services & Corporate Advisory Modal */}
+      <ServicesModal
+        visible={servicesModalVisible}
+        onClose={() => setServicesModalVisible(false)}
+        onOpenInquiry={() => {
+          setServicesModalVisible(false);
+          onOpenCorporateModal();
+        }}
+      />
+
+      {/* Our Course Authors / Instructors Modal */}
+      <InstructorsModal
+        visible={instructorsModalVisible}
+        onClose={() => setInstructorsModalVisible(false)}
       />
 
       {/* Local Storage & Offline Sync Modal */}

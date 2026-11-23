@@ -630,20 +630,20 @@ const MainAppContent: React.FC = () => {
                       </View>
                     ) : null}
                   </View>
-                  <Text
-                    style={[
-                      styles.tabButtonLabel,
-                      {
-                        color: isActive ? colors.tabActive : colors.tabInactive,
-                        fontWeight: isActive ? '700' : '500',
-                      },
-                    ]}
-                    numberOfLines={1}
-                    adjustsFontSizeToFit={true}
-                    minimumFontScale={0.8}
-                  >
-                    {tab.label}
-                  </Text>
+                  <View style={styles.tabLabelContainer}>
+                    <Text
+                      style={[
+                        styles.tabButtonLabel,
+                        {
+                          color: isActive ? colors.tabActive : colors.tabInactive,
+                          fontWeight: isActive ? '700' : '500',
+                        },
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {tab.label}
+                    </Text>
+                  </View>
                 </Pressable>
               );
             })}
@@ -661,6 +661,7 @@ const MainAppContent: React.FC = () => {
         onOpenSubscription={() => setSubscriptionModalVisible(true)}
         onOpenUpdate={() => setUpdateModalVisible(true)}
         onOpenSupport={() => setSupportModalVisible(true)}
+        onOpenCorporate={() => setCorporateModalVisible(true)}
       />
 
       {/* Official CRM & Helpdesk Support Modal */}
@@ -932,14 +933,23 @@ const styles = StyleSheet.create({
     lineHeight: 9,
     letterSpacing: 0.4,
   },
+  tabLabelContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingHorizontal: 2,
+    marginTop: 2,
+    minHeight: 16,
+    overflow: 'visible',
+  },
   tabButtonLabel: {
     fontSize: 10,
-    lineHeight: 14,
-    marginTop: 2,
+    lineHeight: Platform.OS === 'android' ? 15 : 13,
     letterSpacing: -0.1,
     textAlign: 'center',
-    paddingBottom: 2,
+    paddingBottom: 0,
     maxWidth: '100%',
+    includeFontPadding: true,
   },
 });
 

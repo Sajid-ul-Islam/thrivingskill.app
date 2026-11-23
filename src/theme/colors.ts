@@ -105,7 +105,7 @@ export const darkColors = {
   starColor: '#FFB606',
   tabBarBg: '#0B1420', // Deep Navy Navigation Bar
   tabBarBorder: '#1F3147',
-  tabActive: '#38BDF8',
+  tabActive: '#FFB606', // Radiant brand Sunshine Gold active state
   tabInactive: '#A8B5C5',
 };
 

@@ -377,7 +377,257 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
 
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-            {/* Section 2: Quick Controls & Settings */}
+            {/* Section 2: Corporate & Services (Services >, Buy For Team, Business Consultancy, Affiliate) */}
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+              {isBangla ? 'কর্পোরেট সলিউশন ও পার্টনারশিপ' : 'SERVICES & ENTERPRISE'}
+            </Text>
+
+            {/* 4. Services > */}
+            <TouchableOpacity
+              style={styles.navItem}
+              onPress={() => {
+                setServicesInitialId(undefined);
+                setServicesModalVisible(true);
+              }}
+            >
+              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(56, 189, 248, 0.18)' : '#E0F2FE' }]}>
+                <Ionicons name="briefcase-outline" size={18} color={isDark ? '#38BDF8' : '#0284C7'} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.navLabel, { color: colors.text }]}>
+                  {isBangla ? 'সার্ভিসসমূহ (Services)' : 'Services'}
+                </Text>
+              </View>
+              <View style={[styles.pillState, { backgroundColor: isDark ? '#1C2E46' : '#E0F2FE' }]}>
+                <Text style={[styles.pillStateText, { color: colors.primary }]}>6 SOLUTIONS</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} style={{ marginLeft: 4 }} />
+            </TouchableOpacity>
+
+            {/* 7. Buy For Team */}
+            <TouchableOpacity
+              style={styles.navItem}
+              onPress={() => {
+                if (onOpenCorporate) {
+                  onClose();
+                  onOpenCorporate();
+                } else {
+                  Linking.openURL(`${Env.SITE_URL}/buyforyourteam/`).catch(() => {});
+                }
+              }}
+            >
+              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.18)' : '#ECFDF5' }]}>
+                <Ionicons name="business-outline" size={18} color={isDark ? '#34D399' : '#059669'} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.navLabel, { color: colors.text }]}>
+                  {isBangla ? 'টিমের জন্য সাবস্ক্রিপশন (Buy For Team)' : 'Buy For Team'}
+                </Text>
+              </View>
+              <View style={[styles.pillState, { backgroundColor: isDark ? '#1E3147' : '#DCFCE7' }]}>
+                <Text style={[styles.pillStateText, { color: '#10B981' }]}>TEAMS</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* 8. Business Consultancy */}
+            <TouchableOpacity
+              style={styles.navItem}
+              onPress={() => {
+                setServicesInitialId('digital-transformation');
+                setServicesModalVisible(true);
+              }}
+            >
+              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.18)' : '#FEF3C7' }]}>
+                <Ionicons name="trending-up-outline" size={18} color={isDark ? '#FBBF24' : '#D97706'} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.navLabel, { color: colors.text }]}>
+                  {isBangla ? 'বিজনেস কনসালট্যান্সি (Business Consultancy)' : 'Business Consultancy'}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            </TouchableOpacity>
+
+            {/* 9. Affiliate */}
+            <TouchableOpacity
+              style={styles.navItem}
+              onPress={() => Linking.openURL(`${Env.SITE_URL}/affiliate/`).catch(() => {})}
+            >
+              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(236, 72, 153, 0.18)' : '#FCE7F3' }]}>
+                <Ionicons name="gift-outline" size={18} color={isDark ? '#F472B6' : '#DB2777'} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.navLabel, { color: colors.text }]}>
+                  {isBangla ? 'অ্যাফিলিয়েট প্রোগ্রাম (Affiliate)' : 'Affiliate'}
+                </Text>
+              </View>
+              <View style={[styles.pillState, { backgroundColor: isDark ? '#1C2E46' : '#FCE7F3' }]}>
+                <Text style={[styles.pillStateText, { color: '#EC4899' }]}>EARN</Text>
+              </View>
+            </TouchableOpacity>
+
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+            {/* Section 3: Company & Governance (About Us, Contact, HELP) */}
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+              {isBangla ? 'প্রতিষ্ঠান ও সহায়তা' : 'ABOUT & GOVERNANCE'}
+            </Text>
+
+            {/* 3. About Us */}
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={() => {
+                setAboutInitialTab('overview');
+                setAboutModalVisible(true);
+              }}
+            >
+              <View style={styles.actionLeft}>
+                <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
+                <Text style={[styles.actionLabel, { color: colors.text }]}>
+                  {isBangla ? 'আমাদের সম্পর্কে (About Us)' : 'About Us'}
+                </Text>
+              </View>
+              <View style={[styles.pillState, { backgroundColor: colors.surfaceSubtle }]}>
+                <Text style={[styles.pillStateText, { color: colors.primary }]}>TSL</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={() => {
+                setAboutInitialTab('leadership');
+                setAboutModalVisible(true);
+              }}
+            >
+              <View style={styles.actionLeft}>
+                <Ionicons name="people-outline" size={18} color="#F59E0B" />
+                <Text style={[styles.actionLabel, { color: colors.text }]}>Founders & Leadership</Text>
+              </View>
+              <View style={[styles.pillState, { backgroundColor: 'rgba(245, 158, 11, 0.12)' }]}>
+                <Text style={[styles.pillStateText, { color: '#F59E0B' }]}>Exec Board</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* 10. Contact */}
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={() => {
+                if (onOpenSupport) {
+                  onClose();
+                  onOpenSupport();
+                } else {
+                  handleCallHelpline();
+                }
+              }}
+            >
+              <View style={styles.actionLeft}>
+                <Ionicons name="call-outline" size={18} color="#10B981" />
+                <Text style={[styles.actionLabel, { color: colors.text }]}>
+                  {isBangla ? 'যোগাযোগ (Contact)' : 'Contact'}
+                </Text>
+              </View>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary, flexShrink: 0 }}>01312 100288</Text>
+            </TouchableOpacity>
+
+            {/* 14. HELP */}
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={() => setHelpFaqModalVisible(true)}
+            >
+              <View style={styles.actionLeft}>
+                <Ionicons name="help-circle-outline" size={18} color="#6366F1" />
+                <Text style={[styles.actionLabel, { color: colors.text }]}>
+                  {isBangla ? 'হেল্প ও এফএকিউ (HELP)' : 'HELP'}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+            </TouchableOpacity>
+
+            {/* WhatsApp Live Support */}
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={() => Linking.openURL('https://wa.me/8801312100288').catch(() => {})}
+            >
+              <View style={styles.actionLeft}>
+                <Ionicons name="logo-whatsapp" size={18} color="#25D366" />
+                <Text style={[styles.actionLabel, { color: colors.text }]} numberOfLines={1}>WhatsApp Live Support</Text>
+              </View>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: '#25D366', flexShrink: 0 }}>Active</Text>
+            </TouchableOpacity>
+
+            {/* Messenger Support */}
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={() => Linking.openURL('https://m.me/thrivingskills').catch(() => {})}
+            >
+              <View style={styles.actionLeft}>
+                <MessengerIcon size={18} color="#0084FF" />
+                <Text style={[styles.actionLabel, { color: colors.text }]} numberOfLines={1}>Messenger</Text>
+              </View>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: '#0084FF', flexShrink: 0 }}>@thrivingskills</Text>
+            </TouchableOpacity>
+
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+            {/* Section 4: Legal & Policies (Privacy Policy, Privacy Policy Bangla, Terms and Conditions) */}
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+              {isBangla ? 'নীতিমালা ও শর্তাবলি' : 'LEGAL & POLICIES'}
+            </Text>
+
+            {/* 11. Privacy Policy */}
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={() => {
+                setLegalInitialTab('privacy');
+                setLegalPrivacyLang('en');
+                setLegalModalVisible(true);
+              }}
+            >
+              <View style={styles.actionLeft}>
+                <Ionicons name="shield-outline" size={18} color={colors.textMuted} />
+                <Text style={[styles.actionLabel, { color: colors.text }]}>Privacy Policy</Text>
+              </View>
+              <View style={[styles.pillState, { backgroundColor: colors.surfaceSubtle }]}>
+                <Text style={[styles.pillStateText, { color: colors.primary }]}>EN</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* 12. Privacy Policy Bangla */}
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={() => {
+                setLegalInitialTab('privacy');
+                setLegalPrivacyLang('bn');
+                setLegalModalVisible(true);
+              }}
+            >
+              <View style={styles.actionLeft}>
+                <Ionicons name="shield-checkmark-outline" size={18} color={colors.textMuted} />
+                <Text style={[styles.actionLabel, { color: colors.text }]}>Privacy Policy Bangla (বাংলা)</Text>
+              </View>
+              <View style={[styles.pillState, { backgroundColor: isDark ? '#1C2E46' : '#EFF6FF' }]}>
+                <Text style={[styles.pillStateText, { color: colors.primary }]}>বাংলা</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* 13. Terms and Conditions */}
+            <TouchableOpacity
+              style={styles.actionRow}
+              onPress={() => {
+                setLegalInitialTab('terms');
+                setLegalModalVisible(true);
+              }}
+            >
+              <View style={styles.actionLeft}>
+                <Ionicons name="document-text-outline" size={18} color={colors.textMuted} />
+                <Text style={[styles.actionLabel, { color: colors.text }]}>Terms and Conditions</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+            </TouchableOpacity>
+
+            <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
+            {/* Section 5: Preferences & Settings */}
             <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>PREFERENCES & SETTINGS</Text>
 
             {/* Dark Mode Toggle Row */}
@@ -422,179 +672,6 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               </View>
               <Text style={{ fontSize: 11, color: colors.textMuted }}>v1.4.0</Text>
             </TouchableOpacity>
-
-            <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-            {/* Section 3: Official Links & Contact */}
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>ABOUT & GOVERNANCE</Text>
-
-            <TouchableOpacity
-              style={styles.actionRow}
-              onPress={() => {
-                setAboutInitialTab('overview');
-                setAboutModalVisible(true);
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <Ionicons name="information-circle-outline" size={18} color={colors.primary} />
-                <Text style={[styles.actionLabel, { color: colors.text }]}>About Thriving Skills (TSL)</Text>
-              </View>
-              <View style={[styles.pillState, { backgroundColor: colors.surfaceSubtle }]}>
-                <Text style={[styles.pillStateText, { color: colors.primary }]}>Overview</Text>
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.actionRow}
-              onPress={() => {
-                setAboutInitialTab('leadership');
-                setAboutModalVisible(true);
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <Ionicons name="people-outline" size={18} color="#F59E0B" />
-                <Text style={[styles.actionLabel, { color: colors.text }]}>Founders & Leadership</Text>
-              </View>
-              <View style={[styles.pillState, { backgroundColor: 'rgba(245, 158, 11, 0.12)' }]}>
-                <Text style={[styles.pillStateText, { color: '#F59E0B' }]}>Exec Board</Text>
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.actionRow}
-              onPress={() => {
-                setAboutInitialTab('partners');
-                setAboutModalVisible(true);
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <Ionicons name="shield-checkmark-outline" size={18} color="#10B981" />
-                <Text style={[styles.actionLabel, { color: colors.text }]}>Trusted Partners & MoUs</Text>
-              </View>
-              <View style={[styles.pillState, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
-                <Text style={[styles.pillStateText, { color: '#10B981' }]}>Govt & Universities</Text>
-              </View>
-            </TouchableOpacity>
-
-            <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-            {/* Section 4: Legal & Policies */}
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>LEGAL & POLICIES</Text>
-
-            <TouchableOpacity
-              style={styles.actionRow}
-              onPress={() => {
-                setLegalInitialTab('terms');
-                setLegalModalVisible(true);
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <Ionicons name="document-text-outline" size={18} color={colors.textMuted} />
-                <Text style={[styles.actionLabel, { color: colors.text }]}>Terms & Conditions</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.actionRow}
-              onPress={() => {
-                setLegalInitialTab('privacy');
-                setLegalModalVisible(true);
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <Ionicons name="shield-outline" size={18} color={colors.textMuted} />
-                <Text style={[styles.actionLabel, { color: colors.text }]}>Privacy Policy</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-            {/* Section 5: Support */}
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>SUPPORT & CONTACT</Text>
-
-            <TouchableOpacity style={styles.actionRow} onPress={handleCallHelpline}>
-              <View style={styles.actionLeft}>
-                <Ionicons name="call-outline" size={18} color={colors.primary} />
-                <Text style={[styles.actionLabel, { color: colors.text }]} numberOfLines={1}>Call Helpline</Text>
-              </View>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary, flexShrink: 0 }}>01312 100288</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.actionRow} onPress={handleOpenWebsite}>
-              <View style={styles.actionLeft}>
-                <Ionicons name="globe" size={18} color={colors.textMuted} />
-                <Text style={[styles.actionLabel, { color: colors.text }]} numberOfLines={1}>{'Visit ' + Env.SITE_URL.replace(/^https?:\/\//, '')}</Text>
-              </View>
-              <Ionicons name="open-outline" size={14} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.actionRow}
-              onPress={() => setHelpFaqModalVisible(true)}
-            >
-              <View style={styles.actionLeft}>
-                <Ionicons name="help-circle-outline" size={18} color="#6366F1" />
-                <Text style={[styles.actionLabel, { color: colors.text }]} numberOfLines={1}>
-                  {isBangla ? 'হেল্প ও এফএকিউ (FAQ)' : 'Help & FAQ Center'}
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.actionRow}
-              onPress={() => setBlogModalVisible(true)}
-            >
-              <View style={styles.actionLeft}>
-                <Ionicons name="newspaper-outline" size={18} color="#8B5CF6" />
-                <Text style={[styles.actionLabel, { color: colors.text }]} numberOfLines={1}>
-                  {isBangla ? 'টিএসএল ব্লগ ও আর্টিকেল' : 'Articles & Industry Insights'}
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.actionRow}
-              onPress={() => Linking.openURL('https://wa.me/8801312100288').catch(() => {})}
-            >
-              <View style={styles.actionLeft}>
-                <Ionicons name="logo-whatsapp" size={18} color="#25D366" />
-                <Text style={[styles.actionLabel, { color: colors.text }]} numberOfLines={1}>WhatsApp Live Support</Text>
-              </View>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: '#25D366', flexShrink: 0 }}>Active</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.actionRow}
-              onPress={() => Linking.openURL('https://m.me/thrivingskills').catch(() => {})}
-            >
-              <View style={styles.actionLeft}>
-                <MessengerIcon size={18} color="#0084FF" />
-                <Text style={[styles.actionLabel, { color: colors.text }]} numberOfLines={1}>Messenger</Text>
-              </View>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: '#0084FF', flexShrink: 0 }}>@thrivingskills</Text>
-            </TouchableOpacity>
-
-            {onOpenSupport && (
-              <TouchableOpacity
-                style={styles.actionRow}
-                onPress={() => {
-                  onClose();
-                  onOpenSupport();
-                }}
-              >
-                <View style={styles.actionLeft}>
-                  <Ionicons name="headset" size={18} color={colors.primary} />
-                  <Text style={[styles.actionLabel, { color: colors.text }]} numberOfLines={1}>
-                    {isBangla ? 'সিআরএম সাপোর্ট ডেস্ক' : 'Official CRM Helpdesk'}
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
-              </TouchableOpacity>
-            )}
 
             {/* Section 6: User Authentication & Logout */}
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
@@ -655,6 +732,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
         visible={legalModalVisible}
         onClose={() => setLegalModalVisible(false)}
         initialTab={legalInitialTab}
+        initialPrivacyLang={legalPrivacyLang}
       />
 
       <HelpFaqModal
@@ -665,6 +743,29 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
       <BlogModal
         visible={blogModalVisible}
         onClose={() => setBlogModalVisible(false)}
+      />
+
+      <EbookModal
+        visible={ebookModalVisible}
+        onClose={() => setEbookModalVisible(false)}
+      />
+
+      <ServicesModal
+        visible={servicesModalVisible}
+        onClose={() => setServicesModalVisible(false)}
+        initialServiceId={servicesInitialId}
+        onOpenInquiry={(title) => {
+          setServicesModalVisible(false);
+          if (onOpenCorporate) {
+            onClose();
+            onOpenCorporate();
+          }
+        }}
+      />
+
+      <InstructorsModal
+        visible={instructorsModalVisible}
+        onClose={() => setInstructorsModalVisible(false)}
       />
     </Modal>
   );

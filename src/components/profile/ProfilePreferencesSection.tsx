@@ -58,6 +58,9 @@ interface ProfilePreferencesSectionProps {
   onOpenHelpFaq: () => void;
   onOpenBlog: () => void;
   onOpenStorage: () => void;
+  onOpenEbook?: () => void;
+  onOpenServices?: () => void;
+  onOpenInstructors?: () => void;
   pendingSyncCount: number;
   serverEnvironment?: 'production' | 'staging';
   onSwitchServerEnvironment?: () => void;
@@ -103,6 +106,9 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
   onOpenHelpFaq,
   onOpenBlog,
   onOpenStorage,
+  onOpenEbook,
+  onOpenServices,
+  onOpenInstructors,
   pendingSyncCount,
   serverEnvironment = 'production',
   onSwitchServerEnvironment,
@@ -967,6 +973,58 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
             </View>
             <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
           </TouchableOpacity>
+
+          {/* eBook Library */}
+          {onOpenEbook && (
+            <TouchableOpacity
+              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
+              onPress={() => {
+                triggerHaptic('light');
+                onOpenEbook();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="eBook Library"
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="book-outline" size={20} color="#FFB606" />
+                <View style={styles.settingTextCol}>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>
+                    {isBangla ? 'ই-বুক লাইব্রেরি (eBook)' : 'eBook Library'}
+                  </Text>
+                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
+                    {isBangla ? 'ফ্রি প্রফেশনাল গাইড ও ব্লুপ্রিন্ট' : 'Free career handbooks & blueprints'}
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            </TouchableOpacity>
+          )}
+
+          {/* Our Course Authors */}
+          {onOpenInstructors && (
+            <TouchableOpacity
+              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
+              onPress={() => {
+                triggerHaptic('light');
+                onOpenInstructors();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Our Course Authors"
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="people-outline" size={20} color="#10B981" />
+                <View style={styles.settingTextCol}>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>
+                    {isBangla ? 'কোর্স ইন্সট্রাক্টরগণ (Faculty)' : 'Our Course Authors'}
+                  </Text>
+                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
+                    {isBangla ? 'সার্টিফাইড ইন্ডাস্ট্রি লিডার' : 'Certified industry experts & faculty'}
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            </TouchableOpacity>
+          )}
 
           {/* Storage & Offline Sync (Phase 1) */}
           <TouchableOpacity
