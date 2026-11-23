@@ -265,6 +265,19 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
       }
     });
 
+    // Fallback: If network categories are empty or incomplete, guarantee all canonical departments exist
+    Object.entries(CANONICAL_DEPARTMENTS_MAP).forEach(([deptId, conf]) => {
+      if (!canonicalMap.has(deptId)) {
+        const title = isBangla ? conf.banglaName : conf.name;
+        canonicalMap.set(deptId, {
+          id: deptId,
+          title,
+          slug: deptId,
+          count: 0,
+        });
+      }
+    });
+
     const list = Array.from(canonicalMap.values());
     list.sort((a, b) => b.count - a.count);
     return list;

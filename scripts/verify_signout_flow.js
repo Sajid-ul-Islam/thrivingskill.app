@@ -34,13 +34,13 @@ assert(
   'Destructive early return was removed so navigation and screens stay mounted.'
 );
 
-const hasGuestHandling = appTsx.includes('isGuest') &&
-  appTsx.includes('visible={isAuthModalVisible || (!isAuthenticated && !isGuest && !isAuthLoading && !isSplashVisible)}');
+const hasAuthGate = appTsx.includes('AuthModal') &&
+  appTsx.includes('visible={isAuthModalVisible || (!isAuthenticated && !isAuthLoading && !isSplashVisible)}');
 
 assert(
-  hasGuestHandling,
-  'App.tsx handles isGuest smoothly without trapping logged-out users',
-  'AuthModal visibility correctly considers isGuest.'
+  hasAuthGate,
+  'App.tsx enforces mandatory auth gate on unauthenticated users per CR-1',
+  'AuthModal visibility correctly presents mandatory login when unauthenticated.'
 );
 
 // 2. Audit AuthContext.tsx logout()
@@ -84,14 +84,15 @@ const hasHandleLogout = profileScreen.includes('const handleLogout = async () =>
 
 assert(hasHandleLogout, 'ProfileScreen implements handleLogout with toast and onNavigateTab("Home") transition');
 
-// 6. Audit AuthModal.tsx Guest Accessibility
-console.log('\n[STEP 6] Auditing AuthModal.tsx Guest & Dismissibility...');
+// 6. Audit AuthModal.tsx Mandatory Authentication Gate per CR-1
+console.log('\n[STEP 6] Auditing AuthModal.tsx Mandatory Authentication Gate per CR-1...');
 const authModal = fs.readFileSync(path.join(rootDir, 'src', 'components', 'modals', 'AuthModal.tsx'), 'utf8');
 
-const hasGuestEscape = authModal.includes('{mode !== \'forgot_password\' && mode !== \'set_password\' && (') &&
-  authModal.includes('Explore as Guest');
+const hasGuestRemoved = !authModal.includes('Explore as Guest');
+const enforcesMandatoryGate = authModal.includes('const isDismissible = dismissible !== undefined ? dismissible : isAuthenticated;');
 
-assert(hasGuestEscape, 'AuthModal always provides "Explore as Guest" action to prevent login traps');
+assert(hasGuestRemoved, 'AuthModal removes "Explore as Guest" option per client requirement CR-1');
+assert(enforcesMandatoryGate, 'AuthModal enforces mandatory authentication gate (non-dismissible for unauthenticated users)');
 
 console.log('\n================================================================');
 console.log(` RESULTS: ${passed}/${total} TESTS PASSED! 🚀`);

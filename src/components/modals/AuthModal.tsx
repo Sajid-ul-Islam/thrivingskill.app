@@ -107,7 +107,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setAuthModalVisible,
   } = useAuth();
 
-  const isDismissible = dismissible !== undefined ? dismissible : (isAuthenticated || isGuest);
+  const isDismissible = dismissible !== undefined ? dismissible : isAuthenticated;
 
   const [mode, setMode] = useState<AuthMode>(initialMode || 'login');
   const [regStep, setRegStep] = useState<1 | 2>(initialMode === 'set_password' ? 2 : 1);
@@ -1512,22 +1512,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   </>
                 )}
               </View>
-
-              {/* Guest Action - Always allows users to browse catalog without mandatory trap */}
-              {mode !== 'forgot_password' && mode !== 'set_password' && (
-                <TouchableOpacity
-                  style={[
-                    styles.guestButton,
-                    { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
-                  ]}
-                  onPress={handleGuest}
-                  activeOpacity={0.75}
-                  accessibilityRole="button"
-                >
-                  <Ionicons name="compass-outline" size={18} color={colors.text} style={{ marginRight: 8 }} />
-                  <Text style={[styles.guestButtonText, { color: colors.text }]}>Explore as Guest</Text>
-                </TouchableOpacity>
-              )}
 
               <Text style={[styles.disclaimerText, { color: colors.textMuted }]}>
                 Protected by TLS encryption. Connected to {Env.SITE_URL.replace(/^https?:\/\//, '')} official LMS.

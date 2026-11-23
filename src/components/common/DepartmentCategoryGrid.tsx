@@ -8,11 +8,128 @@ import { SpringPressable } from './SpringPressable';
 import { CategoryIllustrationIcon, CategoryDepartmentId } from './CategoryIllustrationIcon';
 import { triggerHaptic } from '../../utils/haptics';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
-import { Category } from '../../types';
+import { Category, Course } from '../../types';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
+
+export const matchesDepartment = (c: Course, deptId: string): boolean => {
+  const lowerCat = (c.category || '').toLowerCase();
+  const slugs = c.categorySlugs ? c.categorySlugs.map((s) => s.toLowerCase()) : [];
+  const dId = deptId.toLowerCase();
+
+  // 1. Business
+  if (dId === 'business') {
+    const isStrategy = lowerCat.includes('strategy') || slugs.some((s) => s.includes('strategy'));
+    if (isStrategy) return false;
+    return lowerCat.includes('business') || slugs.some((s) => s.includes('business'));
+  }
+
+  // 2. Supply Chain & Logistics
+  if (dId.includes('supply-chain') || dId.includes('supply') || dId.includes('logistics')) {
+    return (
+      lowerCat.includes('supply') ||
+      lowerCat.includes('logistics') ||
+      slugs.some((s) => s.includes('supply') || s.includes('logistics'))
+    );
+  }
+
+  // 3. Microsoft Excel
+  if (dId.includes('excel') || dId.includes('spreadsheet')) {
+    return (
+      lowerCat.includes('excel') ||
+      lowerCat.includes('spreadsheet') ||
+      slugs.some((s) => s.includes('excel') || s.includes('spreadsheet'))
+    );
+  }
+
+  // 4. Leadership & Management
+  if (dId.includes('leadership')) {
+    return lowerCat.includes('leadership') || slugs.some((s) => s.includes('leadership'));
+  }
+
+  // 5. Personal Development
+  if (dId.includes('personal-development') || dId.includes('personal')) {
+    return (
+      lowerCat.includes('personal') ||
+      lowerCat.includes('habit') ||
+      slugs.some((s) => s.includes('personal') || s.includes('habit') || s.includes('productivity'))
+    );
+  }
+
+  // 6. Generative AI
+  if (dId.includes('generative') || dId.includes('ai') || dId === '4ir') {
+    return (
+      lowerCat.includes('generative') ||
+      lowerCat.includes('4ir') ||
+      /\bai\b/i.test(lowerCat) ||
+      slugs.some((s) => s.includes('generative') || s.includes('4ir') || /\bai\b/i.test(s))
+    );
+  }
+
+  // 7. Finance, Accounting & Legal
+  if (dId.includes('finance') || dId.includes('account') || dId.includes('legal')) {
+    return (
+      lowerCat.includes('finance') ||
+      lowerCat.includes('account') ||
+      lowerCat.includes('legal') ||
+      slugs.some((s) => s.includes('finance') || s.includes('account') || s.includes('legal'))
+    );
+  }
+
+  // 8. Human Resource Management (HRM)
+  if (dId.includes('human-resource') || dId.includes('hrm') || dId.includes('hr')) {
+    return (
+      lowerCat.includes('human') ||
+      /\bhr\b/i.test(lowerCat) ||
+      slugs.some((s) => s.includes('human') || /\bhr\b/i.test(s) || s.includes('hrm'))
+    );
+  }
+
+  // 9. Sales & Marketing
+  if (dId.includes('marketing') || dId.includes('sales')) {
+    return (
+      lowerCat.includes('marketing') ||
+      lowerCat.includes('sales') ||
+      slugs.some((s) => s.includes('marketing') || s.includes('sales'))
+    );
+  }
+
+  // 10. Data Science & Big Data
+  if (dId.includes('data')) {
+    return (
+      lowerCat.includes('data') ||
+      lowerCat.includes('analytics') ||
+      slugs.some((s) => s.includes('data') || s.includes('analytics'))
+    );
+  }
+
+  // 11. Job Seekers Skills
+  if (dId.includes('job') || dId.includes('career')) {
+    return (
+      lowerCat.includes('job') ||
+      lowerCat.includes('career') ||
+      slugs.some((s) => s.includes('job') || s.includes('career'))
+    );
+  }
+
+  // 12. Research & Academic
+  if (dId.includes('research') || dId.includes('academic')) {
+    return (
+      lowerCat.includes('research') ||
+      lowerCat.includes('academic') ||
+      slugs.some((s) => s.includes('research') || s.includes('academic'))
+    );
+  }
+
+  // 13. Business Strategy
+  if (dId.includes('strategy') || dId.includes('consulting')) {
+    return lowerCat.includes('strategy') || slugs.some((s) => s.includes('strategy'));
+  }
+
+  return false;
+};
 
 
 export const getIconForCategory = (slug: string = '', name: string = ''): CategoryDepartmentId => {
@@ -230,7 +347,7 @@ export const DepartmentCategoryGrid: React.FC<DepartmentCategoryGridProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
-  const { categories: contextCategories } = useLearning();
+  const { categories: contextCategories, courses } = useLearning();
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
   // 1. Source categories dynamically from props or context
@@ -247,12 +364,12 @@ export const DepartmentCategoryGrid: React.FC<DepartmentCategoryGridProps> = ({
       if (!canonicalId || !CANONICAL_DEPARTMENTS_MAP[canonicalId]) continue;
 
       const conf = CANONICAL_DEPARTMENTS_MAP[canonicalId];
+      const liveCalculatedCount = courses ? courses.filter((c) => matchesDepartment(c, canonicalId)).length : 0;
       const count =
         departmentCounts[canonicalId] ??
         departmentCounts[cat.id] ??
         departmentCounts[slug] ??
-        cat.count ??
-        0;
+        (cat.count && cat.count > 0 ? cat.count : liveCalculatedCount);
 
       if (!canonicalMap.has(canonicalId)) {
         canonicalMap.set(canonicalId, {
@@ -270,6 +387,23 @@ export const DepartmentCategoryGrid: React.FC<DepartmentCategoryGridProps> = ({
       }
     }
 
+    // Comprehensive Fallback: Ensure all canonical departments exist with live course counts
+    Object.entries(CANONICAL_DEPARTMENTS_MAP).forEach(([deptId, conf]) => {
+      if (!canonicalMap.has(deptId)) {
+        const liveCalculatedCount = courses ? courses.filter((c) => matchesDepartment(c, deptId)).length : 0;
+        const count = departmentCounts[deptId] ?? liveCalculatedCount;
+        canonicalMap.set(deptId, {
+          id: deptId,
+          slug: deptId,
+          name: conf.name,
+          banglaName: conf.banglaName,
+          count: count,
+          icon: 'book',
+          color: '#4F46E5',
+        });
+      }
+    });
+
     const uniqueList = Array.from(canonicalMap.values());
 
     // Sort by course count descending so top site departments appear first
@@ -280,7 +414,7 @@ export const DepartmentCategoryGrid: React.FC<DepartmentCategoryGridProps> = ({
     });
 
     return uniqueList.slice(0, maxItems);
-  }, [sourceCategories, departmentCounts, maxItems]);
+  }, [sourceCategories, departmentCounts, courses, maxItems]);
 
   const displayedDepartments = useMemo(() => {
     if (!isCollapsible || isExpanded) return validDepartments;

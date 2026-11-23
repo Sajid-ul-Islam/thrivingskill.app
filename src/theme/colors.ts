@@ -68,8 +68,8 @@ export const darkColors = {
   primaryLight: '#1E2430',
   primaryGradientStart: '#102F53',
   primaryGradientEnd: '#E34234',
-  secondary: '#60A5FA', // Slate blue
-  secondaryLight: '#22252E',
+  secondary: '#FFB606', // Brand Sunshine Gold - Vibrant, prestigious, and high-contrast
+  secondaryLight: 'rgba(255, 182, 6, 0.16)', // Luminous warm gold fill
   accent: '#FF5A4B', // Brand Red Light for dark mode
   accentLight: '#450A0A',
   brandNavy: '#102F53',
@@ -95,13 +95,13 @@ export const darkColors = {
   textLight: '#94A3B8',
   textInverse: '#0F172A',
   onPrimary: '#0F172A',
-  onSecondary: '#0F172A',
+  onSecondary: '#102F53',
   onAccent: '#0F172A',
   onDanger: '#0F172A',
   onGold: '#102F53',
   cardShadow: 'rgba(0, 0, 0, 0.5)',
-  badgeBackground: '#282830', // Charcoal Badge Background
-  badgeText: '#93C5FD',
+  badgeBackground: 'rgba(255, 182, 6, 0.14)', // Warm gold badge container
+  badgeText: '#FFC72C', // Radiant warm gold text
   starColor: '#FFB606',
   tabBarBg: '#141416', // Charcoal Navigation Bar
   tabBarBorder: '#24242A',

@@ -60,13 +60,18 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     try {
       // 1. Primary check: Root WP-JSON index (standard, fast discovery endpoint ~300ms vs 5200ms on /wp/v2/types)
+      const headers: Record<string, string> = {
+        Accept: 'application/json',
+      };
+      // On web browser omit Cache-Control header to avoid triggering strict CORS preflight rejections
+      if (Platform.OS !== 'web') {
+        headers['Cache-Control'] = 'no-cache';
+      }
+
       const response = await fetch(Env.API_URL, {
         method: 'GET',
         signal: controller.signal,
-        headers: {
-          Accept: 'application/json',
-          'Cache-Control': 'no-cache',
-        },
+        headers,
       });
 
       if (reachabilityTimerRef.current) {

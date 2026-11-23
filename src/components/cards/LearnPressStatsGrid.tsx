@@ -27,6 +27,7 @@ interface LearnPressStatsGridProps {
   colors: ThemeColors;
   isBangla: boolean;
   isDark: boolean;
+  showSubTabs?: boolean;
 }
 
 interface StatCardConfig {
@@ -48,6 +49,7 @@ export const LearnPressStatsGrid: React.FC<LearnPressStatsGridProps> = ({
   colors,
   isBangla,
   isDark,
+  showSubTabs = false,
 }) => {
   const cards: StatCardConfig[] = [
     {
@@ -168,52 +170,54 @@ export const LearnPressStatsGrid: React.FC<LearnPressStatsGridProps> = ({
         })}
       </View>
 
-      {/* 5 Filter Tabs Underneath Matching Live Website */}
-      <View style={[styles.tabBarWrapper, { borderBottomColor: colors.borderSubtle }]}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.tabBarScroll}
-          accessibilityRole="tablist"
-        >
-          {tabs.map((tab) => {
-            const isActive = activeFilter === tab.id;
-            const activeColor = isDark ? colors.brandGold : colors.primary;
+      {/* Optional Sub-Filter Tabs Underneath (disabled by default to prevent stacked redundancy) */}
+      {showSubTabs && (
+        <View style={[styles.tabBarWrapper, { borderBottomColor: colors.borderSubtle }]}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.tabBarScroll}
+            accessibilityRole="tablist"
+          >
+            {tabs.map((tab) => {
+              const isActive = activeFilter === tab.id;
+              const activeColor = isDark ? colors.brandGold : colors.primary;
 
-            return (
-              <TouchableOpacity
-                key={tab.id}
-                style={[
-                  styles.tabItem,
-                  isActive && {
-                    borderBottomColor: activeColor,
-                    borderBottomWidth: 3,
-                  },
-                ]}
-                onPress={() => {
-                  triggerHaptic('selection');
-                  onSelectFilter(tab.id);
-                }}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: isActive }}
-                accessibilityLabel={`${isBangla ? tab.labelBn : tab.labelEn} tab`}
-              >
-                <Text
+              return (
+                <TouchableOpacity
+                  key={tab.id}
                   style={[
-                    styles.tabLabel,
-                    {
-                      color: isActive ? (isDark ? '#FFFFFF' : colors.primary) : colors.textMuted,
-                      fontWeight: isActive ? '700' : '500',
+                    styles.tabItem,
+                    isActive && {
+                      borderBottomColor: activeColor,
+                      borderBottomWidth: 3,
                     },
                   ]}
+                  onPress={() => {
+                    triggerHaptic('selection');
+                    onSelectFilter(tab.id);
+                  }}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: isActive }}
+                  accessibilityLabel={`${isBangla ? tab.labelBn : tab.labelEn} tab`}
                 >
-                  {isBangla ? tab.labelBn : tab.labelEn}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
+                  <Text
+                    style={[
+                      styles.tabLabel,
+                      {
+                        color: isActive ? (isDark ? '#FFFFFF' : colors.primary) : colors.textMuted,
+                        fontWeight: isActive ? '700' : '500',
+                      },
+                    ]}
+                  >
+                    {isBangla ? tab.labelBn : tab.labelEn}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      )}
     </View>
   );
 };

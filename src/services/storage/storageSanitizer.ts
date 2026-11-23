@@ -3,6 +3,7 @@ import { CacheManager } from '../cache/cacheManager';
 import { SecureStorageService } from './secureStorage';
 
 const STORAGE_CLEANUP_VERSION = '@ts_storage_sanitized_v2';
+const DEFAULT_PREFS_VERSION = '@ts_default_prefs_v1';
 const AUTH_USER_KEY = '@thriving_skill_user';
 const QNA_PREFIX = '@thriving_skill_qna_';
 
@@ -15,6 +16,14 @@ const QNA_PREFIX = '@thriving_skill_qna_';
 export class StorageSanitizer {
   static async runStartupSanitization(): Promise<void> {
     try {
+      // 0. Enforce English language and Light mode by default per client requirement
+      const prefsInitialized = await AsyncStorage.getItem(DEFAULT_PREFS_VERSION);
+      if (!prefsInitialized) {
+        await AsyncStorage.setItem('@thriving_skill_lang', 'en');
+        await AsyncStorage.setItem('@thriving_skill_theme_mode', 'light');
+        await AsyncStorage.setItem(DEFAULT_PREFS_VERSION, '1');
+      }
+
       const alreadySanitized = await AsyncStorage.getItem(STORAGE_CLEANUP_VERSION);
       if (alreadySanitized) {
         // Still perform a fast sanity check on the active user avatar

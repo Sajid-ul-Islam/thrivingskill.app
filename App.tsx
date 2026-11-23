@@ -70,9 +70,8 @@ import { PushNotificationService } from './src/services/notifications/pushNotifi
 import { HabitNotificationQueue } from './src/services/notifications/habitNotificationQueue';
 import { StorageSanitizer } from './src/services/storage/storageSanitizer';
 import { Env } from './src/config/env';
-import { SPLASH_HERO_IMAGE_URI } from './src/data/splashHeroData';
 
-const SPLASH_HERO_SOURCE = { uri: SPLASH_HERO_IMAGE_URI };
+const SPLASH_HERO_SOURCE = require('./assets/splash-hero.jpg');
 
 // Ensure browser omits external Referer on Web to prevent CDN hotlink blocks (Cloudflare 403)
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
@@ -87,6 +86,17 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
       meta.setAttribute('content', 'no-referrer');
     }
   } catch {}
+}
+
+// Suppress React 19 web SVG warning for legacy transform-origin prop from react-native-svg web runtime
+if (Platform.OS === 'web' && typeof console !== 'undefined') {
+  const origConsoleError = console.error;
+  console.error = (...args: any[]) => {
+    if (typeof args[0] === 'string' && args[0].includes('Invalid DOM property `transform-origin`')) {
+      return;
+    }
+    origConsoleError.apply(console, args);
+  };
 }
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -190,15 +200,6 @@ const BrandSplashScreen: React.FC = () => {
           <Text style={splashStyles.wordmark}>
             Thriving <Text style={{ color: '#FFB606' }}>Skills</Text>
           </Text>
-        </View>
-
-        {/* Featured Official Widescreen Hero Banner */}
-        <View style={splashStyles.bannerCard}>
-          <Image
-            source={SPLASH_HERO_SOURCE}
-            style={splashStyles.bannerImage}
-            resizeMode="cover"
-          />
         </View>
 
         {/* Feature Pill */}
@@ -700,10 +701,10 @@ const MainAppContent: React.FC = () => {
         onClose={() => setCorporateModalVisible(false)}
       />
 
-      {/* WordPress LearnPress Auth Modal */}
+      {/* WordPress LearnPress Auth Modal (Mandatory Access Control per CR-1) */}
       <AuthModal
-        visible={isAuthModalVisible || (!isAuthenticated && !isGuest && !isAuthLoading && !isSplashVisible)}
-        dismissible={isAuthenticated || isGuest}
+        visible={isAuthModalVisible || (!isAuthenticated && !isAuthLoading && !isSplashVisible)}
+        dismissible={isAuthenticated}
         onClose={() => setAuthModalVisible(false)}
       />
 
@@ -861,8 +862,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
-    minHeight: 48,
-    paddingVertical: 3,
+    minHeight: 52,
+    paddingVertical: 2,
     paddingHorizontal: 0,
     borderRadius: shape.full,
     ...Platform.select({
@@ -901,7 +902,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 8.5,
     lineHeight: 10,
-    includeFontPadding: false,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
@@ -930,15 +930,15 @@ const styles = StyleSheet.create({
     fontSize: 7.5,
     fontWeight: '900',
     lineHeight: 9,
-    includeFontPadding: false,
     letterSpacing: 0.4,
   },
   tabButtonLabel: {
     fontSize: 10,
+    lineHeight: 14,
     marginTop: 2,
-    letterSpacing: -0.2,
+    letterSpacing: -0.1,
     textAlign: 'center',
-    includeFontPadding: false,
+    paddingBottom: 2,
     maxWidth: '100%',
   },
 });
@@ -963,25 +963,27 @@ const splashStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 2,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     marginTop: -20,
   },
   headerBrand: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 24,
   },
   logoWrap: {
-    width: 68,
-    height: 68,
-    borderRadius: 20,
+    width: 80,
+    height: 80,
+    borderRadius: 24,
     backgroundColor: '#FFFFFF',
-    padding: 10,
-    marginBottom: 10,
+    padding: 12,
+    marginBottom: 14,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 182, 6, 0.65)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -990,59 +992,38 @@ const splashStyles = StyleSheet.create({
     height: '100%',
   },
   wordmark: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '900',
     color: '#FFFFFF',
     letterSpacing: -0.5,
     textAlign: 'center',
   },
-  bannerCard: {
-    width: '100%',
-    maxWidth: 380,
-    aspectRatio: 1024 / 384,
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255, 182, 6, 0.55)',
-    backgroundColor: '#0F192C',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 14,
-    elevation: 10,
-    marginBottom: 16,
-  },
-  bannerImage: {
-    width: '100%',
-    height: '100%',
-    aspectRatio: 1024 / 384,
-  },
   badgePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 182, 6, 0.12)',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 182, 6, 0.35)',
-    marginBottom: 8,
+    backgroundColor: 'rgba(255, 182, 6, 0.14)',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 22,
+    borderWidth: 1.2,
+    borderColor: 'rgba(255, 182, 6, 0.45)',
+    marginBottom: 16,
   },
   badgePillText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
     color: '#FFB606',
     letterSpacing: 0.2,
     textAlign: 'center',
   },
   tagline: {
-    fontSize: 12,
+    fontSize: 12.5,
     fontWeight: '600',
     color: 'rgba(255, 255, 255, 0.85)',
     letterSpacing: 0.2,
     textAlign: 'center',
-    maxWidth: 330,
-    lineHeight: 18,
+    maxWidth: 320,
+    lineHeight: 19,
   },
   footer: {
     position: 'absolute',

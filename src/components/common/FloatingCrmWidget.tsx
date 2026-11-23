@@ -63,11 +63,11 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
   const [expanded, setExpanded] = useState(false);
   const [activeChannel, setActiveChannel] = useState<CrmChannel>('whatsapp');
   const [isDragging, setIsDragging] = useState(false);
-  // Sticks to left edge by default
-  const [snappedSide, setSnappedSide] = useState<'left' | 'right'>('left');
+  // Sticks to right edge by default per mobile UX best practices
+  const [snappedSide, setSnappedSide] = useState<'left' | 'right'>('right');
 
-  // Initial positioning: sticking to the left edge of screen
-  const defaultX = SNAP_MARGIN;
+  // Initial positioning: sticking to the right edge of screen
+  const defaultX = screenWidth - FAB_SIZE - SNAP_MARGIN;
   const defaultY = screenHeight - bottomOffset - FAB_SIZE;
 
   const pan = useRef(new Animated.ValueXY({ x: defaultX, y: defaultY })).current;
@@ -95,7 +95,7 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
   // Adjust default position when mini player or bottom offset changes (only if user hasn't moved it)
   useEffect(() => {
     if (!hasUserMovedRef.current) {
-      const targetX = SNAP_MARGIN;
+      const targetX = screenWidth - FAB_SIZE - SNAP_MARGIN;
       const targetY = screenHeight - bottomOffset - FAB_SIZE;
       Animated.spring(pan, {
         toValue: { x: targetX, y: targetY },
@@ -105,7 +105,7 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
       }).start();
       currentPos.current = { x: targetX, y: targetY };
     }
-  }, [bottomOffset, screenHeight, pan]);
+  }, [bottomOffset, screenHeight, screenWidth, pan]);
 
   // Subtle breathing pulse on the FAB when idle
   useEffect(() => {

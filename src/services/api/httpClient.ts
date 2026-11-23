@@ -146,7 +146,7 @@ export class HttpClient {
     const fullUrl = this.buildUrl(endpoint, params, baseUrl);
     const headers: Record<string, string> = {
       Accept: 'application/json',
-      'Content-Type': 'application/json',
+      ...(isGet ? {} : { 'Content-Type': 'application/json' }),
       ...(customHeaders as Record<string, string>),
     };
 
@@ -329,7 +329,7 @@ export class HttpClient {
     const fullUrl = this.buildUrl(endpoint, params, baseUrl);
     const headers: Record<string, string> = {
       Accept: 'application/json',
-      'Content-Type': 'application/json',
+      ...(isGet ? {} : { 'Content-Type': 'application/json' }),
       ...(customHeaders as Record<string, string>),
     };
 
