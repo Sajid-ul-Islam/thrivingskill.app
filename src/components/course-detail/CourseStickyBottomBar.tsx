@@ -35,6 +35,13 @@ export const CourseStickyBottomBar: React.FC<CourseStickyBottomBarProps> = ({
     course.originalPriceBdt ||
     (course.originalPrice && course.originalPrice > course.price ? Math.round(course.originalPrice * 120) : 0);
 
+  const discountPercent =
+    origBdtPrice > bdtPrice && origBdtPrice > 0
+      ? Math.round(((origBdtPrice - bdtPrice) / origBdtPrice) * 100)
+      : course.originalPrice > course.price && course.originalPrice > 0
+      ? Math.round(((course.originalPrice - course.price) / course.originalPrice) * 100)
+      : 0;
+
   return (
     <View
       style={[
@@ -63,11 +70,6 @@ export const CourseStickyBottomBar: React.FC<CourseStickyBottomBarProps> = ({
         ) : !isEnrolled ? (
           <View style={styles.bottomPriceCol}>
             <View style={styles.priceRow}>
-              {origBdtPrice > bdtPrice && (
-                <Text style={[styles.bottomOriginalPrice, { color: colors.textMuted }]}>
-                  ৳ {origBdtPrice.toLocaleString()}
-                </Text>
-              )}
               <Text style={[styles.bottomPrice, { color: colors.primary }]} numberOfLines={1}>
                 {isPaidCourse
                   ? `৳ ${bdtPrice.toLocaleString()}`
@@ -75,6 +77,16 @@ export const CourseStickyBottomBar: React.FC<CourseStickyBottomBarProps> = ({
                   ? 'বিনামূল্যে'
                   : 'Free Course'}
               </Text>
+              {origBdtPrice > bdtPrice && (
+                <Text style={[styles.bottomOriginalPrice, { color: colors.textMuted }]}>
+                  ৳ {origBdtPrice.toLocaleString()}
+                </Text>
+              )}
+              {discountPercent > 0 && (
+                <View style={[styles.discountPill, { backgroundColor: '#E34234' }]}>
+                  <Text style={styles.discountPillText}>-{discountPercent}% OFF</Text>
+                </View>
+              )}
             </View>
             <Text
               style={[styles.bottomPriceLabel, { color: colors.textMuted }]}
@@ -126,8 +138,13 @@ export const CourseStickyBottomBar: React.FC<CourseStickyBottomBarProps> = ({
                 : isEnrolled
                 ? colors.primary
                 : isPaidCourse
-                ? colors.accent
+                ? '#E34234'
                 : colors.primary,
+              shadowColor: !isEnrolled && isPaidCourse ? '#E34234' : colors.primary,
+              shadowOffset: { width: 0, height: 3 },
+              shadowOpacity: 0.35,
+              shadowRadius: 6,
+              elevation: 4,
             },
           ]}
           onPress={onEnrollOrResume}
@@ -147,16 +164,16 @@ export const CourseStickyBottomBar: React.FC<CourseStickyBottomBarProps> = ({
               : 'Enroll for Free'}
         >
           <Ionicons
-            name={isAdmin ? 'play-circle' : isEnrolled ? 'play' : isPaidCourse ? 'card-outline' : 'flash'}
+            name={isAdmin ? 'play-circle' : isEnrolled ? 'play' : 'flash'}
             size={18}
-            color={isAdmin ? '#FFFFFF' : !isEnrolled && isPaidCourse ? colors.onAccent : colors.onPrimary}
+            color="#FFFFFF"
           />
           <Text
             style={[
               styles.enrollCTAText,
               {
-                color: isAdmin ? '#FFFFFF' : !isEnrolled && isPaidCourse ? colors.onAccent : colors.onPrimary,
-                fontWeight: !isEnrolled && isPaidCourse ? '800' : '700',
+                color: '#FFFFFF',
+                fontWeight: '800',
               },
             ]}
             numberOfLines={1}
@@ -216,6 +233,18 @@ const styles = StyleSheet.create({
   bottomOriginalPrice: {
     fontSize: 12,
     textDecorationLine: 'line-through',
+  },
+  discountPill: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    alignSelf: 'center',
+  },
+  discountPillText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.2,
   },
   bottomPrice: {
     fontSize: 19,
