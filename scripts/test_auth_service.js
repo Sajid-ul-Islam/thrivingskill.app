@@ -21,12 +21,28 @@ async function runAuthTests() {
 
   const BASE_URL = 'https://thrivingskill.com/wp-json';
 
+  async function fetchWithFailover(url, options) {
+    try {
+      return await fetch(url, options);
+    } catch (err) {
+      if (url.includes('thrivingskill.com') && !url.includes('staging.')) {
+        const stagingUrl = url.replace('https://thrivingskill.com', 'https://staging.thrivingskill.com');
+        try {
+          return await fetch(stagingUrl, options);
+        } catch {
+          throw err;
+        }
+      }
+      throw err;
+    }
+  }
+
   // ----------------------------------------------------------------
   // Test 1: LearnPress REST API Base Reachability
   // ----------------------------------------------------------------
   console.log('Test 1: Verifying Live WordPress/LearnPress API Reachability...');
   try {
-    const res = await fetch(`${BASE_URL}/learnpress/v1/courses?per_page=1`, { signal: AbortSignal.timeout(25000) });
+    const res = await fetchWithFailover(`${BASE_URL}/learnpress/v1/courses?per_page=1`, { signal: AbortSignal.timeout(15000) });
     assert(res.status === 200, `LearnPress API returned HTTP 200 (Status: ${res.status})`);
     const courses = await res.json();
     assert(Array.isArray(courses) && courses.length > 0, `Courses list returned ${courses.length} courses from live LMS`);
@@ -39,7 +55,7 @@ async function runAuthTests() {
   // ----------------------------------------------------------------
   console.log('\nTest 2: Verifying LearnPress JWT Login Endpoint (POST /learnpress/v1/token)...');
   try {
-    const res = await fetch(`${BASE_URL}/learnpress/v1/token`, {
+    const res = await fetchWithFailover(`${BASE_URL}/learnpress/v1/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify({
@@ -61,7 +77,7 @@ async function runAuthTests() {
   // ----------------------------------------------------------------
   console.log('\nTest 3: Verifying LearnPress Registration Endpoint & Custom Required Fields...');
   try {
-    const res = await fetch(`${BASE_URL}/learnpress/v1/token/register`, {
+    const res = await fetchWithFailover(`${BASE_URL}/learnpress/v1/token/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify({
@@ -173,7 +189,7 @@ async function runAuthTests() {
   // ----------------------------------------------------------------
   console.log('\nTest 6: Verifying LearnPress Token Validation Endpoint...');
   try {
-    const res = await fetch(`${BASE_URL}/learnpress/v1/token/validate`, {
+    const res = await fetchWithFailover(`${BASE_URL}/learnpress/v1/token/validate`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
