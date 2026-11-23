@@ -1,4 +1,5 @@
 export * from './ProfileHeaderCard';
+export * from './ProfileCompletionDonut';
 export * from './ProfileLearningPortfolio';
 export * from './ProfilePreferencesSection';
 export * from './ProfileSettingsModal';

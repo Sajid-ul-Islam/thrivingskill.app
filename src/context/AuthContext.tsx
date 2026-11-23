@@ -204,7 +204,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const serverUser = await UserService.getCurrentUser();
       if (serverUser) {
         const mergedUser: UserProfile = {
+          ...user,
           ...serverUser,
+          phone: serverUser.phone || user?.phone || '',
+          city: serverUser.city || user?.city || '',
+          description: serverUser.description || user?.description || '',
+          avatar: serverUser.avatar || user?.avatar || '',
+          cover_photo: serverUser.cover_photo || user?.cover_photo || '',
+          social: serverUser.social || user?.social,
           token: currentToken,
         };
         setUser(mergedUser);

@@ -396,7 +396,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           youtube: socialYoutube.trim(),
           linkedin: socialLinkedin.trim(),
         },
-      });
+      }, false);
 
       setEditProfileModalVisible(false);
       showToast({
@@ -632,6 +632,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           customBio={customBio}
           activeWorkspaceName={activeWorkspace?.name || 'Default Workspace'}
           colors={colors}
+          isDark={isDark}
           isBangla={isBangla}
           onEditProfile={() => {
             triggerHaptic('light');
