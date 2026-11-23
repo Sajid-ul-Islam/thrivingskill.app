@@ -2,6 +2,61 @@ import { Platform, ImageSourcePropType } from 'react-native';
 import { Env } from '../config/env';
 
 /**
+ * Authentic bundled team & faculty assets from assets/team/
+ * Matches canonical instructors, founders, and leaders from https://thrivingskill.com
+ */
+export const INSTRUCTOR_LOCAL_AVATARS: Record<string, ImageSourcePropType> = {
+  // Founders & Executive Leadership
+  mahmud: require('../../assets/team/abdullah_al_mahmud.jpeg'),
+  abdullah: require('../../assets/team/abdullah_al_mahmud.jpeg'),
+  nuruddin: require('../../assets/team/syed_nuruddin_ahmed.jpeg'),
+  yusuf: require('../../assets/team/yusuf_iqbal.jpeg'),
+  tareq: require('../../assets/team/tareq_siddiqui.jpeg'),
+  siddiqui: require('../../assets/team/tareq_siddiqui.jpeg'),
+  noman: require('../../assets/team/abdulla_al_noman.jpeg'),
+
+  // Top Faculty, Master Mentors & Course Authors
+  don: require('../../assets/team/don_sumdany.png'),
+  sumdany: require('../../assets/team/don_sumdany.png'),
+  'km ali': require('../../assets/team/km_ali.png'),
+  'k.m. ali': require('../../assets/team/km_ali.png'),
+  'arif khan': require('../../assets/team/arif_khan.png'),
+  moinuddin: require('../../assets/team/moinuddin_chowdhury.png'),
+  habib: require('../../assets/team/mamun_habib.jpeg'),
+  'mamun habib': require('../../assets/team/mamun_habib.jpeg'),
+  jishu: require('../../assets/team/jishu_tarafder.png'),
+  tarafder: require('../../assets/team/jishu_tarafder.png'),
+  humaira: require('../../assets/team/humaira_sharmeen.png'),
+  sharmeen: require('../../assets/team/humaira_sharmeen.png'),
+};
+
+/**
+ * Resolves an instructor or leadership member avatar source.
+ * Prioritizes bundled high-res authentic local assets from assets/team/
+ * before falling back to network URL or fallback image.
+ */
+export function getInstructorAvatarSource(
+  name?: string | null,
+  rawUri?: string | null,
+  fallbackSource: ImageSourcePropType = require('../../assets/icon.png')
+): ImageSourcePropType {
+  if (name && typeof name === 'string') {
+    const cleanName = name.toLowerCase().trim();
+    for (const [key, asset] of Object.entries(INSTRUCTOR_LOCAL_AVATARS)) {
+      if (cleanName.includes(key)) {
+        return asset;
+      }
+    }
+  }
+
+  if (rawUri && typeof rawUri === 'string' && rawUri.trim().length > 0) {
+    return getSafeImageSource(rawUri, fallbackSource);
+  }
+
+  return fallbackSource;
+}
+
+/**
  * Normalizes and sanitizes image URIs for cross-platform reliability.
  * - Handles non-ASCII / Unicode characters (such as Bengali script) via encodeURI.
  * - Trims whitespaces and ensures secure https protocol for WordPress media.
@@ -51,3 +106,4 @@ export function getSafeImageSource(
     },
   };
 }
+

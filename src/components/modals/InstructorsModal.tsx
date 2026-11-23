@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   Linking,
   Image,
+  TextInput,
+  Platform,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -18,6 +20,7 @@ import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
 import { SpringPressable } from '../common/SpringPressable';
 import { triggerHaptic } from '../../utils/haptics';
 import { SiteNavigationService, CourseAuthorItem } from '../../services/site/siteNavigationService';
+import { getInstructorAvatarSource } from '../../utils/imageUtils';
 import { Env } from '../../config/env';
 
 interface InstructorsModalProps {
@@ -25,6 +28,8 @@ interface InstructorsModalProps {
   onClose: () => void;
   onSelectAuthor?: (author: CourseAuthorItem) => void;
 }
+
+type FilterCategory = 'all' | 'leadership' | 'faculty';
 
 export const InstructorsModal: React.FC<InstructorsModalProps> = ({
   visible,
@@ -35,9 +40,37 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
   const { isBangla } = useLanguage();
   const insets = useSafeAreaInsets();
 
-  if (!visible) return null;
+  const [activeFilter, setActiveFilter] = useState<FilterCategory>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const instructors = SiteNavigationService.getInstructors();
+  const instructors = useMemo(() => {
+    return SiteNavigationService.getInstructors();
+  }, []);
+
+  const filteredInstructors = useMemo(() => {
+    let list = instructors;
+
+    if (activeFilter === 'leadership') {
+      list = list.filter((item) => item.category === 'founder' || item.category === 'leadership' || item.isFounder);
+    } else if (activeFilter === 'faculty') {
+      list = list.filter((item) => item.category === 'faculty' && !item.isFounder);
+    }
+
+    if (searchQuery.trim().length > 0) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter((item) => {
+        const nameMatch = item.name.toLowerCase().includes(q) || (item.banglaName && item.banglaName.toLowerCase().includes(q));
+        const desigMatch = item.designation.toLowerCase().includes(q) || (item.banglaDesignation && item.banglaDesignation.toLowerCase().includes(q));
+        const orgMatch = item.organization.toLowerCase().includes(q) || (item.banglaOrganization && item.banglaOrganization.toLowerCase().includes(q));
+        const expMatch = item.expertise?.some((e) => e.toLowerCase().includes(q)) || item.banglaExpertise?.some((e) => e.toLowerCase().includes(q));
+        return nameMatch || desigMatch || orgMatch || expMatch;
+      });
+    }
+
+    return list;
+  }, [instructors, activeFilter, searchQuery]);
+
+  if (!visible) return null;
 
   const handleBecomeInstructor = () => {
     triggerHaptic('medium');
@@ -51,6 +84,12 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
     } else {
       Linking.openURL(author.profileUrl).catch(() => {});
     }
+  };
+
+  const counts = {
+    all: instructors.length,
+    leadership: instructors.filter((item) => item.category === 'founder' || item.category === 'leadership' || item.isFounder).length,
+    faculty: instructors.filter((item) => item.category === 'faculty' && !item.isFounder).length,
   };
 
   return (
@@ -73,10 +112,10 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
             </View>
             <View>
               <Text style={[styles.headerTitle, { color: colors.text }]}>
-                {isBangla ? 'আমাদের কোর্স ইন্সট্রাক্টরগণ' : 'Our Course Authors'}
+                {isBangla ? 'আমাদের সম্মানিত শিক্ষক ও পরিচালনা পর্ষদ' : 'Leadership & Certified Faculty'}
               </Text>
               <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>
-                {isBangla ? 'শীর্ষস্থানীয় ইন্ডাস্ট্রি প্র্যাকটিশনার' : 'Industry Executives & Academicians'}
+                {isBangla ? 'থ্রাইভিং স্কিলসের প্রতিষ্ঠাতা, লিডারশিপ ও প্রশিক্ষক' : 'Founders, Industry Leaders & Master Mentors'}
               </Text>
             </View>
           </View>
@@ -92,6 +131,97 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
           </TouchableOpacity>
         </View>
 
+        {/* Search & Filter Bar */}
+        <View style={[styles.controlsBar, { backgroundColor: colors.surfaceCard, borderBottomColor: colors.border }]}>
+          {/* Search Input */}
+          <View style={[styles.searchBox, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+            <Ionicons name="search" size={17} color={colors.textMuted} style={{ marginRight: 8 }} />
+            <TextInput
+              style={[styles.searchInput, { color: colors.text }]}
+              placeholder={isBangla ? 'নাম, পদবি বা দক্ষতা দিয়ে খুঁজুন...' : 'Search by name, role, or skill...'}
+              placeholderTextColor={colors.textMuted}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              returnKeyType="search"
+              clearButtonMode="while-editing"
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Ionicons name="close-circle" size={16} color={colors.textMuted} />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Segmented Filter Tabs */}
+          <View style={[styles.filterSegmentRow, { backgroundColor: colors.surfaceSubtle }]}>
+            <TouchableOpacity
+              onPress={() => {
+                triggerHaptic('selection');
+                setActiveFilter('all');
+              }}
+              style={[
+                styles.segmentTab,
+                activeFilter === 'all' && [styles.segmentTabActive, { backgroundColor: colors.surfaceCard }],
+              ]}
+              accessibilityRole="button"
+            >
+              <Text
+                style={[
+                  styles.segmentTabText,
+                  { color: activeFilter === 'all' ? (isDark ? '#FFB606' : '#102F53') : colors.textMuted },
+                  activeFilter === 'all' && styles.segmentTabTextActive,
+                ]}
+              >
+                {isBangla ? 'সকল' : 'All'} ({counts.all})
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => {
+                triggerHaptic('selection');
+                setActiveFilter('leadership');
+              }}
+              style={[
+                styles.segmentTab,
+                activeFilter === 'leadership' && [styles.segmentTabActive, { backgroundColor: colors.surfaceCard }],
+              ]}
+              accessibilityRole="button"
+            >
+              <Text
+                style={[
+                  styles.segmentTabText,
+                  { color: activeFilter === 'leadership' ? (isDark ? '#FFB606' : '#102F53') : colors.textMuted },
+                  activeFilter === 'leadership' && styles.segmentTabTextActive,
+                ]}
+              >
+                {isBangla ? 'ফাউন্ডার্স ও টিম' : 'Founders & Team'} ({counts.leadership})
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => {
+                triggerHaptic('selection');
+                setActiveFilter('faculty');
+              }}
+              style={[
+                styles.segmentTab,
+                activeFilter === 'faculty' && [styles.segmentTabActive, { backgroundColor: colors.surfaceCard }],
+              ]}
+              accessibilityRole="button"
+            >
+              <Text
+                style={[
+                  styles.segmentTabText,
+                  { color: activeFilter === 'faculty' ? (isDark ? '#FFB606' : '#102F53') : colors.textMuted },
+                  activeFilter === 'faculty' && styles.segmentTabTextActive,
+                ]}
+              >
+                {isBangla ? 'ফ্যাকাল্টি' : 'Faculty'} ({counts.faculty})
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* Content */}
         <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 24) + 20 }]}>
           {/* Become an Instructor Callout Banner */}
@@ -99,13 +229,13 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
             style={[
               styles.joinBanner,
               {
-                backgroundColor: isDark ? '#1C2E46' : '#EFF6FF',
-                borderColor: colors.border,
+                backgroundColor: isDark ? '#162840' : '#EFF6FF',
+                borderColor: isDark ? '#1E3A5F' : '#DBEAFE',
               },
             ]}
           >
             <View style={styles.joinBannerContent}>
-              <View style={[styles.joinIconWrap, { backgroundColor: isDark ? '#24364B' : '#DBEAFE' }]}>
+              <View style={[styles.joinIconWrap, { backgroundColor: isDark ? '#102F53' : '#DBEAFE' }]}>
                 <Ionicons name="school" size={22} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
@@ -121,7 +251,7 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
             </View>
             <SpringPressable
               onPress={handleBecomeInstructor}
-              style={[styles.joinBtn, { backgroundColor: colors.secondary }]}
+              style={[styles.joinBtn, { backgroundColor: '#FFB606' }]}
               activeScale={0.96}
             >
               <Ionicons name="person-add-outline" size={16} color="#102F53" style={{ marginRight: 6 }} />
@@ -131,72 +261,181 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
             </SpringPressable>
           </View>
 
-          {/* Authors List */}
-          <Text style={[styles.sectionHeading, { color: colors.textMuted }]}>
-            {isBangla ? 'সার্টিফাইড ফ্যাকাল্টি ও এক্সপার্ট' : 'CERTIFIED FACULTY & EXPERTS'}
-          </Text>
+          {/* Section Heading */}
+          <View style={styles.sectionHeadingRow}>
+            <Text style={[styles.sectionHeading, { color: colors.textMuted }]}>
+              {activeFilter === 'leadership'
+                ? isBangla
+                  ? 'প্রতিষ্ঠাতা ও পরিচালনা পর্ষদ'
+                  : 'FOUNDERS & EXECUTIVE LEADERSHIP'
+                : activeFilter === 'faculty'
+                ? isBangla
+                  ? 'সার্টিফাইড ফ্যাকাল্টি ও মাস্টার মেন্টর'
+                  : 'CERTIFIED FACULTY & MASTER MENTORS'
+                : isBangla
+                ? 'সকল প্রোফাইল ও প্রশিক্ষকবৃন্দ'
+                : 'ALL PROFILES & FACULTY MEMBERS'}
+            </Text>
+            <Text style={[styles.resultsCountBadge, { color: colors.textMuted }]}>
+              {filteredInstructors.length} {isBangla ? 'জন' : 'Profiles'}
+            </Text>
+          </View>
 
-          {instructors.map((author) => (
-            <View
-              key={author.id}
-              style={[
-                styles.authorCard,
-                {
-                  backgroundColor: colors.surfaceCard,
-                  borderColor: colors.border,
-                  shadowColor: colors.cardShadow,
-                },
-              ]}
-            >
-              <View style={styles.authorHeader}>
-                <Image
-                  source={{ uri: author.avatarUrl }}
-                  style={[styles.avatar, { borderColor: colors.border }]}
-                />
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.authorName, { color: colors.text }]}>
-                    {isBangla && author.banglaName ? author.banglaName : author.name}
-                  </Text>
-                  <Text style={[styles.authorDesignation, { color: colors.primary }]}>
-                    {author.designation}
-                  </Text>
-                  <Text style={[styles.authorOrg, { color: colors.textMuted }]}>
-                    {author.organization}
-                  </Text>
-                </View>
-              </View>
-
-              <Text style={[styles.authorBio, { color: colors.textMuted }]} numberOfLines={3}>
-                {author.bio}
+          {/* Empty State */}
+          {filteredInstructors.length === 0 && (
+            <View style={[styles.emptyContainer, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+              <Ionicons name="search-outline" size={36} color={colors.textMuted} style={{ marginBottom: 8 }} />
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>
+                {isBangla ? 'কোনো প্রোফাইল পাওয়া যায়নি' : 'No Profiles Found'}
               </Text>
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+                {isBangla ? 'ভিন্ন কোনো নাম বা কি-ওয়ার্ড দিয়ে আবার চেষ্টা করুন।' : 'Try searching with another name or specialty.'}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setSearchQuery('')}
+                style={[styles.clearSearchBtn, { backgroundColor: colors.surfaceSubtle }]}
+              >
+                <Text style={[styles.clearSearchText, { color: colors.primary }]}>
+                  {isBangla ? 'অনুসন্ধান মুছুন' : 'Clear Search'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
-              <View style={styles.authorFooter}>
-                <View style={styles.statsRow}>
-                  <View style={styles.statItem}>
-                    <Ionicons name="book-outline" size={14} color={colors.textMuted} />
-                    <Text style={[styles.statText, { color: colors.text }]}>
-                      {author.coursesCount} {isBangla ? 'কোর্স' : 'Courses'}
-                    </Text>
+          {/* Authors List */}
+          {filteredInstructors.map((author) => {
+            const avatarSource = author.localAvatar || getInstructorAvatarSource(author.name, author.avatarUrl);
+            const isFounder = author.isFounder || author.category === 'founder';
+            const badgeLabel = (isBangla && author.banglaBadge) ? author.banglaBadge : author.badge;
+            const expertiseList = (isBangla && author.banglaExpertise) ? author.banglaExpertise : author.expertise;
+
+            return (
+              <View
+                key={author.id}
+                style={[
+                  styles.authorCard,
+                  {
+                    backgroundColor: colors.surfaceCard,
+                    borderColor: isFounder ? (isDark ? '#F59E0B66' : '#FDE68A') : colors.border,
+                    borderWidth: isFounder ? 1.5 : 1,
+                    shadowColor: colors.cardShadow,
+                  },
+                ]}
+              >
+                {/* Author Card Header */}
+                <View style={styles.authorHeader}>
+                  <View style={styles.avatarWrapper}>
+                    <Image
+                      source={avatarSource}
+                      style={[
+                        styles.avatar,
+                        {
+                          borderColor: isFounder ? '#FFB606' : colors.border,
+                        },
+                      ]}
+                      {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+                    />
+                    {isFounder && (
+                      <View style={styles.founderCrownPill}>
+                        <Ionicons name="star" size={10} color="#102F53" />
+                      </View>
+                    )}
                   </View>
-                  <View style={styles.statItem}>
-                    <Ionicons name="people-outline" size={14} color={colors.textMuted} />
-                    <Text style={[styles.statText, { color: colors.text }]}>
-                      {author.studentsCount.toLocaleString()} {isBangla ? 'শিক্ষার্থী' : 'Students'}
+
+                  <View style={{ flex: 1 }}>
+                    <View style={styles.nameRow}>
+                      <Text style={[styles.authorName, { color: colors.text }]} numberOfLines={1}>
+                        {isBangla && author.banglaName ? author.banglaName : author.name}
+                      </Text>
+                      <Ionicons name="checkmark-circle" size={16} color="#10B981" style={{ marginLeft: 4 }} />
+                    </View>
+
+                    <Text style={[styles.authorDesignation, { color: colors.primary }]} numberOfLines={2}>
+                      {isBangla && author.banglaDesignation ? author.banglaDesignation : author.designation}
                     </Text>
+
+                    <Text style={[styles.authorOrg, { color: colors.textMuted }]} numberOfLines={1}>
+                      {isBangla && author.banglaOrganization ? author.banglaOrganization : author.organization}
+                    </Text>
+
+                    {badgeLabel && (
+                      <View
+                        style={[
+                          styles.badgePill,
+                          {
+                            backgroundColor: isFounder
+                              ? (isDark ? 'rgba(255, 182, 6, 0.2)' : '#FEF3C7')
+                              : (isDark ? 'rgba(16, 47, 83, 0.4)' : '#EFF6FF'),
+                            borderColor: isFounder ? '#FFB606' : (isDark ? '#2563EB44' : '#BFDBFE'),
+                          },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.badgeText,
+                            { color: isFounder ? (isDark ? '#FFB606' : '#B45309') : (isDark ? '#60A5FA' : '#1D4ED8') },
+                          ]}
+                        >
+                          {badgeLabel}
+                        </Text>
+                      </View>
+                    )}
                   </View>
                 </View>
 
-                <TouchableOpacity
-                  onPress={() => handleOpenAuthorProfile(author)}
-                  style={styles.viewProfileTouch}
-                >
-                  <Text style={[styles.viewProfileText, { color: colors.primary }]}>
-                    {isBangla ? 'প্রোফাইল দেখুন →' : 'View Profile →'}
-                  </Text>
-                </TouchableOpacity>
+                {/* Bio */}
+                <Text style={[styles.authorBio, { color: colors.textMuted }]} numberOfLines={3}>
+                  {isBangla && author.banglaBio ? author.banglaBio : author.bio}
+                </Text>
+
+                {/* Expertise Chips */}
+                {expertiseList && expertiseList.length > 0 && (
+                  <View style={styles.skillsRow}>
+                    {expertiseList.map((skill, sIdx) => (
+                      <View
+                        key={sIdx}
+                        style={[
+                          styles.skillChip,
+                          { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                        ]}
+                      >
+                        <Text style={[styles.skillChipText, { color: colors.text }]}>{skill}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                {/* Footer with stats & Profile CTA */}
+                <View style={[styles.authorFooter, { borderTopColor: colors.border }]}>
+                  <View style={styles.statsRow}>
+                    <View style={styles.statItem}>
+                      <Ionicons name="book-outline" size={14} color={colors.textMuted} />
+                      <Text style={[styles.statText, { color: colors.text }]}>
+                        {author.coursesCount} {isBangla ? 'কোর্স' : 'Courses'}
+                      </Text>
+                    </View>
+                    <View style={styles.statItem}>
+                      <Ionicons name="people-outline" size={14} color={colors.textMuted} />
+                      <Text style={[styles.statText, { color: colors.text }]}>
+                        {author.studentsCount.toLocaleString()} {isBangla ? 'শিক্ষার্থী' : 'Students'}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <TouchableOpacity
+                    onPress={() => handleOpenAuthorProfile(author)}
+                    style={styles.viewProfileTouch}
+                    accessibilityRole="button"
+                    accessibilityLabel={`View profile of ${author.name}`}
+                  >
+                    <Text style={[styles.viewProfileText, { color: colors.primary }]}>
+                      {isBangla ? 'প্রোফাইল দেখুন →' : 'View Profile →'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
-          ))}
+            );
+          })}
         </ScrollView>
       </View>
     </Modal>
@@ -219,6 +458,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    flex: 1,
   },
   iconWrap: {
     width: 38,
@@ -228,7 +468,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 16.5,
+    fontSize: 16,
     fontWeight: '800',
     letterSpacing: -0.2,
   },
@@ -242,6 +482,51 @@ const styles = StyleSheet.create({
     borderRadius: shape.full,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  controlsBar: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    gap: 10,
+  },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: shape.medium,
+    paddingHorizontal: 12,
+    height: 40,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 13,
+    paddingVertical: 0,
+  },
+  filterSegmentRow: {
+    flexDirection: 'row',
+    padding: 3,
+    borderRadius: shape.medium,
+  },
+  segmentTab: {
+    flex: 1,
+    paddingVertical: 6,
+    borderRadius: shape.small,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  segmentTabActive: {
+    elevation: 1,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  segmentTabText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  segmentTabTextActive: {
+    fontWeight: '800',
   },
   scrollContent: {
     padding: 16,
@@ -289,16 +574,51 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#102F53',
   },
+  sectionHeadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
   sectionHeading: {
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.8,
-    marginTop: 6,
+  },
+  resultsCountBadge: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  emptyContainer: {
+    padding: 24,
+    borderRadius: shape.large,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+  emptyTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  emptyText: {
+    fontSize: 12.5,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  clearSearchBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: shape.medium,
+  },
+  clearSearchText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   authorCard: {
     borderRadius: shape.large,
     padding: 16,
-    borderWidth: 1,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 6,
@@ -307,32 +627,83 @@ const styles = StyleSheet.create({
   authorHeader: {
     flexDirection: 'row',
     gap: 12,
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 10,
   },
+  avatarWrapper: {
+    position: 'relative',
+  },
   avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 62,
+    height: 62,
+    borderRadius: 31,
+    borderWidth: 2,
+  },
+  founderCrownPill: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    backgroundColor: '#FFB606',
+    borderRadius: 9,
+    width: 18,
+    height: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
   },
   authorName: {
-    fontSize: 15,
+    fontSize: 15.5,
     fontWeight: '800',
-    marginBottom: 1,
+    letterSpacing: -0.2,
   },
   authorDesignation: {
     fontSize: 12,
     fontWeight: '700',
-    marginBottom: 1,
+    marginTop: 2,
+    lineHeight: 16,
   },
   authorOrg: {
     fontSize: 11.5,
+    marginTop: 1,
+  },
+  badgePill: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
+    borderRadius: 6,
+    borderWidth: 1,
+    marginTop: 5,
+  },
+  badgeText: {
+    fontSize: 10.5,
+    fontWeight: '800',
   },
   authorBio: {
     fontSize: 12.5,
-    lineHeight: 17,
+    lineHeight: 18,
+    marginBottom: 10,
+  },
+  skillsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
     marginBottom: 12,
+  },
+  skillChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: shape.small,
+    borderWidth: 1,
+  },
+  skillChipText: {
+    fontSize: 10.5,
+    fontWeight: '600',
   },
   authorFooter: {
     flexDirection: 'row',
@@ -340,7 +711,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(100, 116, 139, 0.2)',
   },
   statsRow: {
     flexDirection: 'row',

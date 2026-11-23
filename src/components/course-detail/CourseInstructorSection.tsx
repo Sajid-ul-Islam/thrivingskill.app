@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, Platform } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { Instructor } from '../../types';
-import { getSafeImageSource } from '../../utils/imageUtils';
+import { getInstructorAvatarSource } from '../../utils/imageUtils';
 
 interface CourseInstructorSectionProps {
   instructor: Instructor;
@@ -18,7 +19,9 @@ export const CourseInstructorSection: React.FC<CourseInstructorSectionProps> = (
 
   useEffect(() => {
     setAvatarError(false);
-  }, [instructor.avatar]);
+  }, [instructor.avatar, instructor.name]);
+
+  const avatarSource = getInstructorAvatarSource(instructor.name, instructor.avatar);
 
   return (
     <View
@@ -28,10 +31,10 @@ export const CourseInstructorSection: React.FC<CourseInstructorSectionProps> = (
       ]}
     >
       <View style={styles.instructorHeader}>
-        {instructor.avatar && !avatarError ? (
+        {!avatarError ? (
           <Image
-            source={getSafeImageSource(instructor.avatar)}
-            style={styles.instructorAvatar}
+            source={avatarSource}
+            style={[styles.instructorAvatar, { borderColor: colors.border }]}
             onError={() => setAvatarError(true)}
             {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
           />
@@ -49,9 +52,12 @@ export const CourseInstructorSection: React.FC<CourseInstructorSectionProps> = (
           </View>
         )}
         <View style={styles.instructorMeta}>
-          <Text style={[styles.instructorName, { color: colors.text }]}>
-            {instructor.name}
-          </Text>
+          <View style={styles.instructorNameRow}>
+            <Text style={[styles.instructorName, { color: colors.text }]}>
+              {instructor.name}
+            </Text>
+            <Ionicons name="checkmark-circle" size={15} color="#10B981" style={{ marginLeft: 4 }} />
+          </View>
           <Text style={[styles.instructorTitle, { color: colors.primary }]}>
             {instructor.title}
           </Text>
@@ -125,10 +131,14 @@ const styles = StyleSheet.create({
   instructorMeta: {
     flex: 1,
   },
+  instructorNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
   instructorName: {
     fontSize: 15,
     fontWeight: '700',
-    marginBottom: 2,
   },
   instructorTitle: {
     fontSize: 12,

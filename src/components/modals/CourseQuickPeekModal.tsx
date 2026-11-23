@@ -14,7 +14,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { Course } from '../../types';
-import { getSafeImageSource } from '../../utils/imageUtils';
+import { getSafeImageSource, getInstructorAvatarSource } from '../../utils/imageUtils';
 import { SpringPressable } from '../common/SpringPressable';
 import { triggerHaptic } from '../../utils/haptics';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
@@ -161,11 +161,11 @@ export const CourseQuickPeekModal: React.FC<CourseQuickPeekModalProps> = ({
 
               {/* Instructor Row */}
               <View style={styles.instructorRow}>
-                <View style={[styles.instructorAvatar, { backgroundColor: colors.primary }]}>
-                  <Text style={styles.instructorInitial}>
-                    {(course.instructor?.name || 'T')[0].toUpperCase()}
-                  </Text>
-                </View>
+                <Image
+                  source={getInstructorAvatarSource(course.instructor?.name, course.instructor?.avatar)}
+                  style={[styles.instructorAvatar, { borderWidth: 1, borderColor: colors.border }]}
+                  {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+                />
                 <View style={styles.instructorTextCol}>
                   <View style={styles.instructorNameRow}>
                     <Text style={[styles.instructorName, { color: colors.text }]} numberOfLines={1}>
