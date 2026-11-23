@@ -17,3 +17,6 @@ export * from './SkillAssessmentModal';
 export * from './SubscriptionModal';
 export * from './SupportContactModal';
 export * from './UniversalSearchModal';
+export * from './EbookModal';
+export * from './ServicesModal';
+export * from './InstructorsModal';

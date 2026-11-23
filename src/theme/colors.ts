@@ -21,13 +21,13 @@ export const lightColors = {
   primaryLight: '#E8EEF5',
   primaryGradientStart: '#102F53',
   primaryGradientEnd: '#1D4476',
-  secondary: '#1D4476', // Deep Royal Blue Light
-  secondaryLight: '#EFF6FF',
+  secondary: '#FFB606', // Thriving Skills Golden Amber
+  secondaryLight: '#FFFBEB',
   accent: '#E34234', // Secondary / Accent Red (CTA, badges, alerts, discounts)
   accentLight: '#FEE2E2',
   brandNavy: '#102F53',
   brandRed: '#E34234',
-  brandGold: '#FFB606', // Thriving Skills Golden Amber
+  brandGold: '#FFB606',
   brandGoldLight: '#FEF3C7',
   brandGoldSubtle: 'rgba(255, 182, 6, 0.12)',
   brandNavySubtle: 'rgba(16, 47, 83, 0.08)',
@@ -36,19 +36,19 @@ export const lightColors = {
   success: '#10B981',
   successLight: 'rgba(16, 185, 129, 0.16)',
   onSuccess: '#FFFFFF',
-  background: '#F8FAFC',
-  surface: '#FFFFFF', // Pure White surface
-  surfaceCard: '#FFFFFF', // Pure White card
-  surfaceSubtle: '#F1F5F9',
-  surfaceElevated: '#FFFFFF',
-  border: '#E2E8F0',
+  background: '#FFFFFF', // Light mode base background
+  surface: '#FFFFFF',
+  surfaceCard: '#FFFFFF', // Card background
+  surfaceSubtle: '#F5F7FA',
+  surfaceElevated: '#F5F7FA', // Elevated surface
+  border: '#E2E8F0', // Border
   borderSubtle: '#F1F5F9',
-  text: '#102F53', // Primary Text Headers in Deep Royal Blue
-  textMuted: '#475569',
-  textLight: '#64748B',
+  text: '#102F53', // Primary Text in Deep Royal Blue
+  textMuted: '#64748B', // Secondary Text
+  textLight: '#94A3B8',
   textInverse: '#FFFFFF',
   onPrimary: '#FFFFFF', // Pure White on Deep Royal Blue
-  onSecondary: '#FFFFFF',
+  onSecondary: '#102F53',
   onAccent: '#FFFFFF', // Pure White on Accent Red
   onDanger: '#FFFFFF',
   onGold: '#102F53',
@@ -63,17 +63,17 @@ export const lightColors = {
 };
 
 export const darkColors = {
-  primary: '#38BDF8', // Cyan/Sky highlight on charcoal navy
-  primaryDark: '#102F53',
-  primaryLight: '#1E2430',
+  primary: '#38BDF8', // Luminous sky highlight token for interactive primary actions on dark navy
+  primaryDark: '#102F53', // Primary brand deep navy
+  primaryLight: '#162538',
   primaryGradientStart: '#102F53',
   primaryGradientEnd: '#E34234',
-  secondary: '#FFB606', // Brand Sunshine Gold - Vibrant, prestigious, and high-contrast
+  secondary: '#FFB606', // Brand Sunshine Gold
   secondaryLight: 'rgba(255, 182, 6, 0.16)', // Luminous warm gold fill
-  accent: '#FF5A4B', // Brand Red Light for dark mode
+  accent: '#E34234', // Accent red (consistent brand identity)
   accentLight: '#450A0A',
-  brandNavy: '#102F53',
-  brandRed: '#E34234',
+  brandNavy: '#102F53', // Primary brand #102F53 consistent across themes
+  brandRed: '#E34234', // Accent red #E34234 consistent across themes
   brandGold: '#FFB606',
   brandGoldLight: '#78350F',
   brandGoldSubtle: 'rgba(255, 182, 6, 0.20)',
@@ -82,31 +82,31 @@ export const darkColors = {
   dangerLight: '#7F1D1D',
   success: '#34D399',
   successLight: 'rgba(52, 211, 153, 0.16)',
-  onSuccess: '#0F172A',
-  background: '#121214', // Rich Charcoal Base
-  surface: '#18181B', // Dark Charcoal Surface
-  surfaceCard: '#1F1F23', // Charcoal Card Surface
-  surfaceSubtle: '#27272D', // Subtle Charcoal Fill
-  surfaceElevated: '#2E2E36', // Elevated Charcoal Modal/Dropdown
-  border: '#2E2E36', // Clean Charcoal Border
-  borderSubtle: '#24242A', // Subtle Charcoal Divider
-  text: '#F8FAFC',
-  textMuted: '#CBD5E1',
-  textLight: '#94A3B8',
-  textInverse: '#0F172A',
-  onPrimary: '#0F172A',
+  onSuccess: '#0B1420',
+  background: '#0B1420', // Deep Navy base background (no pure black #000000)
+  surface: '#162538', // Layered Navy Card Surface
+  surfaceCard: '#162538', // Card background
+  surfaceSubtle: '#1C2E46', // Layered subtle navy fill
+  surfaceElevated: '#24364B', // Elevated surface
+  border: '#34465A', // Border
+  borderSubtle: '#1F3147', // Subtle layered border
+  text: '#F1F5F9', // Primary Text (White/slate for important content & contrast)
+  textMuted: '#A8B5C5', // Secondary Text
+  textLight: '#8295AB',
+  textInverse: '#0B1420',
+  onPrimary: '#0B1420',
   onSecondary: '#102F53',
-  onAccent: '#0F172A',
-  onDanger: '#0F172A',
+  onAccent: '#FFFFFF',
+  onDanger: '#0B1420',
   onGold: '#102F53',
-  cardShadow: 'rgba(0, 0, 0, 0.5)',
-  badgeBackground: 'rgba(255, 182, 6, 0.14)', // Warm gold badge container
+  cardShadow: 'rgba(0, 0, 0, 0.4)',
+  badgeBackground: '#1E3147', // Layered navy badge container
   badgeText: '#FFC72C', // Radiant warm gold text
   starColor: '#FFB606',
-  tabBarBg: '#141416', // Charcoal Navigation Bar
-  tabBarBorder: '#24242A',
+  tabBarBg: '#0B1420', // Deep Navy Navigation Bar
+  tabBarBorder: '#1F3147',
   tabActive: '#38BDF8',
-  tabInactive: '#94A3B8',
+  tabInactive: '#A8B5C5',
 };
 
 export type ThemeColors = typeof lightColors;

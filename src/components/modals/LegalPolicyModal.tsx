@@ -22,25 +22,28 @@ interface LegalPolicyModalProps {
   visible: boolean;
   onClose: () => void;
   initialTab?: LegalTabKey;
+  initialPrivacyLang?: 'en' | 'bn';
 }
 
 export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
   visible,
   onClose,
   initialTab = 'terms',
+  initialPrivacyLang,
 }) => {
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
   const insets = useSafeAreaInsets();
   const { containerClampStyle } = useResponsive();
   const [activeTab, setActiveTab] = useState<LegalTabKey>(initialTab);
-  const [privacyLang, setPrivacyLang] = useState<'en' | 'bn'>(isBangla ? 'bn' : 'en');
+  const [privacyLang, setPrivacyLang] = useState<'en' | 'bn'>(initialPrivacyLang || (isBangla ? 'bn' : 'en'));
 
   useEffect(() => {
-    if (visible && initialTab) {
-      setActiveTab(initialTab);
+    if (visible) {
+      if (initialTab) setActiveTab(initialTab);
+      if (initialPrivacyLang) setPrivacyLang(initialPrivacyLang);
     }
-  }, [visible, initialTab]);
+  }, [visible, initialTab, initialPrivacyLang]);
 
   if (!visible) return null;
 

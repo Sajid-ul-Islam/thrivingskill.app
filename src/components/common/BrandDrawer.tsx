@@ -22,6 +22,9 @@ import { AboutTSLModal, AboutTabKey } from '../modals/AboutTSLModal';
 import { LegalPolicyModal, LegalTabKey } from '../modals/LegalPolicyModal';
 import { HelpFaqModal } from '../modals/HelpFaqModal';
 import { BlogModal } from '../modals/BlogModal';
+import { EbookModal } from '../modals/EbookModal';
+import { ServicesModal } from '../modals/ServicesModal';
+import { InstructorsModal } from '../modals/InstructorsModal';
 import { RootTab } from '../../types';
 import { shape } from '../../theme/shapes';
 import { Env } from '../../config/env';
@@ -36,6 +39,7 @@ interface BrandDrawerProps {
   onOpenSubscription?: () => void;
   onOpenUpdate?: () => void;
   onOpenSupport?: () => void;
+  onOpenCorporate?: () => void;
 }
 
 export const BrandDrawer: React.FC<BrandDrawerProps> = ({
@@ -47,6 +51,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
   onOpenSubscription,
   onOpenUpdate,
   onOpenSupport,
+  onOpenCorporate,
 }) => {
   const { width: windowWidth } = useWindowDimensions();
   const drawerWidth = Math.min(windowWidth * 0.82, 340);
@@ -60,8 +65,13 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
   const [aboutInitialTab, setAboutInitialTab] = useState<AboutTabKey>('overview');
   const [legalModalVisible, setLegalModalVisible] = useState(false);
   const [legalInitialTab, setLegalInitialTab] = useState<LegalTabKey>('terms');
+  const [legalPrivacyLang, setLegalPrivacyLang] = useState<'en' | 'bn'>('en');
   const [helpFaqModalVisible, setHelpFaqModalVisible] = useState(false);
   const [blogModalVisible, setBlogModalVisible] = useState(false);
+  const [ebookModalVisible, setEbookModalVisible] = useState(false);
+  const [servicesModalVisible, setServicesModalVisible] = useState(false);
+  const [servicesInitialId, setServicesInitialId] = useState<string | undefined>(undefined);
+  const [instructorsModalVisible, setInstructorsModalVisible] = useState(false);
 
   const [modalRendered, setModalRendered] = useState(visible);
   const slideAnim = useRef(new Animated.Value(-drawerWidth)).current;
@@ -242,15 +252,17 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               </Text>
             </View>
 
-            {/* Section 1: Learning Hub */}
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>LEARNING ECOSYSTEM</Text>
+            {/* Section 1: Learning & Knowledge (eBook, Blog, Our Course Author, Become An Instructor) */}
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+              {isBangla ? 'লার্নিং ও নলেজ হাব' : 'LEARNING & KNOWLEDGE'}
+            </Text>
 
             <TouchableOpacity
               style={styles.navItem}
               onPress={() => handleNav(() => onNavigateTab('Courses'))}
             >
-              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(79, 70, 229, 0.18)' : '#EEF2FF' }]}>
-                <Ionicons name="book-outline" size={18} color={isDark ? '#818CF8' : '#4F46E5'} />
+              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(56, 189, 248, 0.16)' : '#EFF6FF' }]}>
+                <Ionicons name="compass-outline" size={18} color={isDark ? '#38BDF8' : '#102F53'} />
               </View>
               <Text style={[styles.navLabel, { color: colors.text }]}>
                 {isBangla ? 'সকল কোর্স ও বান্ডেল' : 'All Courses & Bundles'}
@@ -258,17 +270,75 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
             </TouchableOpacity>
 
+            {/* 1. eBook */}
             <TouchableOpacity
               style={styles.navItem}
-              onPress={() => handleNav(() => onOpenYouTube?.())}
+              onPress={() => setEbookModalVisible(true)}
             >
-              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.18)' : '#FEF2F2' }]}>
-                <Ionicons name="logo-youtube" size={18} color="#EF4444" />
+              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : '#FFFBEB' }]}>
+                <Ionicons name="book-outline" size={18} color="#FFB606" />
               </View>
-              <Text style={[styles.navLabel, { color: colors.text }]}>YouTube Masterclasses</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.navLabel, { color: colors.text }]}>
+                  {isBangla ? 'ই-বুক (eBook)' : 'eBook'}
+                </Text>
+              </View>
+              <View style={[styles.pillState, { backgroundColor: isDark ? '#1C2E46' : '#EFF6FF' }]}>
+                <Text style={[styles.pillStateText, { color: colors.primary }]}>FREE</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* 2. Blog */}
+            <TouchableOpacity
+              style={styles.navItem}
+              onPress={() => setBlogModalVisible(true)}
+            >
+              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.18)' : '#F5F3FF' }]}>
+                <Ionicons name="newspaper-outline" size={18} color={isDark ? '#A78BFA' : '#8B5CF6'} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.navLabel, { color: colors.text }]}>
+                  {isBangla ? 'ব্লগ (Blog)' : 'Blog'}
+                </Text>
+              </View>
               <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
             </TouchableOpacity>
 
+            {/* 5. Our Course Author */}
+            <TouchableOpacity
+              style={styles.navItem}
+              onPress={() => setInstructorsModalVisible(true)}
+            >
+              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.16)' : '#ECFDF5' }]}>
+                <Ionicons name="people-outline" size={18} color={isDark ? '#34D399' : '#059669'} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.navLabel, { color: colors.text }]}>
+                  {isBangla ? 'আমাদের কোর্স ইন্সট্রাক্টর (Our Course Author)' : 'Our Course Author'}
+                </Text>
+              </View>
+              <View style={[styles.pillState, { backgroundColor: isDark ? '#1E3147' : '#FEF3C7' }]}>
+                <Text style={[styles.pillStateText, { color: '#FFB606' }]}>FACULTY</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* 6. Become An Instructor */}
+            <TouchableOpacity
+              style={styles.navItem}
+              onPress={() => Linking.openURL(`${Env.SITE_URL}/become-an-instructor/`).catch(() => {})}
+            >
+              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2' }]}>
+                <Ionicons name="school-outline" size={18} color="#E34234" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.navLabel, { color: colors.text }]}>
+                  {isBangla ? 'ইন্সট্রাক্টর হন (Become An Instructor)' : 'Become An Instructor'}
+                </Text>
+              </View>
+              <Ionicons name="open-outline" size={15} color={colors.textMuted} />
+            </TouchableOpacity>
+
+            {/* Live Class & Summits */}
             <TouchableOpacity
               style={styles.navItem}
               onPress={() => handleNav(() => onNavigateTab('Workshops'))}
@@ -282,6 +352,18 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
             </TouchableOpacity>
 
+            {/* YouTube Masterclasses */}
+            <TouchableOpacity
+              style={styles.navItem}
+              onPress={() => handleNav(() => onOpenYouTube?.())}
+            >
+              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.18)' : '#FEF2F2' }]}>
+                <Ionicons name="logo-youtube" size={18} color="#EF4444" />
+              </View>
+              <Text style={[styles.navLabel, { color: colors.text }]}>YouTube Masterclasses</Text>
+              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+            </TouchableOpacity>
+
             <TouchableOpacity
               style={styles.navItem}
               onPress={() => handleNav(() => onOpenAssessment?.())}
@@ -290,32 +372,6 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
                 <Ionicons name="analytics-outline" size={18} color={isDark ? '#A78BFA' : '#8B5CF6'} />
               </View>
               <Text style={[styles.navLabel, { color: colors.text }]}>Skill Assessment Center</Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.navItem}
-              onPress={() => handleNav(() => onNavigateTab('MyLearning'))}
-            >
-              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(5, 150, 105, 0.18)' : '#ECFDF5' }]}>
-                <Ionicons name="ribbon-outline" size={18} color={isDark ? '#34D399' : '#059669'} />
-              </View>
-              <Text style={[styles.navLabel, { color: colors.text }]}>
-                {isBangla ? 'ডিজিটাল সার্টিফিকেট' : 'Verified Certificates'}
-              </Text>
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.navItem}
-              onPress={() => handleNav(() => onNavigateTab('MyLearning'))}
-            >
-              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(217, 119, 6, 0.18)' : '#FEF3C7' }]}>
-                <Ionicons name="time-outline" size={18} color={isDark ? '#FBBF24' : '#D97706'} />
-              </View>
-              <Text style={[styles.navLabel, { color: colors.text }]}>
-                {isBangla ? 'ওয়াচ হিস্ট্রি ও প্রোগ্রেস' : 'Watch History & Progress'}
-              </Text>
               <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
             </TouchableOpacity>
 

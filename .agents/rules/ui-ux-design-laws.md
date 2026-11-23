@@ -13,6 +13,72 @@ All visual interfaces, buttons, badges, and progress gauges MUST align with the 
 - **Pure White** — HEX `#FFFFFF`
   - **Usage:** Card backgrounds, container surfaces in dark modes, body text on dark headers, and negative space separation.
 
+  Light mode vs. Dark mode mapping
+Design element
+
+Light mode
+
+Dark mode
+
+Primary brand
+
+#102F53
+
+#102F53
+
+Accent red
+
+#E34234
+
+#E34234
+
+Background
+
+#FFFFFF
+
+#0B1420
+
+Card background
+
+#FFFFFF
+
+#162538
+
+Elevated surface
+
+#F5F7FA
+
+#24364B
+
+Primary text
+
+#102F53
+
+#F1F5F9
+
+Secondary text
+
+#64748B
+
+#A8B5C5
+
+Border
+
+#E2E8F0
+
+#34465A
+
+Important design recommendations
+Don't use pure black (#000000). A deep navy background creates a more premium and cohesive appearance.
+
+Keep the brand blue and red consistent. These are your identity colors, not theme-dependent colors.
+
+Use white for text, not large backgrounds. Reserve bright white for important content and contrast.
+
+Avoid excessive red. Use it strategically for CTAs, notifications, discounts and active indicators.
+
+Use layered navy surfaces. Different shades of navy will create visual hierarchy without relying heavily on shadows.
+
 ### Enforcement
 - Use brand tokens exclusively from `src/theme/colors.ts` (`primary`, `accent`, `surface`, `surfaceCard`, `onPrimary`, `onAccent`, etc.) and never hardcode bare hex values such as `#102F53` / `#E34234` / `#FFFFFF` in component code.
 - The brand tokens are the canonical source for these three palette colors; do not re-introduce older alternate brand hues (for example `brandGold`, `danger`, `success`) as replacements for the three primary palette colors.

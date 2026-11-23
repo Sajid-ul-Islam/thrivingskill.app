@@ -65,6 +65,10 @@ const getEnvVar = (key: string): string | undefined => {
 
 // Initial environment determination from build-time vars or sensible live default
 const determineInitialEnvironment = (): ApiEnvironment => {
+  const defaultEnv = getEnvVar('EXPO_PUBLIC_DEFAULT_ENVIRONMENT');
+  if (defaultEnv === 'staging') return 'staging';
+  if (defaultEnv === 'production') return 'production';
+
   const explicitApi = getEnvVar('EXPO_PUBLIC_API_URL');
   const explicitSite = getEnvVar('EXPO_PUBLIC_SITE_URL');
   if (

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useCallback, useRef } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View,
   Text,
@@ -95,6 +96,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const {
     user,
     isAuthenticated,
+    isAdmin,
     logout,
     deleteAccount,
     setAuthModalVisible,
@@ -102,7 +104,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     isSyncingProfile,
     refreshUserProfile,
   } = useAuth();
-  const isAdmin = Array.isArray(user?.roles) && user.roles.includes('administrator');
   const {
     subscriptionTier,
     activeWorkspace,
@@ -171,6 +172,19 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const tapCountRef = useRef(0);
   const lastTapTimeRef = useRef(0);
 
+  // Restore dev mode preference if previously unlocked by tester
+  React.useEffect(() => {
+    AsyncStorage.getItem('@ts_dev_mode_unlocked')
+      .then((val) => {
+        if (val === 'true') {
+          setDevModeUnlocked(true);
+        } else if (val === 'false' && !__DEV__) {
+          setDevModeUnlocked(false);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const handleVersionTap = () => {
     const now = Date.now();
     if (now - lastTapTimeRef.current > 2000) {
@@ -183,6 +197,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     if (tapCountRef.current >= 5) {
       const nextState = !devModeUnlocked;
       setDevModeUnlocked(nextState);
+      AsyncStorage.setItem('@ts_dev_mode_unlocked', String(nextState)).catch(() => {});
       tapCountRef.current = 0;
       triggerHaptic('success');
       showToast({

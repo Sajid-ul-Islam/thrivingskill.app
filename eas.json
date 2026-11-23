@@ -9,6 +9,12 @@
       "channel": "development",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://staging.thrivingskill.com/wp-json",
+        "EXPO_PUBLIC_SITE_URL": "https://staging.thrivingskill.com",
+        "EXPO_PUBLIC_WP_ADMIN_URL": "https://staging.thrivingskill.com/wp-admin/",
+        "EXPO_PUBLIC_DEFAULT_ENVIRONMENT": "staging"
       }
     },
     "preview": {
@@ -19,6 +25,12 @@
       },
       "ios": {
         "simulator": true
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://staging.thrivingskill.com/wp-json",
+        "EXPO_PUBLIC_SITE_URL": "https://staging.thrivingskill.com",
+        "EXPO_PUBLIC_WP_ADMIN_URL": "https://staging.thrivingskill.com/wp-admin/",
+        "EXPO_PUBLIC_DEFAULT_ENVIRONMENT": "staging"
       }
     },
     "preview-device": {
@@ -26,12 +38,24 @@
       "channel": "preview",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://staging.thrivingskill.com/wp-json",
+        "EXPO_PUBLIC_SITE_URL": "https://staging.thrivingskill.com",
+        "EXPO_PUBLIC_WP_ADMIN_URL": "https://staging.thrivingskill.com/wp-admin/",
+        "EXPO_PUBLIC_DEFAULT_ENVIRONMENT": "staging"
       }
     },
     "production": {
       "channel": "production",
       "android": {
         "buildType": "app-bundle"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://thrivingskill.com/wp-json",
+        "EXPO_PUBLIC_SITE_URL": "https://thrivingskill.com",
+        "EXPO_PUBLIC_WP_ADMIN_URL": "https://thrivingskill.com/wp-admin/",
+        "EXPO_PUBLIC_DEFAULT_ENVIRONMENT": "production"
       }
     }
   },
