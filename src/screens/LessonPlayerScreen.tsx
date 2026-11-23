@@ -70,7 +70,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const { isBangla } = useLanguage();
   const { user, isAdmin } = useAuth();
   const { showToast } = useFeedback();
-  const { recordStudyTime, unlockBadge, triggerCelebration } = useGamification();
+  const { recordStudyTime, addXP, unlockBadge, triggerCelebration } = useGamification();
   const {
     getCourseById,
     userProgress,
@@ -133,6 +133,15 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   // Timer refs conforming to AGENTS.md Rule 3
   const autoplayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Active study time second buffer for accurate 60s incremental heartbeats
+  const activeSecondsBufferRef = useRef<number>(0);
+
+  const flushStudyTimeBuffer = () => {
+    if (activeSecondsBufferRef.current >= 25) {
+      recordStudyTime(1);
+    }
+    activeSecondsBufferRef.current = 0;
+  };
 
   const course = getCourseById(courseId);
 
@@ -199,6 +208,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   // Cleanup all timers on unmount conforming to AGENTS.md Rule 3
   useEffect(() => {
     return () => {
+      flushStudyTimeBuffer();
       if (autoplayTimerRef.current) {
         clearTimeout(autoplayTimerRef.current);
         autoplayTimerRef.current = null;
@@ -279,10 +289,19 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
       if (next % 5 === 0) {
         recordWatchPosition(course.id, currentLesson.id, next);
       }
+
+      // Active screen-time heartbeat: accumulate real seconds and record every 60s
+      activeSecondsBufferRef.current += 1;
+      if (activeSecondsBufferRef.current >= 60) {
+        activeSecondsBufferRef.current -= 60;
+        recordStudyTime(1);
+      }
+
       // Auto-complete & transition when video duration finishes
       if (next >= totalLessonSeconds && totalLessonSeconds > 0) {
         markLessonCompleted(course.id, currentLesson.id);
-        recordStudyTime(10);
+        flushStudyTimeBuffer();
+        addXP(50);
         unlockBadge('streak_champ');
 
         const isLastLesson = currentLessonIndex >= allLessons.length - 1;
@@ -320,6 +339,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
       if (nextAppState === 'background') {
+        flushStudyTimeBuffer();
         if (!isCommuteMode && !isPiPActive && !isSystemPiPActive) {
           if (course && currentLesson) {
             recordWatchPosition(course.id, currentLesson.id, currentPosRef.current);
@@ -337,6 +357,9 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     triggerHaptic('light');
     const nextPlaying = !isPlaying;
     setIsPlaying(nextPlaying);
+    if (!nextPlaying) {
+      flushStudyTimeBuffer();
+    }
     if (nativePlayerRef.current) {
       if (nextPlaying) {
         nativePlayerRef.current.play();
@@ -453,6 +476,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   };
 
   const handleNextLesson = () => {
+    flushStudyTimeBuffer();
     setAutoplayCountdown(null);
     if (currentLessonIndex < allLessons.length - 1) {
       const nextL = allLessons[currentLessonIndex + 1].lesson;
@@ -462,6 +486,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   };
 
   const handlePrevLesson = () => {
+    flushStudyTimeBuffer();
     setAutoplayCountdown(null);
     if (currentLessonIndex > 0) {
       const prevL = allLessons[currentLessonIndex - 1].lesson;
@@ -473,7 +498,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const handleMarkComplete = () => {
     if (!currentLesson || !course) return;
     markLessonCompleted(course.id, currentLesson.id);
-    recordStudyTime(10);
+    flushStudyTimeBuffer();
+    addXP(50);
     unlockBadge('streak_champ');
 
     triggerCelebration({

@@ -79,17 +79,63 @@ export interface CelebrationEvent {
   icon?: string;
 }
 
+export interface WeeklyDayActivity {
+  day: string;
+  dayBn: string;
+  hours: number;
+  isToday?: boolean;
+}
+
+export const getLocalDateString = (d: Date = new Date()): string => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+export const computeWeeklyActivity = (
+  dailyHistory: Record<string, number> = {}
+): WeeklyDayActivity[] => {
+  const today = new Date();
+  const currentDayOfWeek = today.getDay(); // 0 is Sunday, 1 is Monday...
+  const distToMonday = currentDayOfWeek === 0 ? -6 : 1 - currentDayOfWeek;
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + distToMonday);
+
+  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const dayNamesBn = ['সোম', 'মঙ্গল', 'বুধ', 'বৃহঃ', 'শুক্র', 'শনি', 'রবি'];
+  const todayStr = getLocalDateString(today);
+
+  return dayNames.map((day, idx) => {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + idx);
+    const dateStr = getLocalDateString(d);
+    const minutes = dailyHistory[dateStr] || 0;
+    const hours = Math.round((minutes / 60) * 10) / 10;
+
+    return {
+      day,
+      dayBn: dayNamesBn[idx],
+      hours,
+      isToday: dateStr === todayStr,
+    };
+  });
+};
+
 interface GamificationState {
   streakDays: number;
   lastActiveDate: string;
   dailyMinutesSpent: number;
   dailyGoalMinutes: number;
+  totalStudyMinutes: number;
+  dailyHistory: Record<string, number>;
   badges: AchievementBadge[];
   xp: number;
 }
 
 interface GamificationContextType extends GamificationState {
   celebration: CelebrationEvent | null;
+  weeklyActivity: WeeklyDayActivity[];
   recordStudyTime: (minutes: number) => void;
   unlockBadge: (badgeId: string) => void;
   setDailyGoal: (minutes: number) => void;
@@ -105,14 +151,18 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const { user } = useAuth();
   const scopedStorageKey = `${GAMIFICATION_STORAGE_KEY}${user?.id ? `_u_${user.id}` : '_guest'}`;
   const [celebration, setCelebration] = useState<CelebrationEvent | null>(null);
+
   const getInitialState = (): GamificationState => ({
     streakDays: 0,
-    lastActiveDate: new Date().toISOString().split('T')[0],
+    lastActiveDate: getLocalDateString(),
     dailyMinutesSpent: 0,
     dailyGoalMinutes: 15,
+    totalStudyMinutes: 0,
+    dailyHistory: {},
     badges: DEFAULT_BADGES.map((b) => ({ ...b, isUnlocked: false, unlockedAt: undefined })),
     xp: 0,
   });
+
   const [state, setState] = useState<GamificationState>(getInitialState);
 
   useEffect(() => {
@@ -124,17 +174,30 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         const stored = await AsyncStorage.getItem(scopedStorageKey);
         if (stored && active) {
           const parsed = JSON.parse(stored);
-          const today = new Date().toISOString().split('T')[0];
+          const today = getLocalDateString();
+          const yesterdayDate = new Date();
+          yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+          const yesterday = getLocalDateString(yesterdayDate);
 
           // Reset daily minutes if new day
+          let parsedStreak = parsed.streakDays ?? 0;
+          let parsedDailyMinutes = parsed.dailyMinutesSpent ?? 0;
+
           if (parsed.lastActiveDate !== today) {
-            parsed.dailyMinutesSpent = 0;
-            parsed.lastActiveDate = today;
+            parsedDailyMinutes = 0;
+            // If missed yesterday, streak is reset to 0 until user studies today
+            if (parsed.lastActiveDate !== yesterday) {
+              parsedStreak = 0;
+            }
           }
 
           setState((prev) => ({
             ...prev,
             ...parsed,
+            streakDays: parsedStreak,
+            dailyMinutesSpent: parsedDailyMinutes,
+            totalStudyMinutes: parsed.totalStudyMinutes ?? parsed.dailyMinutesSpent ?? 0,
+            dailyHistory: parsed.dailyHistory ?? {},
             xp: parsed.xp ?? 0,
             badges: prev.badges.map((b) => {
               const savedBadge = parsed.badges?.find((sb: any) => sb.id === b.id);
@@ -158,13 +221,54 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const recordStudyTime = (minutes: number) => {
-    const updated = {
-      ...state,
-      dailyMinutesSpent: state.dailyMinutesSpent + minutes,
-      lastActiveDate: new Date().toISOString().split('T')[0],
-      xp: state.xp + minutes * 5,
-    };
-    saveState(updated);
+    if (minutes <= 0) return;
+    const today = getLocalDateString();
+    const yesterdayDate = new Date();
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    const yesterday = getLocalDateString(yesterdayDate);
+
+    setState((prevState) => {
+      let newStreak = prevState.streakDays;
+      const wasActiveToday = prevState.lastActiveDate === today && prevState.dailyMinutesSpent > 0;
+
+      if (!wasActiveToday) {
+        if (prevState.lastActiveDate === yesterday && prevState.streakDays > 0) {
+          newStreak = prevState.streakDays + 1;
+        } else {
+          newStreak = 1;
+        }
+      } else if (newStreak === 0) {
+        newStreak = 1;
+      }
+
+      const currentDayMins = (prevState.lastActiveDate === today ? prevState.dailyMinutesSpent : 0) + minutes;
+      const newHistory = {
+        ...(prevState.dailyHistory || {}),
+        [today]: currentDayMins,
+      };
+      const newTotalMinutes = (prevState.totalStudyMinutes || 0) + minutes;
+
+      const updated: GamificationState = {
+        ...prevState,
+        streakDays: newStreak,
+        dailyMinutesSpent: currentDayMins,
+        totalStudyMinutes: newTotalMinutes,
+        dailyHistory: newHistory,
+        lastActiveDate: today,
+        xp: (prevState.xp || 0) + minutes * 5,
+      };
+
+      AsyncStorage.setItem(scopedStorageKey, JSON.stringify(updated)).catch(() => {});
+
+      if (newStreak >= 3) {
+        const streakBadge = prevState.badges.find((b) => b.id === 'streak_champ');
+        if (streakBadge && !streakBadge.isUnlocked) {
+          setTimeout(() => unlockBadge('streak_champ'), 0);
+        }
+      }
+
+      return updated;
+    });
   };
 
   const addXP = (amount: number) => {
@@ -215,11 +319,14 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     saveState({ ...state, dailyGoalMinutes: minutes });
   };
 
+  const weeklyActivity = computeWeeklyActivity(state.dailyHistory);
+
   return (
     <GamificationContext.Provider
       value={{
         ...state,
         celebration,
+        weeklyActivity,
         recordStudyTime,
         unlockBadge,
         setDailyGoal,

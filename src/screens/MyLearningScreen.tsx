@@ -60,7 +60,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
-  const { streakDays } = useGamification();
+  const { streakDays, totalStudyMinutes, weeklyActivity } = useGamification();
   const insets = useSafeAreaInsets();
   const { isTablet, containerClampStyle } = useResponsive();
   const { user } = useAuth();
@@ -139,12 +139,27 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
     })
     .filter((h) => !!h.lesson), [enrolledList, userProgress, getCourseProgressPercentage, isBangla]);
 
-  // Compute total learning stats
+  // Compute total learning stats from actual watch time & gamification screen-time
   const totalCompletedLessons = useMemo(() => Object.values(userProgress).reduce(
     (acc, p) => acc + p.completedLessonIds.length,
     0
   ), [userProgress]);
-  const totalHoursLearned = useMemo(() => (totalCompletedLessons * 0.35).toFixed(1), [totalCompletedLessons]);
+
+  const totalWatchedSeconds = useMemo(() => {
+    return Object.values(userProgress).reduce((total, prog) => {
+      const positions = Object.values(prog.lastWatchPositionSeconds || {});
+      const courseSec = positions.reduce((sum, s) => sum + (typeof s === 'number' ? s : 0), 0);
+      return total + courseSec;
+    }, 0);
+  }, [userProgress]);
+
+  const totalHoursLearned = useMemo(() => {
+    const fromWatchedSec = totalWatchedSeconds / 3600;
+    const fromGamificationMins = (totalStudyMinutes || 0) / 60;
+    const fromCompletedLessons = totalCompletedLessons * 0.35;
+    const maxHours = Math.max(fromWatchedSec, fromGamificationMins, fromCompletedLessons);
+    return maxHours.toFixed(1);
+  }, [totalWatchedSeconds, totalStudyMinutes, totalCompletedLessons]);
 
   const renderCourseList = (list: Course[], emptyTitle: string, emptyMessage: string) => {
     if (list.length === 0) {
@@ -419,6 +434,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                 : 0
             }
             streakDays={streakDays}
+            weeklyActivity={weeklyActivity}
             colors={colors}
             isBangla={isBangla}
             activeCourseTab={

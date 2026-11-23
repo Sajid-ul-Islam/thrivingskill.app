@@ -86,7 +86,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const insets = useSafeAreaInsets();
   const { containerClampStyle } = useResponsive();
   const { language, toggleLanguage, isBangla, t } = useLanguage();
-  const { badges, streakDays } = useGamification();
+  const { badges, streakDays, totalStudyMinutes } = useGamification();
   const { showToast, showSnackbar, showPopup } = useFeedback();
   const {
     courses,
@@ -547,7 +547,22 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     (acc, p) => acc + p.completedLessonIds.length,
     0
   ), [userProgress]);
-  const totalHoursLearned = useMemo(() => (totalCompletedLessons * 0.35).toFixed(1), [totalCompletedLessons]);
+
+  const totalWatchedSeconds = useMemo(() => {
+    return Object.values(userProgress).reduce((total, prog) => {
+      const positions = Object.values(prog.lastWatchPositionSeconds || {});
+      const courseSec = positions.reduce((sum, s) => sum + (typeof s === 'number' ? s : 0), 0);
+      return total + courseSec;
+    }, 0);
+  }, [userProgress]);
+
+  const totalHoursLearned = useMemo(() => {
+    const fromWatchedSec = totalWatchedSeconds / 3600;
+    const fromGamificationMins = (totalStudyMinutes || 0) / 60;
+    const fromCompletedLessons = totalCompletedLessons * 0.35;
+    const maxHours = Math.max(fromWatchedSec, fromGamificationMins, fromCompletedLessons);
+    return maxHours.toFixed(1);
+  }, [totalWatchedSeconds, totalStudyMinutes, totalCompletedLessons]);
   const completionRate = useMemo(() => enrolledCount > 0 ? Math.round((completedCount / enrolledCount) * 100) : 0, [enrolledCount, completedCount]);
 
   const displayedCourses = useMemo(() => {
