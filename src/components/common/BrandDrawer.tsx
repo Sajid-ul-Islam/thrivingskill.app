@@ -261,8 +261,8 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               style={styles.navItem}
               onPress={() => handleNav(() => onNavigateTab('Courses'))}
             >
-              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(56, 189, 248, 0.16)' : '#EFF6FF' }]}>
-                <Ionicons name="compass-outline" size={18} color={isDark ? '#38BDF8' : '#102F53'} />
+              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : '#EFF6FF' }]}>
+                <Ionicons name="compass-outline" size={18} color={isDark ? colors.primary : '#102F53'} />
               </View>
               <Text style={[styles.navLabel, { color: colors.text }]}>
                 {isBangla ? 'সকল কোর্স ও বান্ডেল' : 'All Courses & Bundles'}
@@ -390,8 +390,8 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
                 setServicesModalVisible(true);
               }}
             >
-              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(56, 189, 248, 0.18)' : '#E0F2FE' }]}>
-                <Ionicons name="briefcase-outline" size={18} color={isDark ? '#38BDF8' : '#0284C7'} />
+              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : '#FFFBEB' }]}>
+                <Ionicons name="briefcase-outline" size={18} color={isDark ? colors.primary : '#102F53'} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.navLabel, { color: colors.text }]}>

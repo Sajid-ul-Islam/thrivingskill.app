@@ -44,9 +44,9 @@ const TOAST_THEME: Record<
   },
   info: {
     bg: '#102F53',
-    border: '#38BDF8',
+    border: '#FFB606',
     icon: 'information-circle',
-    iconBg: 'rgba(56, 189, 248, 0.25)',
+    iconBg: 'rgba(255, 182, 6, 0.25)',
     actionBg: '#FFB606',
     actionText: '#102F53',
     accentGlow: 'rgba(255, 182, 6, 0.3)',

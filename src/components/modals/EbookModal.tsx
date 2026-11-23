@@ -154,13 +154,13 @@ export const EbookModal: React.FC<EbookModalProps> = ({ visible, onClose }) => {
               ]}
             >
               <View style={styles.cardHeader}>
-                <View style={[styles.bookIconBadge, { backgroundColor: isDark ? 'rgba(16, 47, 83, 0.4)' : '#EFF6FF' }]}>
-                  <Ionicons name="document-text" size={24} color={isDark ? '#38BDF8' : '#102F53'} />
+                <View style={[styles.bookIconBadge, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : '#EFF6FF' }]}>
+                  <Ionicons name="document-text" size={24} color={isDark ? colors.primary : '#102F53'} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <View style={styles.categoryBadgeRow}>
                     <View style={[styles.catBadge, { backgroundColor: isDark ? '#1C2E46' : '#E8EEF5' }]}>
-                      <Text style={[styles.catBadgeText, { color: isDark ? '#38BDF8' : '#102F53' }]}>
+                      <Text style={[styles.catBadgeText, { color: isDark ? colors.primary : '#102F53' }]}>
                         {book.category}
                       </Text>
                     </View>

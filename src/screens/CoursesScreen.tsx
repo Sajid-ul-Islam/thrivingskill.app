@@ -849,14 +849,14 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                   <Ionicons
                     name={topic.icon as any}
                     size={13}
-                    color={isSelected ? '#FFFFFF' : (isDark ? colors.textLight : colors.textMuted)}
+                    color={isSelected ? colors.onPrimary : (isDark ? colors.textLight : colors.textMuted)}
                     style={{ marginRight: 5 }}
                   />
                   <Text
                     style={[
                       styles.hotTopicText,
                       {
-                        color: isSelected ? '#FFFFFF' : (isDark ? colors.text : '#334155'),
+                        color: isSelected ? colors.onPrimary : (isDark ? colors.text : '#334155'),
                         fontWeight: isSelected ? '800' : '600',
                       },
                     ]}

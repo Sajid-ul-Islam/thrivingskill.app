@@ -63,9 +63,9 @@ export const lightColors = {
 };
 
 export const darkColors = {
-  primary: '#38BDF8', // Luminous sky highlight token for interactive primary actions on dark navy
+  primary: '#FFB606', // Radiant brand Sunshine Gold for interactive primary actions on dark navy
   primaryDark: '#102F53', // Primary brand deep navy
-  primaryLight: '#162538',
+  primaryLight: 'rgba(255, 182, 6, 0.16)', // Warm gold container fill
   primaryGradientStart: '#102F53',
   primaryGradientEnd: '#E34234',
   secondary: '#FFB606', // Brand Sunshine Gold
@@ -77,7 +77,7 @@ export const darkColors = {
   brandGold: '#FFB606',
   brandGoldLight: '#78350F',
   brandGoldSubtle: 'rgba(255, 182, 6, 0.20)',
-  brandNavySubtle: 'rgba(56, 189, 248, 0.15)',
+  brandNavySubtle: 'rgba(255, 182, 6, 0.16)',
   danger: '#F87171',
   dangerLight: '#7F1D1D',
   success: '#34D399',
@@ -94,7 +94,7 @@ export const darkColors = {
   textMuted: '#A8B5C5', // Secondary Text
   textLight: '#8295AB',
   textInverse: '#0B1420',
-  onPrimary: '#0B1420',
+  onPrimary: '#102F53', // Brand Deep Navy text on vibrant Sunshine Gold (7.69:1 WCAG AAA)
   onSecondary: '#102F53',
   onAccent: '#FFFFFF',
   onDanger: '#0B1420',

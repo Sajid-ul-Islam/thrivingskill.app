@@ -301,8 +301,8 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
                     style={[
                       styles.suggestionPill,
                       {
-                        backgroundColor: isDark ? 'rgba(56, 189, 248, 0.15)' : 'rgba(16, 47, 83, 0.08)',
-                        borderColor: isDark ? 'rgba(56, 189, 248, 0.3)' : 'rgba(16, 47, 83, 0.15)',
+                        backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : 'rgba(16, 47, 83, 0.08)',
+                        borderColor: isDark ? 'rgba(255, 182, 6, 0.3)' : 'rgba(16, 47, 83, 0.15)',
                       },
                     ]}
                     onPress={() => {
@@ -313,8 +313,8 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
                     accessibilityRole="button"
                     accessibilityLabel={`Auto-complete query: ${suggestion}`}
                   >
-                    <Ionicons name="sparkles-outline" size={11} color={isDark ? '#38BDF8' : '#102F53'} />
-                    <Text style={[styles.suggestionPillText, { color: isDark ? '#38BDF8' : '#102F53' }]}>
+                    <Ionicons name="sparkles-outline" size={11} color={isDark ? colors.primary : '#102F53'} />
+                    <Text style={[styles.suggestionPillText, { color: isDark ? colors.primary : '#102F53' }]}>
                       {suggestion}
                     </Text>
                   </TouchableOpacity>

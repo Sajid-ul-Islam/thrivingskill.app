@@ -181,7 +181,7 @@ export const LessonCommuteCard: React.FC<LessonCommuteCardProps> = ({
         </TouchableOpacity>
       </View>
 
-      <LiveAudioWaveform isPlaying={isPlaying} primaryColor={isDark ? '#38BDF8' : '#102F53'} accentColor="#E34234" />
+      <LiveAudioWaveform isPlaying={isPlaying} primaryColor={isDark ? colors.primary : '#102F53'} accentColor="#E34234" />
 
       <Text style={styles.commuteLessonTitle} numberOfLines={1}>
         {currentLesson.title}
