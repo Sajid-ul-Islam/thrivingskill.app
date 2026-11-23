@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -167,6 +167,34 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [customBio, setCustomBio] = useState(user?.description || '');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [serverEnv, setServerEnv] = useState<ApiEnvironment>(Env.currentEnvironment);
+  const [devModeUnlocked, setDevModeUnlocked] = useState(Boolean(__DEV__));
+  const tapCountRef = useRef(0);
+  const lastTapTimeRef = useRef(0);
+
+  const handleVersionTap = () => {
+    const now = Date.now();
+    if (now - lastTapTimeRef.current > 2000) {
+      tapCountRef.current = 1;
+    } else {
+      tapCountRef.current += 1;
+    }
+    lastTapTimeRef.current = now;
+
+    if (tapCountRef.current >= 5) {
+      const nextState = !devModeUnlocked;
+      setDevModeUnlocked(nextState);
+      tapCountRef.current = 0;
+      triggerHaptic('success');
+      showToast({
+        message: nextState
+          ? (isBangla ? 'ডেভেলপার অপশন সক্রিয় হয়েছে! 🎉' : 'Developer Options Unlocked! 🎉')
+          : (isBangla ? 'ডেভেলপার অপশন বন্ধ করা হয়েছে।' : 'Developer Options Locked.'),
+        type: nextState ? 'success' : 'info',
+      });
+    } else if (tapCountRef.current >= 2) {
+      triggerHaptic('light');
+    }
+  };
 
   React.useEffect(() => {
     const unsub = Env.subscribeEnvironment((newEnv) => {
@@ -746,6 +774,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               onClearCache={handleClearCache}
               serverEnvironment={serverEnv}
               onSwitchServerEnvironment={handleSwitchServerEnvironment}
+              isDevModeUnlocked={devModeUnlocked}
               onOpenCorporateModal={onOpenCorporateModal}
               onOpenHelpFaq={() => setHelpFaqModalVisible(true)}
               onOpenBlog={() => setBlogModalVisible(true)}
@@ -781,6 +810,17 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           <Text style={{ fontSize: 10, color: colors.textMuted, textAlign: 'center', marginTop: 3 }}>
             Gulshan-2, Dhaka • RJSC Registered • SDG-4 Quality Education
           </Text>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={handleVersionTap}
+            style={{ marginTop: 6, paddingVertical: 4, paddingHorizontal: 12 }}
+            accessibilityRole="button"
+            accessibilityLabel="App Version"
+          >
+            <Text style={{ fontSize: 10, color: colors.textMuted, textAlign: 'center', opacity: 0.7 }}>
+              v1.4.0 • Thriving Skills App {devModeUnlocked ? '• [DEV MODE]' : ''}
+            </Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
 

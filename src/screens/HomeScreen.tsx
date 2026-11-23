@@ -380,6 +380,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   // ─── CR-3: Per-category filtered course lists ───────────────────────────────
 
+  // Top popular courses across catalog (always guaranteed to populate if courses exist)
+  const popularCourses = useMemo(
+    () => {
+      if (courses.length === 0) return [];
+      return [...courses]
+        .sort((a, b) => (b.reviewsCount || 0) - (a.reviewsCount || 0) || (b.rating || 0) - (a.rating || 0))
+        .slice(0, 8);
+    },
+    [courses],
+  );
+
   const upcomingCourses = useMemo(
     () =>
       courses.filter(
@@ -391,20 +402,70 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   );
 
   const generativeAiCourses = useMemo(
-    () => courses.filter((c) => c.category === 'generative-ai'),
+    () =>
+      courses.filter(
+        (c) =>
+          c.category === 'generative-ai' ||
+          (c.categorySlugs && c.categorySlugs.includes('generative-ai')) ||
+          c.title.toLowerCase().includes(' ai') ||
+          c.title.toLowerCase().includes('gpt') ||
+          c.title.toLowerCase().includes('gemini'),
+      ),
     [courses],
   );
 
   const marketingCourses = useMemo(
     () =>
       courses.filter(
-        (c) => c.category === 'sales-marketing' || c.category === 'marketing',
+        (c) =>
+          c.category === 'sales-marketing' ||
+          c.category === 'marketing' ||
+          (c.categorySlugs &&
+            (c.categorySlugs.includes('sales-marketing') ||
+              c.categorySlugs.includes('sales-marketing-live-training') ||
+              c.categorySlugs.includes('marketing'))),
+      ),
+    [courses],
+  );
+
+  const businessCourses = useMemo(
+    () =>
+      courses.filter(
+        (c) =>
+          c.category === 'business' ||
+          c.category === 'business-strategy' ||
+          c.category === 'leadership-management' ||
+          (c.categorySlugs &&
+            (c.categorySlugs.includes('business') ||
+              c.categorySlugs.includes('business-strategy') ||
+              c.categorySlugs.includes('business-essentials') ||
+              c.categorySlugs.includes('business-essentials-live-training') ||
+              c.categorySlugs.includes('siam-city-cement'))),
+      ),
+    [courses],
+  );
+
+  const careerCourses = useMemo(
+    () =>
+      courses.filter(
+        (c) =>
+          c.category === 'job-seekers-skills' ||
+          c.category === 'job-seekers' ||
+          (c.categorySlugs &&
+            (c.categorySlugs.includes('job-seekers-skills') ||
+              c.categorySlugs.includes('get-offer') ||
+              c.categorySlugs.includes('career'))),
       ),
     [courses],
   );
 
   const hrCourses = useMemo(
-    () => courses.filter((c) => c.category === 'human-resource-management'),
+    () =>
+      courses.filter(
+        (c) =>
+          c.category === 'human-resource-management' ||
+          (c.categorySlugs && c.categorySlugs.includes('human-resource-management')),
+      ),
     [courses],
   );
 
@@ -417,7 +478,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   );
 
   const financeCourses = useMemo(
-    () => courses.filter((c) => c.category === 'finance-accounting-legal'),
+    () =>
+      courses.filter(
+        (c) =>
+          c.category === 'finance-accounting-legal' ||
+          c.category === 'finance' ||
+          (c.categorySlugs && c.categorySlugs.includes('finance-accounting-legal')),
+      ),
     [courses],
   );
 
@@ -500,24 +567,45 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   // Category rows definition
   const categoryRows = useMemo(
-    () => [
-      { title: isBangla ? 'আসন্ন লাইভ ট্রেনিং' : 'Upcoming Live', courses: upcomingCourses },
-      { title: isBangla ? 'জেনারেটিভ এআই' : 'Generative AI', courses: generativeAiCourses },
-      { title: isBangla ? 'মার্কেটিং' : 'Marketing', courses: marketingCourses },
-      { title: isBangla ? 'হিউম্যান রিসোর্স' : 'Human Resource', courses: hrCourses },
-      { title: isBangla ? 'সাপ্লাই চেইন' : 'Supply Chain', courses: supplyChainCourses },
-      { title: isBangla ? 'ফাইন্যান্স ও অ্যাকাউন্টিং' : 'Finance & Accounting', courses: financeCourses },
-      { title: isBangla ? 'বান্ডেল' : 'Bundle', courses: bundleCourses },
-    ],
+    () => {
+      const rows = [
+        { title: isBangla ? 'জনপ্রিয় কোর্সসমূহ' : 'Popular Courses', courses: popularCourses },
+        { title: isBangla ? 'আসন্ন লাইভ ট্রেনিং' : 'Upcoming Live', courses: upcomingCourses },
+        { title: isBangla ? 'জেনারেটিভ এআই' : 'Generative AI', courses: generativeAiCourses },
+        { title: isBangla ? 'মার্কেটিং ও সেলস' : 'Marketing & Sales', courses: marketingCourses },
+        { title: isBangla ? 'ব্যবসা ও লিডারশিপ' : 'Business & Leadership', courses: businessCourses },
+        { title: isBangla ? 'ফাইন্যান্স ও অ্যাকাউন্টিং' : 'Finance & Accounting', courses: financeCourses },
+        { title: isBangla ? 'হিউম্যান রিসোর্স' : 'Human Resource', courses: hrCourses },
+        { title: isBangla ? 'সাপ্লাই চেইন' : 'Supply Chain', courses: supplyChainCourses },
+        { title: isBangla ? 'ক্যারিয়ার ও জব স্কিলস' : 'Career & Job Skills', courses: careerCourses },
+        { title: isBangla ? 'বান্ডেল' : 'Bundle', courses: bundleCourses },
+      ];
+
+      const activeRows = rows.filter((r) => r.courses && r.courses.length > 0);
+
+      // If activeRows has 1 or fewer rows but courses exist, display All Courses fallback
+      if (activeRows.length <= 1 && courses.length > 0) {
+        return [
+          { title: isBangla ? 'জনপ্রিয় ও সকল কোর্স' : 'All Featured Courses', courses },
+          ...activeRows,
+        ];
+      }
+
+      return activeRows;
+    },
     [
       isBangla,
+      popularCourses,
       upcomingCourses,
       generativeAiCourses,
       marketingCourses,
+      businessCourses,
+      financeCourses,
       hrCourses,
       supplyChainCourses,
-      financeCourses,
+      careerCourses,
       bundleCourses,
+      courses,
     ],
   );
 

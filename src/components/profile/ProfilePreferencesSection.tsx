@@ -61,6 +61,7 @@ interface ProfilePreferencesSectionProps {
   pendingSyncCount: number;
   serverEnvironment?: 'production' | 'staging';
   onSwitchServerEnvironment?: () => void;
+  isDevModeUnlocked?: boolean;
   onOpenAbout: (tab: AboutTabKey) => void;
   onOpenLegal: (tab: LegalTabKey) => void;
   isAuthenticated: boolean;
@@ -105,6 +106,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
   pendingSyncCount,
   serverEnvironment = 'production',
   onSwitchServerEnvironment,
+  isDevModeUnlocked = false,
   onOpenAbout,
   onOpenLegal,
   isAuthenticated,
@@ -719,59 +721,61 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
             <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           </TouchableOpacity>
 
-          {/* Server Environment Switcher (Live vs Staging) */}
-          <TouchableOpacity
-            style={[styles.settingRow, isAdmin ? { borderBottomColor: colors.borderSubtle } : { borderBottomWidth: 0 }]}
-            onPress={() => {
-              triggerHaptic('light');
-              onSwitchServerEnvironment?.();
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={isBangla ? 'সার্ভার পরিবেশ পরিবর্তন করুন' : 'Switch Server Environment'}
-          >
-            <View style={styles.settingLeft}>
-              <Ionicons name="server-outline" size={20} color={colors.primary} />
-              <View style={styles.settingTextCol}>
-                <Text style={[styles.settingLabel, { color: colors.text }]}>
-                  {isBangla ? 'সার্ভার পরিবেশ' : 'Server Environment'}
-                </Text>
-                <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
-                  {serverEnvironment === 'production'
-                    ? (isBangla ? 'লাইভ প্রোডাকশন • thrivingskill.com' : 'Live Production • thrivingskill.com')
-                    : (isBangla ? 'স্টেজিং সার্ভার • staging.thrivingskill.com' : 'Staging Server • staging.thrivingskill.com')}
-                </Text>
+          {/* Server Environment Switcher (Live vs Staging) - Visible in DEV mode, for Admins, or via Easter Egg */}
+          {Boolean(__DEV__ || isAdmin || isDevModeUnlocked) && (
+            <TouchableOpacity
+              style={[styles.settingRow, isAdmin ? { borderBottomColor: colors.borderSubtle } : { borderBottomWidth: 0 }]}
+              onPress={() => {
+                triggerHaptic('light');
+                onSwitchServerEnvironment?.();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={isBangla ? 'সার্ভার পরিবেশ পরিবর্তন করুন' : 'Switch Server Environment'}
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="server-outline" size={20} color={colors.primary} />
+                <View style={styles.settingTextCol}>
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>
+                    {isBangla ? 'সার্ভার পরিবেশ' : 'Server Environment'}
+                  </Text>
+                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
+                    {serverEnvironment === 'production'
+                      ? (isBangla ? 'লাইভ প্রোডাকশন • thrivingskill.com' : 'Live Production • thrivingskill.com')
+                      : (isBangla ? 'স্টেজিং সার্ভার • staging.thrivingskill.com' : 'Staging Server • staging.thrivingskill.com')}
+                  </Text>
+                </View>
               </View>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <View
-                style={{
-                  paddingHorizontal: 8,
-                  paddingVertical: 2,
-                  borderRadius: 6,
-                  backgroundColor:
-                    serverEnvironment === 'production'
-                      ? (isDark ? 'rgba(16, 185, 129, 0.2)' : '#ECFDF5')
-                      : (isDark ? 'rgba(245, 158, 11, 0.2)' : '#FEF3C7'),
-                  borderWidth: 1,
-                  borderColor: serverEnvironment === 'production' ? '#10B981' : '#F59E0B',
-                }}
-              >
-                <Text
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View
                   style={{
-                    fontSize: 11,
-                    fontWeight: '700',
-                    color: serverEnvironment === 'production' ? '#10B981' : '#D97706',
-                    letterSpacing: 0.5,
+                    paddingHorizontal: 8,
+                    paddingVertical: 2,
+                    borderRadius: 6,
+                    backgroundColor:
+                      serverEnvironment === 'production'
+                        ? (isDark ? 'rgba(16, 185, 129, 0.2)' : '#ECFDF5')
+                        : (isDark ? 'rgba(245, 158, 11, 0.2)' : '#FEF3C7'),
+                    borderWidth: 1,
+                    borderColor: serverEnvironment === 'production' ? '#10B981' : '#F59E0B',
                   }}
                 >
-                  {serverEnvironment === 'production'
-                    ? (isBangla ? 'লাইভ' : 'LIVE')
-                    : (isBangla ? 'স্টেজিং' : 'STAGING')}
-                </Text>
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      fontWeight: '700',
+                      color: serverEnvironment === 'production' ? '#10B981' : '#D97706',
+                      letterSpacing: 0.5,
+                    }}
+                  >
+                    {serverEnvironment === 'production'
+                      ? (isBangla ? 'লাইভ' : 'LIVE')
+                      : (isBangla ? 'স্টেজিং' : 'STAGING')}
+                  </Text>
+                </View>
+                <Ionicons name="swap-horizontal" size={16} color={colors.textMuted} />
               </View>
-              <Ionicons name="swap-horizontal" size={16} color={colors.textMuted} />
-            </View>
-          </TouchableOpacity>
+            </TouchableOpacity>
+          )}
 
           {/* WordPress Admin Portal Shortcut (Admin only) */}
           {isAdmin && (

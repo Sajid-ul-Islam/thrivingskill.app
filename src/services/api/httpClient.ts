@@ -167,6 +167,14 @@ export class HttpClient {
       delete headers['pragma'];
     }
 
+    // In web browsers (e.g. localhost preview), headers not in WordPress's Access-Control-Allow-Headers cause preflight CORS failures.
+    if (Platform.OS === 'web') {
+      delete headers['Cache-Control'];
+      delete headers['cache-control'];
+      delete headers['Pragma'];
+      delete headers['pragma'];
+    }
+
     if (Env.DEBUG_API) {
       console.log(`[API Request] ${options.method || 'GET'} ${fullUrl}`);
     }
@@ -347,6 +355,14 @@ export class HttpClient {
       if (token) {
         headers.Authorization = `Bearer ${token}`;
       }
+    }
+
+    // In web browsers (e.g. localhost preview), headers not in WordPress's Access-Control-Allow-Headers cause preflight CORS failures.
+    if (Platform.OS === 'web') {
+      delete headers['Cache-Control'];
+      delete headers['cache-control'];
+      delete headers['Pragma'];
+      delete headers['pragma'];
     }
 
     if (Env.DEBUG_API) {
