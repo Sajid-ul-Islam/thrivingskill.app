@@ -28,6 +28,7 @@ import {
   SpringPressable,
   StateView,
   LearnPressStatsGrid,
+  ProfileLearningAnalytics,
 } from '../components';
 import { useYouTube } from '../context/YouTubeContext';
 import { Certificate, Course, LearnPressCourseFilter } from '../types';
@@ -404,7 +405,32 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >
-        {/* Authentic LearnPress 5 KPI Cards matching thrivingskill.com */}
+        {/* CR-05: Learning Analytics Dashboard with Mastery Donut & Weekly Study Velocity */}
+        <View style={styles.analyticsSection}>
+          <ProfileLearningAnalytics
+            enrolledCount={enrolledList.length}
+            inProgressCount={inProgressList.length}
+            completedCount={finishedList.length}
+            totalHours={totalHoursLearned}
+            certificatesCount={certificates.length}
+            completionRate={
+              enrolledList.length > 0
+                ? Math.round((finishedList.length / enrolledList.length) * 100)
+                : 0
+            }
+            streakDays={streakDays}
+            colors={colors}
+            isBangla={isBangla}
+            activeCourseTab={
+              (['all', 'in-progress', 'finished', 'passed', 'failed'].includes(activeTab)
+                ? activeTab
+                : 'in-progress') as LearnPressCourseFilter
+            }
+            onSelectTab={(tab) => setActiveTab(tab as TabMode)}
+          />
+        </View>
+
+        {/* Authentic LearnPress 5 KPI Filter Chips */}
         <LearnPressStatsGrid
           stats={lpStats}
           activeFilter={
@@ -417,40 +443,6 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
           isBangla={isBangla}
           isDark={isDark}
         />
-
-        {/* Daily Study Streak Banner */}
-        <View
-          style={[
-            styles.streakBanner,
-            {
-              backgroundColor: colors.surfaceCard,
-              borderColor: '#F59E0B',
-            },
-          ]}
-        >
-          <View style={styles.streakFlameWrap}>
-            <Text style={styles.streakFlameEmoji}>🔥</Text>
-          </View>
-          <View style={styles.streakContent}>
-            <View style={styles.streakHeaderRow}>
-              <Text style={[styles.streakTitle, { color: colors.text }]} numberOfLines={1} ellipsizeMode="tail">
-                {streakDays > 0
-                  ? (isBangla ? `${streakDays} দিনের স্টাডি স্ট্রিক` : `${streakDays}-Day Study Streak`)
-                  : (isBangla ? 'আজই স্টাডি স্ট্রিক শুরু করুন' : 'Start Your Study Streak Today')}
-              </Text>
-              <View style={styles.streakRankBadge}>
-                <Text style={styles.streakRankText}>
-                  {isBangla ? 'শীর্ষ ৫%' : 'Top 5%'}
-                </Text>
-              </View>
-            </View>
-            <Text style={[styles.streakSub, { color: colors.textMuted }]}>
-              {isBangla
-                ? `${totalHoursLearned} ঘণ্টা সম্পন্ন • স্ট্রিক সচল রাখতে আজ অন্তত ১টি লেসন শেষ করুন!`
-                : `${totalHoursLearned}h learned • Complete 1 lesson today to keep your streak alive!`}
-            </Text>
-          </View>
-        </View>
 
         {/* Tabs Bar (Horizontally scrollable so 5 tabs never overflow compact viewports) */}
         <ScrollView
@@ -916,6 +908,11 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 40,
+  },
+  analyticsSection: {
+    marginHorizontal: 16,
+    marginTop: 10,
+    marginBottom: 4,
   },
   sectionHeading: {
     fontSize: 14,

@@ -4,7 +4,6 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { shape } from '../../theme/shapes';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
 import { triggerHaptic } from '../../utils/haptics';
-import { ProfileLearningAnalytics } from '../analytics/ProfileLearningAnalytics';
 import { LearnPressStatsGrid } from '../cards/LearnPressStatsGrid';
 import { Course, Certificate, LearnPressCourseFilter, UserProgress } from '../../types';
 import { getSafeImageSource } from '../../utils/imageUtils';
@@ -104,21 +103,43 @@ export const ProfileLearningPortfolio: React.FC<ProfileLearningPortfolioProps> =
         </View>
       )}
 
-      {/* CR-05: Learning Analytics Data Chart */}
+      {/* Quick Access to My Learning Hub for Learning Analytics */}
       <View style={styles.section}>
-        <ProfileLearningAnalytics
-          enrolledCount={enrolledCount}
-          inProgressCount={inProgressCourses.length}
-          completedCount={completedCount}
-          totalHours={totalHoursLearned}
-          certificatesCount={certificates.length}
-          completionRate={completionRate}
-          streakDays={streakDays}
-          colors={colors}
-          isBangla={isBangla}
-          activeCourseTab={portfolioTab}
-          onSelectTab={(tab) => setPortfolioTab(tab)}
-        />
+        <TouchableOpacity
+          style={[
+            styles.analyticsHubCard,
+            {
+              backgroundColor: colors.surfaceCard,
+              borderColor: colors.border,
+            },
+          ]}
+          onPress={() => onNavigateTab('MyLearning')}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={isBangla ? 'মাই লার্নিং হাব-এ অ্যানালিটিক্স দেখুন' : 'View Learning Analytics in My Learning'}
+        >
+          <View style={[styles.analyticsHubIconBg, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.15)' : 'rgba(16, 47, 83, 0.08)' }]}>
+            <Ionicons name="analytics" size={20} color={isDark ? '#FFB606' : colors.primary} />
+          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+              <Text style={[styles.analyticsHubTitle, { color: colors.text }]}>
+                {isBangla ? 'লার্নিং অ্যানালিটিক্স ও ভেলোসিটি' : 'Learning Analytics & Velocity'}
+              </Text>
+              <View style={[styles.analyticsHubStreakBadge, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.2)' : '#FEF3C7' }]}>
+                <Text style={[styles.analyticsHubStreakText, { color: isDark ? '#FFB606' : '#92400E' }]}>
+                  {streakDays > 0 ? `🔥 ${streakDays}d` : '🔥 Streak'}
+                </Text>
+              </View>
+            </View>
+            <Text style={[styles.analyticsHubSub, { color: colors.textMuted }]} numberOfLines={1}>
+              {isBangla
+                ? 'উইকলি ভেলোসিটি চার্ট ও কোর্স প্রগ্রেস মাই লার্নিং-এ রয়েছে →'
+                : 'View weekly study velocity and mastery in My Learning →'}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+        </TouchableOpacity>
       </View>
 
       {/* CR-8: My Achievements (Certificates & Social Sharing) */}
@@ -597,6 +618,37 @@ export const ProfileLearningPortfolio: React.FC<ProfileLearningPortfolioProps> =
 };
 
 const styles = StyleSheet.create({
+  analyticsHubCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: shape.large,
+    borderWidth: 1,
+    gap: 12,
+  },
+  analyticsHubIconBg: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  analyticsHubTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  analyticsHubStreakBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 6,
+  },
+  analyticsHubStreakText: {
+    fontSize: 10.5,
+    fontWeight: '800',
+  },
+  analyticsHubSub: {
+    fontSize: 12,
+  },
   section: {
     paddingHorizontal: 16,
     marginBottom: 20,
