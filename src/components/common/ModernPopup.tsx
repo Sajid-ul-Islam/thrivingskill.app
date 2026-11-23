@@ -21,7 +21,15 @@ interface ModernPopupProps {
   onDismiss: () => void;
 }
 
-const POPUP_THEME: Record<
+interface PopupThemeConfig {
+  icon: string;
+  iconColor: string;
+  iconBg: string;
+  primaryBg: string;
+  primaryText: string;
+}
+
+export const POPUP_THEME: Record<
   PopupType,
   {
     icon: string;
@@ -40,9 +48,9 @@ const POPUP_THEME: Record<
   },
   info: {
     icon: 'information-circle-outline',
-    iconColor: '#0284C7',
-    iconBg: 'rgba(2, 132, 199, 0.1)',
-    primaryBg: '#0284C7',
+    iconColor: '#102F53',
+    iconBg: 'rgba(16, 47, 83, 0.08)',
+    primaryBg: '#102F53',
     primaryText: '#FFFFFF',
   },
   warning: {
@@ -66,6 +74,55 @@ const POPUP_THEME: Record<
     primaryBg: '#10B981',
     primaryText: '#FFFFFF',
   },
+};
+
+const getPopupTheme = (
+  type: PopupType,
+  colors: any,
+  isDark: boolean
+): PopupThemeConfig => {
+  switch (type) {
+    case 'confirm':
+      return {
+        icon: 'help-circle-outline',
+        iconColor: isDark ? colors.primary : colors.brandNavy,
+        iconBg: isDark ? 'rgba(255, 182, 6, 0.16)' : 'rgba(16, 47, 83, 0.08)',
+        primaryBg: colors.primary,
+        primaryText: colors.onPrimary,
+      };
+    case 'info':
+      return {
+        icon: 'information-circle-outline',
+        iconColor: isDark ? colors.primary : colors.brandNavy,
+        iconBg: isDark ? 'rgba(255, 182, 6, 0.16)' : 'rgba(16, 47, 83, 0.08)',
+        primaryBg: colors.primary,
+        primaryText: colors.onPrimary,
+      };
+    case 'warning':
+      return {
+        icon: 'alert-circle-outline',
+        iconColor: isDark ? '#FBBF24' : '#D97706',
+        iconBg: isDark ? 'rgba(245, 158, 11, 0.18)' : 'rgba(217, 119, 6, 0.12)',
+        primaryBg: '#F59E0B',
+        primaryText: isDark ? '#102F53' : '#FFFFFF',
+      };
+    case 'destructive':
+      return {
+        icon: 'trash-outline',
+        iconColor: isDark ? '#F87171' : colors.accent,
+        iconBg: isDark ? 'rgba(227, 66, 52, 0.18)' : 'rgba(227, 66, 52, 0.12)',
+        primaryBg: colors.accent,
+        primaryText: '#FFFFFF',
+      };
+    case 'success':
+      return {
+        icon: 'checkmark-circle-outline',
+        iconColor: isDark ? '#34D399' : colors.success,
+        iconBg: isDark ? 'rgba(52, 211, 153, 0.18)' : 'rgba(16, 185, 129, 0.12)',
+        primaryBg: colors.success,
+        primaryText: isDark ? '#0B1420' : '#FFFFFF',
+      };
+  }
 };
 
 export const ModernPopup: React.FC<ModernPopupProps> = ({ popup, onDismiss }) => {
@@ -125,7 +182,7 @@ export const ModernPopup: React.FC<ModernPopupProps> = ({ popup, onDismiss }) =>
   if (!modalVisible && !popup) return null;
 
   const type: PopupType = popup?.type || (popup?.isDestructive ? 'destructive' : 'confirm');
-  const theme = POPUP_THEME[type];
+  const theme = getPopupTheme(type, colors, isDark);
 
   const handleCancel = () => {
     triggerHaptic('light');
@@ -173,8 +230,10 @@ export const ModernPopup: React.FC<ModernPopupProps> = ({ popup, onDismiss }) =>
             styles.dialogContainer,
             {
               backgroundColor: isDark ? colors.surfaceCard : '#FFFFFF',
-              borderColor: isDark ? colors.border : '#E2E8F0',
-              borderWidth: isDark ? 1 : 0,
+              borderColor: isDark ? colors.border : 'rgba(16, 47, 83, 0.08)',
+              borderWidth: 1,
+              shadowColor: isDark ? '#000000' : colors.primary,
+              shadowOpacity: isDark ? 0.45 : 0.12,
               opacity: opacityAnim,
               transform: [{ scale: scaleAnim }],
             },
@@ -182,6 +241,17 @@ export const ModernPopup: React.FC<ModernPopupProps> = ({ popup, onDismiss }) =>
           accessibilityRole="alertdialog"
           accessibilityViewIsModal={true}
         >
+          {/* Top-Right Dismiss Button */}
+          <TouchableOpacity
+            style={styles.closeBtn}
+            onPress={handleCancel}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel="Close popup"
+          >
+            <Ionicons name="close" size={20} color={colors.textMuted} />
+          </TouchableOpacity>
+
           {/* Header Icon Badge */}
           <View style={[styles.iconWrap, { backgroundColor: theme.iconBg }]}>
             <Ionicons
@@ -192,10 +262,10 @@ export const ModernPopup: React.FC<ModernPopupProps> = ({ popup, onDismiss }) =>
           </View>
 
           {/* Title & Description */}
-          <Text style={[typography.h4, styles.title, { color: isDark ? colors.text : '#102F53' }]}>
+          <Text style={[typography.h3, styles.title, { color: isDark ? colors.text : colors.brandNavy }]}>
             {popup?.title}
           </Text>
-          <Text style={[typography.bodyMedium, styles.message, { color: isDark ? colors.textMuted : '#64748B' }]}>
+          <Text style={[typography.bodyMedium, styles.message, { color: colors.textMuted }]}>
             {popup?.message}
           </Text>
 
@@ -206,15 +276,15 @@ export const ModernPopup: React.FC<ModernPopupProps> = ({ popup, onDismiss }) =>
                 style={[
                   styles.cancelBtn,
                   {
-                    backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9',
-                    borderColor: isDark ? colors.border : '#E2E8F0',
+                    backgroundColor: isDark ? colors.surfaceSubtle : '#F8FAFC',
+                    borderColor: colors.border,
                   },
                 ]}
                 onPress={handleCancel}
                 accessibilityRole="button"
                 accessibilityLabel={popup.secondaryLabel}
               >
-                <Text style={[styles.cancelText, { color: isDark ? colors.text : '#475569' }]}>
+                <Text style={[styles.cancelText, { color: isDark ? colors.text : colors.textMuted }]}>
                   {popup.secondaryLabel}
                 </Text>
               </SpringPressable>
@@ -251,38 +321,48 @@ const styles = StyleSheet.create({
   },
   dialogContainer: {
     width: '100%',
-    maxWidth: 380,
+    maxWidth: 360,
     backgroundColor: '#FFFFFF',
-    borderRadius: shape.largeIncreased,
+    borderRadius: shape.extraLarge,
     padding: 24,
     alignItems: 'center',
     elevation: 20,
-    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
+    shadowRadius: 24,
+    position: 'relative',
+  },
+  closeBtn: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
   },
   iconWrap: {
     width: 64,
     height: 64,
-    borderRadius: shape.full,
+    borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
   },
   title: {
-    color: '#102F53',
     textAlign: 'center',
-    fontWeight: '700',
+    fontWeight: '800',
     marginBottom: 8,
-    fontSize: 18,
+    fontSize: 18.5,
+    letterSpacing: -0.3,
   },
   message: {
-    color: '#64748B',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 22,
     marginBottom: 24,
     fontSize: 14,
+    maxWidth: '92%',
   },
   actionsRow: {
     flexDirection: 'row',
@@ -293,16 +373,13 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 48,
     borderRadius: shape.full,
-    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
   cancelText: {
-    color: '#475569',
-    fontWeight: '600',
-    fontSize: 14,
+    fontWeight: '700',
+    fontSize: 14.5,
   },
   confirmBtn: {
     flex: 1,
@@ -321,7 +398,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   confirmText: {
-    fontWeight: '700',
-    fontSize: 14,
+    fontWeight: '800',
+    fontSize: 14.5,
   },
 });

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import { Alert, AlertButton, AlertOptions } from 'react-native';
 import { triggerHaptic } from '../utils/haptics';
 
 export type ToastType = 'success' | 'info' | 'warning' | 'error';
@@ -348,6 +349,119 @@ export const FeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     },
     []
   );
+
+  // ---------------------------------------------------------------------------
+  // NATIVE ALERT BRIDGE: Intercepts Alert.alert() across the entire app
+  // and routes it into the branded, accessible ModernPopup component.
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    const originalAlert = Alert.alert;
+
+    Alert.alert = (
+      title: string,
+      message?: string,
+      buttons?: AlertButton[],
+      options?: AlertOptions
+    ) => {
+      const fullText = `${title || ''} ${message || ''}`.toLowerCase();
+      let type: PopupType = 'info';
+      let icon: string | undefined;
+
+      if (
+        fullText.includes('certificate') ||
+        fullText.includes('achievement') ||
+        fullText.includes('সনদ') ||
+        fullText.includes('অর্জন') ||
+        fullText.includes('award') ||
+        fullText.includes('credential')
+      ) {
+        icon = 'ribbon-outline';
+        type = 'info';
+      } else if (
+        fullText.includes('error') ||
+        fullText.includes('failed') ||
+        fullText.includes('ত্রুটি') ||
+        fullText.includes('ব্যর্থ') ||
+        fullText.includes('incorrect')
+      ) {
+        type = 'destructive';
+        icon = 'alert-circle-outline';
+      } else if (
+        fullText.includes('success') ||
+        fullText.includes('সফল') ||
+        fullText.includes('passed') ||
+        fullText.includes('unlocked') ||
+        fullText.includes('সক্রিয়')
+      ) {
+        type = 'success';
+        icon = 'checkmark-circle-outline';
+      } else if (
+        fullText.includes('delete') ||
+        fullText.includes('remove') ||
+        fullText.includes('মুছে')
+      ) {
+        type = 'destructive';
+        icon = 'trash-outline';
+      } else if (
+        fullText.includes('warning') ||
+        fullText.includes('alert') ||
+        fullText.includes('সতর্ক')
+      ) {
+        type = 'warning';
+        icon = 'warning-outline';
+      }
+
+      let primaryLabel = 'OK';
+      let secondaryLabel: string | undefined;
+      let onConfirm: (() => void) | undefined;
+      let onCancel: (() => void) | undefined;
+      let isDestructive = false;
+
+      if (buttons && buttons.length > 0) {
+        if (buttons.length === 1) {
+          primaryLabel = buttons[0].text || 'OK';
+          const fn = buttons[0].onPress;
+          onConfirm = fn ? () => { fn(); } : undefined;
+          if (buttons[0].style === 'destructive') isDestructive = true;
+        } else {
+          const cancelBtn = buttons.find((b) => b.style === 'cancel');
+          const confirmBtn = buttons.find((b) => b.style !== 'cancel') || buttons[1];
+
+          if (cancelBtn) {
+            secondaryLabel = cancelBtn.text || 'Cancel';
+            const cFn = cancelBtn.onPress;
+            onCancel = cFn ? () => { cFn(); } : undefined;
+          }
+          if (confirmBtn) {
+            primaryLabel = confirmBtn.text || 'Confirm';
+            const cfFn = confirmBtn.onPress;
+            onConfirm = cfFn ? () => { cfFn(); } : undefined;
+            if (confirmBtn.style === 'destructive') {
+              isDestructive = true;
+              type = 'destructive';
+            }
+          }
+        }
+      }
+
+      const optDismiss = options?.onDismiss;
+      showPopup({
+        title: title || '',
+        message: message || '',
+        type,
+        icon,
+        primaryLabel,
+        secondaryLabel,
+        onConfirm,
+        onCancel: onCancel || (optDismiss ? () => { optDismiss(); } : undefined),
+        isDestructive,
+      });
+    };
+
+    return () => {
+      Alert.alert = originalAlert;
+    };
+  }, [showPopup]);
 
   return (
     <FeedbackContext.Provider

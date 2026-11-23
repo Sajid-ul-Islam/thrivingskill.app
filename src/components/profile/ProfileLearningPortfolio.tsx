@@ -8,6 +8,7 @@ import { ProfileLearningAnalytics } from '../analytics/ProfileLearningAnalytics'
 import { LearnPressStatsGrid } from '../cards/LearnPressStatsGrid';
 import { Course, Certificate, LearnPressCourseFilter, UserProgress } from '../../types';
 import { getSafeImageSource } from '../../utils/imageUtils';
+import { useFeedback } from '../../context/FeedbackContext';
 
 interface ProfileLearningPortfolioProps {
   isAuthenticated: boolean;
@@ -64,6 +65,8 @@ export const ProfileLearningPortfolio: React.FC<ProfileLearningPortfolioProps> =
   onOpenMandatoryReview,
   user,
 }) => {
+  const { showPopup } = useFeedback();
+
   return (
     <View>
       {!isAuthenticated && (
@@ -132,12 +135,15 @@ export const ProfileLearningPortfolio: React.FC<ProfileLearningPortfolioProps> =
               if (certificates.length > 0) {
                 onSelectCertificate(certificates[0]);
               } else {
-                Alert.alert(
-                  isBangla ? 'অর্জন ও সার্টিফিকেট' : 'My Achievements',
-                  isBangla
-                    ? 'কোর্স সম্পন্ন করলেই আপনার ভেরিফাইড সার্টিফিকেট এখানে প্রদর্শিত হবে।'
-                    : 'Complete any course to unlock your verified digital certificate.'
-                );
+                showPopup({
+                  title: isBangla ? 'আমার অর্জন ও সনদ' : 'My Achievements',
+                  message: isBangla
+                    ? 'আপনার যেকোনো একটি এনরোল করা কোর্স সম্পন্ন করলেই অফিসিয়াল ভেরিফাইড ডিজিটাল সার্টিফিকেট এখানে যোগ হবে।'
+                    : 'Complete any course to unlock your verified digital certificate.',
+                  icon: 'ribbon-outline',
+                  type: 'info',
+                  primaryLabel: isBangla ? 'ঠিক আছে' : 'Got It',
+                });
               }
             }}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}

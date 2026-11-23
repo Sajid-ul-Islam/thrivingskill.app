@@ -48,6 +48,7 @@ interface CoursesScreenProps {
 
 type LevelFilter = 'All' | 'Beginner' | 'Intermediate' | 'Advanced';
 type PriceFilter = 'all' | 'free' | 'paid';
+type DurationFilter = 'all' | 'short' | 'in-depth';
 type SortOption = 'popular' | 'newest' | 'rating' | 'price-low' | 'price-high';
 
 interface HotTopicItem {
@@ -99,6 +100,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
 
   const [selectedLevel, setSelectedLevel] = useState<LevelFilter>('All');
   const [selectedPriceFilter, setSelectedPriceFilter] = useState<PriceFilter>('all');
+  const [selectedDurationFilter, setSelectedDurationFilter] = useState<DurationFilter>('all');
   const [selectedSort, setSelectedSort] = useState<SortOption>('popular');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showHeaderSearch, setShowHeaderSearch] = useState(false);
@@ -415,6 +417,15 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
   }, []);
 
+  const handleDurationFilterSelect = useCallback((df: DurationFilter) => {
+    triggerHaptic('selection');
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    startTransition(() => {
+      setSelectedDurationFilter(df);
+    });
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
+  }, []);
+
   const handlePriceFilterSelect = useCallback((pf: PriceFilter) => {
     triggerHaptic('selection');
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -441,6 +452,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
       setSearchQuery('');
       setSelectedCategory('all');
       setSelectedLevel('All');
+      setSelectedDurationFilter('all');
       setSelectedPriceFilter('all');
     });
     flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
@@ -534,6 +546,13 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
         if (course.level !== lvl && course.level !== 'All Levels') return false;
       }
 
+      // Duration check
+      if (selectedDurationFilter !== 'all') {
+        const dHours = course.durationHours || 0;
+        if (selectedDurationFilter === 'short' && dHours > 3) return false;
+        if (selectedDurationFilter === 'in-depth' && dHours <= 3) return false;
+      }
+
       // Price check
       if (pf !== 'all') {
         const isFree = (!course.price || course.price === 0) && (!course.priceBdt || course.priceBdt === 0);
@@ -578,7 +597,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     }
 
     return matched;
-  }, [courses, categoryIndex, selectedCategory, selectedLevel, selectedPriceFilter, selectedSort, searchQuery]);
+  }, [courses, categoryIndex, selectedCategory, selectedLevel, selectedDurationFilter, selectedPriceFilter, selectedSort, searchQuery]);
 
   const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
@@ -617,6 +636,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   const hasActiveFilters =
     selectedCategory !== 'all' ||
     selectedLevel !== 'All' ||
+    selectedDurationFilter !== 'all' ||
     selectedPriceFilter !== 'all' ||
     searchQuery.trim().length > 0;
 
@@ -889,49 +909,208 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
           onSelect={handleCategorySelect}
         />
 
-        {/* Filters and View Mode Controls */}
+        {/* Quick Filter Chips (Skill Level: Beginner/Advanced, Duration: Short/In-depth, Price: Free/Paid) */}
         <View style={styles.filterRow}>
-          {/* Level selector (user-controlled static scroll) */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.levelsScroll}
             accessibilityRole="tablist"
           >
-            {(['All', 'Beginner', 'Intermediate', 'Advanced'] as LevelFilter[]).map((lvl) => {
-              const isSelected = selectedLevel === lvl;
-              return (
-                <TouchableOpacity
-                  key={lvl}
-                  style={[
-                    styles.levelPill,
-                    {
-                      backgroundColor:
-                        isSelected ? colors.secondary : colors.surfaceSubtle,
-                      borderColor: isSelected ? colors.secondary : colors.border,
-                    },
-                  ]}
-                  onPress={() => handleLevelSelect(lvl)}
-                  accessibilityRole="tab"
-                  accessibilityState={{ selected: isSelected }}
-                  accessibilityLabel={
-                    isBangla
-                      ? `${levelLabels[lvl].bn} লেভেল ফিল্টার`
-                      : `Filter by ${levelLabels[lvl].en} difficulty`
-                  }
-                  hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
-                >
-                  <Text
-                    style={[
-                      styles.levelText,
-                      { color: isSelected ? colors.onSecondary : colors.textMuted },
-                    ]}
-                  >
-                    {isBangla ? levelLabels[lvl].bn : levelLabels[lvl].en}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+            {/* Beginner Chip */}
+            <TouchableOpacity
+              style={[
+                styles.quickFilterChip,
+                selectedLevel === 'Beginner'
+                  ? { backgroundColor: isDark ? '#FFB606' : '#102F53', borderColor: isDark ? '#FFB606' : '#102F53' }
+                  : { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+              ]}
+              onPress={() => handleLevelSelect(selectedLevel === 'Beginner' ? 'All' : 'Beginner')}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: selectedLevel === 'Beginner' }}
+              accessibilityLabel={isBangla ? 'বিগিনার লেভেল ফিল্টার' : 'Filter by Beginner level'}
+              hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+            >
+              <Ionicons
+                name="school-outline"
+                size={12}
+                color={selectedLevel === 'Beginner' ? (isDark ? '#0F192C' : '#FFFFFF') : colors.primary}
+              />
+              <Text
+                style={[
+                  styles.quickFilterText,
+                  { color: selectedLevel === 'Beginner' ? (isDark ? '#0F192C' : '#FFFFFF') : colors.text },
+                ]}
+              >
+                {isBangla ? 'বিগিনার' : 'Beginner'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Advanced Chip */}
+            <TouchableOpacity
+              style={[
+                styles.quickFilterChip,
+                selectedLevel === 'Advanced'
+                  ? { backgroundColor: isDark ? '#FFB606' : '#102F53', borderColor: isDark ? '#FFB606' : '#102F53' }
+                  : { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+              ]}
+              onPress={() => handleLevelSelect(selectedLevel === 'Advanced' ? 'All' : 'Advanced')}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: selectedLevel === 'Advanced' }}
+              accessibilityLabel={isBangla ? 'অ্যাডভান্সড লেভেল ফিল্টার' : 'Filter by Advanced level'}
+              hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+            >
+              <Ionicons
+                name="trending-up-outline"
+                size={12}
+                color={selectedLevel === 'Advanced' ? (isDark ? '#0F192C' : '#FFFFFF') : colors.primary}
+              />
+              <Text
+                style={[
+                  styles.quickFilterText,
+                  { color: selectedLevel === 'Advanced' ? (isDark ? '#0F192C' : '#FFFFFF') : colors.text },
+                ]}
+              >
+                {isBangla ? 'অ্যাডভান্সড' : 'Advanced'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Short Duration (<3h) */}
+            <TouchableOpacity
+              style={[
+                styles.quickFilterChip,
+                selectedDurationFilter === 'short'
+                  ? { backgroundColor: isDark ? '#FFB606' : '#102F53', borderColor: isDark ? '#FFB606' : '#102F53' }
+                  : { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+              ]}
+              onPress={() => handleDurationFilterSelect(selectedDurationFilter === 'short' ? 'all' : 'short')}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: selectedDurationFilter === 'short' }}
+              accessibilityLabel={isBangla ? 'সংক্ষিপ্ত কোর্স ফিল্টার' : 'Filter by Short duration'}
+              hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+            >
+              <Ionicons
+                name="flash-outline"
+                size={12}
+                color={selectedDurationFilter === 'short' ? (isDark ? '#0F192C' : '#FFFFFF') : colors.primary}
+              />
+              <Text
+                style={[
+                  styles.quickFilterText,
+                  { color: selectedDurationFilter === 'short' ? (isDark ? '#0F192C' : '#FFFFFF') : colors.text },
+                ]}
+              >
+                {isBangla ? 'সংক্ষিপ্ত (<৩ঘ)' : 'Short (<3h)'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* In-depth Duration (3h+) */}
+            <TouchableOpacity
+              style={[
+                styles.quickFilterChip,
+                selectedDurationFilter === 'in-depth'
+                  ? { backgroundColor: isDark ? '#FFB606' : '#102F53', borderColor: isDark ? '#FFB606' : '#102F53' }
+                  : { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+              ]}
+              onPress={() => handleDurationFilterSelect(selectedDurationFilter === 'in-depth' ? 'all' : 'in-depth')}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: selectedDurationFilter === 'in-depth' }}
+              accessibilityLabel={isBangla ? 'ইন-ডেপ্থ কোর্স ফিল্টার' : 'Filter by In-depth duration'}
+              hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+            >
+              <Ionicons
+                name="time-outline"
+                size={12}
+                color={selectedDurationFilter === 'in-depth' ? (isDark ? '#0F192C' : '#FFFFFF') : colors.primary}
+              />
+              <Text
+                style={[
+                  styles.quickFilterText,
+                  { color: selectedDurationFilter === 'in-depth' ? (isDark ? '#0F192C' : '#FFFFFF') : colors.text },
+                ]}
+              >
+                {isBangla ? 'ইন-ডেপ্থ (৩ঘ+)' : 'In-depth (3h+)'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Free Price Chip */}
+            <TouchableOpacity
+              style={[
+                styles.quickFilterChip,
+                selectedPriceFilter === 'free'
+                  ? { backgroundColor: isDark ? '#FFB606' : '#102F53', borderColor: isDark ? '#FFB606' : '#102F53' }
+                  : { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+              ]}
+              onPress={() => handlePriceFilterSelect(selectedPriceFilter === 'free' ? 'all' : 'free')}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: selectedPriceFilter === 'free' }}
+              accessibilityLabel={isBangla ? 'ফ্রি কোর্স ফিল্টার' : 'Filter by Free courses'}
+              hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+            >
+              <Ionicons
+                name="gift-outline"
+                size={12}
+                color={selectedPriceFilter === 'free' ? (isDark ? '#0F192C' : '#FFFFFF') : '#16A34A'}
+              />
+              <Text
+                style={[
+                  styles.quickFilterText,
+                  { color: selectedPriceFilter === 'free' ? (isDark ? '#0F192C' : '#FFFFFF') : colors.text },
+                ]}
+              >
+                {isBangla ? 'ফ্রি' : 'Free'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Paid Price Chip */}
+            <TouchableOpacity
+              style={[
+                styles.quickFilterChip,
+                selectedPriceFilter === 'paid'
+                  ? { backgroundColor: isDark ? '#FFB606' : '#102F53', borderColor: isDark ? '#FFB606' : '#102F53' }
+                  : { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+              ]}
+              onPress={() => handlePriceFilterSelect(selectedPriceFilter === 'paid' ? 'all' : 'paid')}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: selectedPriceFilter === 'paid' }}
+              accessibilityLabel={isBangla ? 'পেইড কোর্স ফিল্টার' : 'Filter by Paid courses'}
+              hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+            >
+              <Ionicons
+                name="card-outline"
+                size={12}
+                color={selectedPriceFilter === 'paid' ? (isDark ? '#0F192C' : '#FFFFFF') : colors.accent}
+              />
+              <Text
+                style={[
+                  styles.quickFilterText,
+                  { color: selectedPriceFilter === 'paid' ? (isDark ? '#0F192C' : '#FFFFFF') : colors.text },
+                ]}
+              >
+                {isBangla ? 'পেইড' : 'Paid'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Reset / Clear Chip when any quick filter is active */}
+            {(selectedLevel !== 'All' || selectedDurationFilter !== 'all' || selectedPriceFilter !== 'all') && (
+              <TouchableOpacity
+                style={[styles.quickFilterChip, { backgroundColor: isDark ? 'rgba(227,66,52,0.2)' : '#FEE2E2', borderColor: '#E34234' }]}
+                onPress={() => {
+                  triggerHaptic('light');
+                  handleLevelSelect('All');
+                  handleDurationFilterSelect('all');
+                  handlePriceFilterSelect('all');
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Clear all quick filters"
+                hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+              >
+                <Ionicons name="close-circle" size={12} color="#E34234" />
+                <Text style={[styles.quickFilterText, { color: '#E34234', fontWeight: '700' }]}>
+                  {isBangla ? 'রিসেট' : 'Reset'}
+                </Text>
+              </TouchableOpacity>
+            )}
           </ScrollView>
 
           {/* View toggle */}
@@ -1109,6 +1288,22 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                   <Ionicons name="close-circle" size={14} color={colors.textMuted} />
                 </TouchableOpacity>
               )}
+              {selectedDurationFilter !== 'all' && (
+                <TouchableOpacity
+                  style={[styles.activeFilterChip, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                  onPress={() => handleDurationFilterSelect('all')}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear duration filter"
+                  hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+                >
+                  <Text style={[styles.activeFilterChipText, { color: colors.text }]}>
+                    {selectedDurationFilter === 'short'
+                      ? (isBangla ? 'সংক্ষিপ্ত (<৩ঘ)' : 'Short (<3h)')
+                      : (isBangla ? 'ইন-ডেপ্থ (৩ঘ+)' : 'In-depth (3h+)')}
+                  </Text>
+                  <Ionicons name="close-circle" size={14} color={colors.textMuted} />
+                </TouchableOpacity>
+              )}
               {selectedPriceFilter !== 'all' && (
                 <TouchableOpacity
                   style={[styles.activeFilterChip, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
@@ -1118,7 +1313,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                   hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
                 >
                   <Text style={[styles.activeFilterChipText, { color: colors.text }]}>
-                    {selectedPriceFilter === 'free' ? 'Free' : 'Members'}
+                    {selectedPriceFilter === 'free' ? (isBangla ? 'ফ্রি' : 'Free') : (isBangla ? 'পেইড' : 'Paid')}
                   </Text>
                   <Ionicons name="close-circle" size={14} color={colors.textMuted} />
                 </TouchableOpacity>
@@ -1455,6 +1650,21 @@ const styles = StyleSheet.create({
   levelsScroll: {
     gap: 6,
     paddingRight: 8,
+  },
+  quickFilterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4.5,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: 18,
+    borderWidth: 1,
+    marginRight: 6,
+  },
+  quickFilterText: {
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.1,
   },
   levelPill: {
     paddingHorizontal: 12,
