@@ -143,6 +143,7 @@ const AnimatedTabIcon: React.FC<{
  * national motto, and interactive LMS workspace loader.
  */
 const BrandSplashScreen: React.FC = () => {
+  const insets = useSafeAreaInsets();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.92)).current;
 
@@ -215,7 +216,7 @@ const BrandSplashScreen: React.FC = () => {
       </Animated.View>
 
       {/* Footer loading indicator */}
-      <View style={splashStyles.footer}>
+      <View style={[splashStyles.footer, { bottom: Math.max(insets.bottom + 12, 28) }]}>
         <ActivityIndicator size="small" color="#FFB606" />
         <Text style={splashStyles.footerText}>Loading LMS Workspace...</Text>
         <Text style={splashStyles.versionText}>v1.4.0 • Thriving Skills Ltd.</Text>
