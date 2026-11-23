@@ -188,7 +188,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
         /* If 2 courses on tablet portrait, display both side-by-side filling the width */
         <View style={{ flexDirection: 'row', paddingHorizontal: 16, gap: CARD_GAP, alignItems: 'stretch' }}>
           {displayCourses.map((item) => (
-            <View key={`cat-row-${title}-${item.id}`} style={{ flex: 1, alignSelf: 'stretch' }}>
+            <View key={`cat-row-${title}-${item.id}`} style={{ flex: 1, height: '100%', alignSelf: 'stretch' }}>
               <CourseCard
                 course={item}
                 onPress={() => {

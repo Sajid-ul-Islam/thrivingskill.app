@@ -715,7 +715,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
             ) : isTablet && deptItemCount === 2 && !isLandscape ? (
               <View style={{ flexDirection: 'row', paddingHorizontal: 16, gap: 12, alignItems: 'stretch' }}>
                 {dept.courses.map((courseItem) => (
-                  <View key={`dept-course-${dept.id}-${courseItem.id}`} style={{ flex: 1, alignSelf: 'stretch' }}>
+                  <View key={`dept-course-${dept.id}-${courseItem.id}`} style={{ flex: 1, height: '100%', alignSelf: 'stretch' }}>
                     <CourseCard
                       course={courseItem}
                       isBookmarked={bookmarks.includes(courseItem.id)}
@@ -1569,6 +1569,7 @@ const styles = StyleSheet.create({
   },
   gridCardItem: {
     flex: 1,
+    height: '100%',
     paddingHorizontal: 0,
     alignSelf: 'stretch',
   },

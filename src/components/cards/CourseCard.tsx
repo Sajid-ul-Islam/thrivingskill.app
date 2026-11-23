@@ -240,36 +240,39 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
         <View style={styles.content}>
           <View style={styles.topInfo}>
             <Text style={[styles.categoryTag, { color: colors.secondary }]}>
-              {course.level.toUpperCase()}
+              {(course.level || 'All Levels').toUpperCase()}
             </Text>
-            <Text
-              style={[
-                styles.cardTitle,
-                {
-                  color: colors.text,
-                  lineHeight: isBangla ? 23 : 21,
-                  minHeight: isBangla ? 46 : 42,
-                },
-              ]}
-              numberOfLines={2}
-            >
-              {course.title}
-            </Text>
-            <Text style={[styles.instructorName, { color: colors.textMuted }]} numberOfLines={1}>
-              {course.instructor?.name || 'Thriving Skills Instructor'}{course.instructor?.company ? ` • ${course.instructor.company}` : ''}
-            </Text>
+            <View style={[styles.titleContainer, { height: isBangla ? 46 : 42 }]}>
+              <Text
+                style={[
+                  styles.cardTitle,
+                  {
+                    color: colors.text,
+                    lineHeight: isBangla ? 23 : 21,
+                  },
+                ]}
+                numberOfLines={2}
+              >
+                {course.title}
+              </Text>
+            </View>
+            <View style={styles.instructorContainer}>
+              <Text style={[styles.instructorName, { color: colors.textMuted }]} numberOfLines={1}>
+                {course.instructor?.name || 'Thriving Skills Instructor'}{course.instructor?.company ? ` • ${course.instructor.company}` : ''}
+              </Text>
+            </View>
 
             <View style={styles.statsRow}>
               <View style={styles.ratingBadge}>
                 <Ionicons name="star" size={13} color={colors.starColor} />
-                <Text style={[styles.ratingNumber, { color: colors.text }]}>{course.rating}</Text>
+                <Text style={[styles.ratingNumber, { color: colors.text }]}>{course.rating ?? 0}</Text>
                 <Text style={[styles.reviewsCount, { color: colors.textMuted }]}>
-                  ({course.reviewsCount})
+                  ({course.reviewsCount ?? 0})
                 </Text>
               </View>
               <Text style={[styles.dotSeparator, { color: colors.textMuted }]}>•</Text>
               <Text style={[styles.durationText, { color: colors.textMuted }]} numberOfLines={1}>
-                {course.durationHours}h ({course.lecturesCount} lectures)
+                {course.durationHours || 0}h ({course.lecturesCount || 0} lectures)
               </Text>
             </View>
           </View>
@@ -410,17 +413,26 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     marginBottom: 4,
   },
+  titleContainer: {
+    height: 42,
+    justifyContent: 'flex-start',
+    marginBottom: 4,
+    overflow: 'hidden',
+  },
   cardTitle: {
     fontSize: 15,
     fontWeight: '700',
-    marginBottom: 4,
     letterSpacing: -0.2,
+  },
+  instructorContainer: {
+    height: 16,
+    marginBottom: 8,
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
   instructorName: {
     fontSize: 12,
-    height: 16,
     lineHeight: 16,
-    marginBottom: 8,
   },
   statsRow: {
     flexDirection: 'row',
