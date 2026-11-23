@@ -284,9 +284,6 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
 
         <View style={styles.content}>
           <View style={styles.topInfo}>
-            <Text style={[styles.categoryTag, { color: colors.secondary }]}>
-              {(course.level || 'All Levels').toUpperCase()}
-            </Text>
             <View style={[styles.titleContainer, { height: isBangla ? 46 : 42 }]}>
               <Text
                 style={[

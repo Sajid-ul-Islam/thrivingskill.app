@@ -99,7 +99,6 @@ export const CourseCardSkeleton: React.FC<{ horizontal?: boolean }> = ({ horizon
     <View style={[styles.verticalCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
       <SkeletonBox width="100%" aspectRatio={4 / 3} borderRadius={12} style={{ marginBottom: 12 }} />
       <View style={{ paddingHorizontal: 4 }}>
-        <SkeletonBox width={75} height={16} borderRadius={4} style={{ marginBottom: 8 }} />
         <SkeletonBox width="100%" height={18} borderRadius={4} style={{ marginBottom: 6 }} />
         <SkeletonBox width="70%" height={18} borderRadius={4} style={{ marginBottom: 12 }} />
         <View style={[styles.row, { justifyContent: 'space-between' }]}>
