@@ -53,6 +53,7 @@ import { CoursesService } from '../services/api/coursesService';
 import { Env, ApiEnvironment } from '../config/env';
 import {
   ProfileHeaderCard,
+  ProfileCourseSummary,
   ProfileLearningPortfolio,
   ProfilePreferencesSection,
   ProfileSettingsModal,
@@ -655,192 +656,93 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           }}
         />
 
-        {/* Tab Switcher: Portfolio vs Settings */}
-        <View
-          style={[
-            styles.profileSegmentedWrap,
-            { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
-          ]}
-        >
-          <TouchableOpacity
-            style={[
-              styles.profileSegmentedBtn,
-              profileSection === 'learning' && {
-                backgroundColor: colors.surfaceCard,
-                elevation: 2,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.15,
-                shadowRadius: 3,
-              },
-            ]}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            onPress={() => {
-              triggerHaptic('selection');
-              if (Platform.OS === 'ios') {
-                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-              }
-              setProfileSection('learning');
-            }}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: profileSection === 'learning' }}
-          >
-            <Ionicons
-              name={profileSection === 'learning' ? 'school' : 'school-outline'}
-              size={16}
-              color={profileSection === 'learning' ? colors.primary : colors.textMuted}
-            />
-            <Text
-              style={[
-                styles.profileSegmentedText,
-                { color: profileSection === 'learning' ? colors.text : colors.textMuted },
-              ]}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
-              {isBangla ? 'লার্নিং পোর্টফোলিও' : 'Learning Portfolio'}
-            </Text>
-          </TouchableOpacity>
+        {/* Enrolled Courses, Verified Certificates & Achievements Summary */}
+        <ProfileCourseSummary
+          isAuthenticated={isAuthenticated}
+          isDark={isDark}
+          colors={colors}
+          isBangla={isBangla}
+          enrolledCount={enrolledCount}
+          completedCount={completedCount}
+          streakDays={streakDays}
+          certificates={certificates}
+          badges={badges}
+          displayedCourses={displayedCourses}
+          portfolioTab={portfolioTab}
+          setPortfolioTab={setPortfolioTab}
+          userProgress={userProgress}
+          getCourseStatus={getCourseStatus}
+          hasReviewedCourse={hasReviewedCourse}
+          lpStats={lpStats}
+          onNavigateTab={onNavigateTab}
+          onNavigateToCourse={onNavigateToCourse}
+          onNavigateToLesson={onNavigateToLesson}
+          onOpenAuthModal={() => setAuthModalVisible(true)}
+          onSelectCertificate={(cert) => setSelectedCert(cert)}
+          onOpenMandatoryReview={(course) => {
+            setReviewTargetCourse(course);
+            setMandatoryReviewVisible(true);
+          }}
+        />
 
-          <TouchableOpacity
-            style={[
-              styles.profileSegmentedBtn,
-              profileSection === 'settings' && {
-                backgroundColor: colors.surfaceCard,
-                elevation: 2,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.15,
-                shadowRadius: 3,
-              },
-            ]}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            onPress={() => {
-              triggerHaptic('selection');
-              if (Platform.OS === 'ios') {
-                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-              }
-              setProfileSection('settings');
-            }}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: profileSection === 'settings' }}
-          >
-            <Ionicons
-              name={profileSection === 'settings' ? 'settings' : 'settings-outline'}
-              size={16}
-              color={profileSection === 'settings' ? colors.primary : colors.textMuted}
-            />
-            <Text
-              style={[
-                styles.profileSegmentedText,
-                { color: profileSection === 'settings' ? colors.text : colors.textMuted },
-              ]}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
-              {isBangla ? 'সেটিংস ও প্রেফারেন্স' : 'Preferences & Settings'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Tab 1: Learning Portfolio */}
-        {profileSection === 'learning' && (
-          <AnimatedTabContent tabKey="profile-learning">
-            <ProfileLearningPortfolio
-              isAuthenticated={isAuthenticated}
-              isDark={isDark}
-              colors={colors}
-              isBangla={isBangla}
-              enrolledCount={enrolledCount}
-              inProgressCourses={inProgressCourses}
-              completedCount={completedCount}
-              totalHoursLearned={totalHoursLearned}
-              completionRate={completionRate}
-              streakDays={streakDays}
-              portfolioTab={portfolioTab}
-              setPortfolioTab={setPortfolioTab}
-              certificates={certificates}
-              displayedCourses={displayedCourses}
-              userProgress={userProgress}
-              getCourseStatus={getCourseStatus}
-              hasReviewedCourse={hasReviewedCourse}
-              lpStats={lpStats}
-              onNavigateTab={onNavigateTab}
-              onNavigateToCourse={onNavigateToCourse}
-              onNavigateToLesson={onNavigateToLesson}
-              onOpenAuthModal={() => setAuthModalVisible(true)}
-              onSelectCertificate={(cert) => setSelectedCert(cert)}
-              onOpenMandatoryReview={(course) => {
-                setReviewTargetCourse(course);
-                setMandatoryReviewVisible(true);
-              }}
-              user={user}
-            />
-          </AnimatedTabContent>
-        )}
-
-        {/* Tab 2: Preferences & Settings */}
-        {profileSection === 'settings' && (
-          <AnimatedTabContent tabKey="profile-settings">
-            <ProfilePreferencesSection
-              isAdmin={isAdmin}
-              isBangla={isBangla}
-              isDark={isDark}
-              colors={colors}
-              subscriptionTier={subscriptionTier}
-              onOpenSubscription={onOpenSubscription}
-              onOpenOrders={() => setPaymentHistoryModalVisible(true)}
-              enrolledCount={enrolledCount}
-              completedCount={completedCount}
-              certificatesCount={certificates.length}
-              onNavigateTab={onNavigateTab}
-              badges={badges}
-              onOpenFlashcards={() => setFlashcardsModalVisible(true)}
-              onOpenOfflineDeck={() => setOfflineDeckModalVisible(true)}
-              onOpenLocalSearch={() => setLocalSearchModalVisible(true)}
-              language={language}
-              toggleLanguage={toggleLanguage}
-              toggleTheme={toggleTheme}
-              videoQuality={videoQuality}
-              cycleVideoQuality={cycleVideoQuality}
-              onOpenUpdateModal={() => setUpdateModalVisible(true)}
-              biometricEnabled={biometricEnabled}
-              setBiometricEnabled={setBiometricEnabled}
-              onChangePassword={() => setChangePasswordModalVisible(true)}
-              onOpenNotifications={onOpenNotifications}
-              onClearCache={handleClearCache}
-              serverEnvironment={serverEnv}
-              onSwitchServerEnvironment={handleSwitchServerEnvironment}
-              isDevModeUnlocked={devModeUnlocked}
-              onOpenCorporateModal={onOpenCorporateModal}
-              onOpenHelpFaq={() => setHelpFaqModalVisible(true)}
-              onOpenBlog={() => setBlogModalVisible(true)}
-              onOpenStorage={() => setStorageModalVisible(true)}
-              onOpenEbook={() => setEbookModalVisible(true)}
-              onOpenServices={() => setServicesModalVisible(true)}
-              onOpenInstructors={() => setInstructorsModalVisible(true)}
-              pendingSyncCount={pendingSyncCount}
-              onOpenAbout={(tab) => {
-                setAboutInitialTab(tab);
-                setAboutModalVisible(true);
-              }}
-              onOpenLegal={(tab) => {
-                setLegalInitialTab(tab);
-                setLegalModalVisible(true);
-              }}
-              isAuthenticated={isAuthenticated}
-              onDeleteAccount={() => {
-                setDeletePass('');
-                setDeleteError('');
-                setDeleteAccountModalVisible(true);
-              }}
-              onLogout={handleLogout}
-              onOpenAuthModal={() => setAuthModalVisible(true)}
-              showToast={showToast}
-              t={t}
-            />
-          </AnimatedTabContent>
-        )}
+        {/* Executive Membership, Preferences, Tools & Support Hub */}
+        <ProfilePreferencesSection
+          isAdmin={isAdmin}
+          isBangla={isBangla}
+          isDark={isDark}
+          colors={colors}
+          subscriptionTier={subscriptionTier}
+          onOpenSubscription={onOpenSubscription}
+          onOpenOrders={() => setPaymentHistoryModalVisible(true)}
+          enrolledCount={enrolledCount}
+          completedCount={completedCount}
+          certificatesCount={certificates.length}
+          onNavigateTab={onNavigateTab}
+          badges={badges}
+          onOpenFlashcards={() => setFlashcardsModalVisible(true)}
+          onOpenOfflineDeck={() => setOfflineDeckModalVisible(true)}
+          onOpenLocalSearch={() => setLocalSearchModalVisible(true)}
+          language={language}
+          toggleLanguage={toggleLanguage}
+          toggleTheme={toggleTheme}
+          videoQuality={videoQuality}
+          cycleVideoQuality={cycleVideoQuality}
+          onOpenUpdateModal={() => setUpdateModalVisible(true)}
+          biometricEnabled={biometricEnabled}
+          setBiometricEnabled={setBiometricEnabled}
+          onChangePassword={() => setChangePasswordModalVisible(true)}
+          onOpenNotifications={onOpenNotifications}
+          onClearCache={handleClearCache}
+          serverEnvironment={serverEnv}
+          onSwitchServerEnvironment={handleSwitchServerEnvironment}
+          isDevModeUnlocked={devModeUnlocked}
+          onOpenCorporateModal={onOpenCorporateModal}
+          onOpenHelpFaq={() => setHelpFaqModalVisible(true)}
+          onOpenBlog={() => setBlogModalVisible(true)}
+          onOpenStorage={() => setStorageModalVisible(true)}
+          onOpenEbook={() => setEbookModalVisible(true)}
+          onOpenServices={() => setServicesModalVisible(true)}
+          onOpenInstructors={() => setInstructorsModalVisible(true)}
+          pendingSyncCount={pendingSyncCount}
+          onOpenAbout={(tab) => {
+            setAboutInitialTab(tab);
+            setAboutModalVisible(true);
+          }}
+          onOpenLegal={(tab) => {
+            setLegalInitialTab(tab);
+            setLegalModalVisible(true);
+          }}
+          isAuthenticated={isAuthenticated}
+          onDeleteAccount={() => {
+            setDeletePass('');
+            setDeleteError('');
+            setDeleteAccountModalVisible(true);
+          }}
+          onLogout={handleLogout}
+          onOpenAuthModal={() => setAuthModalVisible(true)}
+          showToast={showToast}
+          t={t}
+        />
 
         {/* All Rights Reserved Enterprise Footer */}
         <View style={{ alignItems: 'center', marginTop: 24, marginBottom: 12, paddingHorizontal: 20 }}>

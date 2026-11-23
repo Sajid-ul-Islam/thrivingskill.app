@@ -17,6 +17,7 @@ import { AboutTabKey } from '../modals/AboutTSLModal';
 import { LegalTabKey } from '../modals/LegalPolicyModal';
 import { MessengerIcon } from '../common/MessengerIcon';
 import { useFeedback } from '../../context/FeedbackContext';
+import { ProfileSupportHub } from './ProfileSupportHub';
 
 export interface GamificationBadge {
   id: string;
@@ -304,86 +305,6 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
             </TouchableOpacity>
           </View>
         </View>
-      </View>
-
-      {/* Learning Stats Row */}
-      <View style={styles.statsRow}>
-        <TouchableOpacity
-          style={[
-            styles.statBox,
-            { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-          ]}
-          onPress={() => onNavigateTab('MyLearning')}
-          accessibilityRole="button"
-          accessibilityLabel={`Enrolled courses: ${enrolledCount}`}
-        >
-          <Text style={[styles.statVal, { color: colors.primary }]}>{enrolledCount}</Text>
-          <Text style={[styles.statLbl, { color: colors.textMuted }]} numberOfLines={1}>
-            {isBangla ? 'এনরোল্ড' : 'Enrolled'}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.statBox,
-            { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-          ]}
-          onPress={() => onNavigateTab('MyLearning')}
-          accessibilityRole="button"
-          accessibilityLabel={`Completed courses: ${completedCount}`}
-        >
-          <Text style={[styles.statVal, { color: colors.secondary }]}>{completedCount}</Text>
-          <Text style={[styles.statLbl, { color: colors.textMuted }]} numberOfLines={1}>
-            {isBangla ? 'সম্পন্ন' : 'Completed'}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.statBox,
-            { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-          ]}
-          onPress={() => onNavigateTab('MyLearning')}
-          accessibilityRole="button"
-          accessibilityLabel={`Earned certificates: ${certificatesCount}`}
-        >
-          <Text style={[styles.statVal, { color: colors.accent }]}>{certificatesCount}</Text>
-          <Text style={[styles.statLbl, { color: colors.textMuted }]} numberOfLines={1}>
-            {isBangla ? 'সার্টিফিকেট' : 'Certificates'}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Earned Badges & Achievements */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-          {isBangla ? 'অর্জিত স্কিল ব্যাজসমূহ' : 'ACHIEVEMENT BADGES'}
-        </Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.badgesScroll}>
-          {badges.map((b) => (
-            <View
-              key={b.id}
-              style={[
-                styles.badgeCard,
-                {
-                  backgroundColor: b.isUnlocked ? colors.surfaceCard : colors.surfaceSubtle,
-                  borderColor: b.isUnlocked ? b.color : colors.border,
-                  opacity: b.isUnlocked ? 1 : 0.55,
-                },
-              ]}
-            >
-              <View style={[styles.badgeIconBox, { backgroundColor: b.color + '20' }]}>
-                <Ionicons name={b.icon as any} size={22} color={b.isUnlocked ? b.color : colors.textMuted} />
-              </View>
-              <Text style={[styles.badgeTitle, { color: colors.text }]} numberOfLines={1}>
-                {isBangla ? b.banglaTitle : b.title}
-              </Text>
-              <Text style={[styles.badgeStatus, { color: b.isUnlocked ? b.color : colors.textMuted }]}>
-                {b.isUnlocked ? (isBangla ? '✓ আনলকড' : '✓ Unlocked') : (isBangla ? '🔒 লকড' : '🔒 Locked')}
-              </Text>
-            </View>
-          ))}
-        </ScrollView>
       </View>
 
       {/* Study & Recall Suite (Phase 2 R&D) */}
@@ -839,226 +760,18 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
         </TouchableOpacity>
       </View>
 
-      {/* Support & Insights (Miller's Law: 4 items) */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-          {isBangla ? 'সাপোর্ট ও রিসোর্স' : 'SUPPORT & RESOURCES'}
-        </Text>
-        <View
-          style={[
-            styles.cardGroup,
-            { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-          ]}
-        >
-          {/* WhatsApp Live Support */}
-          <TouchableOpacity
-            style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-            onPress={() => {
-              triggerHaptic('light');
-              Linking.openURL('https://wa.me/8801312100288').catch(() => {});
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Chat on WhatsApp 01312-100288"
-          >
-            <View style={styles.settingLeft}>
-              <Ionicons name="logo-whatsapp" size={20} color="#25D366" />
-              <View style={styles.settingTextCol}>
-                <Text style={[styles.settingLabel, { color: colors.text }]}>WhatsApp Live Support</Text>
-                <Text style={[styles.settingSubtext, { color: '#25D366', fontWeight: '700' }]}>
-                  01312-100288 • Instant Response
-                </Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-          </TouchableOpacity>
-
-          {/* Messenger */}
-          <TouchableOpacity
-            style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-            onPress={() => {
-              triggerHaptic('light');
-              Linking.openURL('https://m.me/thrivingskills').catch(() => {});
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Chat on Messenger"
-          >
-            <View style={styles.settingLeft}>
-              <MessengerIcon size={20} color="#0084FF" />
-              <View style={styles.settingTextCol}>
-                <Text style={[styles.settingLabel, { color: colors.text }]}>Messenger</Text>
-                <Text style={[styles.settingSubtext, { color: '#0084FF', fontWeight: '700' }]}>
-                  @thrivingskills • Community CRM
-                </Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-            onPress={() => {
-              triggerHaptic('light');
-              Linking.openURL('tel:01312100288').catch(() => {});
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Call Hotline Support 01312100288"
-          >
-            <View style={styles.settingLeft}>
-              <Ionicons name="call-outline" size={20} color={colors.primary} />
-              <Text style={[styles.settingLabel, { color: colors.text }]}>Hotline Support</Text>
-            </View>
-            <Text style={[styles.versionText, { color: colors.primary, fontWeight: '700' }]}>01312100288</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-            onPress={() => {
-              triggerHaptic('light');
-              Linking.openURL('mailto:info@thrivingskill.com').catch(() => {});
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Email Support info@thrivingskill.com"
-          >
-            <View style={styles.settingLeft}>
-              <Ionicons name="mail-outline" size={20} color={colors.text} />
-              <Text style={[styles.settingLabel, { color: colors.text }]}>Email Support</Text>
-            </View>
-            <Text style={[styles.versionText, { color: colors.textMuted }]}>info@thrivingskill.com</Text>
-          </TouchableOpacity>
-
-          {/* Help & FAQ Center */}
-          <TouchableOpacity
-            style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-            onPress={() => {
-              triggerHaptic('light');
-              onOpenHelpFaq();
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={isBangla ? 'সাহায্য ও প্রশ্নোত্তর (FAQ) খুলুন' : 'Open Help and FAQ Center'}
-          >
-            <View style={styles.settingLeft}>
-              <Ionicons name="help-circle-outline" size={20} color="#0D9488" />
-              <View style={styles.settingTextCol}>
-                <Text style={[styles.settingLabel, { color: colors.text }]}>
-                  {isBangla ? 'সাহায্য ও প্রশ্নোত্তর (FAQ)' : 'Help & FAQ Center'}
-                </Text>
-                <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
-                  {isBangla ? 'সার্টিফিকেট ও কোর্স নির্দেশিকা' : 'Certificates, sync & course guidance'}
-                </Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-          </TouchableOpacity>
-
-          {/* Thriving Skills Blog & Articles */}
-          <TouchableOpacity
-            style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-            onPress={() => {
-              triggerHaptic('light');
-              onOpenBlog();
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={isBangla ? 'টিএসএল ব্লগ ও আর্টিকেল খুলুন' : 'Open TSL Blog and Industry Articles'}
-          >
-            <View style={styles.settingLeft}>
-              <Ionicons name="newspaper-outline" size={20} color="#8B5CF6" />
-              <View style={styles.settingTextCol}>
-                <Text style={[styles.settingLabel, { color: colors.text }]}>
-                  {isBangla ? 'টিএসএল ব্লগ ও আর্টিকেল' : 'TSL Blog & Industry Articles'}
-                </Text>
-                <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
-                  {isBangla ? 'AI, কর্পোরেট লিডারশিপ ও এক্সিকিউটিভ ইনসাইট' : 'AI, leadership & corporate insights'}
-                </Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-          </TouchableOpacity>
-
-          {/* eBook Library */}
-          {onOpenEbook && (
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => {
-                triggerHaptic('light');
-                onOpenEbook();
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="eBook Library"
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="book-outline" size={20} color="#FFB606" />
-                <View style={styles.settingTextCol}>
-                  <Text style={[styles.settingLabel, { color: colors.text }]}>
-                    {isBangla ? 'ই-বুক লাইব্রেরি (eBook)' : 'eBook Library'}
-                  </Text>
-                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
-                    {isBangla ? 'ফ্রি প্রফেশনাল গাইড ও ব্লুপ্রিন্ট' : 'Free career handbooks & blueprints'}
-                  </Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-            </TouchableOpacity>
-          )}
-
-          {/* Our Course Authors */}
-          {onOpenInstructors && (
-            <TouchableOpacity
-              style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => {
-                triggerHaptic('light');
-                onOpenInstructors();
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Our Course Authors"
-            >
-              <View style={styles.settingLeft}>
-                <Ionicons name="people-outline" size={20} color="#10B981" />
-                <View style={styles.settingTextCol}>
-                  <Text style={[styles.settingLabel, { color: colors.text }]}>
-                    {isBangla ? 'কোর্স ইন্সট্রাক্টরগণ (Faculty)' : 'Our Course Authors'}
-                  </Text>
-                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
-                    {isBangla ? 'সার্টিফাইড ইন্ডাস্ট্রি লিডার' : 'Certified industry experts & faculty'}
-                  </Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-            </TouchableOpacity>
-          )}
-
-          {/* Storage & Offline Sync (Phase 1) */}
-          <TouchableOpacity
-            style={[styles.settingRow, { borderBottomWidth: 0 }]}
-            onPress={() => {
-              triggerHaptic('light');
-              onOpenStorage();
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={isBangla ? 'লোকাল স্টোরেজ ও অফলাইন সিঙ্ক' : 'Local Storage and Offline Sync'}
-          >
-            <View style={styles.settingLeft}>
-              <Ionicons name="server-outline" size={20} color={colors.primary} />
-              <View style={styles.settingTextCol}>
-                <Text style={[styles.settingLabel, { color: colors.text }]}>
-                  {isBangla ? 'স্টোরেজ ও অফলাইন সিঙ্ক' : 'Storage & Offline Sync'}
-                </Text>
-                <Text style={[styles.settingSubtext, { color: pendingSyncCount > 0 ? colors.brandGold : colors.textMuted }]}>
-                  {pendingSyncCount > 0
-                    ? (isBangla ? `${pendingSyncCount}টি অ্যাকশন অফলাইনে অপেক্ষারত` : `${pendingSyncCount} offline actions pending sync`)
-                    : (isBangla ? 'ক্যাশ ম্যানেজমেন্ট ও ডাটা সেভার' : 'Cache, downloads & data saver')}
-                </Text>
-              </View>
-            </View>
-            {pendingSyncCount > 0 ? (
-              <View style={{ backgroundColor: colors.brandGold, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 }}>
-                <Text style={{ color: '#000', fontSize: 11, fontWeight: '800' }}>{pendingSyncCount}</Text>
-              </View>
-            ) : (
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
-            )}
-          </TouchableOpacity>
-        </View>
-      </View>
+      {/* Modern Consolidated Support & Resources Hub */}
+      <ProfileSupportHub
+        colors={colors}
+        isDark={isDark}
+        isBangla={isBangla}
+        onOpenHelpFaq={onOpenHelpFaq}
+        onOpenBlog={onOpenBlog}
+        onOpenEbook={onOpenEbook}
+        onOpenInstructors={onOpenInstructors}
+        onOpenStorage={onOpenStorage}
+        pendingSyncCount={pendingSyncCount}
+      />
 
       {/* About Thriving Skills (Miller's Law: 3 items) */}
       <View style={styles.section}>

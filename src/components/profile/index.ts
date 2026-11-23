@@ -1,5 +1,7 @@
 export * from './ProfileHeaderCard';
 export * from './ProfileCompletionDonut';
+export * from './ProfileCourseSummary';
+export * from './ProfileSupportHub';
 export * from './ProfileLearningPortfolio';
 export * from './ProfilePreferencesSection';
 export * from './ProfileSettingsModal';
