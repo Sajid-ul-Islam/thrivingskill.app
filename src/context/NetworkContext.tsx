@@ -50,6 +50,19 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
       abortControllerRef.current = null;
     }
 
+    // On web browser, cross-origin ping to WordPress without Access-Control-Allow-Origin triggers CORS failure.
+    // Use native window.navigator.onLine to reliably determine internet reachability without false offline banners.
+    if (Platform.OS === 'web') {
+      const isOnline = typeof window !== 'undefined' && typeof window.navigator !== 'undefined'
+        ? window.navigator.onLine
+        : true;
+      if (isMountedRef.current) {
+        setIsOffline(!isOnline);
+        if (isOnline) setLastErrorMessage(null);
+      }
+      return isOnline;
+    }
+
     const controller = new AbortController();
     abortControllerRef.current = controller;
     reachabilityTimerRef.current = setTimeout(() => {
@@ -62,11 +75,8 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
       // 1. Primary check: Root WP-JSON index (standard, fast discovery endpoint ~300ms vs 5200ms on /wp/v2/types)
       const headers: Record<string, string> = {
         Accept: 'application/json',
+        'Cache-Control': 'no-cache',
       };
-      // On web browser omit Cache-Control header to avoid triggering strict CORS preflight rejections
-      if (Platform.OS !== 'web') {
-        headers['Cache-Control'] = 'no-cache';
-      }
 
       const response = await fetch(Env.API_URL, {
         method: 'GET',

@@ -26,7 +26,7 @@ async function runAuthTests() {
   // ----------------------------------------------------------------
   console.log('Test 1: Verifying Live WordPress/LearnPress API Reachability...');
   try {
-    const res = await fetch(`${BASE_URL}/learnpress/v1/courses?per_page=1`);
+    const res = await fetch(`${BASE_URL}/learnpress/v1/courses?per_page=1`, { signal: AbortSignal.timeout(15000) });
     assert(res.status === 200, `LearnPress API returned HTTP 200 (Status: ${res.status})`);
     const courses = await res.json();
     assert(Array.isArray(courses) && courses.length > 0, `Courses list returned ${courses.length} courses from live LMS`);
@@ -45,7 +45,8 @@ async function runAuthTests() {
       body: JSON.stringify({
         username: 'non_existent_learner_probe_9999',
         password: 'TestPassword123!'
-      })
+      }),
+      signal: AbortSignal.timeout(15000)
     });
     const data = await res.json();
     assert(res.status === 403, `API returned HTTP 403 Forbidden for invalid credentials (Status: ${res.status})`);
@@ -68,7 +69,8 @@ async function runAuthTests() {
         email: `probe_${Date.now().toString().slice(-4)}@example.com`,
         password: 'Password123!@#',
         confirm_password: 'Password123!@#'
-      })
+      }),
+      signal: AbortSignal.timeout(15000)
     });
     const data = await res.json();
     console.log(`    Server Response [${res.status}]:`, JSON.stringify(data));
@@ -94,7 +96,8 @@ async function runAuthTests() {
       const res = await fetch(`${BASE_URL}/tsl/v1/auth/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone })
+        body: JSON.stringify({ phone }),
+        signal: AbortSignal.timeout(3000)
       });
       if (res.ok) return await res.json();
       throw new Error(`Endpoint returned ${res.status}`);
@@ -125,7 +128,8 @@ async function runAuthTests() {
       const res = await fetch(`${BASE_URL}/tsl/v1/auth/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: cleanP, otp: cleanO, display_name: fullName })
+        body: JSON.stringify({ phone: cleanP, otp: cleanO, display_name: fullName }),
+        signal: AbortSignal.timeout(3000)
       });
       if (res.ok) return await res.json();
       throw new Error(`Endpoint returned ${res.status}`);
@@ -174,7 +178,8 @@ async function runAuthTests() {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer fake_invalid_token_12345'
-      }
+      },
+      signal: AbortSignal.timeout(15000)
     });
     const valData = await res.json();
     assert(
