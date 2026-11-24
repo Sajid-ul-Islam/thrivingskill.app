@@ -6,3 +6,4 @@ export * from './analytics';
 export * from './profile';
 export * from './course-detail';
 export * from './home';
+export * from './splash/BrandSplashScreen';

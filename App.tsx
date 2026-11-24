@@ -63,6 +63,7 @@ import {
   FloatingCrmWidget,
   AppErrorBoundary,
   IosActionNotificationPanel,
+  BrandSplashScreen,
 } from './src/components';
 import { AppUpdateService } from './src/services/appUpdateService';
 import { TelemetryService } from './src/services/telemetry/telemetryService';
@@ -70,8 +71,6 @@ import { PushNotificationService } from './src/services/notifications/pushNotifi
 import { HabitNotificationQueue } from './src/services/notifications/habitNotificationQueue';
 import { StorageSanitizer } from './src/services/storage/storageSanitizer';
 import { Env } from './src/config/env';
-
-const SPLASH_HERO_SOURCE = require('./assets/splash-hero.jpg');
 
 // Ensure browser omits external Referer on Web to prevent CDN hotlink blocks (Cloudflare 403)
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
@@ -137,94 +136,6 @@ const AnimatedTabIcon: React.FC<{
   );
 };
 
-/**
- * CR-01: BrandSplashScreen - Dynamic startup splash screen showcasing
- * the official widescreen hero banner, ambient brand backdrop, official wordmark,
- * national motto, and interactive LMS workspace loader.
- */
-const BrandSplashScreen: React.FC = () => {
-  const insets = useSafeAreaInsets();
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.92)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 550,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 7,
-        tension: 40,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [fadeAnim, scaleAnim]);
-
-  return (
-    <View style={splashStyles.container}>
-      <StatusBar style="light" />
-
-      {/* Ambient glowing background with photo backdrop */}
-      <Image
-        source={SPLASH_HERO_SOURCE}
-        style={splashStyles.ambientBackground}
-        resizeMode="cover"
-        blurRadius={Platform.OS === 'ios' ? 18 : 12}
-      />
-      <LinearGradient
-        colors={['rgba(16, 47, 83, 0.72)', 'rgba(16, 47, 83, 0.94)', '#0A1C33']}
-        style={StyleSheet.absoluteFill}
-      />
-
-      <Animated.View
-        style={[
-          splashStyles.content,
-          {
-            opacity: fadeAnim,
-            transform: [{ scale: scaleAnim }],
-          },
-        ]}
-      >
-        {/* Top Brand Logo & Wordmark */}
-        <View style={splashStyles.headerBrand}>
-          <View style={splashStyles.logoWrap}>
-            <Image
-              source={require('./assets/icon.png')}
-              style={splashStyles.logoImage}
-              resizeMode="contain"
-            />
-          </View>
-          <Text style={splashStyles.wordmark}>
-            Thriving <Text style={{ color: '#FFB606' }}>Skills</Text>
-          </Text>
-        </View>
-
-        {/* Feature Pill */}
-        <View style={splashStyles.badgePill}>
-          <Ionicons name="sparkles" size={13} color="#FFB606" style={{ marginRight: 6 }} />
-          <Text style={splashStyles.badgePillText}>জাতির দক্ষতা বিনির্মাণে • Building a Skilled Nation</Text>
-        </View>
-
-        {/* National Motto / Pillars */}
-        <Text style={splashStyles.tagline}>
-          Expert-Led Courses • Practical Skills • Career Growth • Learn Anytime
-        </Text>
-      </Animated.View>
-
-      {/* Footer loading indicator */}
-      <View style={[splashStyles.footer, { bottom: Math.max(insets.bottom + 12, 28) }]}>
-        <ActivityIndicator size="small" color="#FFB606" />
-        <Text style={splashStyles.footerText}>Loading LMS Workspace...</Text>
-        <Text style={splashStyles.versionText}>v1.4.0 • Thriving Skills Ltd.</Text>
-      </View>
-    </View>
-  );
-};
-
 const MainAppContent: React.FC = () => {
   const { colors, isDark } = useTheme();
   const { t } = useLanguage();
@@ -262,7 +173,7 @@ const MainAppContent: React.FC = () => {
     );
   }, [user]);
 
-  // CR-1: Splash screen timer (2 seconds) with logo, wordmark, tagline
+  // CR-1: Brand splash screen timer (4.5 seconds auto-advance or on user action)
   const [isSplashVisible, setIsSplashVisible] = useState(true);
   const splashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -272,7 +183,7 @@ const MainAppContent: React.FC = () => {
 
     splashTimerRef.current = setTimeout(() => {
       setIsSplashVisible(false);
-    }, 2000);
+    }, 4500);
 
     return () => {
       if (splashTimerRef.current) {
@@ -454,9 +365,28 @@ const MainAppContent: React.FC = () => {
     { id: 'Profile', label: t('tabProfile'), icon: 'person', iconOutline: 'person-outline' },
   ];
 
-  // CR-1: Brand splash screen on startup (holds until both 2s splash timer and auth session restore complete)
+  // CR-1: Brand splash screen on startup (holds until user taps Get Started / Sign In or 4.5s timeout)
   if (isSplashVisible || isAuthLoading) {
-    return <BrandSplashScreen />;
+    return (
+      <BrandSplashScreen
+        isLoading={isAuthLoading}
+        onGetStarted={() => {
+          if (splashTimerRef.current) {
+            clearTimeout(splashTimerRef.current);
+            splashTimerRef.current = null;
+          }
+          setIsSplashVisible(false);
+        }}
+        onSignIn={() => {
+          if (splashTimerRef.current) {
+            clearTimeout(splashTimerRef.current);
+            splashTimerRef.current = null;
+          }
+          setIsSplashVisible(false);
+          setAuthModalVisible(true);
+        }}
+      />
+    );
   }
 
   return (
@@ -954,105 +884,3 @@ const styles = StyleSheet.create({
   },
 });
 
-const splashStyles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#102F53',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    overflow: 'hidden',
-  },
-  ambientBackground: {
-    ...StyleSheet.absoluteFill,
-    width: '100%',
-    height: '100%',
-    opacity: 0.22,
-  },
-  content: {
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 2,
-    paddingHorizontal: 16,
-    marginTop: -20,
-  },
-  headerBrand: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  logoWrap: {
-    width: 80,
-    height: 80,
-    borderRadius: 24,
-    backgroundColor: '#FFFFFF',
-    padding: 12,
-    marginBottom: 14,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 182, 6, 0.65)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 10,
-    elevation: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoImage: {
-    width: '100%',
-    height: '100%',
-  },
-  wordmark: {
-    fontSize: 32,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: -0.5,
-    textAlign: 'center',
-  },
-  badgePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 182, 6, 0.14)',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 22,
-    borderWidth: 1.2,
-    borderColor: 'rgba(255, 182, 6, 0.45)',
-    marginBottom: 16,
-  },
-  badgePillText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#FFB606',
-    letterSpacing: 0.2,
-    textAlign: 'center',
-  },
-  tagline: {
-    fontSize: 12.5,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.85)',
-    letterSpacing: 0.2,
-    textAlign: 'center',
-    maxWidth: 320,
-    lineHeight: 19,
-  },
-  footer: {
-    position: 'absolute',
-    bottom: 32,
-    alignItems: 'center',
-    gap: 6,
-    zIndex: 2,
-  },
-  footerText: {
-    fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontWeight: '600',
-    letterSpacing: 0.3,
-  },
-  versionText: {
-    fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.4)',
-    fontWeight: '500',
-    letterSpacing: 0.2,
-  },
-});
