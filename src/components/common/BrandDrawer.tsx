@@ -183,7 +183,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               />
               <View style={styles.brandTitleCol}>
                 <Text style={[styles.brandTitle, { color: colors.text }]} numberOfLines={1}>
-                  Thriving<Text style={{ color: colors.primary }}>Skills</Text>
+                  Thriving<Text style={{ color: '#E34234' }}>Skills</Text>
                 </Text>
                 <Text style={[styles.brandSlogan, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
                   {isBangla
@@ -727,7 +727,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
           {/* Footer */}
           <View style={[styles.drawerFooter, { borderTopColor: colors.border }]}>
             <Text style={[styles.footerText, { color: colors.textMuted }]}>
-              Thriving Skills Limited • Dhaka, BD
+              Thriving <Text style={{ color: '#E34234' }}>Skills</Text> Limited • Dhaka, BD
             </Text>
             <Text style={[styles.footerSub, { color: colors.textMuted }]}>
               © 2026 All Rights Reserved • SDG-4

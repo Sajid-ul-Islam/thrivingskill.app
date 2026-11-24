@@ -608,7 +608,9 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                   ) : null}
                   <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(16, 47, 83, 0.4)' }]} />
                   <Ionicons name="school" size={36} color="#E34234" />
-                  <Text style={styles.coverCardTitle}>THRIVING SKILLS</Text>
+                  <Text style={styles.coverCardTitle}>
+                    THRIVING <Text style={{ color: '#E34234' }}>SKILLS</Text>
+                  </Text>
                   <Text style={styles.coverCardSub}>Executive Learning & Career Advancement</Text>
                 </View>
                 <Text style={[styles.avatarSubBig, { color: colors.textMuted, marginTop: 14 }]}>

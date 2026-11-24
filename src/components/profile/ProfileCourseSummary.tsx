@@ -225,7 +225,9 @@ export const ProfileCourseSummary: React.FC<ProfileCourseSummaryProps> = ({
                     <View style={styles.certRibbonCircle}>
                       <Ionicons name="ribbon" size={13} color="#E34234" />
                     </View>
-                    <Text style={[styles.certBrandText, { color: colors.text }]}>Thriving Skills</Text>
+                    <Text style={[styles.certBrandText, { color: colors.text }]}>
+                      Thriving <Text style={{ color: '#E34234' }}>Skills</Text>
+                    </Text>
                   </View>
                   <View style={styles.certScoreBadge}>
                     <Text style={styles.certScoreText}>96% Score</Text>

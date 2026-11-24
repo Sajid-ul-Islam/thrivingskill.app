@@ -763,7 +763,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         {/* All Rights Reserved Enterprise Footer */}
         <View style={{ alignItems: 'center', marginTop: 24, marginBottom: 12, paddingHorizontal: 20 }}>
           <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textMuted, textAlign: 'center' }}>
-            © 2026 Thriving Skills Limited (TSL). All Rights Reserved.
+            © 2026 Thriving <Text style={{ color: '#E34234' }}>Skills</Text> Limited (TSL). All Rights Reserved.
           </Text>
           <Text style={{ fontSize: 10, color: colors.textMuted, textAlign: 'center', marginTop: 3 }}>
             Gulshan-2, Dhaka • RJSC Registered • SDG-4 Quality Education
@@ -776,7 +776,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             accessibilityLabel="App Version"
           >
             <Text style={{ fontSize: 10, color: colors.textMuted, textAlign: 'center', opacity: 0.7 }}>
-              v1.4.0 • Thriving Skills App {devModeUnlocked ? '• [DEV MODE]' : ''}
+              v1.4.0 • Thriving <Text style={{ color: '#E34234' }}>Skills</Text> App {devModeUnlocked ? '• [DEV MODE]' : ''}
             </Text>
           </TouchableOpacity>
         </View>

@@ -108,7 +108,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
             />
             <View style={{ flex: 1, marginLeft: 10 }}>
               <Text style={[styles.companyTitle, { color: colors.text }]}>
-                Thriving<Text style={{ color: colors.primary }}>Skills</Text> Limited
+                Thriving<Text style={{ color: '#E34234' }}>Skills</Text> Limited
               </Text>
               <Text style={[styles.companySubtitle, { color: colors.textMuted }]}>
                 {isBangla
@@ -621,6 +621,19 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                   linkedin: undefined,
                 },
                 {
+                  name: 'Sayed Sirajul Islam',
+                  title: isBangla ? 'সিনিয়র অ্যাডমিন ও অ্যাকাউন্টস অফিসার' : 'Senior Admin & Accounts Officer',
+                  badge: isBangla ? 'অ্যাডমিন ও অ্যাকাউন্টস' : 'Admin & Accounts',
+                  isFounder: false,
+                  desc: isBangla
+                    ? 'থ্রাইভিং স্কিলস লিমিটেডের প্রশাসনিক কার্যক্রম, করপোরেট কমপ্লায়েন্স, লজিস্টিকস ও অ্যাকাউন্টস অপারেশনস ব্যবস্থাপনা।'
+                    : 'Heading administrative operations, corporate compliance, office administration, logistics, and accounts management at Thriving Skills Limited.',
+                  localAvatar: undefined,
+                  webAvatar: 'https://thrivingskill.com/wp-content/themes/eduma/images/demo_images/demo_image.jpg',
+                  profileUrl: 'https://thrivingskill.com/our_team/sayed-sirajul-islam/',
+                  linkedin: 'https://www.linkedin.com/in/islam-syed/',
+                },
+                {
                   name: 'Md. Tareq Siddiqui',
                   title: isBangla ? 'সিনিয়র এক্সিকিউটিভ, প্রোডাকশন' : 'Senior Executive, Production & Content Strategy',
                   badge: 'Production & Media',
@@ -653,7 +666,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                     styles.leaderCard,
                     {
                       backgroundColor: colors.surfaceCard,
-                      borderColor: leader.isFounder ? (isDark ? '#F59E0B66' : '#FDE68A') : colors.border,
+                      borderColor: leader.isFounder ? (isDark ? 'rgba(227, 66, 52, 0.4)' : 'rgba(227, 66, 52, 0.25)') : colors.border,
                       borderWidth: leader.isFounder ? 1.5 : 1,
                     },
                   ]}
@@ -666,8 +679,8 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                       {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
                     />
                     {leader.isFounder ? (
-                      <View style={styles.founderStarBadge}>
-                        <Ionicons name="star" size={10} color="#102F53" />
+                      <View style={[styles.founderStarBadge, { backgroundColor: '#E34234' }]}>
+                        <Ionicons name="star" size={10} color="#FFFFFF" />
                       </View>
                     ) : (
                       <View style={styles.verifiedCheckDot}>
@@ -685,7 +698,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                             styles.leaderBadgePill,
                             {
                               backgroundColor: leader.isFounder
-                                ? (isDark ? '#78350F' : '#FEF3C7')
+                                ? (isDark ? 'rgba(227, 66, 52, 0.2)' : 'rgba(227, 66, 52, 0.12)')
                                 : (isDark ? '#064E3B' : '#E0F2FE'),
                             },
                           ]}
@@ -694,7 +707,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                             style={[
                               styles.leaderBadgePillText,
                               {
-                                color: leader.isFounder ? (isDark ? '#FCD34D' : '#92400E') : (isDark ? '#6EE7B7' : '#0369A1'),
+                                color: leader.isFounder ? '#E34234' : (isDark ? '#6EE7B7' : '#0369A1'),
                               },
                             ]}
                           >
@@ -927,7 +940,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
               <View style={styles.copyrightBlock}>
                 <Ionicons name="ribbon" size={16} color="#F59E0B" />
                 <Text style={[styles.copyrightNoticeText, { color: colors.textMuted }]}>
-                  © 2026 Thriving Skills Limited. All Rights Reserved.{'\n'}
+                  © 2026 Thriving <Text style={{ color: '#E34234' }}>Skills</Text> Limited. All Rights Reserved.{'\n'}
                   Registered under Companies Act of Bangladesh • Gulshan-2, Dhaka
                 </Text>
               </View>

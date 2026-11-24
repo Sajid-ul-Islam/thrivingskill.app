@@ -112,7 +112,7 @@ export const CourseCertificatePreviewModal: React.FC<CourseCertificatePreviewMod
                     resizeMode="contain"
                   />
                   <Text style={[styles.certOrgName, { color: colors.text }]}>
-                    THRIVING SKILLS LIMITED
+                    THRIVING <Text style={{ color: '#E34234' }}>SKILLS</Text> LIMITED
                   </Text>
                   <Text style={[styles.certOrgLoc, { color: colors.textMuted }]}>
                     DHAKA, BANGLADESH • SDG-4 QUALITY EDUCATION

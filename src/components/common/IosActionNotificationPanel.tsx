@@ -192,7 +192,7 @@ export const IosActionNotificationPanel: React.FC<IosActionNotificationPanelProp
               <Ionicons name="sparkles" size={10} color="#FFB606" />
             </View>
             <Text style={[styles.appName, { color: isDark ? '#94A3B8' : '#64748B' }]}>
-              THRIVING SKILLS
+              THRIVING <Text style={{ color: '#E34234' }}>SKILLS</Text>
             </Text>
             <Text style={[styles.headerBullet, { color: isDark ? '#64748B' : '#94A3B8' }]}>•</Text>
             <Text style={[styles.timeNow, { color: isDark ? '#94A3B8' : '#64748B' }]}>now</Text>

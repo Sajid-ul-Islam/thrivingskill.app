@@ -661,6 +661,26 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     banglaExpertise: ['ফিন্যান্সিয়াল একাউন্টিং', 'ট্যাক্স ও অডিট', 'প্রাতিষ্ঠানিক অংশীদারিত্ব'],
   },
   {
+    id: 'team-sirajul',
+    name: 'Sayed Sirajul Islam',
+    banglaName: 'সৈয়দ সিরাজুল ইসলাম',
+    designation: 'Senior Admin & Accounts Officer',
+    banglaDesignation: 'সিনিয়র অ্যাডমিন ও অ্যাকাউন্টস অফিসার',
+    organization: 'Thriving Skills Limited',
+    avatarUrl: 'https://thrivingskill.com/wp-content/themes/eduma/images/demo_images/demo_image.jpg',
+    bio: 'Heading administrative operations, corporate compliance, office administration, logistics, and accounts management at Thriving Skills Limited.',
+    banglaBio: 'থ্রাইভিং স্কিলস লিমিটেডের প্রশাসনিক কার্যক্রম, করপোরেট কমপ্লায়েন্স, লজিস্টিকস ও অ্যাকাউন্টস অপারেশনস ব্যবস্থাপনা।',
+    coursesCount: 2,
+    studentsCount: 6400,
+    profileUrl: `${Env.SITE_URL}/our_team/sayed-sirajul-islam/`,
+    isFounder: false,
+    category: 'leadership',
+    badge: 'Admin & Accounts',
+    banglaBadge: 'অ্যাডমিন ও অ্যাকাউন্টস',
+    expertise: ['Administrative Operations', 'Corporate Logistics', 'Compliance Management', 'Office Administration'],
+    banglaExpertise: ['প্রশাসনিক কার্যক্রম', 'করপোরেট লজিস্টিকস', 'কমপ্লায়েন্স ম্যানেজমেন্ট', 'অফিস প্রশাসন'],
+  },
+  {
     id: 'team-tareq',
     name: 'Md. Tareq Siddiqui',
     banglaName: 'মোঃ তারেক সিদ্দিকী',
@@ -699,6 +719,146 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     banglaBadge: 'প্ল্যাটফর্ম ইঞ্জিনিয়ারিং',
     expertise: ['Web Architecture', 'LMS Security', 'Cloud Infrastructure'],
     banglaExpertise: ['ওয়েব আর্কিটেকচার', 'এলএমএস সিকিউরিটি', 'ক্লাউড ইনফ্রাস্ট্রাকচার'],
+  },
+  {
+    id: 'faculty-saikat',
+    name: 'Saikat Barua',
+    banglaName: 'সৈকত বড়ুয়া',
+    designation: 'Head of HR & Corporate Human Resource Professional',
+    banglaDesignation: 'হেড অব এইচআর ও করপোরেট মানবসম্পদ বিশেষজ্ঞ',
+    organization: 'Head of HR & Admin, Padma Group',
+    avatarUrl: 'https://secure.gravatar.com/avatar/86a5b489636e293e9d9597410b352cf893cc837531ba5ee633cd65c9dd1dd3b0?s=200&d=mm&r=g',
+    bio: 'Seasoned HR leader with 16+ years of experience in talent development, organizational culture, performance appraisal, and strategic HR management.',
+    banglaBio: 'পদ্মা গ্রুপের হেড অব এইচআর অ্যান্ড অ্যাডমিন। ১৬+ বছরের মানবসম্পদ ব্যবস্থাপনা, ট্যালেন্ট ম্যানেজমেন্ট ও কর্পোরেট ট্রেনিংয়ের অভিজ্ঞতাসম্পন্ন।',
+    coursesCount: 4,
+    studentsCount: 12800,
+    profileUrl: `${Env.SITE_URL}/instructors/`,
+    isFounder: false,
+    category: 'faculty',
+    badge: 'HR Practitioner',
+    banglaBadge: 'এইচআর প্র্যাকটিশনার',
+    expertise: ['Strategic HRM', 'Performance Appraisal', 'Talent Acquisition', 'Labor Law & Compliance'],
+    banglaExpertise: ['স্ট্র্যাটেজিক এইচআরএম', 'পারফরম্যান্স মূল্যায়ন', 'ট্যালেন্ট অ্যাকুইজিশন', 'শ্রম আইন ও কমপ্লায়েন্স'],
+  },
+  {
+    id: 'faculty-nazrul',
+    name: 'Dr. Nazrul Islam',
+    banglaName: 'ড. নজরুল ইসলাম',
+    designation: 'Professor of Management & Dean, School of Business',
+    banglaDesignation: 'অধ্যাপক ও ডিন, স্কুল অব বিজনেস',
+    organization: 'Leading Business Faculty & Academic Researcher',
+    avatarUrl: 'https://secure.gravatar.com/avatar/d3c7abba8088eebb4ca22342944c4c0eb33bb369f48e15770a20088a3e9299ac?s=200&d=mm&r=g',
+    bio: 'Eminent professor of Management, HRM and International Business. Extensive publications in international academic journals and executive consulting.',
+    banglaBio: 'ব্যবস্থাপনা, এইচআরএম ও আন্তর্জাতিক বাণিজ্যের বিশিষ্ট অধ্যাপক ও গবেষক। স্কুল অব বিজনেসের ডিন হিসেবে দায়িত্ব পালনরত।',
+    coursesCount: 3,
+    studentsCount: 11400,
+    profileUrl: `${Env.SITE_URL}/instructors/`,
+    isFounder: false,
+    category: 'faculty',
+    badge: 'Business Faculty Dean',
+    banglaBadge: 'বিজনেস ডিন ও গবেষক',
+    expertise: ['International Business', 'Strategic Management', 'Organizational Behavior', 'Academic Research'],
+    banglaExpertise: ['আন্তর্জাতিক বাণিজ্য', 'কৌশলগত ব্যবস্থাপনা', 'সাংগঠনিক আচরণ', 'একাডেমিক গবেষণা'],
+  },
+  {
+    id: 'faculty-fahim',
+    name: 'Fahim Adnan Khan',
+    banglaName: 'ফাহিম আদনান খান',
+    designation: 'Corporate Affairs & International Business Specialist',
+    banglaDesignation: 'করপোরেট অ্যাফেয়ার্স ও বিজনেস ডেভেলপমেন্ট বিশেষজ্ঞ',
+    organization: 'Senior Corporate Affairs Consultant (19+ Years Experience)',
+    avatarUrl: 'https://secure.gravatar.com/avatar/8d70454233aee21271f7892a631e26cec1fc23366c0ab9d9f74eed83c29d4d7e?s=200&d=mm&r=g',
+    bio: 'Over 19+ years of senior executive experience across corporate affairs, regulatory compliance, strategic communications, and international trade.',
+    banglaBio: '১৯+ বছরের সিনিয়র এক্সিকিউটিভ অভিজ্ঞতা। করপোরেট অ্যাফেয়ার্স, রেগুলেটরি কমপ্লায়েন্স, স্ট্র্যাটেজিক কমিউনিকেশন ও বিজনেস ডেভেলপমেন্টে পারদর্শী।',
+    coursesCount: 3,
+    studentsCount: 9800,
+    profileUrl: `${Env.SITE_URL}/instructors/`,
+    isFounder: false,
+    category: 'faculty',
+    badge: 'Corporate Strategist',
+    banglaBadge: 'করপোরেট স্ট্র্যাটেজিস্ট',
+    expertise: ['Corporate Affairs', 'Regulatory Compliance', 'Strategic Alliances', 'Business Negotiations'],
+    banglaExpertise: ['করপোরেট অ্যাফেয়ার্স', 'রেগুলেটরি কমপ্লায়েন্স', 'কৌশলগত অংশীদারিত্ব', 'বিজনেস নেগোসিয়েশন'],
+  },
+  {
+    id: 'faculty-jahid',
+    name: 'Jahid Hussain',
+    banglaName: 'জাহিদ হোসেন',
+    designation: 'International Business & Pharmaceutical Operations Director',
+    banglaDesignation: 'আন্তর্জাতিক বাণিজ্য ও ফার্মাসিউটিক্যালস পরিচালক',
+    organization: 'Global Export Specialist & Healthcare Consultant',
+    avatarUrl: 'https://secure.gravatar.com/avatar/4d2eea19903908075937510088b9b4ac06158dc018d0670543898ff476909c26?s=200&d=mm&r=g',
+    bio: 'Senior international business development director specializing in global pharmaceutical supply chain, emerging markets export, and regulatory approvals.',
+    banglaBio: 'আন্তর্জাতিক বাণিজ্য উন্নয়ন বিশেষজ্ঞ। গ্লোবাল ফার্মাসিউটিক্যাল এক্সপোর্ট, উদীয়মান বাজার সম্প্রসারণ ও রেগুলেটরি প্রক্রিয়াকরণে অভিজ্ঞ।',
+    coursesCount: 3,
+    studentsCount: 8600,
+    profileUrl: `${Env.SITE_URL}/instructors/`,
+    isFounder: false,
+    category: 'faculty',
+    badge: 'Global Trade Director',
+    banglaBadge: 'গ্লোবাল ট্রেড ডিরেক্টর',
+    expertise: ['International Trade', 'Pharmaceutical Exports', 'Emerging Markets', 'Global Supply Chain'],
+    banglaExpertise: ['আন্তর্জাতিক বাণিজ্য', 'ফার্মা এক্সপোর্ট', 'নতুন বাজার উন্নয়ন', 'গ্লোবাল সাপ্লাই চেইন'],
+  },
+  {
+    id: 'faculty-farhan',
+    name: 'Mohammad Osman Farhan Al Harun',
+    banglaName: 'মোহাম্মদ ওসমান ফারহান আল হারুন',
+    designation: 'Assistant Professor & Corporate Training Consultant',
+    banglaDesignation: 'সহকারী অধ্যাপক ও করপোরেট ট্রেনিং কনসালট্যান্ট',
+    organization: 'Leading University Faculty & Management Researcher',
+    avatarUrl: 'https://secure.gravatar.com/avatar/c72db0f02b1bc26588f21869c85eba014184e465db5acb0fd6cfa1f01f22819f?s=200&d=mm&r=g',
+    bio: 'Academician, corporate soft skills trainer, and management researcher. Studied in top UK and Bangladeshi universities.',
+    banglaBio: 'সহকারী অধ্যাপক, প্রফেশনাল কর্পোরেট ট্রেইনার ও গবেষক। যুক্তরাজ্য ও বাংলাদেশের স্বনামধন্য বিশ্ববিদ্যালয়ে উচ্চশিক্ষা সম্পন্ন করেছেন।',
+    coursesCount: 2,
+    studentsCount: 7200,
+    profileUrl: `${Env.SITE_URL}/instructors/`,
+    isFounder: false,
+    category: 'faculty',
+    badge: 'Academic Researcher',
+    banglaBadge: 'গবেষক ও ট্রেইনার',
+    expertise: ['Soft Skills Mastery', 'Corporate Communication', 'Leadership Training', 'Business Research'],
+    banglaExpertise: ['সফট স্কিলস', 'করপোরেট কমিউনিকেশন', 'লিডারশিপ ট্রেনিং', 'বিজনেস রিসার্চ'],
+  },
+  {
+    id: 'faculty-tahamid',
+    name: 'Tahamid',
+    banglaName: 'তাহমিদ',
+    designation: 'Lead MS Office & Spreadsheet Associate',
+    banglaDesignation: 'মাইক্রোসফট অফিস ও স্প্রেডশিট ট্রেইনার',
+    organization: 'Thriving Skills & Bangladesh Excel Summit Facilitation',
+    avatarUrl: 'https://secure.gravatar.com/avatar/456dd4b3b92cc10f2fc22e19c66c61ea775738f9be80fcee7e915501c1781e89?s=200&d=mm&r=g',
+    bio: 'Dedicated instructor for Microsoft Office productivity applications (Excel, PowerPoint, Word) with over 5+ years of practical training.',
+    banglaBio: 'মাইক্রোসফট অফিস অ্যাপ্লিকেশনের (এক্সেল, পাওয়ারপয়েন্ট, ওয়ার্ড) পেশাদার প্রশিক্ষক। শত শত শিক্ষার্থী ও করপোরেট প্রফেশনালদের মেন্টর।',
+    coursesCount: 3,
+    studentsCount: 10200,
+    profileUrl: `${Env.SITE_URL}/instructors/`,
+    isFounder: false,
+    category: 'faculty',
+    badge: 'Office Specialist',
+    banglaBadge: 'অফিস স্পেশালিস্ট',
+    expertise: ['Microsoft Office 365', 'Data Entry & Formulas', 'Visual Presentations', 'Document Formatting'],
+    banglaExpertise: ['মাইক্রোসফট অফিস ৩৬৫', 'ডাটা এন্ট্রি ও ফর্মুলা', 'ভিজ্যুয়াল প্রেজেন্টেশন', 'ডকুমেন্ট ফরম্যাটিং'],
+  },
+  {
+    id: 'faculty-yousuf-sultan',
+    name: 'Mufti Yousuf Sultan',
+    banglaName: 'মুফতি ইউসুফ সুলতান',
+    designation: 'Certified Shariah Advisor & Islamic Banking Expert',
+    banglaDesignation: 'সার্টিফাইড শরীয়াহ অ্যাডভাইজর ও ইসলামিক ব্যাংকিং বিশেষজ্ঞ',
+    organization: 'Islamic Finance Advisory & Shariah Board Member',
+    avatarUrl: 'https://secure.gravatar.com/avatar/3ccd3a9f31b11a25ab558fdccedcfd3690e2657b82172f1905cd27bec3a36670?s=200&d=mm&r=g',
+    bio: 'Certified Islamic finance professional, AAOIFI-certified Shariah advisor and auditor, consulting financial institutions and Islamic fintech.',
+    banglaBio: 'সার্টিফাইড ইসলামিক ফিন্যান্স প্রফেশনাল, আওফি (AAOIFI) সার্টিফাইড শরীয়াহ উপদেষ্টা ও অডিটর। ইসলামিক ব্যাংকিং কোর্সের প্রধান শিক্ষক।',
+    coursesCount: 2,
+    studentsCount: 6800,
+    profileUrl: `${Env.SITE_URL}/instructors/`,
+    isFounder: false,
+    category: 'faculty',
+    badge: 'Shariah Advisor',
+    banglaBadge: 'শরীয়াহ অ্যাডভাইজর',
+    expertise: ['Islamic Banking', 'Shariah Governance', 'Halal Investment', 'Islamic FinTech'],
+    banglaExpertise: ['ইসলামিক ব্যাংকিং', 'শরীয়াহ গভর্নেন্স', 'হালাল ইনভেস্টমেন্ট', 'ইসলামিক ফিনটেক'],
   },
 ];
 
@@ -781,8 +941,56 @@ export class SiteNavigationService {
 
         await CacheManager.set(this.CACHE_KEY_FEATURES, updatedFeatures, this.CACHE_TTL_MS);
       }
+
+      // Sync live instructors and leadership profiles
+      await this.fetchInstructorsFromLiveApi();
     } catch {
       // Fallback silently to offline canonical definitions
     }
+  }
+
+  /**
+   * Asynchronously synchronize and enrich leadership and faculty members from the live WordPress REST API.
+   * Merges authentic canonical data with live user profiles, avatars, and links.
+   */
+  static async fetchInstructorsFromLiveApi(): Promise<CourseAuthorItem[]> {
+    try {
+      const users = await HttpClient.get<any[]>(
+        '/wp/v2/users',
+        {
+          per_page: 100,
+          _fields: 'id,name,slug,description,avatar_urls,link',
+        },
+        { timeoutMs: 6500 }
+      );
+
+      if (Array.isArray(users) && users.length > 0) {
+        const canonical = [...CANONICAL_INSTRUCTORS];
+        const userMap = new Map<string, any>();
+        users.forEach((u) => {
+          if (u.name) userMap.set(u.name.toLowerCase().trim(), u);
+          if (u.slug) userMap.set(u.slug.toLowerCase().trim(), u);
+        });
+
+        const merged: CourseAuthorItem[] = canonical.map((author) => {
+          const liveUser = userMap.get(author.name.toLowerCase().trim()) || userMap.get(author.id.replace(/^(team|faculty|leader)-/, '').toLowerCase());
+          if (liveUser) {
+            return {
+              ...author,
+              avatarUrl: liveUser.avatar_urls?.['96'] || liveUser.avatar_urls?.['48'] || author.avatarUrl,
+              bio: liveUser.description ? liveUser.description.trim() : author.bio,
+              profileUrl: liveUser.link || author.profileUrl,
+            };
+          }
+          return author;
+        });
+
+        await CacheManager.set(this.CACHE_KEY_INSTRUCTORS, merged, this.CACHE_TTL_MS);
+        return merged;
+      }
+    } catch {
+      // Fallback silently to cached or canonical instructors
+    }
+    return this.getInstructors();
   }
 }

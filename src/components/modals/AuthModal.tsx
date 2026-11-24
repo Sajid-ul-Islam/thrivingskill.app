@@ -712,7 +712,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 ]}
               >
                 {mode === 'login'
-                  ? (isBangla ? 'স্বাগতম, পেশাদার শিক্ষার্থী' : 'Welcome Back, Professional')
+                  ? (isBangla ? 'স্বাগতম, প্রফেশনাল' : 'Welcome Back, Professional')
                   : mode === 'register'
                   ? (isBangla ? 'ফ্রি অ্যাকাউন্ট তৈরি করুন' : 'Create Your Free Account')
                   : mode === 'set_password'

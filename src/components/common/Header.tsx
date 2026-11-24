@@ -143,7 +143,7 @@ export const Header: React.FC<HeaderProps> = ({
 
               <View style={styles.brandTitleCol}>
                 <Text style={[typography.h3, styles.brandTitle, { color: colors.text }]}>
-                  Thriving<Text style={{ color: colors.primary }}>Skills</Text>
+                  Thriving<Text style={{ color: '#E34234' }}>Skills</Text>
                 </Text>
                 {title && title !== 'Thriving Skills' ? (
                   <Text style={[typography.caption, { color: colors.textMuted }]} numberOfLines={1}>

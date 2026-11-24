@@ -87,7 +87,7 @@ export class AppErrorBoundary extends Component<Props, State> {
             </View>
 
             <Text style={styles.wordmark}>
-              Thriving <Text style={{ color: '#FFB606' }}>Skills</Text>
+              Thriving <Text style={{ color: '#E34234' }}>Skills</Text>
             </Text>
             <Text style={styles.tagline}>
               জাতির দক্ষতা বিনির্মাণে • Building a Skilled Nation

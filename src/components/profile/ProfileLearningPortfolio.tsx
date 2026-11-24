@@ -209,7 +209,7 @@ export const ProfileLearningPortfolio: React.FC<ProfileLearningPortfolioProps> =
                     <Ionicons name="ribbon" size={13} color="#E34234" />
                   </View>
                   <Text style={{ fontSize: 11, fontWeight: '800', color: colors.text }}>
-                    Thriving Skills
+                    Thriving <Text style={{ color: '#E34234' }}>Skills</Text>
                   </Text>
                 </View>
                 <View style={{ backgroundColor: '#10B98118', paddingHorizontal: 6, paddingVertical: 2, borderRadius: shape.small }}>
