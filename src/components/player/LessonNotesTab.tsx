@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Share } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -26,6 +26,29 @@ export const LessonNotesTab: React.FC<LessonNotesTabProps> = ({
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
 
+  const handleExportNotes = async () => {
+    if (lessonNotes.length === 0) return;
+    triggerHaptic('light');
+    const header = isBangla
+      ? '# থ্রাইভিং স্কিলস লেকচার নোটস\n\n'
+      : '# Thriving Skills Lecture Notes\n\n';
+    const body = lessonNotes
+      .map((n) => `* **[${n.timestamp}]** ${n.text}`)
+      .join('\n\n');
+    const fullText = `${header}${body}\n\n---\n*Exported from Thriving Skills App*`;
+    try {
+      await Share.share({
+        title: isBangla ? 'লেকচার নোটস' : 'Lecture Notes',
+        message: fullText,
+      });
+    } catch {
+      showToast({
+        message: isBangla ? 'নোটস শেয়ার ব্যর্থ হয়েছে' : 'Failed to share notes',
+        type: 'error',
+      });
+    }
+  };
+
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
@@ -41,17 +64,30 @@ export const LessonNotesTab: React.FC<LessonNotesTabProps> = ({
             {isBangla ? 'টাইমস্ট্যাম্পযুক্ত বুকমার্ক ও ব্যক্তিগত পয়েন্ট' : 'Timestamped bookmarks & insights'}
           </Text>
         </View>
-        <TouchableOpacity
-          style={[styles.takeNoteBtn, { backgroundColor: colors.primary }]}
-          onPress={onOpenNewNote}
-          accessibilityRole="button"
-          accessibilityLabel="New Note"
-        >
-          <Ionicons name="add" size={15} color={colors.onPrimary} />
-          <Text style={[styles.takeNoteText, { color: colors.onPrimary }]}>
-            {isBangla ? 'নতুন নোট' : 'New Note'}
-          </Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {lessonNotes.length > 0 && (
+            <TouchableOpacity
+              style={[styles.exportBtn, { borderColor: colors.border, backgroundColor: colors.surfaceCard }]}
+              onPress={handleExportNotes}
+              accessibilityRole="button"
+              accessibilityLabel="Export Notes"
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            >
+              <Ionicons name="share-outline" size={14} color={colors.primary} />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={[styles.takeNoteBtn, { backgroundColor: colors.primary }]}
+            onPress={onOpenNewNote}
+            accessibilityRole="button"
+            accessibilityLabel="New Note"
+          >
+            <Ionicons name="add" size={15} color={colors.onPrimary} />
+            <Text style={[styles.takeNoteText, { color: colors.onPrimary }]}>
+              {isBangla ? 'নতুন নোট' : 'New Note'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {lessonNotes.length === 0 ? (
@@ -141,6 +177,14 @@ const styles = StyleSheet.create({
   },
   notesSub: {
     fontSize: 11,
+  },
+  exportBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   takeNoteBtn: {
     flexDirection: 'row',

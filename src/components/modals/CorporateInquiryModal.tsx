@@ -495,6 +495,18 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
                       );
                     })}
                   </View>
+                  <View style={[styles.volumeDiscountPill, { backgroundColor: 'rgba(255, 182, 6, 0.12)', borderColor: 'rgba(255, 182, 6, 0.3)' }]}>
+                    <Ionicons name="pricetag" size={13} color="#D97706" />
+                    <Text style={[styles.volumeDiscountText, { color: '#B45309' }]}>
+                      {teamSize === '5-20'
+                        ? '10% Team Volume Discount Applied (Save ৳3,000+)'
+                        : teamSize === '20-50'
+                        ? '20% Team Volume Discount Applied (Most Popular • Save ৳12,000+)'
+                        : teamSize === '50-200'
+                        ? '30% Enterprise Cohort Discount Applied (Save ৳45,000+)'
+                        : 'Custom White-Label LMS + Unlimited Enterprise Cohort Licensing'}
+                    </Text>
+                  </View>
                 </View>
 
                 {/* Review Summary Card */}
@@ -696,6 +708,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  volumeDiscountPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 10,
+  },
+  volumeDiscountText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    flex: 1,
   },
   summaryCard: {
     borderRadius: shape.medium,

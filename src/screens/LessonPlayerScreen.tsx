@@ -135,6 +135,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // Active study time second buffer for accurate 60s incremental heartbeats
   const activeSecondsBufferRef = useRef<number>(0);
+  const checkpointTriggeredRef = useRef<Record<string, boolean>>({});
+  const prefetchedNextLessonRef = useRef<string | null>(null);
 
   const flushStudyTimeBuffer = () => {
     if (activeSecondsBufferRef.current >= 25) {
@@ -985,6 +987,42 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
             const sec = Math.floor(curr);
             currentPosRef.current = sec;
             setCurrentPositionSeconds(sec);
+
+            // In-Video Interactive Checkpoint
+            if (
+              currentLesson.quiz &&
+              currentLesson.quiz.length > 0 &&
+              !checkpointTriggeredRef.current[currentLesson.id]
+            ) {
+              const midpoint = Math.floor((totalLessonSeconds || 300) / 2);
+              if (sec >= midpoint && midpoint >= 30) {
+                checkpointTriggeredRef.current[currentLesson.id] = true;
+                setIsPlaying(false);
+                triggerHaptic('medium');
+                setSelectedQuizLesson(currentLesson);
+                setQuizPlayerVisible(true);
+                showToast({
+                  message: isBangla
+                    ? '🎯 ইন-ভিডিও চেকপয়েন্ট কুইজ! সঠিক উত্তর দিয়ে এগিয়ে যান।'
+                    : '🎯 In-video checkpoint! Test your understanding before continuing.',
+                  type: 'info',
+                });
+              }
+            }
+
+            // Next-Lesson Background Pre-buffering (>85% watched)
+            if (
+              course &&
+              totalLessonSeconds > 60 &&
+              sec / totalLessonSeconds >= 0.85 &&
+              currentLessonIndex < allLessons.length - 1
+            ) {
+              const nextLessonObj = allLessons[currentLessonIndex + 1]?.lesson;
+              if (nextLessonObj && prefetchedNextLessonRef.current !== nextLessonObj.id) {
+                prefetchedNextLessonRef.current = nextLessonObj.id;
+                LessonsService.getLessonDetail(nextLessonObj.id).catch(() => {});
+              }
+            }
           }}
           onPlayStateChange={setIsPlaying}
           formatSeconds={formatSeconds}

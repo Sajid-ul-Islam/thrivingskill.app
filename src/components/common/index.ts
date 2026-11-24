@@ -24,3 +24,4 @@ export * from './IosActionNotificationPanel';
 export * from './MessengerIcon';
 export * from './CategoryIllustrationIcon';
 export * from './DepartmentCategoryGrid';
+export * from './ConfettiBurst';

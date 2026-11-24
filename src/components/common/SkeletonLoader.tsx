@@ -134,7 +134,52 @@ export const CategoryPillSkeleton: React.FC = () => {
   );
 };
 
+export const ProfileLearningSkeleton: React.FC = () => {
+  const { colors } = useTheme();
+
+  return (
+    <View style={{ paddingHorizontal: 16, paddingTop: 10 }}>
+      {/* Profile Header Skeleton */}
+      <View style={[styles.profileHeaderCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+        <View style={styles.row}>
+          <SkeletonBox width={64} height={64} borderRadius={32} style={{ marginRight: 14 }} />
+          <View style={{ flex: 1 }}>
+            <SkeletonBox width={140} height={18} borderRadius={6} style={{ marginBottom: 8 }} />
+            <SkeletonBox width={180} height={14} borderRadius={4} style={{ marginBottom: 8 }} />
+            <SkeletonBox width={90} height={28} borderRadius={8} />
+          </View>
+        </View>
+      </View>
+
+      {/* KPI Stats Bar Skeleton */}
+      <View style={[styles.kpiStatsCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+        <SkeletonBox width="28%" height={40} borderRadius={8} />
+        <SkeletonBox width="28%" height={40} borderRadius={8} />
+        <SkeletonBox width="28%" height={40} borderRadius={8} />
+      </View>
+
+      {/* Courses Skeleton */}
+      <CourseCardSkeleton horizontal={true} />
+      <CourseCardSkeleton horizontal={true} />
+    </View>
+  );
+};
+
 const styles = StyleSheet.create({
+  profileHeaderCard: {
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    marginBottom: 14,
+  },
+  kpiStatsCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
   verticalCard: {
     borderRadius: 16,
     padding: 12,

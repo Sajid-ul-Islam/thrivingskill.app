@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View,
   Text,
@@ -78,6 +79,51 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
     setSuggestedEnhancement(null);
   };
 
+  const RECENT_SEARCHES_KEY = '@ts_recent_searches';
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (visible) {
+      AsyncStorage.getItem(RECENT_SEARCHES_KEY)
+        .then((val) => {
+          if (val) {
+            try {
+              const parsed = JSON.parse(val);
+              if (Array.isArray(parsed)) setRecentSearches(parsed);
+            } catch {}
+          }
+        })
+        .catch(() => {});
+    }
+  }, [visible]);
+
+  const saveRecentSearch = async (term: string) => {
+    const clean = term.trim();
+    if (!clean || clean.length < 2) return;
+    try {
+      const updated = [clean, ...recentSearches.filter((s) => s.toLowerCase() !== clean.toLowerCase())].slice(0, 6);
+      setRecentSearches(updated);
+      await AsyncStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+    } catch {}
+  };
+
+  const clearRecentSearches = async () => {
+    try {
+      setRecentSearches([]);
+      await AsyncStorage.removeItem(RECENT_SEARCHES_KEY);
+      triggerHaptic('light');
+    } catch {}
+  };
+
+  const removeRecentSearch = async (term: string) => {
+    try {
+      const updated = recentSearches.filter((s) => s !== term);
+      setRecentSearches(updated);
+      await AsyncStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+      triggerHaptic('selection');
+    } catch {}
+  };
+
   const filterTabs: { id: SearchFilterType; label: string; icon: string }[] = [
     { id: 'all', label: isBangla ? 'সব' : 'All', icon: 'apps-outline' },
     { id: 'courses', label: isBangla ? 'কোর্সসমূহ' : 'Courses', icon: 'school-outline' },
@@ -155,6 +201,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
     onClose();
     if (query.trim()) {
       recordSearchKeyword(query);
+      saveRecentSearch(query);
     }
     if (item.type === 'course') {
       if (item.data.category) {
@@ -196,7 +243,10 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
               value={query}
               onChangeText={setQuery}
               onSubmitEditing={() => {
-                if (query.trim()) recordSearchKeyword(query);
+                if (query.trim()) {
+                  recordSearchKeyword(query);
+                  saveRecentSearch(query);
+                }
               }}
               autoFocus
               clearButtonMode="while-editing"
@@ -428,6 +478,64 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                       ? 'জনপ্রিয় মাস্টারক্লাসগুলো দেখতে নিচের স্কিলে ট্যাপ করুন:'
                       : 'Tap any high-demand skill below to discover accredited masterclasses:')}
               </Text>
+
+              {!query.trim() && recentSearches.length > 0 && (
+                <View style={styles.recentSearchesSection}>
+                  <View style={styles.recentHeaderRow}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Ionicons name="time-outline" size={14} color={colors.primary} />
+                      <Text style={[styles.recentSectionTitle, { color: colors.text }]}>
+                        {isBangla ? 'সাম্প্রতিক অনুসন্ধান' : 'Recent Searches'}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      onPress={clearRecentSearches}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Clear recent searches"
+                    >
+                      <Text style={[styles.clearRecentText, { color: colors.textMuted }]}>
+                        {isBangla ? 'সব মুছুন' : 'Clear All'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.recentChipsWrap}>
+                    {recentSearches.map((term, idx) => (
+                      <View
+                        key={idx}
+                        style={[
+                          styles.recentChip,
+                          { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                        ]}
+                      >
+                        <TouchableOpacity
+                          style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}
+                          onPress={() => {
+                            triggerHaptic('light');
+                            setQuery(term);
+                          }}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Search for ${term}`}
+                        >
+                          <Ionicons name="search" size={11} color={colors.textMuted} />
+                          <Text style={[styles.recentChipText, { color: colors.text }]} numberOfLines={1}>
+                            {term}
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={() => removeRecentSearch(term)}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          style={styles.recentRemoveBtn}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Remove ${term} from recent searches`}
+                        >
+                          <Ionicons name="close" size={12} color={colors.textMuted} />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
 
               {!query.trim() && (
                 <View style={styles.trendingPillsGrid}>
@@ -664,6 +772,52 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
+  },
+  recentSearchesSection: {
+    width: '100%',
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(150, 150, 150, 0.2)',
+  },
+  recentHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  recentSectionTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  clearRecentText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  recentChipsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  recentChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 6,
+    maxWidth: '100%',
+  },
+  recentChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  recentRemoveBtn: {
+    padding: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   trendingPillsGrid: {
     width: '100%',

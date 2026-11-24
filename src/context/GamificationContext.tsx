@@ -131,6 +131,9 @@ interface GamificationState {
   dailyHistory: Record<string, number>;
   badges: AchievementBadge[];
   xp: number;
+  streakFreezes: number;
+  streakFreezeUsedToday: boolean;
+  preferredStudyHour: number;
 }
 
 interface GamificationContextType extends GamificationState {
@@ -143,6 +146,8 @@ interface GamificationContextType extends GamificationState {
   incrementStreak: () => void;
   triggerCelebration: (event: CelebrationEvent) => void;
   clearCelebration: () => void;
+  setPreferredStudyHour: (hour: number) => void;
+  useStreakFreeze: () => boolean;
 }
 
 const GamificationContext = createContext<GamificationContextType>({} as GamificationContextType);
@@ -161,6 +166,9 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     dailyHistory: {},
     badges: DEFAULT_BADGES.map((b) => ({ ...b, isUnlocked: false, unlockedAt: undefined })),
     xp: 0,
+    streakFreezes: 1,
+    streakFreezeUsedToday: false,
+    preferredStudyHour: 20, // 8:00 PM
   });
 
   const [state, setState] = useState<GamificationState>(getInitialState);
@@ -182,12 +190,19 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           // Reset daily minutes if new day
           let parsedStreak = parsed.streakDays ?? 0;
           let parsedDailyMinutes = parsed.dailyMinutesSpent ?? 0;
+          let parsedFreezes = parsed.streakFreezes ?? 1;
+          let streakProtected = false;
 
           if (parsed.lastActiveDate !== today) {
             parsedDailyMinutes = 0;
-            // If missed yesterday, streak is reset to 0 until user studies today
+            // If missed yesterday, check if streak freeze can protect it
             if (parsed.lastActiveDate !== yesterday) {
-              parsedStreak = 0;
+              if (parsedStreak > 0 && parsedFreezes > 0) {
+                parsedFreezes -= 1;
+                streakProtected = true;
+              } else {
+                parsedStreak = 0;
+              }
             }
           }
 
@@ -196,6 +211,9 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             ...parsed,
             streakDays: parsedStreak,
             dailyMinutesSpent: parsedDailyMinutes,
+            streakFreezes: parsedFreezes,
+            streakFreezeUsedToday: streakProtected,
+            preferredStudyHour: parsed.preferredStudyHour ?? 20,
             totalStudyMinutes: parsed.totalStudyMinutes ?? parsed.dailyMinutesSpent ?? 0,
             dailyHistory: parsed.dailyHistory ?? {},
             xp: parsed.xp ?? 0,
@@ -351,6 +369,31 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     });
   };
 
+  const setPreferredStudyHour = (hour: number) => {
+    setState((prevState) => {
+      const updated: GamificationState = {
+        ...prevState,
+        preferredStudyHour: hour,
+      };
+      AsyncStorage.setItem(scopedStorageKey, JSON.stringify(updated)).catch(() => {});
+      return updated;
+    });
+  };
+
+  const useStreakFreeze = (): boolean => {
+    if (state.streakFreezes <= 0) return false;
+    setState((prevState) => {
+      const updated: GamificationState = {
+        ...prevState,
+        streakFreezes: Math.max(0, prevState.streakFreezes - 1),
+        streakFreezeUsedToday: true,
+      };
+      AsyncStorage.setItem(scopedStorageKey, JSON.stringify(updated)).catch(() => {});
+      return updated;
+    });
+    return true;
+  };
+
   const weeklyActivity = computeWeeklyActivity(state.dailyHistory);
 
   return (
@@ -366,6 +409,8 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         incrementStreak,
         triggerCelebration,
         clearCelebration,
+        setPreferredStudyHour,
+        useStreakFreeze,
       }}
     >
       {children}
