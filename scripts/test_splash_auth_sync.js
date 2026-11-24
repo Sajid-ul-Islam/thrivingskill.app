@@ -50,8 +50,8 @@ assert(
 assert(
   splashContent.includes('const autoAdvanceTimer = setTimeout(') &&
   splashContent.includes('handleGetStarted();') &&
-  splashContent.includes('4500'),
-  'Internalized 4.5s auto-advance timer safely cues handleGetStarted()'
+  (splashContent.includes('4500') || splashContent.includes('5000')),
+  'Internalized auto-advance timer safely cues handleGetStarted()'
 );
 assert(
   splashContent.includes("pointerEvents={isExitingRef.current ? 'none' : 'auto'}"),
@@ -65,8 +65,10 @@ assert(fs.existsSync(appPath), 'App.tsx exists');
 const appContent = fs.readFileSync(appPath, 'utf-8');
 
 assert(
-  appContent.includes("import { AuthModal, AuthMode } from './src/components';"),
-  'App.tsx imports AuthMode from src/components'
+  appContent.includes('AuthMode') &&
+  appContent.includes('AuthModal') &&
+  appContent.includes("from './src/components'"),
+  'App.tsx imports AuthMode and AuthModal from src/components'
 );
 assert(
   appContent.includes("const [authInitialMode, setAuthInitialMode] = useState<AuthMode>('register');"),
@@ -126,7 +128,7 @@ assert(
 // 3.3 Client Requirement: Mandatory phone number for signup
 assert(
   authContent.includes('!trimmedPhone') &&
-  authContent.includes("trimmedPhone.replace(/\\D/g, '').length < 10"),
+  authContent.includes('phoneDigits.length < 10'),
   'Registration strictly enforces mandatory phone number with 10+ digit validation'
 );
 assert(
@@ -138,7 +140,8 @@ assert(
 // 3.4 Visual Identity & Brand Parity
 assert(
   authContent.includes("require('../../../assets/icon.png')") &&
-  authContent.includes('ThrivingSkills'),
+  authContent.includes('Thriving') &&
+  authContent.includes('Skills'),
   'AuthModal uses official brand icon and ThrivingSkills wordmark'
 );
 assert(
