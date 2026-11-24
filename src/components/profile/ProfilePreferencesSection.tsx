@@ -66,6 +66,7 @@ interface ProfilePreferencesSectionProps {
   serverEnvironment?: 'production' | 'staging';
   onSwitchServerEnvironment?: () => void;
   isDevModeUnlocked?: boolean;
+  onOpenDevOptions?: () => void;
   onOpenAbout: (tab: AboutTabKey) => void;
   onOpenLegal: (tab: LegalTabKey) => void;
   isAuthenticated: boolean;
@@ -114,6 +115,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
   serverEnvironment = 'production',
   onSwitchServerEnvironment,
   isDevModeUnlocked = false,
+  onOpenDevOptions,
   onOpenAbout,
   onOpenLegal,
   isAuthenticated,
@@ -701,6 +703,41 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                 </View>
                 <Ionicons name="swap-horizontal" size={16} color={colors.textMuted} />
               </View>
+            </TouchableOpacity>
+          )}
+
+          {/* Developer Mode Active Console & Standard Mode Return Option */}
+          {Boolean(isDevModeUnlocked) && (
+            <TouchableOpacity
+              style={[
+                styles.settingRow,
+                isAdmin ? { borderBottomColor: colors.borderSubtle } : { borderBottomWidth: 0 },
+                { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.08)' : 'rgba(227, 66, 52, 0.04)' },
+              ]}
+              onPress={() => {
+                triggerHaptic('medium');
+                onOpenDevOptions?.();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={isBangla ? 'ডেভেলপার কনসোল ও স্বাভাবিক মোড' : 'Developer Console & Return to Standard Mode'}
+            >
+              <View style={styles.settingLeft}>
+                <Ionicons name="code-slash-outline" size={20} color="#E34234" />
+                <View style={styles.settingTextCol}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={[styles.settingLabel, { color: colors.text }]}>
+                      {isBangla ? 'ডেভেলপার অপশন সক্রিয়' : 'Developer Options Console'}
+                    </Text>
+                    <View style={{ backgroundColor: '#E34234', paddingHorizontal: 6, paddingVertical: 1.5, borderRadius: 4 }}>
+                      <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: '800' }}>DEV</Text>
+                    </View>
+                  </View>
+                  <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
+                    {isBangla ? 'কনসোল দেখুন বা স্বাভাবিক মোডে ফিরে যান →' : 'Diagnostics & return to Standard Mode →'}
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#E34234" />
             </TouchableOpacity>
           )}
 

@@ -23,12 +23,14 @@ export interface DeveloperOptionsModalProps {
   visible: boolean;
   onClose: () => void;
   onDirectBypass?: () => void;
+  onResetToStandardMode?: () => void;
 }
 
 export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
   visible,
   onClose,
   onDirectBypass,
+  onResetToStandardMode,
 }) => {
   const insets = useSafeAreaInsets();
   const [currentEnv, setCurrentEnv] = useState<ApiEnvironment>(Env.currentEnvironment);
@@ -74,10 +76,39 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
     }
   };
 
+  const handleReturnToStandardMode = async () => {
+    triggerHaptic('success');
+    try {
+      // 1. Reset server environment to live production
+      await Env.setEnvironment('production');
+      setCurrentEnv('production');
+      // 2. Disable admin bypass
+      setAdminBypass(false);
+      await AsyncStorage.setItem('@ts_auth_admin_bypass', 'false');
+      // 3. Lock and hide developer options
+      await AsyncStorage.setItem('@ts_dev_mode_unlocked', 'false');
+      // 4. Clear cache to guarantee clean production state
+      await CacheManager.clearAll().catch(() => {});
+      // 5. Notify parent callback
+      onResetToStandardMode?.();
+      // 6. Dismiss modal
+      onClose();
+      Alert.alert(
+        'Standard Mode Restored',
+        'You have returned to normal mode. Connected to Live Production (thrivingskill.com) with developer options locked.'
+      );
+    } catch {
+      onClose();
+    }
+  };
+
   const handleLockDevOptions = async () => {
     triggerHaptic('warning');
+    await Env.setEnvironment('production');
+    setCurrentEnv('production');
     await AsyncStorage.setItem('@ts_dev_mode_unlocked', 'false');
     await AsyncStorage.setItem('@ts_auth_admin_bypass', 'false');
+    onResetToStandardMode?.();
     onClose();
   };
 
@@ -105,7 +136,7 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
           <View style={styles.headerRow}>
             <View style={styles.headerLeft}>
               <View style={styles.devBadge}>
-                <Ionicons name="code-slash" size={18} color="#FFB606" />
+                <Ionicons name="code-slash" size={18} color="#E34234" />
               </View>
               <View>
                 <Text style={styles.headerTitle}>Developer Options</Text>
@@ -127,10 +158,41 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
           >
+            {/* Standard Mode Card (Prominent Return to Normal Mode Action) */}
+            <View style={styles.standardModeCard}>
+              <View style={styles.standardModeHeader}>
+                <View style={styles.standardModeBadge}>
+                  <Ionicons name="shield-checkmark" size={18} color="#10B981" />
+                </View>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={styles.standardModeTitle}>Standard / Normal Mode</Text>
+                    <View style={styles.recommendedBadge}>
+                      <Text style={styles.recommendedBadgeText}>NORMAL</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.standardModeDesc}>
+                    Exit developer mode and return to standard user experience. Resets server to Live Production (thrivingskill.com), disables test bypasses, and hides developer console.
+                  </Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={styles.standardModeBtn}
+                onPress={handleReturnToStandardMode}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel="Switch to Standard Mode"
+              >
+                <Ionicons name="arrow-undo-circle" size={18} color="#FFFFFF" />
+                <Text style={styles.standardModeBtnText}>Switch to Standard Mode</Text>
+              </TouchableOpacity>
+            </View>
+
             {/* Section 1: Server Environment */}
             <View style={styles.sectionCard}>
               <View style={styles.sectionHeader}>
-                <Ionicons name="server-outline" size={16} color="#FFB606" />
+                <Ionicons name="server-outline" size={16} color="#E34234" />
                 <Text style={styles.sectionTitle}>Server Environment</Text>
               </View>
               <Text style={styles.sectionDesc}>
@@ -156,7 +218,7 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
                       Live Production
                     </Text>
                     {currentEnv === 'production' && (
-                      <Ionicons name="checkmark-circle" size={16} color="#FFB606" />
+                      <Ionicons name="checkmark-circle" size={16} color="#10B981" />
                     )}
                   </View>
                   <Text style={styles.envOptionUrl}>https://thrivingskill.com</Text>
@@ -165,7 +227,7 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
                 <TouchableOpacity
                   style={[
                     styles.envOption,
-                    currentEnv === 'staging' && styles.envOptionActive,
+                    currentEnv === 'staging' && styles.envOptionActiveStaging,
                   ]}
                   onPress={() => handleSwitchEnv('staging')}
                   activeOpacity={0.8}
@@ -174,13 +236,13 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
                     <Text
                       style={[
                         styles.envOptionTitle,
-                        currentEnv === 'staging' && styles.envOptionTitleActive,
+                        currentEnv === 'staging' && styles.envOptionTitleActiveStaging,
                       ]}
                     >
                       Staging Testing
                     </Text>
                     {currentEnv === 'staging' && (
-                      <Ionicons name="checkmark-circle" size={16} color="#FFB606" />
+                      <Ionicons name="checkmark-circle" size={16} color="#E34234" />
                     )}
                   </View>
                   <Text style={styles.envOptionUrl}>https://staging.thrivingskill.com</Text>
@@ -286,7 +348,7 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
               </View>
               <View style={styles.infoRow}>
                 <Text style={styles.infoKey}>Active API Host</Text>
-                <Text style={[styles.infoVal, { color: '#FFB606' }]}>
+                <Text style={[styles.infoVal, { color: currentEnv === 'production' ? '#10B981' : '#E34234' }]}>
                   {Env.API_URL.replace(/^https?:\/\//, '')}
                 </Text>
               </View>
@@ -340,9 +402,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: 'rgba(255, 182, 6, 0.14)',
+    backgroundColor: 'rgba(227, 66, 52, 0.14)',
     borderWidth: 1,
-    borderColor: '#FFB606',
+    borderColor: '#E34234',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -367,6 +429,65 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 16,
     gap: 14,
+  },
+  standardModeCard: {
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1.5,
+    borderColor: '#10B981',
+    gap: 12,
+  },
+  standardModeHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  standardModeBadge: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  standardModeTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#F8FAFC',
+  },
+  recommendedBadge: {
+    backgroundColor: 'rgba(16, 185, 129, 0.25)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  recommendedBadgeText: {
+    color: '#10B981',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  standardModeDesc: {
+    fontSize: 12,
+    color: '#94A3B8',
+    marginTop: 3,
+    lineHeight: 16,
+  },
+  standardModeBtn: {
+    backgroundColor: '#10B981',
+    borderRadius: 12,
+    height: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  standardModeBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
   },
   sectionCard: {
     backgroundColor: '#14223B',
@@ -403,8 +524,12 @@ const styles = StyleSheet.create({
     borderColor: '#22365A',
   },
   envOptionActive: {
-    borderColor: '#FFB606',
-    backgroundColor: 'rgba(255, 182, 6, 0.08)',
+    borderColor: '#10B981',
+    backgroundColor: 'rgba(16, 185, 129, 0.10)',
+  },
+  envOptionActiveStaging: {
+    borderColor: '#E34234',
+    backgroundColor: 'rgba(227, 66, 52, 0.10)',
   },
   envOptionHeader: {
     flexDirection: 'row',
@@ -418,7 +543,10 @@ const styles = StyleSheet.create({
     color: '#CBD5E1',
   },
   envOptionTitleActive: {
-    color: '#FFB606',
+    color: '#10B981',
+  },
+  envOptionTitleActiveStaging: {
+    color: '#E34234',
   },
   envOptionUrl: {
     fontSize: 11,

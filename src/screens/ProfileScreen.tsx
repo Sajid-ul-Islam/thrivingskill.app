@@ -46,6 +46,7 @@ import { StorageManagerModal } from '../components/modals/StorageManagerModal';
 import { SpacedRepetitionModal } from '../components/modals/SpacedRepetitionModal';
 import { OfflineStudyDeckModal } from '../components/modals/OfflineStudyDeckModal';
 import { LocalSearchModal } from '../components/modals/LocalSearchModal';
+import { DeveloperOptionsModal } from '../components/modals/DeveloperOptionsModal';
 import { Course, Certificate, LearnPressCourseFilter } from '../types';
 import { UserService } from '../services/api/userService';
 import { CacheManager } from '../services/cache/cacheManager';
@@ -178,6 +179,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [serverEnv, setServerEnv] = useState<ApiEnvironment>(Env.currentEnvironment);
   const [devModeUnlocked, setDevModeUnlocked] = useState(Boolean(__DEV__));
+  const [devModalVisible, setDevModalVisible] = useState(false);
   const tapCountRef = useRef(0);
   const lastTapTimeRef = useRef(0);
 
@@ -209,14 +211,21 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       AsyncStorage.setItem('@ts_dev_mode_unlocked', String(nextState)).catch(() => {});
       tapCountRef.current = 0;
       triggerHaptic('success');
+      if (nextState) {
+        setDevModalVisible(true);
+      }
       showToast({
         message: nextState
           ? (isBangla ? 'ডেভেলপার অপশন সক্রিয় হয়েছে! 🎉' : 'Developer Options Unlocked! 🎉')
-          : (isBangla ? 'ডেভেলপার অপশন বন্ধ করা হয়েছে।' : 'Developer Options Locked.'),
+          : (isBangla ? 'স্বাভাবিক মোড সক্রিয় হয়েছে।' : 'Standard Mode Restored.'),
         type: nextState ? 'success' : 'info',
       });
     } else if (tapCountRef.current >= 2) {
       triggerHaptic('light');
+    } else if (devModeUnlocked) {
+      // If already unlocked, tapping version opens Developer Options directly
+      triggerHaptic('light');
+      setDevModalVisible(true);
     }
   };
 
@@ -722,6 +731,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           serverEnvironment={serverEnv}
           onSwitchServerEnvironment={handleSwitchServerEnvironment}
           isDevModeUnlocked={devModeUnlocked}
+          onOpenDevOptions={() => setDevModalVisible(true)}
           onOpenCorporateModal={onOpenCorporateModal}
           onOpenHelpFaq={() => setHelpFaqModalVisible(true)}
           onOpenBlog={() => setBlogModalVisible(true)}
@@ -1010,6 +1020,22 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           onDismissLater={() => setMandatoryReviewVisible(false)}
         />
       )}
+      {/* Developer Options Diagnostics & Standard Mode Switcher */}
+      <DeveloperOptionsModal
+        visible={devModalVisible}
+        onClose={() => setDevModalVisible(false)}
+        onResetToStandardMode={() => {
+          setDevModeUnlocked(false);
+          setServerEnv('production');
+          setDevModalVisible(false);
+          showToast({
+            message: isBangla
+              ? 'স্বাভাবিক মোড সক্রিয় হয়েছে (লাইভ সার্ভার)'
+              : 'Standard Mode Restored (Live Production)',
+            type: 'success',
+          });
+        }}
+      />
     </View>
   );
 };

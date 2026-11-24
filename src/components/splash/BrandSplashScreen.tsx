@@ -7,6 +7,7 @@ import {
   Animated,
   Easing,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -171,6 +172,7 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
               opacity: heroFadeAnim,
               transform: [{ scale: heroScaleAnim }],
             },
+            Platform.OS === 'web' && ({ objectPosition: 'top center' } as unknown as object),
           ]}
           resizeMode="cover"
         />
@@ -254,6 +256,10 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
         visible={devModalVisible}
         onClose={() => setDevModalVisible(false)}
         onDirectBypass={() => triggerSmoothExit(onDismiss || onGetStarted)}
+        onResetToStandardMode={() => {
+          setIsDevModeUnlocked(false);
+          setDevModalVisible(false);
+        }}
       />
     </Animated.View>
   );
