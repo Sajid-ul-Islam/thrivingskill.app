@@ -808,7 +808,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
-    minHeight: 52,
+    minHeight: 48,
     paddingVertical: 2,
     paddingHorizontal: 0,
     borderRadius: shape.full,
