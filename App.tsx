@@ -365,30 +365,6 @@ const MainAppContent: React.FC = () => {
     { id: 'Profile', label: t('tabProfile'), icon: 'person', iconOutline: 'person-outline' },
   ];
 
-  // CR-1: Brand splash screen on startup (holds until user taps Get Started / Sign In or 4.5s timeout)
-  if (isSplashVisible || isAuthLoading) {
-    return (
-      <BrandSplashScreen
-        isLoading={isAuthLoading}
-        onGetStarted={() => {
-          if (splashTimerRef.current) {
-            clearTimeout(splashTimerRef.current);
-            splashTimerRef.current = null;
-          }
-          setIsSplashVisible(false);
-        }}
-        onSignIn={() => {
-          if (splashTimerRef.current) {
-            clearTimeout(splashTimerRef.current);
-            splashTimerRef.current = null;
-          }
-          setIsSplashVisible(false);
-          setAuthModalVisible(true);
-        }}
-      />
-    );
-  }
-
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['left', 'right']}>
       <StatusBar style={isDark ? "light" : "dark"} />
@@ -734,6 +710,35 @@ const MainAppContent: React.FC = () => {
         }}
         onOpenNotifications={() => setNotificationModalVisible(true)}
       />
+
+      {/* CR-1: Startup Brand Splash Screen with Cinematic Fade & Seamless Dissolve */}
+      {(isSplashVisible || isAuthLoading) && (
+        <BrandSplashScreen
+          isLoading={isAuthLoading}
+          onGetStarted={() => {
+            if (splashTimerRef.current) {
+              clearTimeout(splashTimerRef.current);
+              splashTimerRef.current = null;
+            }
+            setIsSplashVisible(false);
+          }}
+          onSignIn={() => {
+            if (splashTimerRef.current) {
+              clearTimeout(splashTimerRef.current);
+              splashTimerRef.current = null;
+            }
+            setIsSplashVisible(false);
+            setAuthModalVisible(true);
+          }}
+          onDismiss={() => {
+            if (splashTimerRef.current) {
+              clearTimeout(splashTimerRef.current);
+              splashTimerRef.current = null;
+            }
+            setIsSplashVisible(false);
+          }}
+        />
+      )}
     </SafeAreaView>
   );
 };

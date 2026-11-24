@@ -23,6 +23,7 @@ import { SpringPressable } from '../common/SpringPressable';
 export interface BrandSplashScreenProps {
   onGetStarted?: () => void;
   onSignIn?: () => void;
+  onDismiss?: () => void;
   isLoading?: boolean;
 }
 
@@ -32,64 +33,235 @@ const BRAND_LOGO_IMAGE = require('../../../assets/icon.png');
 export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
   onGetStarted,
   onSignIn,
+  onDismiss,
   isLoading = false,
 }) => {
   const insets = useSafeAreaInsets();
   const { isBangla, setLanguage } = useLanguage();
+  const isExitingRef = useRef(false);
 
-  // Entrance animations
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(20)).current;
-  const scaleAnim = useRef(new Animated.Value(0.96)).current;
+  // Exit transition animators (smooth cinematic dissolve)
+  const exitFadeAnim = useRef(new Animated.Value(1)).current;
+  const exitScaleAnim = useRef(new Animated.Value(1)).current;
 
-  // Floating nodes slow breathing animation
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  // Choreographed entrance animators
+  const headerAnim = useRef(new Animated.Value(0)).current;
+  const heroImageFade = useRef(new Animated.Value(0)).current;
+  const heroImageScale = useRef(new Animated.Value(0.97)).current;
+  const nodeLeftAnim = useRef(new Animated.Value(0)).current;
+  const nodeRightAnim = useRef(new Animated.Value(0)).current;
+  const mottoAnim = useRef(new Animated.Value(0)).current;
+  const titleAnim = useRef(new Animated.Value(0)).current;
+  const pillarsAnim = useRef(new Animated.Value(0)).current;
+  const footerAnim = useRef(new Animated.Value(0)).current;
+
+  // Continuous organic physics animations (sinusoidal floating nodes)
+  const floatLeft = useRef(new Animated.Value(0)).current;
+  const floatRight = useRef(new Animated.Value(0)).current;
+  const pulseDot = useRef(new Animated.Value(0.6)).current;
+  const arrowNudge = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    // 1. Staggered Choreographed Entrance (Smooth 60fps cascade)
     Animated.parallel([
-      Animated.timing(fadeAnim, {
+      // Header: immediate soft fade in from top
+      Animated.timing(headerAnim, {
         toValue: 1,
-        duration: 650,
+        duration: 480,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 650,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
+      // Hero Image: gentle scale and fade in
+      Animated.timing(heroImageFade, {
         toValue: 1,
-        friction: 8,
-        tension: 45,
+        duration: 650,
+        easing: Easing.bezier(0.16, 1, 0.3, 1),
         useNativeDriver: true,
       }),
+      Animated.timing(heroImageScale, {
+        toValue: 1,
+        duration: 800,
+        easing: Easing.bezier(0.16, 1, 0.3, 1),
+        useNativeDriver: true,
+      }),
+      // Floating Left Badge
+      Animated.sequence([
+        Animated.delay(180),
+        Animated.spring(nodeLeftAnim, {
+          toValue: 1,
+          friction: 7,
+          tension: 65,
+          useNativeDriver: true,
+        }),
+      ]),
+      // Floating Right Badge
+      Animated.sequence([
+        Animated.delay(260),
+        Animated.spring(nodeRightAnim, {
+          toValue: 1,
+          friction: 7,
+          tension: 65,
+          useNativeDriver: true,
+        }),
+      ]),
+      // Motto Badge
+      Animated.sequence([
+        Animated.delay(320),
+        Animated.timing(mottoAnim, {
+          toValue: 1,
+          duration: 480,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]),
+      // Main Headline & Subtitle
+      Animated.sequence([
+        Animated.delay(400),
+        Animated.timing(titleAnim, {
+          toValue: 1,
+          duration: 520,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]),
+      // 4 Pillars Deck
+      Animated.sequence([
+        Animated.delay(500),
+        Animated.spring(pillarsAnim, {
+          toValue: 1,
+          friction: 8,
+          tension: 60,
+          useNativeDriver: true,
+        }),
+      ]),
+      // Footer Action Buttons
+      Animated.sequence([
+        Animated.delay(620),
+        Animated.timing(footerAnim, {
+          toValue: 1,
+          duration: 540,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]),
     ]).start();
 
-    // Pulse animation for tech badges
-    const pulseLoop = Animated.loop(
+    // 2. Organic Asymmetrical Floating Nodes (independent non-lockstep periods)
+    const floatLeftLoop = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.05,
-          duration: 2200,
+        Animated.timing(floatLeft, {
+          toValue: -4,
+          duration: 2500,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(floatLeft, {
+          toValue: 4,
+          duration: 2500,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    const floatRightLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatRight, {
+          toValue: 4,
+          duration: 3100,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(floatRight, {
+          toValue: -4,
+          duration: 3100,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    // Subtle breathing pulse for gold dot
+    const pulseDotLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseDot, {
+          toValue: 1,
+          duration: 1200,
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 2200,
+        Animated.timing(pulseDot, {
+          toValue: 0.45,
+          duration: 1200,
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
       ])
     );
-    pulseLoop.start();
+
+    // Subtle rhythmic inviting arrow nudge on primary CTA
+    const arrowNudgeLoop = Animated.loop(
+      Animated.sequence([
+        Animated.delay(2200),
+        Animated.timing(arrowNudge, {
+          toValue: 4,
+          duration: 320,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver: true,
+        }),
+        Animated.timing(arrowNudge, {
+          toValue: 0,
+          duration: 280,
+          easing: Easing.in(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    floatLeftLoop.start();
+    floatRightLoop.start();
+    pulseDotLoop.start();
+    arrowNudgeLoop.start();
 
     return () => {
-      pulseLoop.stop();
+      floatLeftLoop.stop();
+      floatRightLoop.stop();
+      pulseDotLoop.stop();
+      arrowNudgeLoop.stop();
     };
-  }, [fadeAnim, slideAnim, scaleAnim, pulseAnim]);
+  }, []);
+
+  const triggerSmoothExit = (callback?: () => void) => {
+    if (isExitingRef.current) return;
+    isExitingRef.current = true;
+
+    Animated.parallel([
+      Animated.timing(exitFadeAnim, {
+        toValue: 0,
+        duration: 360,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+        useNativeDriver: true,
+      }),
+      Animated.timing(exitScaleAnim, {
+        toValue: 1.025,
+        duration: 360,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      callback?.();
+    });
+  };
+
+  const handleGetStarted = () => {
+    triggerHaptic('medium');
+    triggerSmoothExit(onGetStarted);
+  };
+
+  const handleSignIn = () => {
+    triggerHaptic('light');
+    triggerSmoothExit(onSignIn);
+  };
 
   const handleLanguageToggle = (lang: 'en' | 'bn') => {
     triggerHaptic('selection');
@@ -102,19 +274,49 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
   };
 
   return (
-    <View style={styles.outerContainer}>
+    <Animated.View
+      style={[
+        styles.outerContainer,
+        {
+          opacity: exitFadeAnim,
+          transform: [{ scale: exitScaleAnim }],
+        },
+      ]}
+    >
       <StatusBar style="light" />
 
-      {/* Top Ambient Light Glows with Brand Palette */}
+      {/* Top Ambient Glows */}
       <View style={styles.topAmbientGold} pointerEvents="none" />
       <View style={styles.midAmbientNavy} pointerEvents="none" />
 
       {/* Main Responsive Mobile Frame */}
-      <View style={[styles.mobileFrame, { paddingTop: Math.max(insets.top, 10), paddingBottom: Math.max(insets.bottom, 12) }]}>
-        
-        {/* TOP BRAND HEADER: Actual Logo, Wordmark & Language Toggle */}
-        <View style={styles.topBar}>
-          {/* Brand Row with Authentic Logo */}
+      <View
+        style={[
+          styles.mobileFrame,
+          {
+            paddingTop: Math.max(insets.top, 12),
+            paddingBottom: Math.max(insets.bottom, 12),
+          },
+        ]}
+      >
+        {/* 1. TOP BRAND HEADER */}
+        <Animated.View
+          style={[
+            styles.topBar,
+            {
+              opacity: headerAnim,
+              transform: [
+                {
+                  translateY: headerAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-10, 0],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          {/* Authentic Brand Logo & Wordmark */}
           <View style={styles.brandRow}>
             <View style={styles.logoWrap}>
               <Image
@@ -133,9 +335,8 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
             </View>
           </View>
 
-          {/* Right Controls: Language Toggle & Energy Indicator */}
+          {/* Right Controls: Language Switcher & Indicator */}
           <View style={styles.topBarRight}>
-            {/* Language Pill Toggle */}
             <View style={styles.langPill}>
               <TouchableOpacity
                 onPress={() => handleLanguageToggle('en')}
@@ -143,6 +344,7 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
                 style={[styles.langBtn, !isBangla && styles.langBtnActive]}
                 accessibilityRole="button"
                 accessibilityLabel="Switch to English"
+                hitSlop={{ top: 8, bottom: 8, left: 6, right: 4 }}
               >
                 <Text style={[styles.langText, !isBangla && styles.langTextActive]}>ENG</Text>
               </TouchableOpacity>
@@ -155,25 +357,25 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
                 style={[styles.langBtn, isBangla && styles.langBtnActive]}
                 accessibilityRole="button"
                 accessibilityLabel="Switch to Bengali"
+                hitSlop={{ top: 8, bottom: 8, left: 4, right: 6 }}
               >
                 <Text style={[styles.langText, isBangla && styles.langTextActive]}>বাংলা</Text>
               </TouchableOpacity>
             </View>
 
-            {/* Quick Energy / Power Indicator */}
             <View style={styles.powerIconPill}>
               <Ionicons name="flash" size={13} color="#FFB606" />
             </View>
           </View>
-        </View>
+        </Animated.View>
 
-        {/* HERO SECTION WITH IMAGE & FLOATING NODES */}
+        {/* 2. HERO VISUAL SECTION WITH PHOTOGRAPH & FLOATING NODES */}
         <Animated.View
           style={[
             styles.heroSection,
             {
-              opacity: fadeAnim,
-              transform: [{ scale: scaleAnim }, { translateY: slideAnim }],
+              opacity: heroImageFade,
+              transform: [{ scale: heroImageScale }],
             },
           ]}
         >
@@ -192,12 +394,23 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
             pointerEvents="none"
           />
 
-          {/* Floating Tech Node 1: Certified with Sunshine Gold Accent */}
+          {/* Floating Node 1: Certified with Sinusoidal Float & Soft Glow */}
           <Animated.View
             style={[
               styles.floatingNodeLeft,
               {
-                transform: [{ scale: pulseAnim }],
+                opacity: nodeLeftAnim,
+                transform: [
+                  {
+                    translateY: Animated.add(
+                      nodeLeftAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [14, 0],
+                      }),
+                      floatLeft
+                    ),
+                  },
+                ],
               },
             ]}
           >
@@ -209,12 +422,23 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
             </Text>
           </Animated.View>
 
-          {/* Floating Tech Node 2: Career Boost with Coral Accent */}
+          {/* Floating Node 2: Career Boost with Sinusoidal Float & Soft Glow */}
           <Animated.View
             style={[
               styles.floatingNodeRight,
               {
-                transform: [{ scale: pulseAnim }],
+                opacity: nodeRightAnim,
+                transform: [
+                  {
+                    translateY: Animated.add(
+                      nodeRightAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [14, 0],
+                      }),
+                      floatRight
+                    ),
+                  },
+                ],
               },
             ]}
           >
@@ -229,34 +453,70 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
           {/* Hero Typography & National Motto */}
           <View style={styles.heroTypographyWrap}>
             {/* Tag Badge */}
-            <View style={styles.mottoBadge}>
-              <View style={styles.glowingDot} />
+            <Animated.View
+              style={[
+                styles.mottoBadge,
+                {
+                  opacity: mottoAnim,
+                  transform: [
+                    {
+                      translateY: mottoAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [12, 0],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            >
+              <Animated.View style={[styles.glowingDot, { opacity: pulseDot }]} />
               <Text style={styles.mottoBadgeText}>
                 {isBangla ? 'প্রতিদিনের দক্ষতা অর্জন' : 'EMPOWERING EVERYDAY LEARNERS'}
               </Text>
-            </View>
+            </Animated.View>
 
-            {/* Main Headline */}
-            <Text style={styles.mainTitle}>
-              {isBangla ? 'মানুষের ক্ষমতায়ন' : 'EMPOWERING PEOPLE'}
-            </Text>
-
-            {/* Sunshine Gold Line & Subtitle */}
-            <View style={styles.subHeadingRow}>
-              <View style={styles.goldUnderline} />
-              <Text style={styles.subHeadingText}>
-                {isBangla ? 'জাতির দক্ষতা বিনির্মাণে' : 'BUILDING A SKILLED NATION'}
+            {/* Main Headline & Subtitle */}
+            <Animated.View
+              style={{
+                opacity: titleAnim,
+                transform: [
+                  {
+                    translateY: titleAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [14, 0],
+                    }),
+                  },
+                ],
+              }}
+            >
+              <Text style={styles.mainTitle}>
+                {isBangla ? 'মানুষের ক্ষমতায়ন' : 'EMPOWERING PEOPLE'}
               </Text>
-            </View>
+
+              <View style={styles.subHeadingRow}>
+                <View style={styles.goldUnderline} />
+                <Text style={styles.subHeadingText}>
+                  {isBangla ? 'জাতির দক্ষতা বিনির্মাণে' : 'BUILDING A SKILLED NATION'}
+                </Text>
+              </View>
+            </Animated.View>
           </View>
         </Animated.View>
 
-        {/* CORE PILLARS SECTION (4 Glass Grid Items with Gold Icons) */}
+        {/* 3. CORE SIGNATURE PILLARS (Glass Grid with Staggered Slide-In) */}
         <Animated.View
           style={[
             styles.pillarsSection,
             {
-              opacity: fadeAnim,
+              opacity: pillarsAnim,
+              transform: [
+                {
+                  translateY: pillarsAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [18, 0],
+                  }),
+                },
+              ],
             },
           ]}
         >
@@ -303,38 +563,42 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
           </View>
         </Animated.View>
 
-        {/* ACTION FOOTER */}
+        {/* 4. ACTION FOOTER (Smooth Fade & Slide-In) */}
         <Animated.View
           style={[
             styles.footerSection,
             {
-              opacity: fadeAnim,
+              opacity: footerAnim,
+              transform: [
+                {
+                  translateY: footerAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [16, 0],
+                  }),
+                },
+              ],
             },
           ]}
         >
-          {/* Primary CTA: Get Started Now (Brand Coral #E34234) */}
+          {/* Primary CTA: Get Started Now */}
           <SpringPressable
-            onPress={() => {
-              triggerHaptic('medium');
-              onGetStarted?.();
-            }}
+            onPress={handleGetStarted}
             style={styles.primaryCtaBtn}
-            activeScale={0.97}
+            activeScale={0.96}
             accessibilityRole="button"
             accessibilityLabel="Get Started Now"
           >
             <Text style={styles.primaryCtaText}>
               {isBangla ? 'এখনই শুরু করুন' : 'Get Started Now'}
             </Text>
-            <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{ marginLeft: 6 }} />
+            <Animated.View style={{ transform: [{ translateX: arrowNudge }] }}>
+              <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{ marginLeft: 8 }} />
+            </Animated.View>
           </SpringPressable>
 
-          {/* Secondary CTA: Already have an account? Sign In (Dark Surface #1E293B) */}
+          {/* Secondary CTA: Already have an account? Sign In */}
           <TouchableOpacity
-            onPress={() => {
-              triggerHaptic('light');
-              onSignIn?.();
-            }}
+            onPress={handleSignIn}
             activeOpacity={0.8}
             style={styles.secondaryCtaBtn}
             accessibilityRole="button"
@@ -345,13 +609,14 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
             </Text>
           </TouchableOpacity>
 
-          {/* Official Website Link in Sunshine Gold */}
+          {/* Official Website Link */}
           <TouchableOpacity
             onPress={handleOpenWebsite}
             activeOpacity={0.7}
             style={styles.websiteLinkRow}
             accessibilityRole="link"
             accessibilityLabel="Visit official website at thrivingskill.com"
+            hitSlop={{ top: 8, bottom: 8, left: 12, right: 12 }}
           >
             <Ionicons name="globe-outline" size={13} color="#FFB606" />
             <Text style={styles.websiteLinkText}>www.thrivingskill.com</Text>
@@ -362,21 +627,21 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
             App Version 4.0.2.3
           </Text>
 
-          {/* iOS / Mobile Home Indicator Bar */}
+          {/* Home Indicator Bar */}
           <View style={styles.homeIndicatorBar} />
         </Animated.View>
-
       </View>
-    </View>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
   outerContainer: {
-    flex: 1,
+    ...StyleSheet.absoluteFill,
     backgroundColor: '#102F53', // Brand Deep Navy
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 9999,
   },
   topAmbientGold: {
     position: 'absolute',
@@ -423,9 +688,9 @@ const styles = StyleSheet.create({
   logoWrap: {
     width: 38,
     height: 38,
-    borderRadius: 11,
+    borderRadius: 12,
     backgroundColor: '#FFFFFF',
-    padding: 2,
+    padding: 3,
     borderWidth: 1.5,
     borderColor: '#FFB606', // Sunshine Gold Border
     alignItems: 'center',
@@ -467,7 +732,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 182, 6, 0.35)', // Gold tinted border
+    borderColor: 'rgba(255, 182, 6, 0.35)',
     borderRadius: 20,
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -486,7 +751,7 @@ const styles = StyleSheet.create({
   },
   langTextActive: {
     fontWeight: '800',
-    color: '#FFB606', // Sunshine Gold Active
+    color: '#FFB606',
   },
   langDivider: {
     fontSize: 10.5,
@@ -525,12 +790,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(16, 47, 83, 0.92)', // Brand Deep Navy Glass
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    backgroundColor: 'rgba(16, 47, 83, 0.94)',
+    paddingHorizontal: 11,
+    paddingVertical: 5.5,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 182, 6, 0.55)', // Sunshine Gold Border
+    borderColor: 'rgba(255, 182, 6, 0.55)',
     shadowColor: '#FFB606',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.35,
@@ -542,7 +807,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: 'rgba(255, 182, 6, 0.2)',
+    backgroundColor: 'rgba(255, 182, 6, 0.22)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -553,12 +818,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(16, 47, 83, 0.92)', // Brand Deep Navy Glass
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    backgroundColor: 'rgba(16, 47, 83, 0.94)',
+    paddingHorizontal: 11,
+    paddingVertical: 5.5,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(227, 66, 52, 0.55)', // Coral Border
+    borderColor: 'rgba(227, 66, 52, 0.55)',
     shadowColor: '#E34234',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.35,
@@ -570,7 +835,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: 'rgba(227, 66, 52, 0.2)',
+    backgroundColor: 'rgba(227, 66, 52, 0.22)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -588,9 +853,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255, 182, 6, 0.16)', // Gold background
+    backgroundColor: 'rgba(255, 182, 6, 0.16)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 182, 6, 0.45)', // Gold border
+    borderColor: 'rgba(255, 182, 6, 0.45)',
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3.5,
@@ -600,7 +865,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#FFB606', // Sunshine Gold
+    backgroundColor: '#FFB606',
     marginRight: 6,
   },
   mottoBadgeText: {
@@ -627,13 +892,13 @@ const styles = StyleSheet.create({
   goldUnderline: {
     width: 28,
     height: 2.5,
-    backgroundColor: '#FFB606', // Sunshine Gold
+    backgroundColor: '#FFB606',
     borderRadius: 2,
   },
   subHeadingText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#FFB606', // Sunshine Gold
+    color: '#FFB606',
     letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
@@ -645,8 +910,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: 'rgba(30, 41, 59, 0.85)', // Dark Surface #1E293B
     borderWidth: 1,
-    borderColor: 'rgba(255, 182, 6, 0.25)', // Subtle Gold border
-    borderRadius: shape.large,
+    borderColor: 'rgba(255, 182, 6, 0.25)',
+    borderRadius: 16,
     paddingVertical: 12,
     paddingHorizontal: 6,
     alignItems: 'center',
@@ -659,10 +924,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   pillarIconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 11,
-    backgroundColor: 'rgba(255, 182, 6, 0.12)', // Sunshine Gold tint
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 182, 6, 0.12)',
     borderWidth: 1,
     borderColor: 'rgba(255, 182, 6, 0.3)',
     alignItems: 'center',
@@ -686,7 +951,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#E34234', // Brand Crimson/Coral
+    backgroundColor: '#E34234', // Brand Coral
     borderRadius: shape.medium,
     paddingVertical: 13,
     paddingHorizontal: 20,
@@ -706,9 +971,9 @@ const styles = StyleSheet.create({
   secondaryCtaBtn: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(30, 41, 59, 0.85)', // Dark Surface #1E293B
+    backgroundColor: 'rgba(30, 41, 59, 0.85)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 182, 6, 0.3)', // Subtle Gold Border
+    borderColor: 'rgba(255, 182, 6, 0.3)',
     borderRadius: shape.medium,
     paddingVertical: 11,
     paddingHorizontal: 16,
@@ -730,7 +995,7 @@ const styles = StyleSheet.create({
   websiteLinkText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#FFB606', // Sunshine Gold
+    color: '#FFB606',
     letterSpacing: 0.4,
   },
   versionTag: {
