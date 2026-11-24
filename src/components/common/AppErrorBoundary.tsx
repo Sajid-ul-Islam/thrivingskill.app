@@ -95,7 +95,7 @@ export class AppErrorBoundary extends Component<Props, State> {
 
             <View style={styles.card}>
               <View style={styles.iconCircle}>
-                <Ionicons name="refresh-circle" size={40} color="#FFB606" />
+                <Ionicons name="refresh-circle" size={40} color="#E34234" />
               </View>
               <Text style={styles.cardTitle}>Workspace Interrupted</Text>
               <Text style={styles.cardSubtitle}>
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
   tagline: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#FFB606',
+    color: '#E34234',
     marginBottom: 24,
     textAlign: 'center',
   },
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: 'rgba(255, 182, 6, 0.15)',
+    backgroundColor: 'rgba(227, 66, 52, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 14,
@@ -226,20 +226,20 @@ const styles = StyleSheet.create({
   primaryBtn: {
     width: '100%',
     height: 48,
-    backgroundColor: '#FFB606',
+    backgroundColor: '#E34234',
     borderRadius: 12,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 10,
-    shadowColor: '#FFB606',
+    shadowColor: '#E34234',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 3,
   },
   primaryBtnText: {
-    color: '#102F53',
+    color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '800',
   },

@@ -214,8 +214,8 @@ export const ThriveGenHub: React.FC<ThriveGenHubProps> = ({
       {/* Header Banner */}
       <View style={styles.header}>
         <View style={styles.badgeRow}>
-          <View style={[styles.brandPill, { backgroundColor: '#FFB606' }]}>
-            <Ionicons name="sparkles" size={11} color="#102F53" />
+          <View style={[styles.brandPill, { backgroundColor: '#E34234' }]}>
+            <Ionicons name="sparkles" size={11} color="#FFFFFF" />
             <Text style={styles.brandPillText}>THRIVE GEN</Text>
           </View>
           <View style={[styles.studentsTag, { backgroundColor: isDark ? 'rgba(16, 47, 83, 0.4)' : '#E8EEF5' }]}>
@@ -474,7 +474,7 @@ const styles = StyleSheet.create({
   brandPillText: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#102F53',
+    color: '#FFFFFF',
     letterSpacing: 0.6,
   },
   studentsTag: {

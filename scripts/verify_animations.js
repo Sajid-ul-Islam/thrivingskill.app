@@ -196,6 +196,43 @@ assert(
   'In Progress, History, Completed, Certificates, Saved wrapped in AnimatedTabContent.'
 );
 
+// TEST 7: Milestone 1 Motion Innovations - Sliding Tab Bar Indicator & Staggered Feed Entrance
+const slidingTabExists = fs.existsSync(path.join(compDir, 'SlidingTabBarIndicator.tsx'));
+const staggeredFadeExists = fs.existsSync(path.join(compDir, 'StaggeredFadeIn.tsx'));
+const screenTransSrc = fs.readFileSync(path.join(compDir, 'ScreenTransition.tsx'), 'utf8');
+const homeSrc = fs.readFileSync(path.join(__dirname, '../src/screens/HomeScreen.tsx'), 'utf8');
+const coursesSrc = fs.readFileSync(path.join(__dirname, '../src/screens/CoursesScreen.tsx'), 'utf8');
+
+assert(
+  slidingTabExists && staggeredFadeExists,
+  'Milestone 1 animation components exist',
+  'SlidingTabBarIndicator.tsx and StaggeredFadeIn.tsx created in src/components/common.'
+);
+
+assert(
+  indexCommon.includes('SlidingTabBarIndicator') && indexCommon.includes('StaggeredFadeIn'),
+  'Milestone 1 animation components exported',
+  'SlidingTabBarIndicator and StaggeredFadeIn exported in src/components/common/index.ts.'
+);
+
+assert(
+  appTsx.includes('<SlidingTabBarIndicator') && appTsx.includes('tabBarWidth'),
+  'App.tsx mounts SlidingTabBarIndicator',
+  'Bottom navigation bar features fluid morphing active indicator pill.'
+);
+
+assert(
+  screenTransSrc.includes('isReduceMotionEnabled') && screenTransSrc.includes('scaleAnim'),
+  'ScreenTransition features bidirectional micro-scale and reduced motion',
+  'Subtle depth scaling (0.985 -> 1.0) and WCAG AA AccessibilityInfo reduceMotion compliance.'
+);
+
+assert(
+  homeSrc.includes('<StaggeredFadeIn') && coursesSrc.includes('<StaggeredFadeIn'),
+  'HomeScreen and CoursesScreen implement StaggeredFadeIn',
+  'Course feeds cascade smoothly without visual content popping.'
+);
+
 console.log('\n================================================================');
 console.log(`TOTAL PASS: ${passCount} | TOTAL FAIL: ${failCount}`);
 console.log('================================================================\n');

@@ -200,14 +200,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: shape.full,
-    backgroundColor: '#FFB606',
+    backgroundColor: '#E34234',
     minHeight: 44,
     minWidth: 64,
     alignItems: 'center',
     justifyContent: 'center',
   },
   actionText: {
-    color: '#102F53',
+    color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 13,
     letterSpacing: 0.3,
@@ -219,6 +219,6 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: 3,
-    backgroundColor: '#FFB606',
+    backgroundColor: '#E34234',
   },
 });

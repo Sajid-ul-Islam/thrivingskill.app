@@ -28,6 +28,7 @@ import {
   DepartmentCategoryGrid,
   CategoryIllustrationIcon,
   CourseQuickPeekModal,
+  StaggeredFadeIn,
   CANONICAL_DEPARTMENTS_MAP,
   getCanonicalDepartmentId,
 } from '../components';
@@ -695,7 +696,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
 
   // Render course item or department carousel row
   const renderItem = useCallback(
-    ({ item }: { item: any }) => {
+    ({ item, index }: { item: any; index: number }) => {
       if (isBrowsingDepartments) {
         const dept = item as {
           id: string;
@@ -742,19 +743,21 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
 
             {deptItemCount === 1 ? (
               <View style={{ paddingHorizontal: 16 }}>
-                <CourseCard
-                  course={dept.courses[0]}
-                  horizontal={true}
-                  isBookmarked={bookmarks.includes(dept.courses[0].id)}
-                  isEnrolled={!!userProgress[dept.courses[0].id]}
-                  onPress={() => onNavigateToCourse(dept.courses[0].id)}
-                  onLongPress={() => handleOpenQuickPeek(dept.courses[0])}
-                />
+                <StaggeredFadeIn index={0}>
+                  <CourseCard
+                    course={dept.courses[0]}
+                    horizontal={true}
+                    isBookmarked={bookmarks.includes(dept.courses[0].id)}
+                    isEnrolled={!!userProgress[dept.courses[0].id]}
+                    onPress={() => onNavigateToCourse(dept.courses[0].id)}
+                    onLongPress={() => handleOpenQuickPeek(dept.courses[0])}
+                  />
+                </StaggeredFadeIn>
               </View>
             ) : isTablet && deptItemCount === 2 && !isLandscape ? (
               <View style={{ flexDirection: 'row', paddingHorizontal: 16, gap: 12, alignItems: 'stretch' }}>
-                {dept.courses.map((courseItem) => (
-                  <View key={`dept-course-${dept.id}-${courseItem.id}`} style={{ flex: 1, height: '100%', alignSelf: 'stretch' }}>
+                {dept.courses.map((courseItem, idx) => (
+                  <StaggeredFadeIn key={`dept-course-${dept.id}-${courseItem.id}`} index={idx} style={{ flex: 1, height: '100%', alignSelf: 'stretch' }}>
                     <CourseCard
                       course={courseItem}
                       isBookmarked={bookmarks.includes(courseItem.id)}
@@ -762,7 +765,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                       onPress={() => onNavigateToCourse(courseItem.id)}
                       onLongPress={() => handleOpenQuickPeek(courseItem)}
                     />
-                  </View>
+                  </StaggeredFadeIn>
                 ))}
               </View>
             ) : (
@@ -776,8 +779,8 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                 maxToRenderPerBatch={4}
                 windowSize={3}
                 removeClippedSubviews={Platform.OS === 'android'}
-                renderItem={({ item: courseItem }) => (
-                  <View style={{ width: deptCardWidth, alignSelf: 'stretch' }}>
+                renderItem={({ item: courseItem, index: cIdx }) => (
+                  <StaggeredFadeIn index={cIdx} style={{ width: deptCardWidth, alignSelf: 'stretch' }}>
                     <CourseCard
                       course={courseItem}
                       isBookmarked={bookmarks.includes(courseItem.id)}
@@ -785,7 +788,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                       onPress={() => onNavigateToCourse(courseItem.id)}
                       onLongPress={() => handleOpenQuickPeek(courseItem)}
                     />
-                  </View>
+                  </StaggeredFadeIn>
                 )}
               />
             )}
@@ -794,7 +797,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
       }
 
       return (
-        <View style={[styles.cardItemWrapper, effectiveColumns > 1 && styles.gridCardItem]}>
+        <StaggeredFadeIn index={index} style={[styles.cardItemWrapper, effectiveColumns > 1 && styles.gridCardItem]}>
           <CourseCard
             course={item as Course}
             horizontal={viewMode === 'list'}
@@ -803,7 +806,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
             onPress={() => onNavigateToCourse(item.id)}
             onLongPress={() => handleOpenQuickPeek(item as Course)}
           />
-        </View>
+        </StaggeredFadeIn>
       );
     },
     [isBrowsingDepartments, colors, isDark, isBangla, handleCategorySelect, onNavigateToCourse, viewMode, bookmarks, userProgress, effectiveColumns, width, isTablet, isLandscape, handleOpenQuickPeek]
@@ -953,12 +956,12 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               <Ionicons
                 name="school-outline"
                 size={12}
-                color={selectedLevel === 'Beginner' ? (isDark ? '#0F192C' : '#FFFFFF') : colors.primary}
+                color={selectedLevel === 'Beginner' ? (isDark ? colors.onSecondary : '#FFFFFF') : colors.primary}
               />
               <Text
                 style={[
                   styles.quickFilterText,
-                  { color: selectedLevel === 'Beginner' ? (isDark ? '#0F192C' : '#FFFFFF') : colors.text },
+                  { color: selectedLevel === 'Beginner' ? (isDark ? colors.onSecondary : '#FFFFFF') : colors.text },
                 ]}
               >
                 {isBangla ? 'বিগিনার' : 'Beginner'}

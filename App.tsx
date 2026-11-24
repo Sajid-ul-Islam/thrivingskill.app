@@ -56,6 +56,7 @@ import {
   AppUpdateModal,
   SupportContactModal,
   ScreenTransition,
+  SlidingTabBarIndicator,
   CelebrationToast,
   ActionToast,
   ModernSnackbar,
@@ -229,6 +230,9 @@ const MainAppContent: React.FC = () => {
     navigateToCourse,
     navigateToLesson,
   } = useNavigationStack({ initialTab: 'Home' });
+
+  // Tab bar dimension for fluid sliding indicator
+  const [tabBarWidth, setTabBarWidth] = useState(0);
 
   useEffect(() => {
     TelemetryService.addBreadcrumb({
@@ -488,7 +492,23 @@ const MainAppContent: React.FC = () => {
             },
           ]}
         >
-          <View style={styles.tabBarInner}>
+          <View
+            style={styles.tabBarInner}
+            onLayout={(e) => {
+              const width = e.nativeEvent.layout.width;
+              if (width > 0 && width !== tabBarWidth) {
+                setTabBarWidth(width);
+              }
+            }}
+          >
+            {/* Sliding Morphing Active Tab Indicator */}
+            <SlidingTabBarIndicator
+              activeIndex={tabItems.findIndex((t) => t.id === activeTab)}
+              tabCount={tabItems.length}
+              containerWidth={tabBarWidth}
+              isDark={isDark}
+              accentColor={colors.accent}
+            />
             {tabItems.map((tab) => {
               const isActive = activeTab === tab.id;
               return (

@@ -44,12 +44,12 @@ const TOAST_THEME: Record<
   },
   info: {
     bg: '#102F53',
-    border: '#FFB606',
+    border: '#E34234',
     icon: 'information-circle',
-    iconBg: 'rgba(255, 182, 6, 0.25)',
-    actionBg: '#FFB606',
-    actionText: '#102F53',
-    accentGlow: 'rgba(255, 182, 6, 0.3)',
+    iconBg: 'rgba(227, 66, 52, 0.25)',
+    actionBg: '#E34234',
+    actionText: '#FFFFFF',
+    accentGlow: 'rgba(227, 66, 52, 0.3)',
   },
   warning: {
     bg: '#78350F',

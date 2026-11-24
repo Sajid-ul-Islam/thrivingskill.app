@@ -39,7 +39,10 @@ check(
 const ruleRel = '.agents/rules/ui-ux-design-laws.md';
 const ruleExists = fs.existsSync(path.join(ROOT, ruleRel));
 const ruleSrc = ruleExists ? read(ruleRel) : '';
-const agentsMd = read('AGENTS.md');
+const agentsMdPath = fs.existsSync(path.join(ROOT, 'AGENTS.md'))
+  ? 'AGENTS.md'
+  : '.agents/rules/AGENTS.md';
+const agentsMd = fs.existsSync(path.join(ROOT, agentsMdPath)) ? read(agentsMdPath) : '';
 check(
   'App Workspace Rule Exists & Linked in AGENTS.md',
   ruleExists &&

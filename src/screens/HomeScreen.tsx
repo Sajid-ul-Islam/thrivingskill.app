@@ -45,6 +45,7 @@ import {
   HomeBlogInsightsFeed,
   BlogModal,
   SupportContactModal,
+  StaggeredFadeIn,
 } from '../components';
 import type {
   HomeFeatureCardItem,
@@ -203,20 +204,22 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
       {/* If single course in category, render featured wide horizontal card */}
       {itemCount === 1 ? (
         <View style={{ paddingHorizontal: 16 }}>
-          <CourseCard
-            course={displayCourses[0]}
-            horizontal={true}
-            onPress={() => {
-              triggerHaptic('light');
-              onNavigateToCourse(displayCourses[0].id);
-            }}
-          />
+          <StaggeredFadeIn index={0}>
+            <CourseCard
+              course={displayCourses[0]}
+              horizontal={true}
+              onPress={() => {
+                triggerHaptic('light');
+                onNavigateToCourse(displayCourses[0].id);
+              }}
+            />
+          </StaggeredFadeIn>
         </View>
       ) : isTablet && itemCount === 2 && !isLandscape ? (
         /* If 2 courses on tablet portrait, display both side-by-side filling the width */
         <View style={{ flexDirection: 'row', paddingHorizontal: 16, gap: CARD_GAP, alignItems: 'stretch' }}>
-          {displayCourses.map((item) => (
-            <View key={`cat-row-${title}-${item.id}`} style={{ flex: 1, height: '100%', alignSelf: 'stretch' }}>
+          {displayCourses.map((item, idx) => (
+            <StaggeredFadeIn key={`cat-row-${title}-${item.id}`} index={idx} style={{ flex: 1, height: '100%', alignSelf: 'stretch' }}>
               <CourseCard
                 course={item}
                 onPress={() => {
@@ -224,7 +227,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
                   onNavigateToCourse(item.id);
                 }}
               />
-            </View>
+            </StaggeredFadeIn>
           ))}
         </View>
       ) : (
@@ -256,8 +259,8 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
             const offX = e.nativeEvent.contentOffset.x;
             indexRef.current = Math.round(offX / cardSnap);
           }}
-          renderItem={({ item }) => (
-            <View style={{ width: cardWidth, alignSelf: 'stretch' }}>
+          renderItem={({ item, index }) => (
+            <StaggeredFadeIn index={index} style={{ width: cardWidth, alignSelf: 'stretch' }}>
               <CourseCard
                 course={item}
                 onPress={() => {
@@ -265,7 +268,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
                   onNavigateToCourse(item.id);
                 }}
               />
-            </View>
+            </StaggeredFadeIn>
           )}
         />
       )}

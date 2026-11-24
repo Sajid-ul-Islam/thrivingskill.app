@@ -103,7 +103,7 @@ export const CelebrationToast: React.FC<CelebrationToastProps> = ({
         accessibilityLabel={`${data.title}: ${data.subtitle}`}
       >
         <View style={styles.iconCircle}>
-          <Ionicons name={(data.icon as any) || 'trophy'} size={20} color="#FFB606" />
+          <Ionicons name={(data.icon as any) || 'trophy'} size={20} color="#E34234" />
         </View>
 
         <View style={styles.textCol}>
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: '#FFB606',
+    borderColor: '#E34234',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: 'rgba(255, 182, 6, 0.2)',
+    backgroundColor: 'rgba(227, 66, 52, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -184,14 +184,14 @@ const styles = StyleSheet.create({
   xpBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFB606',
+    backgroundColor: '#E34234',
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 8,
     gap: 3,
   },
   xpText: {
-    color: '#102F53',
+    color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '900',
   },

@@ -522,10 +522,10 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
         </View>
       </View>
 
-      {/* Security, Library & Storage (Miller's Law: <= 5 items per Gestalt group) */}
+      {/* Security & Notifications (Miller's Law: 3 items per Gestalt group) */}
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
-          {isBangla ? 'নিরাপত্তা ও লাইব্রেরি' : 'SECURITY & LIBRARY'}
+          {isBangla ? 'নিরাপত্তা ও নোটিফিকেশন' : 'SECURITY & NOTIFICATIONS'}
         </Text>
         <View
           style={[
@@ -583,6 +583,38 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
             <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           </TouchableOpacity>
 
+          {/* Push notifications */}
+          <TouchableOpacity
+            style={[styles.settingRow, { borderBottomWidth: 0 }]}
+            onPress={() => {
+              triggerHaptic('light');
+              onOpenNotifications?.();
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={isBangla ? 'নোটিফিকেশন সেন্টার খুলুন' : 'Open Notification Center'}
+          >
+            <View style={styles.settingLeft}>
+              <Ionicons name="notifications-outline" size={20} color={colors.text} />
+              <Text style={[styles.settingLabel, { color: colors.text }]}>
+                {isBangla ? 'নোটিফিকেশন সেন্টার' : 'Notification Center'}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Library & System Storage (Miller's Law: <= 5 items per Gestalt group) */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+          {isBangla ? 'লাইব্রেরি ও সিস্টেম' : 'LIBRARY & SYSTEM STORAGE'}
+        </Text>
+        <View
+          style={[
+            styles.cardGroup,
+            { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+          ]}
+        >
           {/* Enrolled Courses & Library History */}
           <TouchableOpacity
             style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
@@ -603,25 +635,6 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                   {isBangla ? 'আপনার সিঙ্ক করা সকল LearnPress ও WooCommerce অর্ডার' : 'Your synced LearnPress & WooCommerce orders'}
                 </Text>
               </View>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-          </TouchableOpacity>
-
-          {/* Push notifications */}
-          <TouchableOpacity
-            style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-            onPress={() => {
-              triggerHaptic('light');
-              onOpenNotifications?.();
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={isBangla ? 'নোটিফিকেশন সেন্টার খুলুন' : 'Open Notification Center'}
-          >
-            <View style={styles.settingLeft}>
-              <Ionicons name="notifications-outline" size={20} color={colors.text} />
-              <Text style={[styles.settingLabel, { color: colors.text }]}>
-                {isBangla ? 'নোটিফিকেশন সেন্টার' : 'Notification Center'}
-              </Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           </TouchableOpacity>

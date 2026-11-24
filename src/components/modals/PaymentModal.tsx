@@ -807,7 +807,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               renderLoading={() => (
                 <View style={[styles.drawerLoadingState, { backgroundColor: isDark ? '#0F172A' : '#FFFFFF' }]}>
                   <View style={styles.drawerLoadingIconWrap}>
-                    <ActivityIndicator size="large" color="#FFB606" />
+                    <ActivityIndicator size="large" color="#E34234" />
                   </View>
                   <Text style={[styles.drawerLoadingTitle, { color: colors.text }]}>
                     {isBangla ? 'নিরাপদ চেকআউট লোড হচ্ছে...' : 'Connecting to Secure Checkout...'}
@@ -1003,7 +1003,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     </Text>
                     {isBundle && (
                       <View style={{ backgroundColor: '#102F53', paddingHorizontal: 8, paddingVertical: 3, borderRadius: shape.full }}>
-                        <Text style={{ color: '#FFB606', fontSize: 10, fontWeight: '800' }}>
+                        <Text style={{ color: '#E34234', fontSize: 10, fontWeight: '800' }}>
                           {isBangla ? 'স্পেশাল বান্ডেল (৫টি কোর্স)' : 'SPECIAL BUNDLE (5 COURSES)'}
                         </Text>
                       </View>
@@ -1710,7 +1710,7 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#FFB606',
+    backgroundColor: '#E34234',
   },
   drawerWebView: {
     flex: 1,

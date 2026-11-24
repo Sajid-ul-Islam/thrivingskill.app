@@ -92,14 +92,14 @@ const BANNER_THEME: Record<
   },
   promo: {
     bg: '#102F53',
-    border: '#FFB606',
+    border: '#E34234',
     icon: 'sparkles-outline',
-    iconColor: '#FFB606',
-    iconBg: 'rgba(255, 182, 6, 0.2)',
-    titleColor: '#FFB606',
+    iconColor: '#E34234',
+    iconBg: 'rgba(227, 66, 52, 0.2)',
+    titleColor: '#E34234',
     textColor: '#F8FAFC',
-    actionBg: '#FFB606',
-    actionText: '#102F53',
+    actionBg: '#E34234',
+    actionText: '#FFFFFF',
   },
 };
 

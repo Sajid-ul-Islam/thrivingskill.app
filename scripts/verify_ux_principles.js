@@ -29,11 +29,11 @@ check('HomeScreen is focused on learning launchpad without bloated footer walls'
   assert(home.includes('gatewayCard'), 'HomeScreen should render compact Enterprise & About gateway card');
 });
 
-check('ProfileScreen separates Learning & Stats from Settings & Account via segmented tabs', () => {
-  const profile = read('src/screens/ProfileScreen.tsx') + read('src/components/profile/ProfileLearningPortfolio.tsx');
-  assert(profile.includes("profileSection === 'learning'"), 'ProfileScreen missing learning segment');
-  assert(profile.includes("profileSection === 'settings'"), 'ProfileScreen missing settings segment');
-  assert(profile.includes('ProfileLearningAnalytics'), 'ProfileScreen missing CR-05 ProfileLearningAnalytics');
+check('ProfileScreen separates Learning & Stats from Settings & Account via structured Gestalt sections', () => {
+  const profile = read('src/screens/ProfileScreen.tsx') + read('src/components/profile/ProfileCourseSummary.tsx') + read('src/components/profile/ProfilePreferencesSection.tsx');
+  assert(profile.includes('ProfileCourseSummary') || profile.includes("profileSection === 'learning'"), 'ProfileScreen missing learning summary section');
+  assert(profile.includes('ProfilePreferencesSection') || profile.includes("profileSection === 'settings'"), 'ProfileScreen missing preferences/settings section');
+  assert(profile.includes('lpStats') || profile.includes('ProfileLearningAnalytics'), 'ProfileScreen missing LearnPress stats analytics');
 });
 
 // 2. Progressive disclosure

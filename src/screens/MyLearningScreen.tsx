@@ -1009,14 +1009,14 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   streakRankBadge: {
-    backgroundColor: '#FFB606',
+    backgroundColor: '#E34234',
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 6,
     flexShrink: 0,
   },
   streakRankText: {
-    color: '#102F53',
+    color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '800',
   },

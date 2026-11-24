@@ -45,7 +45,7 @@ export const lightColors = {
   borderSubtle: '#F1F5F9',
   text: '#102F53', // Primary Text in Deep Royal Blue
   textMuted: '#64748B', // Secondary Text
-  textLight: '#94A3B8',
+  textLight: '#64748B', // WCAG AA Compliant Tertiary Text (>= 4.5:1)
   textInverse: '#FFFFFF',
   onPrimary: '#FFFFFF', // Pure White on Deep Royal Blue
   onSecondary: '#102F53',
