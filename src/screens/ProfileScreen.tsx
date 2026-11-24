@@ -656,6 +656,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             triggerHaptic('light');
             setEditProfileModalVisible(true);
           }}
+          onViewFullProfile={() => {
+            triggerHaptic('light');
+            setFullProfileModalVisible(true);
+          }}
         />
 
         {/* Enrolled Courses, Verified Certificates & Achievements Summary */}
@@ -848,6 +852,20 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         onClose={() => setLocalSearchModalVisible(false)}
         onSelectCourse={onNavigateToCourse}
         onSelectLesson={onNavigateToLesson}
+      />
+
+      {/* Full Profile View Modal */}
+      <FullProfileModal
+        visible={fullProfileModalVisible}
+        onClose={() => setFullProfileModalVisible(false)}
+        onEditProfile={() => setEditProfileModalVisible(true)}
+        user={user}
+        isAuthenticated={isAuthenticated}
+        isAdmin={isAdmin}
+        activeWorkspaceName={activeWorkspace?.name || 'Default Workspace'}
+        colors={colors}
+        isDark={isDark}
+        isBangla={isBangla}
       />
 
       {/* Official Profile Settings Modal (5 tabs) */}
