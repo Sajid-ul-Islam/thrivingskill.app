@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Image,
   TextInput,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -31,6 +32,79 @@ interface InstructorsModalProps {
 
 type FilterCategory = 'all' | 'leadership' | 'faculty';
 
+interface AuthorAvatarProps {
+  name: string;
+  avatarUrl?: string;
+  localAvatar?: any;
+  isFounder?: boolean;
+  colors: any;
+  isDark: boolean;
+}
+
+const AuthorAvatar: React.FC<AuthorAvatarProps> = ({
+  name,
+  avatarUrl,
+  localAvatar,
+  isFounder,
+  colors,
+  isDark,
+}) => {
+  const [hasError, setHasError] = useState(false);
+
+  const getInitials = (text: string) => {
+    if (!text) return 'TS';
+    const parts = text.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
+
+  const avatarSource = localAvatar || getInstructorAvatarSource(name, avatarUrl);
+
+  return (
+    <View style={styles.avatarWrapper}>
+      {!hasError && avatarSource ? (
+        <Image
+          source={avatarSource}
+          style={[
+            styles.avatar,
+            {
+              borderColor: isFounder ? '#E34234' : colors.border,
+            },
+          ]}
+          onError={() => setHasError(true)}
+          {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+        />
+      ) : (
+        <View
+          style={[
+            styles.avatar,
+            styles.avatarFallback,
+            {
+              backgroundColor: isFounder ? '#102F53' : (isDark ? '#1E293B' : '#E2E8F0'),
+              borderColor: isFounder ? '#E34234' : colors.border,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.avatarInitials,
+              { color: isFounder ? '#FFFFFF' : (isDark ? '#F8FAFC' : '#102F53') },
+            ]}
+          >
+            {getInitials(name)}
+          </Text>
+        </View>
+      )}
+
+      {isFounder && (
+        <View style={styles.founderCrownPill}>
+          <Ionicons name="star" size={10} color="#FFFFFF" />
+        </View>
+      )}
+    </View>
+  );
+};
+
 export const InstructorsModal: React.FC<InstructorsModalProps> = ({
   visible,
   onClose,
@@ -42,13 +116,33 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
 
   const [activeFilter, setActiveFilter] = useState<FilterCategory>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [instructorsList, setInstructorsList] = useState<CourseAuthorItem[]>(() =>
+    SiteNavigationService.getInstructors()
+  );
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const instructors = useMemo(() => {
-    return SiteNavigationService.getInstructors();
-  }, []);
+  const loadLiveInstructors = async () => {
+    setIsRefreshing(true);
+    try {
+      const liveData = await SiteNavigationService.fetchInstructorsFromLiveApi();
+      if (liveData && liveData.length > 0) {
+        setInstructorsList(liveData);
+      }
+    } catch {
+      // Fallback to canonical instructors preserved
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (visible) {
+      loadLiveInstructors();
+    }
+  }, [visible]);
 
   const filteredInstructors = useMemo(() => {
-    let list = instructors;
+    let list = instructorsList;
 
     if (activeFilter === 'leadership') {
       list = list.filter((item) => item.category === 'founder' || item.category === 'leadership' || item.isFounder);
@@ -68,7 +162,7 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
     }
 
     return list;
-  }, [instructors, activeFilter, searchQuery]);
+  }, [instructorsList, activeFilter, searchQuery]);
 
   if (!visible) return null;
 
@@ -87,9 +181,9 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
   };
 
   const counts = {
-    all: instructors.length,
-    leadership: instructors.filter((item) => item.category === 'founder' || item.category === 'leadership' || item.isFounder).length,
-    faculty: instructors.filter((item) => item.category === 'faculty' && !item.isFounder).length,
+    all: instructorsList.length,
+    leadership: instructorsList.filter((item) => item.category === 'founder' || item.category === 'leadership' || item.isFounder).length,
+    faculty: instructorsList.filter((item) => item.category === 'faculty' && !item.isFounder).length,
   };
 
   return (
@@ -107,28 +201,48 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
           ]}
         >
           <View style={styles.headerLeft}>
-            <View style={[styles.iconWrap, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.15)' : '#FFFBEB' }]}>
-              <Ionicons name="people" size={20} color="#FFB606" />
+            <View style={[styles.iconWrap, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2' }]}>
+              <Ionicons name="people" size={20} color="#E34234" />
             </View>
-            <View>
-              <Text style={[styles.headerTitle, { color: colors.text }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
                 {isBangla ? 'আমাদের সম্মানিত শিক্ষক ও পরিচালনা পর্ষদ' : 'Leadership & Certified Faculty'}
               </Text>
-              <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>
+              <Text style={[styles.headerSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
                 {isBangla ? 'থ্রাইভিং স্কিলসের প্রতিষ্ঠাতা, লিডারশিপ ও প্রশিক্ষক' : 'Founders, Industry Leaders & Master Mentors'}
               </Text>
             </View>
           </View>
 
-          <TouchableOpacity
-            onPress={onClose}
-            style={[styles.closeButton, { backgroundColor: colors.surfaceSubtle }]}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            accessibilityRole="button"
-            accessibilityLabel="Close instructors modal"
-          >
-            <Ionicons name="close" size={20} color={colors.text} />
-          </TouchableOpacity>
+          <View style={styles.headerRightActions}>
+            <TouchableOpacity
+              onPress={() => {
+                triggerHaptic('light');
+                loadLiveInstructors();
+              }}
+              disabled={isRefreshing}
+              style={[styles.headerActionBtn, { backgroundColor: colors.surfaceSubtle }]}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel="Sync instructor data from live platform"
+            >
+              {isRefreshing ? (
+                <ActivityIndicator size="small" color="#E34234" />
+              ) : (
+                <Ionicons name="sync-outline" size={18} color={colors.text} />
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={onClose}
+              style={[styles.closeButton, { backgroundColor: colors.surfaceSubtle }]}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel="Close instructors modal"
+            >
+              <Ionicons name="close" size={20} color={colors.text} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Search & Filter Bar */}
@@ -168,7 +282,7 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
               <Text
                 style={[
                   styles.segmentTabText,
-                  { color: activeFilter === 'all' ? (isDark ? '#FFB606' : '#102F53') : colors.textMuted },
+                  { color: activeFilter === 'all' ? (isDark ? '#E34234' : '#102F53') : colors.textMuted },
                   activeFilter === 'all' && styles.segmentTabTextActive,
                 ]}
               >
@@ -190,7 +304,7 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
               <Text
                 style={[
                   styles.segmentTabText,
-                  { color: activeFilter === 'leadership' ? (isDark ? '#FFB606' : '#102F53') : colors.textMuted },
+                  { color: activeFilter === 'leadership' ? (isDark ? '#E34234' : '#102F53') : colors.textMuted },
                   activeFilter === 'leadership' && styles.segmentTabTextActive,
                 ]}
               >
@@ -212,7 +326,7 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
               <Text
                 style={[
                   styles.segmentTabText,
-                  { color: activeFilter === 'faculty' ? (isDark ? '#FFB606' : '#102F53') : colors.textMuted },
+                  { color: activeFilter === 'faculty' ? (isDark ? '#E34234' : '#102F53') : colors.textMuted },
                   activeFilter === 'faculty' && styles.segmentTabTextActive,
                 ]}
               >
@@ -251,10 +365,10 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
             </View>
             <SpringPressable
               onPress={handleBecomeInstructor}
-              style={[styles.joinBtn, { backgroundColor: '#FFB606' }]}
+              style={[styles.joinBtn, { backgroundColor: '#102F53' }]}
               activeScale={0.96}
             >
-              <Ionicons name="person-add-outline" size={16} color="#102F53" style={{ marginRight: 6 }} />
+              <Ionicons name="person-add-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
               <Text style={styles.joinBtnText}>
                 {isBangla ? 'আবেদন করুন →' : 'Apply Now →'}
               </Text>
@@ -304,7 +418,6 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
 
           {/* Authors List */}
           {filteredInstructors.map((author) => {
-            const avatarSource = author.localAvatar || getInstructorAvatarSource(author.name, author.avatarUrl);
             const isFounder = author.isFounder || author.category === 'founder';
             const badgeLabel = (isBangla && author.banglaBadge) ? author.banglaBadge : author.badge;
             const expertiseList = (isBangla && author.banglaExpertise) ? author.banglaExpertise : author.expertise;
@@ -316,7 +429,7 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
                   styles.authorCard,
                   {
                     backgroundColor: colors.surfaceCard,
-                    borderColor: isFounder ? (isDark ? '#F59E0B66' : '#FDE68A') : colors.border,
+                    borderColor: isFounder ? (isDark ? 'rgba(227, 66, 52, 0.45)' : '#FECACA') : colors.border,
                     borderWidth: isFounder ? 1.5 : 1,
                     shadowColor: colors.cardShadow,
                   },
@@ -324,23 +437,14 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
               >
                 {/* Author Card Header */}
                 <View style={styles.authorHeader}>
-                  <View style={styles.avatarWrapper}>
-                    <Image
-                      source={avatarSource}
-                      style={[
-                        styles.avatar,
-                        {
-                          borderColor: isFounder ? '#FFB606' : colors.border,
-                        },
-                      ]}
-                      {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
-                    />
-                    {isFounder && (
-                      <View style={styles.founderCrownPill}>
-                        <Ionicons name="star" size={10} color="#102F53" />
-                      </View>
-                    )}
-                  </View>
+                  <AuthorAvatar
+                    name={author.name}
+                    avatarUrl={author.avatarUrl}
+                    localAvatar={author.localAvatar}
+                    isFounder={isFounder}
+                    colors={colors}
+                    isDark={isDark}
+                  />
 
                   <View style={{ flex: 1 }}>
                     <View style={styles.nameRow}>
@@ -364,16 +468,16 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
                           styles.badgePill,
                           {
                             backgroundColor: isFounder
-                              ? (isDark ? 'rgba(255, 182, 6, 0.2)' : '#FEF3C7')
+                              ? (isDark ? 'rgba(227, 66, 52, 0.2)' : '#FEE2E2')
                               : (isDark ? 'rgba(16, 47, 83, 0.4)' : '#EFF6FF'),
-                            borderColor: isFounder ? '#FFB606' : (isDark ? '#2563EB44' : '#BFDBFE'),
+                            borderColor: isFounder ? '#E34234' : (isDark ? '#2563EB44' : '#BFDBFE'),
                           },
                         ]}
                       >
                         <Text
                           style={[
                             styles.badgeText,
-                            { color: isFounder ? (isDark ? '#FFB606' : '#B45309') : (isDark ? '#60A5FA' : '#1D4ED8') },
+                            { color: isFounder ? '#E34234' : (isDark ? '#60A5FA' : '#1D4ED8') },
                           ]}
                         >
                           {badgeLabel}
@@ -476,6 +580,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 1,
   },
+  headerRightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerActionBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   closeButton: {
     width: MIN_TOUCH_TARGET,
     height: MIN_TOUCH_TARGET,
@@ -572,7 +688,7 @@ const styles = StyleSheet.create({
   joinBtnText: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#102F53',
+    color: '#FFFFFF',
   },
   sectionHeadingRow: {
     flexDirection: 'row',
@@ -639,11 +755,20 @@ const styles = StyleSheet.create({
     borderRadius: 31,
     borderWidth: 2,
   },
+  avatarFallback: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitials: {
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
   founderCrownPill: {
     position: 'absolute',
     bottom: -2,
     right: -2,
-    backgroundColor: '#FFB606',
+    backgroundColor: '#E34234',
     borderRadius: 9,
     width: 18,
     height: 18,

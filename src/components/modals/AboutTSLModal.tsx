@@ -225,7 +225,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                   </Text>
                 </View>
                 <View style={[styles.metricCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
-                  <Text style={[styles.metricNumber, { color: '#F59E0B' }]}>5+</Text>
+                  <Text style={[styles.metricNumber, { color: '#E34234' }]}>5+</Text>
                   <Text style={[styles.metricLabel, { color: colors.textMuted }]}>
                     {isBangla ? 'জাতীয় সামিট' : 'National Summits'}
                   </Text>
@@ -316,14 +316,14 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
 
               {/* Pillar 4 */}
               <View style={[styles.pillarCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
-                <View style={[styles.pillarIconBg, { backgroundColor: '#FFFBEB' }]}>
-                  <Ionicons name="globe-outline" size={22} color="#D97706" />
+                <View style={[styles.pillarIconBg, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2' }]}>
+                  <Ionicons name="globe-outline" size={22} color="#E34234" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.pillarTitle, { color: colors.text }]}>
                     4. Ecosystem & Community Initiatives
                   </Text>
-                  <Text style={[styles.pillarSubtitle, { color: '#D97706' }]}>
+                  <Text style={[styles.pillarSubtitle, { color: '#E34234' }]}>
                     {isBangla ? 'জাতীয় সামিট ও বিশ্ববিদ্যালয় পার্টনারশিপ' : 'National Summits & University Alliances'}
                   </Text>
                   <Text style={[styles.pillarDesc, { color: colors.textMuted }]}>
@@ -536,7 +536,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                   venue: 'Nationwide Campus Drive',
                   desc: 'Connecting top graduating talent with leading MNCs, telecommunications giants, and fast-growing tech companies.',
                   icon: 'people-outline',
-                  color: '#F59E0B',
+                  color: '#E34234',
                 },
               ].map((summit, idx) => (
                 <View
@@ -938,7 +938,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
 
               {/* ALL RIGHTS RESERVED FOOTER NOTICE */}
               <View style={styles.copyrightBlock}>
-                <Ionicons name="ribbon" size={16} color="#F59E0B" />
+                <Ionicons name="ribbon" size={16} color="#E34234" />
                 <Text style={[styles.copyrightNoticeText, { color: colors.textMuted }]}>
                   © 2026 Thriving <Text style={{ color: '#E34234' }}>Skills</Text> Limited. All Rights Reserved.{'\n'}
                   Registered under Companies Act of Bangladesh • Gulshan-2, Dhaka
@@ -1193,7 +1193,7 @@ const styles = StyleSheet.create({
     width: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: '#FFB606',
+    backgroundColor: '#E34234',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,

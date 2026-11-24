@@ -88,10 +88,10 @@ export const LearnPressStatsGrid: React.FC<LearnPressStatsGridProps> = ({
                   styles.compactPill,
                   {
                     backgroundColor: isSelected
-                      ? (isDark ? 'rgba(255, 182, 6, 0.16)' : colors.primary)
+                      ? (isDark ? 'rgba(227, 66, 52, 0.16)' : colors.primary)
                       : (isDark ? colors.surfaceSubtle : '#F1F5F9'),
                     borderColor: isSelected
-                      ? (isDark ? '#FFB606' : colors.primary)
+                      ? (isDark ? '#E34234' : colors.primary)
                       : colors.border,
                   },
                 ]}
@@ -107,14 +107,14 @@ export const LearnPressStatsGrid: React.FC<LearnPressStatsGridProps> = ({
                 <Ionicons
                   name={pill.icon}
                   size={14}
-                  color={isSelected ? (isDark ? '#FFB606' : colors.onPrimary) : colors.textMuted}
+                  color={isSelected ? (isDark ? '#E34234' : colors.onPrimary) : colors.textMuted}
                 />
                 <Text
                   style={[
                     styles.compactPillLabel,
                     {
                       color: isSelected
-                        ? (isDark ? '#FFB606' : colors.onPrimary)
+                        ? (isDark ? '#E34234' : colors.onPrimary)
                         : colors.text,
                       fontWeight: isSelected ? '700' : '500',
                     },
@@ -127,7 +127,7 @@ export const LearnPressStatsGrid: React.FC<LearnPressStatsGridProps> = ({
                     styles.compactCountBadge,
                     {
                       backgroundColor: isSelected
-                        ? (isDark ? '#FFB606' : 'rgba(255, 255, 255, 0.25)')
+                        ? (isDark ? '#E34234' : 'rgba(255, 255, 255, 0.25)')
                         : (isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)'),
                     },
                   ]}
@@ -137,7 +137,7 @@ export const LearnPressStatsGrid: React.FC<LearnPressStatsGridProps> = ({
                       styles.compactCountText,
                       {
                         color: isSelected
-                          ? (isDark ? '#102F53' : colors.onPrimary)
+                          ? (isDark ? '#FFFFFF' : colors.onPrimary)
                           : colors.textMuted,
                         fontWeight: '700',
                       },

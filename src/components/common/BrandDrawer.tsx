@@ -279,8 +279,8 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               style={styles.navItem}
               onPress={() => setEbookModalVisible(true)}
             >
-              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : '#FFFBEB' }]}>
-                <Ionicons name="book-outline" size={18} color="#FFB606" />
+              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2' }]}>
+                <Ionicons name="book-outline" size={18} color="#E34234" />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.navLabel, { color: colors.text }]}>
@@ -321,8 +321,8 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
                   {isBangla ? 'আমাদের কোর্স ইন্সট্রাক্টর (Our Course Author)' : 'Our Course Author'}
                 </Text>
               </View>
-              <View style={[styles.pillState, { backgroundColor: isDark ? '#1E3147' : '#FEF3C7' }]}>
-                <Text style={[styles.pillStateText, { color: '#FFB606' }]}>FACULTY</Text>
+              <View style={[styles.pillState, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2' }]}>
+                <Text style={[styles.pillStateText, { color: '#E34234' }]}>FACULTY</Text>
               </View>
             </TouchableOpacity>
 
@@ -347,8 +347,8 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               style={styles.navItem}
               onPress={() => handleNav(() => onNavigateTab('Workshops'))}
             >
-              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.18)' : '#FFFBEB' }]}>
-                <Ionicons name="calendar-outline" size={18} color="#F59E0B" />
+              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.18)' : '#FEE2E2' }]}>
+                <Ionicons name="calendar-outline" size={18} color="#E34234" />
               </View>
               <Text style={[styles.navLabel, { color: colors.text }]}>
                 {isBangla ? 'লাইভ ক্লাস ও সামিট' : 'Live Class & Summits'}
@@ -394,7 +394,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
                 setServicesModalVisible(true);
               }}
             >
-              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : '#FFFBEB' }]}>
+              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(16, 47, 83, 0.24)' : '#EFF6FF' }]}>
                 <Ionicons name="briefcase-outline" size={18} color={isDark ? colors.primary : '#102F53'} />
               </View>
               <View style={{ flex: 1 }}>
@@ -441,8 +441,8 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
                 setServicesModalVisible(true);
               }}
             >
-              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.18)' : '#FEF3C7' }]}>
-                <Ionicons name="trending-up-outline" size={18} color={isDark ? '#FBBF24' : '#D97706'} />
+              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.18)' : '#ECFDF5' }]}>
+                <Ionicons name="trending-up-outline" size={18} color={isDark ? '#34D399' : '#059669'} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.navLabel, { color: colors.text }]}>
@@ -504,11 +504,11 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               }}
             >
               <View style={styles.actionLeft}>
-                <Ionicons name="people-outline" size={18} color="#F59E0B" />
+                <Ionicons name="people-outline" size={18} color="#E34234" />
                 <Text style={[styles.actionLabel, { color: colors.text }]}>Founders & Leadership</Text>
               </View>
-              <View style={[styles.pillState, { backgroundColor: 'rgba(245, 158, 11, 0.12)' }]}>
-                <Text style={[styles.pillStateText, { color: '#F59E0B' }]}>Exec Board</Text>
+              <View style={[styles.pillState, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}>
+                <Text style={[styles.pillStateText, { color: '#E34234' }]}>Exec Board</Text>
               </View>
             </TouchableOpacity>
 
