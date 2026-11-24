@@ -934,10 +934,20 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
             </TouchableOpacity>
           )}
 
-          {/* Auth Action Row */}
+          {/* Auth Action Row - Sign Out Button in Signature Accent Red (#E34234) */}
           {isAuthenticated ? (
             <TouchableOpacity
-              style={[styles.settingRow, { borderBottomWidth: 0 }]}
+              style={[
+                styles.settingRow,
+                {
+                  borderBottomWidth: 0,
+                  backgroundColor: isDark ? 'rgba(227, 66, 52, 0.12)' : 'rgba(227, 66, 52, 0.08)',
+                  borderRadius: 12,
+                  marginTop: 6,
+                  borderColor: 'rgba(227, 66, 52, 0.35)',
+                  borderWidth: 1,
+                },
+              ]}
               onPress={() => {
                 triggerHaptic('warning');
                 showPopup({
@@ -956,13 +966,14 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
               accessibilityLabel={isBangla ? 'সাইন আউট' : 'Sign Out'}
             >
               <View style={styles.settingLeft}>
-                <Ionicons name="log-out-outline" size={20} color={colors.danger} />
+                <Ionicons name="log-out-outline" size={20} color="#E34234" />
                 <View style={styles.settingTextCol}>
-                  <Text style={[styles.settingLabel, { color: colors.danger, fontWeight: '700' }]} numberOfLines={1}>
+                  <Text style={[styles.settingLabel, { color: '#E34234', fontWeight: '800' }]} numberOfLines={1}>
                     {isBangla ? 'সাইন আউট' : 'Sign Out'}
                   </Text>
                 </View>
               </View>
+              <Ionicons name="chevron-forward" size={16} color="#E34234" />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity

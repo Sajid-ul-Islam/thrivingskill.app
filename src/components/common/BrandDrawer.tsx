@@ -682,15 +682,29 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
             <View style={{ paddingHorizontal: 8, paddingBottom: 10 }}>
               {isAuthenticated ? (
                 <TouchableOpacity
-                  style={[styles.sessionBtn, { backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.3)' }]}
+                  style={[
+                    styles.sessionBtn,
+                    {
+                      backgroundColor: '#E34234',
+                      borderColor: '#E34234',
+                      shadowColor: '#E34234',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.25,
+                      shadowRadius: 4,
+                      elevation: 2,
+                    },
+                  ]}
                   onPress={() => {
                     onClose();
                     logout();
                   }}
+                  activeOpacity={0.88}
+                  accessibilityRole="button"
+                  accessibilityLabel={isBangla ? 'সাইন আউট করুন' : 'Sign Out'}
                 >
-                  <Ionicons name="log-out-outline" size={18} color="#EF4444" />
-                  <Text style={[styles.sessionBtnText, { color: '#EF4444' }]}>
-                    {isBangla ? 'লগআউট করুন' : 'Logout'} ({user?.username || 'Learner'})
+                  <Ionicons name="log-out-outline" size={18} color="#FFFFFF" />
+                  <Text style={[styles.sessionBtnText, { color: '#FFFFFF', fontWeight: '700' }]}>
+                    {isBangla ? 'সাইন আউট' : 'Sign Out'} ({user?.username || 'Learner'})
                   </Text>
                 </TouchableOpacity>
               ) : (
