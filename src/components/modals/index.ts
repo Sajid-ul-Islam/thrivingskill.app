@@ -20,3 +20,4 @@ export * from './UniversalSearchModal';
 export * from './EbookModal';
 export * from './ServicesModal';
 export * from './InstructorsModal';
+export * from './DeveloperOptionsModal';

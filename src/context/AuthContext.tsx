@@ -89,9 +89,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           AsyncStorage.getItem(AUTH_ADMIN_BYPASS_KEY),
         ]);
 
-        if (isDevMode && savedBypass === 'true') {
+        const devUnlocked = (await AsyncStorage.getItem('@ts_dev_mode_unlocked')) === 'true';
+        const isDevEffective = isDevMode || devUnlocked;
+
+        if (isDevEffective && savedBypass === 'true') {
           setIsAdminBypass(true);
-        } else if (!isDevMode && savedBypass) {
+        } else if (!isDevEffective && savedBypass) {
           await AsyncStorage.removeItem(AUTH_ADMIN_BYPASS_KEY);
         }
 
@@ -151,7 +154,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const toggleAdminBypass = async (): Promise<boolean> => {
-    if (!isDevMode) {
+    const devUnlocked = (await AsyncStorage.getItem('@ts_dev_mode_unlocked')) === 'true';
+    if (!isDevMode && !devUnlocked) {
       setIsAdminBypass(false);
       return false;
     }
@@ -165,7 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return nextVal;
   };
 
-  const isAdmin = (isDevMode && isAdminBypass) || isUserAdmin(user);
+  const isAdmin = ((isDevMode || isAdminBypass) && isAdminBypass) || isUserAdmin(user);
 
   const saveUserSession = async (loggedInUser: WpUser | UserProfile) => {
     const userToken = loggedInUser.token || `ts_session_${loggedInUser.id || Date.now()}`;
@@ -410,7 +414,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         token,
         isAuthenticated: !!user,
         isAdmin,
-        isAdminBypass: isDevMode ? isAdminBypass : false,
+        isAdminBypass,
         toggleAdminBypass,
         isLoading,
         isGuest,

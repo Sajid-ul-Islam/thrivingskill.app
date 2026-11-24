@@ -1,21 +1,20 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Image,
-  Platform,
   Animated,
   Easing,
   TouchableOpacity,
-  Linking,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { LinearGradient } from 'expo-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '../../context/LanguageContext';
 import { triggerHaptic } from '../../utils/haptics';
+import { DeveloperOptionsModal } from '../modals/DeveloperOptionsModal';
 
 export interface BrandSplashScreenProps {
   onGetStarted?: () => void;
@@ -47,8 +46,23 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
   const heroScaleAnim = useRef(new Animated.Value(0.96)).current;
   const bottomDockAnim = useRef(new Animated.Value(0)).current;
 
+  // Developer mode unlock state & 5-tap tracker
+  const tapCountRef = useRef(0);
+  const lastTapTimeRef = useRef(0);
+  const [devModalVisible, setDevModalVisible] = useState(false);
+  const [isDevModeUnlocked, setIsDevModeUnlocked] = useState(false);
+
   useEffect(() => {
-    // 1. Choreographed Entrance Animation
+    // Check if dev mode was previously unlocked
+    AsyncStorage.getItem('@ts_dev_mode_unlocked')
+      .then((val) => {
+        if (val === 'true') {
+          setIsDevModeUnlocked(true);
+        }
+      })
+      .catch(() => {});
+
+    // Choreographed Entrance Animation
     Animated.parallel([
       // Poster hero: gentle scale and fade in
       Animated.timing(heroFadeAnim, {
@@ -110,9 +124,27 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
     triggerSmoothExit(onSignIn);
   };
 
-  const handleOpenWebsite = () => {
-    triggerHaptic('light');
-    Linking.openURL('https://www.thrivingskill.com').catch(() => {});
+  const handleVersionTap = async () => {
+    const now = Date.now();
+    if (now - lastTapTimeRef.current > 2000) {
+      tapCountRef.current = 1;
+    } else {
+      tapCountRef.current += 1;
+    }
+    lastTapTimeRef.current = now;
+
+    if (tapCountRef.current >= 5) {
+      tapCountRef.current = 0;
+      setIsDevModeUnlocked(true);
+      await AsyncStorage.setItem('@ts_dev_mode_unlocked', 'true').catch(() => {});
+      triggerHaptic('success');
+      setDevModalVisible(true);
+    } else if (isDevModeUnlocked) {
+      triggerHaptic('selection');
+      setDevModalVisible(true);
+    } else if (tapCountRef.current >= 2) {
+      triggerHaptic('light');
+    }
   };
 
   return (
@@ -128,103 +160,101 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
     >
       <StatusBar style="light" />
 
-      {/* Ambient Lighting Accents */}
-      <View style={styles.topAmbientGold} pointerEvents="none" />
-      <View style={styles.midAmbientNavy} pointerEvents="none" />
-
-      {/* Main Responsive Mobile Poster Frame */}
-      <View
-        style={[
-          styles.mobileFrame,
-          {
-            paddingTop: Math.max(insets.top, 8),
-            paddingBottom: Math.max(insets.bottom, 12),
-          },
-        ]}
-      >
-        {/* Authentic Full Hero Poster Canvas (Clean, unobstructed view) */}
-        <Animated.View
+      {/* Main Responsive Mobile Frame */}
+      <View style={styles.mobileFrame}>
+        {/* Full-bleed Edge-to-Edge Poster Image with NO fading gradient */}
+        <Animated.Image
+          source={SPLASH_POSTER_IMAGE}
           style={[
-            styles.posterSection,
+            styles.posterImage,
             {
               opacity: heroFadeAnim,
               transform: [{ scale: heroScaleAnim }],
             },
           ]}
-        >
-          <Image
-            source={SPLASH_POSTER_IMAGE}
-            style={styles.posterImage}
-            resizeMode="contain"
-          />
+          resizeMode="cover"
+        />
 
-          {/* Subtle Lower Fade to blend smoothly into the interactive action dock */}
-          <LinearGradient
-            colors={['transparent', 'rgba(15, 25, 44, 0.45)', 'rgba(15, 25, 44, 0.95)', '#0F192C']}
-            locations={[0.55, 0.75, 0.9, 1]}
-            style={StyleSheet.absoluteFill}
-            pointerEvents="none"
-          />
-        </Animated.View>
-
-        {/* Interactive Floating Action Dock */}
-        <Animated.View
+        {/* Foreground Content Overlay */}
+        <View
           style={[
-            styles.bottomDock,
+            styles.contentOverlay,
             {
-              opacity: bottomDockAnim,
-              transform: [
-                {
-                  translateY: bottomDockAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [24, 0],
-                  }),
-                },
-              ],
+              paddingTop: insets.top,
+              paddingBottom: Math.max(insets.bottom, 16),
             },
           ]}
         >
-          {/* Primary CTA: Get Started - 1:1 Match with Create Account Button */}
-          <TouchableOpacity
-            onPress={handleGetStarted}
-            style={[styles.primaryCtaBtn, { backgroundColor: '#E34234' }]}
-            activeOpacity={0.88}
-            accessibilityRole="button"
-            accessibilityLabel={isBangla ? 'এখনই শুরু করুন' : 'Get Started'}
-          >
-            <Text style={[styles.primaryCtaText, { color: '#FFFFFF' }]}>
-              {isBangla ? 'এখনই শুরু করুন' : 'Get Started'}
-            </Text>
-            <Ionicons name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 8 }} />
-          </TouchableOpacity>
+          {/* Top spacer allowing full poster graphics, trio & text to remain 100% visible */}
+          <View style={styles.topSpacer} />
 
-          {/* Secondary CTA: Sign In */}
-          <TouchableOpacity
-            onPress={handleSignIn}
-            activeOpacity={0.8}
-            style={styles.secondaryCtaBtn}
-            accessibilityRole="button"
-            accessibilityLabel={isBangla ? 'ইতিমধ্যেই অ্যাকাউন্ট আছে? সাইন ইন করুন' : 'Already have an account? Sign In'}
+          {/* Interactive Floating Action Dock */}
+          <Animated.View
+            style={[
+              styles.bottomDock,
+              {
+                opacity: bottomDockAnim,
+                transform: [
+                  {
+                    translateY: bottomDockAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [24, 0],
+                    }),
+                  },
+                ],
+              },
+            ]}
           >
-            <Text style={styles.secondaryCtaText}>
-              {isBangla ? 'ইতিমধ্যেই অ্যাকাউন্ট আছে? সাইন ইন করুন' : 'Already have an account? Sign In'}
-            </Text>
-          </TouchableOpacity>
+            {/* Primary CTA: Get Started - 1:1 Match with Create Account Button */}
+            <TouchableOpacity
+              onPress={handleGetStarted}
+              style={[styles.primaryCtaBtn, { backgroundColor: '#E34234' }]}
+              activeOpacity={0.88}
+              accessibilityRole="button"
+              accessibilityLabel={isBangla ? 'এখনই শুরু করুন' : 'Get Started'}
+            >
+              <Text style={[styles.primaryCtaText, { color: '#FFFFFF' }]}>
+                {isBangla ? 'এখনই শুরু করুন' : 'Get Started'}
+              </Text>
+              <Ionicons name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 8 }} />
+            </TouchableOpacity>
 
-          {/* Official Website Link */}
-          <TouchableOpacity
-            onPress={handleOpenWebsite}
-            activeOpacity={0.7}
-            style={styles.websiteLinkRow}
-            accessibilityRole="link"
-            accessibilityLabel="Visit official website at thrivingskill.com"
-            hitSlop={{ top: 8, bottom: 8, left: 12, right: 12 }}
-          >
-            <Ionicons name="globe-outline" size={13} color="#E34234" />
-            <Text style={styles.websiteLinkText}>www.thrivingskill.com</Text>
-          </TouchableOpacity>
-        </Animated.View>
+            {/* Secondary CTA: Sign In */}
+            <TouchableOpacity
+              onPress={handleSignIn}
+              activeOpacity={0.8}
+              style={styles.secondaryCtaBtn}
+              accessibilityRole="button"
+              accessibilityLabel={isBangla ? 'ইতিমধ্যেই অ্যাকাউন্ট আছে? সাইন ইন করুন' : 'Already have an account? Sign In'}
+            >
+              <Text style={styles.secondaryCtaText}>
+                {isBangla ? 'ইতিমধ্যেই অ্যাকাউন্ট আছে? সাইন ইন করুন' : 'Already have an account? Sign In'}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Version name - Tap 5 times to unlock Developer Options */}
+            <TouchableOpacity
+              onPress={handleVersionTap}
+              activeOpacity={0.75}
+              style={styles.versionTouch}
+              accessibilityRole="button"
+              accessibilityLabel="App Version - Tap 5 times for Developer Options"
+              hitSlop={{ top: 12, bottom: 14, left: 24, right: 24 }}
+            >
+              <Text style={styles.versionText}>
+                v1.4.0 {isDevModeUnlocked ? '• [DEV MODE]' : ''}
+              </Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
       </View>
+
+      {/* Developer Options Modal */}
+      <DeveloperOptionsModal
+        visible={devModalVisible}
+        onClose={() => setDevModalVisible(false)}
+        onDirectBypass={() => triggerSmoothExit(onDismiss || onGetStarted)}
+      />
     </Animated.View>
   );
 };
@@ -232,59 +262,39 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
 const styles = StyleSheet.create({
   outerContainer: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: '#0F192C', // Official Dark Surface
+    backgroundColor: '#0F192C',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 9999,
   },
-  topAmbientGold: {
-    position: 'absolute',
-    top: -60,
-    right: -40,
-    width: 260,
-    height: 260,
-    borderRadius: 130,
-    backgroundColor: 'rgba(255, 182, 6, 0.14)',
-    filter: Platform.OS === 'web' ? 'blur(64px)' : undefined,
-  },
-  midAmbientNavy: {
-    position: 'absolute',
-    bottom: '20%',
-    left: -50,
-    width: 260,
-    height: 260,
-    borderRadius: 130,
-    backgroundColor: 'rgba(16, 47, 83, 0.5)',
-    filter: Platform.OS === 'web' ? 'blur(60px)' : undefined,
-  },
   mobileFrame: {
     flex: 1,
     width: '100%',
-    maxWidth: 440,
-    backgroundColor: '#0F192C',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    overflow: 'hidden',
-  },
-  posterSection: {
-    flex: 1,
+    maxWidth: 480,
+    height: '100%',
     position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: 4,
-    borderRadius: 16,
     overflow: 'hidden',
+    backgroundColor: '#0F192C',
   },
   posterImage: {
+    ...StyleSheet.absoluteFill,
     width: '100%',
     height: '100%',
   },
+  contentOverlay: {
+    ...StyleSheet.absoluteFill,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    zIndex: 20,
+  },
+  topSpacer: {
+    flex: 1,
+  },
   bottomDock: {
-    paddingTop: 4,
-    paddingBottom: 4,
+    width: '100%',
     alignItems: 'center',
-    zIndex: 30,
     gap: 8,
+    paddingBottom: 4,
   },
   primaryCtaBtn: {
     flexDirection: 'row',
@@ -312,20 +322,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   secondaryCtaText: {
-    color: 'rgba(255, 255, 255, 0.85)',
-    fontSize: 12.5,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: 13,
     fontWeight: '600',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
-  websiteLinkRow: {
-    flexDirection: 'row',
+  versionTouch: {
+    paddingVertical: 6,
+    paddingHorizontal: 16,
     alignItems: 'center',
-    gap: 5,
-    paddingVertical: 2,
+    justifyContent: 'center',
   },
-  websiteLinkText: {
+  versionText: {
     fontSize: 11,
     fontWeight: '700',
     color: 'rgba(255, 255, 255, 0.65)',
     letterSpacing: 0.4,
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
   },
 });
