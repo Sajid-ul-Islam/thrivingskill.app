@@ -248,8 +248,8 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
                     {isBangla ? 'কোর্স ও অর্জিত সনদপত্র' : 'Enrolled Courses & Certificates'}
                   </Text>
                 </View>
-                <View style={[styles.verifiedCredPill, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : '#FEF3C7' }]}>
-                  <Text style={[styles.verifiedCredPillText, { color: isDark ? '#FFB606' : '#B45309' }]}>
+                <View style={[styles.verifiedCredPill, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}>
+                  <Text style={[styles.verifiedCredPillText, { color: '#E34234' }]}>
                     {certificates.length > 0
                       ? (isBangla ? `${certificates.length}টি সনদপত্র` : `${certificates.length} EARNED`)
                       : 'ACCREDITED'}
@@ -289,15 +289,15 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
                     styles.academicStatBox,
                     {
                       backgroundColor: colors.surfaceCard,
-                      borderColor: '#FFB606',
+                      borderColor: '#E34234',
                       borderWidth: 1.5,
                     },
                   ]}
                 >
-                  <View style={[styles.statIconCircle, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.20)' : '#FEF3C7' }]}>
-                    <Ionicons name="ribbon" size={15} color="#FFB606" />
+                  <View style={[styles.statIconCircle, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}>
+                    <Ionicons name="ribbon" size={15} color="#E34234" />
                   </View>
-                  <Text style={[styles.statNumber, { color: isDark ? '#FFB606' : '#B45309' }]}>
+                  <Text style={[styles.statNumber, { color: '#E34234' }]}>
                     {certificates.length}
                   </Text>
                   <Text style={[styles.statLabel, { color: colors.text }]}>
@@ -377,8 +377,8 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
                       }}
                       activeOpacity={0.8}
                     >
-                      <View style={[styles.certRibbonBadge, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : '#FEF3C7' }]}>
-                        <Ionicons name="ribbon" size={16} color="#FFB606" />
+                      <View style={[styles.certRibbonBadge, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}>
+                        <Ionicons name="ribbon" size={16} color="#E34234" />
                       </View>
                       <View style={{ flex: 1, minWidth: 0 }}>
                         <Text style={[styles.certItemTitle, { color: colors.text }]} numberOfLines={1}>
@@ -394,7 +394,7 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
                 </View>
               ) : (
                 <View style={[styles.noCertCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
-                  <Ionicons name="ribbon-outline" size={20} color="#F59E0B" />
+                  <Ionicons name="ribbon-outline" size={20} color="#E34234" />
                   <Text style={[styles.noCertText, { color: colors.textMuted }]}>
                     {isBangla
                       ? 'এখনো কোনো সনদপত্র পাওয়া যায়নি। কোর্স ১০০% শেষ করলেই ভেরিফাইড সনদপত্র এখানে যুক্ত হবে।'
@@ -704,8 +704,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   coverOverlayPattern: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(255, 182, 6, 0.08)',
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(227, 66, 52, 0.08)',
     borderRadius: 16,
   },
   avatarAnchor: {

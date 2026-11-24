@@ -163,7 +163,7 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
               </View>
             ) : null}
 
-            <Text style={[styles.role, { color: colors.secondary }]} numberOfLines={2}>
+            <Text style={[styles.role, { color: colors.textMuted }]} numberOfLines={2}>
               {user?.description || customBio || (isAuthenticated
                 ? `Connected to ${Env.SITE_URL.replace(/^https?:\/\//, '')} • ${activeWorkspaceName}`
                 : 'Thriving Skills Online Platform')}

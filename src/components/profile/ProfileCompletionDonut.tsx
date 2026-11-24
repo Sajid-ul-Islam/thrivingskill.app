@@ -39,15 +39,13 @@ export const ProfileCompletionDonut: React.FC<ProfileCompletionDonutProps> = ({
   // Dynamic theme colors
   const trackColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(16, 47, 83, 0.08)';
   const gradientStart = isComplete ? '#10B981' : (colors.primary || '#102F53');
-  const gradientEnd = isComplete ? '#059669' : (colors.brandGold || '#FFB606');
+  const gradientEnd = isComplete ? '#059669' : '#E34234';
 
   const strengthBadgeColor = isComplete
     ? '#10B981'
     : strengthLevel === 'advanced'
     ? '#3B82F6'
-    : strengthLevel === 'intermediate'
-    ? (colors.brandGold || '#FFB606')
-    : '#F59E0B';
+    : '#E34234';
 
   const handlePress = () => {
     triggerHaptic('light');
@@ -165,12 +163,12 @@ export const ProfileCompletionDonut: React.FC<ProfileCompletionDonutProps> = ({
           </Text>
 
           {!isComplete && (
-            <View style={[styles.actionNudgePill, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.12)' : 'rgba(255, 182, 6, 0.15)' }]}>
-              <Ionicons name="add-circle" size={12} color={colors.brandGold || '#FFB606'} />
-              <Text style={[styles.actionNudgeText, { color: isDark ? '#FBBF24' : '#B45309' }]} numberOfLines={1}>
+            <View style={[styles.actionNudgePill, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}>
+              <Ionicons name="add-circle" size={12} color="#E34234" />
+              <Text style={[styles.actionNudgeText, { color: '#E34234' }]} numberOfLines={1}>
                 {actionText}
               </Text>
-              <Ionicons name="chevron-forward" size={11} color={isDark ? '#FBBF24' : '#B45309'} />
+              <Ionicons name="chevron-forward" size={11} color="#E34234" />
             </View>
           )}
         </View>
@@ -182,7 +180,7 @@ export const ProfileCompletionDonut: React.FC<ProfileCompletionDonutProps> = ({
             </Text>
           </View>
           {!isComplete && nextAction && (
-            <Text style={[styles.compactNudgeText, { color: colors.brandGold || '#FFB606' }]} numberOfLines={1}>
+            <Text style={[styles.compactNudgeText, { color: '#E34234' }]} numberOfLines={1}>
               {actionText}
             </Text>
           )}

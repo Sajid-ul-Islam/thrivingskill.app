@@ -168,8 +168,8 @@ export const ProfileCourseSummary: React.FC<ProfileCourseSummaryProps> = ({
           accessibilityRole="button"
           accessibilityLabel={isBangla ? `সনদপত্র ${certificates.length}টি` : `Certificates ${certificates.length}`}
         >
-          <Ionicons name="ribbon-outline" size={15} color="#F59E0B" />
-          <Text style={[styles.kpiVal, { color: '#F59E0B' }]}>{certificates.length}</Text>
+          <Ionicons name="ribbon-outline" size={15} color="#E34234" />
+          <Text style={[styles.kpiVal, { color: '#E34234' }]}>{certificates.length}</Text>
           <Text style={[styles.kpiLabel, { color: colors.textMuted }]} numberOfLines={1}>
             {isBangla ? 'সনদপত্র' : 'Certificates'}
           </Text>
@@ -223,7 +223,7 @@ export const ProfileCourseSummary: React.FC<ProfileCourseSummaryProps> = ({
                 <View style={styles.certTopRow}>
                   <View style={styles.certBrand}>
                     <View style={styles.certRibbonCircle}>
-                      <Ionicons name="ribbon" size={13} color="#FFB606" />
+                      <Ionicons name="ribbon" size={13} color="#E34234" />
                     </View>
                     <Text style={[styles.certBrandText, { color: colors.text }]}>Thriving Skills</Text>
                   </View>
