@@ -27,6 +27,7 @@ export interface BrandSplashScreenProps {
 }
 
 const SPLASH_HERO_IMAGE = require('../../../assets/splash-hero.jpg');
+const BRAND_LOGO_IMAGE = require('../../../assets/icon.png');
 
 export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
   onGetStarted,
@@ -104,17 +105,35 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
     <View style={styles.outerContainer}>
       <StatusBar style="light" />
 
-      {/* Top Ambient Light Glows */}
-      <View style={styles.topAmbientCyan} pointerEvents="none" />
-      <View style={styles.midAmbientBlue} pointerEvents="none" />
+      {/* Top Ambient Light Glows with Brand Palette */}
+      <View style={styles.topAmbientGold} pointerEvents="none" />
+      <View style={styles.midAmbientNavy} pointerEvents="none" />
 
       {/* Main Responsive Mobile Frame */}
       <View style={[styles.mobileFrame, { paddingTop: Math.max(insets.top, 10), paddingBottom: Math.max(insets.bottom, 12) }]}>
         
-        {/* TOP BAR: Clock & Language Toggle */}
+        {/* TOP BRAND HEADER: Actual Logo, Wordmark & Language Toggle */}
         <View style={styles.topBar}>
-          <Text style={styles.topBarClock}>9:41</Text>
+          {/* Brand Row with Authentic Logo */}
+          <View style={styles.brandRow}>
+            <View style={styles.logoWrap}>
+              <Image
+                source={BRAND_LOGO_IMAGE}
+                style={styles.brandIcon}
+                resizeMode="contain"
+              />
+            </View>
+            <View style={styles.brandTitleCol}>
+              <Text style={styles.brandTitle}>
+                Thriving<Text style={{ color: '#FFB606' }}>Skills</Text>
+              </Text>
+              <Text style={styles.brandSubtitle}>
+                {isBangla ? 'স্কিলস ফর ফিউচার' : 'Skills For Future'}
+              </Text>
+            </View>
+          </View>
 
+          {/* Right Controls: Language Toggle & Energy Indicator */}
           <View style={styles.topBarRight}>
             {/* Language Pill Toggle */}
             <View style={styles.langPill}>
@@ -143,7 +162,7 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
 
             {/* Quick Energy / Power Indicator */}
             <View style={styles.powerIconPill}>
-              <Ionicons name="flash" size={13} color="#00e5ff" />
+              <Ionicons name="flash" size={13} color="#FFB606" />
             </View>
           </View>
         </View>
@@ -167,13 +186,13 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
 
           {/* Seamless Deep Navy Vignette Overlays */}
           <LinearGradient
-            colors={['rgba(4, 25, 53, 0.95)', 'rgba(4, 25, 53, 0.4)', 'rgba(4, 25, 53, 0.75)', '#041935']}
+            colors={['rgba(16, 47, 83, 0.95)', 'rgba(16, 47, 83, 0.35)', 'rgba(15, 25, 44, 0.78)', '#0F192C']}
             locations={[0, 0.35, 0.75, 1]}
             style={StyleSheet.absoluteFill}
             pointerEvents="none"
           />
 
-          {/* Floating Tech Node 1: Certified */}
+          {/* Floating Tech Node 1: Certified with Sunshine Gold Accent */}
           <Animated.View
             style={[
               styles.floatingNodeLeft,
@@ -182,15 +201,15 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
               },
             ]}
           >
-            <View style={styles.nodeIconWrapCyan}>
-              <Ionicons name="school" size={13} color="#00e5ff" />
+            <View style={styles.nodeIconWrapGold}>
+              <Ionicons name="school" size={13} color="#FFB606" />
             </View>
             <Text style={styles.nodeText}>
               {isBangla ? 'সার্টিফাইড' : 'Certified'}
             </Text>
           </Animated.View>
 
-          {/* Floating Tech Node 2: Career Boost */}
+          {/* Floating Tech Node 2: Career Boost with Coral Accent */}
           <Animated.View
             style={[
               styles.floatingNodeRight,
@@ -199,8 +218,8 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
               },
             ]}
           >
-            <View style={styles.nodeIconWrapSky}>
-              <Ionicons name="trending-up" size={13} color="#38bdf8" />
+            <View style={styles.nodeIconWrapCoral}>
+              <Ionicons name="trending-up" size={13} color="#E34234" />
             </View>
             <Text style={styles.nodeText}>
               {isBangla ? 'ক্যারিয়ার বুস্ট' : 'Career Boost'}
@@ -222,9 +241,9 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
               {isBangla ? 'মানুষের ক্ষমতায়ন' : 'EMPOWERING PEOPLE'}
             </Text>
 
-            {/* Cyan Line & Subtitle */}
+            {/* Sunshine Gold Line & Subtitle */}
             <View style={styles.subHeadingRow}>
-              <View style={styles.cyanUnderline} />
+              <View style={styles.goldUnderline} />
               <Text style={styles.subHeadingText}>
                 {isBangla ? 'জাতির দক্ষতা বিনির্মাণে' : 'BUILDING A SKILLED NATION'}
               </Text>
@@ -232,7 +251,7 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
           </View>
         </Animated.View>
 
-        {/* CORE PILLARS SECTION (4 Glass Grid Items) */}
+        {/* CORE PILLARS SECTION (4 Glass Grid Items with Gold Icons) */}
         <Animated.View
           style={[
             styles.pillarsSection,
@@ -245,7 +264,7 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
             {/* Pillar 1: Expert-Led Courses */}
             <View style={styles.pillarCol}>
               <View style={styles.pillarIconWrap}>
-                <Ionicons name="videocam-outline" size={18} color="#00e5ff" />
+                <Ionicons name="videocam-outline" size={18} color="#FFB606" />
               </View>
               <Text style={styles.pillarTitle}>
                 {isBangla ? 'এক্সপার্টদের\nকোর্স' : 'Expert-Led\nCourses'}
@@ -255,7 +274,7 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
             {/* Pillar 2: Practical Skills */}
             <View style={styles.pillarCol}>
               <View style={styles.pillarIconWrap}>
-                <Ionicons name="shield-checkmark-outline" size={18} color="#00e5ff" />
+                <Ionicons name="shield-checkmark-outline" size={18} color="#FFB606" />
               </View>
               <Text style={styles.pillarTitle}>
                 {isBangla ? 'ব্যবহারিক\nদক্ষতা' : 'Practical\nSkills'}
@@ -265,7 +284,7 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
             {/* Pillar 3: Career Growth */}
             <View style={styles.pillarCol}>
               <View style={styles.pillarIconWrap}>
-                <Ionicons name="people-outline" size={18} color="#00e5ff" />
+                <Ionicons name="people-outline" size={18} color="#FFB606" />
               </View>
               <Text style={styles.pillarTitle}>
                 {isBangla ? 'ক্যারিয়ার\nগ্রোথ' : 'Career\nGrowth'}
@@ -275,7 +294,7 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
             {/* Pillar 4: Learn Anytime */}
             <View style={styles.pillarCol}>
               <View style={styles.pillarIconWrap}>
-                <Ionicons name="time-outline" size={18} color="#00e5ff" />
+                <Ionicons name="time-outline" size={18} color="#FFB606" />
               </View>
               <Text style={styles.pillarTitle}>
                 {isBangla ? 'যেকোনো সময়\nশিক্ষা' : 'Learn\nAnytime'}
@@ -293,7 +312,7 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
             },
           ]}
         >
-          {/* Primary CTA: Get Started Now */}
+          {/* Primary CTA: Get Started Now (Brand Coral #E34234) */}
           <SpringPressable
             onPress={() => {
               triggerHaptic('medium');
@@ -310,7 +329,7 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
             <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{ marginLeft: 6 }} />
           </SpringPressable>
 
-          {/* Secondary CTA: Already have an account? Sign In */}
+          {/* Secondary CTA: Already have an account? Sign In (Dark Surface #1E293B) */}
           <TouchableOpacity
             onPress={() => {
               triggerHaptic('light');
@@ -326,7 +345,7 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
             </Text>
           </TouchableOpacity>
 
-          {/* Official Website Link */}
+          {/* Official Website Link in Sunshine Gold */}
           <TouchableOpacity
             onPress={handleOpenWebsite}
             activeOpacity={0.7}
@@ -334,7 +353,7 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
             accessibilityRole="link"
             accessibilityLabel="Visit official website at thrivingskill.com"
           >
-            <Ionicons name="globe-outline" size={13} color="rgba(0, 210, 255, 0.85)" />
+            <Ionicons name="globe-outline" size={13} color="#FFB606" />
             <Text style={styles.websiteLinkText}>www.thrivingskill.com</Text>
           </TouchableOpacity>
 
@@ -352,40 +371,38 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
   );
 };
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 const styles = StyleSheet.create({
   outerContainer: {
     flex: 1,
-    backgroundColor: '#041935',
+    backgroundColor: '#102F53', // Brand Deep Navy
     justifyContent: 'center',
     alignItems: 'center',
   },
-  topAmbientCyan: {
+  topAmbientGold: {
     position: 'absolute',
     top: -60,
     right: -40,
     width: 260,
     height: 260,
     borderRadius: 130,
-    backgroundColor: 'rgba(0, 210, 255, 0.16)',
+    backgroundColor: 'rgba(255, 182, 6, 0.16)', // Sunshine Gold Glow
     filter: Platform.OS === 'web' ? 'blur(64px)' : undefined,
   },
-  midAmbientBlue: {
+  midAmbientNavy: {
     position: 'absolute',
     top: '35%',
     left: -50,
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    backgroundColor: 'rgba(14, 67, 140, 0.22)',
+    width: 240,
+    height: 240,
+    borderRadius: 120,
+    backgroundColor: 'rgba(16, 47, 83, 0.45)', // Deep Navy Ambient
     filter: Platform.OS === 'web' ? 'blur(60px)' : undefined,
   },
   mobileFrame: {
     flex: 1,
     width: '100%',
     maxWidth: 420,
-    backgroundColor: '#041935',
+    backgroundColor: '#0F192C', // Official Dark Surface
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     overflow: 'hidden',
@@ -398,11 +415,47 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
     zIndex: 20,
   },
-  topBarClock: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: 'rgba(255, 255, 255, 0.95)',
-    letterSpacing: -0.2,
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+  },
+  logoWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 11,
+    backgroundColor: '#FFFFFF',
+    padding: 2,
+    borderWidth: 1.5,
+    borderColor: '#FFB606', // Sunshine Gold Border
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#FFB606',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  brandIcon: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 9,
+  },
+  brandTitleCol: {
+    justifyContent: 'center',
+  },
+  brandTitle: {
+    fontSize: 16.5,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: -0.3,
+  },
+  brandSubtitle: {
+    fontSize: 9.5,
+    fontWeight: '600',
+    color: 'rgba(255, 255, 255, 0.65)',
+    letterSpacing: 0.2,
+    marginTop: -1,
   },
   topBarRight: {
     flexDirection: 'row',
@@ -414,7 +467,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.14)',
+    borderColor: 'rgba(255, 182, 6, 0.35)', // Gold tinted border
     borderRadius: 20,
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -433,7 +486,7 @@ const styles = StyleSheet.create({
   },
   langTextActive: {
     fontWeight: '800',
-    color: '#00d2ff',
+    color: '#FFB606', // Sunshine Gold Active
   },
   langDivider: {
     fontSize: 10.5,
@@ -441,12 +494,12 @@ const styles = StyleSheet.create({
     marginHorizontal: 1,
   },
   powerIconPill: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 182, 6, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 182, 6, 0.35)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -472,24 +525,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(2, 24, 56, 0.88)',
+    backgroundColor: 'rgba(16, 47, 83, 0.92)', // Brand Deep Navy Glass
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(0, 210, 255, 0.45)',
-    shadowColor: '#00d2ff',
+    borderColor: 'rgba(255, 182, 6, 0.55)', // Sunshine Gold Border
+    shadowColor: '#FFB606',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.35,
     shadowRadius: 8,
     elevation: 4,
     zIndex: 10,
   },
-  nodeIconWrapCyan: {
+  nodeIconWrapGold: {
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: 'rgba(0, 210, 255, 0.2)',
+    backgroundColor: 'rgba(255, 182, 6, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -500,31 +553,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(2, 24, 56, 0.88)',
+    backgroundColor: 'rgba(16, 47, 83, 0.92)', // Brand Deep Navy Glass
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.45)',
-    shadowColor: '#38bdf8',
+    borderColor: 'rgba(227, 66, 52, 0.55)', // Coral Border
+    shadowColor: '#E34234',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.35,
     shadowRadius: 8,
     elevation: 4,
     zIndex: 10,
   },
-  nodeIconWrapSky: {
+  nodeIconWrapCoral: {
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: 'rgba(56, 189, 248, 0.2)',
+    backgroundColor: 'rgba(227, 66, 52, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   nodeText: {
     fontSize: 10.5,
     fontWeight: '700',
-    color: '#E0F2FE',
+    color: '#FFFFFF',
   },
   heroTypographyWrap: {
     paddingHorizontal: 12,
@@ -535,9 +588,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(0, 210, 255, 0.15)',
+    backgroundColor: 'rgba(255, 182, 6, 0.16)', // Gold background
     borderWidth: 1,
-    borderColor: 'rgba(0, 210, 255, 0.35)',
+    borderColor: 'rgba(255, 182, 6, 0.45)', // Gold border
     borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3.5,
@@ -547,13 +600,13 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#00e5ff',
+    backgroundColor: '#FFB606', // Sunshine Gold
     marginRight: 6,
   },
   mottoBadgeText: {
     fontSize: 9.5,
     fontWeight: '800',
-    color: '#00e5ff',
+    color: '#FFB606',
     letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
@@ -571,16 +624,16 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 4,
   },
-  cyanUnderline: {
+  goldUnderline: {
     width: 28,
     height: 2.5,
-    backgroundColor: '#00e5ff',
+    backgroundColor: '#FFB606', // Sunshine Gold
     borderRadius: 2,
   },
   subHeadingText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#00e5ff',
+    color: '#FFB606', // Sunshine Gold
     letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
@@ -590,9 +643,9 @@ const styles = StyleSheet.create({
   },
   pillarsCard: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    backgroundColor: 'rgba(30, 41, 59, 0.85)', // Dark Surface #1E293B
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 182, 6, 0.25)', // Subtle Gold border
     borderRadius: shape.large,
     paddingVertical: 12,
     paddingHorizontal: 6,
@@ -609,9 +662,9 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 11,
-    backgroundColor: 'rgba(0, 210, 255, 0.1)',
+    backgroundColor: 'rgba(255, 182, 6, 0.12)', // Sunshine Gold tint
     borderWidth: 1,
-    borderColor: 'rgba(0, 210, 255, 0.25)',
+    borderColor: 'rgba(255, 182, 6, 0.3)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
@@ -633,7 +686,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#E34234',
+    backgroundColor: '#E34234', // Brand Crimson/Coral
     borderRadius: shape.medium,
     paddingVertical: 13,
     paddingHorizontal: 20,
@@ -653,9 +706,9 @@ const styles = StyleSheet.create({
   secondaryCtaBtn: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(30, 41, 59, 0.85)', // Dark Surface #1E293B
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.14)',
+    borderColor: 'rgba(255, 182, 6, 0.3)', // Subtle Gold Border
     borderRadius: shape.medium,
     paddingVertical: 11,
     paddingHorizontal: 16,
@@ -664,7 +717,7 @@ const styles = StyleSheet.create({
   secondaryCtaText: {
     fontSize: 12,
     fontWeight: '700',
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: 'rgba(255, 255, 255, 0.95)',
     letterSpacing: 0.1,
   },
   websiteLinkRow: {
@@ -676,14 +729,14 @@ const styles = StyleSheet.create({
   },
   websiteLinkText: {
     fontSize: 11,
-    fontWeight: '600',
-    color: 'rgba(0, 210, 255, 0.85)',
+    fontWeight: '700',
+    color: '#FFB606', // Sunshine Gold
     letterSpacing: 0.4,
   },
   versionTag: {
     fontSize: 9.5,
     fontWeight: '500',
-    color: 'rgba(255, 255, 255, 0.4)',
+    color: 'rgba(255, 255, 255, 0.45)',
     letterSpacing: 0.3,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
