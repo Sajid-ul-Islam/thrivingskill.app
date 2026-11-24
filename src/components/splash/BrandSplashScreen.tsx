@@ -504,19 +504,19 @@ const styles = StyleSheet.create({
   },
   primaryCtaBtn: {
     width: '100%',
-    minHeight: 48,
-    backgroundColor: '#102F53', // Brand Deep Navy
+    minHeight: 50,
+    backgroundColor: '#E34234', // Brand Crimson / Coral Red
     borderRadius: shape.medium,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: '#FFB606', // Sunshine Gold Glow Border
-    shadowColor: '#FFB606',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#E34234',
+    shadowColor: '#E34234',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 5,
   },
   primaryCtaText: {
     color: '#FFFFFF',

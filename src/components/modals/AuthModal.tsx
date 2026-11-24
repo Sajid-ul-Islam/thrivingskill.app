@@ -891,7 +891,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </View>
 
                     <TouchableOpacity
-                      style={[styles.submitButton, { backgroundColor: colors.primary }]}
+                      style={[styles.submitButton, { backgroundColor: '#E34234' }]}
                       onPress={handleResetPassword}
                       disabled={isResetLoading}
                       activeOpacity={0.88}
@@ -899,13 +899,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       accessibilityLabel="Send Password Reset Link"
                     >
                       {isResetLoading ? (
-                        <ActivityIndicator color={colors.onPrimary} size="small" />
+                        <ActivityIndicator color="#FFFFFF" size="small" />
                       ) : (
                         <>
-                          <Text style={[styles.submitButtonText, { color: colors.onPrimary }]}>
+                          <Text style={[styles.submitButtonText, { color: '#FFFFFF' }]}>
                             Send Verification Link
                           </Text>
-                          <Ionicons name="mail-unread-outline" size={18} color={colors.onPrimary} style={{ marginLeft: 6 }} />
+                          <Ionicons name="mail-unread-outline" size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
                         </>
                       )}
                     </TouchableOpacity>
@@ -1139,20 +1139,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </View>
 
                     <TouchableOpacity
-                      style={[styles.submitButton, { backgroundColor: colors.primary }]}
+                      style={[styles.submitButton, { backgroundColor: '#E34234' }]}
                       onPress={handleSetNewPassword}
                       disabled={isSettingPassword}
                       activeOpacity={0.88}
                       accessibilityRole="button"
                     >
                       {isSettingPassword ? (
-                        <ActivityIndicator color={colors.onPrimary} size="small" />
+                        <ActivityIndicator color="#FFFFFF" size="small" />
                       ) : (
                         <>
-                          <Text style={[styles.submitButtonText, { color: colors.onPrimary }]}>
+                          <Text style={[styles.submitButtonText, { color: '#FFFFFF' }]}>
                             Save Password & Sign In
                           </Text>
-                          <Ionicons name="checkmark-circle-outline" size={18} color={colors.onPrimary} style={{ marginLeft: 6 }} />
+                          <Ionicons name="checkmark-circle-outline" size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
                         </>
                       )}
                     </TouchableOpacity>
@@ -1395,7 +1395,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                     {/* Submit Button */}
                     <TouchableOpacity
-                      style={[styles.submitButton, { backgroundColor: colors.primary }]}
+                      style={[styles.submitButton, { backgroundColor: '#E34234' }]}
                       onPress={handleRegister}
                       disabled={isRegistering}
                       activeOpacity={0.88}
@@ -1403,13 +1403,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       accessibilityLabel={isBangla ? 'অ্যাকাউন্ট তৈরি করুন' : 'Create Account'}
                     >
                       {isRegistering ? (
-                        <ActivityIndicator color={colors.onPrimary} size="small" />
+                        <ActivityIndicator color="#FFFFFF" size="small" />
                       ) : (
                         <>
-                          <Text style={[styles.submitButtonText, { color: colors.onPrimary }]}>
+                          <Text style={[styles.submitButtonText, { color: '#FFFFFF' }]}>
                             {isBangla ? 'অ্যাকাউন্ট তৈরি করুন' : 'Create Account'}
                           </Text>
-                          <Ionicons name="arrow-forward" size={18} color={colors.onPrimary} style={{ marginLeft: 8 }} />
+                          <Ionicons name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 8 }} />
                         </>
                       )}
                     </TouchableOpacity>
@@ -1573,20 +1573,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </View>
 
                     <TouchableOpacity
-                      style={[styles.submitButton, { backgroundColor: colors.primary }]}
+                      style={[styles.submitButton, { backgroundColor: '#E34234' }]}
                       onPress={handleLogin}
                       disabled={isLoading}
                       activeOpacity={0.88}
                       accessibilityRole="button"
                     >
                       {isLoading ? (
-                        <ActivityIndicator color={colors.onPrimary} size="small" />
+                        <ActivityIndicator color="#FFFFFF" size="small" />
                       ) : (
                         <>
-                          <Text style={[styles.submitButtonText, { color: colors.onPrimary }]}>
+                          <Text style={[styles.submitButtonText, { color: '#FFFFFF' }]}>
                             Sign In with Credentials
                           </Text>
-                          <Ionicons name="arrow-forward" size={18} color={colors.onPrimary} style={{ marginLeft: 6 }} />
+                          <Ionicons name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
                         </>
                       )}
                     </TouchableOpacity>
