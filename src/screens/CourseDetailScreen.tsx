@@ -463,7 +463,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                   courseId={course.id}
                   modules={course.modules}
                   isEnrolled={isEnrolled}
-                  isAdmin={isAdmin}
+                  isAdmin={isPrivileged}
                   onSelectLesson={handleSelectLesson}
                 />
               </View>
@@ -480,7 +480,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
             {activeTab === 'reviews' && (
               <CourseReviewsSection
                 reviews={course.reviews}
-                isEnrolled={isEnrolled}
+                isEnrolled={isEnrolled || isPrivileged}
                 onOpenWriteReview={() => setWriteReviewModalVisible(true)}
               />
             )}
@@ -492,7 +492,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
       <CourseStickyBottomBar
         course={course}
         isEnrolled={isEnrolled}
-        isAdmin={isAdmin}
+        isAdmin={isPrivileged}
         progressPercent={progressPercent}
         isCompleted={isCompleted}
         insetsBottom={insets.bottom}
@@ -525,10 +525,10 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
         visible={certPreviewVisible}
         course={course}
         userName={user?.displayName || user?.username || 'Executive Graduate'}
-        isUnlocked={isCertificateUnlocked(course.id)}
-        isCompleted={isCompleted}
-        hasReviewed={hasReviewedCourse(course.id)}
-        certificateId={userProgress[course.id]?.certificateId}
+        isUnlocked={isPrivileged || isCertificateUnlocked(course.id)}
+        isCompleted={isPrivileged || isCompleted}
+        hasReviewed={isPrivileged || hasReviewedCourse(course.id)}
+        certificateId={userProgress[course.id]?.certificateId || (isPrivileged ? `TS-2026-DEV${course.id.slice(-4).toUpperCase()}` : undefined)}
         onClose={() => setCertPreviewVisible(false)}
         onOpenMandatoryReview={() => setMandatoryReviewVisible(true)}
       />
@@ -595,5 +595,59 @@ const styles = StyleSheet.create({
   },
   curriculumTab: {
     paddingBottom: 8,
+  },
+  devBypassBanner: {
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderRadius: shape.medium,
+    padding: 12,
+    borderWidth: 1,
+    gap: 8,
+  },
+  devBypassHeader: {
+    gap: 2,
+  },
+  devBypassBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  devBypassTitle: {
+    color: '#E34234',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  devBypassSubtitle: {
+    color: 'rgba(255, 255, 255, 0.75)',
+    fontSize: 11,
+  },
+  devActionBtnRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 2,
+  },
+  devActionBtnPrimary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#E34234',
+    paddingHorizontal: 10,
+    paddingVertical: 5.5,
+    borderRadius: 6,
+  },
+  devActionBtnSecondary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 5.5,
+    borderRadius: 6,
+  },
+  devActionBtnText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
   },
 });
