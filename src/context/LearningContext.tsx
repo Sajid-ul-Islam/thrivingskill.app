@@ -13,8 +13,16 @@ import {
   BrandingService,
   SiteBrandingInfo,
   DynamicCarouselSlide,
+  PartnerLogoItem,
+  HomeFeatureCardItem,
+  SpecialBundlePosterItem,
+  StudentTestimonialItem,
   DEFAULT_SITE_BRANDING,
   DEFAULT_CURATED_SLIDES,
+  DEFAULT_PARTNER_LOGOS,
+  DEFAULT_HOME_FEATURES,
+  DEFAULT_SPECIAL_BUNDLES,
+  DEFAULT_STUDENT_TESTIMONIALS,
 } from '../services/api/brandingService';
 import { CompanionService, AppRemoteConfig } from '../services/api/companionService';
 import {
@@ -126,6 +134,10 @@ interface LearningContextType {
   // Dynamic Site Branding & Banners
   siteBranding: SiteBrandingInfo;
   banners: DynamicCarouselSlide[];
+  partnerLogos: PartnerLogoItem[];
+  homeFeatures: HomeFeatureCardItem[];
+  specialBundles: SpecialBundlePosterItem[];
+  studentTestimonials: StudentTestimonialItem[];
   appRemoteConfig: AppRemoteConfig | null;
   isBrandingLoading: boolean;
   refreshBranding: (forceRefresh?: boolean) => Promise<void>;
@@ -202,20 +214,48 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Dynamic Site Branding & Hero Banners State
   const [siteBranding, setSiteBranding] = useState<SiteBrandingInfo>(DEFAULT_SITE_BRANDING);
   const [banners, setBanners] = useState<DynamicCarouselSlide[]>(DEFAULT_CURATED_SLIDES);
+  const [partnerLogos, setPartnerLogos] = useState<PartnerLogoItem[]>(DEFAULT_PARTNER_LOGOS);
+  const [homeFeatures, setHomeFeatures] = useState<HomeFeatureCardItem[]>(DEFAULT_HOME_FEATURES);
+  const [specialBundles, setSpecialBundles] = useState<SpecialBundlePosterItem[]>(DEFAULT_SPECIAL_BUNDLES);
+  const [studentTestimonials, setStudentTestimonials] = useState<StudentTestimonialItem[]>(DEFAULT_STUDENT_TESTIMONIALS);
   const [appRemoteConfig, setAppRemoteConfig] = useState<AppRemoteConfig | null>(null);
   const [isBrandingLoading, setIsBrandingLoading] = useState<boolean>(false);
 
   const refreshBranding = useCallback(async (forceRefresh: boolean = false) => {
     try {
       setIsBrandingLoading(true);
-      const [brandingInfo, bannerSlides, remoteConfig] = await Promise.all([
+      const [
+        brandingInfo,
+        bannerSlides,
+        remoteConfig,
+        partners,
+        features,
+        bundles,
+        testimonials,
+      ] = await Promise.all([
         BrandingService.getSiteBranding(forceRefresh),
         BrandingService.getDynamicBanners(forceRefresh),
         CompanionService.fetchAppConfig(forceRefresh),
+        BrandingService.getPartnerLogos(forceRefresh),
+        BrandingService.getHomeFeatureCards(forceRefresh),
+        BrandingService.getSpecialBundles(forceRefresh),
+        BrandingService.getStudentTestimonials(forceRefresh),
       ]);
       setSiteBranding(brandingInfo);
       if (bannerSlides && bannerSlides.length > 0) {
         setBanners(bannerSlides);
+      }
+      if (partners && partners.length > 0) {
+        setPartnerLogos(partners);
+      }
+      if (features && features.length > 0) {
+        setHomeFeatures(features);
+      }
+      if (bundles && bundles.length > 0) {
+        setSpecialBundles(bundles);
+      }
+      if (testimonials && testimonials.length > 0) {
+        setStudentTestimonials(testimonials);
       }
       if (remoteConfig) {
         setAppRemoteConfig(remoteConfig);
@@ -920,6 +960,10 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         syncOfflineData,
         siteBranding,
         banners,
+        partnerLogos,
+        homeFeatures,
+        specialBundles,
+        studentTestimonials,
         appRemoteConfig,
         isBrandingLoading,
         refreshBranding,

@@ -36,7 +36,15 @@ import {
   ScrollToTopPill,
   AboutTSLModal,
   AboutTabKey,
+  PartnerLogoMarquee,
+  HomeFeatureGrid,
+  SpecialBundlesCarousel,
+  HomeTestimonialsCarousel,
 } from '../components';
+import type {
+  HomeFeatureCardItem,
+  SpecialBundlePosterItem,
+} from '../services/api/brandingService';
 import { triggerHaptic } from '../utils/haptics';
 import { useYouTube } from '../context/YouTubeContext';
 import { RootTab } from '../types';
@@ -302,6 +310,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     getCourseProgressPercentage,
     recordSearchKeyword,
     banners,
+    partnerLogos,
+    homeFeatures,
+    specialBundles,
+    studentTestimonials,
+    refreshBranding,
   } = useLearning();
 
   const { subscriptionTier } = useSaaS();
@@ -542,6 +555,45 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     }
   };
 
+  // HomeFeatureGrid handler
+  const handleSelectFeature = (feature: HomeFeatureCardItem) => {
+    if (feature.actionType === 'bundle') {
+      setSearchQuery('bundle');
+      onNavigateTab('Courses');
+    } else if (feature.actionType === 'subscription') {
+      onOpenSubscription();
+    } else if (feature.actionType === 'courses') {
+      onNavigateTab('Courses');
+    } else if (feature.actionType === 'workshops') {
+      onNavigateTab('Workshops');
+    }
+  };
+
+  // Special Bundles handler
+  const handleSelectSpecialBundle = (bundle: SpecialBundlePosterItem) => {
+    const matchingCourse = courses.find(
+      (c) =>
+        c.id.toLowerCase() === bundle.targetSlug.toLowerCase() ||
+        c.title.toLowerCase().includes(bundle.title.toLowerCase()) ||
+        (bundle.targetSlug.includes('finance') && (c.title.toLowerCase().includes('finance') || c.category === 'business')) ||
+        (bundle.targetSlug.includes('hr') && (c.title.toLowerCase().includes('hr') || c.category === 'business')) ||
+        (bundle.targetSlug.includes('excel') && (c.title.toLowerCase().includes('excel') || c.category === 'excel')) ||
+        (bundle.targetSlug.includes('leadership') && (c.title.toLowerCase().includes('leadership') || c.category === 'business'))
+    );
+
+    if (matchingCourse) {
+      onNavigateToCourse(matchingCourse.id);
+    } else {
+      setSearchQuery(bundle.title);
+      onNavigateTab('Courses');
+    }
+  };
+
+  const handleViewAllBundles = () => {
+    setSearchQuery('bundle');
+    onNavigateTab('Courses');
+  };
+
   // Scroll dynamics
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
@@ -639,6 +691,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             onRefresh={() => {
               triggerHaptic('light');
               refreshCourses();
+              refreshBranding(true);
             }}
             tintColor={colors.primary}
             colors={[colors.primary]}
@@ -1072,6 +1125,22 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           onOpenSubscription={onOpenSubscription}
         />
 
+        {/* ── Live Site Partner Logos Marquee ── */}
+        <PartnerLogoMarquee logos={partnerLogos} />
+
+        {/* ── Live Site 2x2 Feature Grid ("শিখুন এবং গড়ুন নিজের ক্যারিয়ার") ── */}
+        <HomeFeatureGrid
+          features={homeFeatures}
+          onSelectFeature={handleSelectFeature}
+        />
+
+        {/* ── Special Promotional Bundles Carousel ("স্পেশাল বান্ডেল কোর্স") ── */}
+        <SpecialBundlesCarousel
+          bundles={specialBundles}
+          onSelectBundle={handleSelectSpecialBundle}
+          onViewAllBundles={handleViewAllBundles}
+        />
+
         {/* ── Loading / Error State ── */}
         {isLoadingCourses && courses.length === 0 && (
           <View style={{ paddingHorizontal: 16, marginTop: 14 }}>
@@ -1103,6 +1172,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               colors={colors}
             />
           ))}
+
+        {/* ── Live Site Student Testimonials Carousel ("Why people choose Thriving Skills") ── */}
+        <HomeTestimonialsCarousel testimonials={studentTestimonials} />
 
         {/* ── About TSL Footer Card ── */}
         <View style={styles.section}>
