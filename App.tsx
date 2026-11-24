@@ -48,6 +48,7 @@ import {
   SkillAssessmentModal,
   CorporateInquiryModal,
   AuthModal,
+  AuthMode,
   YouTubeMiniPlayer,
   YouTubePlayerModal,
   UniversalSearchModal,
@@ -173,24 +174,13 @@ const MainAppContent: React.FC = () => {
     );
   }, [user]);
 
-  // CR-1: Brand splash screen timer (4.5 seconds auto-advance or on user action)
+  // CR-1: Brand splash screen state and intent synchronization
   const [isSplashVisible, setIsSplashVisible] = useState(true);
-  const splashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [authInitialMode, setAuthInitialMode] = useState<AuthMode>('register');
 
   useEffect(() => {
     // Sanitize local storage of any legacy mock avatars or comments
     StorageSanitizer.runStartupSanitization().catch(() => {});
-
-    splashTimerRef.current = setTimeout(() => {
-      setIsSplashVisible(false);
-    }, 4500);
-
-    return () => {
-      if (splashTimerRef.current) {
-        clearTimeout(splashTimerRef.current);
-        splashTimerRef.current = null;
-      }
-    };
   }, []);
 
   // Cross-platform timer for proactive background OTA check
@@ -612,6 +602,7 @@ const MainAppContent: React.FC = () => {
       {/* WordPress LearnPress Auth Modal (Mandatory Access Control per CR-1) */}
       <AuthModal
         visible={isAuthModalVisible || (!isAuthenticated && !isAuthLoading && !isSplashVisible)}
+        initialMode={authInitialMode}
         dismissible={isAuthenticated}
         onClose={() => setAuthModalVisible(false)}
       />
@@ -711,30 +702,23 @@ const MainAppContent: React.FC = () => {
         onOpenNotifications={() => setNotificationModalVisible(true)}
       />
 
-      {/* CR-1: Startup Brand Splash Screen with Cinematic Fade & Seamless Dissolve */}
+      {/* CR-1: Startup Brand Splash Screen with Seamless Synchronized Transition */}
       {(isSplashVisible || isAuthLoading) && (
         <BrandSplashScreen
           isLoading={isAuthLoading}
           onGetStarted={() => {
-            if (splashTimerRef.current) {
-              clearTimeout(splashTimerRef.current);
-              splashTimerRef.current = null;
-            }
-            setIsSplashVisible(false);
+            setAuthInitialMode('register');
+            setAuthModalVisible(true);
           }}
           onSignIn={() => {
-            if (splashTimerRef.current) {
-              clearTimeout(splashTimerRef.current);
-              splashTimerRef.current = null;
-            }
-            setIsSplashVisible(false);
+            setAuthInitialMode('login');
             setAuthModalVisible(true);
           }}
           onDismiss={() => {
-            if (splashTimerRef.current) {
-              clearTimeout(splashTimerRef.current);
-              splashTimerRef.current = null;
-            }
+            setAuthInitialMode('login');
+            setAuthModalVisible(true);
+          }}
+          onExitComplete={() => {
             setIsSplashVisible(false);
           }}
         />

@@ -14,6 +14,7 @@ import {
   Keyboard,
   Linking,
   LayoutAnimation,
+  Image,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -92,7 +93,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   dismissible,
 }) => {
   const { colors, isDark } = useTheme();
-  const { isBangla } = useLanguage();
+  const { isBangla, setLanguage } = useLanguage();
   const insets = useSafeAreaInsets();
   const { isTablet } = useResponsive();
   const { showToast } = useFeedback();
@@ -102,7 +103,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     login,
     register,
     confirmPasswordReset,
-    continueAsGuest,
     isLoading,
     setAuthModalVisible,
   } = useAuth();
@@ -331,18 +331,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     if (!trimmedPhone || phoneDigits.length < 10) {
       setErrorMessage(
         isBangla
-          ? 'অনুগ্রহ করে সঠিক মোবাইল নম্বর লিখুন (যেমন: 017xxxxxxxx)।'
-          : 'Please enter a valid mobile number (e.g. 017xxxxxxxx).'
+          ? 'কোর্স ভর্তি ও ভেরিফিকেশনে সঠিক মোবাইল নম্বর প্রদান আবশ্যক (যেমন: 017xxxxxxxx)।'
+          : 'Please enter a valid mobile number required for enrollment & support (e.g. 017xxxxxxxx).'
       );
       triggerHaptic('warning');
       return;
     }
 
-    if (!trimmedPassword || trimmedPassword.length < 6) {
+    if (!trimmedPassword || trimmedPassword.length < 12) {
       setErrorMessage(
         isBangla
-          ? 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।'
-          : 'Password must be at least 6 characters long.'
+          ? 'পাসওয়ার্ড কমপক্ষে ১২ অক্ষরের হতে হবে (অফিসিয়াল প্ল্যাটফর্মের নিয়ম)।'
+          : 'Password must be at least 12 characters long per official site rules.'
       );
       triggerHaptic('warning');
       return;
@@ -492,11 +492,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const handleGuest = () => {
-    continueAsGuest();
-    onClose();
-  };
-
   return (
     <Modal
       visible={visible}
@@ -630,17 +625,51 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             {/* Drag Handle */}
             <View style={[styles.handleBar, { backgroundColor: colors.border }]} />
 
-            {/* Close Button (Hidden if login is mandatory) */}
-            {isDismissible && (
-              <TouchableOpacity
-                style={[styles.closeButton, { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' }]}
-                onPress={onClose}
-                accessibilityRole="button"
-                accessibilityLabel="Close dialog"
-              >
-                <Ionicons name="close" size={20} color={colors.textMuted} />
-              </TouchableOpacity>
-            )}
+            {/* Top Control Bar: Language Switcher Pill & Optional Close Button */}
+            <View style={styles.topControlRow}>
+              <View style={styles.langPill}>
+                <TouchableOpacity
+                  onPress={() => {
+                    triggerHaptic('selection');
+                    setLanguage('en');
+                  }}
+                  activeOpacity={0.7}
+                  style={[styles.langBtn, !isBangla && styles.langBtnActive]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Switch to English"
+                  hitSlop={{ top: 8, bottom: 8, left: 6, right: 4 }}
+                >
+                  <Text style={[styles.langText, !isBangla && styles.langTextActive]}>ENG</Text>
+                </TouchableOpacity>
+
+                <Text style={styles.langDivider}>|</Text>
+
+                <TouchableOpacity
+                  onPress={() => {
+                    triggerHaptic('selection');
+                    setLanguage('bn');
+                  }}
+                  activeOpacity={0.7}
+                  style={[styles.langBtn, isBangla && styles.langBtnActive]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Switch to Bengali"
+                  hitSlop={{ top: 8, bottom: 8, left: 4, right: 6 }}
+                >
+                  <Text style={[styles.langText, isBangla && styles.langTextActive]}>বাংলা</Text>
+                </TouchableOpacity>
+              </View>
+
+              {isDismissible && (
+                <TouchableOpacity
+                  style={[styles.closeButtonInline, { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' }]}
+                  onPress={onClose}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close dialog"
+                >
+                  <Ionicons name="close" size={18} color={colors.textMuted} />
+                </TouchableOpacity>
+              )}
+            </View>
 
             <ScrollView
               ref={scrollViewRef}
@@ -653,17 +682,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               ]}
               style={styles.scrollView}
             >
-              {/* Brand Logo & Pill */}
-              {!isKeyboardVisible && (
-                <View style={styles.brandContainer}>
-                  <View style={[styles.brandIconWrap, { backgroundColor: '#102F53' }]}>
-                    <Ionicons name="school" size={26} color="#FFB606" />
-                  </View>
-                  <Text style={[styles.brandBadgeText, { color: colors.text }]}>
-                    THRIVING <Text style={{ color: colors.accent }}>SKILLS</Text>
+              {/* Authentic Brand Header - Persistent across keyboard to eliminate layout collapse */}
+              <View style={styles.brandRowHeader}>
+                <View style={styles.brandLogoBox}>
+                  <Image
+                    source={require('../../../assets/icon.png')}
+                    style={styles.brandLogoImg}
+                    resizeMode="contain"
+                  />
+                </View>
+                <View style={styles.brandTitleCol}>
+                  <Text style={[styles.brandTitleText, { color: colors.text }]}>
+                    Thriving<Text style={{ color: '#FFB606' }}>Skills</Text>
+                  </Text>
+                  <Text style={[styles.brandSubtitleText, { color: colors.textMuted }]}>
+                    {isBangla ? 'স্কিলস ফর ফিউচার' : 'Skills For Future'}
                   </Text>
                 </View>
-              )}
+              </View>
 
               <Text
                 style={[
@@ -1220,10 +1256,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       )}
                     </View>
 
-                    {/* Phone Number Input */}
+                    {/* Phone Number Input (Mandatory per client requirement for course enrollment) */}
                     <View style={styles.inputGroup}>
                       <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
-                        {isBangla ? 'মোবাইল নম্বর *' : 'Phone Number *'}
+                        {isBangla ? 'মোবাইল নম্বর * (কোর্স ভর্তি ও ভেরিফিকেশনে আবশ্যক)' : 'Phone Number * (Required for enrollment & verification)'}
                       </Text>
                       <View
                         style={[
@@ -1252,24 +1288,38 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           onSubmitEditing={() => regPasswordInputRef.current?.focus()}
                         />
                       </View>
-                      {touched.regPhone && !regPhone.trim() && (
+                      {touched.regPhone && (!regPhone.trim() || regPhone.replace(/\D/g, '').length < 10) && (
                         <Text style={[styles.inlineFieldError, { color: colors.danger }]}>
-                          {isBangla ? 'অনুগ্রহ করে আপনার মোবাইল নম্বর লিখুন।' : 'Please enter your mobile phone number.'}
+                          {isBangla
+                            ? 'কোর্স ভর্তি ও ভেরিফিকেশনে সঠিক মোবাইল নম্বর প্রদান আবশ্যক (যেমন: 017xxxxxxxx)।'
+                            : 'Please enter a valid mobile number (e.g. 017xxxxxxxx).'}
                         </Text>
                       )}
                     </View>
 
-                    {/* Password Input */}
+                    {/* Password Input - Min 12 Characters per official platform rules */}
                     <View style={styles.inputGroup}>
-                      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
-                        {isBangla ? 'পাসওয়ার্ড * (কমপক্ষে ৬ অক্ষর)' : 'Password * (Min 6 characters)'}
-                      </Text>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
+                          {isBangla ? 'পাসওয়ার্ড * (কমপক্ষে ১২ অক্ষর)' : 'Password * (Min 12 characters)'}
+                        </Text>
+                        {regPassword.length > 0 && (
+                          <Text
+                            style={[
+                              styles.charCountPill,
+                              { color: regPassword.length >= 12 ? '#10B981' : colors.textMuted },
+                            ]}
+                          >
+                            {regPassword.length}/12 {regPassword.length >= 12 ? '✓' : ''}
+                          </Text>
+                        )}
+                      </View>
                       <View
                         style={[
                           styles.inputWrapper,
                           {
                             backgroundColor: colors.surfaceSubtle,
-                            borderColor: touched.regPassword && regPassword.length < 6 ? colors.danger : colors.border,
+                            borderColor: touched.regPassword && regPassword.length < 12 ? colors.danger : colors.border,
                           },
                         ]}
                       >
@@ -1277,7 +1327,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         <TextInput
                           ref={regPasswordInputRef}
                           style={[styles.input, { color: colors.text }]}
-                          placeholder={isBangla ? 'পাসওয়ার্ড নির্ধারণ করুন' : 'Create an account password'}
+                          placeholder={isBangla ? 'কমপক্ষে ১২ অক্ষরের পাসওয়ার্ড লিখুন' : 'Enter at least 12 character password'}
                           placeholderTextColor={colors.textLight}
                           value={regPassword}
                           onChangeText={(t) => {
@@ -1305,11 +1355,42 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           />
                         </TouchableOpacity>
                       </View>
-                      {touched.regPassword && regPassword.length > 0 && regPassword.length < 6 && (
+
+                      {/* Character Count Progress Bar */}
+                      {regPassword.length > 0 && (
+                        <View style={[styles.charCountTrack, { backgroundColor: colors.surfaceSubtle }]}>
+                          <View
+                            style={[
+                              styles.charCountFill,
+                              {
+                                width: `${Math.min(100, (regPassword.length / 12) * 100)}%`,
+                                backgroundColor: regPassword.length >= 12 ? '#10B981' : '#FFB606',
+                              },
+                            ]}
+                          />
+                        </View>
+                      )}
+
+                      {touched.regPassword && regPassword.length > 0 && regPassword.length < 12 && (
                         <Text style={[styles.inlineFieldError, { color: colors.danger }]}>
-                          {isBangla ? 'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।' : 'Password must be at least 6 characters long.'}
+                          {isBangla
+                            ? `পাসওয়ার্ড কমপক্ষে ১২ অক্ষরের হতে হবে (বর্তমানে ${regPassword.length}/১২)।`
+                            : `Password must be at least 12 characters long (currently ${regPassword.length}/12).`}
                         </Text>
                       )}
+
+                      {/* Official Password Rule Card from thrivingskill.com */}
+                      <View style={[styles.siteHintBox, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border, marginTop: 8 }]}>
+                        <Ionicons name="shield-checkmark" size={15} color="#FFB606" style={{ marginTop: 1 }} />
+                        <Text style={[styles.siteHintText, { color: colors.textMuted }]}>
+                          <Text style={{ fontWeight: '700', color: colors.text }}>
+                            {isBangla ? 'পাসওয়ার্ড নিয়ম: ' : 'Password Rule: '}
+                          </Text>
+                          {isBangla
+                            ? 'পাসওয়ার্ড কমপক্ষে ১২ অক্ষরের হতে হবে। আরও শক্তিশালী করতে বড় ও ছোট হাতের অক্ষর, সংখ্যা এবং চিহ্ন (! " ? $ % ^ &) ব্যবহার করুন।'
+                            : 'The password must be at least twelve (12) characters long. To make it stronger, use uppercase, lowercase, numbers, and symbols like ! " ? $ % ^ & ).'}
+                        </Text>
+                      </View>
                     </View>
 
                     {/* Submit Button */}
@@ -1625,7 +1706,53 @@ const styles = StyleSheet.create({
     height: 5,
     borderRadius: 3,
     alignSelf: 'center',
-    marginBottom: 14,
+    marginBottom: 8,
+  },
+  topControlRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 4,
+    marginBottom: 8,
+  },
+  langPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 182, 6, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 182, 6, 0.35)',
+    borderRadius: 16,
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+  },
+  langBtn: {
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+  },
+  langBtnActive: {
+    borderRadius: 8,
+  },
+  langText: {
+    fontSize: 10.5,
+    fontWeight: '600',
+    color: 'rgba(150, 150, 150, 0.85)',
+  },
+  langTextActive: {
+    fontWeight: '800',
+    color: '#FFB606',
+  },
+  langDivider: {
+    fontSize: 10,
+    color: 'rgba(150, 150, 150, 0.3)',
+    marginHorizontal: 1,
+  },
+  closeButtonInline: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   closeButton: {
     position: 'absolute',
@@ -1641,6 +1768,65 @@ const styles = StyleSheet.create({
   scrollContent: {
     alignItems: 'center',
     paddingBottom: 24,
+  },
+  brandRowHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 9,
+    marginTop: 2,
+    marginBottom: 10,
+  },
+  brandLogoBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    backgroundColor: '#FFFFFF',
+    padding: 3,
+    borderWidth: 1.5,
+    borderColor: '#FFB606',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#FFB606',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  brandLogoImg: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+  },
+  brandTitleCol: {
+    justifyContent: 'center',
+  },
+  brandTitleText: {
+    fontSize: 16,
+    fontWeight: '900',
+    letterSpacing: -0.3,
+  },
+  brandSubtitleText: {
+    fontSize: 9.5,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+    marginTop: -1,
+  },
+  charCountPill: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  charCountTrack: {
+    width: '100%',
+    height: 3,
+    borderRadius: 1.5,
+    marginTop: 5,
+    marginBottom: 4,
+    overflow: 'hidden',
+  },
+  charCountFill: {
+    height: '100%',
+    borderRadius: 1.5,
   },
   brandContainer: {
     alignItems: 'center',
@@ -1976,20 +2162,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     marginLeft: 6,
-  },
-  guestButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    height: 46,
-    borderRadius: 14,
-    borderWidth: 1,
-    marginBottom: 14,
-  },
-  guestButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
   },
   disclaimerText: {
     fontSize: 11,
