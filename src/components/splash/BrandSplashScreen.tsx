@@ -266,7 +266,7 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
               accessibilityLabel="Skip splash screen"
               hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
             >
-              <Ionicons name="flash" size={13} color="#FFB606" />
+              <Ionicons name="flash" size={13} color="#E34234" />
             </TouchableOpacity>
           </View>
         </Animated.View>
@@ -313,7 +313,7 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
             },
           ]}
         >
-          {/* Primary CTA: Get Started Now */}
+          {/* Primary CTA: Get Started Now in Signature Red (#E34234) */}
           <SpringPressable
             onPress={handleGetStarted}
             style={styles.primaryCtaBtn}
@@ -351,7 +351,7 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
             accessibilityLabel="Visit official website at thrivingskill.com"
             hitSlop={{ top: 8, bottom: 8, left: 12, right: 12 }}
           >
-            <Ionicons name="globe-outline" size={13} color="#FFB606" />
+            <Ionicons name="globe-outline" size={13} color="#E34234" />
             <Text style={styles.websiteLinkText}>www.thrivingskill.com</Text>
           </TouchableOpacity>
         </Animated.View>
@@ -414,7 +414,7 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 182, 6, 0.3)',
+    borderColor: 'rgba(227, 66, 52, 0.35)',
   },
   logoWrap: {
     width: 22,
@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(16, 47, 83, 0.85)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 182, 6, 0.35)',
+    borderColor: 'rgba(227, 66, 52, 0.35)',
     borderRadius: 20,
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -465,7 +465,7 @@ const styles = StyleSheet.create({
   },
   langTextActive: {
     fontWeight: '800',
-    color: '#FFB606',
+    color: '#E34234',
   },
   langDivider: {
     fontSize: 10.5,
@@ -478,7 +478,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: 'rgba(16, 47, 83, 0.85)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 182, 6, 0.35)',
+    borderColor: 'rgba(227, 66, 52, 0.4)',
     alignItems: 'center',
     justifyContent: 'center',
   },

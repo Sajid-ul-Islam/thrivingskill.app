@@ -707,16 +707,21 @@ const MainAppContent: React.FC = () => {
         <BrandSplashScreen
           isLoading={isAuthLoading}
           onGetStarted={() => {
-            setAuthInitialMode('register');
-            setAuthModalVisible(true);
+            setIsSplashVisible(false);
+            if (!isAuthenticated) {
+              setAuthInitialMode('register');
+              setAuthModalVisible(true);
+            }
           }}
           onSignIn={() => {
-            setAuthInitialMode('login');
-            setAuthModalVisible(true);
+            setIsSplashVisible(false);
+            if (!isAuthenticated) {
+              setAuthInitialMode('login');
+              setAuthModalVisible(true);
+            }
           }}
           onDismiss={() => {
-            setAuthInitialMode('login');
-            setAuthModalVisible(true);
+            setIsSplashVisible(false);
           }}
           onExitComplete={() => {
             setIsSplashVisible(false);
