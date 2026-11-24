@@ -19,6 +19,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useFeedback } from '../../context/FeedbackContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useLearning } from '../../context/LearningContext';
+import { useAuth } from '../../context/AuthContext';
 import { triggerHaptic } from '../../utils/haptics';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
@@ -39,6 +40,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
   const { isBangla } = useLanguage();
   const { showToast } = useFeedback();
   const { hasReviewedCourse, submitMandatoryCourseReview } = useLearning();
+  const { canBypassCourseLocks } = useAuth();
   const insets = useSafeAreaInsets();
   const pdfTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -56,9 +58,10 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
 
   if (!certificate) return null;
 
-  const isReviewed = certificate.courseId ? hasReviewedCourse(certificate.courseId) : true;
+  const isReviewed = canBypassCourseLocks || (certificate.courseId ? hasReviewedCourse(certificate.courseId) : true);
 
   const requireReviewGate = (): boolean => {
+    if (canBypassCourseLocks) return true;
     if (!isReviewed) {
       triggerHaptic('warning');
       showToast({
@@ -230,13 +233,13 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
             )}
 
             {/* The Certificate Frame */}
-            <View style={[styles.certFrame, { backgroundColor: '#FFFFFF', borderColor: '#FFB606' }]}>
+            <View style={[styles.certFrame, { backgroundColor: '#FFFFFF', borderColor: '#E34234' }]}>
               {/* Inner Decorative Border */}
               <View style={[styles.certInnerBorder, { borderColor: '#102F53' }]}>
                 {/* Logo Header */}
                 <View style={styles.certHeader}>
                   <View style={[styles.certLogoBadge, { backgroundColor: '#102F53' }]}>
-                    <Ionicons name="school" size={20} color="#FFB606" />
+                    <Ionicons name="school" size={20} color="#E34234" />
                   </View>
                   <Text style={[styles.certOrgName, { color: '#102F53' }]}>THRIVING SKILLS</Text>
                   <Text style={styles.certOrgSub}>ACADEMY OF EXECUTIVE EXCELLENCE</Text>
@@ -260,8 +263,8 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
                     <Text style={styles.signTitle}>Course Director</Text>
                   </View>
 
-                  <View style={[styles.goldSeal, { borderColor: '#FFB606', backgroundColor: '#FEF3C7' }]}>
-                    <Ionicons name="shield-checkmark" size={26} color="#D97706" />
+                  <View style={[styles.goldSeal, { borderColor: '#E34234', backgroundColor: 'rgba(227, 66, 52, 0.08)' }]}>
+                    <Ionicons name="shield-checkmark" size={26} color="#E34234" />
                     <Text style={styles.sealText}>VERIFIED</Text>
                   </View>
 
@@ -326,7 +329,7 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
               <TouchableOpacity
                 style={[
                   styles.downloadPdfBtn,
-                  { backgroundColor: isReviewed ? colors.accent : '#F59E0B' },
+                  { backgroundColor: isReviewed ? colors.accent : '#E34234' },
                 ]}
                 onPress={handleDownloadPdf}
                 disabled={isDownloadingPdf}
@@ -492,7 +495,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: 'rgba(227, 66, 52, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -510,7 +513,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#D97706',
+    backgroundColor: '#E34234',
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 16,
@@ -566,7 +569,7 @@ const styles = StyleSheet.create({
   },
   certInnerBorder: {
     borderWidth: 1.5,
-    borderColor: '#D97706',
+    borderColor: '#102F53',
     borderStyle: 'dashed',
     borderRadius: 8,
     padding: 18,
@@ -620,7 +623,7 @@ const styles = StyleSheet.create({
   certNameDivider: {
     width: 140,
     height: 1.5,
-    backgroundColor: '#D97706',
+    backgroundColor: '#E34234',
     marginVertical: 6,
   },
   certCourseTitle: {
@@ -667,7 +670,7 @@ const styles = StyleSheet.create({
   sealText: {
     fontSize: 8,
     fontWeight: '900',
-    color: '#B45309',
+    color: '#E34234',
     marginTop: 2,
   },
   credentialRow: {

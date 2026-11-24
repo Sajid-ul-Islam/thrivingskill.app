@@ -38,6 +38,8 @@ import { useFeedback } from '../context/FeedbackContext';
 import { findRelatedVideoForCourse } from '../services/youtubeService';
 import { CoursesService } from '../services/api/coursesService';
 import { MIN_TOUCH_TARGET } from '../theme/typography';
+import { shape } from '../theme/shapes';
+import { triggerHaptic } from '../utils/haptics';
 import { useResponsive } from '../theme/responsive';
 import { Lesson } from '../types';
 

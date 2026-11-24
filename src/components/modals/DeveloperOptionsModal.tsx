@@ -41,8 +41,11 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
   useEffect(() => {
     if (visible) {
       setCurrentEnv(Env.currentEnvironment);
-      AsyncStorage.getItem('@ts_auth_admin_bypass')
-        .then((val) => setAdminBypass(val === 'true'))
+      Promise.all([
+        AsyncStorage.getItem('@thrivingskill_admin_bypass'),
+        AsyncStorage.getItem('@ts_auth_admin_bypass'),
+      ])
+        .then(([v1, v2]) => setAdminBypass(v1 === 'true' || v2 === 'true'))
         .catch(() => {});
     }
   }, [visible]);
@@ -57,7 +60,10 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
   const handleToggleAdminBypass = async (value: boolean) => {
     triggerHaptic('selection');
     setAdminBypass(value);
-    await AsyncStorage.setItem('@ts_auth_admin_bypass', String(value)).catch(() => {});
+    await Promise.all([
+      AsyncStorage.setItem('@thrivingskill_admin_bypass', String(value)),
+      AsyncStorage.setItem('@ts_auth_admin_bypass', String(value)),
+    ]).catch(() => {});
   };
 
   const handleClearAppCache = async () => {
@@ -84,9 +90,12 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
       setCurrentEnv('production');
       // 2. Disable admin bypass
       setAdminBypass(false);
-      await AsyncStorage.setItem('@ts_auth_admin_bypass', 'false');
-      // 3. Lock and hide developer options
-      await AsyncStorage.setItem('@ts_dev_mode_unlocked', 'false');
+      await Promise.all([
+        AsyncStorage.setItem('@thrivingskill_admin_bypass', 'false'),
+        AsyncStorage.setItem('@ts_auth_admin_bypass', 'false'),
+        // 3. Lock and hide developer options
+        AsyncStorage.setItem('@ts_dev_mode_unlocked', 'false'),
+      ]);
       // 4. Clear cache to guarantee clean production state
       await CacheManager.clearAll().catch(() => {});
       // 5. Notify parent callback
@@ -106,8 +115,11 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
     triggerHaptic('warning');
     await Env.setEnvironment('production');
     setCurrentEnv('production');
-    await AsyncStorage.setItem('@ts_dev_mode_unlocked', 'false');
-    await AsyncStorage.setItem('@ts_auth_admin_bypass', 'false');
+    await Promise.all([
+      AsyncStorage.setItem('@thrivingskill_admin_bypass', 'false'),
+      AsyncStorage.setItem('@ts_auth_admin_bypass', 'false'),
+      AsyncStorage.setItem('@ts_dev_mode_unlocked', 'false'),
+    ]);
     onResetToStandardMode?.();
     onClose();
   };
@@ -259,9 +271,9 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
 
               <View style={styles.settingItem}>
                 <View style={styles.settingItemText}>
-                  <Text style={styles.settingItemTitle}>Admin Bypass Mode</Text>
+                  <Text style={styles.settingItemTitle}>Master Course & Video Bypass</Text>
                   <Text style={styles.settingItemDesc}>
-                    Unlock all courses, lessons, and curriculum tests for previewing.
+                    Unrestricted access to all courses, video streaming, lessons, reviews, and certificates across both Staging and Live Production.
                   </Text>
                 </View>
                 <Switch

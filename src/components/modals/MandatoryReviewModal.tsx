@@ -110,19 +110,19 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
           >
             {/* Header / Lock badge */}
             <View style={styles.badgeRow}>
-              <View style={[styles.badge, { backgroundColor: '#F59E0B1A' }]}>
-                <Ionicons name="ribbon" size={16} color="#F59E0B" />
-                <Text style={styles.badgeText}>
+              <View style={[styles.badge, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}>
+                <Ionicons name="ribbon" size={16} color="#E34234" />
+                <Text style={[styles.badgeText, { color: '#E34234' }]}>
                   {isBangla ? 'সার্টিফিকেট আনলক করতে রিভিউ আবশ্যক' : 'REVIEW REQUIRED FOR CERTIFICATE'}
                 </Text>
               </View>
             </View>
 
             <View style={styles.trophyIconContainer}>
-              <View style={styles.iconCircle}>
-                <Ionicons name="trophy" size={36} color="#F59E0B" />
+              <View style={[styles.iconCircle, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}>
+                <Ionicons name="trophy" size={36} color="#E34234" />
               </View>
-              <View style={styles.lockBadge}>
+              <View style={[styles.lockBadge, { backgroundColor: '#E34234' }]}>
                 <Ionicons name="lock-closed" size={14} color="#FFFFFF" />
               </View>
             </View>
@@ -169,7 +169,7 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
                     <Ionicons
                       name={rating >= star ? 'star' : 'star-outline'}
                       size={36}
-                      color="#F59E0B"
+                      color={colors.starColor}
                     />
                   </TouchableOpacity>
                 ))}
@@ -223,13 +223,13 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
 
             {/* Submit Action Button */}
             <TouchableOpacity
-              style={[styles.submitButton, { backgroundColor: colors.primary }]}
+              style={[styles.submitButton, { backgroundColor: '#E34234' }]}
               onPress={handleSubmit}
               accessibilityRole="button"
               activeOpacity={0.85}
             >
-              <Ionicons name="lock-open" size={18} color={colors.onPrimary} />
-              <Text style={[styles.submitButtonText, { color: colors.onPrimary }]}>
+              <Ionicons name="lock-open" size={18} color="#FFFFFF" />
+              <Text style={[styles.submitButtonText, { color: '#FFFFFF' }]}>
                 {isBangla ? 'রিভিউ জমা দিন ও সার্টিফিকেট আনলক করুন' : 'Submit Review & Unlock Certificate'}
               </Text>
             </TouchableOpacity>
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#B45309',
+    color: '#E34234',
     letterSpacing: 0.5,
   },
   trophyIconContainer: {
@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: 'rgba(227, 66, 52, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: '#DC2626',
+    backgroundColor: '#E34234',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
   ratingScoreLabel: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#B45309',
+    color: '#E34234',
   },
   inputContainer: {
     width: '100%',

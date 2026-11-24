@@ -25,3 +25,5 @@ export * from './MessengerIcon';
 export * from './CategoryIllustrationIcon';
 export * from './DepartmentCategoryGrid';
 export * from './ConfettiBurst';
+export * from './SlidingTabBarIndicator';
+export * from './StaggeredFadeIn';

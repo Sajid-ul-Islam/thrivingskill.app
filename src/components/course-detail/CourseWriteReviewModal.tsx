@@ -162,15 +162,15 @@ export const CourseWriteReviewModal: React.FC<CourseWriteReviewModalProps> = ({
             {/* Actions */}
             <View style={styles.reviewModalActions}>
               <TouchableOpacity
-                style={[styles.submitReviewBtn, { backgroundColor: colors.primary }]}
+                style={[styles.submitReviewBtn, { backgroundColor: '#E34234' }]}
                 onPress={onSubmit}
                 disabled={isSubmitting}
                 activeOpacity={0.88}
                 accessibilityRole="button"
                 accessibilityLabel={isBangla ? 'রিভিউ সাবমিট করুন' : 'Submit Review'}
               >
-                <Ionicons name="checkmark-circle" size={18} color={colors.onPrimary} />
-                <Text style={[styles.submitReviewBtnText, { color: colors.onPrimary }]}>
+                <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" />
+                <Text style={[styles.submitReviewBtnText, { color: '#FFFFFF' }]}>
                   {isBangla ? 'রিভিউ সাবমিট করুন' : 'Submit Review'}
                 </Text>
               </TouchableOpacity>

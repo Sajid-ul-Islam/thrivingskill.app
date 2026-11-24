@@ -53,7 +53,7 @@ export const HomeQuickNavPills: React.FC<HomeQuickNavPillsProps> = ({
       label: 'Thrive Gen',
       labelBn: 'থ্রাইভ জেন',
       badge: 'YOUTH',
-      badgeColor: '#FFB606',
+      badgeColor: '#E34234',
       onPress: onOpenThriveGen,
     },
     {

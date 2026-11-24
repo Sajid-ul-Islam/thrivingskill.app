@@ -197,6 +197,12 @@ export const LessonPlaylistTab: React.FC<LessonPlaylistTabProps> = ({
                 </View>
               )}
 
+              {isAdmin && !isEnrolled && (
+                <View style={[styles.previewBadge, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}>
+                  <Text style={[styles.previewText, { color: '#E34234', fontWeight: '700' }]}>Master</Text>
+                </View>
+              )}
+
               {(item.lesson.quiz || item.lesson.type === 'quiz') && (
                 <TouchableOpacity
                   style={[styles.quizPill, { backgroundColor: colors.secondaryLight }]}

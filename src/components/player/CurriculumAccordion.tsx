@@ -201,9 +201,9 @@ export const CurriculumAccordion: React.FC<CurriculumAccordionProps> = ({
                         </View>
                       )}
                       {isAdmin && !isEnrolled && (
-                        <View style={[styles.previewBadge, { backgroundColor: 'rgba(255, 182, 6, 0.15)' }]}>
-                          <Text style={[styles.previewText, { color: '#B45309', fontWeight: '700' }]}>
-                            Admin
+                        <View style={[styles.previewBadge, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}>
+                          <Text style={[styles.previewText, { color: '#E34234', fontWeight: '700' }]}>
+                            Master Access
                           </Text>
                         </View>
                       )}

@@ -58,9 +58,9 @@ export const CourseStickyBottomBar: React.FC<CourseStickyBottomBarProps> = ({
         {isAdmin ? (
           <View style={styles.bottomPriceCol}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Ionicons name="shield-checkmark" size={14} color="#D97706" />
-              <Text style={[styles.bottomPriceLabel, { color: '#D97706', fontWeight: '800' }]}>
-                {isBangla ? 'অ্যাডমিন অ্যাক্সেস' : 'ADMIN ACCESS'}
+              <Ionicons name="shield-checkmark" size={14} color="#E34234" />
+              <Text style={[styles.bottomPriceLabel, { color: '#E34234', fontWeight: '800' }]}>
+                {isBangla ? 'মাস্টার অ্যাক্সেস' : 'DEV / ADMIN ACCESS'}
               </Text>
             </View>
             <Text style={[styles.enrolledStatus, { color: colors.textMuted }]}>

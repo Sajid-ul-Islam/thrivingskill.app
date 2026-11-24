@@ -83,7 +83,7 @@ export const CourseCertificatePreviewModal: React.FC<CourseCertificatePreviewMod
           {/* Modal Header */}
           <View style={styles.certModalHeader}>
             <View style={styles.titleRow}>
-              <Ionicons name="shield-checkmark" size={18} color="#D97706" style={{ flexShrink: 0 }} />
+              <Ionicons name="shield-checkmark" size={18} color="#E34234" style={{ flexShrink: 0 }} />
               <Text style={[styles.certModalTitle, { color: colors.text }]} numberOfLines={1}>
                 {isBangla ? 'অফিসিয়াল সার্টিফিকেট প্রিভিউ' : 'Official Certificate Preview'}
               </Text>
@@ -150,7 +150,7 @@ export const CourseCertificatePreviewModal: React.FC<CourseCertificatePreviewMod
                   </View>
 
                   <View style={styles.certGoldSeal}>
-                    <Ionicons name="medal" size={20} color="#D97706" />
+                    <Ionicons name="medal" size={20} color="#E34234" />
                     <Text style={styles.certSealText}>VERIFIED</Text>
                     <Text style={styles.certSealSub}>CREDENTIAL</Text>
                   </View>
@@ -189,7 +189,7 @@ export const CourseCertificatePreviewModal: React.FC<CourseCertificatePreviewMod
                 </TouchableOpacity>
               ) : isCompleted && !hasReviewed ? (
                 <TouchableOpacity
-                  style={[styles.certShareBtn, { backgroundColor: '#F59E0B' }]}
+                  style={[styles.certShareBtn, { backgroundColor: '#E34234' }]}
                   onPress={() => {
                     onClose();
                     onOpenMandatoryReview();
@@ -356,17 +356,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
-    backgroundColor: 'rgba(217, 119, 6, 0.1)',
+    backgroundColor: 'rgba(227, 66, 52, 0.1)',
   },
   certSealText: {
     fontSize: 8,
     fontWeight: '800',
-    color: '#D97706',
+    color: '#E34234',
   },
   certSealSub: {
     fontSize: 7,
     fontWeight: '700',
-    color: '#D97706',
+    color: '#E34234',
   },
   certSigCol: {
     alignItems: 'center',
