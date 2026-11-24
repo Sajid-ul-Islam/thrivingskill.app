@@ -237,7 +237,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     if (pass.length < 12) {
       return {
         label: `Weak (${pass.length}/12 chars - at least 12 required)`,
-        color: colors.brandGold,
+        color: '#E34234',
         pct: Math.min(Math.round((pass.length / 12) * 60), 60),
         isValid: false,
       };

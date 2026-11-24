@@ -12,7 +12,7 @@ function assert(cond, name, details = '') {
   }
 }
 
-console.log('\n=== TESTING PROFILE REDUNDANCY FIX, FULL PROFILE MODAL & #E34234 COLOR REPLACEMENT ===\n');
+console.log('\n=== COMPREHENSIVE VERIFICATION: PROFILE REDUNDANCY, FULL PROFILE VIEW & #E34234 COLOR REPLACEMENT ===\n');
 
 // 1. AuthModal and BrandSplashScreen Color Replacement
 console.log('1. Checking Yellow replaced with #E34234 in AuthModal and BrandSplashScreen:');
@@ -37,6 +37,10 @@ const splashContent = fs.readFileSync(splashPath, 'utf8');
 assert(
   !splashContent.includes('const autoAdvanceTimer'),
   'BrandSplashScreen has no auto-advance timer (stays on screen until user clicks Get Started)'
+);
+assert(
+  splashContent.includes("backgroundColor: '#E34234'"),
+  'BrandSplashScreen primary CTA button uses #E34234'
 );
 
 // 2. Profile Screen Redundancy Elimination
@@ -81,6 +85,11 @@ assert(
   'FullProfileModal displays how many certificates learner already got'
 );
 assert(
+  fullProfileContent.includes('completedCount') &&
+  fullProfileContent.includes('streakDays'),
+  'FullProfileModal displays completed courses and study streak'
+);
+assert(
   fullProfileContent.includes('editButtonCta') &&
   fullProfileContent.includes('onEditProfile'),
   'FullProfileModal features prominent Edit Profile CTA button'
@@ -103,9 +112,60 @@ assert(
   'ProfileScreen manages and displays FullProfileModal'
 );
 
+// 4. Yellow to #E34234 Replacement across Profile Components
+console.log('\n4. Checking Yellow Replacement with #E34234 across Profile Components:');
+const learningPortfolioPath = path.join(__dirname, '..', 'src', 'components', 'profile', 'ProfileLearningPortfolio.tsx');
+const learningPortfolioContent = fs.readFileSync(learningPortfolioPath, 'utf8');
+assert(
+  !learningPortfolioContent.includes('#FFB606') &&
+  !learningPortfolioContent.includes('#F59E0B') &&
+  !learningPortfolioContent.includes('#FEF3C7'),
+  'ProfileLearningPortfolio has 0 yellow hex codes'
+);
+
+const preferencesPath = path.join(__dirname, '..', 'src', 'components', 'profile', 'ProfilePreferencesSection.tsx');
+const preferencesContent = fs.readFileSync(preferencesPath, 'utf8');
+assert(
+  !preferencesContent.includes('#FFB606') &&
+  !preferencesContent.includes('#F59E0B') &&
+  !preferencesContent.includes('#FEF3C7') &&
+  !preferencesContent.includes('#FBBF24') &&
+  !preferencesContent.includes('#B45309'),
+  'ProfilePreferencesSection has 0 yellow hex codes'
+);
+
+const supportHubPath = path.join(__dirname, '..', 'src', 'components', 'profile', 'ProfileSupportHub.tsx');
+const supportHubContent = fs.readFileSync(supportHubPath, 'utf8');
+assert(
+  !supportHubContent.includes('#FFB606') &&
+  !supportHubContent.includes('#F59E0B') &&
+  !supportHubContent.includes('#FEF3C7') &&
+  !supportHubContent.includes('#FBBF24') &&
+  !supportHubContent.includes('#B45309') &&
+  !supportHubContent.includes('colors.brandGold'),
+  'ProfileSupportHub has 0 yellow references'
+);
+
+const settingsModalPath = path.join(__dirname, '..', 'src', 'components', 'profile', 'ProfileSettingsModal.tsx');
+const settingsModalContent = fs.readFileSync(settingsModalPath, 'utf8');
+assert(
+  !settingsModalContent.includes('#FFB606') &&
+  !settingsModalContent.includes('#F59E0B'),
+  'ProfileSettingsModal has 0 yellow hex codes'
+);
+
+const donutPath = path.join(__dirname, '..', 'src', 'components', 'profile', 'ProfileCompletionDonut.tsx');
+const donutContent = fs.readFileSync(donutPath, 'utf8');
+assert(
+  !donutContent.includes('#FFB606') &&
+  !donutContent.includes('#F59E0B') &&
+  donutContent.includes("gradientEnd = isComplete ? '#059669' : '#E34234'"),
+  'ProfileCompletionDonut uses #E34234 for progress arc and badges'
+);
+
 console.log('\n======================================================');
 if (failures === 0) {
-  console.log('ALL NEW TESTS PASSED! (0 failures)\n');
+  console.log('ALL TESTS PASSED! (0 failures)\n');
   process.exit(0);
 } else {
   console.error(`FAILED: ${failures} assertion(s) failed!\n`);
