@@ -40,11 +40,18 @@ import {
   HomeFeatureGrid,
   SpecialBundlesCarousel,
   HomeTestimonialsCarousel,
+  HomeQuickNavPills,
+  ThriveGenHub,
+  HomeBlogInsightsFeed,
+  BlogModal,
+  SupportContactModal,
 } from '../components';
 import type {
   HomeFeatureCardItem,
   SpecialBundlePosterItem,
 } from '../services/api/brandingService';
+import type { ThriveGenCourseItem } from '../components/home/ThriveGenHub';
+import type { WpPost } from '../types';
 import { triggerHaptic } from '../utils/haptics';
 import { useYouTube } from '../context/YouTubeContext';
 import { RootTab } from '../types';
@@ -289,6 +296,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const { isTablet, containerClampStyle } = useResponsive();
   const [aboutModalVisible, setAboutModalVisible] = useState(false);
   const [aboutInitialTab, setAboutInitialTab] = useState<AboutTabKey>('overview');
+  const [blogModalVisible, setBlogModalVisible] = useState(false);
+  const [selectedBlogId, setSelectedBlogId] = useState<string | number | undefined>(undefined);
+  const [supportModalVisible, setSupportModalVisible] = useState(false);
   const [showHeaderSearch, setShowHeaderSearch] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -315,6 +325,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     specialBundles,
     studentTestimonials,
     refreshBranding,
+    blogPosts,
   } = useLearning();
 
   const { subscriptionTier } = useSaaS();
@@ -592,6 +603,29 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const handleViewAllBundles = () => {
     setSearchQuery('bundle');
     onNavigateTab('Courses');
+  };
+
+  // Thrive Gen course selection
+  const handleSelectThriveGenCourse = (course: ThriveGenCourseItem) => {
+    const matchingCourse = courses.find(
+      (c) =>
+        c.id.toLowerCase() === course.slug.toLowerCase() ||
+        c.title.toLowerCase().includes(course.title.toLowerCase()) ||
+        c.title.toLowerCase().includes(course.slug.replace(/-/g, ' '))
+    );
+
+    if (matchingCourse) {
+      onNavigateToCourse(matchingCourse.id);
+    } else {
+      setSearchQuery(course.title);
+      onNavigateTab('Courses');
+    }
+  };
+
+  // Blog / Insights selection
+  const handleSelectBlogPost = (post: WpPost) => {
+    setSelectedBlogId(post.id);
+    setBlogModalVisible(true);
   };
 
   // Scroll dynamics
@@ -1118,6 +1152,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           }}
         />
 
+        {/* ── Quick Access Portal Bar (Live Website Portals) ── */}
+        <HomeQuickNavPills
+          onOpenThriveGen={() => {
+            setSearchQuery('thrive-gen');
+            onNavigateTab('Courses');
+          }}
+          onOpenBundles={handleViewAllBundles}
+          onOpenBlog={() => setBlogModalVisible(true)}
+          onOpenSubscription={onOpenSubscription}
+          onOpenWorkshops={() => onNavigateTab('Workshops')}
+          onOpenAbout={() => {
+            setAboutInitialTab('overview');
+            setAboutModalVisible(true);
+          }}
+          onOpenContact={() => setSupportModalVisible(true)}
+        />
+
         {/* ── 3. Dynamic Live Hero Carousel ── */}
         <HeroCarousel
           slides={banners}
@@ -1139,6 +1190,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           bundles={specialBundles}
           onSelectBundle={handleSelectSpecialBundle}
           onViewAllBundles={handleViewAllBundles}
+        />
+
+        {/* ── Live Site: Thrive Gen Student & Youth Pathways ("থ্রাইভ জেন") ── */}
+        <ThriveGenHub
+          onSelectCourse={handleSelectThriveGenCourse}
+          onExploreAllThriveGen={() => {
+            setSearchQuery('thrive-gen');
+            onNavigateTab('Courses');
+          }}
         />
 
         {/* ── Loading / Error State ── */}
@@ -1172,6 +1232,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               colors={colors}
             />
           ))}
+
+        {/* ── Live Site: Thriving Insights & Thought Leadership ("থ্রাইভিং ইনসাইটস ও ব্লগ") ── */}
+        <HomeBlogInsightsFeed
+          posts={blogPosts}
+          onSelectPost={handleSelectBlogPost}
+          onViewAllPosts={() => setBlogModalVisible(true)}
+        />
 
         {/* ── Live Site Student Testimonials Carousel ("Why people choose Thriving Skills") ── */}
         <HomeTestimonialsCarousel testimonials={studentTestimonials} />
@@ -1228,6 +1295,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         onClose={() => setAboutModalVisible(false)}
         initialTab={aboutInitialTab}
         onNavigateTab={onNavigateTab}
+      />
+
+      <BlogModal
+        visible={blogModalVisible}
+        initialPostId={selectedBlogId}
+        onClose={() => {
+          setBlogModalVisible(false);
+          setSelectedBlogId(undefined);
+        }}
+        onSelectCourse={onNavigateToCourse}
+      />
+
+      <SupportContactModal
+        visible={supportModalVisible}
+        onClose={() => setSupportModalVisible(false)}
       />
 
       {/* Scroll to Top Pill */}

@@ -61,6 +61,8 @@ interface HotTopicItem {
 
 const HOT_TOPICS: HotTopicItem[] = [
   { id: 'all', label: 'All Courses', bnLabel: 'সব কোর্স', icon: 'sparkles', type: 'all' },
+  { id: 'thrive-gen', label: 'Thrive Gen (Youth)', bnLabel: 'থ্রাইভ জেন (ছাত্রছাত্রী)', icon: 'school-outline', type: 'dept' },
+  { id: 'bundle-courses', label: 'Career Bundles', bnLabel: 'ক্যারিয়ার বান্ডেল', icon: 'layers-outline', type: 'dept' },
   { id: 'generative-ai', label: 'AI & ChatGPT', bnLabel: 'এআই ও চ্যাটজিপিটি', icon: 'hardware-chip-outline', type: 'dept' },
   { id: 'microsoft-excel-courses', label: 'Excel Mastery', bnLabel: 'এক্সেল স্প্রেডশিট', icon: 'grid-outline', type: 'dept' },
   { id: 'free-offer', label: '100% Free', bnLabel: 'সম্পূর্ণ ফ্রি', icon: 'gift-outline', type: 'price_free' },
@@ -520,8 +522,25 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
       candidateList = courses;
     } else if (isDeptFilter) {
       candidateList = courses.filter((c) => matchesDepartment(c, cat));
-    } else if (cat === 'bundle') {
-      candidateList = courses.filter((c) => c.isCareerBundle === true || c.title.includes('Bundle') || c.category === 'special-bundle');
+    } else if (cat === 'bundle' || cat === 'bundle-courses') {
+      candidateList = courses.filter((c) => c.isCareerBundle === true || c.title.toLowerCase().includes('bundle') || c.category === 'special-bundle');
+    } else if (cat === 'thrive-gen') {
+      candidateList = courses.filter((c) => {
+        const t = c.title.toLowerCase();
+        const slugs = c.categorySlugs || [];
+        return (
+          t.includes('english') ||
+          t.includes('mindset') ||
+          t.includes('habits') ||
+          t.includes('notebooklm') ||
+          t.includes('linkedin') ||
+          t.includes('presentation') ||
+          t.includes('research') ||
+          t.includes('interview') ||
+          t.includes('job') ||
+          slugs.some((s) => s.includes('thrive') || s.includes('ssc') || s.includes('hsc') || s.includes('honours') || s.includes('masters'))
+        );
+      });
     } else {
       const indexed = categoryIndex.get(cat);
       if (indexed) {

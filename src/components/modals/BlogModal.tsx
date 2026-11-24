@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -29,6 +29,7 @@ export interface BlogModalProps {
   visible: boolean;
   onClose: () => void;
   onSelectCourse?: (courseId: string) => void;
+  initialPostId?: string | number;
 }
 
 interface BlogPostItem {
@@ -119,7 +120,7 @@ By designing dashboards with high data-to-ink ratios and neutral corporate palet
   },
 ];
 
-export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelectCourse }) => {
+export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelectCourse, initialPostId }) => {
   const { colors } = useTheme();
   const { isBangla } = useLanguage();
   const { blogPosts } = useLearning();
@@ -129,8 +130,6 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeArticle, setActiveArticle] = useState<BlogPostItem | null>(null);
-
-  if (!visible) return null;
 
   // Merge live WordPress posts with curated insights
   const liveTransformed: BlogPostItem[] = (blogPosts || []).map((p) => ({
@@ -150,6 +149,19 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
   }));
 
   const allArticles = [...CURATED_BLOGS, ...liveTransformed];
+
+  useEffect(() => {
+    if (initialPostId && visible) {
+      const found = allArticles.find((a) => String(a.id) === String(initialPostId));
+      if (found) {
+        setActiveArticle(found);
+      }
+    } else if (!visible) {
+      setActiveArticle(null);
+    }
+  }, [initialPostId, visible]);
+
+  if (!visible) return null;
 
   const categories = [
     { id: 'all', label: isBangla ? 'সকল পোস্ট' : 'All Articles' },
