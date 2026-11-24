@@ -135,9 +135,17 @@ export const HomeBlogInsightsFeed: React.FC<HomeBlogInsightsFeedProps> = ({
           const cleanTitle = cleanHtml(item.title);
           const cleanExcerpt = cleanHtml(item.excerpt);
           const categoryName = item.categories && item.categories.length > 0 ? item.categories[0] : 'Insight';
-          const formattedDate = item.date
-            ? new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-            : 'Recent';
+          let formattedDate = 'Recent';
+          if (item.date) {
+            try {
+              const parsedD = new Date(item.date);
+              if (!isNaN(parsedD.getTime())) {
+                formattedDate = parsedD.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+              }
+            } catch {
+              formattedDate = 'Recent';
+            }
+          }
 
           return (
             <SpringPressable

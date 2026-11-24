@@ -521,7 +521,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const enrollInCourse = (courseId: string) => {
     if (userProgress[courseId]) return;
     const course = courses.find((c) => c.id === courseId);
-    const firstLessonId = course?.modules[0]?.lessons[0]?.id || `les-${courseId}-1`;
+    const firstLessonId = course?.modules?.[0]?.lessons?.[0]?.id || `les-${courseId}-1`;
     const updated = {
       ...userProgress,
       [courseId]: {
@@ -553,9 +553,12 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       isCompleted: false,
     };
 
-    const newCompleted = current.completedLessonIds.includes(lessonId)
-      ? current.completedLessonIds
-      : [...current.completedLessonIds, lessonId];
+    // If lesson already completed, avoid redundant mutations and state updates
+    if (current.completedLessonIds.includes(lessonId)) {
+      return;
+    }
+
+    const newCompleted = [...current.completedLessonIds, lessonId];
 
     const totalLessons = course.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0) || 0;
     const isCompleted = totalLessons > 0 && newCompleted.length >= totalLessons;
@@ -676,8 +679,10 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!course) return 0;
     const progress = userProgress[courseId];
     if (!progress) return 0;
+    if (progress.isCompleted) return 100;
 
-    const totalLessons = course.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0) || 0;
+    const moduleLessons = course.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0) || 0;
+    const totalLessons = moduleLessons > 0 ? moduleLessons : (course.lecturesCount || 0);
     if (totalLessons === 0) return 0;
 
     return Math.min(100, Math.round((progress.completedLessonIds.length / totalLessons) * 100));

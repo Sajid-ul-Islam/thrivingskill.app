@@ -64,7 +64,7 @@ export const HomeTestimonialsCarousel: React.FC<HomeTestimonialsCarouselProps> =
         renderItem={({ item }) => {
           const role = isBangla && item.roleBn ? item.roleBn : item.role;
           const quote = isBangla && item.quoteBn ? item.quoteBn : item.quote;
-          const initials = item.name
+          const initials = (item.name || 'Student')
             .split(' ')
             .map((n) => n[0])
             .filter(Boolean)

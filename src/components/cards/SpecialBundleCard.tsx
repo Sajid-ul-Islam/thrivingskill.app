@@ -60,7 +60,7 @@ export const SpecialBundleCard: React.FC<SpecialBundleCardProps> = ({ bundle, on
 
         {/* Feature Pills */}
         <View style={styles.featuresList}>
-          {bundle.features.slice(0, 2).map((feat, idx) => (
+          {(bundle.features || []).slice(0, 2).map((feat, idx) => (
             <View key={idx} style={styles.featureItem}>
               <Ionicons name="checkmark-circle" size={14} color={colors.primary} />
               <Text style={[styles.featureText, { color: colors.textMuted }]} numberOfLines={1}>
@@ -75,21 +75,21 @@ export const SpecialBundleCard: React.FC<SpecialBundleCardProps> = ({ bundle, on
           <View style={styles.statsCol}>
             <View style={styles.ratingRow}>
               <Ionicons name="star" size={13} color={colors.starColor} />
-              <Text style={[styles.ratingText, { color: colors.text }]}>{bundle.rating}</Text>
+              <Text style={[styles.ratingText, { color: colors.text }]}>{bundle.rating || 4.9}</Text>
               <Text style={[styles.enrolledText, { color: colors.textMuted }]}>
-                ({bundle.enrolledCount.toLocaleString()} enrolled)
+                ({(bundle.enrolledCount || 0).toLocaleString()} enrolled)
               </Text>
             </View>
           </View>
 
           <View style={styles.priceCol}>
-            {bundle.originalPriceBdt && bundle.originalPriceBdt > bundle.priceBdt ? (
+            {bundle.originalPriceBdt && bundle.priceBdt && bundle.originalPriceBdt > bundle.priceBdt ? (
               <Text style={[styles.origPrice, { color: colors.textMuted }]}>
                 ৳ {bundle.originalPriceBdt.toLocaleString()}
               </Text>
             ) : null}
             <Text style={[styles.price, { color: colors.primary }]}>
-              ৳ {bundle.priceBdt.toLocaleString()}
+              ৳ {(bundle.priceBdt || 0).toLocaleString()}
             </Text>
           </View>
         </View>

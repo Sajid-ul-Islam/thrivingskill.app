@@ -272,20 +272,28 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const addXP = (amount: number) => {
-    const updated = {
-      ...state,
-      xp: (state.xp || 0) + amount,
-    };
-    saveState(updated);
+    if (amount <= 0) return;
+    setState((prevState) => {
+      const updated: GamificationState = {
+        ...prevState,
+        xp: (prevState.xp || 0) + amount,
+      };
+      AsyncStorage.setItem(scopedStorageKey, JSON.stringify(updated)).catch(() => {});
+      return updated;
+    });
   };
 
   const incrementStreak = () => {
-    const updated = {
-      ...state,
-      streakDays: (state.streakDays || 0) + 1,
-      lastActiveDate: new Date().toISOString().split('T')[0],
-    };
-    saveState(updated);
+    const today = getLocalDateString();
+    setState((prevState) => {
+      const updated: GamificationState = {
+        ...prevState,
+        streakDays: (prevState.streakDays || 0) + 1,
+        lastActiveDate: today,
+      };
+      AsyncStorage.setItem(scopedStorageKey, JSON.stringify(updated)).catch(() => {});
+      return updated;
+    });
   };
 
   const triggerCelebration = (event: CelebrationEvent) => {
@@ -297,26 +305,50 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const unlockBadge = (badgeId: string) => {
-    const existing = state.badges.find((b) => b.id === badgeId);
-    const updatedBadges = state.badges.map((b) =>
-      b.id === badgeId
-        ? { ...b, isUnlocked: true, unlockedAt: new Date().toISOString().split('T')[0] }
-        : b
-    );
-    saveState({ ...state, badges: updatedBadges, xp: (state.xp || 0) + 100 });
+    const today = getLocalDateString();
+    setState((prevState) => {
+      const existing = prevState.badges.find((b) => b.id === badgeId);
+      if (existing && existing.isUnlocked) {
+        return prevState; // Already unlocked: prevent duplicate XP awards and celebrations
+      }
 
-    if (existing && !existing.isUnlocked) {
-      triggerCelebration({
-        title: `Badge Unlocked: ${existing.title}! 🏆`,
-        subtitle: existing.description,
-        xpAwarded: 100,
-        icon: existing.icon,
-      });
-    }
+      const updatedBadges = prevState.badges.map((b) =>
+        b.id === badgeId
+          ? { ...b, isUnlocked: true, unlockedAt: today }
+          : b
+      );
+
+      const updated: GamificationState = {
+        ...prevState,
+        badges: updatedBadges,
+        xp: (prevState.xp || 0) + 100,
+      };
+
+      AsyncStorage.setItem(scopedStorageKey, JSON.stringify(updated)).catch(() => {});
+
+      if (existing && !existing.isUnlocked) {
+        triggerCelebration({
+          title: `Badge Unlocked: ${existing.title}! 🏆`,
+          subtitle: existing.description,
+          xpAwarded: 100,
+          icon: existing.icon,
+        });
+      }
+
+      return updated;
+    });
   };
 
   const setDailyGoal = (minutes: number) => {
-    saveState({ ...state, dailyGoalMinutes: minutes });
+    if (minutes <= 0) return;
+    setState((prevState) => {
+      const updated: GamificationState = {
+        ...prevState,
+        dailyGoalMinutes: minutes,
+      };
+      AsyncStorage.setItem(scopedStorageKey, JSON.stringify(updated)).catch(() => {});
+      return updated;
+    });
   };
 
   const weeklyActivity = computeWeeklyActivity(state.dailyHistory);

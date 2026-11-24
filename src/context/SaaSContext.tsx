@@ -172,9 +172,11 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
       lastActive: 'Just invited',
       skillsMastered: [],
     };
-    const updated = [newMember, ...teamMembers];
-    setTeamMembers(updated);
-    saveToStorage({ teamMembers: updated });
+    setTeamMembers((prev) => {
+      const updated = [newMember, ...prev];
+      saveToStorage({ teamMembers: updated });
+      return updated;
+    });
 
     // Update workspace active seats count
     setWorkspaces((prev) =>
@@ -187,29 +189,35 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const assignCourseToMember = (memberId: string, courseId: string) => {
-    const updated = teamMembers.map((tm) => {
-      if (tm.id === memberId && !tm.assignedCourseIds.includes(courseId)) {
-        return {
-          ...tm,
-          assignedCourseIds: [...tm.assignedCourseIds, courseId],
-        };
-      }
-      return tm;
+    setTeamMembers((prev) => {
+      const updated = prev.map((tm) => {
+        if (tm.id === memberId && !tm.assignedCourseIds.includes(courseId)) {
+          return {
+            ...tm,
+            assignedCourseIds: [...tm.assignedCourseIds, courseId],
+          };
+        }
+        return tm;
+      });
+      saveToStorage({ teamMembers: updated });
+      return updated;
     });
-    setTeamMembers(updated);
-    saveToStorage({ teamMembers: updated });
   };
 
   const markNotificationRead = (notifId: string) => {
-    const updated = notifications.map((n) => (n.id === notifId ? { ...n, isRead: true } : n));
-    setNotifications(updated);
-    saveToStorage({ notifications: updated });
+    setNotifications((prev) => {
+      const updated = prev.map((n) => (n.id === notifId ? { ...n, isRead: true } : n));
+      saveToStorage({ notifications: updated });
+      return updated;
+    });
   };
 
   const markAllNotificationsRead = () => {
-    const updated = notifications.map((n) => ({ ...n, isRead: true }));
-    setNotifications(updated);
-    saveToStorage({ notifications: updated });
+    setNotifications((prev) => {
+      const updated = prev.map((n) => ({ ...n, isRead: true }));
+      saveToStorage({ notifications: updated });
+      return updated;
+    });
   };
 
   const removeNotification = (notifId: string) => {

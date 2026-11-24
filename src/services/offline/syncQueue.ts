@@ -216,9 +216,14 @@ export class SyncQueueManager {
         mutation.attempts += 1;
         mutation.lastError = err?.message || 'Network request failed';
 
-        // Keep in queue if retry limit not exceeded and not a 4xx terminal error
-        const isClientError = err?.status >= 400 && err?.status < 500 && err?.status !== 408;
-        if (mutation.attempts < mutation.maxAttempts && !isClientError) {
+        // Keep in queue if retry limit not exceeded and not a permanent client error (exclude 401 auth expiration and 429 rate limit)
+        const isPermanentClientError =
+          err?.status >= 400 &&
+          err?.status < 500 &&
+          err?.status !== 401 &&
+          err?.status !== 408 &&
+          err?.status !== 429;
+        if (mutation.attempts < mutation.maxAttempts && !isPermanentClientError) {
           remainingQueue.push(mutation);
         }
         failed++;

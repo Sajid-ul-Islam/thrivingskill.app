@@ -181,7 +181,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
           const percent = getCourseProgressPercentage(course.id);
           const progress = userProgress[course.id];
           const targetLessonId =
-            progress?.lastAccessedLessonId || course.modules[0]?.lessons[0]?.id || '';
+            progress?.lastAccessedLessonId || course.modules?.[0]?.lessons?.[0]?.id || '';
           const courseStatus = getCourseStatus(course.id);
           const cert = certificates.find((c) => c.courseId === course.id);
 

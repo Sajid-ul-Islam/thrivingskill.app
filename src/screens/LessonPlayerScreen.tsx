@@ -255,9 +255,11 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     if (autoplayCountdown <= 0) {
       setAutoplayCountdown(null);
       if (currentLessonIndex < allLessons.length - 1) {
-        const nextL = allLessons[currentLessonIndex + 1].lesson;
-        setCurrentPositionSeconds(0);
-        onSelectLesson(courseId, nextL.id);
+        const nextL = allLessons[currentLessonIndex + 1]?.lesson;
+        if (nextL) {
+          setCurrentPositionSeconds(0);
+          onSelectLesson(courseId, nextL.id);
+        }
       }
       return;
     }
@@ -299,6 +301,10 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
 
       // Auto-complete & transition when video duration finishes
       if (next >= totalLessonSeconds && totalLessonSeconds > 0) {
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = null;
+        }
         markLessonCompleted(course.id, currentLesson.id);
         flushStudyTimeBuffer();
         addXP(50);
@@ -319,6 +325,10 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     }, 1000);
 
     return () => {
+      flushStudyTimeBuffer();
+      if (course && currentLesson) {
+        recordWatchPosition(course.id, currentLesson.id, currentPosRef.current);
+      }
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
         progressIntervalRef.current = null;
@@ -479,9 +489,11 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     flushStudyTimeBuffer();
     setAutoplayCountdown(null);
     if (currentLessonIndex < allLessons.length - 1) {
-      const nextL = allLessons[currentLessonIndex + 1].lesson;
-      setCurrentPositionSeconds(0);
-      onSelectLesson(courseId, nextL.id);
+      const nextL = allLessons[currentLessonIndex + 1]?.lesson;
+      if (nextL) {
+        setCurrentPositionSeconds(0);
+        onSelectLesson(courseId, nextL.id);
+      }
     }
   };
 
@@ -489,29 +501,40 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     flushStudyTimeBuffer();
     setAutoplayCountdown(null);
     if (currentLessonIndex > 0) {
-      const prevL = allLessons[currentLessonIndex - 1].lesson;
-      setCurrentPositionSeconds(0);
-      onSelectLesson(courseId, prevL.id);
+      const prevL = allLessons[currentLessonIndex - 1]?.lesson;
+      if (prevL) {
+        setCurrentPositionSeconds(0);
+        onSelectLesson(courseId, prevL.id);
+      }
     }
   };
 
   const handleMarkComplete = () => {
     if (!currentLesson || !course) return;
+    const isAlreadyMarked = progress?.completedLessonIds.includes(currentLesson.id);
+
     markLessonCompleted(course.id, currentLesson.id);
     flushStudyTimeBuffer();
-    addXP(50);
-    unlockBadge('streak_champ');
 
-    triggerCelebration({
-      title: isBangla ? 'পাঠ সম্পন্ন হয়েছে! 🎉' : 'Lesson Mastered! 🎉',
-      subtitle: `${currentLesson.title} • +50 XP`,
-      xpAwarded: 50,
-      icon: 'checkmark-circle',
-    });
+    if (!isAlreadyMarked) {
+      addXP(50);
+      unlockBadge('streak_champ');
+
+      triggerCelebration({
+        title: isBangla ? 'পাঠ সম্পন্ন হয়েছে! 🎉' : 'Lesson Mastered! 🎉',
+        subtitle: `${currentLesson.title} • +50 XP`,
+        xpAwarded: 50,
+        icon: 'checkmark-circle',
+      });
+    } else {
+      showToast({
+        message: isBangla ? 'পাঠ ইতিমধ্যে সম্পন্ন করা হয়েছে' : 'Lesson already completed',
+        type: 'info',
+      });
+    }
 
     const totalLessons = allLessons.length;
     const currentCompleted = progress?.completedLessonIds.length || 0;
-    const isAlreadyMarked = progress?.completedLessonIds.includes(currentLesson.id);
     const completedCount = isAlreadyMarked ? currentCompleted : currentCompleted + 1;
 
     if (completedCount >= totalLessons) {
