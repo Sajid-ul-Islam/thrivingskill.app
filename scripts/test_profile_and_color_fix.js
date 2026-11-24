@@ -71,6 +71,16 @@ assert(
   'FullProfileModal displays complete user details (name, email, phone, bio)'
 );
 assert(
+  fullProfileContent.includes('enrolledCount') &&
+  (fullProfileContent.includes('Enrolled Courses') || fullProfileContent.includes('এনরোল্ড কোর্স')),
+  'FullProfileModal displays how many courses learner is enrolled in'
+);
+assert(
+  fullProfileContent.includes('certificates') &&
+  (fullProfileContent.includes('Certificates Got') || fullProfileContent.includes('অর্জিত সনদ')),
+  'FullProfileModal displays how many certificates learner already got'
+);
+assert(
   fullProfileContent.includes('editButtonCta') &&
   fullProfileContent.includes('onEditProfile'),
   'FullProfileModal features prominent Edit Profile CTA button'

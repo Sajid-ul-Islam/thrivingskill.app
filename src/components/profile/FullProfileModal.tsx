@@ -13,6 +13,7 @@ import {
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { UserProfile } from '../../services/api/userService';
+import { Certificate } from '../../types';
 import { triggerHaptic } from '../../utils/haptics';
 import { shape } from '../../theme/shapes';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
@@ -29,6 +30,12 @@ export interface FullProfileModalProps {
   colors: any;
   isDark: boolean;
   isBangla: boolean;
+  enrolledCount?: number;
+  completedCount?: number;
+  certificates?: Certificate[];
+  streakDays?: number;
+  totalHoursLearned?: string;
+  onSelectCertificate?: (cert: Certificate) => void;
 }
 
 export const FullProfileModal: React.FC<FullProfileModalProps> = ({
@@ -42,6 +49,12 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
   colors,
   isDark,
   isBangla,
+  enrolledCount = 0,
+  completedCount = 0,
+  certificates = [],
+  streakDays = 0,
+  totalHoursLearned = '0.0',
+  onSelectCertificate,
 }) => {
   const insets = useSafeAreaInsets();
 
@@ -72,8 +85,8 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
     { label: isBangla ? 'বায়ো/বিবরণ' : 'Bio / Tagline', completed: Boolean(user?.description) },
     { label: isBangla ? 'শহর/ঠিকানা' : 'City / Location', completed: Boolean(user?.city) },
   ];
-  const completedCount = completionItems.filter((i) => i.completed).length;
-  const completionPct = Math.round((completedCount / completionItems.length) * 100);
+  const completedProfileFieldsCount = completionItems.filter((i) => i.completed).length;
+  const completionPct = Math.round((completedProfileFieldsCount / completionItems.length) * 100);
 
   const handleEditPress = () => {
     triggerHaptic('medium');
@@ -219,6 +232,176 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
                   {bio}
                 </Text>
               ) : null}
+            </View>
+
+            {/* Academic Learning & Credentials Section (Enrolled Courses & Certificates Got) */}
+            <View
+              style={[
+                styles.academicCard,
+                { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+              ]}
+            >
+              <View style={styles.academicHeaderRow}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Ionicons name="school" size={16} color={colors.primary} />
+                  <Text style={[styles.academicSectionTitle, { color: colors.text }]}>
+                    {isBangla ? 'কোর্স ও অর্জিত সনদপত্র' : 'Enrolled Courses & Certificates'}
+                  </Text>
+                </View>
+                <View style={[styles.verifiedCredPill, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : '#FEF3C7' }]}>
+                  <Text style={[styles.verifiedCredPillText, { color: isDark ? '#FFB606' : '#B45309' }]}>
+                    {certificates.length > 0
+                      ? (isBangla ? `${certificates.length}টি সনদপত্র` : `${certificates.length} EARNED`)
+                      : 'ACCREDITED'}
+                  </Text>
+                </View>
+              </View>
+
+              {/* 4 Stat KPI Grid */}
+              <View style={styles.academicGrid}>
+                {/* Enrolled Courses */}
+                <View
+                  style={[
+                    styles.academicStatBox,
+                    {
+                      backgroundColor: colors.surfaceCard,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <View style={[styles.statIconCircle, { backgroundColor: isDark ? 'rgba(16, 47, 83, 0.35)' : '#E8EEF5' }]}>
+                    <Ionicons name="book" size={15} color={colors.primary} />
+                  </View>
+                  <Text style={[styles.statNumber, { color: colors.primary }]}>
+                    {enrolledCount}
+                  </Text>
+                  <Text style={[styles.statLabel, { color: colors.text }]}>
+                    {isBangla ? 'এনরোল্ড কোর্স' : 'Enrolled Courses'}
+                  </Text>
+                  <Text style={[styles.statSub, { color: colors.textMuted }]}>
+                    {isBangla ? 'মোট কোর্স' : 'Active Learning'}
+                  </Text>
+                </View>
+
+                {/* Certificates Got/Earned */}
+                <View
+                  style={[
+                    styles.academicStatBox,
+                    {
+                      backgroundColor: colors.surfaceCard,
+                      borderColor: '#FFB606',
+                      borderWidth: 1.5,
+                    },
+                  ]}
+                >
+                  <View style={[styles.statIconCircle, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.20)' : '#FEF3C7' }]}>
+                    <Ionicons name="ribbon" size={15} color="#FFB606" />
+                  </View>
+                  <Text style={[styles.statNumber, { color: isDark ? '#FFB606' : '#B45309' }]}>
+                    {certificates.length}
+                  </Text>
+                  <Text style={[styles.statLabel, { color: colors.text }]}>
+                    {isBangla ? 'অর্জিত সনদ' : 'Certificates Got'}
+                  </Text>
+                  <Text style={[styles.statSub, { color: colors.textMuted }]}>
+                    {isBangla ? 'ভেরিফাইড সনদ' : 'Official Credentials'}
+                  </Text>
+                </View>
+
+                {/* Completed Courses */}
+                <View
+                  style={[
+                    styles.academicStatBox,
+                    {
+                      backgroundColor: colors.surfaceCard,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <View style={[styles.statIconCircle, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
+                    <Ionicons name="checkmark-done-circle" size={15} color="#10B981" />
+                  </View>
+                  <Text style={[styles.statNumber, { color: '#10B981' }]}>
+                    {completedCount}
+                  </Text>
+                  <Text style={[styles.statLabel, { color: colors.text }]}>
+                    {isBangla ? 'সম্পন্ন কোর্স' : 'Completed'}
+                  </Text>
+                  <Text style={[styles.statSub, { color: colors.textMuted }]}>
+                    {isBangla ? '১০০% শেষ' : '100% Finished'}
+                  </Text>
+                </View>
+
+                {/* Daily Learning Streak */}
+                <View
+                  style={[
+                    styles.academicStatBox,
+                    {
+                      backgroundColor: colors.surfaceCard,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <View style={[styles.statIconCircle, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}>
+                    <Ionicons name="flame" size={15} color="#E34234" />
+                  </View>
+                  <Text style={[styles.statNumber, { color: '#E34234' }]}>
+                    {streakDays}d
+                  </Text>
+                  <Text style={[styles.statLabel, { color: colors.text }]}>
+                    {isBangla ? 'লার্নিং স্ট্রিক' : 'Study Streak'}
+                  </Text>
+                  <Text style={[styles.statSub, { color: colors.textMuted }]}>
+                    {totalHoursLearned ? `${totalHoursLearned}h learned` : 'Daily Habit'}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Earned Certificates List (if any already got) */}
+              {certificates.length > 0 ? (
+                <View style={styles.certsListWrap}>
+                  <Text style={[styles.certsSubHeading, { color: colors.text }]}>
+                    {isBangla ? 'অর্জিত অফিসিয়াল সার্টিফিকেটসমূহ:' : 'Official Accredited Certificates Already Got:'}
+                  </Text>
+                  {certificates.map((cert) => (
+                    <TouchableOpacity
+                      key={cert.id}
+                      style={[
+                        styles.certItemCard,
+                        { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                      ]}
+                      onPress={() => {
+                        triggerHaptic('light');
+                        onClose();
+                        onSelectCertificate?.(cert);
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <View style={[styles.certRibbonBadge, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : '#FEF3C7' }]}>
+                        <Ionicons name="ribbon" size={16} color="#FFB606" />
+                      </View>
+                      <View style={{ flex: 1, minWidth: 0 }}>
+                        <Text style={[styles.certItemTitle, { color: colors.text }]} numberOfLines={1}>
+                          {cert.courseTitle}
+                        </Text>
+                        <Text style={[styles.certItemMeta, { color: colors.textMuted }]} numberOfLines={1}>
+                          {cert.credentialId ? `ID: ${cert.credentialId} • ` : ''}Issued: {cert.issueDate}
+                        </Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              ) : (
+                <View style={[styles.noCertCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+                  <Ionicons name="ribbon-outline" size={20} color="#F59E0B" />
+                  <Text style={[styles.noCertText, { color: colors.textMuted }]}>
+                    {isBangla
+                      ? 'এখনো কোনো সনদপত্র পাওয়া যায়নি। কোর্স ১০০% শেষ করলেই ভেরিফাইড সনদপত্র এখানে যুক্ত হবে।'
+                      : 'No certificates earned yet. Complete 100% of any enrolled course to receive your accredited credential.'}
+                  </Text>
+                </View>
+              )}
             </View>
 
             {/* Profile Completion Indicator */}
@@ -725,5 +908,119 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '800',
+  },
+  academicCard: {
+    width: '100%',
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 14,
+  },
+  academicHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  academicSectionTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  verifiedCredPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  verifiedCredPillText: {
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  academicGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 8,
+  },
+  academicStatBox: {
+    flex: 1,
+    minWidth: '46%',
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+    alignItems: 'center',
+  },
+  statIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  statNumber: {
+    fontSize: 20,
+    fontWeight: '900',
+    marginBottom: 2,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 1,
+  },
+  statSub: {
+    fontSize: 10,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  certsListWrap: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(150, 150, 150, 0.2)',
+    gap: 8,
+  },
+  certsSubHeading: {
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  certItemCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    gap: 10,
+  },
+  certRibbonBadge: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  certItemTitle: {
+    fontSize: 12.5,
+    fontWeight: '700',
+  },
+  certItemMeta: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  noCertCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginTop: 6,
+    gap: 8,
+  },
+  noCertText: {
+    fontSize: 11.5,
+    lineHeight: 16,
+    flex: 1,
   },
 });

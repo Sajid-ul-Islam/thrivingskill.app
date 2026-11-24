@@ -866,6 +866,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         colors={colors}
         isDark={isDark}
         isBangla={isBangla}
+        enrolledCount={enrolledCount}
+        completedCount={completedCount}
+        certificates={certificates}
+        streakDays={streakDays}
+        totalHoursLearned={totalHoursLearned}
+        onSelectCertificate={(cert) => setSelectedCert(cert)}
       />
 
       {/* Official Profile Settings Modal (5 tabs) */}
