@@ -64,6 +64,7 @@ import { getSafeImageSource } from '../utils/imageUtils';
 
 interface CategoryRowProps {
   title: string;
+  subtitle?: string;
   courses: Course[];
   onNavigateToCourse: (id: string) => void;
   onNavigateTab: (tab: RootTab) => void;
@@ -74,6 +75,7 @@ const CARD_GAP = 12;
 
 const CategoryRow: React.FC<CategoryRowProps> = ({
   title,
+  subtitle,
   courses,
   onNavigateToCourse,
   onNavigateTab,
@@ -144,20 +146,31 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
           marginBottom: 10,
         }}
       >
-        <Text
-          style={{
-            fontSize: 17,
-            fontWeight: '800',
-            color: colors.text,
-            letterSpacing: -0.3,
-            flex: 1,
-            minWidth: 0,
-            marginRight: 8,
-          }}
-          numberOfLines={1}
-        >
-          {title}
-        </Text>
+        <View style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
+          <Text
+            style={{
+              fontSize: 17,
+              fontWeight: '800',
+              color: colors.text,
+              letterSpacing: -0.3,
+            }}
+            numberOfLines={1}
+          >
+            {title}
+          </Text>
+          {subtitle ? (
+            <Text
+              style={{
+                fontSize: 12,
+                color: colors.textMuted,
+                marginTop: 2,
+              }}
+              numberOfLines={1}
+            >
+              {subtitle}
+            </Text>
+          ) : null}
+        </View>
         <SpringPressable
           onPress={() => {
             triggerHaptic('light');
@@ -319,6 +332,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     userProgress,
     getCourseProgressPercentage,
     recordSearchKeyword,
+    getRecommendedCourses,
     banners,
     partnerLogos,
     homeFeatures,
@@ -651,10 +665,18 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     }
   };
 
-  // Category rows definition
+  // Category rows definition with CR-01 Personalized Recommendations
   const categoryRows = useMemo(
     () => {
+      const recData = getRecommendedCourses ? getRecommendedCourses() : { courses: [], rationale: '', rationaleBn: '' };
+      const recommendedRow = recData.courses && recData.courses.length > 0 ? [{
+        title: isBangla ? 'আপনার জন্য বিশেষ প্রস্তাবিত' : 'Recommended For You',
+        subtitle: isBangla ? recData.rationaleBn : recData.rationale,
+        courses: recData.courses,
+      }] : [];
+
       const rows = [
+        ...recommendedRow,
         { title: isBangla ? 'জনপ্রিয় কোর্সসমূহ' : 'Popular Courses', courses: popularCourses },
         { title: isBangla ? 'আসন্ন লাইভ ট্রেনিং' : 'Upcoming Live', courses: upcomingCourses },
         { title: isBangla ? 'জেনারেটিভ এআই' : 'Generative AI', courses: generativeAiCourses },
@@ -692,6 +714,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       careerCourses,
       bundleCourses,
       courses,
+      getRecommendedCourses,
     ],
   );
 

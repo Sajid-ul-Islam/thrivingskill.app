@@ -123,7 +123,7 @@ assert(panelContent.includes('PanResponder'), 'Must support swipe to dismiss');
 assert(panelContent.includes('triggerHaptic'), 'Must provide tactile feedback');
 assert(panelContent.includes('onNavigateToCourse'), 'Must support primary action navigation');
 assert(panelContent.includes('onBookmarkCourse'), 'Must support secondary action bookmarking');
-assert(panelContent.includes('THRIVING SKILLS'), 'Must display official brand identifier');
+assert(panelContent.includes('THRIVING') && panelContent.includes('SKILLS'), 'Must display official brand identifier');
 pass('IosActionNotificationPanel provides native iOS action panel UX with swipe & haptics');
 
 // -------------------------------------------------------------

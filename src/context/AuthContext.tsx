@@ -21,6 +21,8 @@ export type { UserProfile };
 const AUTH_USER_STORAGE_KEY = '@thrivingskill_auth_user';
 const AUTH_TOKEN_STORAGE_KEY = '@thrivingskill_auth_token';
 const AUTH_ADMIN_BYPASS_KEY = '@thrivingskill_admin_bypass';
+const ALT_ADMIN_BYPASS_KEY = '@ts_auth_admin_bypass';
+const AUTH_DEV_MODE_KEY = '@ts_dev_mode_unlocked';
 
 /**
  * Strict administrator check based only on verified WordPress server roles.
@@ -52,6 +54,10 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   isAdminBypass: boolean;
+  isDevMode: boolean;
+  devModeUnlocked: boolean;
+  setDevModeUnlocked: (unlocked: boolean) => Promise<void>;
+  canBypassCourseLocks: boolean;
   toggleAdminBypass: () => Promise<boolean>;
   isLoading: boolean;
   isGuest: boolean;
@@ -79,23 +85,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isGuest, setIsGuest] = useState<boolean>(false);
   const [isAuthModalVisible, setAuthModalVisible] = useState<boolean>(false);
   const [isAdminBypass, setIsAdminBypass] = useState<boolean>(false);
+  const [devModeUnlocked, setDevModeUnlockedState] = useState<boolean>(false);
 
   useEffect(() => {
     (async () => {
       try {
-        const [savedUser, secureToken, savedBypass] = await Promise.all([
+        const [savedUser, secureToken, savedBypass, savedAltBypass, devUnlockedStr] = await Promise.all([
           AsyncStorage.getItem(AUTH_USER_STORAGE_KEY),
           SecureStorageService.getAuthToken(),
           AsyncStorage.getItem(AUTH_ADMIN_BYPASS_KEY),
+          AsyncStorage.getItem(ALT_ADMIN_BYPASS_KEY),
+          AsyncStorage.getItem(AUTH_DEV_MODE_KEY),
         ]);
 
-        const devUnlocked = (await AsyncStorage.getItem('@ts_dev_mode_unlocked')) === 'true';
+        const devUnlocked = devUnlockedStr === 'true' || isDevMode;
+        setDevModeUnlockedState(devUnlocked);
         const isDevEffective = isDevMode || devUnlocked;
+        const hasBypass = savedBypass === 'true' || savedAltBypass === 'true';
 
-        if (isDevEffective && savedBypass === 'true') {
+        if (isDevEffective && hasBypass) {
           setIsAdminBypass(true);
-        } else if (!isDevEffective && savedBypass) {
-          await AsyncStorage.removeItem(AUTH_ADMIN_BYPASS_KEY);
+        } else if (!isDevEffective && (savedBypass || savedAltBypass)) {
+          await Promise.all([
+            AsyncStorage.removeItem(AUTH_ADMIN_BYPASS_KEY),
+            AsyncStorage.removeItem(ALT_ADMIN_BYPASS_KEY),
+          ]);
         }
 
         if (savedUser) {
@@ -153,23 +167,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     })();
   }, []);
 
+  const setDevModeUnlocked = async (unlocked: boolean) => {
+    setDevModeUnlockedState(unlocked);
+    try {
+      await AsyncStorage.setItem(AUTH_DEV_MODE_KEY, String(unlocked));
+    } catch (e) {
+      console.warn('Failed to persist dev mode state:', e);
+    }
+  };
+
   const toggleAdminBypass = async (): Promise<boolean> => {
-    const devUnlocked = (await AsyncStorage.getItem('@ts_dev_mode_unlocked')) === 'true';
-    if (!isDevMode && !devUnlocked) {
+    const devUnlockedStr = await AsyncStorage.getItem(AUTH_DEV_MODE_KEY);
+    const devUnlocked = devUnlockedStr === 'true' || devModeUnlocked || isDevMode;
+    if (!devUnlocked) {
       setIsAdminBypass(false);
       return false;
     }
     const nextVal = !isAdminBypass;
     setIsAdminBypass(nextVal);
     try {
-      await AsyncStorage.setItem(AUTH_ADMIN_BYPASS_KEY, String(nextVal));
+      await Promise.all([
+        AsyncStorage.setItem(AUTH_ADMIN_BYPASS_KEY, String(nextVal)),
+        AsyncStorage.setItem(ALT_ADMIN_BYPASS_KEY, String(nextVal)),
+      ]);
     } catch (e) {
       console.warn('Failed to persist admin bypass state:', e);
     }
     return nextVal;
   };
 
-  const isAdmin = ((isDevMode || isAdminBypass) && isAdminBypass) || isUserAdmin(user);
+  const isDevEffective = isDevMode || devModeUnlocked;
+  const isAdmin = ((isDevEffective || isAdminBypass) && isAdminBypass) || isUserAdmin(user);
+  const canBypassCourseLocks = isAdmin || isDevEffective;
 
   const saveUserSession = async (loggedInUser: WpUser | UserProfile) => {
     const userToken = loggedInUser.token || `ts_session_${loggedInUser.id || Date.now()}`;
@@ -415,6 +444,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!user,
         isAdmin,
         isAdminBypass,
+        isDevMode,
+        devModeUnlocked,
+        setDevModeUnlocked,
+        canBypassCourseLocks,
         toggleAdminBypass,
         isLoading,
         isGuest,

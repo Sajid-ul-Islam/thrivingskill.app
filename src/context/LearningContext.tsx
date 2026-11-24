@@ -118,6 +118,7 @@ interface LearningContextType {
   reviewedCourseIds: string[];
   hasReviewedCourse: (courseId: string) => boolean;
   isCertificateUnlocked: (courseId: string) => boolean;
+  unlockCertificateForDev: (courseId: string, studentName?: string) => Certificate | null;
   submitMandatoryCourseReview: (
     courseId: string,
     rating: number,
@@ -166,7 +167,7 @@ const INITIAL_CANONICAL_CATEGORIES: Category[] = [
 const LearningContext = createContext<LearningContextType>({} as LearningContextType);
 
 export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
+  const { user, canBypassCourseLocks } = useAuth();
   const { isOffline } = useNetwork();
   const userScope = user?.id ? `_u_${user.id}` : '_guest';
 
@@ -763,9 +764,77 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const isCertificateUnlocked = (courseId: string) => {
+    if (canBypassCourseLocks) return true;
     const progress = userProgress[courseId];
     if (!progress || !progress.isCompleted) return false;
     return hasReviewedCourse(courseId);
+  };
+
+  const unlockCertificateForDev = (courseId: string, studentName?: string): Certificate | null => {
+    const course = courses.find((c) => c.id === courseId);
+    if (!course) return null;
+
+    const recipientName =
+      studentName ||
+      user?.displayName ||
+      user?.name ||
+      user?.username ||
+      'Executive Developer';
+
+    const current = userProgress[courseId] || {
+      courseId,
+      enrolledDate: new Date().toISOString().split('T')[0],
+      completedLessonIds: course.modules?.flatMap((m) => m.lessons.map((l) => l.id)) || [],
+      isCompleted: true,
+    };
+
+    let cert = certificates.find((c) => c.courseId === courseId);
+    let certId = current.certificateId || cert?.credentialId;
+
+    if (!certId) {
+      const randSuffix = Math.random().toString(36).substring(2, 8).toUpperCase().padEnd(6, '0');
+      certId = `TS-2026-${randSuffix}`;
+    }
+
+    if (!cert) {
+      cert = {
+        id: `cert-${Date.now()}`,
+        courseId: course.id,
+        courseTitle: course.title,
+        studentName: recipientName,
+        issueDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+        credentialId: certId,
+        instructorName: course.instructor?.name || 'Thriving Skills Instructor',
+        verificationUrl: `${Env.SITE_URL}/verify/${certId}`,
+      };
+      setCertificates((prev) => {
+        const nextCerts = [cert!, ...prev.filter((c) => c.courseId !== courseId)];
+        saveState(CERTIFICATES_STORAGE_KEY, nextCerts);
+        return nextCerts;
+      });
+    }
+
+    if (!reviewedCourseIds.includes(courseId)) {
+      const nextReviewed = [...reviewedCourseIds, courseId];
+      setReviewedCourseIds(nextReviewed);
+      saveState(REVIEWS_STORAGE_KEY, nextReviewed);
+    }
+
+    const updated = {
+      ...userProgress,
+      [courseId]: {
+        ...current,
+        completedLessonIds: course.modules?.flatMap((m) => m.lessons.map((l) => l.id)) || current.completedLessonIds,
+        isCompleted: true,
+        hasReviewed: true,
+        certificateId: certId,
+        completedDate: current.completedDate || new Date().toISOString().split('T')[0],
+      },
+    };
+    setUserProgress(updated);
+    saveState(PROGRESS_STORAGE_KEY, updated);
+
+    return cert;
   };
 
   const submitMandatoryCourseReview = (
