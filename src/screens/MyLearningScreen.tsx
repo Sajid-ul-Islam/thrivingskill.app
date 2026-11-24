@@ -709,7 +709,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                         styles.certIconBadge,
                         {
                           backgroundColor: isReviewed
-                            ? (isDark ? 'rgba(217, 119, 6, 0.2)' : '#FEF3C7')
+                            ? (isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2')
                             : (isDark ? 'rgba(239, 68, 68, 0.2)' : '#FEF2F2'),
                         },
                       ]}
@@ -717,7 +717,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                       <Ionicons
                         name={isReviewed ? "ribbon" : "lock-closed"}
                         size={26}
-                        color={isReviewed ? (isDark ? '#FBBF24' : '#D97706') : '#EF4444'}
+                        color={isReviewed ? '#E34234' : '#EF4444'}
                       />
                     </View>
 

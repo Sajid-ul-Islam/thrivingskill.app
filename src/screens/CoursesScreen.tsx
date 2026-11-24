@@ -941,7 +941,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               style={[
                 styles.quickFilterChip,
                 selectedLevel === 'Beginner'
-                  ? { backgroundColor: isDark ? '#FFB606' : '#102F53', borderColor: isDark ? '#FFB606' : '#102F53' }
+                  ? { backgroundColor: isDark ? '#FFFFFF' : '#102F53', borderColor: isDark ? '#FFFFFF' : '#102F53' }
                   : { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
               ]}
               onPress={() => handleLevelSelect(selectedLevel === 'Beginner' ? 'All' : 'Beginner')}
@@ -970,7 +970,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               style={[
                 styles.quickFilterChip,
                 selectedLevel === 'Advanced'
-                  ? { backgroundColor: isDark ? '#FFB606' : '#102F53', borderColor: isDark ? '#FFB606' : '#102F53' }
+                  ? { backgroundColor: isDark ? '#FFFFFF' : '#102F53', borderColor: isDark ? '#FFFFFF' : '#102F53' }
                   : { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
               ]}
               onPress={() => handleLevelSelect(selectedLevel === 'Advanced' ? 'All' : 'Advanced')}
@@ -999,7 +999,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               style={[
                 styles.quickFilterChip,
                 selectedDurationFilter === 'short'
-                  ? { backgroundColor: isDark ? '#FFB606' : '#102F53', borderColor: isDark ? '#FFB606' : '#102F53' }
+                  ? { backgroundColor: isDark ? '#FFFFFF' : '#102F53', borderColor: isDark ? '#FFFFFF' : '#102F53' }
                   : { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
               ]}
               onPress={() => handleDurationFilterSelect(selectedDurationFilter === 'short' ? 'all' : 'short')}
@@ -1028,7 +1028,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               style={[
                 styles.quickFilterChip,
                 selectedDurationFilter === 'in-depth'
-                  ? { backgroundColor: isDark ? '#FFB606' : '#102F53', borderColor: isDark ? '#FFB606' : '#102F53' }
+                  ? { backgroundColor: isDark ? '#FFFFFF' : '#102F53', borderColor: isDark ? '#FFFFFF' : '#102F53' }
                   : { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
               ]}
               onPress={() => handleDurationFilterSelect(selectedDurationFilter === 'in-depth' ? 'all' : 'in-depth')}
@@ -1057,7 +1057,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               style={[
                 styles.quickFilterChip,
                 selectedPriceFilter === 'free'
-                  ? { backgroundColor: isDark ? '#FFB606' : '#102F53', borderColor: isDark ? '#FFB606' : '#102F53' }
+                  ? { backgroundColor: isDark ? '#FFFFFF' : '#102F53', borderColor: isDark ? '#FFFFFF' : '#102F53' }
                   : { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
               ]}
               onPress={() => handlePriceFilterSelect(selectedPriceFilter === 'free' ? 'all' : 'free')}
@@ -1086,7 +1086,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               style={[
                 styles.quickFilterChip,
                 selectedPriceFilter === 'paid'
-                  ? { backgroundColor: isDark ? '#FFB606' : '#102F53', borderColor: isDark ? '#FFB606' : '#102F53' }
+                  ? { backgroundColor: isDark ? '#FFFFFF' : '#102F53', borderColor: isDark ? '#FFFFFF' : '#102F53' }
                   : { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
               ]}
               onPress={() => handlePriceFilterSelect(selectedPriceFilter === 'paid' ? 'all' : 'paid')}

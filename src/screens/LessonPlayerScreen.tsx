@@ -68,7 +68,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { isBangla } = useLanguage();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, canBypassCourseLocks } = useAuth();
   const { showToast } = useFeedback();
   const { recordStudyTime, addXP, unlockBadge, triggerCelebration } = useGamification();
   const {
@@ -85,6 +85,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     getWatchPosition,
     hasReviewedCourse,
     isCertificateUnlocked,
+    unlockCertificateForDev,
     submitMandatoryCourseReview,
     recordCategoryInteraction,
   } = useLearning();
@@ -159,10 +160,11 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const currentItem = allLessons[currentLessonIndex] || allLessons[0];
   const currentLesson = currentItem?.lesson;
 
-  // Access Control: Administrator has master power to play all videos without purchase
+  // Access Control: Administrator or Developer has master power to play all videos without purchase
   const isEnrolled = !!userProgress[course?.id || ''];
   const isFreePreview = Boolean(currentLesson?.isFreePreview);
-  const canPlayVideo = isAdmin || isEnrolled || isFreePreview;
+  const isPrivileged = isAdmin || Boolean(canBypassCourseLocks);
+  const canPlayVideo = isPrivileged || isEnrolled || isFreePreview;
 
   const progress = course ? userProgress[course.id] : undefined;
   const isLessonCompleted = progress?.completedLessonIds.includes(currentLesson?.id || '') || false;
@@ -883,23 +885,77 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         />
       )}
 
-      {/* Administrator Access Banner */}
-      {isAdmin && !isFullscreen && (
+      {/* Administrator / Developer Access Banner */}
+      {isPrivileged && !isFullscreen && (
         <View style={[styles.adminBanner, { backgroundColor: '#102F53', borderColor: 'rgba(227, 66, 52, 0.4)' }]}>
           <View style={styles.adminBannerLeft}>
             <Ionicons name="shield-checkmark" size={14} color="#E34234" />
-            <Text style={styles.adminBannerTitle}>ADMINISTRATOR ACCESS ACTIVE</Text>
+            <Text style={styles.adminBannerTitle}>
+              {isAdmin ? 'ADMINISTRATOR ACCESS ACTIVE' : 'DEVELOPER ACCESS ACTIVE'}
+            </Text>
           </View>
           <Text style={styles.adminBannerSub}>
             {isBangla
-              ? 'অ্যাডমিন ক্ষমতা: কোর্সের সকল ভিডিও আনলক করা হয়েছে'
+              ? 'মাস্টার বাইপাস সক্রিয়: কোর্সের সকল ভিডিও আনলক করা হয়েছে'
               : 'Master bypass: Unrestricted playback of all course videos'}
           </Text>
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 5,
+                backgroundColor: '#E34234',
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 6,
+              }}
+              onPress={() => {
+                triggerHaptic('success');
+                if (course) {
+                  const cert = unlockCertificateForDev(course.id);
+                  if (cert) {
+                    setCertModalVisible(true);
+                  }
+                }
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Test Certificate Generation"
+            >
+              <Ionicons name="ribbon" size={12} color="#FFFFFF" />
+              <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '800' }}>
+                {isBangla ? 'সার্টিফিকেট টেস্ট' : 'Test Certificate'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 5,
+                backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 6,
+              }}
+              onPress={() => {
+                triggerHaptic('light');
+                setMandatoryReviewVisible(true);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Test Mandatory Review Modal"
+            >
+              <Ionicons name="star" size={12} color="#FFFFFF" />
+              <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700' }}>
+                {isBangla ? 'রিভিউ মডাল টেস্ট' : 'Test Review'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
       {/* Free Preview Banner */}
-      {!isAdmin && !isEnrolled && isFreePreview && !isFullscreen && (
+      {!isPrivileged && !isEnrolled && isFreePreview && !isFullscreen && (
         <View
           style={[
             styles.previewBanner,
@@ -1205,7 +1261,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                     completedLessonIds={progress?.completedLessonIds || []}
                     isCourseCompleted={isCourseCompleted}
                     isEnrolled={isEnrolled}
-                    isAdmin={isAdmin}
+                    isAdmin={isPrivileged}
                     insetsBottom={insets.bottom}
                     onSelectLesson={(lessonId) => onSelectLesson(courseId, lessonId)}
                     onOpenQuiz={(l) => {

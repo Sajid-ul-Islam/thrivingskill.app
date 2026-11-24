@@ -112,7 +112,7 @@ export const LessonNotesTab: React.FC<LessonNotesTabProps> = ({
               <TouchableOpacity
                 style={[
                   styles.noteTimestampPill,
-                  { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.18)' : '#FEF3C7' },
+                  { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#EFF6FF' },
                 ]}
                 onPress={() => {
                   triggerHaptic('light');
@@ -126,11 +126,11 @@ export const LessonNotesTab: React.FC<LessonNotesTabProps> = ({
                 accessibilityLabel={`Jump to video timestamp ${n.timestamp}`}
                 hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
               >
-                <Ionicons name="time-outline" size={12} color={isDark ? '#FBBF24' : '#102F53'} />
+                <Ionicons name="time-outline" size={12} color={isDark ? '#FFFFFF' : '#102F53'} />
                 <Text
                   style={[
                     styles.noteTimestampText,
-                    { color: isDark ? '#FBBF24' : '#102F53' },
+                    { color: isDark ? '#FFFFFF' : '#102F53' },
                   ]}
                 >
                   {n.timestamp}

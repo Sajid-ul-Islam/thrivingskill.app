@@ -68,11 +68,13 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     addCourseReview,
     hasReviewedCourse,
     isCertificateUnlocked,
+    unlockCertificateForDev,
     submitMandatoryCourseReview,
     recordCategoryInteraction,
     refreshCourses,
   } = useLearning();
-  const { user, isAuthenticated, isAdmin } = useAuth();
+  const { user, isAuthenticated, isAdmin, canBypassCourseLocks } = useAuth();
+  const isPrivileged = isAdmin || Boolean(canBypassCourseLocks);
 
   const [activeTab, setActiveTab] = useState<'curriculum' | 'qna' | 'instructor' | 'reviews'>('curriculum');
   const [loadingDetail, setLoadingDetail] = useState(false);
@@ -184,7 +186,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
   };
 
   const handleEnrollOrResume = () => {
-    if (isAdmin) {
+    if (isPrivileged) {
       const targetLessonId =
         userProgress[course.id]?.lastAccessedLessonId ||
         course.modules?.[0]?.lessons?.[0]?.id ||
@@ -245,7 +247,11 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
       userAvatar: user?.avatar || '',
       rating: reviewRating,
       comment: reviewComment.trim(),
-      userRole: isEnrolled ? 'Enrolled Student' : 'Verified Learner',
+      userRole: isPrivileged
+        ? 'Developer / Admin Reviewer'
+        : isEnrolled
+        ? 'Enrolled Student'
+        : 'Verified Learner',
       company: 'Corporate Professional',
     });
     setIsSubmittingReview(false);
@@ -331,7 +337,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
         <CourseDetailHero
           course={course}
           isEnrolled={isEnrolled}
-          isAdmin={isAdmin}
+          isAdmin={isPrivileged}
           trailerVideo={trailerVideo}
           isTablet={isTablet}
           hasReviewed={hasReviewedCourse(course.id)}
@@ -342,6 +348,58 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
           onOpenCertPreview={() => setCertPreviewVisible(true)}
           onOpenMandatoryReview={() => setMandatoryReviewVisible(true)}
         />
+
+        {/* Administrator / Developer Access Banner & Testing Actions */}
+        {isPrivileged && (
+          <View style={[styles.devBypassBanner, { backgroundColor: '#102F53', borderColor: 'rgba(227, 66, 52, 0.4)' }]}>
+            <View style={styles.devBypassHeader}>
+              <View style={styles.devBypassBadge}>
+                <Ionicons name="shield-checkmark" size={14} color="#E34234" />
+                <Text style={styles.devBypassTitle}>
+                  {isAdmin ? 'ADMINISTRATOR ACCESS' : 'DEVELOPER ACCESS'}
+                </Text>
+              </View>
+              <Text style={styles.devBypassSubtitle}>
+                {isBangla ? 'কোর্সের সকল লেকচার ও ফিচার আনলক করা হয়েছে' : 'All course lectures unlocked for testing'}
+              </Text>
+            </View>
+
+            <View style={styles.devActionBtnRow}>
+              <TouchableOpacity
+                style={styles.devActionBtnPrimary}
+                onPress={() => {
+                  triggerHaptic('success');
+                  const cert = unlockCertificateForDev(course.id);
+                  if (cert) {
+                    setCertPreviewVisible(true);
+                  }
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Test and Unlock Certificate"
+              >
+                <Ionicons name="ribbon" size={12} color="#FFFFFF" />
+                <Text style={styles.devActionBtnText}>
+                  {isBangla ? 'সার্টিফিকেট টেস্ট' : 'Test Certificate'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.devActionBtnSecondary}
+                onPress={() => {
+                  triggerHaptic('light');
+                  setWriteReviewModalVisible(true);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Rate and Write Review"
+              >
+                <Ionicons name="star" size={12} color="#FFFFFF" />
+                <Text style={styles.devActionBtnText}>
+                  {isBangla ? 'রিভিউ দিন' : 'Write Review'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         {/* Navigation Tabs (Curriculum / Q&A / Instructor / Reviews) */}
         <View style={styles.tabsContainer}>

@@ -282,8 +282,8 @@ export const CourseDetailHero: React.FC<CourseDetailHeroProps> = ({
         {/* Official Certificate Card & Preview Trigger */}
         <View style={[styles.certPromoCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
           <View style={styles.certPromoLeft}>
-            <View style={[styles.certIconBg, { backgroundColor: isDark ? 'rgba(217, 119, 6, 0.2)' : '#FEF3C7' }]}>
-              <Ionicons name="ribbon" size={20} color={isDark ? '#FBBF24' : '#D97706'} />
+            <View style={[styles.certIconBg, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2' }]}>
+              <Ionicons name="ribbon" size={20} color="#E34234" />
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={[styles.certPromoTitle, { color: colors.text }]}>

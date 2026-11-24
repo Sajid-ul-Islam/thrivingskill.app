@@ -848,9 +848,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                       {greetingInfo.salutation}
                     </Text>
                     {(subscriptionTier === 'pro' || subscriptionTier === 'enterprise') && (
-                      <View style={[styles.proBadge, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.2)' : '#FEF3C7' }]}>
-                        <Ionicons name="star" size={10} color="#D97706" />
-                        <Text style={styles.proBadgeText}>{subscriptionTier.toUpperCase()}</Text>
+                      <View style={[styles.proBadge, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2' }]}>
+                        <Ionicons name="star" size={10} color="#E34234" />
+                        <Text style={[styles.proBadgeText, { color: '#E34234' }]}>{subscriptionTier.toUpperCase()}</Text>
                       </View>
                     )}
                   </View>
@@ -1041,9 +1041,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                       {greetingInfo.salutation}
                     </Text>
                     {(subscriptionTier === 'pro' || subscriptionTier === 'enterprise') && (
-                      <View style={[styles.proBadge, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.2)' : '#FEF3C7' }]}>
-                        <Ionicons name="star" size={10} color="#D97706" />
-                        <Text style={styles.proBadgeText}>{subscriptionTier.toUpperCase()}</Text>
+                      <View style={[styles.proBadge, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2' }]}>
+                        <Ionicons name="star" size={10} color="#E34234" />
+                        <Text style={[styles.proBadgeText, { color: '#E34234' }]}>{subscriptionTier.toUpperCase()}</Text>
                       </View>
                     )}
                   </View>

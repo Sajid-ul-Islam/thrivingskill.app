@@ -63,21 +63,21 @@ export const lightColors = {
 };
 
 export const darkColors = {
-  primary: '#FFB606', // Radiant brand Sunshine Gold for interactive primary actions on dark navy
-  primaryDark: '#102F53', // Primary brand deep navy
-  primaryLight: 'rgba(255, 182, 6, 0.16)', // Warm gold container fill
+  primary: '#FFFFFF', // Crisp Pure White for interactive primary actions on dark navy
+  primaryDark: '#F1F5F9', // Elevated white surface
+  primaryLight: 'rgba(255, 255, 255, 0.12)', // Clean frosted white container fill
   primaryGradientStart: '#102F53',
   primaryGradientEnd: '#E34234',
-  secondary: '#FFB606', // Brand Sunshine Gold
-  secondaryLight: 'rgba(255, 182, 6, 0.16)', // Luminous warm gold fill
+  secondary: '#FFFFFF', // Crisp White secondary action
+  secondaryLight: 'rgba(255, 255, 255, 0.12)', // Frosted white fill
   accent: '#E34234', // Accent red (consistent brand identity)
   accentLight: '#450A0A',
   brandNavy: '#102F53', // Primary brand #102F53 consistent across themes
   brandRed: '#E34234', // Accent red #E34234 consistent across themes
-  brandGold: '#FFB606',
-  brandGoldLight: '#78350F',
-  brandGoldSubtle: 'rgba(255, 182, 6, 0.20)',
-  brandNavySubtle: 'rgba(255, 182, 6, 0.16)',
+  brandGold: '#FFFFFF',
+  brandGoldLight: '#1C2E46',
+  brandGoldSubtle: 'rgba(255, 255, 255, 0.12)',
+  brandNavySubtle: 'rgba(255, 255, 255, 0.12)',
   danger: '#F87171',
   dangerLight: '#7F1D1D',
   success: '#34D399',
@@ -94,18 +94,18 @@ export const darkColors = {
   textMuted: '#A8B5C5', // Secondary Text
   textLight: '#8295AB',
   textInverse: '#0B1420',
-  onPrimary: '#102F53', // Brand Deep Navy text on vibrant Sunshine Gold (7.69:1 WCAG AAA)
+  onPrimary: '#102F53', // Brand Deep Navy text on vibrant Pure White (15.6:1 WCAG AAA)
   onSecondary: '#102F53',
   onAccent: '#FFFFFF',
   onDanger: '#0B1420',
   onGold: '#102F53',
   cardShadow: 'rgba(0, 0, 0, 0.4)',
   badgeBackground: '#1E3147', // Layered navy badge container
-  badgeText: '#FFC72C', // Radiant warm gold text
+  badgeText: '#FFFFFF', // Clean white badge text on dark navy
   starColor: '#FFB606',
   tabBarBg: '#0B1420', // Deep Navy Navigation Bar
   tabBarBorder: '#1F3147',
-  tabActive: '#FFB606', // Radiant brand Sunshine Gold active state
+  tabActive: '#FFFFFF', // Crisp White active tab state in dark mode
   tabInactive: '#A8B5C5',
 };
 

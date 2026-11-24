@@ -1028,6 +1028,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         reviewedCourseIds,
         hasReviewedCourse,
         isCertificateUnlocked,
+        unlockCertificateForDev,
         submitMandatoryCourseReview,
         pendingSyncCount,
         isSyncingOffline,

@@ -196,20 +196,20 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
                 style={[
                   styles.lockedBanner,
                   {
-                    backgroundColor: isDark ? 'rgba(217, 119, 6, 0.15)' : '#FEF3C7',
-                    borderColor: '#F59E0B',
+                    backgroundColor: isDark ? 'rgba(227, 66, 52, 0.15)' : '#FEE2E2',
+                    borderColor: '#E34234',
                   },
                 ]}
               >
                 <View style={styles.lockedBannerHeader}>
                   <View style={styles.lockedIconCircle}>
-                    <Ionicons name="lock-closed" size={16} color="#B45309" />
+                    <Ionicons name="lock-closed" size={16} color="#E34234" />
                   </View>
-                  <Text style={[styles.lockedBannerTitle, { color: isDark ? '#FBBF24' : '#92400E' }]}>
+                  <Text style={[styles.lockedBannerTitle, { color: isDark ? '#FFFFFF' : '#991B1B' }]}>
                     {isBangla ? 'সার্টিফিকেট ডাউনলোড করতে রিভিউ আবশ্যক' : 'Mandatory Review Required to Unlock'}
                   </Text>
                 </View>
-                <Text style={[styles.lockedBannerBody, { color: isDark ? '#E5E7EB' : '#78350F' }]}>
+                <Text style={[styles.lockedBannerBody, { color: isDark ? '#E5E7EB' : '#7F1D1D' }]}>
                   {isBangla
                     ? 'অফিসিয়াল সার্টিফিকেট PDF ডাউনলোড, লিঙ্কডইন অ্যাড এবং ভেরিফিকেশন লিংক পেতে কোর্সটির উপর ১-৫ স্টার রেটিং ও মতামত প্রদান করুন।'
                     : 'To download official PDF, share, or add credentials to LinkedIn, please rate this course (1 to 5 stars) and write your review.'}

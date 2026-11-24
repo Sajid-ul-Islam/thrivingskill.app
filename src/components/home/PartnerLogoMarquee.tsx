@@ -70,8 +70,8 @@ export const PartnerLogoMarquee: React.FC<PartnerLogoMarqueeProps> = ({ logos })
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <View style={[styles.badgePill, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.15)' : '#FEF3C7' }]}>
-          <Text style={[styles.badgeText, { color: isDark ? '#FBBF24' : '#B45309' }]}>
+        <View style={[styles.badgePill, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#EFF6FF' }]}>
+          <Text style={[styles.badgeText, { color: isDark ? '#FFFFFF' : '#102F53' }]}>
             {isBangla ? 'কর্পোরেট পার্টনারশিপ' : 'ENTERPRISE TRUST'}
           </Text>
         </View>

@@ -121,7 +121,7 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
           <Ionicons
             name={saved ? 'bookmark' : 'bookmark-outline'}
             size={16}
-            color={saved ? (isDark ? '#FFB606' : '#102F53') : colors.textMuted}
+            color={saved ? (isDark ? '#FFFFFF' : '#102F53') : colors.textMuted}
           />
         </SpringPressable>
       </View>
@@ -200,7 +200,7 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
 
       {/* Bookmark button on thumbnail as sibling */}
       <SpringPressable
-        style={[styles.bookmarkThumbBtn, { backgroundColor: saved ? (isDark ? '#FFB606' : '#102F53') : 'rgba(0,0,0,0.68)' }]}
+        style={[styles.bookmarkThumbBtn, { backgroundColor: saved ? (isDark ? '#FFFFFF' : '#102F53') : 'rgba(0,0,0,0.68)' }]}
         onPress={handleToggleSave}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         accessibilityRole="button"
