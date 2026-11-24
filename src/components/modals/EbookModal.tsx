@@ -117,6 +117,8 @@ export const EbookModal: React.FC<EbookModalProps> = ({ visible, onClose }) => {
                     triggerHaptic('selection');
                     setSelectedCategory(cat);
                   }}
+                  accessibilityRole="button"
+                  accessibilityLabel={cat}
                   style={[
                     styles.categoryPill,
                     {
@@ -188,6 +190,8 @@ export const EbookModal: React.FC<EbookModalProps> = ({ visible, onClose }) => {
                   onPress={() => handleOpenEbook(book.readUrl)}
                   style={[styles.readBtn, { backgroundColor: colors.accent }]}
                   activeScale={0.96}
+                  accessibilityRole="button"
+                  accessibilityLabel={isBangla ? `${book.title} পড়ুন` : `Read ${book.title}`}
                 >
                   <Ionicons name="open-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
                   <Text style={styles.readBtnText}>

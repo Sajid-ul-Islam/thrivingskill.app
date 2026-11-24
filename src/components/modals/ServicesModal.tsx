@@ -131,6 +131,8 @@ export const ServicesModal: React.FC<ServicesModalProps> = ({
                   style={styles.cardHeader}
                   onPress={() => handleToggleExpand(item.id)}
                   activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={isBangla ? item.banglaTitle : item.title}
                 >
                   <View style={[styles.serviceIconWrap, { backgroundColor: isDark ? '#24364B' : '#F1F5F9' }]}>
                     <Ionicons name={item.icon as any} size={22} color={colors.primary} />
@@ -171,6 +173,8 @@ export const ServicesModal: React.FC<ServicesModalProps> = ({
                         onPress={() => handleInquiryPress(item)}
                         style={[styles.inquireBtn, { backgroundColor: colors.accent }]}
                         activeScale={0.96}
+                        accessibilityRole="button"
+                        accessibilityLabel={isBangla ? 'পরামর্শ ও সেবা নিন' : 'Inquire / Book Consultation'}
                       >
                         <Ionicons name="mail-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
                         <Text style={styles.inquireBtnText}>

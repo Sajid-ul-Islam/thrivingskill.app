@@ -260,7 +260,12 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
               clearButtonMode="while-editing"
             />
             {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <TouchableOpacity
+                onPress={() => setSearchQuery('')}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel="Clear search input"
+              >
                 <Ionicons name="close-circle" size={16} color={colors.textMuted} />
               </TouchableOpacity>
             )}
@@ -367,6 +372,8 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
               onPress={handleBecomeInstructor}
               style={[styles.joinBtn, { backgroundColor: '#102F53' }]}
               activeScale={0.96}
+              accessibilityRole="button"
+              accessibilityLabel={isBangla ? 'প্রশিক্ষক হিসেবে আবেদন করুন' : 'Apply as Instructor'}
             >
               <Ionicons name="person-add-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
               <Text style={styles.joinBtnText}>
@@ -408,6 +415,8 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
               <TouchableOpacity
                 onPress={() => setSearchQuery('')}
                 style={[styles.clearSearchBtn, { backgroundColor: colors.surfaceSubtle }]}
+                accessibilityRole="button"
+                accessibilityLabel="Clear Search Filter"
               >
                 <Text style={[styles.clearSearchText, { color: colors.primary }]}>
                   {isBangla ? 'অনুসন্ধান মুছুন' : 'Clear Search'}

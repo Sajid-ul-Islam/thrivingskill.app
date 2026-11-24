@@ -219,6 +219,8 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
                   ]}
                   onPress={() => handleSwitchEnv('production')}
                   activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Switch to Live Production Environment"
                 >
                   <View style={styles.envOptionHeader}>
                     <Text
@@ -243,6 +245,8 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
                   ]}
                   onPress={() => handleSwitchEnv('staging')}
                   activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Switch to Staging Server Environment"
                 >
                   <View style={styles.envOptionHeader}>
                     <Text
@@ -293,6 +297,8 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
                     onDirectBypass();
                   }}
                   activeOpacity={0.8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Bypass Splash to Main App"
                 >
                   <Ionicons name="flash-outline" size={16} color="#FFFFFF" />
                   <Text style={styles.actionBtnText}>Bypass Splash to Main App</Text>
@@ -312,6 +318,8 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
                 onPress={handleClearAppCache}
                 disabled={isClearingCache}
                 activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="Clear All Cached Data"
               >
                 {isClearingCache ? (
                   <ActivityIndicator size="small" color="#38BDF8" />
@@ -371,6 +379,8 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
               style={styles.lockBtn}
               onPress={handleLockDevOptions}
               activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Lock and Hide Developer Options"
             >
               <Ionicons name="lock-closed-outline" size={14} color="#94A3B8" />
               <Text style={styles.lockBtnText}>Lock & Hide Developer Options</Text>

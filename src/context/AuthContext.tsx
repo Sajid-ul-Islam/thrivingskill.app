@@ -63,10 +63,16 @@ interface AuthContextType {
   isGuest: boolean;
   isAuthModalVisible: boolean;
   setAuthModalVisible: (visible: boolean) => void;
-  login: (username: string, password: string) => Promise<void>;
+  login: (username: string, password: string, dismissModal?: boolean) => Promise<void>;
   loginWithPhone: (phone: string, otp: string, fullName?: string) => Promise<void>;
   sendPhoneOtp: (phone: string) => Promise<{ success: boolean; message: string; testOtp?: string }>;
-  register: (username: string, email: string, password: string, phone?: string, fullName?: string) => Promise<void>;
+  register: (
+    username: string,
+    email: string,
+    password: string,
+    phone?: string,
+    fullName?: string
+  ) => Promise<{ success: boolean; emailSent: boolean; autoLoggedIn: boolean } | void>;
   confirmPasswordReset: (login: string, key: string, newPassword: string) => Promise<void>;
   updateUserProfile: (updates: Partial<UserProfile>, syncToServer?: boolean) => Promise<void>;
   refreshUserProfile: () => Promise<UserProfile | null>;
@@ -200,7 +206,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isAdmin = ((isDevEffective || isAdminBypass) && isAdminBypass) || isUserAdmin(user);
   const canBypassCourseLocks = isAdmin || isDevEffective;
 
-  const saveUserSession = async (loggedInUser: WpUser | UserProfile) => {
+  const saveUserSession = async (loggedInUser: WpUser | UserProfile, dismissModal: boolean = true) => {
     const userToken = loggedInUser.token || `ts_session_${loggedInUser.id || Date.now()}`;
     const userWithToken: UserProfile = {
       ...(loggedInUser as UserProfile),
@@ -210,7 +216,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToken(userToken);
     HttpClient.setAuthToken(userToken);
     setIsGuest(false);
-    setAuthModalVisible(false);
+    if (dismissModal) {
+      setAuthModalVisible(false);
+    }
 
     try {
       await Promise.all([
@@ -337,11 +345,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const login = async (username: string, password: string) => {
+  const login = async (username: string, password: string, dismissModal: boolean = true) => {
     setIsLoading(true);
     try {
       const loggedInUser = await loginWpUser(username, password);
-      await saveUserSession(loggedInUser);
+      await saveUserSession(loggedInUser, dismissModal);
     } finally {
       setIsLoading(false);
     }
@@ -361,7 +369,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return sendWpPhoneOtp(phone);
   };
 
-  const register = async (username: string, email: string, password: string, phone?: string, fullName?: string) => {
+  const register = async (
+    username: string,
+    email: string,
+    password: string,
+    phone?: string,
+    fullName?: string
+  ): Promise<{ success: boolean; emailSent: boolean; autoLoggedIn: boolean }> => {
     setIsLoading(true);
     try {
       await registerWpUser({
@@ -372,15 +386,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         phone,
         name: fullName,
       });
-      // Immediately log in new user
-      await login(username, password);
-      // Ensure user profile locally reflects their chosen full name and phone number
-      if (fullName || phone) {
-        await updateUserProfile({
-          name: fullName || undefined,
-          phone: phone || undefined,
-        }, false);
+
+      let autoLoggedIn = false;
+      // Immediately log in new user without auto-dismissing the modal so they see the email confirmation screen
+      try {
+        await login(username, password, false);
+        autoLoggedIn = true;
+        if (fullName || phone) {
+          await updateUserProfile({
+            name: fullName || undefined,
+            phone: phone || undefined,
+          }, false);
+        }
+      } catch (loginErr) {
+        console.warn('Auto-login deferred after registration:', loginErr);
       }
+
+      return {
+        success: true,
+        emailSent: true,
+        autoLoggedIn,
+      };
     } finally {
       setIsLoading(false);
     }

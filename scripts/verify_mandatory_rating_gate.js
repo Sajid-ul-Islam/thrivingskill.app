@@ -65,7 +65,7 @@ const certModalSrc = fs.readFileSync(certModalPath, 'utf8');
 assert(
   certModalSrc.includes('hasReviewedCourse') &&
   certModalSrc.includes('submitMandatoryCourseReview') &&
-  certModalSrc.includes('isReviewed = certificate.courseId ? hasReviewedCourse(certificate.courseId) : true;'),
+  certModalSrc.includes('certificate.courseId ? hasReviewedCourse(certificate.courseId) : true'),
   'CertificateModal checks hasReviewedCourse for certificate.courseId'
 );
 

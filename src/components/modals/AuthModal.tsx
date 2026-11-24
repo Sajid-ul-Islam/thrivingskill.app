@@ -73,7 +73,7 @@ export function parseResetPasswordUrl(url: string): { key: string; login: string
   return null;
 }
 
-export type AuthMode = 'login' | 'register' | 'forgot_password' | 'set_password' | 'register_webview';
+export type AuthMode = 'login' | 'register' | 'forgot_password' | 'set_password' | 'register_webview' | 'register_success';
 
 export interface AuthModalProps {
   visible: boolean;
@@ -128,6 +128,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [regPassword, setRegPassword] = useState('');
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
+
+  // Registration Success & Email Notification State
+  const [registeredSuccessEmail, setRegisteredSuccessEmail] = useState('');
+  const [registeredSuccessUsername, setRegisteredSuccessUsername] = useState('');
+  const [isAutoLoggedInAfterReg, setIsAutoLoggedInAfterReg] = useState(false);
 
   // Set Password State (For email verification & password setup)
   const [resetLogin, setResetLogin] = useState(initialResetLogin || '');
@@ -300,6 +305,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     return `${base}${rand}`;
   };
 
+  const handleOpenMailApp = async () => {
+    triggerHaptic('selection');
+    try {
+      const mailUrl = Platform.OS === 'ios' ? 'message://' : 'mailto:';
+      const supported = await Linking.canOpenURL(mailUrl).catch(() => false);
+      if (supported) {
+        await Linking.openURL(mailUrl);
+      } else {
+        await Linking.openURL('mailto:');
+      }
+    } catch {
+      showToast({
+        message: isBangla
+          ? 'অনুগ্রহ করে আপনার ডিভাইসের ইমেইল অ্যাপ ওপেন করুন।'
+          : 'Please open your email application to check incoming mail.',
+        type: 'info',
+      });
+    }
+  };
+
   const handleRegister = async () => {
     const trimmedName = regFullName.trim();
     const trimmedEmail = regEmail.trim().toLowerCase();
@@ -354,26 +379,30 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     const autoUsername = generateUsernameFromEmail(trimmedEmail);
 
     try {
-      await register(autoUsername, trimmedEmail, trimmedPassword, trimmedPhone, trimmedName);
+      const regRes = await register(autoUsername, trimmedEmail, trimmedPassword, trimmedPhone, trimmedName);
+      setRegisteredSuccessEmail(trimmedEmail);
+      setRegisteredSuccessUsername(autoUsername);
+      setIsAutoLoggedInAfterReg(Boolean(regRes && typeof regRes === 'object' && 'autoLoggedIn' in regRes && regRes.autoLoggedIn));
+      setMode('register_success');
+      triggerHaptic('success');
       showToast({
         message: isBangla
-          ? 'অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে! স্বাগতম 🎉'
-          : 'Account created successfully! Welcome 🎉',
+          ? '🎉 রেজিস্ট্রেশন সম্পন্ন হয়েছে! নিশ্চিতকরণ ইমেইল পাঠানো হয়েছে।'
+          : '🎉 Registration completed! Confirmation email sent.',
         type: 'success',
       });
-      triggerHaptic('success');
       setRegFullName('');
       setRegEmail('');
       setRegPhone('');
       setRegPassword('');
       setTouched({});
-      onClose();
     } catch (err: any) {
       triggerHaptic('error');
       const code = String(err?.code || err?.data?.code || '');
       const msg = String(err?.message || '');
 
       if (code.includes('email-exists') || msg.toLowerCase().includes('already registered')) {
+        setUsername(trimmedEmail);
         setErrorMessage(
           isBangla
             ? 'এই ইমেইল দিয়ে ইতিমধ্যে একটি অ্যাকাউন্ট রয়েছে। অনুগ্রহ করে সাইন ইন করুন।'
@@ -386,9 +415,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       } else if (code.includes('username-exists') || msg.toLowerCase().includes('username already')) {
         try {
           const retryUsername = `${autoUsername}${Math.floor(10 + Math.random() * 90)}`;
-          await register(retryUsername, trimmedEmail, trimmedPassword, trimmedPhone, trimmedName);
+          const retryRes = await register(retryUsername, trimmedEmail, trimmedPassword, trimmedPhone, trimmedName);
+          setRegisteredSuccessEmail(trimmedEmail);
+          setRegisteredSuccessUsername(retryUsername);
+          setIsAutoLoggedInAfterReg(Boolean(retryRes && typeof retryRes === 'object' && 'autoLoggedIn' in retryRes && retryRes.autoLoggedIn));
+          setMode('register_success');
           showToast({
-            message: isBangla ? 'অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে! 🎉' : 'Account created successfully! 🎉',
+            message: isBangla ? '🎉 রেজিস্ট্রেশন সম্পন্ন হয়েছে! ইমেইল চেক করুন।' : '🎉 Registration completed! Check your email.',
             type: 'success',
           });
           triggerHaptic('success');
@@ -396,7 +429,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           setRegEmail('');
           setRegPhone('');
           setRegPassword('');
-          onClose();
+          setTouched({});
           return;
         } catch (retryErr: any) {
           setErrorMessage(retryErr?.message || (isBangla ? 'রেজিস্ট্রেশন সম্পন্ন করা যায়নি।' : 'Registration failed. Please try again.'));
@@ -715,6 +748,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   ? (isBangla ? 'স্বাগতম, প্রফেশনাল' : 'Welcome Back, Professional')
                   : mode === 'register'
                   ? (isBangla ? 'ফ্রি অ্যাকাউন্ট তৈরি করুন' : 'Create Your Free Account')
+                  : mode === 'register_success'
+                  ? (isBangla ? 'রেজিস্ট্রেশন সম্পন্ন হয়েছে!' : 'Registration Successful!')
                   : mode === 'set_password'
                   ? (isBangla ? 'পাসওয়ার্ড সেট করুন' : 'Set Your Account Password')
                   : (isBangla ? 'পাসওয়ার্ড রিসেট' : 'Reset Your Password')}
@@ -725,6 +760,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     ? (isBangla ? 'আপনার কোর্স, সার্টিফিকেট এবং লার্নিং ট্র্যাক এক্সেস করতে সাইন ইন করুন।' : 'Sign in to access your masterclasses, certificates, and learning track.')
                     : mode === 'register'
                     ? (isBangla ? 'নাম, ইমেইল, মোবাইল নম্বর ও পাসওয়ার্ড দিয়ে সহজে যুক্ত হোন।' : 'Fast 4-field registration. Join learners and professionals across Bangladesh.')
+                    : mode === 'register_success'
+                    ? (isBangla ? 'আপনার অ্যাকাউন্টের একটি নিশ্চিতকরণ ইমেইল পাঠানো হয়েছে।' : 'A confirmation & activation email has been sent to your registered address.')
                     : mode === 'set_password'
                     ? (isBangla ? 'ভেরিফিকেশন লিংক থেকে পাসওয়ার্ড সেট করুন।' : 'Enter your email link details to set your new password.')
                     : (isBangla ? 'আপনার ইমেইল বা ইউজারনেম লিখুন।' : 'Enter your username or email address and we will email you a password setup link.')}
@@ -1448,6 +1485,179 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       </TouchableOpacity>
                     </View>
                   </>
+                ) : mode === 'register_success' ? (
+                  /* Registration Success & Email Notification Confirmation Screen */
+                  <View style={styles.registerSuccessContainer}>
+                    {/* Visual Success & Mail Badge */}
+                    <View style={styles.successIconOuterRing}>
+                      <View style={[styles.successIconCircle, { backgroundColor: isDark ? 'rgba(16, 47, 83, 0.4)' : '#F0FDF4' }]}>
+                        <Ionicons name="mail-open" size={42} color="#102F53" />
+                        <View style={styles.successMiniBadge}>
+                          <Ionicons name="checkmark-circle" size={20} color="#10B981" />
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* Prominent Header Text */}
+                    <Text style={[styles.successTitle, { color: colors.text }]}>
+                      {isBangla ? 'রেজিস্ট্রেশন সফল হয়েছে!' : 'Registration Successful!'}
+                    </Text>
+
+                    <Text style={[styles.successSubtitle, { color: colors.textMuted }]}>
+                      {isBangla
+                        ? 'আপনার অ্যাকাউন্টের একটি কনফার্মেশন ও অ্যাক্টিভেশন ইমেইল পাঠানো হয়েছে।'
+                        : 'A confirmation & activation email has been sent to your registered address.'}
+                    </Text>
+
+                    {/* Email Card Highlight */}
+                    <View style={[styles.emailNoticeBox, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.08)' : '#FFF1F2', borderColor: 'rgba(227, 66, 52, 0.3)' }]}>
+                      <View style={styles.emailNoticeRow}>
+                        <Ionicons name="mail" size={16} color="#E34234" />
+                        <Text style={[styles.emailNoticeLabel, { color: colors.textMuted }]}>
+                          {isBangla ? 'নিবন্ধিত ইমেইল ঠিকানা:' : 'Registered Email Address:'}
+                        </Text>
+                      </View>
+                      <Text style={[styles.registeredEmailHighlight, { color: colors.text }]} numberOfLines={1} selectable>
+                        {registeredSuccessEmail || regEmail || 'your email'}
+                      </Text>
+                      {registeredSuccessUsername ? (
+                        <View style={styles.usernameRow}>
+                          <Text style={[styles.usernameLabel, { color: colors.textMuted }]}>
+                            {isBangla ? 'ইউজারনেম:' : 'Username:'}
+                          </Text>
+                          <Text style={[styles.usernameValue, { color: colors.text }]} selectable>
+                            @{registeredSuccessUsername}
+                          </Text>
+                        </View>
+                      ) : null}
+                    </View>
+
+                    {/* Step-by-Step Guidance Box */}
+                    <View style={[styles.guidanceCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+                      <Text style={[styles.guidanceHeading, { color: colors.text }]}>
+                        {isBangla ? 'পরবর্তী করণীয় ৩টি সহজ ধাপ:' : 'What to do next:'}
+                      </Text>
+
+                      {/* Step 1: Check Inbox */}
+                      <View style={styles.guidanceStepRow}>
+                        <View style={[styles.guidanceStepBadge, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}>
+                          <Ionicons name="mail-unread" size={14} color="#E34234" />
+                        </View>
+                        <View style={styles.guidanceStepContent}>
+                          <Text style={[styles.guidanceStepTitle, { color: colors.text }]}>
+                            {isBangla ? '১. ইনবক্স চেক করুন' : '1. Check Your Inbox'}
+                          </Text>
+                          <Text style={[styles.guidanceStepBody, { color: colors.textMuted }]}>
+                            {isBangla
+                              ? 'থ্রাইভিং স্কিলস (Thriving Skills) থেকে পাঠানো স্বাগতম ও নিশ্চিতকরণ ইমেইলটি ওপেন করুন।'
+                              : 'Open the welcome & confirmation email sent to your inbox from Thriving Skills.'}
+                          </Text>
+                        </View>
+                      </View>
+
+                      {/* Step 2: Spam / Junk Warning */}
+                      <View style={styles.guidanceStepRow}>
+                        <View style={[styles.guidanceStepBadge, { backgroundColor: 'rgba(16, 47, 83, 0.12)' }]}>
+                          <Ionicons name="file-tray-full-outline" size={14} color="#102F53" />
+                        </View>
+                        <View style={styles.guidanceStepContent}>
+                          <Text style={[styles.guidanceStepTitle, { color: colors.text }]}>
+                            {isBangla ? '২. স্প্যাম / প্রোমোশনস ফোল্ডার দেখুন' : '2. Check Spam / Promotions Folder'}
+                          </Text>
+                          <Text style={[styles.guidanceStepBody, { color: colors.textMuted }]}>
+                            {isBangla
+                              ? 'ইনবক্সে তাৎক্ষণিক না পেলে Spam বা Promotions ফোল্ডার দেখুন এবং "Not Spam" মার্ক করুন।'
+                              : 'If not in your primary inbox, check your Spam, Junk, or Promotions tab.'}
+                          </Text>
+                        </View>
+                      </View>
+
+                      {/* Step 3: Link activation */}
+                      <View style={styles.guidanceStepRow}>
+                        <View style={[styles.guidanceStepBadge, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
+                          <Ionicons name="key-outline" size={14} color="#10B981" />
+                        </View>
+                        <View style={styles.guidanceStepContent}>
+                          <Text style={[styles.guidanceStepTitle, { color: colors.text }]}>
+                            {isBangla ? '৩. লিংক ট্যাপ অথবা সাইন ইন' : '3. Tap Link or Sign In'}
+                          </Text>
+                          <Text style={[styles.guidanceStepBody, { color: colors.textMuted }]}>
+                            {isBangla
+                              ? 'ইমেইলে থাকা লিংকে ট্যাপ করলে সরাসরি অ্যাপে আপনার পাসওয়ার্ড নিশ্চিত হবে, অথবা নিচে সরাসরি সাইন ইন করুন।'
+                              : 'Tapping the link in your email will open directly in this app to finalize access.'}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+
+                    {/* Action Buttons */}
+                    <View style={styles.successActionsContainer}>
+                      {/* Open Mail App */}
+                      <TouchableOpacity
+                        style={[styles.submitButton, { backgroundColor: '#E34234' }]}
+                        onPress={handleOpenMailApp}
+                        activeOpacity={0.88}
+                        accessibilityRole="button"
+                        accessibilityLabel={isBangla ? 'ইমেইল অ্যাপ খুলুন' : 'Open Email App'}
+                      >
+                        <Ionicons name="mail-open" size={18} color="#FFFFFF" />
+                        <Text style={[styles.submitButtonText, { color: '#FFFFFF' }]}>
+                          {isBangla ? 'ইমেইল অ্যাপ খুলুন' : 'Open Email App'}
+                        </Text>
+                      </TouchableOpacity>
+
+                      {/* Proceed to Sign In */}
+                      <TouchableOpacity
+                        style={[styles.secondaryActionButton, { borderColor: colors.border, backgroundColor: colors.surfaceCard }]}
+                        onPress={() => {
+                          triggerHaptic('selection');
+                          setUsername(registeredSuccessEmail || regEmail);
+                          setMode('login');
+                          setErrorMessage(null);
+                          setInfoMessage(
+                            isBangla
+                              ? 'আপনার ইমেইল ও পাসওয়ার্ড দিয়ে সাইন ইন করুন।'
+                              : 'Sign in with your email and password to access your account.'
+                          );
+                        }}
+                        activeOpacity={0.85}
+                        accessibilityRole="button"
+                        accessibilityLabel={isBangla ? 'পাসওয়ার্ড দিয়ে সাইন ইন করুন' : 'Proceed to Sign In'}
+                      >
+                        <Ionicons name="log-in-outline" size={18} color={colors.primary} />
+                        <Text style={[styles.secondaryActionText, { color: colors.primary }]}>
+                          {isBangla ? 'পাসওয়ার্ড দিয়ে সাইন ইন করুন' : 'Proceed to Sign In'}
+                        </Text>
+                      </TouchableOpacity>
+
+                      {/* Link to Set Password with key */}
+                      <TouchableOpacity
+                        style={styles.keyEntryLink}
+                        onPress={() => {
+                          triggerHaptic('selection');
+                          setResetLogin(registeredSuccessUsername || registeredSuccessEmail);
+                          setMode('set_password');
+                        }}
+                        accessibilityRole="button"
+                      >
+                        <Text style={[styles.keyEntryLinkText, { color: colors.textMuted }]}>
+                          {isBangla ? 'ইমেইল লিংক কপি করেছেন? এখানে পেস্ট করুন' : 'Have a link from email? Enter key here'}
+                        </Text>
+                      </TouchableOpacity>
+
+                      {/* Dismiss / Browse */}
+                      <TouchableOpacity
+                        style={styles.textDismissButton}
+                        onPress={onClose}
+                        accessibilityRole="button"
+                        accessibilityLabel={isBangla ? 'বন্ধ করুন' : 'Close and Browse'}
+                      >
+                        <Text style={[styles.textDismissText, { color: colors.textMuted }]}>
+                          {isBangla ? 'পরে ভেরিফাই করব, বন্ধ করুন' : 'Verify Later, Continue Browsing'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
                 ) : (
                   /* Login Form */
                   <>
@@ -2183,5 +2393,164 @@ const styles = StyleSheet.create({
   switchActionText: {
     fontSize: 13,
     fontWeight: '700',
+  },
+  // Registration Success Screen Styles
+  registerSuccessContainer: {
+    width: '100%',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  successIconOuterRing: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  successIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    borderWidth: 1.5,
+    borderColor: 'rgba(16, 47, 83, 0.15)',
+  },
+  successMiniBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+  },
+  successTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 6,
+    letterSpacing: -0.3,
+  },
+  successSubtitle: {
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+    paddingHorizontal: 8,
+    marginBottom: 14,
+  },
+  emailNoticeBox: {
+    width: '100%',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    padding: 14,
+    marginBottom: 14,
+  },
+  emailNoticeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  emailNoticeLabel: {
+    fontSize: 11.5,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+  },
+  registeredEmailHighlight: {
+    fontSize: 16,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  usernameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 2,
+  },
+  usernameLabel: {
+    fontSize: 12,
+  },
+  usernameValue: {
+    fontSize: 12.5,
+    fontWeight: '700',
+  },
+  guidanceCard: {
+    width: '100%',
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 14,
+    marginBottom: 16,
+    gap: 12,
+  },
+  guidanceHeading: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  guidanceStepRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+  },
+  guidanceStepBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+    marginTop: 1,
+  },
+  guidanceStepContent: {
+    flex: 1,
+  },
+  guidanceStepTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  guidanceStepBody: {
+    fontSize: 11.5,
+    lineHeight: 16,
+  },
+  successActionsContainer: {
+    width: '100%',
+    gap: 10,
+    alignItems: 'center',
+  },
+  secondaryActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    minHeight: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    gap: 8,
+  },
+  secondaryActionText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  keyEntryLink: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    minHeight: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  keyEntryLinkText: {
+    fontSize: 12,
+    textDecorationLine: 'underline',
+  },
+  textDismissButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  textDismissText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
 });
