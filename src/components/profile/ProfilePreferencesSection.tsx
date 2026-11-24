@@ -206,7 +206,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
               accessibilityLabel="Orders and Enrollment Management"
             >
               <View style={styles.settingLeft}>
-                <Ionicons name="card-outline" size={20} color="#F59E0B" />
+                <Ionicons name="card-outline" size={20} color="#E34234" />
                 <View style={styles.settingTextCol}>
                   <Text style={[styles.settingLabel, { color: colors.text }]}>
                     {isBangla ? 'এনরোলমেন্ট ও অর্ডার ম্যানেজমেন্ট' : 'Orders & Enrollment Management'}
@@ -339,8 +339,8 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                 </Text>
               </View>
             </View>
-            <View style={[styles.langPill, { backgroundColor: isDark ? colors.surfaceSubtle : '#FEF3C7' }]}>
-              <Text style={[styles.langPillText, { color: colors.brandGold }]}>
+            <View style={[styles.langPill, { backgroundColor: isDark ? colors.surfaceSubtle : 'rgba(227, 66, 52, 0.10)' }]}>
+              <Text style={[styles.langPillText, { color: '#E34234' }]}>
                 {isBangla ? 'স্মৃতি পরীক্ষা' : 'Review Deck'}
               </Text>
             </View>
@@ -534,7 +534,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
           {/* Biometric unlock toggle */}
           <View style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}>
             <View style={styles.settingLeft}>
-              <Ionicons name="finger-print" size={20} color={colors.secondary} />
+              <Ionicons name="finger-print" size={20} color="#E34234" />
               <Text style={[styles.settingLabel, { color: colors.text }]}>
                 {isBangla ? 'বায়োমেট্রিক আনলক (ফিঙ্গারপ্রিন্ট)' : 'Biometric Security'}
               </Text>
@@ -552,7 +552,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                   type: 'info',
                 });
               }}
-              trackColor={{ false: '#CBD5E1', true: colors.secondary }}
+              trackColor={{ false: '#CBD5E1', true: '#E34234' }}
               thumbColor="#FFFFFF"
             />
           </View>
@@ -568,7 +568,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
             accessibilityLabel={isBangla ? 'পাসওয়ার্ড পরিবর্তন করুন' : 'Change Password'}
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="key-outline" size={20} color="#F59E0B" />
+              <Ionicons name="key-outline" size={20} color="#E34234" />
               <View style={styles.settingTextCol}>
                 <Text style={[styles.settingLabel, { color: colors.text }]}>
                   {isBangla ? 'পাসওয়ার্ড পরিবর্তন' : 'Change Password'}
@@ -681,16 +681,16 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                     backgroundColor:
                       serverEnvironment === 'production'
                         ? (isDark ? 'rgba(16, 185, 129, 0.2)' : '#ECFDF5')
-                        : (isDark ? 'rgba(245, 158, 11, 0.2)' : '#FEF3C7'),
+                        : (isDark ? 'rgba(227, 66, 52, 0.2)' : 'rgba(227, 66, 52, 0.12)'),
                     borderWidth: 1,
-                    borderColor: serverEnvironment === 'production' ? '#10B981' : '#F59E0B',
+                    borderColor: serverEnvironment === 'production' ? '#10B981' : '#E34234',
                   }}
                 >
                   <Text
                     style={{
                       fontSize: 11,
                       fontWeight: '700',
-                      color: serverEnvironment === 'production' ? '#10B981' : '#D97706',
+                      color: serverEnvironment === 'production' ? '#10B981' : '#E34234',
                       letterSpacing: 0.5,
                     }}
                   >
@@ -735,7 +735,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
         <TouchableOpacity
           style={[
             styles.corporateCard,
-            { backgroundColor: colors.surfaceCard, borderColor: colors.secondary },
+            { backgroundColor: colors.surfaceCard, borderColor: '#E34234' },
           ]}
           onPress={() => {
             triggerHaptic('light');
@@ -745,8 +745,8 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
           accessibilityRole="button"
           accessibilityLabel="Corporate Training & SME Advisory"
         >
-          <View style={[styles.corpIconBg, { backgroundColor: colors.secondaryLight }]}>
-            <Ionicons name="business" size={22} color={colors.secondary} />
+          <View style={[styles.corpIconBg, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}>
+            <Ionicons name="business" size={22} color="#E34234" />
           </View>
           <View style={styles.corpInfo}>
             <Text style={[styles.corpTitle, { color: colors.text }]}>
@@ -756,7 +756,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
               কাস্টমাইজড Corporate Training, LMS Integration এবং বিজনেস কনসালটেন্সি প্রপোজাল।
             </Text>
           </View>
-          <Ionicons name="arrow-forward" size={18} color={colors.secondary} />
+          <Ionicons name="arrow-forward" size={18} color="#E34234" />
         </TouchableOpacity>
       </View>
 
@@ -810,10 +810,10 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
             accessibilityLabel="Founders and Leadership"
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="people-outline" size={20} color={isDark ? '#FBBF24' : '#B45309'} />
+              <Ionicons name="people-outline" size={20} color="#E34234" />
               <Text style={[styles.settingLabel, { color: colors.text }]}>Founders & Leadership</Text>
             </View>
-            <Text style={[styles.versionText, { color: isDark ? '#FBBF24' : '#B45309', fontWeight: '600' }]}>Exec Board →</Text>
+            <Text style={[styles.versionText, { color: '#E34234', fontWeight: '600' }]}>Exec Board →</Text>
           </TouchableOpacity>
 
           <TouchableOpacity

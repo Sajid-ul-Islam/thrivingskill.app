@@ -6,6 +6,7 @@ import {
   Modal,
   TouchableOpacity,
   ScrollView,
+  Linking,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -281,6 +282,63 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                 </View>
               </ScrollView>
             </View>
+
+            {/* Strategic Business Consultancy Subscription Callout */}
+            <View
+              style={[
+                styles.consultancyCard,
+                {
+                  backgroundColor: isDark ? colors.surfaceCard : '#FEF3C7',
+                  borderColor: isDark ? '#F59E0B' : '#FBBF24',
+                },
+              ]}
+            >
+              <View style={styles.consultancyHeader}>
+                <View style={styles.consultancyBadge}>
+                  <Ionicons name="trending-up" size={13} color="#D97706" />
+                  <Text style={styles.consultancyBadgeText}>EXECUTIVE CONSULTANCY</Text>
+                </View>
+                <Text style={[styles.consultancyTitle, { color: colors.text }]}>
+                  {isBangla ? 'বিজনেস কনসালট্যান্সি সার্ভিস সাবস্ক্রিপশন' : 'Business Consultancy Service'}
+                </Text>
+                <Text style={[styles.consultancyDesc, { color: colors.textMuted }]}>
+                  {isBangla
+                    ? 'আপনার ব্যবসার প্রবৃদ্ধিতে কৌশলগত ১-অন-১ কন-কল, আনলিমিটেড ইমেইল অ্যাডভাইজরি এবং কাস্টম এক্সেল ট্র্যাকিং।'
+                    : 'End-to-end strategic advisory for scale-ups: 1-on-1 monthly calls, unlimited email consulting & custom Excel tools.'}
+                </Text>
+              </View>
+
+              <View style={styles.consultancyTiersRow}>
+                <View style={[styles.tierChip, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]}>
+                  <Text style={[styles.tierChipName, { color: colors.text }]}>Priority</Text>
+                  <Text style={styles.tierChipPrice}>৳1,000–9,000</Text>
+                </View>
+                <View style={[styles.tierChip, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]}>
+                  <Text style={[styles.tierChipName, { color: colors.text }]}>Premium</Text>
+                  <Text style={styles.tierChipPrice}>৳1,500–14,000</Text>
+                </View>
+                <View style={[styles.tierChip, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]}>
+                  <Text style={[styles.tierChipName, { color: colors.text }]}>Platinum</Text>
+                  <Text style={styles.tierChipPrice}>৳2,000–18,000</Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.consultancyCtaBtn, { backgroundColor: '#E34234' }]}
+                onPress={() => {
+                  triggerHaptic('medium');
+                  Linking.openURL('https://thrivingskill.com/subscription/business-consultancy-service/').catch(() => {});
+                }}
+                activeOpacity={0.88}
+                accessibilityRole="link"
+                accessibilityLabel="Explore Business Consultancy Service on official website"
+              >
+                <Text style={styles.consultancyCtaText}>
+                  {isBangla ? 'কনসালট্যান্সি বিস্তারিত দেখুন' : 'Explore Business Consultancy'}
+                </Text>
+                <Ionicons name="arrow-forward" size={15} color="#FFFFFF" style={{ marginLeft: 6 }} />
+              </TouchableOpacity>
+            </View>
           </ScrollView>
         </View>
       </View>
@@ -508,5 +566,71 @@ const styles = StyleSheet.create({
   matrixValText: {
     fontSize: 10,
     textAlign: 'center',
+  },
+  consultancyCard: {
+    marginTop: 20,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    padding: 16,
+    gap: 12,
+  },
+  consultancyHeader: {
+    gap: 4,
+  },
+  consultancyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginBottom: 2,
+  },
+  consultancyBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#D97706',
+    letterSpacing: 0.5,
+  },
+  consultancyTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  consultancyDesc: {
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  consultancyTiersRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 2,
+  },
+  tierChip: {
+    flex: 1,
+    padding: 8,
+    borderRadius: 10,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.3)',
+  },
+  tierChipName: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  tierChipPrice: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#E34234',
+    marginTop: 2,
+  },
+  consultancyCtaBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 42,
+    borderRadius: 12,
+    marginTop: 4,
+  },
+  consultancyCtaText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
   },
 });

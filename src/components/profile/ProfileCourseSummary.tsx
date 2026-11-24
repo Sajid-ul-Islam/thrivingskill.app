@@ -269,8 +269,8 @@ export const ProfileCourseSummary: React.FC<ProfileCourseSummaryProps> = ({
           </ScrollView>
         ) : (
           <View style={[styles.emptyCertBanner, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
-            <View style={[styles.emptyCertIconBg, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.15)' : '#FEF3C7' }]}>
-              <Ionicons name="ribbon-outline" size={20} color="#F59E0B" />
+            <View style={[styles.emptyCertIconBg, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}>
+              <Ionicons name="ribbon-outline" size={20} color="#E34234" />
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={[styles.emptyCertTitle, { color: colors.text }]}>
@@ -428,11 +428,11 @@ export const ProfileCourseSummary: React.FC<ProfileCourseSummaryProps> = ({
                     <View style={styles.courseBtnRow}>
                       {courseStatus === 'passed' && cert && hasReviewedCourse(course.id) ? (
                         <TouchableOpacity
-                          style={[styles.cardActionBtn, { backgroundColor: colors.brandGold }]}
+                          style={[styles.cardActionBtn, { backgroundColor: '#E34234' }]}
                           onPress={() => onSelectCertificate(cert)}
                         >
-                          <Ionicons name="ribbon" size={12} color="#102F53" />
-                          <Text style={[styles.cardActionBtnText, { color: '#102F53' }]}>
+                          <Ionicons name="ribbon" size={12} color="#FFFFFF" />
+                          <Text style={[styles.cardActionBtnText, { color: '#FFFFFF' }]}>
                             {isBangla ? 'সনদপত্র' : 'Certificate'}
                           </Text>
                         </TouchableOpacity>

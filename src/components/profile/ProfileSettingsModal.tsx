@@ -607,7 +607,7 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                     />
                   ) : null}
                   <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(16, 47, 83, 0.4)' }]} />
-                  <Ionicons name="school" size={36} color="#FFB606" />
+                  <Ionicons name="school" size={36} color="#E34234" />
                   <Text style={styles.coverCardTitle}>THRIVING SKILLS</Text>
                   <Text style={styles.coverCardSub}>Executive Learning & Career Advancement</Text>
                 </View>
@@ -1076,7 +1076,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   coverCardSub: {
-    color: '#FFB606',
+    color: '#E34234',
     fontSize: 11,
     fontWeight: '600',
     marginTop: 2,

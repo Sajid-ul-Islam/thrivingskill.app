@@ -218,8 +218,8 @@ export const ProfileSupportHub: React.FC<ProfileSupportHubProps> = ({
             accessibilityLabel="eBook Library"
           >
             <View style={styles.resourceLeft}>
-              <View style={[styles.resourceIconBg, { backgroundColor: 'rgba(255, 182, 6, 0.15)' }]}>
-                <Ionicons name="book" size={18} color="#FFB606" />
+              <View style={[styles.resourceIconBg, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}>
+                <Ionicons name="book" size={18} color="#E34234" />
               </View>
               <View style={styles.resourceTextCol}>
                 <Text style={[styles.resourceLabel, { color: colors.text }]}>
@@ -230,8 +230,8 @@ export const ProfileSupportHub: React.FC<ProfileSupportHubProps> = ({
                 </Text>
               </View>
             </View>
-            <View style={[styles.freeTag, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.2)' : '#FEF3C7' }]}>
-              <Text style={[styles.freeTagText, { color: isDark ? '#FBBF24' : '#B45309' }]}>FREE</Text>
+            <View style={[styles.freeTag, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.2)' : 'rgba(227, 66, 52, 0.12)' }]}>
+              <Text style={[styles.freeTagText, { color: '#E34234' }]}>FREE</Text>
             </View>
           </TouchableOpacity>
         )}
@@ -282,7 +282,7 @@ export const ProfileSupportHub: React.FC<ProfileSupportHubProps> = ({
               <Text style={[styles.resourceLabel, { color: colors.text }]}>
                 {isBangla ? 'স্টোরেজ ও অফলাইন ডাটা সিঙ্ক' : 'Storage & Offline Sync'}
               </Text>
-              <Text style={[styles.resourceSub, { color: pendingSyncCount > 0 ? colors.brandGold : colors.textMuted }]}>
+              <Text style={[styles.resourceSub, { color: pendingSyncCount > 0 ? '#E34234' : colors.textMuted }]}>
                 {pendingSyncCount > 0
                   ? (isBangla ? `${pendingSyncCount}টি অ্যাকশন অফলাইনে অপেক্ষারত` : `${pendingSyncCount} offline actions pending sync`)
                   : (isBangla ? 'ক্যাশ ম্যানেজমেন্ট ও অফলাইন কনটেন্ট' : 'Cache management & offline storage')}
@@ -290,8 +290,8 @@ export const ProfileSupportHub: React.FC<ProfileSupportHubProps> = ({
             </View>
           </View>
           {pendingSyncCount > 0 ? (
-            <View style={{ backgroundColor: colors.brandGold, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8 }}>
-              <Text style={{ color: '#0F192C', fontSize: 10, fontWeight: '800' }}>{pendingSyncCount}</Text>
+            <View style={{ backgroundColor: '#E34234', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8 }}>
+              <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '800' }}>{pendingSyncCount}</Text>
             </View>
           ) : (
             <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />

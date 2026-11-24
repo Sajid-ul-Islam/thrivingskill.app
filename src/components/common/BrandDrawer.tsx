@@ -437,7 +437,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
             <TouchableOpacity
               style={styles.navItem}
               onPress={() => {
-                setServicesInitialId('digital-transformation');
+                setServicesInitialId('business-consultancy');
                 setServicesModalVisible(true);
               }}
             >

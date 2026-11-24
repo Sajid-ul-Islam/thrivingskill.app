@@ -244,8 +244,28 @@ export const CANONICAL_SITE_FEATURES: SiteFeatureItem[] = [
   },
 ];
 
-// 6 Core Corporate Services under "Services >"
+// 7 Core Corporate Services under "Services >"
 export const CANONICAL_SERVICES: PortalServiceItem[] = [
+  {
+    id: 'business-consultancy',
+    title: 'Business Consultancy Service',
+    banglaTitle: 'বিজনেস কনসালট্যান্সি সার্ভিস',
+    icon: 'trending-up-outline',
+    category: 'Strategic Advisory & Scaling',
+    description: 'Executive advisory, corporate financial modeling, scale-up blueprints, and 1-on-1 monthly strategic calls.',
+    banglaDescription: 'ব্যবসার প্রবৃদ্ধি, কৌশলগত আর্থিক পরিকল্পনা এবং ১-অন-১ এক্সিকিউটিভ বিজনেস কনসালট্যান্সি।',
+    bullets: [
+      'Priority Consultancy (৳1,000–9,000): Unlimited email consulting, monthly 30-min call, live session, 2 custom Excel formats',
+      'Premium Consultancy (৳1,500–14,000): Unlimited email consulting, two 30-min calls, live session, 5 custom Excel trackers',
+      'Platinum Consultancy (৳2,000–18,000): Unlimited email consulting, four 30-min calls, live session, full business audit & automation',
+    ],
+    banglaBullets: [
+      'প্রায়োরিটি কনসালট্যান্সি (৳১,০০০–৯,০০০): আনলিমিটেড ইমেইল সাপোর্ট, ১টি ৩০-মিনিট কল, ১টি লাইভ সেশন, ২টি এক্সেল ফরম্যাট',
+      'প্রিমিয়াম কনসালট্যান্সি (৳১,৫০০–১৪,০০০): আনলিমিটেড ইমেইল সাপোর্ট, ২টি ৩০-মিনিট কল, ১টি লাইভ সেশন, ৫টি এক্সেল ট্র্যাকার',
+      'প্লাটিনাম কনসালট্যান্সি (৳২,০০০–১৮,০০০): আনলিমিটেড ইমেইল সাপোর্ট, ৪টি ৩০-মিনিট কল, ১টি লাইভ সেশন, ফুল অটোমেশন ও অডিট',
+    ],
+    webUrl: `${Env.SITE_URL}/subscription/business-consultancy-service/`,
+  },
   {
     id: 'digital-transformation',
     title: 'Digital Transformation Consulting',

@@ -118,16 +118,16 @@ export const ProfileLearningPortfolio: React.FC<ProfileLearningPortfolioProps> =
           accessibilityRole="button"
           accessibilityLabel={isBangla ? 'মাই লার্নিং হাব-এ অ্যানালিটিক্স দেখুন' : 'View Learning Analytics in My Learning'}
         >
-          <View style={[styles.analyticsHubIconBg, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.15)' : 'rgba(16, 47, 83, 0.08)' }]}>
-            <Ionicons name="analytics" size={20} color={isDark ? '#FFB606' : colors.primary} />
+          <View style={[styles.analyticsHubIconBg, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.15)' : 'rgba(16, 47, 83, 0.08)' }]}>
+            <Ionicons name="analytics" size={20} color={isDark ? '#E34234' : colors.primary} />
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
               <Text style={[styles.analyticsHubTitle, { color: colors.text }]}>
                 {isBangla ? 'লার্নিং অ্যানালিটিক্স ও ভেলোসিটি' : 'Learning Analytics & Velocity'}
               </Text>
-              <View style={[styles.analyticsHubStreakBadge, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.2)' : '#FEF3C7' }]}>
-                <Text style={[styles.analyticsHubStreakText, { color: isDark ? '#FFB606' : '#92400E' }]}>
+              <View style={[styles.analyticsHubStreakBadge, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.2)' : 'rgba(227, 66, 52, 0.12)' }]}>
+                <Text style={[styles.analyticsHubStreakText, { color: '#E34234' }]}>
                   {streakDays > 0 ? `🔥 ${streakDays}d` : '🔥 Streak'}
                 </Text>
               </View>
@@ -206,7 +206,7 @@ export const ProfileLearningPortfolio: React.FC<ProfileLearningPortfolioProps> =
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#102F53', justifyContent: 'center', alignItems: 'center' }}>
-                    <Ionicons name="ribbon" size={13} color="#FFB606" />
+                    <Ionicons name="ribbon" size={13} color="#E34234" />
                   </View>
                   <Text style={{ fontSize: 11, fontWeight: '800', color: colors.text }}>
                     Thriving Skills
@@ -548,19 +548,19 @@ export const ProfileLearningPortfolio: React.FC<ProfileLearningPortfolioProps> =
                   </View>
                   {courseStatus === 'passed' && cert && hasReviewedCourse(course.id) ? (
                     <TouchableOpacity
-                      style={[styles.certificateActionBtn, { backgroundColor: colors.brandGold }]}
+                      style={[styles.certificateActionBtn, { backgroundColor: '#E34234' }]}
                       onPress={() => onSelectCertificate(cert)}
                       accessibilityRole="button"
                       accessibilityLabel={isBangla ? 'সনদপত্র দেখুন' : 'View Certificate'}
                     >
-                      <Ionicons name="ribbon" size={14} color="#102F53" />
-                      <Text style={styles.certificateActionBtnText}>
+                      <Ionicons name="ribbon" size={14} color="#FFFFFF" />
+                      <Text style={[styles.certificateActionBtnText, { color: '#FFFFFF' }]}>
                         {isBangla ? 'সনদপত্র দেখুন' : 'View Certificate'}
                       </Text>
                     </TouchableOpacity>
                   ) : courseStatus === 'passed' && !hasReviewedCourse(course.id) ? (
                     <TouchableOpacity
-                      style={[styles.certificateActionBtn, { backgroundColor: '#F59E0B' }]}
+                      style={[styles.certificateActionBtn, { backgroundColor: '#E34234' }]}
                       onPress={() => onOpenMandatoryReview(course)}
                       accessibilityRole="button"
                       accessibilityLabel={isBangla ? 'রিভিউ দিন (লক)' : 'Review to Unlock'}

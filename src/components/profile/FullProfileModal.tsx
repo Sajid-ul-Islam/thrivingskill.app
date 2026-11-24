@@ -704,7 +704,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   coverOverlayPattern: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(227, 66, 52, 0.08)',
     borderRadius: 16,
   },
