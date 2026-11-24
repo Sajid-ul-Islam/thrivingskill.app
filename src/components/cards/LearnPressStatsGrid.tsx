@@ -28,6 +28,7 @@ interface LearnPressStatsGridProps {
   isBangla: boolean;
   isDark: boolean;
   showSubTabs?: boolean;
+  compactTabs?: boolean;
 }
 
 interface StatCardConfig {
@@ -50,7 +51,109 @@ export const LearnPressStatsGrid: React.FC<LearnPressStatsGridProps> = ({
   isBangla,
   isDark,
   showSubTabs = false,
+  compactTabs = false,
 }) => {
+  const filterPills: {
+    id: LearnPressCourseFilter;
+    labelEn: string;
+    labelBn: string;
+    count: number;
+    icon: keyof typeof Ionicons.glyphMap;
+    color: string;
+  }[] = [
+    { id: 'all', labelEn: 'All', labelBn: 'সকল', count: stats.enrolledCount, icon: 'layers-outline', color: '#0D9488' },
+    { id: 'in-progress', labelEn: 'In Progress', labelBn: 'চলমান', count: stats.inProgressCount, icon: 'time-outline', color: '#9333EA' },
+    { id: 'finished', labelEn: 'Finished', labelBn: 'সম্পন্ন', count: stats.finishedCount, icon: 'ribbon-outline', color: '#4F46E5' },
+    { id: 'passed', labelEn: 'Passed', labelBn: 'উত্তীর্ণ', count: stats.passedCount, icon: 'checkmark-circle-outline', color: '#16A34A' },
+  ];
+  if (stats.failedCount > 0) {
+    filterPills.push({ id: 'failed', labelEn: 'Failed', labelBn: 'অনুত্তীর্ণ', count: stats.failedCount, icon: 'close-circle-outline', color: '#EF4444' });
+  }
+
+  if (compactTabs) {
+    return (
+      <View style={styles.compactContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.compactScroll}
+          accessibilityRole="tablist"
+        >
+          {filterPills.map((pill) => {
+            const isSelected = activeFilter === pill.id;
+            return (
+              <TouchableOpacity
+                key={pill.id}
+                style={[
+                  styles.compactPill,
+                  {
+                    backgroundColor: isSelected
+                      ? (isDark ? 'rgba(255, 182, 6, 0.16)' : colors.primary)
+                      : (isDark ? colors.surfaceSubtle : '#F1F5F9'),
+                    borderColor: isSelected
+                      ? (isDark ? '#FFB606' : colors.primary)
+                      : colors.border,
+                  },
+                ]}
+                onPress={() => {
+                  triggerHaptic('selection');
+                  onSelectFilter(pill.id);
+                }}
+                activeOpacity={0.75}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: isSelected }}
+                accessibilityLabel={`${isBangla ? pill.labelBn : pill.labelEn} (${pill.count})`}
+              >
+                <Ionicons
+                  name={pill.icon}
+                  size={14}
+                  color={isSelected ? (isDark ? '#FFB606' : colors.onPrimary) : colors.textMuted}
+                />
+                <Text
+                  style={[
+                    styles.compactPillLabel,
+                    {
+                      color: isSelected
+                        ? (isDark ? '#FFB606' : colors.onPrimary)
+                        : colors.text,
+                      fontWeight: isSelected ? '700' : '500',
+                    },
+                  ]}
+                >
+                  {isBangla ? pill.labelBn : pill.labelEn}
+                </Text>
+                <View
+                  style={[
+                    styles.compactCountBadge,
+                    {
+                      backgroundColor: isSelected
+                        ? (isDark ? '#FFB606' : 'rgba(255, 255, 255, 0.25)')
+                        : (isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)'),
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.compactCountText,
+                      {
+                        color: isSelected
+                          ? (isDark ? '#102F53' : colors.onPrimary)
+                          : colors.textMuted,
+                        fontWeight: '700',
+                      },
+                    ]}
+                  >
+                    {pill.count}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+    );
+  }
+
   const cards: StatCardConfig[] = [
     {
       id: 'enrolled',
@@ -289,5 +392,39 @@ const styles = StyleSheet.create({
   },
   tabLabel: {
     fontSize: 15,
+  },
+  compactContainer: {
+    marginBottom: 12,
+  },
+  compactScroll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+  },
+  compactPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    minHeight: 38,
+    gap: 6,
+  },
+  compactPillLabel: {
+    fontSize: 12.5,
+  },
+  compactCountBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 10,
+    minWidth: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  compactCountText: {
+    fontSize: 11,
   },
 });

@@ -339,7 +339,7 @@ export const ProfileCourseSummary: React.FC<ProfileCourseSummaryProps> = ({
           </TouchableOpacity>
         </View>
 
-        {/* Filter Chips */}
+        {/* Filter Chips - Compact pills to eliminate redundancy with top KPI bar */}
         <LearnPressStatsGrid
           stats={lpStats}
           activeFilter={portfolioTab}
@@ -347,6 +347,7 @@ export const ProfileCourseSummary: React.FC<ProfileCourseSummaryProps> = ({
           colors={colors}
           isBangla={isBangla}
           isDark={isDark}
+          compactTabs={true}
         />
 
         {/* Course Cards List */}

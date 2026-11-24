@@ -8,3 +8,4 @@ export * from './ProfileSettingsModal';
 export * from './ProfileDeleteAccountModal';
 export * from './ProfileChangePasswordModal';
 export * from './ProfileOrdersModal';
+export * from './FullProfileModal';

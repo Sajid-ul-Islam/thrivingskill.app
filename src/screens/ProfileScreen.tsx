@@ -60,6 +60,7 @@ import {
   ProfileDeleteAccountModal,
   ProfileChangePasswordModal,
   ProfileOrdersModal,
+  FullProfileModal,
 } from '../components/profile';
 
 interface ProfileScreenProps {
@@ -144,6 +145,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [flashcardsModalVisible, setFlashcardsModalVisible] = useState(false);
   const [offlineDeckModalVisible, setOfflineDeckModalVisible] = useState(false);
   const [localSearchModalVisible, setLocalSearchModalVisible] = useState(false);
+  const [fullProfileModalVisible, setFullProfileModalVisible] = useState(false);
   const [editProfileModalVisible, setEditProfileModalVisible] = useState(false);
   const [changePasswordModalVisible, setChangePasswordModalVisible] = useState(false);
   const [paymentHistoryModalVisible, setPaymentHistoryModalVisible] = useState(false);

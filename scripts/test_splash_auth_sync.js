@@ -48,10 +48,8 @@ assert(
   'triggerSmoothExit fires onExitComplete after exit animation finishes'
 );
 assert(
-  splashContent.includes('const autoAdvanceTimer = setTimeout(') &&
-  splashContent.includes('handleGetStarted();') &&
-  (splashContent.includes('4500') || splashContent.includes('5000')),
-  'Internalized auto-advance timer safely cues handleGetStarted()'
+  !splashContent.includes('const autoAdvanceTimer = setTimeout('),
+  'Splash screen waits for user tap (no unwanted auto-advance to registration/login)'
 );
 assert(
   splashContent.includes("pointerEvents={isExitingRef.current ? 'none' : 'auto'}"),
@@ -151,8 +149,10 @@ assert(
   'AuthModal header includes bilingual English / Bangla toggle pill'
 );
 assert(
-  authContent.includes('brandRowHeader'),
-  'AuthModal uses persistent compact brand header to prevent keyboard jump'
+  authContent.includes('brandRowHeader') &&
+  authContent.includes("borderColor: '#E34234'") &&
+  authContent.includes("color: '#E34234'"),
+  'AuthModal uses persistent compact brand header styled with Accent Red (#E34234)'
 );
 
 console.log('\n======================================================');

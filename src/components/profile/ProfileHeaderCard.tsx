@@ -18,6 +18,7 @@ interface ProfileHeaderCardProps {
   isDark?: boolean;
   isBangla: boolean;
   onEditProfile: () => void;
+  onViewFullProfile?: () => void;
 }
 
 export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
@@ -31,7 +32,9 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
   isDark = false,
   isBangla,
   onEditProfile,
+  onViewFullProfile,
 }) => {
+  const handleCardPress = onViewFullProfile || onEditProfile;
   const { isTablet, isLandscape, width } = useResponsive();
   const isWide = isTablet || isLandscape || width >= 580;
   const isUltraNarrow = width < 360;
@@ -85,8 +88,14 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
           isUltraNarrow && styles.contentRowStacked,
         ]}
       >
-        {/* Left Side: Avatar + Details */}
-        <View style={styles.userInfoGroup}>
+        {/* Left Side: Avatar + Details - Tap opens Full Profile View */}
+        <TouchableOpacity
+          style={styles.userInfoGroup}
+          onPress={handleCardPress}
+          activeOpacity={0.82}
+          accessibilityRole="button"
+          accessibilityLabel="Open full profile details"
+        >
           {avatarUri && !avatarError ? (
             <Image
               source={getSafeImageSource(avatarUri)}
@@ -160,31 +169,29 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
                 : 'Thriving Skills Online Platform')}
             </Text>
 
-            <TouchableOpacity
+            <View
               style={[
                 styles.editProfileBtn,
                 { backgroundColor: colors.primaryLight, borderColor: colors.primary },
               ]}
-              onPress={onEditProfile}
-              accessibilityRole="button"
-              accessibilityLabel="Edit profile"
             >
-              <Ionicons name="create-outline" size={14} color={colors.primary} />
+              <Ionicons name="person-circle-outline" size={14} color={colors.primary} />
               <Text style={[styles.editProfileBtnText, { color: colors.primary }]}>
-                {isBangla ? 'প্রোফাইল সম্পাদন' : 'Edit Profile'}
+                {isBangla ? 'সম্পূর্ণ প্রোফাইল' : 'View Profile'}
               </Text>
-            </TouchableOpacity>
+              <Ionicons name="chevron-forward" size={12} color={colors.primary} />
+            </View>
           </View>
-        </View>
+        </TouchableOpacity>
 
-        {/* Right Side (Red Box in screenshot): LinkedIn-style Profile Completion Donut Widget */}
+        {/* Right Side: Profile Completion Donut Widget - Tap opens Full Profile View */}
         <View style={[styles.donutArea, isWide && styles.donutAreaWide, isUltraNarrow && styles.donutAreaStacked]}>
           <ProfileCompletionDonut
             user={user}
             colors={colors}
             isDark={isDark}
             isBangla={isBangla}
-            onPress={onEditProfile}
+            onPress={handleCardPress}
             isWide={isWide}
             style={isUltraNarrow ? { width: '100%', maxWidth: '100%' } : undefined}
           />

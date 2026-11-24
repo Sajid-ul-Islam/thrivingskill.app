@@ -9,7 +9,6 @@ import {
   Easing,
   TouchableOpacity,
   Linking,
-  Dimensions,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -17,9 +16,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '../../context/LanguageContext';
 import { triggerHaptic } from '../../utils/haptics';
-import { shape } from '../../theme/shapes';
-import { useResponsive } from '../../theme/responsive';
-import { SpringPressable } from '../common/SpringPressable';
 
 export interface BrandSplashScreenProps {
   onGetStarted?: () => void;
@@ -30,7 +26,6 @@ export interface BrandSplashScreenProps {
 }
 
 const SPLASH_POSTER_IMAGE = require('../../../assets/splash-poster.jpg');
-const BRAND_LOGO_IMAGE = require('../../../assets/icon.png');
 
 export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
   onGetStarted,
@@ -40,8 +35,7 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
   isLoading = false,
 }) => {
   const insets = useSafeAreaInsets();
-  const { isBangla, setLanguage } = useLanguage();
-  const { isTablet, isLandscape, width, height } = useResponsive();
+  const { isBangla } = useLanguage();
   const isExitingRef = useRef(false);
 
   // Exit transition animators (smooth cinematic dissolve)
@@ -51,11 +45,7 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
   // Choreographed entrance animators
   const heroFadeAnim = useRef(new Animated.Value(0)).current;
   const heroScaleAnim = useRef(new Animated.Value(0.96)).current;
-  const topBarAnim = useRef(new Animated.Value(0)).current;
   const bottomDockAnim = useRef(new Animated.Value(0)).current;
-
-  // Inviting arrow nudge on primary CTA
-  const arrowNudge = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     // 1. Choreographed Entrance Animation
@@ -73,19 +63,9 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
         easing: Easing.bezier(0.16, 1, 0.3, 1),
         useNativeDriver: true,
       }),
-      // Top floating bar
+      // Bottom action dock: springs up smoothly
       Animated.sequence([
-        Animated.delay(150),
-        Animated.timing(topBarAnim, {
-          toValue: 1,
-          duration: 500,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-      ]),
-      // Bottom action dock
-      Animated.sequence([
-        Animated.delay(350),
+        Animated.delay(200),
         Animated.spring(bottomDockAnim, {
           toValue: 1,
           friction: 8,
@@ -94,39 +74,7 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
         }),
       ]),
     ]).start();
-
-    // 2. Inviting rhythmic arrow nudge
-    const arrowLoop = Animated.loop(
-      Animated.sequence([
-        Animated.delay(2000),
-        Animated.timing(arrowNudge, {
-          toValue: 5,
-          duration: 320,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(arrowNudge, {
-          toValue: 0,
-          duration: 280,
-          easing: Easing.in(Easing.quad),
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    arrowLoop.start();
-
-    // 3. Graceful 5s Auto-advance timer: initiates transition if untouched
-    const autoAdvanceTimer = setTimeout(() => {
-      if (!isExitingRef.current && !isLoading) {
-        handleGetStarted();
-      }
-    }, 5000);
-
-    return () => {
-      arrowLoop.stop();
-      clearTimeout(autoAdvanceTimer);
-    };
-  }, [isLoading]);
+  }, []);
 
   const triggerSmoothExit = (callback?: () => void) => {
     if (isExitingRef.current) return;
@@ -162,11 +110,6 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
     triggerSmoothExit(onSignIn);
   };
 
-  const handleLanguageToggle = (lang: 'en' | 'bn') => {
-    triggerHaptic('selection');
-    setLanguage(lang);
-  };
-
   const handleOpenWebsite = () => {
     triggerHaptic('light');
     Linking.openURL('https://www.thrivingskill.com').catch(() => {});
@@ -194,84 +137,12 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
         style={[
           styles.mobileFrame,
           {
-            paddingTop: Math.max(insets.top, 10),
+            paddingTop: Math.max(insets.top, 8),
             paddingBottom: Math.max(insets.bottom, 12),
           },
         ]}
       >
-        {/* 1. TOP FLOATING CONTROLS */}
-        <Animated.View
-          style={[
-            styles.topBar,
-            {
-              opacity: topBarAnim,
-              transform: [
-                {
-                  translateY: topBarAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [-12, 0],
-                  }),
-                },
-              ],
-            },
-          ]}
-        >
-          {/* Subtle Brand Pill */}
-          <View style={styles.brandPill}>
-            <View style={styles.logoWrap}>
-              <Image
-                source={BRAND_LOGO_IMAGE}
-                style={styles.brandIcon}
-                resizeMode="contain"
-              />
-            </View>
-            <Text style={styles.brandPillText}>
-              Thriving<Text style={{ color: '#FFB606' }}>Skills</Text>
-            </Text>
-          </View>
-
-          {/* Right Controls: Language Switcher & Quick Skip */}
-          <View style={styles.topBarRight}>
-            <View style={styles.langPill}>
-              <TouchableOpacity
-                onPress={() => handleLanguageToggle('en')}
-                activeOpacity={0.7}
-                style={[styles.langBtn, !isBangla && styles.langBtnActive]}
-                accessibilityRole="button"
-                accessibilityLabel="Switch to English"
-                hitSlop={{ top: 8, bottom: 8, left: 6, right: 4 }}
-              >
-                <Text style={[styles.langText, !isBangla && styles.langTextActive]}>ENG</Text>
-              </TouchableOpacity>
-
-              <Text style={styles.langDivider}>|</Text>
-
-              <TouchableOpacity
-                onPress={() => handleLanguageToggle('bn')}
-                activeOpacity={0.7}
-                style={[styles.langBtn, isBangla && styles.langBtnActive]}
-                accessibilityRole="button"
-                accessibilityLabel="Switch to Bengali"
-                hitSlop={{ top: 8, bottom: 8, left: 4, right: 6 }}
-              >
-                <Text style={[styles.langText, isBangla && styles.langTextActive]}>বাংলা</Text>
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity
-              onPress={() => triggerSmoothExit(onDismiss || onGetStarted)}
-              activeOpacity={0.7}
-              style={styles.skipBtn}
-              accessibilityRole="button"
-              accessibilityLabel="Skip splash screen"
-              hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
-            >
-              <Ionicons name="flash" size={13} color="#E34234" />
-            </TouchableOpacity>
-          </View>
-        </Animated.View>
-
-        {/* 2. AUTHENTIC HERO POSTER CANVAS */}
+        {/* Authentic Full Hero Poster Canvas (Clean, unobstructed view) */}
         <Animated.View
           style={[
             styles.posterSection,
@@ -296,7 +167,7 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
           />
         </Animated.View>
 
-        {/* 3. INTERACTIVE FLOATING ACTION DOCK */}
+        {/* Interactive Floating Action Dock */}
         <Animated.View
           style={[
             styles.bottomDock,
@@ -313,21 +184,19 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
             },
           ]}
         >
-          {/* Primary CTA: Get Started Now in Signature Red (#E34234) */}
-          <SpringPressable
+          {/* Primary CTA: Get Started - 1:1 Match with Create Account Button */}
+          <TouchableOpacity
             onPress={handleGetStarted}
-            style={styles.primaryCtaBtn}
-            activeScale={0.96}
+            style={[styles.primaryCtaBtn, { backgroundColor: '#E34234' }]}
+            activeOpacity={0.88}
             accessibilityRole="button"
-            accessibilityLabel={isBangla ? 'এখনই শুরু করুন' : 'Get Started Now'}
+            accessibilityLabel={isBangla ? 'এখনই শুরু করুন' : 'Get Started'}
           >
-            <Text style={styles.primaryCtaText}>
-              {isBangla ? 'এখনই শুরু করুন' : 'Get Started Now'}
+            <Text style={[styles.primaryCtaText, { color: '#FFFFFF' }]}>
+              {isBangla ? 'এখনই শুরু করুন' : 'Get Started'}
             </Text>
-            <Animated.View style={{ transform: [{ translateX: arrowNudge }] }}>
-              <Ionicons name="arrow-forward" size={16} color="#FFFFFF" style={{ marginLeft: 8 }} />
-            </Animated.View>
-          </SpringPressable>
+            <Ionicons name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 8 }} />
+          </TouchableOpacity>
 
           {/* Secondary CTA: Sign In */}
           <TouchableOpacity
@@ -397,91 +266,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     overflow: 'hidden',
   },
-  topBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingTop: 4,
-    paddingBottom: 4,
-    zIndex: 30,
-  },
-  brandPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(16, 47, 83, 0.85)',
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(227, 66, 52, 0.35)',
-  },
-  logoWrap: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-    backgroundColor: '#FFFFFF',
-    padding: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  brandIcon: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 4,
-  },
-  brandPillText: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: -0.2,
-  },
-  topBarRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  langPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(16, 47, 83, 0.85)',
-    borderWidth: 1,
-    borderColor: 'rgba(227, 66, 52, 0.35)',
-    borderRadius: 20,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  langBtn: {
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-  },
-  langBtnActive: {
-    borderRadius: 10,
-  },
-  langText: {
-    fontSize: 10.5,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.65)',
-  },
-  langTextActive: {
-    fontWeight: '800',
-    color: '#E34234',
-  },
-  langDivider: {
-    fontSize: 10.5,
-    color: 'rgba(255, 255, 255, 0.25)',
-    marginHorizontal: 1,
-  },
-  skipBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(16, 47, 83, 0.85)',
-    borderWidth: 1,
-    borderColor: 'rgba(227, 66, 52, 0.4)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   posterSection: {
     flex: 1,
     position: 'relative',
@@ -503,26 +287,23 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   primaryCtaBtn: {
-    width: '100%',
-    minHeight: 50,
-    backgroundColor: '#E34234', // Brand Crimson / Coral Red
-    borderRadius: shape.medium,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E34234',
+    width: '100%',
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: '#E34234',
     shadowColor: '#E34234',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 5,
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
   },
   primaryCtaText: {
     color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: 0.3,
+    fontWeight: '700',
   },
   secondaryCtaBtn: {
     minHeight: 36,

@@ -693,7 +693,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </View>
                 <View style={styles.brandTitleCol}>
                   <Text style={[styles.brandTitleText, { color: colors.text }]}>
-                    Thriving<Text style={{ color: '#FFB606' }}>Skills</Text>
+                    Thriving<Text style={{ color: '#E34234' }}>Skills</Text>
                   </Text>
                   <Text style={[styles.brandSubtitleText, { color: colors.textMuted }]}>
                     {isBangla ? 'স্কিলস ফর ফিউচার' : 'Skills For Future'}
@@ -1364,7 +1364,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                               styles.charCountFill,
                               {
                                 width: `${Math.min(100, (regPassword.length / 12) * 100)}%`,
-                                backgroundColor: regPassword.length >= 12 ? '#10B981' : '#FFB606',
+                                backgroundColor: regPassword.length >= 12 ? '#10B981' : '#E34234',
                               },
                             ]}
                           />
@@ -1381,7 +1381,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                       {/* Official Password Rule Card from thrivingskill.com */}
                       <View style={[styles.siteHintBox, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border, marginTop: 8 }]}>
-                        <Ionicons name="shield-checkmark" size={15} color="#FFB606" style={{ marginTop: 1 }} />
+                        <Ionicons name="shield-checkmark" size={15} color="#E34234" style={{ marginTop: 1 }} />
                         <Text style={[styles.siteHintText, { color: colors.textMuted }]}>
                           <Text style={{ fontWeight: '700', color: colors.text }}>
                             {isBangla ? 'পাসওয়ার্ড নিয়ম: ' : 'Password Rule: '}
@@ -1719,9 +1719,9 @@ const styles = StyleSheet.create({
   langPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 182, 6, 0.08)',
+    backgroundColor: 'rgba(227, 66, 52, 0.08)',
     borderWidth: 1,
-    borderColor: 'rgba(255, 182, 6, 0.35)',
+    borderColor: 'rgba(227, 66, 52, 0.35)',
     borderRadius: 16,
     paddingHorizontal: 7,
     paddingVertical: 2.5,
@@ -1740,7 +1740,7 @@ const styles = StyleSheet.create({
   },
   langTextActive: {
     fontWeight: '800',
-    color: '#FFB606',
+    color: '#E34234',
   },
   langDivider: {
     fontSize: 10,
@@ -1784,10 +1784,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     padding: 3,
     borderWidth: 1.5,
-    borderColor: '#FFB606',
+    borderColor: '#E34234',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#FFB606',
+    shadowColor: '#E34234',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
@@ -1926,9 +1926,9 @@ const styles = StyleSheet.create({
   noticeCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 182, 6, 0.12)',
+    backgroundColor: 'rgba(227, 66, 52, 0.08)',
     borderWidth: 1,
-    borderColor: '#FFB606',
+    borderColor: '#E34234',
     borderRadius: 12,
     padding: 12,
     marginBottom: 14,
