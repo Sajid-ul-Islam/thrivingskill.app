@@ -600,7 +600,7 @@ const styles = StyleSheet.create({
   playerContainer: {
     width: '100%',
     aspectRatio: 16 / 9,
-    backgroundColor: '#000000',
+    backgroundColor: '#0F192C',
   },
   playerContainerPortrait: {
     borderRadius: 14,
@@ -633,7 +633,7 @@ const styles = StyleSheet.create({
   },
   webView: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#0F192C',
   },
   playerLoadingOverlay: {
     position: 'absolute',
@@ -641,7 +641,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: '#000000',
+    backgroundColor: '#0F192C',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
@@ -966,7 +966,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
     position: 'relative',
-    backgroundColor: '#000',
+    backgroundColor: '#0F192C',
   },
   relatedThumb: {
     width: '100%',

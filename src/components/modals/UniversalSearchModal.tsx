@@ -589,7 +589,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
     position: 'relative',
-    backgroundColor: '#000',
+    backgroundColor: '#0F192C',
   },
   thumb: {
     width: '100%',

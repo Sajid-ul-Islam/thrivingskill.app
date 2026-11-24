@@ -502,7 +502,7 @@ const styles = StyleSheet.create({
   stickyPlayerFrame: {
     width: '100%',
     aspectRatio: 16 / 9,
-    backgroundColor: '#000000',
+    backgroundColor: '#0F192C',
     overflow: 'hidden',
     borderRadius: 14,
   },
@@ -527,11 +527,11 @@ const styles = StyleSheet.create({
   playerContainer: {
     flex: 1,
     position: 'relative',
-    backgroundColor: '#000000',
+    backgroundColor: '#0F192C',
   },
   videoWebView: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#0F192C',
   },
   loadingVideoOverlay: {
     position: 'absolute',

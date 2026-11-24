@@ -113,6 +113,8 @@ export const PartnerLogoMarquee: React.FC<PartnerLogoMarqueeProps> = ({ logos })
                 borderColor: colors.border,
               },
             ]}
+            accessibilityRole="image"
+            accessibilityLabel={`${item.name} logo`}
           >
             <Image
               source={getSafeImageSource(item.logoUrl)}

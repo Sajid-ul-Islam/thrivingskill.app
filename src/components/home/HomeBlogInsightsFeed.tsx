@@ -113,6 +113,7 @@ export const HomeBlogInsightsFeed: React.FC<HomeBlogInsightsFeedProps> = ({
             onViewAllPosts();
           }}
           style={styles.viewAllBtn}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           accessibilityRole="button"
           accessibilityLabel={isBangla ? 'সব আর্টিকেল দেখুন' : 'View all articles'}
         >

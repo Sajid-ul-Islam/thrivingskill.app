@@ -63,6 +63,7 @@ export const SpecialBundlesCarousel: React.FC<SpecialBundlesCarouselProps> = ({
               onViewAllBundles();
             }}
             style={styles.viewAllBtn}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityRole="button"
             accessibilityLabel={isBangla ? 'সব বান্ডেল দেখুন' : 'View all bundles'}
           >

@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 8,
     overflow: 'hidden',
-    backgroundColor: '#000',
+    backgroundColor: '#0F192C',
     position: 'relative',
   },
   thumbnail: {

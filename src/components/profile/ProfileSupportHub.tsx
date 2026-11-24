@@ -291,7 +291,7 @@ export const ProfileSupportHub: React.FC<ProfileSupportHubProps> = ({
           </View>
           {pendingSyncCount > 0 ? (
             <View style={{ backgroundColor: colors.brandGold, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8 }}>
-              <Text style={{ color: '#000', fontSize: 10, fontWeight: '800' }}>{pendingSyncCount}</Text>
+              <Text style={{ color: '#0F192C', fontSize: 10, fontWeight: '800' }}>{pendingSyncCount}</Text>
             </View>
           ) : (
             <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />

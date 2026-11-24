@@ -207,6 +207,8 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
               activeCourseTab === 'in-progress' && { backgroundColor: colors.brandNavySubtle || 'rgba(16,47,83,0.06)' },
             ]}
             onPress={() => onSelectTab && onSelectTab('in-progress')}
+            accessibilityRole="button"
+            accessibilityLabel={isBangla ? `চলমান কোর্স: ${inProgressCount}` : `In Progress courses: ${inProgressCount}`}
           >
             <View style={[styles.legendDot, { backgroundColor: colors.brandNavy }]} />
             <Text style={[styles.legendLabel, { color: colors.textMuted }]}>
@@ -223,6 +225,8 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
               },
             ]}
             onPress={() => onSelectTab && onSelectTab('passed')}
+            accessibilityRole="button"
+            accessibilityLabel={isBangla ? `উত্তীর্ণ কোর্স: ${completedCount}` : `Passed courses: ${completedCount}`}
           >
             <View style={[styles.legendDot, { backgroundColor: colors.brandGold }]} />
             <Text style={[styles.legendLabel, { color: colors.textMuted }]}>
@@ -398,6 +402,8 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
             activeCourseTab === 'in-progress' && { borderColor: colors.brandNavy, borderWidth: 1.5 },
           ]}
           onPress={() => onSelectTab && onSelectTab('in-progress')}
+          accessibilityRole="button"
+          accessibilityLabel={isBangla ? `চলমান কোর্স ফিল্টার: ${inProgressCount}` : `Filter in-progress courses: ${inProgressCount}`}
         >
           <Ionicons name="book-outline" size={17} color={colors.brandNavy} />
           <Text style={[styles.kpiNumber, { color: colors.brandNavy }]}>{inProgressCount}</Text>
@@ -416,6 +422,8 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
             },
           ]}
           onPress={() => onSelectTab && onSelectTab('passed')}
+          accessibilityRole="button"
+          accessibilityLabel={isBangla ? `উত্তীর্ণ কোর্স ফিল্টার: ${completedCount}` : `Filter completed courses: ${completedCount}`}
         >
           <Ionicons name="school" size={17} color={colors.brandGold} />
           <Text style={[styles.kpiNumber, { color: colors.brandGold }]}>{completedCount}</Text>

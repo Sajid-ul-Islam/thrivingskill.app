@@ -139,8 +139,10 @@ export const CourseDetailHero: React.FC<CourseDetailHeroProps> = ({
         >
           <View style={styles.trailerThumbWrapper}>
             <Image
-              source={{ uri: trailerVideo.thumbnail, cache: 'force-cache' }}
+              source={getSafeImageSource(trailerVideo.thumbnail)}
               style={styles.trailerThumb}
+              onError={() => {}}
+              {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
             />
             <View style={styles.trailerPlayOverlay}>
               <Ionicons name="play" size={14} color="#FFFFFF" />
@@ -355,7 +357,7 @@ const styles = StyleSheet.create({
     width: '100%',
     aspectRatio: 4 / 3,
     position: 'relative',
-    backgroundColor: '#000000',
+    backgroundColor: '#0A1C33',
     overflow: 'hidden',
   },
   heroThumbnail: {
@@ -407,7 +409,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
     position: 'relative',
-    backgroundColor: '#000',
+    backgroundColor: '#0A1C33',
   },
   trailerThumb: {
     width: '100%',

@@ -66,6 +66,8 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
           style={{ flex: 1, flexDirection: 'row' }}
           onPress={() => onPress(video)}
           activeScale={0.97}
+          accessibilityRole="button"
+          accessibilityLabel={`${video.title}, ${video.views || ''}`}
         >
           <View style={styles.horizontalThumbWrapper}>
             <Image
@@ -137,6 +139,8 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
       <SpringPressable
         onPress={() => onPress(video)}
         activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={`${video.title}, ${video.views || ''}`}
       >
         <View style={styles.thumbWrapper}>
           <Image
@@ -222,7 +226,7 @@ const styles = StyleSheet.create({
   thumbWrapper: {
     width: '100%',
     aspectRatio: 16 / 9,
-    backgroundColor: '#000000',
+    backgroundColor: '#0F192C',
     position: 'relative',
   },
   thumbImage: {
@@ -360,7 +364,7 @@ const styles = StyleSheet.create({
     borderRadius: shape.small,
     overflow: 'hidden',
     position: 'relative',
-    backgroundColor: '#000',
+    backgroundColor: '#0F192C',
   },
   horizontalThumb: {
     width: '100%',

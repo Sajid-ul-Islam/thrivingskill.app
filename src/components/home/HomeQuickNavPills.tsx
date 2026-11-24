@@ -121,6 +121,7 @@ export const HomeQuickNavPills: React.FC<HomeQuickNavPillsProps> = ({
             ]}
             activeScale={0.94}
             haptic="light"
+            hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
             onPress={() => {
               triggerHaptic('light');
               item.onPress();
@@ -175,7 +176,8 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingLeft: 6,
     paddingRight: 10,
-    paddingVertical: 6,
+    paddingVertical: 7,
+    minHeight: 38,
     borderRadius: shape.full,
     borderWidth: 1,
     ...Platform.select({

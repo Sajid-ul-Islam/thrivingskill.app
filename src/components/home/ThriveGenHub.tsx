@@ -288,6 +288,7 @@ export const ThriveGenHub: React.FC<ThriveGenHubProps> = ({
                   borderColor: isActive ? colors.primary : colors.border,
                 },
               ]}
+              hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
               onPress={() => {
                 triggerHaptic('selection');
                 setActiveLevel(tab.id);

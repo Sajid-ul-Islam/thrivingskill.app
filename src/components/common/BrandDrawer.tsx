@@ -197,6 +197,8 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               style={[styles.closeBtn, { backgroundColor: colors.surfaceSubtle }]}
               onPress={onClose}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              accessibilityRole="button"
+              accessibilityLabel="Close Drawer"
             >
               <Ionicons name="close" size={20} color={colors.text} />
             </TouchableOpacity>
@@ -232,6 +234,8 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
                     if (nextWs) switchWorkspace(nextWs.id);
                   }}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Switch Workspace"
                 >
                   <Ionicons name="swap-horizontal" size={14} color={colors.text} />
                   <Text style={[styles.switchWsText, { color: colors.text }]}>Switch</Text>
