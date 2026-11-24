@@ -363,9 +363,16 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
               </TouchableOpacity>
             </View>
 
-            <View style={styles.powerIconPill}>
+            <TouchableOpacity
+              onPress={() => triggerSmoothExit(onDismiss || onGetStarted)}
+              activeOpacity={0.7}
+              style={styles.powerIconPill}
+              accessibilityRole="button"
+              accessibilityLabel="Skip welcome screen"
+              hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+            >
               <Ionicons name="flash" size={13} color="#FFB606" />
-            </View>
+            </TouchableOpacity>
           </View>
         </Animated.View>
 
@@ -626,9 +633,6 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
           <Text style={styles.versionTag}>
             App Version 4.0.2.3
           </Text>
-
-          {/* Home Indicator Bar */}
-          <View style={styles.homeIndicatorBar} />
         </Animated.View>
       </View>
     </Animated.View>
@@ -786,49 +790,49 @@ const styles = StyleSheet.create({
   floatingNodeLeft: {
     position: 'absolute',
     top: '22%',
-    left: 10,
+    left: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(16, 47, 83, 0.94)',
+    backgroundColor: 'rgba(15, 25, 44, 0.88)',
     paddingHorizontal: 11,
     paddingVertical: 5.5,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 182, 6, 0.55)',
+    borderColor: 'rgba(255, 182, 6, 0.4)',
     shadowColor: '#FFB606',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
     zIndex: 10,
   },
   nodeIconWrapGold: {
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: 'rgba(255, 182, 6, 0.22)',
+    backgroundColor: 'rgba(255, 182, 6, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   floatingNodeRight: {
     position: 'absolute',
     top: '16%',
-    right: 10,
+    right: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(16, 47, 83, 0.94)',
+    backgroundColor: 'rgba(15, 25, 44, 0.88)',
     paddingHorizontal: 11,
     paddingVertical: 5.5,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(227, 66, 52, 0.55)',
+    borderColor: 'rgba(227, 66, 52, 0.4)',
     shadowColor: '#E34234',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
     zIndex: 10,
   },
   nodeIconWrapCoral: {
@@ -908,12 +912,12 @@ const styles = StyleSheet.create({
   },
   pillarsCard: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(30, 41, 59, 0.85)', // Dark Surface #1E293B
+    backgroundColor: 'rgba(21, 34, 56, 0.72)', // Smooth translucent glass
     borderWidth: 1,
-    borderColor: 'rgba(255, 182, 6, 0.25)',
+    borderColor: 'rgba(255, 182, 6, 0.22)',
     borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 6,
+    paddingVertical: 14,
+    paddingHorizontal: 8,
     alignItems: 'center',
     justifyContent: 'space-between',
   },
@@ -924,12 +928,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
   },
   pillarIconWrap: {
-    width: 40,
-    height: 40,
+    width: 38,
+    height: 38,
     borderRadius: 12,
-    backgroundColor: 'rgba(255, 182, 6, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 182, 6, 0.3)',
+    backgroundColor: 'rgba(255, 182, 6, 0.12)', // Clean borderless icon well (eliminates box-in-box nesting)
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
@@ -1004,12 +1006,5 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.45)',
     letterSpacing: 0.3,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-  },
-  homeIndicatorBar: {
-    width: 120,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    marginTop: 6,
   },
 });

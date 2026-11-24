@@ -1029,7 +1029,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   </Text>
                 </TouchableOpacity>
 
-                {/* Momentum Capsule */}
+                {/* Unified Learning Momentum Hub (Streak + Daily Goal Ring) */}
                 <SpringPressable
                   style={[
                     styles.momentumCapsule,
@@ -1041,8 +1041,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   onPress={() => {
                     triggerHaptic('light');
                     Alert.alert(
-                      isBangla ? 'দৈনিক লার্নিং মোমেন্টাম 🔥' : 'Learning Momentum 🔥',
-                      `${isBangla ? '• টানা স্ট্রিক' : '• Streak'}: ${streakDays} ${isBangla ? 'দিন' : 'Days'}\n${isBangla ? '• আজকের সময়' : '• Today\'s Time'}: ${dailyMinutesSpent}m / ${dailyTargetMinutes}m ${isBangla ? 'লক্ষ্য' : 'Goal'}\n\n${isBangla ? 'প্রতিদিন কোর্স ও ভিডিও দেখে নতুন ব্যাজ অর্জন করুন!' : 'Complete lessons and videos to keep up your daily streak!'}`,
+                      isBangla ? 'দৈনিক লার্নিং মোমেন্টাম ও লক্ষ্য 🎯' : 'Learning Momentum & Goal 🎯',
+                      `${isBangla ? '• টানা স্ট্রিক' : '• Streak'}: ${streakDays} ${isBangla ? 'দিন' : 'Days'} 🔥\n` +
+                      `${isBangla ? '• আজকের স্টাডি' : '• Today'}: ${dailyMinutesSpent}m / ${dailyTargetMinutes}m (${currentGoalPercent}% ${isBangla ? 'সম্পন্ন' : 'completed'})\n\n` +
+                      (isGoalAchieved
+                        ? (isBangla ? 'অভিনন্দন! আজকের লক্ষ্য অর্জিত হয়েছে 🎉' : 'Awesome! You hit today\'s learning goal 🎉')
+                        : (isBangla ? `আর মাত্র ${Math.max(0, dailyTargetMinutes - dailyMinutesSpent)} মিনিট স্টাডি করলেই আজকের লক্ষ্য সম্পন্ন!` : `Only ${Math.max(0, dailyTargetMinutes - dailyMinutesSpent)} minutes left to complete today's goal!`)),
                       [
                         {
                           text: isBangla ? 'মাই হাব দেখুন' : 'View My Hub',
@@ -1053,9 +1057,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     );
                   }}
                   accessibilityRole="button"
-                  accessibilityLabel={isBangla ? `দৈনিক স্ট্রিক ${streakDays} দিন, আজকের স্টাডি ${dailyMinutesSpent} মিনিট` : `Daily streak ${streakDays} days, today study ${dailyMinutesSpent} minutes`}
+                  accessibilityLabel={isBangla ? `দৈনিক স্ট্রিক ${streakDays} দিন, আজকের স্টাডি ${dailyMinutesSpent} মিনিট, লক্ষ্য ${dailyTargetMinutes} মিনিট` : `Daily streak ${streakDays} days, today study ${dailyMinutesSpent} of ${dailyTargetMinutes} minutes`}
                   haptic="selection"
-                  activeScale={0.93}
+                  activeScale={0.94}
                 >
                   <View style={styles.momentumItem}>
                     <Text style={styles.flameEmoji}>🔥</Text>
@@ -1063,9 +1067,31 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                       {streakDays}d
                     </Text>
                   </View>
+
                   <View style={[styles.momentumDivider, { backgroundColor: colors.border }]} />
+
                   <View style={styles.momentumItem}>
-                    <Ionicons name="time" size={12} color={colors.primary} />
+                    <CircularProgressRing
+                      progress={currentGoalPercent}
+                      size={20}
+                      strokeWidth={2.4}
+                      trackColor={isDark ? colors.border : '#E2E8F0'}
+                      progressColor={isGoalAchieved ? '#10B981' : (colors.brandGold || '#FFB606')}
+                      showText={false}
+                      centerContent={
+                        <Text
+                          style={[
+                            styles.radialCenterIcon,
+                            {
+                              color: isGoalAchieved ? '#10B981' : (colors.brandGold || '#FFB606'),
+                              fontSize: 7.5,
+                            },
+                          ]}
+                        >
+                          {isGoalAchieved ? '✓' : '⚡'}
+                        </Text>
+                      }
+                    />
                     <Text style={[styles.momentumValue, { color: colors.primary }]}>
                       {dailyMinutesSpent}m
                     </Text>
@@ -1073,70 +1099,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                 </SpringPressable>
               </View>
 
-              {/* Subtitle + Radial Goal Ring */}
+              {/* Subtitle Row - Clean, Distraction-Free Breathing Room */}
               <View style={styles.greetingBottomRow}>
-                <View style={{ flex: 1, minWidth: 0, marginRight: 10 }}>
-                  <Text style={[styles.greetingSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
-                    {greetingSubtitleText}
-                  </Text>
-                </View>
-
-                <TouchableOpacity
-                  style={[
-                    styles.radialGoalBadge,
-                    {
-                      backgroundColor: isDark ? colors.surfaceSubtle : '#F8FAFC',
-                      borderColor: colors.border,
-                    },
-                  ]}
-                  activeOpacity={0.85}
-                  onPress={() => {
-                    triggerHaptic('light');
-                    Alert.alert(
-                      isBangla ? 'দৈনিক লক্ষ্য ও মোমেন্টাম 🎯' : 'Daily Study Goal 🎯',
-                      `${isBangla ? '• আজকের স্টাডি' : '• Today'}: ${dailyMinutesSpent}m / ${dailyTargetMinutes}m (${currentGoalPercent}% ${isBangla ? 'সম্পন্ন' : 'completed'})\n${isBangla ? '• স্টাডি স্ট্রিক' : '• Study Streak'}: ${streakDays} ${isBangla ? 'দিন' : 'days'} 🔥\n\n${
-                        isGoalAchieved
-                          ? (isBangla ? 'অভিনন্দন! আজকের লক্ষ্য অর্জিত হয়েছে 🎉' : 'Awesome! You hit today\'s learning goal 🎉')
-                          : (isBangla ? `আর মাত্র ${Math.max(0, dailyTargetMinutes - dailyMinutesSpent)} মিনিট স্টাডি করলেই আজকের লক্ষ্য সম্পন্ন!` : `Only ${Math.max(0, dailyTargetMinutes - dailyMinutesSpent)} minutes left to complete today's goal!`)
-                      }`,
-                      [
-                        { text: isBangla ? 'কোর্স চালিয়ে যান' : 'Continue Course', onPress: () => onNavigateTab('MyLearning') },
-                        { text: isBangla ? 'ঠিক আছে' : 'OK', style: 'cancel' },
-                      ],
-                    );
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Daily Goal: ${dailyMinutesSpent} of ${dailyTargetMinutes} minutes completed`}
-                >
-                  <CircularProgressRing
-                    progress={currentGoalPercent}
-                    size={32}
-                    strokeWidth={3}
-                    trackColor={isDark ? colors.border : '#E2E8F0'}
-                    progressColor={isGoalAchieved ? '#10B981' : (colors.brandGold || '#FFB606')}
-                    showText={false}
-                    centerContent={
-                      <Text
-                        style={[
-                          styles.radialCenterIcon,
-                          {
-                            color: isGoalAchieved ? '#10B981' : (colors.brandGold || '#FFB606'),
-                          },
-                        ]}
-                      >
-                        {isGoalAchieved ? '✓' : '⚡'}
-                      </Text>
-                    }
-                  />
-                  <View style={styles.radialGoalTextCol}>
-                    <Text style={[styles.radialGoalTitle, { color: colors.text }]}>
-                      {dailyMinutesSpent}/{dailyTargetMinutes}m
-                    </Text>
-                    <Text style={[styles.radialGoalSub, { color: colors.textMuted }]}>
-                      {isBangla ? 'দৈনিক লক্ষ্য' : 'Daily Goal'}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
+                <Text style={[styles.greetingSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
+                  {greetingSubtitleText}
+                </Text>
               </View>
             </>
           )}

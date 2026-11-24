@@ -1097,7 +1097,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                       key={tab.id}
                       style={[
                         styles.tabButton,
-                        isActive && { borderBottomColor: colors.primary, borderBottomWidth: 2 },
+                        { borderBottomColor: isActive ? colors.primary : 'transparent' },
                       ]}
                       onPress={() => handleTabPress(tab.id, idx)}
                       accessibilityRole="tab"
@@ -1476,6 +1476,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 4,
     minWidth: 0,
+    minHeight: 44,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
   },
   tabButtonText: {
     fontSize: 12,

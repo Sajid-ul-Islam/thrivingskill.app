@@ -117,54 +117,76 @@ export const ProfileCourseSummary: React.FC<ProfileCourseSummaryProps> = ({
         </View>
       )}
 
-      {/* Modern 4-Pill Executive KPI Bar */}
-      <View style={styles.kpiRow}>
+      {/* Modern Unified Executive KPI Bar */}
+      <View
+        style={[
+          styles.kpiBarCard,
+          {
+            backgroundColor: colors.surfaceCard,
+            borderColor: colors.border,
+          },
+        ]}
+      >
         <TouchableOpacity
-          style={[styles.kpiPill, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
+          style={styles.kpiCol}
           onPress={() => onNavigateTab('MyLearning')}
-          activeOpacity={0.8}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={isBangla ? `এনরোল্ড কোর্স ${enrolledCount}টি` : `Enrolled courses ${enrolledCount}`}
         >
-          <Ionicons name="book-outline" size={14} color={colors.primary} />
+          <Ionicons name="book-outline" size={15} color={colors.primary} />
           <Text style={[styles.kpiVal, { color: colors.primary }]}>{enrolledCount}</Text>
-          <Text style={[styles.kpiLabel, { color: colors.textMuted }]}>
+          <Text style={[styles.kpiLabel, { color: colors.textMuted }]} numberOfLines={1}>
             {isBangla ? 'এনরোল্ড' : 'Enrolled'}
           </Text>
         </TouchableOpacity>
 
+        <View style={[styles.kpiDivider, { backgroundColor: colors.border }]} />
+
         <TouchableOpacity
-          style={[styles.kpiPill, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
+          style={styles.kpiCol}
           onPress={() => onNavigateTab('MyLearning')}
-          activeOpacity={0.8}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={isBangla ? `সম্পন্ন কোর্স ${completedCount}টি` : `Completed courses ${completedCount}`}
         >
-          <Ionicons name="checkmark-done-circle-outline" size={14} color="#10B981" />
+          <Ionicons name="checkmark-done-circle-outline" size={15} color="#10B981" />
           <Text style={[styles.kpiVal, { color: '#10B981' }]}>{completedCount}</Text>
-          <Text style={[styles.kpiLabel, { color: colors.textMuted }]}>
+          <Text style={[styles.kpiLabel, { color: colors.textMuted }]} numberOfLines={1}>
             {isBangla ? 'সম্পন্ন' : 'Completed'}
           </Text>
         </TouchableOpacity>
 
+        <View style={[styles.kpiDivider, { backgroundColor: colors.border }]} />
+
         <TouchableOpacity
-          style={[styles.kpiPill, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
+          style={styles.kpiCol}
           onPress={() => {
             if (certificates.length > 0) onSelectCertificate(certificates[0]);
           }}
-          activeOpacity={0.8}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={isBangla ? `সনদপত্র ${certificates.length}টি` : `Certificates ${certificates.length}`}
         >
-          <Ionicons name="ribbon-outline" size={14} color="#F59E0B" />
+          <Ionicons name="ribbon-outline" size={15} color="#F59E0B" />
           <Text style={[styles.kpiVal, { color: '#F59E0B' }]}>{certificates.length}</Text>
-          <Text style={[styles.kpiLabel, { color: colors.textMuted }]}>
+          <Text style={[styles.kpiLabel, { color: colors.textMuted }]} numberOfLines={1}>
             {isBangla ? 'সনদপত্র' : 'Certificates'}
           </Text>
         </TouchableOpacity>
 
+        <View style={[styles.kpiDivider, { backgroundColor: colors.border }]} />
+
         <TouchableOpacity
-          style={[styles.kpiPill, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
+          style={styles.kpiCol}
           onPress={() => onNavigateTab('MyLearning')}
-          activeOpacity={0.8}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={isBangla ? `স্টাডি স্ট্রিক ${streakDays} দিন` : `Study streak ${streakDays} days`}
         >
-          <Ionicons name="flame" size={14} color="#E11D48" />
+          <Ionicons name="flame" size={15} color="#E11D48" />
           <Text style={[styles.kpiVal, { color: '#E11D48' }]}>{streakDays}d</Text>
-          <Text style={[styles.kpiLabel, { color: colors.textMuted }]}>
+          <Text style={[styles.kpiLabel, { color: colors.textMuted }]} numberOfLines={1}>
             {isBangla ? 'স্ট্রিক' : 'Streak'}
           </Text>
         </TouchableOpacity>
@@ -500,18 +522,29 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
   },
-  kpiRow: {
+  kpiBarCard: {
     flexDirection: 'row',
-    gap: 8,
+    alignItems: 'center',
+    borderRadius: shape.large,
+    borderWidth: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
     marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 2,
   },
-  kpiPill: {
+  kpiCol: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
-    borderRadius: shape.medium,
-    borderWidth: 1,
+    minHeight: 44,
+  },
+  kpiDivider: {
+    width: 1,
+    height: 24,
   },
   kpiVal: {
     fontSize: 14,

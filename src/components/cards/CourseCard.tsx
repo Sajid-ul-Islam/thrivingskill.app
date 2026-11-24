@@ -200,11 +200,6 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
                     ৳ {origBdtPrice.toLocaleString()}
                   </Text>
                 )}
-                {discountPercent > 0 && (
-                  <View style={styles.discountBadge}>
-                    <Text style={styles.discountBadgeText}>-{discountPercent}% OFF</Text>
-                  </View>
-                )}
               </View>
             )}
           </View>
@@ -353,11 +348,6 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
                   <Text style={[styles.originalPrice, { color: colors.textMuted }]}>
                     ৳ {origBdtPrice.toLocaleString()}
                   </Text>
-                )}
-                {discountPercent > 0 && (
-                  <View style={styles.discountBadge}>
-                    <Text style={styles.discountBadgeText}>-{discountPercent}% OFF</Text>
-                  </View>
                 )}
               </View>
               <View style={[styles.certBadge, { backgroundColor: colors.surfaceSubtle }]}>
