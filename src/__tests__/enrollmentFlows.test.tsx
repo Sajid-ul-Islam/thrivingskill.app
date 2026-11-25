@@ -7,7 +7,6 @@ import { CoursesService } from '../services/api/coursesService';
 import { LessonsService } from '../services/api/lessonsService';
 import { CourseDetailScreen } from '../screens/CourseDetailScreen';
 import { LessonPlayerScreen } from '../screens/LessonPlayerScreen';
-import { LearningProvider, useLearning } from '../context/LearningContext';
 
 jest.mock('@expo/vector-icons/Ionicons', () => {
   const ReactActual = require('react');

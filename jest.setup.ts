@@ -45,6 +45,16 @@ jest.mock(
   { virtual: true }
 );
 
+jest.mock('@sentry/react-native', () => ({
+  init: jest.fn(),
+  wrap: jest.fn((Component: any) => Component),
+  captureException: jest.fn(),
+  captureMessage: jest.fn(),
+  addBreadcrumb: jest.fn(),
+  setUser: jest.fn(),
+  setTag: jest.fn(),
+}));
+
 // Default global fetch guard: fail loudly if any test forgets to mock fetch
 globalThis.fetch = jest.fn(() =>
   Promise.reject(new Error('Unmocked network request attempted during Jest unit tests'))

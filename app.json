@@ -110,8 +110,19 @@
         }
       ],
       "expo-secure-store",
-      "expo-build-properties",
-      "@sentry/react-native"
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 24,
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "-keep class com.thrivingskill.app.aicore.** { *; }\n-keep class com.thrivingskill.app.litert.** { *; }"
+          }
+        }
+      ],
+      "@sentry/react-native/expo",
+      "./plugins/withOnDeviceAi"
     ],
     "extra": {
       "eas": {

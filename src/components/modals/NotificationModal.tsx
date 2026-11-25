@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useSaaS } from '../../context/SaaSContext';
 import { useFeedback } from '../../context/FeedbackContext';
+import { PushNotificationService } from '../../services/notifications/pushNotificationService';
 import { StateView } from '../common';
 import { triggerHaptic } from '../../utils/haptics';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
@@ -48,6 +49,41 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
   } = useSaaS();
   const { showToast } = useFeedback();
   const [filterType, setFilterType] = useState<string>('all');
+  const [pushPermStatus, setPushPermStatus] = useState<'granted' | 'denied' | 'undetermined'>(
+    'granted'
+  );
+  const [isRequestingPerm, setIsRequestingPerm] = useState(false);
+
+  useEffect(() => {
+    if (!visible) return;
+    let active = true;
+    PushNotificationService.getPermissionStatus()
+      .then((status) => {
+        if (active) setPushPermStatus(status);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [visible]);
+
+  const handleEnablePushAlerts = async () => {
+    if (isRequestingPerm) return;
+    triggerHaptic('selection');
+    setIsRequestingPerm(true);
+    try {
+      const result = await PushNotificationService.requestPermissionAndRegister();
+      setPushPermStatus(result.granted ? 'granted' : 'denied');
+      showToast({
+        message: result.granted
+          ? 'Push notifications enabled'
+          : 'Enable notification permissions in device settings to receive alerts',
+        type: result.granted ? 'success' : 'info',
+      });
+    } finally {
+      setIsRequestingPerm(false);
+    }
+  };
 
   const filtered = notifications.filter((n) => {
     if (filterType === 'all') return true;
@@ -243,6 +279,32 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
               </TouchableOpacity>
             ))}
           </ScrollView>
+
+          {/* User-Initiated Push Opt-in Banner (never prompts automatically at app launch) */}
+          {pushPermStatus !== 'granted' && (
+            <View
+              style={[
+                styles.pushOptInBanner,
+                { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+              ]}
+            >
+              <Ionicons name="notifications-outline" size={18} color={colors.primary} />
+              <Text style={[styles.pushOptInText, { color: colors.text }]} numberOfLines={2}>
+                Enable push notifications for live class reminders, new courses, and offers.
+              </Text>
+              <TouchableOpacity
+                onPress={handleEnablePushAlerts}
+                disabled={isRequestingPerm}
+                style={[styles.pushOptInBtn, { backgroundColor: colors.primary }]}
+                accessibilityRole="button"
+                accessibilityLabel="Enable push notifications"
+              >
+                <Text style={[styles.pushOptInBtnText, { color: colors.onPrimary }]}>
+                  {isRequestingPerm ? 'Enabling...' : 'Enable'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* Notifications List */}
           <ScrollView contentContainerStyle={styles.listContent}>
@@ -530,5 +592,32 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  pushOptInBanner: {
+    marginHorizontal: 16,
+    marginBottom: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: shape.medium,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  pushOptInText: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  pushOptInBtn: {
+    minHeight: 36,
+    paddingHorizontal: 12,
+    borderRadius: shape.small,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pushOptInBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
 });

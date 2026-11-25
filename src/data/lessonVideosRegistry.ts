@@ -182,7 +182,7 @@ export function detectVideoType(url?: string): LessonVideoType {
 }
 
 function makeResponsiveIframe(embedUrl: string): string {
-  const safeSrc = embedUrl.replace(/"/g, '&quot;');
+  const safeSrc = embedUrl.replace(/"/g, '&quot;').replace(/</g, '%3C').replace(/>/g, '%3E');
   return `<iframe src="${safeSrc}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
 }
 
@@ -304,11 +304,7 @@ export function resolveLessonVideoData(
     };
   }
 
-  // Verified HTTPS iframe
-  const hasSafeRawIframe =
-    Boolean(lesson.videoIntro?.includes('<iframe')) &&
-    Boolean(extractVideoUrlFromIntro(lesson.videoIntro));
-
+  // Verified HTTPS iframe rebuilt strictly from canonical URL (never pass through raw server HTML)
   return {
     hasVideo: true,
     comingSoon: false,
@@ -316,9 +312,7 @@ export function resolveLessonVideoData(
     title,
     duration,
     videoUrl: candidateUrl,
-    videoIntro: hasSafeRawIframe
-      ? decodeHtmlEntities(lesson.videoIntro!).trim()
-      : makeResponsiveIframe(candidateUrl),
+    videoIntro: makeResponsiveIframe(candidateUrl),
     videoId: undefined,
     videoType: 'iframe',
     summary,

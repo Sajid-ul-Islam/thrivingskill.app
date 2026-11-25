@@ -1,281 +1,19 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { AppState, AppStateStatus } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Env } from '../config/env';
-import {
-  Course,
-  UserProgress,
-  Certificate,
-  Note,
-  CategoryId,
-  Workshop,
-  Category,
-  WpPost,
-  Review,
-} from '../types';
+import { Course, UserProgress, Certificate, Note, CategoryId, Review } from '../types';
 import { useAuth } from './AuthContext';
 import { useNetwork } from './NetworkContext';
 import { CoursesService } from '../services/api/coursesService';
 import { Endpoints } from '../services/api/endpoints';
 import { SyncQueueManager } from '../services/offline/syncQueue';
 import { computeRecommendedCourses } from '../utils/recommendations';
+import { LearningContextType } from './learning/learningContext.types';
+import { buildCertificateRecord } from './learning/learningCatalogData';
 import {
-  BrandingService,
-  SiteBrandingInfo,
-  DynamicCarouselSlide,
-  PartnerLogoItem,
-  HomeFeatureCardItem,
-  SpecialBundlePosterItem,
-  StudentTestimonialItem,
-  DEFAULT_SITE_BRANDING,
-  DEFAULT_CURATED_SLIDES,
-  DEFAULT_PARTNER_LOGOS,
-  DEFAULT_HOME_FEATURES,
-  DEFAULT_SPECIAL_BUNDLES,
-  DEFAULT_STUDENT_TESTIMONIALS,
-} from '../services/api/brandingService';
-import { CompanionService, AppRemoteConfig } from '../services/api/companionService';
-import {
-  fetchWpCourses,
-  fetchWpCategories,
-  fetchWpPosts,
-  fetchWpCourseDetail,
-  fetchWpLiveWorkshops,
-} from '../services/wordpressApi';
-
-function areDataEqual(a: any, b: any): boolean {
-  if (a === b) return true;
-  if (!a || !b) return false;
-  try {
-    return JSON.stringify(a) === JSON.stringify(b);
-  } catch {
-    return false;
-  }
-}
-
-function areCoursesEqual(a: Course[], b: Course[]): boolean {
-  if (a === b) return true;
-  if (!a || !b) return false;
-  if (a.length !== b.length) return false;
-  if (a.length === 0) return true;
-  if (a[0]?.id !== b[0]?.id || a[a.length - 1]?.id !== b[b.length - 1]?.id) return false;
-  const step = Math.max(1, Math.floor(a.length / 20));
-  for (let i = 0; i < a.length; i += step) {
-    if (a[i]?.id !== b[i]?.id || a[i]?.priceBdt !== b[i]?.priceBdt || a[i]?.title !== b[i]?.title) {
-      return false;
-    }
-  }
-  return true;
-}
-
-const PROGRESS_STORAGE_KEY = '@thriving_skill_progress';
-const BOOKMARKS_STORAGE_KEY = '@thriving_skill_bookmarks';
-const NOTES_STORAGE_KEY = '@thriving_skill_notes';
-const WORKSHOPS_STORAGE_KEY = '@thriving_skill_rsvps';
-const AFFINITIES_STORAGE_KEY = '@thriving_skill_affinities';
-const SEARCH_HISTORY_STORAGE_KEY = '@thriving_skill_searches';
-const REVIEWS_STORAGE_KEY = '@thriving_skill_reviewed_courses';
-const CERTIFICATES_STORAGE_KEY = '@thriving_skill_certificates';
-
-interface LearningContextType {
-  courses: Course[];
-  totalCourseCount: number;
-  categories: Category[];
-  workshops: Workshop[];
-  hasActiveLiveWorkshop: boolean;
-  blogPosts: WpPost[];
-  isLoadingCourses: boolean;
-  coursesError: string | null;
-  userProgress: Record<string, UserProgress>;
-  bookmarks: string[];
-  certificates: Certificate[];
-  notes: Note[];
-  rsvpWorkshops: string[];
-  selectedCategory: CategoryId;
-  searchQuery: string;
-  setSelectedCategory: (cat: CategoryId) => void;
-  setSearchQuery: (query: string) => void;
-  refreshCourses: () => Promise<void>;
-  loadCourseDetail: (courseId: string) => Promise<Course>;
-  enrollInCourse: (courseId: string) => void;
-  confirmServerEnrollments: (courseIds: string[]) => void;
-  markLessonCompleted: (courseId: string, lessonId: string) => void;
-  toggleBookmark: (courseId: string) => void;
-  isBookmarked: (courseId: string) => boolean;
-  addNote: (courseId: string, lessonId: string, text: string, timestamp?: string) => void;
-  deleteNote: (noteId: string) => void;
-  restoreNote: (note: Note) => void;
-  getNotesForLesson: (courseId: string, lessonId: string) => Note[];
-  getCourseProgressPercentage: (courseId: string) => number;
-  recordWatchPosition: (courseId: string, lessonId: string, seconds: number) => void;
-  getWatchPosition: (courseId: string, lessonId: string) => number;
-  addCourseReview: (courseId: string, review: Omit<Review, 'id' | 'date'>) => void;
-  rsvpForWorkshop: (workshopId: string) => void;
-  toggleWorkshopRsvp: (workshopId: string) => boolean;
-  isRsvpd: (workshopId: string) => boolean;
-  getCourseById: (courseId: string) => Course | undefined;
-  getWorkshopById: (workshopId: string) => Workshop | undefined;
-
-  // Behavior-based Recommendations (CR-01)
-  recordCategoryInteraction: (categoryId: string) => void;
-  recordSearchKeyword: (keyword: string) => void;
-  getRecommendedCourses: () => { courses: Course[]; rationale: string; rationaleBn: string };
-
-  // Mandatory Review & Certificate Gating (CR-02)
-  reviewedCourseIds: string[];
-  hasReviewedCourse: (courseId: string) => boolean;
-  isCertificateUnlocked: (courseId: string) => boolean;
-  unlockCertificateForDev: (courseId: string, studentName?: string) => Certificate | null;
-  submitMandatoryCourseReview: (
-    courseId: string,
-    rating: number,
-    feedback: string,
-    userName?: string,
-    userRole?: string
-  ) => Certificate | null;
-
-  // Local-First Outbox Sync (Phase 1)
-  pendingSyncCount: number;
-  isSyncingOffline: boolean;
-  syncOfflineData: (
-    force?: boolean
-  ) => Promise<{ processed: number; succeeded: number; failed: number }>;
-
-  // Dynamic Site Branding & Banners
-  siteBranding: SiteBrandingInfo;
-  banners: DynamicCarouselSlide[];
-  partnerLogos: PartnerLogoItem[];
-  homeFeatures: HomeFeatureCardItem[];
-  specialBundles: SpecialBundlePosterItem[];
-  studentTestimonials: StudentTestimonialItem[];
-  appRemoteConfig: AppRemoteConfig | null;
-  isBrandingLoading: boolean;
-  refreshBranding: (forceRefresh?: boolean) => Promise<void>;
-
-  // Dynamic Live Site Synchronization
-  lastSyncedAt: number | null;
-  isBackgroundSyncing: boolean;
-}
-
-const INITIAL_CANONICAL_CATEGORIES: Category[] = [
-  {
-    id: 'all',
-    name: 'All Courses',
-    banglaName: 'সব কোর্স',
-    icon: 'grid',
-    count: 382,
-    color: '#059669',
-    slug: 'all',
-  },
-  {
-    id: 'business',
-    name: 'Business',
-    banglaName: 'ব্যবসা ও বাণিজ্য',
-    icon: 'business',
-    count: 85,
-    color: '#4F46E5',
-    slug: 'business',
-  },
-  {
-    id: 'supply-chain-management',
-    name: 'Supply Chain Management',
-    banglaName: 'সাপ্লাই চেইন ম্যানেজমেন্ট',
-    icon: 'cube',
-    count: 59,
-    color: '#0284C7',
-    slug: 'supply-chain-management',
-  },
-  {
-    id: 'microsoft-excel-courses',
-    name: 'Microsoft Excel',
-    banglaName: 'মাইক্রোসফট এক্সেল',
-    icon: 'grid',
-    count: 47,
-    color: '#107C41',
-    slug: 'microsoft-excel-courses',
-  },
-  {
-    id: 'leadership-management',
-    name: 'Leadership & Management',
-    banglaName: 'নেতৃত্ব ও ব্যবস্থাপনা',
-    icon: 'people',
-    count: 39,
-    color: '#D97706',
-    slug: 'leadership-management',
-  },
-  {
-    id: 'personal-development',
-    name: 'Personal Development',
-    banglaName: 'ব্যক্তিগত দক্ষতা উন্নয়ন',
-    icon: 'bulb',
-    count: 39,
-    color: '#EC4899',
-    slug: 'personal-development',
-  },
-  {
-    id: 'generative-ai',
-    name: 'Generative AI',
-    banglaName: 'জেনারেটিভ এআই',
-    icon: 'sparkles',
-    count: 38,
-    color: '#8B5CF6',
-    slug: 'generative-ai',
-  },
-  {
-    id: 'finance-accounting-legal',
-    name: 'Finance & Legal',
-    banglaName: 'অর্থনীতি ও আইন',
-    icon: 'cash',
-    count: 35,
-    color: '#059669',
-    slug: 'finance-accounting-legal',
-  },
-  {
-    id: 'human-resource-management',
-    name: 'Human Resource Management',
-    banglaName: 'মানব সম্পদ ব্যবস্থাপনা',
-    icon: 'briefcase',
-    count: 28,
-    color: '#6366F1',
-    slug: 'human-resource-management',
-  },
-  {
-    id: 'sales-marketing',
-    name: 'Sales & Marketing',
-    banglaName: 'বিক্রয় ও বিপণন',
-    icon: 'trending-up',
-    count: 25,
-    color: '#F59E0B',
-    slug: 'sales-marketing',
-  },
-  {
-    id: 'data-science',
-    name: 'Data Science',
-    banglaName: 'ডাটা সায়েন্স',
-    icon: 'analytics',
-    count: 22,
-    color: '#06B6D4',
-    slug: 'data-science',
-  },
-  {
-    id: 'job-seekers-skills',
-    name: 'Job Seekers Skills',
-    banglaName: 'চাকরি প্রত্যাশীদের দক্ষতা',
-    icon: 'school',
-    count: 18,
-    color: '#10B981',
-    slug: 'job-seekers-skills',
-  },
-  {
-    id: 'research-courses',
-    name: 'Research & Academic',
-    banglaName: 'গবেষণা ও শিক্ষায়তনিক',
-    icon: 'book',
-    count: 15,
-    color: '#64748B',
-    slug: 'research-courses',
-  },
-];
+  LEARNING_STORAGE_KEYS,
+  hydrateUserLearningScope,
+  persistUserLearningKey,
+} from './learning/learningStorage';
+import { useCatalogAndBrandingSync } from './learning/useCatalogAndBrandingSync';
 
 const LearningContext = createContext<LearningContextType>({} as LearningContextType);
 
@@ -284,104 +22,20 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const { isOffline } = useNetwork();
   const userScope = user?.id ? `_u_${user.id}` : '_guest';
 
-  // Pre-seed available courses from in-memory / persistent cache for 0ms instant display
-  const [courses, setCourses] = useState<Course[]>(() => CoursesService.getCachedCoursesSync());
-  const [totalCourseCount, setTotalCourseCount] = useState<number>(() => {
-    const initial = CoursesService.getCachedCoursesSync();
-    return initial && initial.length > 0 ? initial.length : 0;
-  });
-  const [categories, setCategories] = useState<Category[]>(() => {
-    const initial = CoursesService.getCachedCategoriesSync();
-    if (initial && initial.length > 0) return initial;
-    return INITIAL_CANONICAL_CATEGORIES;
-  });
-  const [workshops, setWorkshops] = useState<Workshop[]>(() =>
-    CoursesService.getCachedWorkshopsSync()
-  );
-  const [blogPosts, setBlogPosts] = useState<WpPost[]>([]);
-  // Only show blocking loader if no cached courses exist at all
-  const [isLoadingCourses, setIsLoadingCourses] = useState<boolean>(() => {
-    return CoursesService.getCachedCoursesSync().length === 0;
-  });
-  const [isBackgroundSyncing, setIsBackgroundSyncing] = useState<boolean>(false);
-  const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null);
-  const [coursesError, setCoursesError] = useState<string | null>(null);
-  const heartbeatTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const prevOfflineRef = useRef<boolean>(isOffline);
-  const coursesRef = useRef<Course[]>(courses);
-  coursesRef.current = courses;
   const [selectedCategory, setSelectedCategory] = useState<CategoryId>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-
-  // Clean user-scoped learning state (no hardcoded fake demo enrollments/badges on fresh install)
   const [userProgress, setUserProgress] = useState<Record<string, UserProgress>>({});
   const [bookmarks, setBookmarks] = useState<string[]>([]);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [rsvpWorkshops, setRsvpWorkshops] = useState<string[]>([]);
-
-  // Behavior tracking & mandatory reviews state
   const [categoryAffinities, setCategoryAffinities] = useState<Record<string, number>>({});
   const [searchKeywordsHistory, setSearchKeywordsHistory] = useState<string[]>([]);
   const [reviewedCourseIds, setReviewedCourseIds] = useState<string[]>([]);
-
-  // Local-First Outbox Sync State
   const [pendingSyncCount, setPendingSyncCount] = useState<number>(0);
   const [isSyncingOffline, setIsSyncingOffline] = useState<boolean>(false);
 
-  // Dynamic Site Branding & Hero Banners State
-  const [siteBranding, setSiteBranding] = useState<SiteBrandingInfo>(DEFAULT_SITE_BRANDING);
-  const [banners, setBanners] = useState<DynamicCarouselSlide[]>(DEFAULT_CURATED_SLIDES);
-  const [partnerLogos, setPartnerLogos] = useState<PartnerLogoItem[]>(DEFAULT_PARTNER_LOGOS);
-  const [homeFeatures, setHomeFeatures] = useState<HomeFeatureCardItem[]>(DEFAULT_HOME_FEATURES);
-  const [specialBundles, setSpecialBundles] =
-    useState<SpecialBundlePosterItem[]>(DEFAULT_SPECIAL_BUNDLES);
-  const [studentTestimonials, setStudentTestimonials] = useState<StudentTestimonialItem[]>(
-    DEFAULT_STUDENT_TESTIMONIALS
-  );
-  const [appRemoteConfig, setAppRemoteConfig] = useState<AppRemoteConfig | null>(null);
-  const [isBrandingLoading, setIsBrandingLoading] = useState<boolean>(false);
-
-  const refreshBranding = useCallback(async (forceRefresh: boolean = false) => {
-    try {
-      setIsBrandingLoading(true);
-      const [brandingInfo, bannerSlides, remoteConfig, partners, features, bundles, testimonials] =
-        await Promise.all([
-          BrandingService.getSiteBranding(forceRefresh),
-          BrandingService.getDynamicBanners(forceRefresh),
-          CompanionService.fetchAppConfig(forceRefresh),
-          BrandingService.getPartnerLogos(forceRefresh),
-          BrandingService.getHomeFeatureCards(forceRefresh),
-          BrandingService.getSpecialBundles(forceRefresh),
-          BrandingService.getStudentTestimonials(forceRefresh),
-        ]);
-      setSiteBranding(brandingInfo);
-      if (bannerSlides && bannerSlides.length > 0) {
-        setBanners(bannerSlides);
-      }
-      if (partners && partners.length > 0) {
-        setPartnerLogos(partners);
-      }
-      if (features && features.length > 0) {
-        setHomeFeatures(features);
-      }
-      if (bundles && bundles.length > 0) {
-        setSpecialBundles(bundles);
-      }
-      if (testimonials && testimonials.length > 0) {
-        setStudentTestimonials(testimonials);
-      }
-      if (remoteConfig) {
-        setAppRemoteConfig(remoteConfig);
-      }
-    } catch (err) {
-      if (Env.DEBUG_API) {
-        console.warn('[LearningContext] Failed to refresh branding:', err);
-      }
-    } finally {
-      setIsBrandingLoading(false);
-    }
-  }, []);
+  const catalogCoursesRef = useRef<Course[]>([]);
 
   useEffect(() => {
     const unsub = SyncQueueManager.subscribe((count, isSyncing) => {
@@ -395,88 +49,11 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return SyncQueueManager.processQueue(force);
   }, []);
 
-  // Fetch live courses, categories, workshops, and blog posts from WordPress with SWR
-  const loadWordPressData = useCallback(
-    async (forceRefresh: boolean = false, silent: boolean = false) => {
-      // Only set blocking loading state if we have no cached courses in memory
-      setCourses((current) => {
-        if (current.length === 0 && !silent) {
-          setIsLoadingCourses(true);
-        } else {
-          setIsBackgroundSyncing(true);
-        }
-        return current;
-      });
-      setCoursesError(null);
-
-      try {
-        const [wpCourses, wpCategories, wpWorkshops, wpPosts] = await Promise.allSettled([
-          fetchWpCourses({ fetchAll: true, forceRefresh }),
-          fetchWpCategories({ forceRefresh }),
-          fetchWpLiveWorkshops({ forceRefresh }),
-          fetchWpPosts({ perPage: 6 }),
-        ]);
-
-        if (wpCourses.status === 'fulfilled' && wpCourses.value.length > 0) {
-          setCourses((prev) => (areCoursesEqual(prev, wpCourses.value) ? prev : wpCourses.value));
-          setTotalCourseCount(wpCourses.value.length);
-        } else if (wpCourses.status === 'rejected' && !silent) {
-          setCoursesError(wpCourses.reason?.message || 'Unable to sync latest courses.');
-        }
-
-        if (wpCategories.status === 'fulfilled' && wpCategories.value.length > 0) {
-          const liveCount = wpCourses.status === 'fulfilled' ? wpCourses.value.length : 0;
-          const updatedCats = wpCategories.value.map((c) => {
-            if (c.id === 'all') {
-              return {
-                ...c,
-                count: Math.max(c.count, liveCount),
-              };
-            }
-            return c;
-          });
-          setCategories((prev) => (areDataEqual(prev, updatedCats) ? prev : updatedCats));
-        }
-
-        if (wpWorkshops.status === 'fulfilled' && wpWorkshops.value.length > 0) {
-          setWorkshops((prev) =>
-            areDataEqual(prev, wpWorkshops.value) ? prev : wpWorkshops.value
-          );
-        }
-
-        if (wpPosts.status === 'fulfilled' && wpPosts.value.length > 0) {
-          setBlogPosts((prev) => (areDataEqual(prev, wpPosts.value) ? prev : wpPosts.value));
-        }
-
-        setLastSyncedAt(Date.now());
-      } catch (err: any) {
-        if (!silent) {
-          setCoursesError(err?.message || 'Unable to connect to Thriving Skills.');
-        }
-        if (Env.DEBUG_API) {
-          console.warn('Error fetching WordPress backend data:', err);
-        }
-      } finally {
-        if (!silent) {
-          setIsLoadingCourses(false);
-        } else {
-          setIsBackgroundSyncing(false);
-        }
-      }
-    },
-    []
-  );
-
-  // Reconcile server-confirmed course enrollments on login, foreground return, and manual refresh
   const syncUserEnrollments = useCallback(async (): Promise<string[] | null> => {
-    if (!user?.id || !token) {
-      return null;
-    }
+    if (!user?.id || !token) return null;
 
     const serverIds = await CoursesService.fetchEnrolledCourseIdsFromServer();
-    if (serverIds === null) {
-      return null;
-    }
+    if (serverIds === null) return null;
 
     let pendingEnrollIds = new Set<string>();
     try {
@@ -505,7 +82,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       for (const cId of serverIds) {
         if (next[cId]) continue;
-        const matchedCourse = courses.find((c) => c.id === cId);
+        const matchedCourse = catalogCoursesRef.current.find((c) => c.id === cId);
         const firstLessonId = matchedCourse?.modules?.[0]?.lessons?.[0]?.id || `les-${cId}-1`;
         next[cId] = {
           courseId: cId,
@@ -518,14 +95,16 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
 
       if (!changed) return prev;
-      saveState(PROGRESS_STORAGE_KEY, next);
+      persistUserLearningKey(LEARNING_STORAGE_KEYS.PROGRESS, userScope, next);
       return next;
     });
 
     return serverIds;
-  }, [user?.id, token, userScope, courses]);
+  }, [user?.id, token, userScope]);
 
-  // Hydrate scoped user learning state whenever signed-in account changes
+  const catalog = useCatalogAndBrandingSync(isOffline, syncUserEnrollments);
+  catalogCoursesRef.current = catalog.courses;
+
   useEffect(() => {
     let active = true;
     SyncQueueManager.setUserScope(userScope);
@@ -540,77 +119,22 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     (async () => {
       try {
-        const [
-          savedProgress,
-          savedBookmarks,
-          savedNotes,
-          savedWorkshops,
-          savedAffinities,
-          savedSearches,
-          savedReviews,
-          savedCertificates,
-        ] = await Promise.all([
-          AsyncStorage.getItem(`${PROGRESS_STORAGE_KEY}${userScope}`),
-          AsyncStorage.getItem(`${BOOKMARKS_STORAGE_KEY}${userScope}`),
-          AsyncStorage.getItem(`${NOTES_STORAGE_KEY}${userScope}`),
-          AsyncStorage.getItem(`${WORKSHOPS_STORAGE_KEY}${userScope}`),
-          AsyncStorage.getItem(`${AFFINITIES_STORAGE_KEY}${userScope}`),
-          AsyncStorage.getItem(`${SEARCH_HISTORY_STORAGE_KEY}${userScope}`),
-          AsyncStorage.getItem(`${REVIEWS_STORAGE_KEY}${userScope}`),
-          AsyncStorage.getItem(`${CERTIFICATES_STORAGE_KEY}${userScope}`),
-        ]);
-
+        const hydrated = await hydrateUserLearningScope(userScope);
         if (!active) return;
-        if (savedProgress) {
-          try {
-            setUserProgress(JSON.parse(savedProgress));
-          } catch {}
-        }
-        if (savedBookmarks) {
-          try {
-            setBookmarks(JSON.parse(savedBookmarks));
-          } catch {}
-        }
-        if (savedNotes) {
-          try {
-            setNotes(JSON.parse(savedNotes));
-          } catch {}
-        }
-        if (savedWorkshops) {
-          try {
-            setRsvpWorkshops(JSON.parse(savedWorkshops));
-          } catch {}
-        }
-        if (savedAffinities) {
-          try {
-            setCategoryAffinities(JSON.parse(savedAffinities));
-          } catch {}
-        }
-        if (savedSearches) {
-          try {
-            setSearchKeywordsHistory(JSON.parse(savedSearches));
-          } catch {}
-        }
-        if (savedReviews) {
-          try {
-            setReviewedCourseIds(JSON.parse(savedReviews));
-          } catch {}
-        }
-        if (savedCertificates) {
-          try {
-            setCertificates(JSON.parse(savedCertificates));
-          } catch {}
-        }
+
+        setUserProgress(hydrated.userProgress);
+        setBookmarks(hydrated.bookmarks);
+        setNotes(hydrated.notes);
+        setRsvpWorkshops(hydrated.rsvpWorkshops);
+        setCategoryAffinities(hydrated.categoryAffinities);
+        setSearchKeywordsHistory(hydrated.searchKeywordsHistory);
+        setReviewedCourseIds(hydrated.reviewedCourseIds);
+        setCertificates(hydrated.certificates);
 
         if (user?.id && token) {
-          const syncedIds = await syncUserEnrollments();
-          if (active && syncedIds === null) {
-            // Transient offline/error: preserve hydrated local scope without fabricating unlocks
-          }
+          await syncUserEnrollments();
         }
-      } catch {
-        // Safe fallback
-      }
+      } catch {}
     })();
 
     return () => {
@@ -618,158 +142,8 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
   }, [user?.id, token, userScope, syncUserEnrollments]);
 
-  // 1. Hydrate persisted snapshots (offline-ready) & trigger live catalog fetch on mount
-  useEffect(() => {
-    let active = true;
-    CoursesService.hydrateCatalogCache()
-      .then((snapshot) => {
-        if (!active) return;
-        if (snapshot.courses.length > 0) {
-          setCourses((prev) => (prev.length > 0 ? prev : snapshot.courses));
-          setTotalCourseCount((prev) => (prev > 0 ? prev : snapshot.courses.length));
-          setIsLoadingCourses(false);
-        }
-        if (snapshot.categories.length > 0) {
-          setCategories((prev) => (prev.length > 1 ? prev : snapshot.categories));
-        }
-        if (snapshot.workshops.length > 0) {
-          setWorkshops((prev) => (prev.length > 0 ? prev : snapshot.workshops));
-        }
-      })
-      .catch(() => {});
-
-    loadWordPressData(false, false);
-    refreshBranding(false);
-    return () => {
-      active = false;
-    };
-  }, [loadWordPressData, refreshBranding]);
-
-  // 2. Real-time background sync when app comes into the foreground (AppState: active)
-  useEffect(() => {
-    const handleAppStateChange = (nextState: AppStateStatus) => {
-      if (nextState === 'active') {
-        if (Env.DEBUG_API) {
-          console.log(
-            '[LearningContext] App returned to active. Silently syncing with thrivingskill.com...'
-          );
-        }
-        loadWordPressData(true, true);
-        refreshBranding(true);
-        syncUserEnrollments().catch(() => {});
-      }
-    };
-
-    const sub = AppState.addEventListener('change', handleAppStateChange);
-    return () => {
-      sub.remove();
-    };
-  }, [loadWordPressData, refreshBranding, syncUserEnrollments]);
-
-  // 3. Re-synchronize when device recovers internet connectivity
-  useEffect(() => {
-    if (prevOfflineRef.current && !isOffline) {
-      if (Env.DEBUG_API) {
-        console.log('[LearningContext] Connectivity recovered. Synchronizing catalog...');
-      }
-      loadWordPressData(true, true);
-      refreshBranding(true);
-      syncUserEnrollments().catch(() => {});
-    }
-    prevOfflineRef.current = isOffline;
-  }, [isOffline, loadWordPressData, refreshBranding, syncUserEnrollments]);
-
-  // 4. Periodic background sync heartbeat (every 90s while app is in foreground)
-  // Cross-Platform Timer Hygiene: Stored in useRef and cleared on unmount
-  useEffect(() => {
-    heartbeatTimerRef.current = setInterval(() => {
-      if (AppState.currentState === 'active' && !isOffline) {
-        if (Env.DEBUG_API) {
-          console.log('[LearningContext] Background heartbeat poll: checking thrivingskill.com...');
-        }
-        loadWordPressData(true, true);
-        syncUserEnrollments().catch(() => {});
-      }
-    }, 90000);
-
-    return () => {
-      if (heartbeatTimerRef.current) {
-        clearInterval(heartbeatTimerRef.current);
-        heartbeatTimerRef.current = null;
-      }
-    };
-  }, [isOffline, loadWordPressData, syncUserEnrollments]);
-
-  // 5. Subscribe to CoursesService live catalog updates (SWR events)
-  useEffect(() => {
-    const unsubscribe = CoursesService.subscribeCatalogUpdates(() => {
-      if (Env.DEBUG_API) {
-        console.log(
-          '[LearningContext] Received catalog update notification, revalidating state...'
-        );
-      }
-      loadWordPressData(false, true);
-    });
-    return unsubscribe;
-  }, [loadWordPressData]);
-
-  const refreshCourses = async () => {
-    await Promise.all([
-      loadWordPressData(true, false),
-      refreshBranding(true),
-      syncUserEnrollments().catch(() => null),
-    ]);
-  };
-
-  const loadCourseDetail = async (courseId: string): Promise<Course> => {
-    try {
-      const [detail, reviewsSnapshot] = await Promise.all([
-        fetchWpCourseDetail(courseId),
-        CoursesService.getCourseReviews(courseId),
-      ]);
-      const existing = courses.find((c) => c.id === courseId);
-      const localReviews = (existing?.reviews || []).filter(
-        (r) => !reviewsSnapshot.reviews.some((sr) => sr.id === r.id)
-      );
-      const mergedReviews =
-        reviewsSnapshot.reviews.length > 0 || localReviews.length > 0
-          ? [...reviewsSnapshot.reviews, ...localReviews]
-          : detail.reviews;
-      const enrichedDetail: Course = {
-        ...detail,
-        reviews: mergedReviews,
-        rating: reviewsSnapshot.rating ?? detail.rating,
-        reviewsCount:
-          reviewsSnapshot.reviewsCount ??
-          (mergedReviews.length > 0 ? mergedReviews.length : detail.reviewsCount),
-      };
-
-      // Update in our courses list if it has richer sections
-      setCourses((prev) => {
-        const idx = prev.findIndex((c) => c.id === courseId);
-        if (idx >= 0) {
-          const next = [...prev];
-          next[idx] = enrichedDetail;
-          return next;
-        }
-        return [enrichedDetail, ...prev];
-      });
-      return enrichedDetail;
-    } catch {
-      const existing = courses.find((c) => c.id === courseId);
-      if (existing) return existing;
-      throw new Error('Course not found');
-    }
-  };
-
-  const saveState = async (key: string, data: any) => {
-    try {
-      await AsyncStorage.setItem(`${key}${userScope}`, JSON.stringify(data));
-    } catch {}
-  };
-
   const enrollInCourse = (courseId: string) => {
-    const course = courses.find((c) => c.id === courseId);
+    const course = catalog.courses.find((c) => c.id === courseId);
     const isPaid = Boolean(
       (course?.priceBdt && course.priceBdt > 0) || (course?.price && course.price > 0)
     );
@@ -788,11 +162,10 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           isCompleted: false,
         },
       };
-      saveState(PROGRESS_STORAGE_KEY, updated);
+      persistUserLearningKey(LEARNING_STORAGE_KEYS.PROGRESS, userScope, updated);
       return updated;
     });
 
-    // Queue enrollment mutation for offline-first sync with LearnPress (free courses only)
     SyncQueueManager.enqueue('ENROLL_COURSE', Endpoints.LEARNPRESS.COURSE_ENROLL, {
       id: courseId,
     }).then(() => {
@@ -813,7 +186,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const next = { ...prev };
         for (const courseId of uniqueIds) {
           if (next[courseId]) continue;
-          const course = courses.find((c) => c.id === courseId);
+          const course = catalog.coursesRef.current.find((c) => c.id === courseId);
           const firstLessonId = course?.modules?.[0]?.lessons?.[0]?.id || `les-${courseId}-1`;
           next[courseId] = {
             courseId,
@@ -825,15 +198,15 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           changed = true;
         }
         if (!changed) return prev;
-        saveState(PROGRESS_STORAGE_KEY, next);
+        persistUserLearningKey(LEARNING_STORAGE_KEYS.PROGRESS, userScope, next);
         return next;
       });
     },
-    [courses, userScope]
+    [catalog.coursesRef, userScope]
   );
 
   const markLessonCompleted = (courseId: string, lessonId: string) => {
-    const course = courses.find((c) => c.id === courseId);
+    const course = catalog.courses.find((c) => c.id === courseId);
     if (!course) return;
 
     const current = userProgress[courseId] || {
@@ -843,41 +216,22 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       lastAccessedLessonId: lessonId,
       isCompleted: false,
     };
-
-    // If lesson already completed, avoid redundant mutations and state updates
-    if (current.completedLessonIds.includes(lessonId)) {
-      return;
-    }
+    if (current.completedLessonIds.includes(lessonId)) return;
 
     const newCompleted = [...current.completedLessonIds, lessonId];
-
     const totalLessons = course.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0) || 0;
     const isCompleted = totalLessons > 0 && newCompleted.length >= totalLessons;
-
     const userHasReviewed = reviewedCourseIds.includes(courseId) || !!current.hasReviewed;
     let certId = current.certificateId;
 
-    // Certificate is ONLY generated if the course is completed AND the user has submitted a review (CR-02)
     if (isCompleted && userHasReviewed && !certId) {
-      const randSuffix = Math.random().toString(36).substring(2, 8).toUpperCase().padEnd(6, '0');
-      certId = `TS-2026-${randSuffix}`;
-      const newCert: Certificate = {
-        id: `cert-${Date.now()}`,
-        courseId: course.id,
-        courseTitle: course.title,
-        studentName: user?.displayName || user?.name || user?.username || 'Executive Graduate',
-        issueDate: new Date().toLocaleDateString('en-US', {
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric',
-        }),
-        credentialId: certId,
-        instructorName: course.instructor?.name || 'Course Instructor',
-        verificationUrl: `${Env.SITE_URL}/verify/${certId}`,
-      };
+      const studentName =
+        user?.displayName || user?.name || user?.username || 'Executive Graduate';
+      const newCert = buildCertificateRecord(course, studentName, undefined, 'Course Instructor');
+      certId = newCert.credentialId;
       setCertificates((prev) => {
         const nextCerts = [newCert, ...prev];
-        saveState(CERTIFICATES_STORAGE_KEY, nextCerts);
+        persistUserLearningKey(LEARNING_STORAGE_KEYS.CERTIFICATES, userScope, nextCerts);
         return nextCerts;
       });
     }
@@ -898,9 +252,8 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
 
     setUserProgress(updated);
-    saveState(PROGRESS_STORAGE_KEY, updated);
+    persistUserLearningKey(LEARNING_STORAGE_KEYS.PROGRESS, userScope, updated);
 
-    // Queue lesson completion mutation for offline-first sync with LearnPress
     SyncQueueManager.enqueue('COMPLETE_LESSON', Endpoints.LEARNPRESS.LESSON_FINISH, {
       id: lessonId,
       course_id: courseId,
@@ -914,7 +267,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       ? bookmarks.filter((id) => id !== courseId)
       : [...bookmarks, courseId];
     setBookmarks(next);
-    saveState(BOOKMARKS_STORAGE_KEY, next);
+    persistUserLearningKey(LEARNING_STORAGE_KEYS.BOOKMARKS, userScope, next);
   };
 
   const isBookmarked = (courseId: string) => bookmarks.includes(courseId);
@@ -930,7 +283,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
     const updated = [newNote, ...notes];
     setNotes(updated);
-    saveState(NOTES_STORAGE_KEY, updated);
+    persistUserLearningKey(LEARNING_STORAGE_KEYS.NOTES, userScope, updated);
   };
 
   const addCourseReview = (courseId: string, reviewData: Omit<Review, 'id' | 'date'>) => {
@@ -943,20 +296,18 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         year: 'numeric',
       }),
     };
-    setCourses((prevCourses) =>
+    catalog.setCourses((prevCourses) =>
       prevCourses.map((c) => {
-        if (c.id === courseId) {
-          const updatedReviews = [newReview, ...(c.reviews || [])];
-          const newAvgRating =
-            updatedReviews.reduce((sum, r) => sum + r.rating, 0) / updatedReviews.length;
-          return {
-            ...c,
-            reviews: updatedReviews,
-            reviewsCount: updatedReviews.length,
-            rating: Number(newAvgRating.toFixed(1)),
-          };
-        }
-        return c;
+        if (c.id !== courseId) return c;
+        const updatedReviews = [newReview, ...(c.reviews || [])];
+        const newAvgRating =
+          updatedReviews.reduce((sum, r) => sum + r.rating, 0) / updatedReviews.length;
+        return {
+          ...c,
+          reviews: updatedReviews,
+          reviewsCount: updatedReviews.length,
+          rating: Number(newAvgRating.toFixed(1)),
+        };
       })
     );
   };
@@ -964,22 +315,21 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const deleteNote = (noteId: string) => {
     const updated = notes.filter((n) => n.id !== noteId);
     setNotes(updated);
-    saveState(NOTES_STORAGE_KEY, updated);
+    persistUserLearningKey(LEARNING_STORAGE_KEYS.NOTES, userScope, updated);
   };
 
   const restoreNote = (note: Note) => {
     if (notes.some((n) => n.id === note.id)) return;
     const updated = [note, ...notes];
     setNotes(updated);
-    saveState(NOTES_STORAGE_KEY, updated);
+    persistUserLearningKey(LEARNING_STORAGE_KEYS.NOTES, userScope, updated);
   };
 
-  const getNotesForLesson = (courseId: string, lessonId: string) => {
-    return notes.filter((n) => n.courseId === courseId && n.lessonId === lessonId);
-  };
+  const getNotesForLesson = (courseId: string, lessonId: string) =>
+    notes.filter((n) => n.courseId === courseId && n.lessonId === lessonId);
 
   const getCourseProgressPercentage = (courseId: string): number => {
-    const course = courses.find((c) => c.id === courseId);
+    const course = catalog.courses.find((c) => c.id === courseId);
     if (!course) return 0;
     const progress = userProgress[courseId];
     if (!progress) return 0;
@@ -989,7 +339,6 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       course.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0) || 0;
     const totalLessons = moduleLessons > 0 ? moduleLessons : course.lecturesCount || 0;
     if (totalLessons === 0) return 0;
-
     return Math.min(100, Math.round((progress.completedLessonIds.length / totalLessons) * 100));
   };
 
@@ -1012,19 +361,17 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       },
     };
     setUserProgress(updated);
-    saveState(PROGRESS_STORAGE_KEY, updated);
+    persistUserLearningKey(LEARNING_STORAGE_KEYS.PROGRESS, userScope, updated);
   };
 
-  const getWatchPosition = (courseId: string, lessonId: string): number => {
-    const progress = userProgress[courseId];
-    return progress?.lastWatchPositionSeconds?.[lessonId] || 0;
-  };
+  const getWatchPosition = (courseId: string, lessonId: string): number =>
+    userProgress[courseId]?.lastWatchPositionSeconds?.[lessonId] || 0;
 
   const rsvpForWorkshop = (workshopId: string) => {
     if (rsvpWorkshops.includes(workshopId)) return;
     const updated = [...rsvpWorkshops, workshopId];
     setRsvpWorkshops(updated);
-    saveState(WORKSHOPS_STORAGE_KEY, updated);
+    persistUserLearningKey(LEARNING_STORAGE_KEYS.WORKSHOPS, userScope, updated);
   };
 
   const toggleWorkshopRsvp = (workshopId: string): boolean => {
@@ -1033,21 +380,19 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       ? rsvpWorkshops.filter((id) => id !== workshopId)
       : [...rsvpWorkshops, workshopId];
     setRsvpWorkshops(updated);
-    saveState(WORKSHOPS_STORAGE_KEY, updated);
+    persistUserLearningKey(LEARNING_STORAGE_KEYS.WORKSHOPS, userScope, updated);
     return !exists;
   };
 
   const isRsvpd = (workshopId: string) => rsvpWorkshops.includes(workshopId);
-
-  const getCourseById = (courseId: string) => courses.find((c) => c.id === courseId);
-  const getWorkshopById = (workshopId: string) => workshops.find((w) => w.id === workshopId);
+  const getCourseById = (courseId: string) => catalog.courses.find((c) => c.id === courseId);
+  const getWorkshopById = (workshopId: string) => catalog.workshops.find((w) => w.id === workshopId);
 
   const recordCategoryInteraction = (categoryId: string) => {
     if (!categoryId || categoryId === 'all') return;
     setCategoryAffinities((prev) => {
-      const current = prev[categoryId] || 0;
-      const updated = { ...prev, [categoryId]: current + 1 };
-      saveState(AFFINITIES_STORAGE_KEY, updated);
+      const updated = { ...prev, [categoryId]: (prev[categoryId] || 0) + 1 };
+      persistUserLearningKey(LEARNING_STORAGE_KEYS.AFFINITIES, userScope, updated);
       return updated;
     });
   };
@@ -1056,31 +401,27 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const trimmed = keyword.trim().toLowerCase();
     if (!trimmed || trimmed.length < 2) return;
     setSearchKeywordsHistory((prev) => {
-      const filtered = prev.filter((k) => k !== trimmed);
-      const updated = [trimmed, ...filtered].slice(0, 10);
-      saveState(SEARCH_HISTORY_STORAGE_KEY, updated);
+      const updated = [trimmed, ...prev.filter((k) => k !== trimmed)].slice(0, 10);
+      persistUserLearningKey(LEARNING_STORAGE_KEYS.SEARCH_HISTORY, userScope, updated);
       return updated;
     });
   };
 
-  const hasReviewedCourse = (courseId: string) => {
-    return reviewedCourseIds.includes(courseId) || !!userProgress[courseId]?.hasReviewed;
-  };
+  const hasReviewedCourse = (courseId: string) =>
+    reviewedCourseIds.includes(courseId) || !!userProgress[courseId]?.hasReviewed;
 
   const isCertificateUnlocked = (courseId: string) => {
     if (canBypassCourseLocks) return true;
     const progress = userProgress[courseId];
-    if (!progress || !progress.isCompleted) return false;
-    return hasReviewedCourse(courseId);
+    return Boolean(progress?.isCompleted && hasReviewedCourse(courseId));
   };
 
   const unlockCertificateForDev = (courseId: string, studentName?: string): Certificate | null => {
-    const course = courses.find((c) => c.id === courseId);
+    const course = catalog.courses.find((c) => c.id === courseId);
     if (!course) return null;
 
     const recipientName =
       studentName || user?.displayName || user?.name || user?.username || 'Executive Developer';
-
     const current = userProgress[courseId] || {
       courseId,
       enrolledDate: new Date().toISOString().split('T')[0],
@@ -1089,31 +430,16 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
 
     let cert = certificates.find((c) => c.courseId === courseId);
-    let certId = current.certificateId || cert?.credentialId;
-
-    if (!certId) {
-      const randSuffix = Math.random().toString(36).substring(2, 8).toUpperCase().padEnd(6, '0');
-      certId = `TS-2026-${randSuffix}`;
-    }
+    const certId =
+      current.certificateId ||
+      cert?.credentialId ||
+      buildCertificateRecord(course, recipientName).credentialId;
 
     if (!cert) {
-      cert = {
-        id: `cert-${Date.now()}`,
-        courseId: course.id,
-        courseTitle: course.title,
-        studentName: recipientName,
-        issueDate: new Date().toLocaleDateString('en-US', {
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric',
-        }),
-        credentialId: certId,
-        instructorName: course.instructor?.name || 'Thriving Skills Instructor',
-        verificationUrl: `${Env.SITE_URL}/verify/${certId}`,
-      };
+      cert = buildCertificateRecord(course, recipientName, certId);
       setCertificates((prev) => {
         const nextCerts = [cert!, ...prev.filter((c) => c.courseId !== courseId)];
-        saveState(CERTIFICATES_STORAGE_KEY, nextCerts);
+        persistUserLearningKey(LEARNING_STORAGE_KEYS.CERTIFICATES, userScope, nextCerts);
         return nextCerts;
       });
     }
@@ -1121,7 +447,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!reviewedCourseIds.includes(courseId)) {
       const nextReviewed = [...reviewedCourseIds, courseId];
       setReviewedCourseIds(nextReviewed);
-      saveState(REVIEWS_STORAGE_KEY, nextReviewed);
+      persistUserLearningKey(LEARNING_STORAGE_KEYS.REVIEWS, userScope, nextReviewed);
     }
 
     const updated = {
@@ -1137,8 +463,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       },
     };
     setUserProgress(updated);
-    saveState(PROGRESS_STORAGE_KEY, updated);
-
+    persistUserLearningKey(LEARNING_STORAGE_KEYS.PROGRESS, userScope, updated);
     return cert;
   };
 
@@ -1149,24 +474,15 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     userName = 'Executive Graduate',
     userRole = 'Learner'
   ): Certificate | null => {
-    // 1. Record review on course object
-    addCourseReview(courseId, {
-      userName,
-      userAvatar: '',
-      rating,
-      comment: feedback,
-      userRole,
-    });
+    addCourseReview(courseId, { userName, userAvatar: '', rating, comment: feedback, userRole });
 
-    // 2. Mark as reviewed in persistent list
     const nextReviewed = reviewedCourseIds.includes(courseId)
       ? reviewedCourseIds
       : [...reviewedCourseIds, courseId];
     setReviewedCourseIds(nextReviewed);
-    saveState(REVIEWS_STORAGE_KEY, nextReviewed);
+    persistUserLearningKey(LEARNING_STORAGE_KEYS.REVIEWS, userScope, nextReviewed);
 
-    // 3. Find course & unlock certificate
-    const course = courses.find((c) => c.id === courseId);
+    const course = catalog.courses.find((c) => c.id === courseId);
     const current = userProgress[courseId] || {
       courseId,
       enrolledDate: new Date().toISOString().split('T')[0],
@@ -1178,25 +494,11 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     let cert: Certificate | null = null;
 
     if (!certId && course) {
-      const randSuffix = Math.random().toString(36).substring(2, 8).toUpperCase().padEnd(6, '0');
-      certId = `TS-2026-${randSuffix}`;
-      cert = {
-        id: `cert-${Date.now()}`,
-        courseId: course.id,
-        courseTitle: course.title,
-        studentName: userName,
-        issueDate: new Date().toLocaleDateString('en-US', {
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric',
-        }),
-        credentialId: certId,
-        instructorName: course.instructor?.name || 'Thriving Skills Instructor',
-        verificationUrl: `${Env.SITE_URL}/verify/${certId}`,
-      };
+      cert = buildCertificateRecord(course, userName);
+      certId = cert.credentialId;
       setCertificates((prev) => {
         const nextCerts = [cert!, ...prev];
-        saveState(CERTIFICATES_STORAGE_KEY, nextCerts);
+        persistUserLearningKey(LEARNING_STORAGE_KEYS.CERTIFICATES, userScope, nextCerts);
         return nextCerts;
       });
     } else if (certId) {
@@ -1205,46 +507,33 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const updated = {
       ...userProgress,
-      [courseId]: {
-        ...current,
-        isCompleted: true,
-        hasReviewed: true,
-        certificateId: certId,
-      },
+      [courseId]: { ...current, isCompleted: true, hasReviewed: true, certificateId: certId },
     };
     setUserProgress(updated);
-    saveState(PROGRESS_STORAGE_KEY, updated);
-
+    persistUserLearningKey(LEARNING_STORAGE_KEYS.PROGRESS, userScope, updated);
     return cert;
   };
 
-  const getRecommendedCourses = (): {
-    courses: Course[];
-    rationale: string;
-    rationaleBn: string;
-  } => {
-    return computeRecommendedCourses({
-      courses,
-      categories,
+  const getRecommendedCourses = () =>
+    computeRecommendedCourses({
+      courses: catalog.courses,
+      categories: catalog.categories,
       userProgress,
       categoryAffinities,
       searchKeywordsHistory,
     });
-  };
-
-  const hasActiveLiveWorkshop = workshops.some((w) => !!w.isLive);
 
   return (
     <LearningContext.Provider
       value={{
-        courses,
-        totalCourseCount,
-        categories,
-        workshops,
-        hasActiveLiveWorkshop,
-        blogPosts,
-        isLoadingCourses,
-        coursesError,
+        courses: catalog.courses,
+        totalCourseCount: catalog.totalCourseCount,
+        categories: catalog.categories,
+        workshops: catalog.workshops,
+        hasActiveLiveWorkshop: catalog.workshops.some((w) => !!w.isLive),
+        blogPosts: catalog.blogPosts,
+        isLoadingCourses: catalog.isLoadingCourses,
+        coursesError: catalog.coursesError,
         userProgress,
         bookmarks,
         certificates,
@@ -1254,8 +543,8 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         searchQuery,
         setSelectedCategory,
         setSearchQuery,
-        refreshCourses,
-        loadCourseDetail,
+        refreshCourses: catalog.refreshCourses,
+        loadCourseDetail: catalog.loadCourseDetail,
         enrollInCourse,
         confirmServerEnrollments,
         markLessonCompleted,
@@ -1285,17 +574,17 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         pendingSyncCount,
         isSyncingOffline,
         syncOfflineData,
-        siteBranding,
-        banners,
-        partnerLogos,
-        homeFeatures,
-        specialBundles,
-        studentTestimonials,
-        appRemoteConfig,
-        isBrandingLoading,
-        refreshBranding,
-        lastSyncedAt,
-        isBackgroundSyncing,
+        siteBranding: catalog.siteBranding,
+        banners: catalog.banners,
+        partnerLogos: catalog.partnerLogos,
+        homeFeatures: catalog.homeFeatures,
+        specialBundles: catalog.specialBundles,
+        studentTestimonials: catalog.studentTestimonials,
+        appRemoteConfig: catalog.appRemoteConfig,
+        isBrandingLoading: catalog.isBrandingLoading,
+        refreshBranding: catalog.refreshBranding,
+        lastSyncedAt: catalog.lastSyncedAt,
+        isBackgroundSyncing: catalog.isBackgroundSyncing,
       }}
     >
       {children}

@@ -134,6 +134,9 @@ describe('Companion Plugin Hardening & Issues 7-9 Compliance', () => {
     expect(php).toContain("'learn-press/user/can-enroll/course'");
     expect(php).toContain('has_user_paid_for_course');
     expect(php).toContain('is_object($user_or_course)');
+    expect(php).toContain("'/auth/reset-password/confirm'");
+    expect(php).toContain('confirm_password_reset');
+    expect(php).toContain('check_password_reset_key(');
   });
 
   it('derives isFreePreview strictly from server preview flags rather than synthetic first-lesson overrides', () => {

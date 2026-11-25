@@ -87,6 +87,8 @@ export const Endpoints = {
     REGISTER: '/thrivingskill/v1/register',
     VERIFY_REGISTRATION: '/thrivingskill/v1/verify-registration',
     RESEND_REGISTRATION: '/thrivingskill/v1/resend-registration',
+    REVOKE_TOKEN: '/thrivingskill/v1/revoke-token',
+    CONFIRM_PASSWORD_RESET: '/thrivingskill/v1/auth/reset-password/confirm',
   },
 
   // --------------------------------------------------------------------------

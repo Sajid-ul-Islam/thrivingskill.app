@@ -646,6 +646,12 @@ class TSMB_Rest_API
             'permission_callback' => '__return_true',
         ]);
 
+        register_rest_route(self::NAMESPACE, '/auth/reset-password/confirm', [
+            'methods'             => 'POST',
+            'callback'            => [__CLASS__, 'confirm_password_reset'],
+            'permission_callback' => '__return_true',
+        ]);
+
         register_rest_route(self::NAMESPACE, '/revoke-token', [
             'methods'             => 'POST',
             'callback'            => [__CLASS__, 'revoke_token'],
@@ -1771,6 +1777,79 @@ class TSMB_Rest_API
         }
 
         return rest_ensure_response($response);
+    }
+
+    public static function confirm_password_reset($request)
+    {
+        $client_ip = TSMB_Security::get_client_ip();
+        $ip_limit  = TSMB_Security::consume_rate_limit('reset_confirm_ip', $client_ip, 10, 15 * MINUTE_IN_SECONDS);
+        if (is_wp_error($ip_limit)) {
+            return $ip_limit;
+        }
+
+        $params = $request->get_json_params();
+        if (!is_array($params)) {
+            $params = [];
+        }
+
+        $raw_login    = sanitize_text_field((string) ($params['login'] ?? ($request->get_param('login') ?? '')));
+        $key          = sanitize_text_field((string) ($params['key'] ?? ($request->get_param('key') ?? '')));
+        $new_password = (string) ($params['password'] ?? ($request->get_param('password') ?? ''));
+
+        if ($raw_login === '' || $key === '') {
+            return new WP_Error(
+                'invalid_reset_request',
+                __('Username and password reset key are required.', 'ts-mobile-bridge'),
+                ['status' => 400]
+            );
+        }
+
+        $login_limit = TSMB_Security::consume_rate_limit(
+            'reset_confirm_login',
+            strtolower($raw_login),
+            5,
+            15 * MINUTE_IN_SECONDS
+        );
+        if (is_wp_error($login_limit)) {
+            return $login_limit;
+        }
+
+        if (strlen($new_password) < self::MIN_PASSWORD_LENGTH) {
+            return new WP_Error(
+                'weak_password',
+                sprintf(
+                    __('Password must be at least %d characters long.', 'ts-mobile-bridge'),
+                    self::MIN_PASSWORD_LENGTH
+                ),
+                ['status' => 400]
+            );
+        }
+
+        $target_login = $raw_login;
+        $user_obj     = get_user_by('login', $raw_login);
+        if (!$user_obj && is_email($raw_login)) {
+            $user_obj = get_user_by('email', $raw_login);
+        }
+        if ($user_obj instanceof WP_User) {
+            $target_login = $user_obj->user_login;
+        }
+
+        $checked_user = check_password_reset_key($key, $target_login);
+        if (is_wp_error($checked_user) || !($checked_user instanceof WP_User)) {
+            return new WP_Error(
+                'invalid_reset_key',
+                __('This password reset link is invalid or has expired. Please request a new link.', 'ts-mobile-bridge'),
+                ['status' => 400]
+            );
+        }
+
+        reset_password($checked_user, $new_password);
+
+        return rest_ensure_response([
+            'status'  => 'success',
+            'code'    => 200,
+            'message' => __('Password has been reset successfully.', 'ts-mobile-bridge'),
+        ]);
     }
 
     public static function clear_feed_cache(): void

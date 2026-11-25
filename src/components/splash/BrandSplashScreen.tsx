@@ -3,15 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
   Animated,
   Easing,
   TouchableOpacity,
-  Platform,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '../../context/LanguageContext';
 import { triggerHaptic } from '../../utils/haptics';

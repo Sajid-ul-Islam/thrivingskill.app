@@ -52,11 +52,14 @@ import {
 } from './src/components';
 import { AppModalHost } from './src/components/common/AppModalHost';
 import { AppUpdateService } from './src/services/appUpdateService';
+import * as Sentry from '@sentry/react-native';
 import { TelemetryService } from './src/services/telemetry/telemetryService';
 import { PushNotificationService } from './src/services/notifications/pushNotificationService';
 import { HabitNotificationQueue } from './src/services/notifications/habitNotificationQueue';
 import { StorageSanitizer } from './src/services/storage/storageSanitizer';
 import { Env } from './src/config/env';
+
+TelemetryService.initialize();
 
 // Ensure browser omits external Referer on Web to prevent CDN hotlink blocks (Cloudflare 403)
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
@@ -175,12 +178,11 @@ const MainAppContent: React.FC = () => {
   const updateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasCheckedUpdateRef = useRef<boolean>(false);
 
-  // Telemetry & Push Notification Infrastructure Initialization (Env.init() already awaited in root App)
+  // Telemetry & Permitted Push Registration (NEVER requests OS push permission at launch)
   useEffect(() => {
     TelemetryService.initialize();
-    PushNotificationService.registerForPushNotifications();
+    PushNotificationService.syncGrantedPushRegistration().catch(() => {});
     HabitNotificationQueue.resetStartupSession();
-    PushNotificationService.scheduleDailyStreakNudge();
     StorageSanitizer.runStartupSanitization().catch(() => {});
   }, []);
 
@@ -189,7 +191,8 @@ const MainAppContent: React.FC = () => {
       user ? { id: String(user.id), username: user.username, role: user.roles?.[0] } : null
     );
     if (isAuthenticated && user?.id) {
-      PushNotificationService.registerForPushNotifications().catch(() => {});
+      PushNotificationService.syncGrantedPushRegistration().catch(() => {});
+      PushNotificationService.scheduleDailyStreakNudge().catch(() => {});
     }
   }, [isAuthenticated, user]);
 
@@ -436,7 +439,7 @@ const MainAppContent: React.FC = () => {
   );
 };
 
-export default function App() {
+function App() {
   const [envReady, setEnvReady] = useState(false);
   const [envError, setEnvError] = useState<string | null>(null);
 
@@ -617,3 +620,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
+export default Sentry.wrap(App);

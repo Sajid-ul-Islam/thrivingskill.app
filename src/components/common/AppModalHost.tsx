@@ -67,7 +67,9 @@ export const AppModalHost: React.FC<AppModalHostProps> = ({
         return true;
       }
       if (isAuthModalVisible) {
-        setAuthModalVisible(false);
+        if (isAuthenticated) {
+          setAuthModalVisible(false);
+        }
         return true;
       }
       if (playerMode === 'modal') {
@@ -82,6 +84,7 @@ export const AppModalHost: React.FC<AppModalHostProps> = ({
   }, [
     activeModal,
     closeModal,
+    isAuthenticated,
     isAuthModalVisible,
     setAuthModalVisible,
     playerMode,

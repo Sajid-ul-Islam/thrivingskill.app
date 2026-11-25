@@ -298,23 +298,72 @@ export class PushNotificationService {
   }
 
   /**
-   * Registers the device for push notifications, sets up Android notification channels,
-   * requests Android 13+ POST_NOTIFICATIONS permission, and returns the device push token.
+   * Checks current notification permission status without triggering any OS prompt.
    */
-  static async registerForPushNotifications(): Promise<string | null> {
+  static async getPermissionStatus(): Promise<'granted' | 'denied' | 'undetermined'> {
+    try {
+      if (Platform.OS === 'web') {
+        if (typeof window !== 'undefined' && 'Notification' in window) {
+          if (Notification.permission === 'granted') return 'granted';
+          if (Notification.permission === 'denied') return 'denied';
+        }
+        return 'undetermined';
+      }
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status === 'granted') return 'granted';
+      if (status === 'denied') return 'denied';
+      return 'undetermined';
+    } catch {
+      return 'undetermined';
+    }
+  }
+
+  /**
+   * Synchronizes Android channels & push token ONLY if the learner has already granted permission.
+   * Safe to call on app launch or login without triggering an OS permission dialog.
+   */
+  static async syncGrantedPushRegistration(): Promise<string | null> {
+    return this.registerForPushNotifications({ requestPermission: false });
+  }
+
+  /**
+   * Explicitly requests OS push notification permission (from a user action) and registers the token.
+   */
+  static async requestPermissionAndRegister(): Promise<{
+    granted: boolean;
+    token: string | null;
+  }> {
+    const token = await this.registerForPushNotifications({ requestPermission: true });
+    const status = await this.getPermissionStatus();
+    return { granted: status === 'granted', token };
+  }
+
+  /**
+   * Registers the device for push notifications and sets up Android notification channels.
+   * Only prompts for OS permission when `options.requestPermission` is explicitly `true`.
+   */
+  static async registerForPushNotifications(options?: {
+    requestPermission?: boolean;
+  }): Promise<string | null> {
+    const shouldRequest = options?.requestPermission === true;
+
     try {
       const stored = await AsyncStorage.getItem(STORAGE_KEY_TOKEN);
       if (stored) {
         this.cachedToken = stored;
       }
 
-      // Request native system notification permissions (Android 13+ & iOS)
+      // Check (and optionally request) native system notification permissions (Android 13+ & iOS)
+      let isPermissionGranted = false;
       if (Platform.OS !== 'web') {
         try {
           const { status: existingStatus } = await Notifications.getPermissionsAsync();
-          if (existingStatus !== 'granted') {
-            await Notifications.requestPermissionsAsync();
+          let finalStatus = existingStatus;
+          if (existingStatus !== 'granted' && shouldRequest) {
+            const requested = await Notifications.requestPermissionsAsync();
+            finalStatus = requested.status;
           }
+          isPermissionGranted = finalStatus === 'granted';
         } catch {}
       }
 
@@ -369,13 +418,18 @@ export class PushNotificationService {
         } catch {}
       }
 
-      // Web Notification permission
+      // Web Notification permission (only prompt when explicitly requested)
       if (Platform.OS === 'web' && typeof window !== 'undefined' && 'Notification' in window) {
         try {
-          if (Notification.permission === 'default') {
+          if (Notification.permission === 'default' && shouldRequest) {
             await Notification.requestPermission();
           }
+          isPermissionGranted = Notification.permission === 'granted';
         } catch {}
+      }
+
+      if (!isPermissionGranted) {
+        return null;
       }
 
       // Generate or retrieve push token
@@ -465,31 +519,34 @@ export class PushNotificationService {
       await AsyncStorage.setItem(STORAGE_KEY_INBOX, JSON.stringify(list.slice(0, 40)));
     } catch {}
 
-    // 2. Deliver to phone's native notification shade (pull down from status bar)
+    // 2. Deliver to phone's native notification shade ONLY when permission was already granted
     if (Platform.OS !== 'web') {
       try {
-        const channelId =
-          data?.channelId ||
-          (type === 'offer'
-            ? ANDROID_NOTIFICATION_CHANNELS.OFFERS.id
-            : type === 'course'
-              ? ANDROID_NOTIFICATION_CHANNELS.COURSES.id
-              : type === 'recommendation'
-                ? ANDROID_NOTIFICATION_CHANNELS.RECOMMENDATIONS.id
-                : ANDROID_NOTIFICATION_CHANNELS.UPDATES.id);
+        const perm = await this.getPermissionStatus();
+        if (perm === 'granted') {
+          const channelId =
+            data?.channelId ||
+            (type === 'offer'
+              ? ANDROID_NOTIFICATION_CHANNELS.OFFERS.id
+              : type === 'course'
+                ? ANDROID_NOTIFICATION_CHANNELS.COURSES.id
+                : type === 'recommendation'
+                  ? ANDROID_NOTIFICATION_CHANNELS.RECOMMENDATIONS.id
+                  : ANDROID_NOTIFICATION_CHANNELS.UPDATES.id);
 
-        await Notifications.scheduleNotificationAsync({
-          content: {
-            title,
-            body,
-            data: { ...data, type, notificationId: notification.id },
-            sound: true,
-            badge: 1,
-            // @ts-ignore Android channel config
-            channelId,
-          },
-          trigger: null, // null delivers immediately into status bar tray
-        });
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title,
+              body,
+              data: { ...data, type, notificationId: notification.id },
+              sound: true,
+              badge: 1,
+              // @ts-ignore Android channel config
+              channelId,
+            },
+            trigger: null, // null delivers immediately into status bar tray
+          });
+        }
       } catch (nativeErr) {
         // Gracefully catch if native module is unavailable
       }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,6 @@ import {
   ScrollView,
   Platform,
   Alert,
-  Switch,
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
@@ -36,12 +35,22 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
   const [currentEnv, setCurrentEnv] = useState<ApiEnvironment>(Env.currentEnvironment);
   const [isClearingCache, setIsClearingCache] = useState<boolean>(false);
   const [cacheClearSuccess, setCacheClearSuccess] = useState<boolean>(false);
+  const cacheResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (visible) {
       setCurrentEnv(Env.currentEnvironment);
     }
   }, [visible]);
+
+  useEffect(() => {
+    return () => {
+      if (cacheResetTimerRef.current) {
+        clearTimeout(cacheResetTimerRef.current);
+        cacheResetTimerRef.current = null;
+      }
+    };
+  }, []);
 
   const handleSwitchEnv = async (env: ApiEnvironment) => {
     if (!Env.canSwitchEnvironment || env === currentEnv) return;
@@ -58,7 +67,11 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
       await CacheManager.clearAll();
       setCacheClearSuccess(true);
       triggerHaptic('success');
-      setTimeout(() => setCacheClearSuccess(false), 3000);
+      if (cacheResetTimerRef.current) clearTimeout(cacheResetTimerRef.current);
+      cacheResetTimerRef.current = setTimeout(() => {
+        cacheResetTimerRef.current = null;
+        setCacheClearSuccess(false);
+      }, 3000);
     } catch {
       Alert.alert('Error', 'Failed to clear cache');
     } finally {
@@ -72,23 +85,21 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
       // 1. Reset server environment to live production
       await Env.setEnvironment('production');
       setCurrentEnv('production');
-      // 2. Disable admin bypass
-      setAdminBypass(false);
-      await Promise.all([
-        AsyncStorage.setItem('@thrivingskill_admin_bypass', 'false'),
-        AsyncStorage.setItem('@ts_auth_admin_bypass', 'false'),
-        // 3. Lock and hide developer options
-        AsyncStorage.setItem('@ts_dev_mode_unlocked', 'false'),
+      // 2. Purge any legacy bypass/dev flags from storage
+      await AsyncStorage.multiRemove([
+        '@thrivingskill_admin_bypass',
+        '@ts_auth_admin_bypass',
+        '@ts_dev_mode_unlocked',
       ]);
-      // 4. Clear cache to guarantee clean production state
+      // 3. Clear cache to guarantee clean production state
       await CacheManager.clearAll().catch(() => {});
-      // 5. Notify parent callback
+      // 4. Notify parent callback
       onResetToStandardMode?.();
-      // 6. Dismiss modal
+      // 5. Dismiss modal
       onClose();
       Alert.alert(
         'Standard Mode Restored',
-        'You have returned to normal mode. Connected to Live Production (thrivingskill.com) with developer options locked.'
+        'You have returned to normal mode. Connected to Live Production (thrivingskill.com).'
       );
     } catch {
       onClose();
@@ -99,10 +110,10 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
     triggerHaptic('warning');
     await Env.setEnvironment('production');
     setCurrentEnv('production');
-    await Promise.all([
-      AsyncStorage.setItem('@thrivingskill_admin_bypass', 'false'),
-      AsyncStorage.setItem('@ts_auth_admin_bypass', 'false'),
-      AsyncStorage.setItem('@ts_dev_mode_unlocked', 'false'),
+    await AsyncStorage.multiRemove([
+      '@thrivingskill_admin_bypass',
+      '@ts_auth_admin_bypass',
+      '@ts_dev_mode_unlocked',
     ]);
     onResetToStandardMode?.();
     onClose();

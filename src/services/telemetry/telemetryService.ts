@@ -1,5 +1,7 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Sentry from '@sentry/react-native';
+import { Env } from '../../config/env';
 
 export interface TelemetryBreadcrumb {
   category: 'navigation' | 'auth' | 'video' | 'checkout' | 'system' | 'network';
@@ -29,36 +31,49 @@ export class TelemetryService {
   private static isInitialized = false;
   private static breadcrumbs: TelemetryBreadcrumb[] = [];
   private static currentUser: { id: string; username?: string; role?: string } | null = null;
-  private static sentryDsn?: string;
+  private static activeDsn = '';
 
   /**
-   * Initializes Telemetry & Crash Monitoring
+   * Initializes official @sentry/react-native crash reporting using static build-time Env.SENTRY_DSN.
    */
   static initialize(customDsn?: string): void {
-    if (this.isInitialized) return;
+    const resolvedDsn = (customDsn ?? Env.SENTRY_DSN).trim();
+    if (this.isInitialized && (!customDsn || resolvedDsn === this.activeDsn)) {
+      return;
+    }
+
     this.isInitialized = true;
-    this.sentryDsn = customDsn || (process.env as any)?.EXPO_PUBLIC_SENTRY_DSN;
+    this.activeDsn = resolvedDsn;
+
+    try {
+      Sentry.init({
+        dsn: resolvedDsn || undefined,
+        enabled: Boolean(resolvedDsn),
+        environment: Env.currentEnvironment,
+        attachStacktrace: true,
+        enableAutoSessionTracking: true,
+        tracesSampleRate: __DEV__ ? 1.0 : 0.2,
+      });
+    } catch {
+      // Never block app boot if native Sentry initialization is unavailable in test/web environments
+    }
 
     this.addBreadcrumb({
       category: 'system',
-      message: `App initialized (v1.4.0, Platform: ${Platform.OS})`,
+      message: `App initialized (v1.4.0, Platform: ${Platform.OS}, Env: ${Env.currentEnvironment})`,
       timestamp: Date.now(),
     });
-
-    // Global Error Handler Hook
-    if (typeof ErrorUtils !== 'undefined' && ErrorUtils.getGlobalHandler) {
-      const defaultHandler = ErrorUtils.getGlobalHandler();
-      ErrorUtils.setGlobalHandler((error: any, isFatal?: boolean) => {
-        TelemetryService.captureException(error, { isFatal });
-        if (defaultHandler) {
-          defaultHandler(error, isFatal);
-        }
-      });
-    }
   }
 
   /**
-   * Records a user/action breadcrumb for crash forensics
+   * Returns whether a valid Sentry DSN is configured in this build.
+   */
+  static isSentryConfigured(): boolean {
+    return Boolean(this.activeDsn || Env.SENTRY_DSN);
+  }
+
+  /**
+   * Records a user/action breadcrumb both locally and inside Sentry scope.
    */
   static addBreadcrumb(
     breadcrumb: Omit<TelemetryBreadcrumb, 'timestamp'> & { timestamp?: number }
@@ -71,13 +86,36 @@ export class TelemetryService {
     if (this.breadcrumbs.length > MAX_BREADCRUMBS) {
       this.breadcrumbs.shift();
     }
+
+    try {
+      Sentry.addBreadcrumb({
+        category: entry.category,
+        message: entry.message,
+        data: entry.data,
+        timestamp: entry.timestamp / 1000,
+      });
+    } catch {}
   }
 
   /**
-   * Associates telemetry with the active authenticated user
+   * Associates telemetry & Sentry crash events with the active authenticated learner.
    */
   static setUser(user: { id: string; username?: string; role?: string } | null): void {
     this.currentUser = user;
+    try {
+      Sentry.setUser(
+        user
+          ? {
+              id: user.id,
+              username: user.username,
+            }
+          : null
+      );
+      if (user?.role) {
+        Sentry.setTag('user_role', user.role);
+      }
+    } catch {}
+
     if (user) {
       this.addBreadcrumb({
         category: 'auth',
@@ -87,11 +125,12 @@ export class TelemetryService {
   }
 
   /**
-   * Captures an unhandled or caught exception
+   * Captures an unhandled or caught exception via @sentry/react-native and local diagnostics ring buffer.
    */
   static captureException(error: Error | any, context?: Record<string, any>): void {
-    const message = error?.message || String(error);
-    const stack = error?.stack || undefined;
+    const normalizedError = error instanceof Error ? error : new Error(String(error));
+    const message = normalizedError.message || String(error);
+    const stack = normalizedError.stack || undefined;
 
     const crashEvent: TelemetryEvent = {
       id: `crash_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -110,17 +149,17 @@ export class TelemetryService {
       console.warn('[Telemetry] Crash Captured:', message, context);
     }
 
-    // Persist locally for diagnostics
     this.persistCrashLocally(crashEvent);
 
-    // Forward to remote ingestion if Sentry DSN is present
-    if (this.sentryDsn) {
-      this.forwardToSentry(crashEvent).catch(() => {});
-    }
+    try {
+      if (this.isSentryConfigured()) {
+        Sentry.captureException(normalizedError, context ? { extra: context } : undefined);
+      }
+    } catch {}
   }
 
   /**
-   * Tracks custom business/learning events (e.g., lesson_complete, checkout_start)
+   * Tracks custom business/learning breadcrumbs.
    */
   static trackEvent(eventName: string, properties?: Record<string, any>): void {
     this.addBreadcrumb({
@@ -130,9 +169,6 @@ export class TelemetryService {
     });
   }
 
-  /**
-   * Persists crash log to local AsyncStorage queue
-   */
   private static async persistCrashLocally(event: TelemetryEvent): Promise<void> {
     try {
       const raw = await AsyncStorage.getItem(STORAGE_KEY_CRASHES);
@@ -145,9 +181,6 @@ export class TelemetryService {
     } catch {}
   }
 
-  /**
-   * Retrieves recent crash reports for in-app support / audit
-   */
   static async getStoredCrashes(): Promise<TelemetryEvent[]> {
     try {
       const raw = await AsyncStorage.getItem(STORAGE_KEY_CRASHES);
@@ -157,57 +190,9 @@ export class TelemetryService {
     }
   }
 
-  /**
-   * Clears stored crash reports
-   */
   static async clearStoredCrashes(): Promise<void> {
     try {
       await AsyncStorage.removeItem(STORAGE_KEY_CRASHES);
-    } catch {}
-  }
-
-  /**
-   * Forwards event payload to Sentry ingestion envelope
-   */
-  private static async forwardToSentry(event: TelemetryEvent): Promise<void> {
-    if (!this.sentryDsn) return;
-    try {
-      const dsnUrl = new URL(this.sentryDsn);
-      const projectId = dsnUrl.pathname.replace('/', '');
-      const endpoint = `${dsnUrl.protocol}//${dsnUrl.host}/api/${projectId}/store/`;
-
-      await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Sentry-Auth': `Sentry sentry_version=7, sentry_client=thrivingskill-mobile/1.4.0, sentry_key=${dsnUrl.username}`,
-        },
-        body: JSON.stringify({
-          event_id: event.id.replace('crash_', ''),
-          timestamp: new Date(event.timestamp).toISOString(),
-          platform: 'javascript',
-          level: 'error',
-          message: event.message,
-          exception: {
-            values: [
-              {
-                type: 'Error',
-                value: event.message,
-                stacktrace: event.stack
-                  ? { frames: [{ filename: 'app.bundle', function: event.stack }] }
-                  : undefined,
-              },
-            ],
-          },
-          user: event.userId ? { id: event.userId } : undefined,
-          breadcrumbs: event.breadcrumbs.map((b) => ({
-            timestamp: b.timestamp / 1000,
-            category: b.category,
-            message: b.message,
-            data: b.data,
-          })),
-        }),
-      });
     } catch {}
   }
 }

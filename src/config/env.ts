@@ -167,6 +167,13 @@ export const Env = {
   },
 
   /**
+   * Public Sentry DSN read via static literal access so Expo/Metro inlines it into release bundles.
+   */
+  get SENTRY_DSN(): string {
+    return (process.env.EXPO_PUBLIC_SENTRY_DSN || '').trim();
+  },
+
+  /**
    * Validates required EXPO_PUBLIC_* variables at startup in non-production builds
    * so missing release/preview config fails loudly instead of silently falling back.
    */

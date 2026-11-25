@@ -180,6 +180,19 @@ describe('resolveLessonVideoData (Issue 2 fail-closed behavior)', () => {
     });
     expect(xss.hasVideo).toBe(false);
     expect(xss.videoType).toBe('none');
+
+    const dirtyIframe = resolveLessonVideoData(undefined, {
+      id: 'iframe-sanitize-1',
+      title: 'Third-Party HTTPS Embed',
+      videoIntro:
+        '<iframe src="https://cdn.example.com/embed/lesson-99" onload="alert(1)" data-evil="x"></iframe><script>alert(2)</script>',
+    });
+    expect(dirtyIframe.hasVideo).toBe(true);
+    expect(dirtyIframe.videoType).toBe('iframe');
+    expect(dirtyIframe.videoUrl).toBe('https://cdn.example.com/embed/lesson-99');
+    expect(dirtyIframe.videoIntro).toContain('src="https://cdn.example.com/embed/lesson-99"');
+    expect(dirtyIframe.videoIntro).not.toContain('onload=');
+    expect(dirtyIframe.videoIntro).not.toContain('<script>');
   });
 
   it('supports optional explicit lesson-ID registry lookups while failing closed on any miss', () => {

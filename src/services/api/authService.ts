@@ -219,6 +219,27 @@ export class AuthService {
   }
 
   /**
+   * Best-effort server-side revocation for active TSMB bearer tokens.
+   */
+  static async revokeToken(token?: string): Promise<void> {
+    const activeToken = token || (await HttpClient.getAuthToken());
+    if (!isValidSessionTokenFormat(activeToken)) return;
+    try {
+      await HttpClient.post(
+        Endpoints.COMPANION.REVOKE_TOKEN,
+        {},
+        {
+          headers: { Authorization: `Bearer ${activeToken}` },
+          retries: 0,
+          suppressUnauthorizedHandler: true,
+        }
+      );
+    } catch {
+      // Logout must stay resilient offline or on servers without companion revocation support.
+    }
+  }
+
+  /**
    * CR-04: Register a new student account directly in LearnPress/WordPress.
    * Succeeds only after server confirmation; never fabricates a local session on network failure.
    */
@@ -395,45 +416,69 @@ export class AuthService {
   }
 
   /**
-   * Complete password reset or new user password setup via WordPress action=resetpass
+   * Complete password reset or new user password setup via WordPress REST API.
+   * Never scrapes HTML login pages or spoofs browser User-Agent headers.
    */
   static async confirmPasswordReset(
     login: string,
     key: string,
     newPassword: string
   ): Promise<boolean> {
-    const data = new URLSearchParams({
-      action: 'resetpass',
-      rp_key: key.trim(),
-      rp_login: login.trim(),
-      pass1: newPassword,
-      pass2: newPassword,
-    }).toString();
-
-    const response = await fetch(`${Env.SITE_URL}/login/?action=resetpass`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'Mozilla/5.0 (Linux; Android; Mobile)',
-      },
-      body: data,
-    });
-
-    if (!response.ok) {
-      throw new Error(`Password reset request failed (HTTP ${response.status}). Please try again.`);
+    const cleanLogin = login.trim();
+    const cleanKey = key.trim();
+    if (!cleanLogin || !cleanKey || !newPassword) {
+      throw new Error('Username, verification key, and new password are required.');
     }
 
-    const redirectUrl = response.url || '';
-    if (redirectUrl.includes('error=invalidkey') || redirectUrl.includes('error=expiredkey')) {
+    try {
+      await HttpClient.post<{ status?: string; code?: number; message?: string }>(
+        Endpoints.COMPANION.CONFIRM_PASSWORD_RESET,
+        {
+          login: cleanLogin,
+          key: cleanKey,
+          password: newPassword,
+        },
+        { skipAuth: true }
+      );
+      return true;
+    } catch (err: any) {
+      if (isTimeoutError(err)) {
+        throw new ApiError(
+          'Connection timed out. Please check your internet connection and try again.',
+          408,
+          'REQUEST_TIMEOUT',
+          err
+        );
+      }
+      if (isNetworkFailureError(err)) {
+        throw new ApiError(
+          'No internet connection. Please check your connection and try again.',
+          0,
+          'NETWORK_ERROR',
+          err
+        );
+      }
+      if (err?.status === 404 || err?.code === 'rest_no_route') {
+        throw new Error(
+          'In-app password reset endpoint is unavailable on the server. Please open the password reset link from your email in a browser.'
+        );
+      }
+      const msg = String(err?.message || '');
+      if (
+        err?.code === 'invalid_reset_key' ||
+        err?.code === 'invalidkey' ||
+        err?.code === 'expiredkey' ||
+        msg.toLowerCase().includes('invalid') ||
+        msg.toLowerCase().includes('expired')
+      ) {
+        throw new Error(
+          'This password reset link is invalid or has expired. Please request a new link.'
+        );
+      }
       throw new Error(
-        'This password reset link is invalid or has expired. Please request a new link.'
+        msg || 'Could not reset password. Please check your reset link and try again.'
       );
     }
-    if (redirectUrl.includes('error=')) {
-      throw new Error('Could not reset password. Please check your reset link and try again.');
-    }
-
-    return true;
   }
 
   /**

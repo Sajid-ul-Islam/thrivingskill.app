@@ -128,7 +128,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(null);
         setToken(null);
         setIsGuest(false);
-        setIsAdminBypass(false);
         if (showExpiredFeedback) {
           setSessionExpiredNotice(true);
         }
@@ -553,6 +552,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    const currentToken = token || (await SecureStorageService.getAuthToken());
     activeSessionRef.current = false;
     isHandlingUnauthorizedRef.current = false;
     setSessionExpiredNotice(false);
@@ -560,7 +560,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToken(null);
     setUser(null);
     setIsGuest(true);
-    setIsAdminBypass(false);
+    if (isValidSessionTokenFormat(currentToken)) {
+      void AuthService.revokeToken(currentToken);
+    }
     await clearPersistedSession();
   };
 

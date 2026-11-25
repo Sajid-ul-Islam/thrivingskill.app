@@ -235,12 +235,36 @@ describe('AuthService (with mocked fetch)', () => {
     );
   });
 
-  it('detects invalid/expired reset keys in confirmPasswordReset', async () => {
-    (globalThis.fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      status: 200,
-      url: 'https://staging.thrivingskill.com/login/?error=invalidkey',
+  it('confirms password reset via REST API and rejects invalid/expired keys without HTML scraping', async () => {
+    const fetchMock = globalThis.fetch as jest.Mock;
+
+    // Success via Companion REST API
+    fetchMock.mockResolvedValueOnce(
+      mockJsonResponse({ status: 'success', code: 200, message: 'Password reset' }, 200)
+    );
+    await expect(
+      AuthService.confirmPasswordReset('tanvir', 'validkey123', 'NewPass123456!')
+    ).resolves.toBe(true);
+    expect(fetchMock.mock.calls[0][0]).toContain('/thrivingskill/v1/auth/reset-password/confirm');
+    expect(fetchMock.mock.calls[0][0]).not.toContain('/login/?action=resetpass');
+    expect(fetchMock.mock.calls[0][1].headers?.['User-Agent']).toBeUndefined();
+    expect(safeParseBody(fetchMock.mock.calls[0][1].body)).toEqual({
+      login: 'tanvir',
+      key: 'validkey123',
+      password: 'NewPass123456!',
     });
+
+    // Invalid/expired key error from REST API
+    fetchMock.mockResolvedValueOnce(
+      mockJsonResponse(
+        {
+          code: 'invalid_reset_key',
+          message: 'This password reset link is invalid or has expired.',
+          data: { status: 400 },
+        },
+        400
+      )
+    );
 
     await expect(
       AuthService.confirmPasswordReset('tanvir', 'badkey', 'NewPass123456!')
