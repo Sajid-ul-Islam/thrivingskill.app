@@ -45,7 +45,10 @@ export const AboutPartnersTab: React.FC<TabThemeProps> = ({ colors, isDark, isBa
         {group.items.map((item, itemIdx) => (
           <View
             key={itemIdx}
-            style={[styles.partnerCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
+            style={[
+              styles.partnerCard,
+              { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+            ]}
           >
             <View style={styles.partnerCardTop}>
               <View style={{ flex: 1 }}>
@@ -75,13 +78,18 @@ export const AboutPartnersTab: React.FC<TabThemeProps> = ({ colors, isDark, isBa
 export const AboutSummitsTab: React.FC<TabThemeProps> = ({ colors, isDark, isBangla }) => (
   <View style={styles.sectionContainer}>
     <Text style={[styles.subheading, { color: colors.textMuted }]}>
-      {isBangla ? 'থ্রাইভিং স্কিলসের অফিসিয়াল জাতীয় সামিটসমূহ:' : 'Official TSL National Summits & Forums:'}
+      {isBangla
+        ? 'থ্রাইভিং স্কিলসের অফিসিয়াল জাতীয় সামিটসমূহ:'
+        : 'Official TSL National Summits & Forums:'}
     </Text>
 
     {getNationalSummits().map((summit, idx) => (
       <View
         key={idx}
-        style={[styles.summitCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
+        style={[
+          styles.summitCard,
+          { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+        ]}
       >
         <View style={styles.summitHeaderRow}>
           <View

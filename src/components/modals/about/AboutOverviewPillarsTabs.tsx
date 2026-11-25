@@ -37,25 +37,45 @@ export const AboutOverviewTab: React.FC<TabThemeProps> = ({ colors, isDark, isBa
     </View>
 
     <View style={styles.metricsGrid}>
-      <View style={[styles.metricCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+      <View
+        style={[
+          styles.metricCard,
+          { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+        ]}
+      >
         <Text style={[styles.metricNumber, { color: colors.primary }]}>300+</Text>
         <Text style={[styles.metricLabel, { color: colors.textMuted }]}>
           {isBangla ? 'অন-ডিমান্ড কোর্স' : 'Executive Courses'}
         </Text>
       </View>
-      <View style={[styles.metricCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+      <View
+        style={[
+          styles.metricCard,
+          { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+        ]}
+      >
         <Text style={[styles.metricNumber, { color: '#10B981' }]}>50,000+</Text>
         <Text style={[styles.metricLabel, { color: colors.textMuted }]}>
           {isBangla ? 'পেশাজীবী লার্নার' : 'Empowered Learners'}
         </Text>
       </View>
-      <View style={[styles.metricCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+      <View
+        style={[
+          styles.metricCard,
+          { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+        ]}
+      >
         <Text style={[styles.metricNumber, { color: '#E34234' }]}>5+</Text>
         <Text style={[styles.metricLabel, { color: colors.textMuted }]}>
           {isBangla ? 'জাতীয় সামিট' : 'National Summits'}
         </Text>
       </View>
-      <View style={[styles.metricCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+      <View
+        style={[
+          styles.metricCard,
+          { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+        ]}
+      >
         <Text style={[styles.metricNumber, { color: '#8B5CF6' }]}>150+</Text>
         <Text style={[styles.metricLabel, { color: colors.textMuted }]}>
           {isBangla ? 'কর্পোরেট পার্টনার' : 'Enterprise Partners'}
@@ -63,7 +83,12 @@ export const AboutOverviewTab: React.FC<TabThemeProps> = ({ colors, isDark, isBa
       </View>
     </View>
 
-    <View style={[styles.infoBlock, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+    <View
+      style={[
+        styles.infoBlock,
+        { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+      ]}
+    >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
         <Ionicons name="globe-outline" size={18} color="#0284C7" />
         <Text style={[styles.infoBlockTitle, { color: colors.text }]}>
@@ -113,7 +138,9 @@ export const AboutPillarsTab: React.FC<TabThemeProps> = ({ colors, isDark, isBan
       iconColor: '#E34234',
       iconBg: isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2',
       title: '4. Ecosystem & Community Initiatives',
-      subtitle: isBangla ? 'জাতীয় সামিট ও বিশ্ববিদ্যালয় পার্টনারশিপ' : 'National Summits & University Alliances',
+      subtitle: isBangla
+        ? 'জাতীয় সামিট ও বিশ্ববিদ্যালয় পার্টনারশিপ'
+        : 'National Summits & University Alliances',
       subtitleColor: '#E34234',
       desc: 'Flagship national summits bringing together government, universities, and industry leaders to bridge the skill gap between academia and modern enterprise.',
     },
@@ -127,7 +154,10 @@ export const AboutPillarsTab: React.FC<TabThemeProps> = ({ colors, isDark, isBan
       {pillars.map((pillar) => (
         <View
           key={pillar.title}
-          style={[styles.pillarCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
+          style={[
+            styles.pillarCard,
+            { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+          ]}
         >
           <View style={[styles.pillarIconBg, { backgroundColor: pillar.iconBg }]}>
             <Ionicons name={pillar.icon as any} size={22} color={pillar.iconColor} />

@@ -26,11 +26,7 @@ import {
   fetchWpCourseDetail,
   fetchWpLiveWorkshops,
 } from '../../services/wordpressApi';
-import {
-  INITIAL_CANONICAL_CATEGORIES,
-  areCoursesEqual,
-  areDataEqual,
-} from './learningCatalogData';
+import { INITIAL_CANONICAL_CATEGORIES, areCoursesEqual, areDataEqual } from './learningCatalogData';
 
 export function useCatalogAndBrandingSync(
   isOffline: boolean,

@@ -575,7 +575,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const allKeys = await AsyncStorage.getAllKeys();
       const userScopedKeys = allKeys.filter((k) => k.includes(`_u_${uid}`));
-      await (userScopedKeys.length > 0 ? AsyncStorage.multiRemove(userScopedKeys) : Promise.resolve());
+      await (userScopedKeys.length > 0
+        ? AsyncStorage.multiRemove(userScopedKeys)
+        : Promise.resolve());
     } catch {}
     await logout();
   };

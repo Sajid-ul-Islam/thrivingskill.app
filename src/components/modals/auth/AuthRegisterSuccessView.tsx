@@ -83,7 +83,11 @@ export const AuthRegisterSuccessView: React.FC<Props> = ({
           {isBangla ? 'নিবন্ধিত ইমেইল ঠিকানা:' : 'Registered Email Address:'}
         </Text>
       </View>
-      <Text style={[styles.registeredEmailHighlight, { color: colors.text }]} numberOfLines={1} selectable>
+      <Text
+        style={[styles.registeredEmailHighlight, { color: colors.text }]}
+        numberOfLines={1}
+        selectable
+      >
         {registeredSuccessEmail || regEmail || 'your email'}
       </Text>
       {registeredSuccessUsername ? (
@@ -98,7 +102,12 @@ export const AuthRegisterSuccessView: React.FC<Props> = ({
       ) : null}
     </View>
 
-    <View style={[styles.guidanceCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+    <View
+      style={[
+        styles.guidanceCard,
+        { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+      ]}
+    >
       <Text style={[styles.guidanceHeading, { color: colors.text }]}>
         {isBangla ? 'পরবর্তী করণীয় ৩টি সহজ ধাপ:' : 'What to do next:'}
       </Text>
@@ -206,9 +215,7 @@ export const AuthRegisterSuccessView: React.FC<Props> = ({
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
               <Text style={[styles.submitButtonText, { color: '#FFFFFF' }]}>
-                {isBangla
-                  ? 'কোড ভেরিফাই ও অ্যাকাউন্ট সক্রিয় করুন'
-                  : 'Verify Code & Activate Account'}
+                {isBangla ? 'কোড ভেরিফাই ও অ্যাকাউন্ট সক্রিয় করুন' : 'Verify Code & Activate Account'}
               </Text>
             )}
           </TouchableOpacity>

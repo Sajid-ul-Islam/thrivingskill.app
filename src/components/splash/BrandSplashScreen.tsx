@@ -1,12 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Animated,
-  Easing,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, Animated, Easing, TouchableOpacity } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -214,9 +207,7 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
               accessibilityLabel="App Version"
               hitSlop={{ top: 12, bottom: 14, left: 24, right: 24 }}
             >
-              <Text style={styles.versionText}>
-                v1.4.0 {__DEV__ ? '• [DEV]' : ''}
-              </Text>
+              <Text style={styles.versionText}>v1.4.0 {__DEV__ ? '• [DEV]' : ''}</Text>
             </TouchableOpacity>
           </Animated.View>
         </View>

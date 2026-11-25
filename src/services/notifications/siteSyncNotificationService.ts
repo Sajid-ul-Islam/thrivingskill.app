@@ -337,9 +337,7 @@ export class SiteSyncNotificationService {
       const flagship = candidates.find((c: any) => {
         const name = (c.name || '').toLowerCase();
         return (
-          name.includes('excel') ||
-          name.includes('generative ai') ||
-          name.includes('communication')
+          name.includes('excel') || name.includes('generative ai') || name.includes('communication')
         );
       });
       if (flagship) {

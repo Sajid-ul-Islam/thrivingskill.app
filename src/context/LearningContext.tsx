@@ -225,8 +225,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     let certId = current.certificateId;
 
     if (isCompleted && userHasReviewed && !certId) {
-      const studentName =
-        user?.displayName || user?.name || user?.username || 'Executive Graduate';
+      const studentName = user?.displayName || user?.name || user?.username || 'Executive Graduate';
       const newCert = buildCertificateRecord(course, studentName, undefined, 'Course Instructor');
       certId = newCert.credentialId;
       setCertificates((prev) => {
@@ -386,7 +385,8 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const isRsvpd = (workshopId: string) => rsvpWorkshops.includes(workshopId);
   const getCourseById = (courseId: string) => catalog.courses.find((c) => c.id === courseId);
-  const getWorkshopById = (workshopId: string) => catalog.workshops.find((w) => w.id === workshopId);
+  const getWorkshopById = (workshopId: string) =>
+    catalog.workshops.find((w) => w.id === workshopId);
 
   const recordCategoryInteraction = (categoryId: string) => {
     if (!categoryId || categoryId === 'all') return;

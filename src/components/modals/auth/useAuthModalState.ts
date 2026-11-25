@@ -1,12 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  ScrollView,
-  TextInput,
-  Alert,
-  Keyboard,
-  Linking,
-  Platform,
-} from 'react-native';
+import { ScrollView, TextInput, Alert, Keyboard, Linking, Platform } from 'react-native';
 import { useLanguage } from '../../../context/LanguageContext';
 import { useAuth } from '../../../context/AuthContext';
 import { useFeedback } from '../../../context/FeedbackContext';
@@ -223,9 +216,9 @@ export function useAuthModalState({
   ) => {
     const needsOtp = Boolean(
       regRes &&
-        typeof regRes === 'object' &&
-        'requiresVerification' in regRes &&
-        regRes.requiresVerification
+      typeof regRes === 'object' &&
+      'requiresVerification' in regRes &&
+      regRes.requiresVerification
     );
     setRegisteredSuccessEmail(trimmedEmail);
     setRegisteredSuccessUsername(assignedUsername);

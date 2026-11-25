@@ -1,10 +1,5 @@
 export type AboutTabKey =
-  | 'overview'
-  | 'pillars'
-  | 'partners'
-  | 'summits'
-  | 'leadership'
-  | 'contact';
+  'overview' | 'pillars' | 'partners' | 'summits' | 'leadership' | 'contact';
 
 export const FOUNDER_IMAGES = {
   abdullah_al_mahmud: require('../../../../assets/team/abdullah_al_mahmud.jpeg'),
@@ -14,14 +9,32 @@ export const FOUNDER_IMAGES = {
   abdulla_al_noman: require('../../../../assets/team/abdulla_al_noman.jpeg'),
 };
 
-export function getAboutTabs(isBangla: boolean): { key: AboutTabKey; label: string; icon: string }[] {
+export function getAboutTabs(
+  isBangla: boolean
+): { key: AboutTabKey; label: string; icon: string }[] {
   return [
-    { key: 'overview', label: isBangla ? 'সংক্ষিপ্ত তথ্য' : 'Overview', icon: 'information-circle-outline' },
+    {
+      key: 'overview',
+      label: isBangla ? 'সংক্ষিপ্ত তথ্য' : 'Overview',
+      icon: 'information-circle-outline',
+    },
     { key: 'pillars', label: isBangla ? '৪টি মূল স্তম্ভ' : '4 Pillars', icon: 'layers-outline' },
-    { key: 'partners', label: isBangla ? 'পার্টনার্স ও সহযোগী' : 'Partners & MoUs', icon: 'shield-checkmark-outline' },
+    {
+      key: 'partners',
+      label: isBangla ? 'পার্টনার্স ও সহযোগী' : 'Partners & MoUs',
+      icon: 'shield-checkmark-outline',
+    },
     { key: 'summits', label: isBangla ? 'সামিট ও ইভেন্ট' : 'Summits', icon: 'ribbon-outline' },
-    { key: 'leadership', label: isBangla ? 'নেতৃত্ব ও ফাউন্ডার্স' : 'Founders & Team', icon: 'people-outline' },
-    { key: 'contact', label: isBangla ? 'যোগাযোগ ও আইনি' : 'Contact & Legal', icon: 'call-outline' },
+    {
+      key: 'leadership',
+      label: isBangla ? 'নেতৃত্ব ও ফাউন্ডার্স' : 'Founders & Team',
+      icon: 'people-outline',
+    },
+    {
+      key: 'contact',
+      label: isBangla ? 'যোগাযোগ ও আইনি' : 'Contact & Legal',
+      icon: 'call-outline',
+    },
   ];
 }
 
@@ -36,7 +49,9 @@ export function getPartnerGroups(isBangla: boolean) {
       items: [
         {
           name: 'University of Dhaka (DU) / DUCSU',
-          role: isBangla ? 'জাতীয় স্কিলস সামিট কো-অর্গানাইজার' : 'National Skills Summit Co-Organizer',
+          role: isBangla
+            ? 'জাতীয় স্কিলস সামিট কো-অর্গানাইজার'
+            : 'National Skills Summit Co-Organizer',
           scope: isBangla
             ? 'ঢাকা বিশ্ববিদ্যালয়ের সিনেট ভবনে বাংলাদেশ স্কিলস সামিট আয়োজনের যৌথ অংশীদার। জাতীয় পুনর্গঠন ও কর্মদক্ষতা রূপান্তরে অগ্রণী।'
             : 'Co-organizer of the Bangladesh Skills Summit at the Senate Bhaban, University of Dhaka, advancing national workforce reform.',
@@ -44,7 +59,9 @@ export function getPartnerGroups(isBangla: boolean) {
         },
         {
           name: 'North South University (NSU)',
-          role: isBangla ? '৪আইআর সামিট ও প্লেসমেন্ট পার্টনার' : '4IR Skills Summit & Placement Partner',
+          role: isBangla
+            ? '৪আইআর সামিট ও প্লেসমেন্ট পার্টনার'
+            : '4IR Skills Summit & Placement Partner',
           scope: isBangla
             ? 'নর্থ সাউথ ইউনিভার্সিটির ক্যারিয়ার অ্যান্ড প্লেসমেন্ট সেন্টারের (CPC) সাথে ফোর্থ ইন্ডাস্ট্রিয়াল রেভোলিউশন সামিট কো-অর্গানাইজার।'
             : 'Organized the 4th Industrial Revolution (4IR) Skills Summit with NSU’s Career and Placement Center (CPC) to equip youth with modern AI capabilities.',
@@ -52,7 +69,9 @@ export function getPartnerGroups(isBangla: boolean) {
         },
         {
           name: 'Eastern University (EU)',
-          role: isBangla ? 'দ্বিপাক্ষিক সমঝোতা স্মারক (MoU) স্বাক্ষরিত' : 'Official Bilateral MoU Signed',
+          role: isBangla
+            ? 'দ্বিপাক্ষিক সমঝোতা স্মারক (MoU) স্বাক্ষরিত'
+            : 'Official Bilateral MoU Signed',
           scope: isBangla
             ? 'শিক্ষা, গবেষণা ও প্রাতিষ্ঠানিক দক্ষতায় এআই (AI) অন্তর্ভুক্তির লক্ষ্যে আনুষ্ঠানিক চুক্তি (MoU) স্বাক্ষরিত। শিক্ষক ও কর্মকর্তাদের এআই প্রশিক্ষণ প্রদান।'
             : 'Signed a formal Memorandum of Understanding (MoU) to integrate Artificial Intelligence into university teaching, student curricula, and administrative workflows.',
@@ -60,7 +79,9 @@ export function getPartnerGroups(isBangla: boolean) {
         },
         {
           name: 'Ahsanullah University of Science & Tech (AUST)',
-          role: isBangla ? 'এমপ্লয়েবিলিটি সামিট কো-অর্গানাইজার' : 'Employability & Skills Summit Co-Organizer',
+          role: isBangla
+            ? 'এমপ্লয়েবিলিটি সামিট কো-অর্গানাইজার'
+            : 'Employability & Skills Summit Co-Organizer',
           scope: isBangla
             ? 'অস্ট স্কুল অব বিজনেস-এর যৌথ উদ্যোগে এমপ্লয়েবিলিটি অ্যান্ড স্কিলস সামিট, জব ফেয়ার এবং কর্পোরেট একাডেমি ডায়ালগ পরিচালনা।'
             : 'Partnered with AUST School of Business to host the national Employability & Skills Summit, corporate job fairs, and industry masterclasses.',
@@ -68,7 +89,9 @@ export function getPartnerGroups(isBangla: boolean) {
         },
         {
           name: 'Comilla University (CoU) & Manarat Int. University',
-          role: isBangla ? 'দক্ষতা উন্নয়ন কর্মশালা ও ফ্যাকাল্টি পার্টনার' : 'Skills Workshop & Faculty Partner',
+          role: isBangla
+            ? 'দক্ষতা উন্নয়ন কর্মশালা ও ফ্যাকাল্টি পার্টনার'
+            : 'Skills Workshop & Faculty Partner',
           scope: isBangla
             ? 'শিক্ষার্থীদের ক্যারিয়ার প্রস্তুতি, সফটওয়্যার স্কিলস এবং ডেটা অ্যানালিটিক্স প্রশিক্ষণে সক্রিয় প্রাতিষ্ঠানিক অংশীদার।'
             : 'Delivering tailored masterclasses in data literacy, business presentation, and enterprise digital tools for graduating student cohorts.',
@@ -85,7 +108,9 @@ export function getPartnerGroups(isBangla: boolean) {
       items: [
         {
           name: 'Aspire to Innovate (a2i) — ICT & Cabinet Division',
-          role: isBangla ? 'স্মার্ট বাংলাদেশ ও ৪আইআর পার্টনার' : 'National 4IR & Smart Workforce Partner',
+          role: isBangla
+            ? 'স্মার্ট বাংলাদেশ ও ৪আইআর পার্টনার'
+            : 'National 4IR & Smart Workforce Partner',
           scope: isBangla
             ? 'চতুর্থ শিল্প বিপ্লবের চ্যালেঞ্জ মোকাবিলা এবং জাতীয় তরুণদের ডিজিটাল কর্মসংস্থানে যৌথ উদ্যোগ ও কনফারেন্স কোলাবরেশন।'
             : 'Strategic alignment with a2i (ICT Division & Cabinet Division, Bangladesh) for 4IR skills adoption and tech workforce readiness.',
@@ -102,15 +127,15 @@ export function getPartnerGroups(isBangla: boolean) {
       ],
     },
     {
-      category: isBangla
-        ? 'পেশাদার ও জাতীয় শিল্প সমিতি'
-        : 'Professional & Industry Associations',
+      category: isBangla ? 'পেশাদার ও জাতীয় শিল্প সমিতি' : 'Professional & Industry Associations',
       icon: 'briefcase-outline',
       color: '#8B5CF6',
       items: [
         {
           name: 'ICMAB (Cost & Management Accountants)',
-          role: isBangla ? 'প্রফেশনাল ফিন্যান্স স্কিলিং পার্টনার' : 'Professional Finance Skilling Partner',
+          role: isBangla
+            ? 'প্রফেশনাল ফিন্যান্স স্কিলিং পার্টনার'
+            : 'Professional Finance Skilling Partner',
           scope: isBangla
             ? 'পেশাদার একাউন্ট্যান্টদের জন্য কৃত্রিম বুদ্ধিমত্তা (AI) ও প্রেডিক্টিভ বিজনেস অ্যানালিটিক্স কর্মশালা পরিচালনা।'
             : 'Joint webinars and masterclasses equipping professional cost & management accountants with applied AI in corporate finance.',
@@ -183,7 +208,9 @@ export function getLeadershipMembers(isBangla: boolean) {
   return [
     {
       name: 'Md. Abdullah Al Mahmud',
-      title: isBangla ? 'প্রতিষ্ঠাতা ও প্রধান নির্বাহী কর্মকর্তা (সিইও)' : 'Founder & Chief Executive Officer (CEO)',
+      title: isBangla
+        ? 'প্রতিষ্ঠাতা ও প্রধান নির্বাহী কর্মকর্তা (সিইও)'
+        : 'Founder & Chief Executive Officer (CEO)',
       badge: isBangla ? 'প্রতিষ্ঠাতা ও সিইও' : 'Founder & CEO',
       isFounder: true,
       desc: isBangla
@@ -230,13 +257,16 @@ export function getLeadershipMembers(isBangla: boolean) {
         ? 'থ্রাইভিং স্কিলস লিমিটেডের প্রশাসনিক কার্যক্রম, করপোরেট কমপ্লায়েন্স, লজিস্টিকস ও অ্যাকাউন্টস অপারেশনস ব্যবস্থাপনা।'
         : 'Heading administrative operations, corporate compliance, office administration, logistics, and accounts management at Thriving Skills Limited.',
       localAvatar: undefined,
-      webAvatar: 'https://thrivingskill.com/wp-content/themes/eduma/images/demo_images/demo_image.jpg',
+      webAvatar:
+        'https://thrivingskill.com/wp-content/themes/eduma/images/demo_images/demo_image.jpg',
       profileUrl: 'https://thrivingskill.com/our_team/sayed-sirajul-islam/',
       linkedin: 'https://www.linkedin.com/in/islam-syed/',
     },
     {
       name: 'Md. Tareq Siddiqui',
-      title: isBangla ? 'সিনিয়র এক্সিকিউটিভ, প্রোডাকশন' : 'Senior Executive, Production & Content Strategy',
+      title: isBangla
+        ? 'সিনিয়র এক্সিকিউটিভ, প্রোডাকশন'
+        : 'Senior Executive, Production & Content Strategy',
       badge: 'Production & Media',
       isFounder: false,
       desc: isBangla
@@ -249,7 +279,9 @@ export function getLeadershipMembers(isBangla: boolean) {
     },
     {
       name: 'Md: Abdulla Al Noman',
-      title: isBangla ? 'ওয়েব ডেভেলপার ও প্ল্যাটফর্ম অ্যাডমিনিস্ট্রেটর' : 'Web Developer & Platform Administrator',
+      title: isBangla
+        ? 'ওয়েব ডেভেলপার ও প্ল্যাটফর্ম অ্যাডমিনিস্ট্রেটর'
+        : 'Web Developer & Platform Administrator',
       badge: 'Platform Engineering',
       isFounder: false,
       desc: isBangla
@@ -264,9 +296,34 @@ export function getLeadershipMembers(isBangla: boolean) {
 }
 
 export const ABOUT_SOCIAL_CHANNELS = [
-  { name: 'Facebook', icon: 'logo-facebook', color: '#1877F2', url: 'https://www.facebook.com/thrivingskills/' },
-  { name: 'LinkedIn', icon: 'logo-linkedin', color: '#0A66C2', url: 'https://www.linkedin.com/company/thriving-skills' },
-  { name: 'YouTube', icon: 'logo-youtube', color: '#FF0000', url: 'https://www.youtube.com/@ThrivingSkills' },
-  { name: 'Twitter / X', icon: 'logo-twitter', color: '#1DA1F2', url: 'https://twitter.com/SkillsThriving' },
-  { name: 'Instagram', icon: 'logo-instagram', color: '#E4405F', url: 'https://www.instagram.com/thriving_skills/' },
+  {
+    name: 'Facebook',
+    icon: 'logo-facebook',
+    color: '#1877F2',
+    url: 'https://www.facebook.com/thrivingskills/',
+  },
+  {
+    name: 'LinkedIn',
+    icon: 'logo-linkedin',
+    color: '#0A66C2',
+    url: 'https://www.linkedin.com/company/thriving-skills',
+  },
+  {
+    name: 'YouTube',
+    icon: 'logo-youtube',
+    color: '#FF0000',
+    url: 'https://www.youtube.com/@ThrivingSkills',
+  },
+  {
+    name: 'Twitter / X',
+    icon: 'logo-twitter',
+    color: '#1DA1F2',
+    url: 'https://twitter.com/SkillsThriving',
+  },
+  {
+    name: 'Instagram',
+    icon: 'logo-instagram',
+    color: '#E4405F',
+    url: 'https://www.instagram.com/thriving_skills/',
+  },
 ];

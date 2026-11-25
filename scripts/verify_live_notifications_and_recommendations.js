@@ -91,14 +91,44 @@ pass('SiteSyncNotificationService connects to live LearnPress & WordPress APIs')
 // -------------------------------------------------------------
 console.log('\nTest 3: Executing Actual Production Course Recommendation Engine...');
 const babel = require('@babel/core');
+const loadedTsCache = new Map();
+function loadTsModule(targetPath) {
+  const normalized = path.normalize(targetPath);
+  if (loadedTsCache.has(normalized)) {
+    return loadedTsCache.get(normalized).exports;
+  }
+  const mod = { exports: {} };
+  loadedTsCache.set(normalized, mod);
+  const transformed = babel.transformFileSync(normalized, {
+    presets: ['babel-preset-expo'],
+    filename: path.basename(normalized),
+  });
+  const localRequire = (specifier) => {
+    if (specifier === 'react-native') {
+      return { NativeModules: {}, Platform: { OS: 'android' } };
+    }
+    if (specifier === '@react-native-async-storage/async-storage') {
+      return { default: { getItem: async () => null, setItem: async () => {} } };
+    }
+    if (specifier.startsWith('.')) {
+      const base = path.resolve(path.dirname(normalized), specifier);
+      for (const candidate of [`${base}.ts`, `${base}.tsx`, `${base}.js`, base]) {
+        if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+          if (candidate.endsWith('.ts') || candidate.endsWith('.tsx')) {
+            return loadTsModule(candidate);
+          }
+          return require(candidate);
+        }
+      }
+    }
+    return require(specifier);
+  };
+  new Function('exports', 'require', 'module', transformed.code)(mod.exports, localRequire, mod);
+  return mod.exports;
+}
+
 const recEnginePath = path.join(__dirname, '../src/utils/recommendations.ts');
-const transformed = babel.transformFileSync(recEnginePath, {
-  presets: ['babel-preset-expo'],
-  filename: 'recommendations.ts',
-});
-const recModule = { exports: {} };
-new Function('exports', 'require', 'module', transformed.code)(recModule.exports, require, recModule);
-const { computeRecommendedCourses } = recModule.exports;
+const { computeRecommendedCourses } = loadTsModule(recEnginePath);
 
 const mockCategories = [
   { id: 'ai', name: 'AI & Automation', count: 5, color: '#102F53' },

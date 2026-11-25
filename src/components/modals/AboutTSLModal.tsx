@@ -133,7 +133,9 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                     size={14}
                     color={isActive ? colors.onPrimary : colors.textMuted}
                   />
-                  <Text style={[styles.tabLabel, { color: isActive ? colors.onPrimary : colors.text }]}>
+                  <Text
+                    style={[styles.tabLabel, { color: isActive ? colors.onPrimary : colors.text }]}
+                  >
                     {tab.label}
                   </Text>
                 </TouchableOpacity>

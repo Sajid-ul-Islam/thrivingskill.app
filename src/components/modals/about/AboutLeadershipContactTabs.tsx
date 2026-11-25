@@ -100,11 +100,7 @@ export const AboutLeadershipTab: React.FC<LeadershipTabProps> = ({
                   style={[
                     styles.leaderBadgePillText,
                     {
-                      color: leader.isFounder
-                        ? '#E34234'
-                        : isDark
-                          ? '#6EE7B7'
-                          : '#0369A1',
+                      color: leader.isFounder ? '#E34234' : isDark ? '#6EE7B7' : '#0369A1',
                     },
                   ]}
                 >
@@ -179,7 +175,12 @@ export const AboutContactTab: React.FC<ContactTabProps> = ({
 
   return (
     <View style={styles.sectionContainer}>
-      <View style={[styles.contactCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+      <View
+        style={[
+          styles.contactCard,
+          { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+        ]}
+      >
         <Text style={[styles.contactCardHeader, { color: colors.text }]}>
           {isBangla ? 'অফিসিয়াল যোগাযোগ ও সাপোর্ট' : 'Official Coordinates & Support'}
         </Text>
@@ -190,7 +191,12 @@ export const AboutContactTab: React.FC<ContactTabProps> = ({
           accessibilityRole="button"
           accessibilityLabel="Call direct helpline 01312 100288"
         >
-          <View style={[styles.contactIconBg, { backgroundColor: isDark ? 'rgba(37, 99, 235, 0.18)' : '#EFF6FF' }]}>
+          <View
+            style={[
+              styles.contactIconBg,
+              { backgroundColor: isDark ? 'rgba(37, 99, 235, 0.18)' : '#EFF6FF' },
+            ]}
+          >
             <Ionicons name="call" size={18} color={isDark ? '#60A5FA' : '#2563EB'} />
           </View>
           <View style={{ flex: 1 }}>
@@ -208,7 +214,12 @@ export const AboutContactTab: React.FC<ContactTabProps> = ({
           accessibilityRole="button"
           accessibilityLabel="Open official WhatsApp +880 1312-100288"
         >
-          <View style={[styles.contactIconBg, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.18)' : '#ECFDF5' }]}>
+          <View
+            style={[
+              styles.contactIconBg,
+              { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.18)' : '#ECFDF5' },
+            ]}
+          >
             <Ionicons name="logo-whatsapp" size={18} color="#10B981" />
           </View>
           <View style={{ flex: 1 }}>
@@ -226,14 +237,21 @@ export const AboutContactTab: React.FC<ContactTabProps> = ({
           accessibilityRole="button"
           accessibilityLabel="Send email to info@thrivingskill.com"
         >
-          <View style={[styles.contactIconBg, { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.16)' : '#FAF5FF' }]}>
+          <View
+            style={[
+              styles.contactIconBg,
+              { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.16)' : '#FAF5FF' },
+            ]}
+          >
             <Ionicons name="mail" size={18} color="#8B5CF6" />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[styles.contactLabel, { color: colors.textMuted }]}>
               {isBangla ? 'ইমেইল যোগাযোগ' : 'Inquiries & Support Email'}
             </Text>
-            <Text style={[styles.contactValue, { color: colors.text }]}>info@thrivingskill.com</Text>
+            <Text style={[styles.contactValue, { color: colors.text }]}>
+              info@thrivingskill.com
+            </Text>
           </View>
           <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
         </TouchableOpacity>
@@ -244,7 +262,12 @@ export const AboutContactTab: React.FC<ContactTabProps> = ({
           accessibilityRole="button"
           accessibilityLabel="Open official portal on web"
         >
-          <View style={[styles.contactIconBg, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.16)' : '#FEF2F2' }]}>
+          <View
+            style={[
+              styles.contactIconBg,
+              { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.16)' : '#FEF2F2' },
+            ]}
+          >
             <Ionicons name="globe-outline" size={18} color="#EF4444" />
           </View>
           <View style={{ flex: 1 }}>
@@ -267,7 +290,10 @@ export const AboutContactTab: React.FC<ContactTabProps> = ({
         {ABOUT_SOCIAL_CHANNELS.map((social, idx) => (
           <TouchableOpacity
             key={idx}
-            style={[styles.socialPill, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
+            style={[
+              styles.socialPill,
+              { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+            ]}
             onPress={() => onOpenUrl(social.url)}
             accessibilityRole="button"
             accessibilityLabel={`Visit Thriving Skills on ${social.name}`}
@@ -278,7 +304,12 @@ export const AboutContactTab: React.FC<ContactTabProps> = ({
         ))}
       </View>
 
-      <View style={[styles.legalAccessCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+      <View
+        style={[
+          styles.legalAccessCard,
+          { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+        ]}
+      >
         <View style={styles.legalAccessHeader}>
           <Ionicons name="shield-checkmark" size={18} color={colors.primary} />
           <Text style={[styles.legalAccessTitle, { color: colors.text }]}>

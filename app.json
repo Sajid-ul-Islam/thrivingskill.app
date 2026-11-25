@@ -121,8 +121,8 @@
           }
         }
       ],
-      "@sentry/react-native/expo",
-      "./plugins/withOnDeviceAi"
+      "./plugins/withOnDeviceAi",
+      "@sentry/react-native/expo"
     ],
     "extra": {
       "eas": {

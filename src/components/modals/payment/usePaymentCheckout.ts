@@ -418,7 +418,13 @@ export function usePaymentCheckout({
 
   // Short background auto-poll when slow SSLCommerz webhook lands user on the sync tab
   useEffect(() => {
-    if (!visible || activeTab !== 'sync' || !course || !isAuthenticated || hasCompletedPurchaseRef.current) {
+    if (
+      !visible ||
+      activeTab !== 'sync' ||
+      !course ||
+      !isAuthenticated ||
+      hasCompletedPurchaseRef.current
+    ) {
       return;
     }
     let cancelled = false;
@@ -433,12 +439,22 @@ export function usePaymentCheckout({
             resolve();
           }, delayMs);
         });
-        if (cancelled || !isMountedRef.current || isCancelledRef.current || hasCompletedPurchaseRef.current) {
+        if (
+          cancelled ||
+          !isMountedRef.current ||
+          isCancelledRef.current ||
+          hasCompletedPurchaseRef.current
+        ) {
           return;
         }
         try {
           const check = await CoursesService.verifyServerEnrollment(course.id);
-          if (check.enrolled && !cancelled && isMountedRef.current && !hasCompletedPurchaseRef.current) {
+          if (
+            check.enrolled &&
+            !cancelled &&
+            isMountedRef.current &&
+            !hasCompletedPurchaseRef.current
+          ) {
             hasCompletedPurchaseRef.current = true;
             confirmServerEnrollments(
               check.enrolledCourseIds.length > 0 ? check.enrolledCourseIds : [course.id]
@@ -460,7 +476,16 @@ export function usePaymentCheckout({
       cancelled = true;
       if (pollTimer) clearTimeout(pollTimer);
     };
-  }, [visible, activeTab, course, isAuthenticated, confirmServerEnrollments, refreshCourses, onClose, onSuccess]);
+  }, [
+    visible,
+    activeTab,
+    course,
+    isAuthenticated,
+    confirmServerEnrollments,
+    refreshCourses,
+    onClose,
+    onSuccess,
+  ]);
 
   const performEnrollmentSync = useCallback(async () => {
     if (!course) return;
