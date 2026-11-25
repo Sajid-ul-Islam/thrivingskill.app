@@ -280,7 +280,7 @@ const INITIAL_CANONICAL_CATEGORIES: Category[] = [
 const LearningContext = createContext<LearningContextType>({} as LearningContextType);
 
 export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, canBypassCourseLocks } = useAuth();
+  const { user, token, canBypassCourseLocks } = useAuth();
   const { isOffline } = useNetwork();
   const userScope = user?.id ? `_u_${user.id}` : '_guest';
 
@@ -308,6 +308,8 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [coursesError, setCoursesError] = useState<string | null>(null);
   const heartbeatTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const prevOfflineRef = useRef<boolean>(isOffline);
+  const coursesRef = useRef<Course[]>(courses);
+  coursesRef.current = courses;
   const [selectedCategory, setSelectedCategory] = useState<CategoryId>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
@@ -465,6 +467,64 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     []
   );
 
+  // Reconcile server-confirmed course enrollments on login, foreground return, and manual refresh
+  const syncUserEnrollments = useCallback(async (): Promise<string[] | null> => {
+    if (!user?.id || !token) {
+      return null;
+    }
+
+    const serverIds = await CoursesService.fetchEnrolledCourseIdsFromServer();
+    if (serverIds === null) {
+      return null;
+    }
+
+    let pendingEnrollIds = new Set<string>();
+    try {
+      const pending = await SyncQueueManager.getPendingMutations();
+      pendingEnrollIds = new Set(
+        pending
+          .filter((m) => m.action === 'ENROLL_COURSE' && m.payload?.id != null)
+          .map((m) => String(m.payload.id))
+      );
+    } catch {}
+
+    const serverIdSet = new Set(serverIds);
+    const today = new Date().toISOString().split('T')[0];
+
+    setUserProgress((prev) => {
+      let changed = false;
+      const next: Record<string, UserProgress> = {};
+
+      for (const [cId, prog] of Object.entries(prev)) {
+        if (serverIdSet.has(cId) || pendingEnrollIds.has(cId)) {
+          next[cId] = prog;
+        } else {
+          changed = true;
+        }
+      }
+
+      for (const cId of serverIds) {
+        if (next[cId]) continue;
+        const matchedCourse = courses.find((c) => c.id === cId);
+        const firstLessonId = matchedCourse?.modules?.[0]?.lessons?.[0]?.id || `les-${cId}-1`;
+        next[cId] = {
+          courseId: cId,
+          enrolledDate: today,
+          completedLessonIds: [],
+          lastAccessedLessonId: firstLessonId,
+          isCompleted: false,
+        };
+        changed = true;
+      }
+
+      if (!changed) return prev;
+      saveState(PROGRESS_STORAGE_KEY, next);
+      return next;
+    });
+
+    return serverIds;
+  }, [user?.id, token, userScope, courses]);
+
   // Hydrate scoped user learning state whenever signed-in account changes
   useEffect(() => {
     let active = true;
@@ -542,30 +602,10 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           } catch {}
         }
 
-        if (user?.id) {
-          const serverSync = await CompanionService.checkServerEnrollment();
-          if (active && serverSync?.enrolledCourseIds?.length) {
-            const uniqueIds = Array.from(
-              new Set(serverSync.enrolledCourseIds.map((id) => String(id)).filter(Boolean))
-            );
-            setUserProgress((prev) => {
-              let changed = false;
-              const next = { ...prev };
-              for (const cId of uniqueIds) {
-                if (next[cId]) continue;
-                next[cId] = {
-                  courseId: cId,
-                  enrolledDate: new Date().toISOString().split('T')[0],
-                  completedLessonIds: [],
-                  lastAccessedLessonId: `les-${cId}-1`,
-                  isCompleted: false,
-                };
-                changed = true;
-              }
-              if (!changed) return prev;
-              saveState(PROGRESS_STORAGE_KEY, next);
-              return next;
-            });
+        if (user?.id && token) {
+          const syncedIds = await syncUserEnrollments();
+          if (active && syncedIds === null) {
+            // Transient offline/error: preserve hydrated local scope without fabricating unlocks
           }
         }
       } catch {
@@ -576,7 +616,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => {
       active = false;
     };
-  }, [user?.id, userScope]);
+  }, [user?.id, token, userScope, syncUserEnrollments]);
 
   // 1. Hydrate persisted snapshots (offline-ready) & trigger live catalog fetch on mount
   useEffect(() => {
@@ -616,6 +656,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
         loadWordPressData(true, true);
         refreshBranding(true);
+        syncUserEnrollments().catch(() => {});
       }
     };
 
@@ -623,7 +664,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => {
       sub.remove();
     };
-  }, [loadWordPressData, refreshBranding]);
+  }, [loadWordPressData, refreshBranding, syncUserEnrollments]);
 
   // 3. Re-synchronize when device recovers internet connectivity
   useEffect(() => {
@@ -633,9 +674,10 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
       loadWordPressData(true, true);
       refreshBranding(true);
+      syncUserEnrollments().catch(() => {});
     }
     prevOfflineRef.current = isOffline;
-  }, [isOffline, loadWordPressData, refreshBranding]);
+  }, [isOffline, loadWordPressData, refreshBranding, syncUserEnrollments]);
 
   // 4. Periodic background sync heartbeat (every 90s while app is in foreground)
   // Cross-Platform Timer Hygiene: Stored in useRef and cleared on unmount
@@ -646,6 +688,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           console.log('[LearningContext] Background heartbeat poll: checking thrivingskill.com...');
         }
         loadWordPressData(true, true);
+        syncUserEnrollments().catch(() => {});
       }
     }, 90000);
 
@@ -655,7 +698,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         heartbeatTimerRef.current = null;
       }
     };
-  }, [isOffline, loadWordPressData]);
+  }, [isOffline, loadWordPressData, syncUserEnrollments]);
 
   // 5. Subscribe to CoursesService live catalog updates (SWR events)
   useEffect(() => {
@@ -671,7 +714,11 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [loadWordPressData]);
 
   const refreshCourses = async () => {
-    await Promise.all([loadWordPressData(true, false), refreshBranding(true)]);
+    await Promise.all([
+      loadWordPressData(true, false),
+      refreshBranding(true),
+      syncUserEnrollments().catch(() => null),
+    ]);
   };
 
   const loadCourseDetail = async (courseId: string): Promise<Course> => {
@@ -722,21 +769,28 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const enrollInCourse = (courseId: string) => {
-    if (userProgress[courseId]) return;
     const course = courses.find((c) => c.id === courseId);
+    const isPaid = Boolean(
+      (course?.priceBdt && course.priceBdt > 0) || (course?.price && course.price > 0)
+    );
+    if (isPaid || !user?.id) return;
+
     const firstLessonId = course?.modules?.[0]?.lessons?.[0]?.id || `les-${courseId}-1`;
-    const updated = {
-      ...userProgress,
-      [courseId]: {
-        courseId,
-        enrolledDate: new Date().toISOString().split('T')[0],
-        completedLessonIds: [],
-        lastAccessedLessonId: firstLessonId,
-        isCompleted: false,
-      },
-    };
-    setUserProgress(updated);
-    saveState(PROGRESS_STORAGE_KEY, updated);
+    setUserProgress((prev) => {
+      if (prev[courseId]) return prev;
+      const updated = {
+        ...prev,
+        [courseId]: {
+          courseId,
+          enrolledDate: new Date().toISOString().split('T')[0],
+          completedLessonIds: [],
+          lastAccessedLessonId: firstLessonId,
+          isCompleted: false,
+        },
+      };
+      saveState(PROGRESS_STORAGE_KEY, updated);
+      return updated;
+    });
 
     // Queue enrollment mutation for offline-first sync with LearnPress (free courses only)
     SyncQueueManager.enqueue('ENROLL_COURSE', Endpoints.LEARNPRESS.COURSE_ENROLL, {

@@ -261,10 +261,54 @@ const defaultIp = mockGetClientIp(
 );
 assert(defaultIp === '172.68.23.4', 'Falls back safely to REMOTE_ADDR when proxy trust is off');
 
+// --------------------------------------------------------------------------
+// 5. Item C: Phone Number Squatting Prevention
+// --------------------------------------------------------------------------
+console.log('\n--- Item C: Verified Phone Meta & Squatting Prevention ---');
+assert(
+  bridgeContent.includes("public const VERIFIED_PHONE_META = 'tsmb_verified_phone';"),
+  'TSMB_OTP_Auth defines dedicated tsmb_verified_phone meta key'
+);
+
+// Verify verify_registration does NOT write tsmb_verified_phone
+const verifyRegSection = bridgeContent.slice(
+  bridgeContent.indexOf('public static function verify_registration('),
+  bridgeContent.indexOf('public static function resend_registration(')
+);
+assert(
+  !verifyRegSection.includes('tsmb_verified_phone') && !verifyRegSection.includes('VERIFIED_PHONE_META'),
+  'Email registration (verify_registration) never sets tsmb_verified_phone'
+);
+
+// Verify find_user_by_phone strictly queries VERIFIED_PHONE_META and not phone/billing_phone/user_login
+const findPhoneSection = bridgeContent.slice(
+  bridgeContent.indexOf('private static function find_user_by_phone('),
+  bridgeContent.indexOf('public static function claim_verified_phone(')
+);
+assert(
+  findPhoneSection.includes("'key'     => self::VERIFIED_PHONE_META") &&
+  !findPhoneSection.includes("'billing_phone'") &&
+  !findPhoneSection.includes("get_user_by('login'"),
+  'find_user_by_phone queries only tsmb_verified_phone (not unverified phone, billing_phone, or user_login)'
+);
+assert(
+  findPhoneSection.includes("'number'     => 2") &&
+  findPhoneSection.includes("verified_phone_conflict"),
+  'find_user_by_phone detects duplicate verified phone conflicts instead of taking first match'
+);
+
+// Verify claim_verified_phone enforces uniqueness and is called by verify_otp
+assert(
+  bridgeContent.includes('public static function claim_verified_phone(') &&
+  bridgeContent.includes('verified_phone_already_in_use') &&
+  bridgeContent.includes('self::claim_verified_phone($user_id, $phone)'),
+  'claim_verified_phone enforces uniqueness and is called only after OTP verification'
+);
+
 // Summary
 console.log(`\n====================================================`);
 if (failed === 0) {
-  console.log(`🎉 ALL D, E, F REGISTRATION, PROXY & RESEND CHECKS PASSED SUCCESSFULLY!`);
+  console.log(`🎉 ALL C, D, E, F AUTH & REGISTRATION CHECKS PASSED SUCCESSFULLY!`);
   process.exit(0);
 } else {
   console.error(`❌ ${failed} CHECKS FAILED!`);

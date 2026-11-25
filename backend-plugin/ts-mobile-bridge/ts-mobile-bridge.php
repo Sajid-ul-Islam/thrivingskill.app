@@ -508,6 +508,7 @@ class TSMB_Rest_API
         add_action('save_post_lp_course', [__CLASS__, 'clear_feed_cache']);
         add_filter('rest_request_before_callbacks', [__CLASS__, 'guard_learnpress_paid_enroll'], 10, 3);
         add_filter('learn_press_user_can_enroll_course', [__CLASS__, 'filter_learnpress_can_enroll_course'], 10, 3);
+        add_filter('learn-press/user/can-enroll/course', [__CLASS__, 'filter_learnpress_can_enroll_course'], 10, 3);
     }
 
     public static function register_routes(): void
@@ -806,13 +807,34 @@ class TSMB_Rest_API
 
     public static function check_lesson_access($request)
     {
+        $lesson_id  = absint($request['id']);
+        $post       = get_post($lesson_id);
+        $is_logged  = is_user_logged_in() && get_current_user_id() > 0;
+        $is_admin   = $is_logged && current_user_can('manage_options');
+        $is_preview = self::is_lesson_free_preview($lesson_id);
+
+        if ($is_admin) {
+            return true;
+        }
+
+        // Allow genuine LearnPress free-preview lessons for both guests and signed-in learners (rate-limited).
+        if ($is_preview) {
+            $rl_key = $is_logged ? (string) get_current_user_id() : TSMB_Security::get_client_ip();
+            $rl = TSMB_Security::consume_rate_limit(
+                'lesson_preview_access',
+                $rl_key,
+                60,
+                MINUTE_IN_SECONDS
+            );
+            if (is_wp_error($rl)) {
+                return $rl;
+            }
+            return true;
+        }
+
         $auth_check = self::check_authenticated_user();
         if (is_wp_error($auth_check)) {
             return $auth_check;
-        }
-
-        if (current_user_can('manage_options')) {
-            return true;
         }
 
         $user_id = get_current_user_id();
@@ -825,9 +847,6 @@ class TSMB_Rest_API
         if (is_wp_error($rl)) {
             return $rl;
         }
-
-        $lesson_id = absint($request['id']);
-        $post      = get_post($lesson_id);
 
         // Return uniform 403 for missing, draft, private, or unenrolled lessons to prevent ID enumeration.
         if (!$post || $post->post_type !== 'lp_lesson' || $post->post_status !== 'publish') {
@@ -851,14 +870,18 @@ class TSMB_Rest_API
 
     public static function get_lesson_detail($request)
     {
-        $auth_check = self::check_authenticated_user();
-        if (is_wp_error($auth_check)) {
-            return $auth_check;
-        }
+        $lesson_id  = absint($request['id']);
+        $post       = get_post($lesson_id);
+        $is_logged  = is_user_logged_in() && get_current_user_id() > 0;
+        $is_admin   = $is_logged && current_user_can('manage_options');
+        $is_preview = self::is_lesson_free_preview($lesson_id);
 
-        $lesson_id = absint($request['id']);
-        $post      = get_post($lesson_id);
-        $is_admin  = current_user_can('manage_options');
+        if (!$is_admin && !$is_preview) {
+            $auth_check = self::check_authenticated_user();
+            if (is_wp_error($auth_check)) {
+                return $auth_check;
+            }
+        }
 
         if (!$post || $post->post_type !== 'lp_lesson') {
             if ($is_admin) {
@@ -879,7 +902,7 @@ class TSMB_Rest_API
             );
         }
 
-        if (!$is_admin && !self::is_user_enrolled_in_any_lesson_course(get_current_user_id(), $lesson_id)) {
+        if (!$is_admin && !$is_preview && !self::is_user_enrolled_in_any_lesson_course(get_current_user_id(), $lesson_id)) {
             return new WP_Error(
                 'tsmb_not_enrolled',
                 __('You must be enrolled in this course to access this lesson.', 'ts-mobile-bridge'),
@@ -1018,18 +1041,181 @@ class TSMB_Rest_API
         return $response;
     }
 
-    public static function filter_learnpress_can_enroll_course($can_enroll, $course_id, $user_id = 0)
+    public static function filter_learnpress_can_enroll_course($can_enroll, $user_or_course, $course_or_user = 0)
     {
         if (!$can_enroll) {
+            return $can_enroll;
+        }
+
+        $uid = 0;
+        $cid = 0;
+
+        // LearnPress core passes ($enrollable, $this [LP_User], $course_id), while newer filters/addons may pass ($can_enroll, $course_id, $user_id).
+        if (is_object($user_or_course)) {
+            if (method_exists($user_or_course, 'get_id')) {
+                $uid = absint($user_or_course->get_id());
+            } elseif (isset($user_or_course->ID)) {
+                $uid = absint($user_or_course->ID);
+            }
+            $cid = absint($course_or_user);
+        } else {
+            $arg2 = absint($user_or_course);
+            $arg3 = absint($course_or_user);
+            if ($arg2 > 0 && get_post_type($arg2) === 'lp_course') {
+                $cid = $arg2;
+                $uid = $arg3;
+            } elseif ($arg3 > 0 && get_post_type($arg3) === 'lp_course') {
+                $cid = $arg3;
+                $uid = $arg2;
+            } else {
+                $cid = $arg2;
+                $uid = $arg3;
+            }
+        }
+
+        if ($uid <= 0) {
+            $uid = get_current_user_id();
+        }
+
+        if ($uid > 0 && user_can($uid, 'manage_options')) {
+            return $can_enroll;
+        }
+
+        if ($cid <= 0) {
+            return $can_enroll;
+        }
+
+        return self::can_user_enroll_paid_course($uid, $cid) ? $can_enroll : false;
+    }
+
+    private static function is_lesson_free_preview(int $lesson_id): bool
+    {
+        if ($lesson_id <= 0) {
             return false;
         }
 
-        $uid = absint($user_id) > 0 ? absint($user_id) : get_current_user_id();
-        if ($uid > 0 && user_can($uid, 'manage_options')) {
-            return true;
+        $post = get_post($lesson_id);
+        if (!$post || $post->post_type !== 'lp_lesson' || $post->post_status !== 'publish') {
+            return false;
         }
 
-        return self::can_user_enroll_paid_course($uid, absint($course_id));
+        $preview_meta = get_post_meta($lesson_id, '_lp_preview', true);
+        if (is_bool($preview_meta)) {
+            $is_preview = $preview_meta;
+        } else {
+            $normalized = strtolower(trim((string) $preview_meta));
+            $is_preview = in_array($normalized, ['yes', '1', 'true', 'on'], true);
+        }
+
+        if (!$is_preview) {
+            return false;
+        }
+
+        return !empty(self::get_course_ids_for_lesson($lesson_id));
+    }
+
+    private static function has_user_paid_for_course(int $user_id, int $course_id): bool
+    {
+        if ($user_id <= 0 || $course_id <= 0) {
+            return false;
+        }
+
+        if (function_exists('learn_press_get_user')) {
+            $lp_user = learn_press_get_user($user_id);
+            if ($lp_user) {
+                if (
+                    method_exists($lp_user, 'has_purchased_course') &&
+                    method_exists($lp_user, 'get_course_order') &&
+                    $lp_user->has_purchased_course($course_id)
+                ) {
+                    $lp_order_id = $lp_user->get_course_order($course_id);
+                    if ($lp_order_id && function_exists('learn_press_get_order')) {
+                        $lp_order = learn_press_get_order($lp_order_id);
+                        if ($lp_order && method_exists($lp_order, 'has_status') && $lp_order->has_status('completed')) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check completed LearnPress orders directly in case user_items does not yet hold an enrolled row.
+        $lp_orders = get_posts([
+            'post_type'      => 'lp_order',
+            'post_status'    => 'lp-completed',
+            'posts_per_page' => 25,
+            'fields'         => 'ids',
+            'meta_query'     => [
+                [
+                    'key'     => '_user_id',
+                    'value'   => $user_id,
+                    'compare' => '=',
+                    'type'    => 'NUMERIC',
+                ],
+            ],
+        ]);
+        if (is_array($lp_orders) && function_exists('learn_press_get_order')) {
+            foreach ($lp_orders as $lp_order_id) {
+                $lp_order = learn_press_get_order($lp_order_id);
+                if (!$lp_order || !method_exists($lp_order, 'get_items')) {
+                    continue;
+                }
+                foreach ((array) $lp_order->get_items() as $item) {
+                    $item_course_id = is_array($item) ? absint($item['course_id'] ?? 0) : 0;
+                    if ($item_course_id === $course_id) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        // Check paid WooCommerce orders mapped directly to the course or via LearnPress–WooCommerce product meta.
+        if (function_exists('wc_get_orders')) {
+            $wc_orders = wc_get_orders([
+                'customer_id' => $user_id,
+                'status'      => ['completed', 'processing'],
+                'limit'       => 25,
+                'orderby'     => 'date',
+                'order'       => 'DESC',
+            ]);
+            if (is_array($wc_orders)) {
+                foreach ($wc_orders as $wc_order) {
+                    if (!$wc_order || !method_exists($wc_order, 'get_items')) {
+                        continue;
+                    }
+                    $order_status = method_exists($wc_order, 'get_status')
+                        ? sanitize_key((string) $wc_order->get_status())
+                        : '';
+                    $is_paid = (method_exists($wc_order, 'is_paid') && $wc_order->is_paid())
+                        || in_array($order_status, ['completed', 'processing'], true);
+                    if (!$is_paid) {
+                        continue;
+                    }
+
+                    foreach ($wc_order->get_items() as $wc_item) {
+                        $product_id = method_exists($wc_item, 'get_product_id') ? absint($wc_item->get_product_id()) : 0;
+                        if ($product_id <= 0) {
+                            continue;
+                        }
+                        if ($product_id === $course_id) {
+                            return true;
+                        }
+                        foreach (['_learnpress_course', '_lp_course'] as $meta_key) {
+                            $mapped = get_post_meta($product_id, $meta_key, true);
+                            if (is_array($mapped)) {
+                                if (in_array($course_id, array_map('absint', $mapped), true)) {
+                                    return true;
+                                }
+                            } elseif (absint($mapped) === $course_id) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     private static function can_user_enroll_paid_course(int $user_id, int $course_id): bool
@@ -1054,7 +1240,8 @@ class TSMB_Rest_API
             return false;
         }
 
-        return self::is_user_enrolled_in_course($user_id, $course_id);
+        return self::is_user_enrolled_in_course($user_id, $course_id)
+            || self::has_user_paid_for_course($user_id, $course_id);
     }
 
     private static function get_course_ids_for_lesson(int $lesson_id): array
@@ -1617,6 +1804,7 @@ class TSMB_Rest_API
 class TSMB_OTP_Auth
 {
     public const NAMESPACE = 'tsl/v1';
+    public const VERIFIED_PHONE_META = 'tsmb_verified_phone';
 
     public static function init(): void
     {
@@ -1780,6 +1968,9 @@ class TSMB_OTP_Auth
         delete_transient($otp_key);
 
         $user = self::find_user_by_phone($phone);
+        if (is_wp_error($user)) {
+            return $user;
+        }
 
         if (!$user) {
             if (!get_option('users_can_register')) {
@@ -1810,6 +2001,12 @@ class TSMB_OTP_Auth
             if ($user) {
                 $user->set_role('subscriber');
             }
+
+            $claimed = self::claim_verified_phone($user_id, $phone);
+            if (is_wp_error($claimed)) {
+                return $claimed;
+            }
+
             update_user_meta($user_id, 'phone', $phone);
             update_user_meta($user_id, 'phone_number', $phone);
             update_user_meta($user_id, 'billing_phone', $phone);
@@ -1839,31 +2036,81 @@ class TSMB_OTP_Auth
         return '';
     }
 
+    /**
+     * Look up an account strictly by its OTP-verified phone meta.
+     * Never matches unverified `phone`, `billing_phone`, or `user_login` to prevent phone squatting.
+     *
+     * @return WP_User|WP_Error|null
+     */
     private static function find_user_by_phone(string $phone)
     {
-        $by_login = get_user_by('login', $phone);
-        if ($by_login) {
-            return $by_login;
+        $normalized = self::normalize_bd_phone($phone);
+        if ($normalized === '') {
+            return null;
         }
 
         $users = get_users([
-            'number'     => 1,
+            'number'     => 2,
             'meta_query' => [
-                'relation' => 'OR',
                 [
-                    'key'     => 'phone',
-                    'value'   => $phone,
-                    'compare' => '=',
-                ],
-                [
-                    'key'     => 'billing_phone',
-                    'value'   => $phone,
+                    'key'     => self::VERIFIED_PHONE_META,
+                    'value'   => $normalized,
                     'compare' => '=',
                 ],
             ],
         ]);
 
+        if (count($users) > 1) {
+            error_log(sprintf('[TSMB OTP Auth] Duplicate %s detected for phone ending in %s', self::VERIFIED_PHONE_META, substr($normalized, -4)));
+            return new WP_Error(
+                'verified_phone_conflict',
+                __('Multiple accounts are linked to this phone number. Please contact support.', 'ts-mobile-bridge'),
+                ['status' => 409]
+            );
+        }
+
         return !empty($users) ? $users[0] : null;
+    }
+
+    /**
+     * Atomically assign a unique OTP-verified phone number to a user account.
+     *
+     * @return true|WP_Error
+     */
+    public static function claim_verified_phone(int $user_id, string $raw_phone)
+    {
+        $normalized = self::normalize_bd_phone($raw_phone);
+        if ($normalized === '') {
+            return new WP_Error(
+                'invalid_phone',
+                __('Please enter a valid Bangladeshi mobile number (e.g. 017XXXXXXXX).', 'ts-mobile-bridge'),
+                ['status' => 400]
+            );
+        }
+
+        $existing = get_users([
+            'number'     => 1,
+            'exclude'    => [$user_id],
+            'fields'     => 'ID',
+            'meta_query' => [
+                [
+                    'key'     => self::VERIFIED_PHONE_META,
+                    'value'   => $normalized,
+                    'compare' => '=',
+                ],
+            ],
+        ]);
+
+        if (!empty($existing)) {
+            return new WP_Error(
+                'verified_phone_already_in_use',
+                __('This phone number is already verified on another account.', 'ts-mobile-bridge'),
+                ['status' => 409]
+            );
+        }
+
+        update_user_meta($user_id, self::VERIFIED_PHONE_META, $normalized);
+        return true;
     }
 
     private static function dispatch_sms(string $phone, string $otp): bool
