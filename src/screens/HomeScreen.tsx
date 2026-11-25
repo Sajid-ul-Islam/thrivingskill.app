@@ -43,6 +43,7 @@ import {
   HomeQuickNavPills,
   ThriveGenHub,
   HomeBlogInsightsFeed,
+  FlashSaleBanner,
   BlogModal,
   SupportContactModal,
   StaggeredFadeIn,
@@ -361,6 +362,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     homeFeatures,
     specialBundles,
     studentTestimonials,
+    appRemoteConfig,
     refreshBranding,
     blogPosts,
   } = useLearning();
@@ -446,7 +448,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     if (courses.length === 0) return [];
     return [...courses]
       .sort(
-        (a, b) => (b.reviewsCount || 0) - (a.reviewsCount || 0) || (b.rating || 0) - (a.rating || 0)
+        (a, b) => (b.reviewsCount ?? 0) - (a.reviewsCount ?? 0) || (b.rating ?? 0) - (a.rating ?? 0)
       )
       .slice(0, 8);
   }, [courses]);
@@ -1245,6 +1247,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           slides={banners}
           onSelectSlide={handleSelectSlide}
           onOpenSubscription={onOpenSubscription}
+        />
+
+        {/* ── Remote Flash Sale Campaign (strictly hidden when off or expired) ── */}
+        <FlashSaleBanner
+          sale={appRemoteConfig?.flash_sale}
+          onPress={() => onNavigateTab('Courses')}
         />
 
         {/* ── Live Site Partner Logos Marquee ── */}

@@ -119,14 +119,17 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
           });
           fallbackOk = fallbackRes.status >= 200 && fallbackRes.status < 400;
         } catch {
-          // If primary site URL failed, test connectivity against alternate fallback host
-          try {
-            const altRes = await fetch(Env.FALLBACK_SITE_URL, {
-              method: 'HEAD',
-              signal: fallbackController.signal,
-            });
-            fallbackOk = altRes.status >= 200 && altRes.status < 400;
-          } catch {}
+          // If primary site URL failed, test configured fallback host (never staging in production)
+          const fallbackSiteUrl = Env.FALLBACK_SITE_URL;
+          if (fallbackSiteUrl && fallbackSiteUrl !== Env.SITE_URL) {
+            try {
+              const altRes = await fetch(fallbackSiteUrl, {
+                method: 'HEAD',
+                signal: fallbackController.signal,
+              });
+              fallbackOk = altRes.status >= 200 && altRes.status < 400;
+            } catch {}
+          }
         }
 
         clearTimeout(fallbackTimer);

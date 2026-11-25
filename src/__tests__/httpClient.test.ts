@@ -112,7 +112,26 @@ describe('HttpClient', () => {
     expect(listener).toHaveBeenCalledWith(false, 'Connection timed out.');
   });
 
-  it('falls back to Env.FALLBACK_API_URL when primary host returns 502', async () => {
+  it('never fails over to staging when production fails with 502 or network error', async () => {
+    await Env.setEnvironment('production');
+    const fetchMock = globalThis.fetch as jest.Mock;
+    fetchMock.mockResolvedValueOnce(makeJsonResponse({ message: 'Bad Gateway' }, 502));
+
+    await expect(
+      HttpClient.get('/learnpress/v1/courses', undefined, {
+        skipAuth: true,
+        retries: 0,
+        allowFallback: true,
+      })
+    ).rejects.toMatchObject({ status: 502 });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      'https://thrivingskill.com/wp-json/learnpress/v1/courses'
+    );
+  });
+
+  it('falls back to Env.FALLBACK_API_URL when staging primary host returns 502', async () => {
     const fetchMock = globalThis.fetch as jest.Mock;
     fetchMock
       .mockResolvedValueOnce(makeJsonResponse({ message: 'Bad Gateway' }, 502))

@@ -11,6 +11,7 @@ import { SecureStorageService } from '../services/storage/secureStorage';
 import {
   loginWpUser,
   registerWpUser,
+  verifyWpRegistrationOtp,
   sendWpPhoneOtp,
   verifyWpPhoneOtp,
   confirmWpPasswordReset,
@@ -68,7 +69,15 @@ interface AuthContextType {
     password: string,
     phone?: string,
     fullName?: string
-  ) => Promise<{ success: boolean; emailSent: boolean; autoLoggedIn: boolean } | void>;
+  ) => Promise<{
+    success: boolean;
+    emailSent: boolean;
+    requiresVerification?: boolean;
+    autoLoggedIn: boolean;
+    message?: string;
+    devVerificationOtp?: string;
+  } | void>;
+  verifyRegistrationOtp: (email: string, otp: string) => Promise<void>;
   confirmPasswordReset: (login: string, key: string, newPassword: string) => Promise<void>;
   updateUserProfile: (updates: Partial<UserProfile>, syncToServer?: boolean) => Promise<void>;
   refreshUserProfile: () => Promise<UserProfile | null>;
@@ -377,10 +386,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     password: string,
     phone?: string,
     fullName?: string
-  ): Promise<{ success: boolean; emailSent: boolean; autoLoggedIn: boolean }> => {
+  ): Promise<{
+    success: boolean;
+    emailSent: boolean;
+    requiresVerification?: boolean;
+    autoLoggedIn: boolean;
+    message?: string;
+    devVerificationOtp?: string;
+  }> => {
     setIsLoading(true);
     try {
-      await registerWpUser({
+      const regRes = await registerWpUser({
         username,
         email,
         password,
@@ -389,8 +405,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         name: fullName,
       });
 
+      if (regRes?.requires_verification || regRes?.status === 'verification_required') {
+        return {
+          success: true,
+          emailSent: true,
+          requiresVerification: true,
+          autoLoggedIn: false,
+          message: typeof regRes.message === 'string' ? regRes.message : undefined,
+          devVerificationOtp:
+            isDevMode && typeof regRes.dev_verification_otp === 'string'
+              ? regRes.dev_verification_otp
+              : undefined,
+        };
+      }
+
       let autoLoggedIn = false;
-      // Immediately log in new user without auto-dismissing the modal so they see the email confirmation screen
+      // Fallback for legacy endpoints without OTP pre-verification
       try {
         await login(username, password, false);
         autoLoggedIn = true;
@@ -410,8 +440,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return {
         success: true,
         emailSent: true,
+        requiresVerification: false,
         autoLoggedIn,
       };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const verifyRegistrationOtp = async (email: string, otp: string): Promise<void> => {
+    setIsLoading(true);
+    try {
+      const res = await verifyWpRegistrationOtp(email, otp);
+      const verifiedUser: WpUser = {
+        id: res.user_id || 0,
+        username: res.username || email.split('@')[0],
+        email: res.email || email,
+        displayName: res.user_display_name || res.username || email.split('@')[0],
+        token: res.token,
+        roles: ['subscriber'],
+      };
+      await saveUserSession(verifiedUser, true);
     } finally {
       setIsLoading(false);
     }
@@ -488,6 +537,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loginWithPhone,
         sendPhoneOtp,
         register,
+        verifyRegistrationOtp,
         confirmPasswordReset,
         updateUserProfile,
         refreshUserProfile,

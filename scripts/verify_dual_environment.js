@@ -114,8 +114,8 @@ async function runVerification() {
   console.log('\n[STEP 4] Auditing src/components/modals/AuthModal.tsx Domain Whitelist...');
   const authModalTs = fs.readFileSync(path.join(rootDir, 'src', 'components', 'modals', 'AuthModal.tsx'), 'utf8');
 
-  assert('AuthModal.tsx onShouldStartLoadWithRequest whitelists staging.thrivingskill.com', 
-    authModalTs.includes("url.startsWith('https://staging.thrivingskill.com')")
+  assert('AuthModal.tsx onShouldStartLoadWithRequest restricts navigation to active Env.SITE_URL',
+    authModalTs.includes('Env.SITE_URL') && !authModalTs.includes("url.startsWith('https://staging.thrivingskill.com')")
   );
   assert('AuthModal.tsx parseResetPasswordUrl accepts both live and staging reset URLs',
     authModalTs.includes('cleanUrl.startsWith(\'/\')')
@@ -141,10 +141,10 @@ async function runVerification() {
     profileTs.includes('Env.setEnvironment(targetEnv)')
   );
 
-  // 6. Audit App.tsx for startup Env.init()
+  // 6. Audit App.tsx for startup Env.init() gate before network providers
   console.log('\n[STEP 6] Auditing App.tsx Startup Hydration...');
   const appTs = fs.readFileSync(path.join(rootDir, 'App.tsx'), 'utf8');
-  assert('App.tsx calls Env.init() during startup hydration', appTs.includes('Env.init().catch(() => {});'));
+  assert('App.tsx awaits Env.init() before mounting providers', appTs.includes('Env.init()') && appTs.includes('!envReady'));
 
   // 7. Optional Staging Integration Probe (strictly disabled in CI; never calls production)
   if (process.env.RUN_STAGING_INTEGRATION === 'true' && process.env.CI !== 'true') {

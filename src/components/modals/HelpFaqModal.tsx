@@ -422,7 +422,7 @@ export const HelpFaqModal: React.FC<HelpFaqModalProps> = ({ visible, onClose }) 
 
               <TouchableOpacity
                 style={[styles.contactBtn, { backgroundColor: colors.primary }]}
-                onPress={openCallHelpline}
+                onPress={() => openCallHelpline()}
                 accessibilityRole="button"
                 accessibilityLabel={`Call helpline at ${CRM_CHANNELS.phoneDisplay}`}
               >

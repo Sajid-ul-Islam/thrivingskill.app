@@ -73,15 +73,22 @@ export const SpecialBundleCard: React.FC<SpecialBundleCardProps> = ({ bundle, on
         {/* Footer Meta & Price */}
         <View style={[styles.footerRow, { borderTopColor: colors.borderSubtle }]}>
           <View style={styles.statsCol}>
-            <View style={styles.ratingRow}>
-              <Ionicons name="star" size={13} color={colors.starColor} />
-              <Text style={[styles.ratingText, { color: colors.text }]}>
-                {bundle.rating || 4.9}
-              </Text>
-              <Text style={[styles.enrolledText, { color: colors.textMuted }]}>
-                ({(bundle.enrolledCount || 0).toLocaleString()} enrolled)
-              </Text>
-            </View>
+            {(typeof bundle.rating === 'number' && bundle.rating > 0) ||
+            (typeof bundle.enrolledCount === 'number' && bundle.enrolledCount > 0) ? (
+              <View style={styles.ratingRow}>
+                {typeof bundle.rating === 'number' && bundle.rating > 0 && (
+                  <>
+                    <Ionicons name="star" size={13} color={colors.starColor} />
+                    <Text style={[styles.ratingText, { color: colors.text }]}>{bundle.rating}</Text>
+                  </>
+                )}
+                {typeof bundle.enrolledCount === 'number' && bundle.enrolledCount > 0 && (
+                  <Text style={[styles.enrolledText, { color: colors.textMuted }]}>
+                    ({bundle.enrolledCount.toLocaleString()} enrolled)
+                  </Text>
+                )}
+              </View>
+            ) : null}
           </View>
 
           <View style={styles.priceCol}>

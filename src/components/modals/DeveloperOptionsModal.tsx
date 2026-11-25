@@ -51,7 +51,7 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
   }, [visible]);
 
   const handleSwitchEnv = async (env: ApiEnvironment) => {
-    if (env === currentEnv) return;
+    if (!Env.canSwitchEnvironment || env === currentEnv) return;
     triggerHaptic('medium');
     await Env.setEnvironment(env);
     setCurrentEnv(env);
@@ -203,67 +203,72 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
               </TouchableOpacity>
             </View>
 
-            {/* Section 1: Server Environment */}
-            <View style={styles.sectionCard}>
-              <View style={styles.sectionHeader}>
-                <Ionicons name="server-outline" size={16} color="#E34234" />
-                <Text style={styles.sectionTitle}>Server Environment</Text>
-              </View>
-              <Text style={styles.sectionDesc}>
-                Switch between live production WordPress and staging server.
-              </Text>
+            {/* Section 1: Server Environment (Development builds only) */}
+            {Env.canSwitchEnvironment && (
+              <View style={styles.sectionCard}>
+                <View style={styles.sectionHeader}>
+                  <Ionicons name="server-outline" size={16} color="#E34234" />
+                  <Text style={styles.sectionTitle}>Server Environment</Text>
+                </View>
+                <Text style={styles.sectionDesc}>
+                  Switch between live production WordPress and staging server.
+                </Text>
 
-              <View style={styles.envGrid}>
-                <TouchableOpacity
-                  style={[styles.envOption, currentEnv === 'production' && styles.envOptionActive]}
-                  onPress={() => handleSwitchEnv('production')}
-                  activeOpacity={0.8}
-                  accessibilityRole="button"
-                  accessibilityLabel="Switch to Live Production Environment"
-                >
-                  <View style={styles.envOptionHeader}>
-                    <Text
-                      style={[
-                        styles.envOptionTitle,
-                        currentEnv === 'production' && styles.envOptionTitleActive,
-                      ]}
-                    >
-                      Live Production
-                    </Text>
-                    {currentEnv === 'production' && (
-                      <Ionicons name="checkmark-circle" size={16} color="#10B981" />
-                    )}
-                  </View>
-                  <Text style={styles.envOptionUrl}>https://thrivingskill.com</Text>
-                </TouchableOpacity>
+                <View style={styles.envGrid}>
+                  <TouchableOpacity
+                    style={[
+                      styles.envOption,
+                      currentEnv === 'production' && styles.envOptionActive,
+                    ]}
+                    onPress={() => handleSwitchEnv('production')}
+                    activeOpacity={0.8}
+                    accessibilityRole="button"
+                    accessibilityLabel="Switch to Live Production Environment"
+                  >
+                    <View style={styles.envOptionHeader}>
+                      <Text
+                        style={[
+                          styles.envOptionTitle,
+                          currentEnv === 'production' && styles.envOptionTitleActive,
+                        ]}
+                      >
+                        Live Production
+                      </Text>
+                      {currentEnv === 'production' && (
+                        <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+                      )}
+                    </View>
+                    <Text style={styles.envOptionUrl}>https://thrivingskill.com</Text>
+                  </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={[
-                    styles.envOption,
-                    currentEnv === 'staging' && styles.envOptionActiveStaging,
-                  ]}
-                  onPress={() => handleSwitchEnv('staging')}
-                  activeOpacity={0.8}
-                  accessibilityRole="button"
-                  accessibilityLabel="Switch to Staging Server Environment"
-                >
-                  <View style={styles.envOptionHeader}>
-                    <Text
-                      style={[
-                        styles.envOptionTitle,
-                        currentEnv === 'staging' && styles.envOptionTitleActiveStaging,
-                      ]}
-                    >
-                      Staging Testing
-                    </Text>
-                    {currentEnv === 'staging' && (
-                      <Ionicons name="checkmark-circle" size={16} color="#E34234" />
-                    )}
-                  </View>
-                  <Text style={styles.envOptionUrl}>https://staging.thrivingskill.com</Text>
-                </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.envOption,
+                      currentEnv === 'staging' && styles.envOptionActiveStaging,
+                    ]}
+                    onPress={() => handleSwitchEnv('staging')}
+                    activeOpacity={0.8}
+                    accessibilityRole="button"
+                    accessibilityLabel="Switch to Staging Server Environment"
+                  >
+                    <View style={styles.envOptionHeader}>
+                      <Text
+                        style={[
+                          styles.envOptionTitle,
+                          currentEnv === 'staging' && styles.envOptionTitleActiveStaging,
+                        ]}
+                      >
+                        Staging Testing
+                      </Text>
+                      {currentEnv === 'staging' && (
+                        <Ionicons name="checkmark-circle" size={16} color="#E34234" />
+                      )}
+                    </View>
+                    <Text style={styles.envOptionUrl}>https://staging.thrivingskill.com</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </View>
+            )}
 
             {/* Section 2: Admin & Bypass Controls */}
             <View style={styles.sectionCard}>

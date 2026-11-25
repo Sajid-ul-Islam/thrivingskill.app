@@ -172,8 +172,8 @@ const MainAppContent: React.FC = () => {
   } = useFeedback();
 
   // Option D: Telemetry & Push Notification Infrastructure Initialization
+  // Env.init() is awaited in root App() before network-calling providers mount.
   useEffect(() => {
-    Env.init().catch(() => {});
     TelemetryService.initialize();
     PushNotificationService.registerForPushNotifications();
     HabitNotificationQueue.resetStartupSession();
@@ -185,7 +185,10 @@ const MainAppContent: React.FC = () => {
     TelemetryService.setUser(
       user ? { id: String(user.id), username: user.username, role: user.roles?.[0] } : null
     );
-  }, [user]);
+    if (isAuthenticated && user?.id) {
+      PushNotificationService.registerForPushNotifications().catch(() => {});
+    }
+  }, [isAuthenticated, user]);
 
   // CR-1: Brand splash screen state and intent synchronization
   const [isSplashVisible, setIsSplashVisible] = useState(true);
@@ -757,26 +760,57 @@ const MainAppContent: React.FC = () => {
 };
 
 export default function App() {
+  const [envReady, setEnvReady] = useState(false);
+  const [envError, setEnvError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    Env.init()
+      .then(() => {
+        if (mounted) setEnvReady(true);
+      })
+      .catch((err: any) => {
+        if (mounted) {
+          setEnvError(
+            err?.message ||
+              'Missing required environment variables. Please check EXPO_PUBLIC_* build configuration.'
+          );
+        }
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   return (
     <AppErrorBoundary>
       <SafeAreaProvider>
         <ThemeProvider>
           <LanguageProvider>
-            <NetworkProvider>
-              <FeedbackProvider>
-                <AuthProvider>
-                  <GamificationProvider>
-                    <SaaSProvider>
-                      <LearningProvider>
-                        <YouTubeProvider>
-                          <MainAppContent />
-                        </YouTubeProvider>
-                      </LearningProvider>
-                    </SaaSProvider>
-                  </GamificationProvider>
-                </AuthProvider>
-              </FeedbackProvider>
-            </NetworkProvider>
+            {envError ? (
+              <SafeAreaView style={[styles.safeArea, styles.envErrorContainer]}>
+                <Text style={styles.envErrorTitle}>Configuration Error</Text>
+                <Text style={styles.envErrorMessage}>{envError}</Text>
+              </SafeAreaView>
+            ) : !envReady ? (
+              <BrandSplashScreen isLoading={true} />
+            ) : (
+              <NetworkProvider>
+                <FeedbackProvider>
+                  <AuthProvider>
+                    <GamificationProvider>
+                      <SaaSProvider>
+                        <LearningProvider>
+                          <YouTubeProvider>
+                            <MainAppContent />
+                          </YouTubeProvider>
+                        </LearningProvider>
+                      </SaaSProvider>
+                    </GamificationProvider>
+                  </AuthProvider>
+                </FeedbackProvider>
+              </NetworkProvider>
+            )}
           </LanguageProvider>
         </ThemeProvider>
       </SafeAreaProvider>
@@ -899,5 +933,24 @@ const styles = StyleSheet.create({
     paddingBottom: 0,
     maxWidth: '100%',
     includeFontPadding: true,
+  },
+  envErrorContainer: {
+    backgroundColor: '#0F192C',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  envErrorTitle: {
+    color: '#FFB606',
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  envErrorMessage: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'center',
   },
 });

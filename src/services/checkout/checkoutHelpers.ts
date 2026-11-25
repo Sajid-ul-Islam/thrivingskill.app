@@ -10,14 +10,15 @@ export const ALLOWED_CHECKOUT_SCHEMES = new Set([
   'mailto',
 ]);
 
-export const TRUSTED_CHECKOUT_HOSTS = [
-  'thrivingskill.com',
+export const TRUSTED_PAYMENT_GATEWAY_HOSTS = [
   'sslcommerz.com',
   'bkash.com',
   'nagad.com.bd',
   'shurjopay.com.bd',
   'aamarpay.com',
 ];
+
+export const TRUSTED_CHECKOUT_HOSTS = ['thrivingskill.com', ...TRUSTED_PAYMENT_GATEWAY_HOSTS];
 
 export interface ServerBundleCourseItem {
   id: string;
@@ -68,14 +69,19 @@ export function isTrustedCheckoutHost(
   const cleanHost = hostname.toLowerCase();
   if (!cleanHost) return false;
 
-  const siteParsed = parseUrlSafe(activeSiteUrl);
-  const allowedHosts = new Set(TRUSTED_CHECKOUT_HOSTS);
-  if (siteParsed?.hostname) {
-    allowedHosts.add(siteParsed.hostname.toLowerCase());
+  const siteParsed = parseUrlSafe(activeSiteUrl) || parseUrlSafe('https://thrivingskill.com');
+  const activeHost = siteParsed?.hostname?.toLowerCase() || 'thrivingskill.com';
+
+  // Match active checkout site host strictly (prevent production from allowing staging.thrivingskill.com)
+  if (cleanHost === activeHost) {
+    return true;
+  }
+  if (activeHost === 'thrivingskill.com' && cleanHost === 'www.thrivingskill.com') {
+    return true;
   }
 
-  for (const trusted of allowedHosts) {
-    if (cleanHost === trusted || cleanHost.endsWith(`.${trusted}`)) {
+  for (const gatewayHost of TRUSTED_PAYMENT_GATEWAY_HOSTS) {
+    if (cleanHost === gatewayHost || cleanHost.endsWith(`.${gatewayHost}`)) {
       return true;
     }
   }
@@ -105,9 +111,11 @@ export function isTrustedCheckoutOrigin(
 export function getCheckoutOriginWhitelist(
   activeSiteUrl: string = 'https://thrivingskill.com'
 ): string[] {
+  const parsedSite = parseUrlSafe(activeSiteUrl) || parseUrlSafe('https://thrivingskill.com');
+  const activeHost = parsedSite?.hostname?.toLowerCase() || 'thrivingskill.com';
+
   const whitelist = new Set<string>([
-    'https://thrivingskill.com',
-    'https://*.thrivingskill.com',
+    `https://${activeHost}`,
     'https://sslcommerz.com',
     'https://*.sslcommerz.com',
     'https://bkash.com',
@@ -120,9 +128,8 @@ export function getCheckoutOriginWhitelist(
     'https://*.aamarpay.com',
   ]);
 
-  const parsedSite = parseUrlSafe(activeSiteUrl);
-  if (parsedSite && parsedSite.protocol === 'https:') {
-    whitelist.add(`https://${parsedSite.hostname}`);
+  if (activeHost === 'thrivingskill.com') {
+    whitelist.add('https://www.thrivingskill.com');
   }
 
   return Array.from(whitelist);

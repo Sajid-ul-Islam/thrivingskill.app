@@ -196,17 +196,27 @@ export const CourseQuickPeekModal: React.FC<CourseQuickPeekModalProps> = ({
                   },
                 ]}
               >
-                <View style={styles.metricItem}>
-                  <Ionicons name="star" size={16} color="#FFB606" />
-                  <Text style={[styles.metricVal, { color: colors.text }]}>
-                    {course.rating.toFixed(1)}
-                  </Text>
-                  <Text style={[styles.metricLbl, { color: colors.textMuted }]}>
-                    {course.reviewsCount || 0} {isBangla ? 'রিভিউ' : 'Ratings'}
-                  </Text>
-                </View>
+                {typeof course.rating === 'number' && course.rating > 0 && (
+                  <>
+                    <View style={styles.metricItem}>
+                      <Ionicons name="star" size={16} color="#FFB606" />
+                      <Text style={[styles.metricVal, { color: colors.text }]}>
+                        {course.rating.toFixed(1)}
+                      </Text>
+                      {typeof course.reviewsCount === 'number' && course.reviewsCount > 0 ? (
+                        <Text style={[styles.metricLbl, { color: colors.textMuted }]}>
+                          {course.reviewsCount} {isBangla ? 'রিভিউ' : 'Ratings'}
+                        </Text>
+                      ) : (
+                        <Text style={[styles.metricLbl, { color: colors.textMuted }]}>
+                          {isBangla ? 'রেটিং' : 'Rating'}
+                        </Text>
+                      )}
+                    </View>
 
-                <View style={[styles.metricDivider, { backgroundColor: colors.border }]} />
+                    <View style={[styles.metricDivider, { backgroundColor: colors.border }]} />
+                  </>
+                )}
 
                 <View style={styles.metricItem}>
                   <Ionicons name="time-outline" size={16} color={colors.primary} />

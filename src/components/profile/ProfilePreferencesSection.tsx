@@ -722,8 +722,8 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
             <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
           </TouchableOpacity>
 
-          {/* Server Environment Switcher (Live vs Staging) - Visible in DEV mode, for Admins, or via Easter Egg */}
-          {Boolean(__DEV__ || isAdmin || isDevModeUnlocked) && (
+          {/* Server Environment Switcher (Live vs Staging) - Development builds only */}
+          {Boolean(Env.canSwitchEnvironment) && (
             <TouchableOpacity
               style={[
                 styles.settingRow,

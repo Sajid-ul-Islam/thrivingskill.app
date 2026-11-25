@@ -323,11 +323,7 @@ export const ThriveGenHub: React.FC<ThriveGenHubProps> = ({
               style={[
                 styles.levelTab,
                 {
-                  backgroundColor: isActive
-                    ? colors.primary
-                    : isDark
-                      ? colors.surfaceCard
-                      : '#FFFFFF',
+                  backgroundColor: isActive ? colors.primary : colors.surfaceCard,
                   borderColor: isActive ? colors.primary : colors.border,
                 },
               ]}
@@ -341,7 +337,9 @@ export const ThriveGenHub: React.FC<ThriveGenHubProps> = ({
               accessibilityLabel={isBangla ? tab.labelBn : tab.label}
             >
               <Ionicons name={tab.icon} size={13} color={isActive ? '#FFFFFF' : colors.textMuted} />
-              <Text style={[styles.levelTabText, { color: isActive ? '#FFFFFF' : colors.text }]}>
+              <Text
+                style={[styles.levelTabText, { color: isActive ? colors.onPrimary : colors.text }]}
+              >
                 {isBangla ? tab.labelBn : tab.label}
               </Text>
             </SpringPressable>
@@ -403,10 +401,12 @@ export const ThriveGenHub: React.FC<ThriveGenHubProps> = ({
               <View style={styles.cardBody}>
                 <View style={styles.levelRow}>
                   <Text style={[styles.levelText, { color: colors.primary }]}>{levelLabel}</Text>
-                  <View style={styles.ratingBadge}>
-                    <Ionicons name="star" size={11} color="#FFB606" />
-                    <Text style={styles.ratingText}>{item.rating.toFixed(1)}</Text>
-                  </View>
+                  {item.rating > 0 && (
+                    <View style={styles.ratingBadge}>
+                      <Ionicons name="star" size={11} color="#FFB606" />
+                      <Text style={styles.ratingText}>{item.rating.toFixed(1)}</Text>
+                    </View>
+                  )}
                 </View>
 
                 <Text
@@ -424,9 +424,13 @@ export const ThriveGenHub: React.FC<ThriveGenHubProps> = ({
                 </Text>
 
                 <View style={styles.cardFooter}>
-                  <Text style={[styles.learnersCount, { color: colors.textMuted }]}>
-                    {item.studentsCount.toLocaleString()}+ {isBangla ? 'লার্নার্স' : 'Learners'}
-                  </Text>
+                  {item.studentsCount > 0 ? (
+                    <Text style={[styles.learnersCount, { color: colors.textMuted }]}>
+                      {item.studentsCount.toLocaleString()}+ {isBangla ? 'লার্নার্স' : 'Learners'}
+                    </Text>
+                  ) : (
+                    <View />
+                  )}
 
                   <View style={[styles.exploreBtn, { backgroundColor: colors.primary }]}>
                     <Text style={[styles.exploreBtnText, { color: colors.onPrimary }]}>

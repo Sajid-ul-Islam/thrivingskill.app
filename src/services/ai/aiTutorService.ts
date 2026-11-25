@@ -1,5 +1,4 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Env } from '../../config/env';
 import { GeminiNanoService, GeminiNanoStatus } from './geminiNanoService';
 
 export interface AiTutorContext {
@@ -32,7 +31,7 @@ export class AiTutorService {
   static async askTutor(
     question: string,
     context: AiTutorContext,
-    conversationHistory: TutorMessage[] = [],
+    _conversationHistory: TutorMessage[] = [],
     isBangla: boolean = false
   ): Promise<string> {
     const trimmed = question.trim();
@@ -62,24 +61,8 @@ export class AiTutorService {
       }
     }
 
-    // 2. Try Google Gemini 1.5 Flash Cloud API if key is present
-    const geminiKey = Env.GEMINI_API_KEY;
-    if (geminiKey) {
-      try {
-        const response = await this.callGeminiApi(
-          trimmed,
-          context,
-          conversationHistory,
-          isBangla,
-          geminiKey
-        );
-        if (response) return response;
-      } catch (err) {
-        // Fall back to contextual engine if network or quota issue arises
-      }
-    }
-
-    // 3. Contextual intelligent synthesis fallback grounded in lecture curriculum
+    // 2. Contextual intelligent synthesis grounded in lecture curriculum
+    // (Cloud LLM calls must be proxied server-side rather than shipping API keys in EXPO_PUBLIC_* vars)
     return this.generateContextualResponse(trimmed, context, isBangla);
   }
 
@@ -105,81 +88,6 @@ export class AiTutorService {
    */
   static async getExecutionStatus(): Promise<GeminiNanoStatus> {
     return GeminiNanoService.checkStatus();
-  }
-
-  /**
-   * Calls Google Gemini 1.5 Flash endpoint with contextual grounding prompt.
-   */
-  private static async callGeminiApi(
-    question: string,
-    context: AiTutorContext,
-    history: TutorMessage[],
-    isBangla: boolean,
-    apiKey: string
-  ): Promise<string> {
-    const systemPrompt = `You are "SkillBot", an expert pedagogical tutor for Thriving Skills (thrivingskill.com), an executive e-learning platform in Bangladesh.
-Current Learning Context:
-- Course: "${context.courseTitle}" (Category: ${context.courseCategory || 'Executive Skills'})
-- Instructor: "${context.instructorName}"
-- Module: "${context.moduleTitle}"
-- Current Lesson: "${context.lessonTitle}"
-${context.currentTimestamp ? `- Current Video Timestamp: ${context.currentTimestamp}` : ''}
-${context.lessonSummary ? `- Lesson Overview / Transcript: ${context.lessonSummary}` : ''}
-
-Guidelines:
-1. Provide concise, highly practical, and actionable insights.
-2. Ground all answers strictly on the course topic and industry best practices.
-3. If the user writes or asks in Bengali, or if preferred language is Bangla, respond in natural, professional, encouraging Bangla.
-4. Avoid fluff, unnecessary disclaimers, or generic robotic apologies. Use formatting (bullet points, bold text) where beneficial.`;
-
-    const contents = [
-      {
-        role: 'user',
-        parts: [{ text: systemPrompt }],
-      },
-      ...history.slice(-4).map((m) => ({
-        role: m.role === 'user' ? 'user' : 'model',
-        parts: [{ text: m.content }],
-      })),
-      {
-        role: 'user',
-        parts: [{ text: question }],
-      },
-    ];
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 12000);
-
-    try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents,
-            generationConfig: {
-              temperature: 0.4,
-              maxOutputTokens: 600,
-            },
-          }),
-          signal: controller.signal,
-        }
-      );
-
-      if (!res.ok) {
-        throw new Error(`Gemini API returned status ${res.status}`);
-      }
-
-      const json = await res.json();
-      const answer = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (answer && typeof answer === 'string') {
-        return answer.trim();
-      }
-      throw new Error('Invalid Gemini API response structure');
-    } finally {
-      clearTimeout(timeoutId);
-    }
   }
 
   /**

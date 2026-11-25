@@ -61,7 +61,7 @@ All detailed specifications, technical architectures, client proposals, and rele
 * **In-App Profile Editing & Live Web Sync**: Edit Name, Bio, Phone, City, Social, and Avatars inside the app with persistence to `/wp/v2/users/me` and `/learnpress/v1/users/{id}`. Edits made on `https://thrivingskill.com` automatically sync down to the app via `AppState` foreground detection and pull-to-refresh.
 * **Habit-Based Smart Notification Queue**: Background scheduler batches and delivers contextual study reminders during learner habit hours, paired with a simple 1-tap clear/dismiss action.
 * **Uniform Course Cards (Pixel-Perfect Consistency)**: Standardized card heights (332dp), uniform 16:9 thumbnail ratios, two-line clamped titles (40dp), and aligned action footers across all screens and carousels.
-* **WordPress Companion Plugin**: Packaged companion plugin (`backend-plugin/thriving-skills-mobile-bridge.zip`) providing `/wp-json/thrivingskill/v1/register` endpoint with LearnPress fallback.
+* **WordPress Companion Plugin**: Single-plugin WordPress companion ([`backend-plugin/ts-mobile-bridge`](./backend-plugin/ts-mobile-bridge)) built as an installable ZIP in CI, providing `/wp-json/thrivingskill/v1/*` and `/wp-json/tsl/v1/auth/*` endpoints with LearnPress fallback.
 
 ---
 
@@ -121,6 +121,15 @@ npm run ios
 # Run web preview
 npm run web
 ```
+
+### 2b. Environment Variables (`EXPO_PUBLIC_*`)
+- **How env values reach builds**: Expo/Metro only inlines **static literal** `process.env.EXPO_PUBLIC_*` references at bundle time (dynamic `process.env[key]` lookups remain `undefined` in release Hermes bundles).
+  - Local runs load `.env.development` (or `.env.production` when bundling production, plus `.env.local` overrides; copy `.env.example` as a starting template).
+  - EAS cloud builds (`preview`, `production`) inject their `env` blocks directly from [`eas.json`](eas.json).
+- **Security rules**:
+  - Required variables (`EXPO_PUBLIC_API_URL`, `EXPO_PUBLIC_SITE_URL`) are validated on startup in non-production builds before network-calling providers mount.
+  - Production builds never fail over to staging and disable runtime server switching.
+  - Never place secret credentials (e.g., AI provider keys or WooCommerce secrets) in `EXPO_PUBLIC_*` variables.
 
 ### 3. Automated Code Verification & Health Audit
 ```bash

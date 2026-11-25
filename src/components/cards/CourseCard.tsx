@@ -90,22 +90,23 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
   const isFreeCourse =
     (!course.price || course.price === 0) && (!course.priceBdt || course.priceBdt === 0);
 
-  // Prominent star rating (e.g. ★ 4.9)
+  // Authentic star rating & learner counts only (hidden when unavailable)
   const numericRating =
-    typeof course.rating === 'number' && course.rating > 0
-      ? course.rating
-      : 4.8 + ((course.id || '').split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0) % 3) / 10;
-  const formattedRating = Number(numericRating).toFixed(1);
+    typeof course.rating === 'number' && course.rating > 0 ? course.rating : null;
+  const formattedRating = numericRating !== null ? Number(numericRating).toFixed(1) : null;
+  const hasReviewsCount = typeof course.reviewsCount === 'number' && course.reviewsCount > 0;
 
-  // Prominent student enrollment count (e.g. 1.2k learners)
   const rawEnrolled =
     typeof course.enrolledCount === 'number' && course.enrolledCount > 0
       ? course.enrolledCount
-      : course.reviewsCount && course.reviewsCount > 0
-        ? course.reviewsCount * 4
-        : 350 + ((course.id || '').split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0) % 850);
+      : null;
   const formattedEnrolled =
-    rawEnrolled >= 1000 ? `${(rawEnrolled / 1000).toFixed(1)}k` : `${rawEnrolled}`;
+    rawEnrolled !== null
+      ? rawEnrolled >= 1000
+        ? `${(rawEnrolled / 1000).toFixed(1)}k`
+        : `${rawEnrolled}`
+      : null;
+  const hasStats = formattedRating !== null || formattedEnrolled !== null;
 
   // Red discount percentage (-33% OFF)
   const discountPercent =
@@ -189,28 +190,41 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
               {course.instructor?.name || 'Thriving Skills Instructor'}
             </Text>
 
-            <View style={styles.statsRow}>
-              <View
-                style={[
-                  styles.ratingBadge,
-                  {
-                    backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : 'rgba(255, 182, 6, 0.12)',
-                  },
-                ]}
-              >
-                <Ionicons name="star" size={11.5} color="#FFB606" />
-                <Text style={[styles.ratingNumber, { color: isDark ? '#FFB606' : '#946200' }]}>
-                  {formattedRating}
-                </Text>
+            {hasStats && (
+              <View style={styles.statsRow}>
+                {formattedRating !== null && (
+                  <View
+                    style={[
+                      styles.ratingBadge,
+                      {
+                        backgroundColor: isDark
+                          ? 'rgba(255, 182, 6, 0.16)'
+                          : 'rgba(255, 182, 6, 0.12)',
+                      },
+                    ]}
+                  >
+                    <Ionicons name="star" size={11.5} color="#FFB606" />
+                    <Text style={[styles.ratingNumber, { color: isDark ? '#FFB606' : '#946200' }]}>
+                      {formattedRating}
+                    </Text>
+                  </View>
+                )}
+                {formattedRating !== null && formattedEnrolled !== null && (
+                  <Text style={[styles.dotSeparator, { color: colors.textMuted }]}>•</Text>
+                )}
+                {formattedEnrolled !== null && (
+                  <View style={styles.enrolledBadge}>
+                    <Ionicons name="people-outline" size={12} color={colors.textMuted} />
+                    <Text
+                      style={[styles.enrolledText, { color: colors.textMuted }]}
+                      numberOfLines={1}
+                    >
+                      {formattedEnrolled} {isBangla ? 'শিক্ষার্থী' : 'learners'}
+                    </Text>
+                  </View>
+                )}
               </View>
-              <Text style={[styles.dotSeparator, { color: colors.textMuted }]}>•</Text>
-              <View style={styles.enrolledBadge}>
-                <Ionicons name="people-outline" size={12} color={colors.textMuted} />
-                <Text style={[styles.enrolledText, { color: colors.textMuted }]} numberOfLines={1}>
-                  {formattedEnrolled} {isBangla ? 'শিক্ষার্থী' : 'learners'}
-                </Text>
-              </View>
-            </View>
+            )}
 
             {isEnrolled ? (
               <View style={styles.progressContainer}>
@@ -344,33 +358,46 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
               </Text>
             </View>
 
-            <View style={styles.statsRow}>
-              <View
-                style={[
-                  styles.ratingBadge,
-                  {
-                    backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : 'rgba(255, 182, 6, 0.12)',
-                  },
-                ]}
-              >
-                <Ionicons name="star" size={12} color="#FFB606" />
-                <Text style={[styles.ratingNumber, { color: isDark ? '#FFB606' : '#946200' }]}>
-                  {formattedRating}
-                </Text>
-                {course.reviewsCount > 0 && (
-                  <Text style={[styles.reviewsCount, { color: colors.textMuted }]}>
-                    ({course.reviewsCount})
-                  </Text>
+            {hasStats && (
+              <View style={styles.statsRow}>
+                {formattedRating !== null && (
+                  <View
+                    style={[
+                      styles.ratingBadge,
+                      {
+                        backgroundColor: isDark
+                          ? 'rgba(255, 182, 6, 0.16)'
+                          : 'rgba(255, 182, 6, 0.12)',
+                      },
+                    ]}
+                  >
+                    <Ionicons name="star" size={12} color="#FFB606" />
+                    <Text style={[styles.ratingNumber, { color: isDark ? '#FFB606' : '#946200' }]}>
+                      {formattedRating}
+                    </Text>
+                    {hasReviewsCount && (
+                      <Text style={[styles.reviewsCount, { color: colors.textMuted }]}>
+                        ({course.reviewsCount})
+                      </Text>
+                    )}
+                  </View>
+                )}
+                {formattedRating !== null && formattedEnrolled !== null && (
+                  <Text style={[styles.dotSeparator, { color: colors.textMuted }]}>•</Text>
+                )}
+                {formattedEnrolled !== null && (
+                  <View style={styles.enrolledBadge}>
+                    <Ionicons name="people-outline" size={12} color={colors.textMuted} />
+                    <Text
+                      style={[styles.enrolledText, { color: colors.textMuted }]}
+                      numberOfLines={1}
+                    >
+                      {formattedEnrolled} {isBangla ? 'শিক্ষার্থী' : 'learners'}
+                    </Text>
+                  </View>
                 )}
               </View>
-              <Text style={[styles.dotSeparator, { color: colors.textMuted }]}>•</Text>
-              <View style={styles.enrolledBadge}>
-                <Ionicons name="people-outline" size={12} color={colors.textMuted} />
-                <Text style={[styles.enrolledText, { color: colors.textMuted }]} numberOfLines={1}>
-                  {formattedEnrolled} {isBangla ? 'শিক্ষার্থী' : 'learners'}
-                </Text>
-              </View>
-            </View>
+            )}
           </View>
 
           {isEnrolled ? (

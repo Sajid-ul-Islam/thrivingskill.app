@@ -68,6 +68,15 @@ jobs:
           find backend-plugin -name '*.php' -print0 | xargs -0 -n1 php -l
           phpcs --standard=backend-plugin/phpcs.xml backend-plugin
 
+      - name: Package WordPress Companion Plugin ZIP
+        run: python3 scripts/package_plugin.py
+
+      - name: Upload WordPress Plugin Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ts-mobile-bridge-plugin
+          path: backend-plugin/ts-mobile-bridge.zip
+
       - name: Run Jest Unit & Component Tests with Coverage (Offline)
         env:
           CI: 'true'

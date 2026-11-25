@@ -120,15 +120,22 @@ export const SpecialBundlesCarousel: React.FC<SpecialBundlesCarouselProps> = ({
 
               {/* Details Content */}
               <View style={styles.contentWrap}>
-                <View style={styles.ratingRow}>
-                  <View style={styles.starsContainer}>
-                    <Ionicons name="star" size={13} color="#FFB606" />
-                    <Text style={styles.ratingNumber}>{item.rating.toFixed(1)}</Text>
+                {(item.rating > 0 || item.enrolledCount > 0) && (
+                  <View style={styles.ratingRow}>
+                    {item.rating > 0 && (
+                      <View style={styles.starsContainer}>
+                        <Ionicons name="star" size={13} color="#FFB606" />
+                        <Text style={styles.ratingNumber}>{item.rating.toFixed(1)}</Text>
+                      </View>
+                    )}
+                    {item.enrolledCount > 0 && (
+                      <Text style={[styles.enrolledText, { color: colors.textMuted }]}>
+                        {item.rating > 0 ? '• ' : ''}
+                        {item.enrolledCount}+ {isBangla ? 'শিক্ষার্থী' : 'Learners'}
+                      </Text>
+                    )}
                   </View>
-                  <Text style={[styles.enrolledText, { color: colors.textMuted }]}>
-                    • {item.enrolledCount}+ {isBangla ? 'শিক্ষার্থী' : 'Learners'}
-                  </Text>
-                </View>
+                )}
 
                 <Text
                   style={[typography.bodyMedium, styles.bundleTitle, { color: colors.text }]}

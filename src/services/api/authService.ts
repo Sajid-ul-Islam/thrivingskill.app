@@ -1,5 +1,4 @@
-import { Platform } from 'react-native';
-import { HttpClient } from './httpClient';
+import { ApiError, HttpClient } from './httpClient';
 import { Endpoints } from './endpoints';
 import { Env } from '../../config/env';
 import { WpUser } from '../../types';
@@ -12,9 +11,25 @@ export interface TokenResponse {
   user_id?: string | number;
 }
 
+function isNetworkFailureError(err: any): boolean {
+  const msg = String(err?.message || '');
+  return (
+    err?.status === 0 ||
+    err?.code === 'NETWORK_ERROR' ||
+    msg.includes('Failed to fetch') ||
+    msg.includes('Network request failed') ||
+    msg.includes('Network error')
+  );
+}
+
+function isTimeoutError(err: any): boolean {
+  return err?.status === 408 || err?.code === 'REQUEST_TIMEOUT';
+}
+
 export class AuthService {
   /**
-   * CR-04: Log in user using WordPress credentials via Native LearnPress JWT token endpoint
+   * CR-04: Log in user using WordPress credentials via Native LearnPress JWT token endpoint.
+   * Never fabricates a client session or token on network errors.
    */
   static async login(username: string, password: string): Promise<WpUser> {
     try {
@@ -56,32 +71,21 @@ export class AuthService {
         roles,
       };
     } catch (err: any) {
-      // In web browser testing (http://localhost:8081/), cross-origin fetch is blocked by browser CORS policy.
-      // If network/CORS error occurs on web runtime, provide a seamless developer testing session so UI flows can be fully tested.
-      if (
-        Platform.OS === 'web' &&
-        (err?.message?.includes('Failed to fetch') ||
-          err?.message?.includes('Network request failed') ||
-          err?.message?.includes('Network error') ||
-          err?.status === 0 ||
-          err?.status === 408 ||
-          err?.code === 'NETWORK_ERROR' ||
-          err?.code === 'REQUEST_TIMEOUT')
-      ) {
-        const cleanUser = username.trim();
-        const siteHost =
-          Env.SITE_URL.replace(/^https?:\/\//i, '').split('/')[0] || 'thrivingskill.com';
-        const fallbackToken = `tsl_web_dev_jwt_${Date.now()}`;
-        HttpClient.setAuthToken(fallbackToken);
-        return {
-          id: `web-user-${Date.now()}`,
-          username: cleanUser,
-          email: cleanUser.includes('@') ? cleanUser : `${cleanUser}@${siteHost}`,
-          displayName: cleanUser.includes('@') ? cleanUser.split('@')[0] : cleanUser,
-          avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200',
-          token: fallbackToken,
-          roles: ['subscriber'],
-        };
+      if (isTimeoutError(err)) {
+        throw new ApiError(
+          'Connection timed out. Please check your internet connection and try again.',
+          408,
+          'REQUEST_TIMEOUT',
+          err
+        );
+      }
+      if (isNetworkFailureError(err)) {
+        throw new ApiError(
+          'No internet connection. Please check your connection and try again.',
+          0,
+          'NETWORK_ERROR',
+          err
+        );
       }
       throw err;
     }
@@ -110,7 +114,8 @@ export class AuthService {
   }
 
   /**
-   * CR-04: Register a new student account directly in LearnPress/WordPress
+   * CR-04: Register a new student account directly in LearnPress/WordPress.
+   * Succeeds only after server confirmation; never fabricates a local session on network failure.
    */
   static async register(userData: {
     username: string;
@@ -156,30 +161,79 @@ export class AuthService {
         return await HttpClient.post(Endpoints.COMPANION.REGISTER, payload, {
           skipAuth: true,
         });
-      } catch {
-        return await HttpClient.post(Endpoints.LEARNPRESS.TOKEN_REGISTER, payload, {
-          skipAuth: true,
-        });
+      } catch (companionErr: any) {
+        // Fall back to LearnPress native registration endpoint only if companion route is absent (404/rest_no_route)
+        if (companionErr?.status === 404 || companionErr?.code === 'rest_no_route') {
+          return await HttpClient.post(Endpoints.LEARNPRESS.TOKEN_REGISTER, payload, {
+            skipAuth: true,
+          });
+        }
+        throw companionErr;
       }
     } catch (err: any) {
-      if (
-        Platform.OS === 'web' &&
-        (err?.message?.includes('Failed to fetch') ||
-          err?.message?.includes('Network request failed') ||
-          err?.status === 0 ||
-          err?.status === 408 ||
-          err?.code === 'NETWORK_ERROR')
-      ) {
-        const cleanUser = userData.username.trim();
-        const fallbackToken = `tsl_web_dev_jwt_${Date.now()}`;
-        HttpClient.setAuthToken(fallbackToken);
-        return {
-          user_id: `web-reg-${Date.now()}`,
-          username: cleanUser,
-          email: userData.email.trim(),
-          token: fallbackToken,
-          status: 200,
-        };
+      if (isTimeoutError(err)) {
+        throw new ApiError(
+          'Connection timed out. Please check your internet connection and try again.',
+          408,
+          'REQUEST_TIMEOUT',
+          err
+        );
+      }
+      if (isNetworkFailureError(err)) {
+        throw new ApiError(
+          'No internet connection. Please check your connection and try again.',
+          0,
+          'NETWORK_ERROR',
+          err
+        );
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * Complete email OTP verification after companion registration
+   */
+  static async verifyRegistrationOtp(
+    email: string,
+    otp: string
+  ): Promise<{
+    verified?: boolean;
+    token?: string;
+    user_id?: string | number;
+    username?: string;
+    email?: string;
+    user_display_name?: string;
+  }> {
+    try {
+      const res = await HttpClient.post<any>(
+        Endpoints.COMPANION.VERIFY_REGISTRATION,
+        {
+          email: email.trim().toLowerCase(),
+          otp: otp.trim(),
+        },
+        { skipAuth: true }
+      );
+      if (res?.token) {
+        HttpClient.setAuthToken(res.token);
+      }
+      return res;
+    } catch (err: any) {
+      if (isTimeoutError(err)) {
+        throw new ApiError(
+          'Connection timed out. Please check your internet connection and try again.',
+          408,
+          'REQUEST_TIMEOUT',
+          err
+        );
+      }
+      if (isNetworkFailureError(err)) {
+        throw new ApiError(
+          'No internet connection. Please check your connection and try again.',
+          0,
+          'NETWORK_ERROR',
+          err
+        );
       }
       throw err;
     }
@@ -247,10 +301,14 @@ export class AuthService {
     const cleanPhone = phone.trim().replace(/[\s-]/g, '');
     try {
       const res = await HttpClient.post<{ success: boolean; message: string; testOtp?: string }>(
-        '/wp-json/tsl/v1/auth/send-otp',
+        Endpoints.TSL.SEND_OTP,
         { phone: cleanPhone },
         { skipAuth: true }
       );
+      if (!__DEV__ && res && 'testOtp' in res) {
+        const { testOtp: _ignored, ...safeRes } = res;
+        return safeRes;
+      }
       return res;
     } catch (err: any) {
       throw new Error(
@@ -269,7 +327,7 @@ export class AuthService {
 
     try {
       const data = await HttpClient.post<TokenResponse>(
-        '/wp-json/tsl/v1/auth/verify-otp',
+        Endpoints.TSL.VERIFY_OTP,
         {
           phone: cleanPhone,
           otp: cleanOtp,

@@ -108,6 +108,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     isGuest,
     login,
     register,
+    verifyRegistrationOtp,
     confirmPasswordReset,
     isLoading,
     setAuthModalVisible,
@@ -135,10 +136,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [showRegPassword, setShowRegPassword] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
 
-  // Registration Success & Email Notification State
+  // Registration Success & Email Notification / OTP Verification State
   const [registeredSuccessEmail, setRegisteredSuccessEmail] = useState('');
   const [registeredSuccessUsername, setRegisteredSuccessUsername] = useState('');
   const [isAutoLoggedInAfterReg, setIsAutoLoggedInAfterReg] = useState(false);
+  const [requiresEmailOtp, setRequiresEmailOtp] = useState(false);
+  const [regOtpCode, setRegOtpCode] = useState('');
+  const [isVerifyingEmailOtp, setIsVerifyingEmailOtp] = useState(false);
 
   // Set Password State (For email verification & password setup)
   const [resetLogin, setResetLogin] = useState(initialResetLogin || '');
@@ -403,6 +407,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       );
       setRegisteredSuccessEmail(trimmedEmail);
       setRegisteredSuccessUsername(autoUsername);
+      const needsOtp = Boolean(
+        regRes &&
+        typeof regRes === 'object' &&
+        'requiresVerification' in regRes &&
+        regRes.requiresVerification
+      );
+      setRequiresEmailOtp(needsOtp);
+      setRegOtpCode('');
       setIsAutoLoggedInAfterReg(
         Boolean(
           regRes && typeof regRes === 'object' && 'autoLoggedIn' in regRes && regRes.autoLoggedIn
@@ -412,8 +424,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       triggerHaptic('success');
       showToast({
         message: isBangla
-          ? '🎉 রেজিস্ট্রেশন সম্পন্ন হয়েছে! নিশ্চিতকরণ ইমেইল পাঠানো হয়েছে।'
-          : '🎉 Registration completed! Confirmation email sent.',
+          ? needsOtp
+            ? 'ইমেইলে ৬-ডিজিটের ভেরিফিকেশন কোড পাঠানো হয়েছে।'
+            : '🎉 রেজিস্ট্রেশন সম্পন্ন হয়েছে! নিশ্চিতকরণ ইমেইল পাঠানো হয়েছে।'
+          : needsOtp
+            ? 'Check your inbox for the 6-digit verification code.'
+            : '🎉 Registration completed! Confirmation email sent.',
         type: 'success',
       });
       setRegFullName('');
@@ -426,14 +442,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       const code = String(err?.code || err?.data?.code || '');
       const msg = String(err?.message || '');
 
-      if (code.includes('email-exists') || msg.toLowerCase().includes('already registered')) {
-        setUsername(trimmedEmail);
-        setErrorMessage(
-          isBangla
-            ? 'এই ইমেইল দিয়ে ইতিমধ্যে একটি অ্যাকাউন্ট রয়েছে। অনুগ্রহ করে সাইন ইন করুন।'
-            : 'An account with this email is already registered. Please sign in.'
-        );
-      } else if (code.includes('invalid-email') || msg.toLowerCase().includes('valid email')) {
+      if (code.includes('invalid-email') || msg.toLowerCase().includes('valid email')) {
         setErrorMessage(
           isBangla ? 'অনুগ্রহ করে সঠিক ইমেইল এড্রেস লিখুন।' : 'Please provide a valid email address.'
         );
@@ -452,6 +461,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           );
           setRegisteredSuccessEmail(trimmedEmail);
           setRegisteredSuccessUsername(retryUsername);
+          setRequiresEmailOtp(
+            Boolean(
+              retryRes &&
+              typeof retryRes === 'object' &&
+              'requiresVerification' in retryRes &&
+              retryRes.requiresVerification
+            )
+          );
+          setRegOtpCode('');
           setIsAutoLoggedInAfterReg(
             Boolean(
               retryRes &&
@@ -582,6 +600,43 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
+  const handleVerifyEmailOtp = async () => {
+    const cleanOtp = regOtpCode.trim();
+    if (!/^\d{6}$/.test(cleanOtp)) {
+      setErrorMessage(
+        isBangla
+          ? 'ইমেইলে পাঠানো সঠিক ৬-ডিজিটের কোডটি লিখুন।'
+          : 'Please enter the 6-digit verification code sent to your email.'
+      );
+      triggerHaptic('warning');
+      return;
+    }
+
+    setErrorMessage(null);
+    setIsVerifyingEmailOtp(true);
+    try {
+      await verifyRegistrationOtp(registeredSuccessEmail, cleanOtp);
+      triggerHaptic('success');
+      showToast({
+        message: isBangla ? 'অ্যাকাউন্ট ভেরিফাই ও সক্রিয় হয়েছে!' : 'Account verified and activated!',
+        type: 'success',
+      });
+      setRegOtpCode('');
+      setRequiresEmailOtp(false);
+      onClose();
+    } catch (err: any) {
+      triggerHaptic('error');
+      setErrorMessage(
+        err?.message ||
+          (isBangla
+            ? 'ভেরিফিকেশন কোডটি সঠিক নয় বা মেয়াদ শেষ হয়েছে।'
+            : 'Verification code is invalid or expired. Please try again.')
+      );
+    } finally {
+      setIsVerifyingEmailOtp(false);
+    }
+  };
+
   return (
     <Modal
       visible={visible}
@@ -652,14 +707,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               allowUniversalAccessFromFileURLs={false}
               onShouldStartLoadWithRequest={(request) => {
                 const url = (request.url || '').toLowerCase();
-                // Restrict embedded auth webview navigation strictly to authorized Thriving Skills domains
-                return (
-                  url.startsWith('https://thrivingskill.com') ||
-                  url.startsWith('https://www.thrivingskill.com') ||
-                  url.startsWith('https://staging.thrivingskill.com') ||
-                  (Env.SITE_URL ? url.startsWith(Env.SITE_URL.toLowerCase()) : false) ||
-                  url.startsWith('about:blank')
-                );
+                if (url.startsWith('about:blank')) return true;
+                const activeOrigin = (Env.SITE_URL || 'https://thrivingskill.com').toLowerCase();
+                if (url.startsWith(activeOrigin)) return true;
+                if (
+                  Env.currentEnvironment === 'production' &&
+                  url.startsWith('https://www.thrivingskill.com')
+                ) {
+                  return true;
+                }
+                return false;
               }}
               injectedJavaScript={`
                 (function() {
@@ -1883,6 +1940,74 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                     {/* Action Buttons */}
                     <View style={styles.successActionsContainer}>
+                      {requiresEmailOtp && (
+                        <View
+                          style={[
+                            styles.guidanceCard,
+                            { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                          ]}
+                        >
+                          <Text style={[styles.guidanceHeading, { color: colors.text }]}>
+                            {isBangla
+                              ? '৬-ডিজিটের ইমেইল ভেরিফিকেশন কোড লিখুন'
+                              : 'Enter 6-Digit Email Verification Code'}
+                          </Text>
+                          <View
+                            style={[
+                              styles.inputWrapper,
+                              {
+                                backgroundColor: colors.surfaceCard,
+                                borderColor: colors.border,
+                                marginBottom: 8,
+                              },
+                            ]}
+                          >
+                            <Ionicons
+                              name="shield-checkmark-outline"
+                              size={18}
+                              color={colors.primary}
+                              style={styles.inputIcon}
+                            />
+                            <TextInput
+                              style={[styles.input, { color: colors.text }]}
+                              placeholder="123456"
+                              placeholderTextColor={colors.textLight}
+                              value={regOtpCode}
+                              onChangeText={(val) => {
+                                setRegOtpCode(val.replace(/\D/g, '').slice(0, 6));
+                                if (errorMessage) setErrorMessage(null);
+                              }}
+                              keyboardType="number-pad"
+                              maxLength={6}
+                              returnKeyType="done"
+                              onSubmitEditing={handleVerifyEmailOtp}
+                            />
+                          </View>
+                          <TouchableOpacity
+                            style={[styles.submitButton, { backgroundColor: '#102F53' }]}
+                            onPress={handleVerifyEmailOtp}
+                            disabled={isVerifyingEmailOtp}
+                            activeOpacity={0.88}
+                            accessibilityRole="button"
+                            accessibilityLabel={
+                              isBangla
+                                ? 'কোড ভেরিফাই ও অ্যাকাউন্ট সক্রিয় করুন'
+                                : 'Verify Code & Activate Account'
+                            }
+                          >
+                            {isVerifyingEmailOtp ? (
+                              <ActivityIndicator color="#FFFFFF" size="small" />
+                            ) : (
+                              <Text style={[styles.submitButtonText, { color: '#FFFFFF' }]}>
+                                {isBangla
+                                  ? 'কোড ভেরিফাই ও অ্যাকাউন্ট সক্রিয় করুন'
+                                  : 'Verify Code & Activate Account'}
+                              </Text>
+                            )}
+                          </TouchableOpacity>
+                        </View>
+                      )}
+
                       {/* Open Mail App */}
                       <TouchableOpacity
                         style={[styles.submitButton, { backgroundColor: '#E34234' }]}

@@ -372,8 +372,8 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     // Dynamic R&D: Add "🌟 Bestsellers & Top Rated" as the leading curated spotlight ribbon
     if (courses.length > 0) {
       const bestsellers = [...courses]
-        .filter((c) => c.rating >= 4.5 || c.enrolledCount > 50 || c.badge)
-        .sort((a, b) => (b.enrolledCount || 0) - (a.enrolledCount || 0))
+        .filter((c) => (c.rating ?? 0) >= 4.5 || (c.enrolledCount ?? 0) > 50 || c.badge)
+        .sort((a, b) => (b.enrolledCount ?? 0) - (a.enrolledCount ?? 0))
         .slice(0, 8);
 
       if (bestsellers.length >= 3) {
@@ -678,13 +678,13 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     if (sort === 'newest') {
       matched.sort((a, b) => Number(b.id) - Number(a.id));
     } else if (sort === 'rating') {
-      matched.sort((a, b) => b.rating - a.rating);
+      matched.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
     } else if (sort === 'price-low') {
       matched.sort((a, b) => (a.priceBdt ?? 0) - (b.priceBdt ?? 0));
     } else if (sort === 'price-high') {
       matched.sort((a, b) => (b.priceBdt ?? 0) - (a.priceBdt ?? 0));
     } else {
-      matched.sort((a, b) => b.enrolledCount - a.enrolledCount);
+      matched.sort((a, b) => (b.enrolledCount ?? 0) - (a.enrolledCount ?? 0));
     }
 
     return matched;

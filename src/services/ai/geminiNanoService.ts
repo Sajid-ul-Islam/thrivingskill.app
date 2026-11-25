@@ -240,9 +240,9 @@ export class GeminiNanoService {
     const unenrolled = catalog.filter((c) => !enrolledCourses.includes(c.id));
     const pool = unenrolled.length > 0 ? unenrolled : catalog;
 
-    // Score based on interests and ratings
+    // Score based on interests and authentic ratings (when present)
     const scored = pool.map((c) => {
-      let score = (c.rating || 4.5) * 5;
+      let score = typeof c.rating === 'number' && c.rating > 0 ? c.rating * 5 : 0;
       const titleLower = c.title.toLowerCase();
       const catLower = (c.category || '').toLowerCase();
 

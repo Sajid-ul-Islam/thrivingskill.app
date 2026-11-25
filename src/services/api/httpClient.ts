@@ -92,8 +92,11 @@ export class HttpClient {
     params?: RequestOptions['params'],
     customBase?: string
   ): string {
-    const base = customBase || Env.API_URL;
-    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const base = (customBase || Env.API_URL).replace(/\/+$/, '');
+    let cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    if (base.endsWith('/wp-json') && cleanEndpoint.startsWith('/wp-json/')) {
+      cleanEndpoint = cleanEndpoint.slice('/wp-json'.length);
+    }
     let url = `${base}${cleanEndpoint}`;
 
     if (params) {
@@ -152,7 +155,14 @@ export class HttpClient {
     } = options;
 
     const isGet = !options.method || options.method.toUpperCase() === 'GET';
-    const canAttemptFallback = allowFallback && isGet && Env.ENABLE_FALLBACK && !baseUrl;
+    const fallbackBaseUrl = Env.FALLBACK_API_URL;
+    const canAttemptFallback =
+      allowFallback &&
+      isGet &&
+      Env.ENABLE_FALLBACK &&
+      !baseUrl &&
+      Boolean(fallbackBaseUrl) &&
+      fallbackBaseUrl !== Env.API_URL;
 
     const fullUrl = this.buildUrl(endpoint, params, baseUrl);
     const headers: Record<string, string> = {
@@ -378,7 +388,14 @@ export class HttpClient {
     } = options;
 
     const isGet = !options.method || options.method.toUpperCase() === 'GET';
-    const canAttemptFallback = allowFallback && isGet && Env.ENABLE_FALLBACK && !baseUrl;
+    const fallbackBaseUrl = Env.FALLBACK_API_URL;
+    const canAttemptFallback =
+      allowFallback &&
+      isGet &&
+      Env.ENABLE_FALLBACK &&
+      !baseUrl &&
+      Boolean(fallbackBaseUrl) &&
+      fallbackBaseUrl !== Env.API_URL;
 
     const fullUrl = this.buildUrl(endpoint, params, baseUrl);
     const headers: Record<string, string> = {

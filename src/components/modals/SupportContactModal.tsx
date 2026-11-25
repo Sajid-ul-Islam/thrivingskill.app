@@ -5,6 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useFeedback } from '../../context/FeedbackContext';
+import { useLearning } from '../../context/LearningContext';
+import { resolveSupportContacts } from '../../services/api/companionService';
 import { triggerHaptic } from '../../utils/haptics';
 import {
   CRM_CHANNELS,
@@ -32,8 +34,15 @@ export const SupportContactModal: React.FC<SupportContactModalProps> = ({
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
   const { showToast } = useFeedback();
+  const { appRemoteConfig } = useLearning();
   const insets = useSafeAreaInsets();
   const [selectedTopic, setSelectedTopic] = useState<CrmInquiryType>(initialInquiryType);
+
+  const remoteSupport = resolveSupportContacts(appRemoteConfig?.support);
+  const activeWhatsapp = remoteSupport.whatsapp ?? CRM_CHANNELS.whatsappNumber;
+  const activeWhatsappDisplay = remoteSupport.whatsapp || CRM_CHANNELS.phoneDisplay;
+  const activeHelpline = remoteSupport.helpline ?? CRM_CHANNELS.phone;
+  const activeHelplineDisplay = remoteSupport.helpline || CRM_CHANNELS.phoneDisplay;
 
   const topicOptions: { id: CrmInquiryType; label: string; icon: string }[] = [
     {
@@ -64,12 +73,13 @@ export const SupportContactModal: React.FC<SupportContactModalProps> = ({
   ];
 
   const handleOpenWhatsApp = async (topic = selectedTopic) => {
+    if (!activeWhatsapp) return;
     triggerHaptic('medium');
     showToast({
       message: isBangla ? 'হোয়াটসঅ্যাপ খোলা হচ্ছে...' : 'Launching WhatsApp support...',
       type: 'info',
     });
-    await openWhatsAppChat(topic, isBangla);
+    await openWhatsAppChat(topic, isBangla, activeWhatsapp);
   };
 
   const handleOpenMessenger = async () => {
@@ -82,8 +92,9 @@ export const SupportContactModal: React.FC<SupportContactModalProps> = ({
   };
 
   const handleCall = async () => {
+    if (!activeHelpline) return;
     triggerHaptic('light');
-    await openCallHelpline();
+    await openCallHelpline(activeHelpline);
   };
 
   const handleOpenFacebookPage = async () => {
@@ -240,27 +251,29 @@ export const SupportContactModal: React.FC<SupportContactModalProps> = ({
           </View>
 
           {/* 1. Official WhatsApp Card */}
-          <TouchableOpacity
-            style={[styles.channelCard, { backgroundColor: '#25D366' }]}
-            onPress={() => handleOpenWhatsApp()}
-            activeOpacity={0.88}
-            accessibilityRole="button"
-            accessibilityLabel={`Chat on WhatsApp at ${CRM_CHANNELS.phoneDisplay}`}
-          >
-            <View style={styles.channelIconWrap}>
-              <Ionicons name="logo-whatsapp" size={28} color="#FFFFFF" />
-            </View>
-            <View style={styles.channelTextCol}>
-              <View style={styles.channelBadgeRow}>
-                <Text style={styles.channelBadgeText}>RECOMMENDED & FASTEST</Text>
+          {activeWhatsapp ? (
+            <TouchableOpacity
+              style={[styles.channelCard, { backgroundColor: '#25D366' }]}
+              onPress={() => handleOpenWhatsApp()}
+              activeOpacity={0.88}
+              accessibilityRole="button"
+              accessibilityLabel={`Chat on WhatsApp at ${activeWhatsappDisplay}`}
+            >
+              <View style={styles.channelIconWrap}>
+                <Ionicons name="logo-whatsapp" size={28} color="#FFFFFF" />
               </View>
-              <Text style={styles.channelTitle}>WhatsApp Live Chat</Text>
-              <Text style={styles.channelSubtitle}>
-                {CRM_CHANNELS.phoneDisplay} • Direct message to advisors
-              </Text>
-            </View>
-            <Ionicons name="arrow-forward-circle" size={26} color="#FFFFFF" />
-          </TouchableOpacity>
+              <View style={styles.channelTextCol}>
+                <View style={styles.channelBadgeRow}>
+                  <Text style={styles.channelBadgeText}>RECOMMENDED & FASTEST</Text>
+                </View>
+                <Text style={styles.channelTitle}>WhatsApp Live Chat</Text>
+                <Text style={styles.channelSubtitle}>
+                  {activeWhatsappDisplay} • Direct message to advisors
+                </Text>
+              </View>
+              <Ionicons name="arrow-forward-circle" size={26} color="#FFFFFF" />
+            </TouchableOpacity>
+          ) : null}
 
           {/* 2. Official Messenger Card */}
           <TouchableOpacity
@@ -290,28 +303,30 @@ export const SupportContactModal: React.FC<SupportContactModalProps> = ({
           {/* Secondary Actions Row: Direct Phone Call & Facebook Page */}
           <View style={styles.secondaryRow}>
             {/* Direct Phone Call */}
-            <TouchableOpacity
-              style={[
-                styles.secondaryCard,
-                { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-              ]}
-              onPress={handleCall}
-              activeOpacity={0.8}
-              accessibilityRole="button"
-              accessibilityLabel={`Call official helpline at ${CRM_CHANNELS.phoneDisplay}`}
-            >
-              <View style={[styles.secondaryIconBg, { backgroundColor: colors.primaryLight }]}>
-                <Ionicons name="call" size={18} color={colors.primary} />
-              </View>
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={[styles.secondaryTitle, { color: colors.text }]} numberOfLines={1}>
-                  {isBangla ? 'সরাসরি কল করুন' : 'Helpline Call'}
-                </Text>
-                <Text style={[styles.secondarySub, { color: colors.primary }]} numberOfLines={1}>
-                  {CRM_CHANNELS.phoneDisplay}
-                </Text>
-              </View>
-            </TouchableOpacity>
+            {activeHelpline ? (
+              <TouchableOpacity
+                style={[
+                  styles.secondaryCard,
+                  { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                ]}
+                onPress={handleCall}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel={`Call official helpline at ${activeHelplineDisplay}`}
+              >
+                <View style={[styles.secondaryIconBg, { backgroundColor: colors.primaryLight }]}>
+                  <Ionicons name="call" size={18} color={colors.primary} />
+                </View>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={[styles.secondaryTitle, { color: colors.text }]} numberOfLines={1}>
+                    {isBangla ? 'সরাসরি কল করুন' : 'Helpline Call'}
+                  </Text>
+                  <Text style={[styles.secondarySub, { color: colors.primary }]} numberOfLines={1}>
+                    {activeHelplineDisplay}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ) : null}
 
             {/* Visit Official Facebook Page */}
             <TouchableOpacity

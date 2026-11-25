@@ -106,6 +106,13 @@ export async function registerWpUser(userData: {
 }
 
 /**
+ * Complete email OTP verification after companion registration
+ */
+export async function verifyWpRegistrationOtp(email: string, otp: string) {
+  return AuthService.verifyRegistrationOtp(email, otp);
+}
+
+/**
  * CR-04: Validate JWT token using AuthService
  */
 export async function validateWpToken(token: string): Promise<boolean> {

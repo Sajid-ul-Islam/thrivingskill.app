@@ -68,10 +68,11 @@ test('SEC-06: PaymentModal allowlists custom schemes and validates intent:// fal
 });
 
 // 4. AuthModal registration WebView domain restriction
-test('SEC-03: AuthModal WebView restricts navigation to thrivingskill.com and https', () => {
+test('SEC-03: AuthModal WebView restricts navigation to active Env.SITE_URL and https', () => {
   const content = fs.readFileSync(path.join(__dirname, '../src/components/modals/AuthModal.tsx'), 'utf8');
   assert(content.includes("originWhitelist={['https://*']}"), 'Expected AuthModal originWhitelist https only');
-  assert(content.includes("url.startsWith('https://thrivingskill.com')"), 'Expected thrivingskill.com domain restriction');
+  assert(content.includes('Env.SITE_URL'), 'Expected active Env.SITE_URL domain restriction');
+  assert(!content.includes("url.startsWith('https://staging.thrivingskill.com')"), 'AuthModal must not unconditionally allow staging URLs in production');
 });
 
 // 5. Offline Sync Queue allowlist validation
@@ -81,11 +82,16 @@ test('SEC-05: syncQueue enforces isAllowedSyncEndpoint', () => {
   assert(content.includes('/learnpress/v1/lessons/finish'), 'Expected allowed prefix check');
 });
 
-// 6. env.ts purged secrets
-test('SEC-07: env.ts has no WC_CONSUMER_SECRET or WC_CONSUMER_KEY accessors', () => {
+// 6. env.ts & authService.ts purged secrets and production safety
+test('SEC-07: env.ts has no WC secrets, no AI keys in EXPO_PUBLIC, and no prod-to-staging fallback', () => {
   const content = fs.readFileSync(path.join(__dirname, '../src/config/env.ts'), 'utf8');
+  const authContent = fs.readFileSync(path.join(__dirname, '../src/services/api/authService.ts'), 'utf8');
   assert(!content.includes('WC_CONSUMER_SECRET'), 'WC_CONSUMER_SECRET should be removed');
   assert(!content.includes('WC_CONSUMER_KEY'), 'WC_CONSUMER_KEY should be removed');
+  assert(!content.includes('EXPO_PUBLIC_GEMINI_API_KEY'), 'EXPO_PUBLIC_GEMINI_API_KEY should be removed');
+  assert(!content.includes('EXPO_PUBLIC_GOOGLE_API_KEY'), 'EXPO_PUBLIC_GOOGLE_API_KEY should be removed');
+  assert(!content.includes('getEnvVar('), 'env.ts must use static process.env.EXPO_PUBLIC_* reads');
+  assert(!authContent.includes('tsl_web_dev_jwt_'), 'authService.ts must not fabricate web dev JWT sessions');
 });
 
 console.log(`\nALL ${passedTests} SECURITY TESTS PASSED SUCCESSFULLY!`);

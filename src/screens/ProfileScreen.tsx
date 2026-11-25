@@ -320,6 +320,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   };
 
   const handleSwitchServerEnvironment = () => {
+    if (!Env.canSwitchEnvironment) return;
     const isProd = serverEnv === 'production';
     const targetEnv: ApiEnvironment = isProd ? 'staging' : 'production';
     const targetLabel =

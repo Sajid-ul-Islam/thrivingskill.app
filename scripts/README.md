@@ -22,4 +22,4 @@ Only actively maintained CI, structural QA, and plugin packaging scripts live in
 - **`verify_ui_ux_laws.js`**: Checks Miller's Law, Fitts's Law (`MIN_TOUCH_TARGET`), Hick's Law, and accessibility labels.
 
 ## Backend Plugin Packaging
-- **`package_plugin.js`** / **`package_plugin.py`**: Packages `backend-plugin/thriving-skills-mobile-bridge` into a POSIX-compliant `.zip` archive for WordPress Admin upload.
+- **`package_plugin.js`** / **`package_plugin.py`**: Packages `backend-plugin/ts-mobile-bridge` into `backend-plugin/ts-mobile-bridge.zip` (POSIX-compliant archive built automatically in CI and ignored in Git).

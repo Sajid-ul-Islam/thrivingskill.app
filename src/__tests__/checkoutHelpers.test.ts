@@ -121,11 +121,18 @@ describe('checkoutHelpers security & server pricing', () => {
   });
 
   describe('origin checks & originWhitelist', () => {
-    it('does not include wildcard https://* in originWhitelist', () => {
-      const whitelist = getCheckoutOriginWhitelist('https://thrivingskill.com');
-      expect(whitelist).not.toContain('https://*');
-      expect(whitelist).toContain('https://thrivingskill.com');
-      expect(whitelist).toContain('https://*.sslcommerz.com');
+    it('does not include wildcard https://* or staging in production originWhitelist', () => {
+      const prodWhitelist = getCheckoutOriginWhitelist('https://thrivingskill.com');
+      expect(prodWhitelist).not.toContain('https://*');
+      expect(prodWhitelist).not.toContain('https://*.thrivingskill.com');
+      expect(prodWhitelist).not.toContain('https://staging.thrivingskill.com');
+      expect(prodWhitelist).toContain('https://thrivingskill.com');
+      expect(prodWhitelist).toContain('https://www.thrivingskill.com');
+      expect(prodWhitelist).toContain('https://*.sslcommerz.com');
+
+      const stagingWhitelist = getCheckoutOriginWhitelist('https://staging.thrivingskill.com');
+      expect(stagingWhitelist).toContain('https://staging.thrivingskill.com');
+      expect(stagingWhitelist).not.toContain('https://thrivingskill.com');
     });
 
     it('validates message origin strictly against active HTTPS site origin', () => {

@@ -50,3 +50,7 @@ yarn-error.*
 # test coverage reports
 coverage/
 
+# WordPress plugin build archives (built in CI)
+backend-plugin/*.zip
+
+

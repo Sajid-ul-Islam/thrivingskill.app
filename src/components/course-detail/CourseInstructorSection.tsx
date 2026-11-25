@@ -65,30 +65,40 @@ export const CourseInstructorSection: React.FC<CourseInstructorSectionProps> = (
 
       <Text style={[styles.instructorBio, { color: colors.text }]}>{instructor.bio}</Text>
 
-      <View style={[styles.instructorStats, { backgroundColor: colors.surfaceSubtle }]}>
-        <View style={styles.instStatItem}>
-          <Text style={[styles.instStatVal, { color: colors.text }]}>{instructor.rating}</Text>
-          <Text style={[styles.instStatLbl, { color: colors.textMuted }]}>
-            {isBangla ? 'রেটিং' : 'Rating'}
-          </Text>
+      {(typeof instructor.rating === 'number' && instructor.rating > 0) ||
+      (typeof instructor.studentsCount === 'number' && instructor.studentsCount > 0) ||
+      (typeof instructor.coursesCount === 'number' && instructor.coursesCount > 0) ? (
+        <View style={[styles.instructorStats, { backgroundColor: colors.surfaceSubtle }]}>
+          {typeof instructor.rating === 'number' && instructor.rating > 0 && (
+            <View style={styles.instStatItem}>
+              <Text style={[styles.instStatVal, { color: colors.text }]}>{instructor.rating}</Text>
+              <Text style={[styles.instStatLbl, { color: colors.textMuted }]}>
+                {isBangla ? 'রেটিং' : 'Rating'}
+              </Text>
+            </View>
+          )}
+          {typeof instructor.studentsCount === 'number' && instructor.studentsCount > 0 && (
+            <View style={styles.instStatItem}>
+              <Text style={[styles.instStatVal, { color: colors.text }]}>
+                {instructor.studentsCount.toLocaleString()}
+              </Text>
+              <Text style={[styles.instStatLbl, { color: colors.textMuted }]}>
+                {isBangla ? 'শিক্ষার্থী' : 'Students'}
+              </Text>
+            </View>
+          )}
+          {typeof instructor.coursesCount === 'number' && instructor.coursesCount > 0 && (
+            <View style={styles.instStatItem}>
+              <Text style={[styles.instStatVal, { color: colors.text }]}>
+                {instructor.coursesCount}
+              </Text>
+              <Text style={[styles.instStatLbl, { color: colors.textMuted }]}>
+                {isBangla ? 'কোর্স' : 'Courses'}
+              </Text>
+            </View>
+          )}
         </View>
-        <View style={styles.instStatItem}>
-          <Text style={[styles.instStatVal, { color: colors.text }]}>
-            {instructor.studentsCount.toLocaleString()}
-          </Text>
-          <Text style={[styles.instStatLbl, { color: colors.textMuted }]}>
-            {isBangla ? 'শিক্ষার্থী' : 'Students'}
-          </Text>
-        </View>
-        <View style={styles.instStatItem}>
-          <Text style={[styles.instStatVal, { color: colors.text }]}>
-            {instructor.coursesCount}
-          </Text>
-          <Text style={[styles.instStatLbl, { color: colors.textMuted }]}>
-            {isBangla ? 'কোর্স' : 'Courses'}
-          </Text>
-        </View>
-      </View>
+      ) : null}
     </View>
   );
 };

@@ -5,3 +5,4 @@ export * from './HomeTestimonialsCarousel';
 export * from './HomeQuickNavPills';
 export * from './ThriveGenHub';
 export * from './HomeBlogInsightsFeed';
+export * from './FlashSaleBanner';

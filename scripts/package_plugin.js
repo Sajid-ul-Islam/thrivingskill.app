@@ -1,36 +1,34 @@
 /**
  * Package Plugin Script
- * Compresses backend-plugin/thriving-skills-mobile-bridge into a zip archive
- * ready for 1-click upload to WordPress Admin.
+ * Compresses backend-plugin/ts-mobile-bridge into a POSIX-compliant zip archive
+ * ready for upload to WordPress Admin (ignored in git; also built by CI).
  */
 
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const pluginDir = path.resolve(__dirname, '../backend-plugin/thriving-skills-mobile-bridge');
-const outputZip = path.resolve(__dirname, '../backend-plugin/thriving-skills-mobile-bridge.zip');
+const pluginDir = path.resolve(__dirname, '../backend-plugin/ts-mobile-bridge');
+const outputZip = path.resolve(__dirname, '../backend-plugin/ts-mobile-bridge.zip');
 
-console.log('📦 Packaging Thriving Skills Mobile Bridge WordPress Plugin...');
+console.log('Packaging TS Mobile Bridge WordPress Plugin...');
 console.log(`Source: ${pluginDir}`);
 console.log(`Output: ${outputZip}`);
 
 if (!fs.existsSync(pluginDir)) {
-  console.error('❌ Error: Plugin source directory does not exist.');
+  console.error('Error: Plugin source directory does not exist:', pluginDir);
   process.exit(1);
 }
 
-// Remove existing zip if present
 if (fs.existsSync(outputZip)) {
   fs.unlinkSync(outputZip);
 }
 
 try {
-  // Use Python script to guarantee POSIX forward slashes ('/') in the zip archive
-  // This avoids Windows backslash directory separator bugs on Linux WordPress servers
   const pyScript = path.resolve(__dirname, 'package_plugin.py');
-  execSync(`python "${pyScript}"`, { stdio: 'inherit' });
+  const pythonBin = process.platform === 'win32' ? 'python' : 'python3';
+  execSync(`${pythonBin} "${pyScript}"`, { stdio: 'inherit' });
 } catch (err) {
-  console.error('❌ Packaging failed:', err.message);
+  console.error('Packaging failed:', err.message);
   process.exit(1);
 }

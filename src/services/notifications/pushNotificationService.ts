@@ -243,7 +243,7 @@ export class PushNotificationService {
         this.cachedToken = deviceToken;
       }
 
-      if (this.cachedToken) {
+      if (this.cachedToken && /^(?:ExponentPushToken|ExpoPushToken)\[/.test(this.cachedToken)) {
         const platform =
           Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : 'web';
         CompanionService.registerPushToken(this.cachedToken, platform).catch(() => {});

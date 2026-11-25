@@ -1,5 +1,6 @@
+import { Platform } from 'react-native';
 import { AuthService } from '../services/api/authService';
-import { HttpClient } from '../services/api/httpClient';
+import { ApiError, HttpClient } from '../services/api/httpClient';
 import { Env } from '../config/env';
 
 function safeParseBody(raw: string): Record<string, any> {
@@ -24,10 +25,17 @@ function mockJsonResponse(data: any, status = 200) {
 }
 
 describe('AuthService (with mocked fetch)', () => {
+  const originalPlatformOS = Platform.OS;
+
   beforeEach(async () => {
     jest.clearAllMocks();
+    (Platform as { OS: string }).OS = originalPlatformOS;
     HttpClient.setAuthToken(null);
     await Env.setEnvironment('staging');
+  });
+
+  afterAll(() => {
+    (Platform as { OS: string }).OS = originalPlatformOS;
   });
 
   it('logs in via LearnPress JWT token endpoint and fetches WordPress user profile', async () => {
@@ -62,6 +70,88 @@ describe('AuthService (with mocked fetch)', () => {
     expect(user.displayName).toBe('Sadia Rahman');
     expect(user.roles).toEqual(['subscriber']);
     expect(await HttpClient.getAuthToken()).toBe('jwt_real_token_123');
+  });
+
+  it('never creates a fake web session or tsl_web_dev_jwt token on network failure for login or register', async () => {
+    (Platform as { OS: string }).OS = 'web';
+    const fetchMock = globalThis.fetch as jest.Mock;
+    fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+
+    await expect(AuthService.login('user@example.com', 'Password1234!')).rejects.toMatchObject({
+      name: 'ApiError',
+      code: 'NETWORK_ERROR',
+      status: 0,
+    });
+    expect(await HttpClient.getAuthToken()).toBeNull();
+
+    await expect(
+      AuthService.register({
+        username: 'webuser',
+        email: 'webuser@example.com',
+        password: 'VeryLongPassword1234!',
+      })
+    ).rejects.toMatchObject({
+      name: 'ApiError',
+      code: 'NETWORK_ERROR',
+      status: 0,
+    });
+    expect(await HttpClient.getAuthToken()).toBeNull();
+  });
+
+  it('rejects 4xx and 5xx responses cleanly for login and register without signing in', async () => {
+    const fetchMock = globalThis.fetch as jest.Mock;
+
+    // 4xx on login
+    fetchMock.mockResolvedValueOnce(
+      mockJsonResponse(
+        {
+          code: '[lp_jwt_auth] incorrect_password',
+          message: 'Wrong password',
+          data: { status: 403 },
+        },
+        403
+      )
+    );
+    await expect(AuthService.login('user@example.com', 'wrong')).rejects.toBeInstanceOf(ApiError);
+    expect(await HttpClient.getAuthToken()).toBeNull();
+
+    // 5xx on login
+    fetchMock.mockResolvedValueOnce(
+      mockJsonResponse(
+        { code: 'server_error', message: 'Internal Server Error', data: { status: 500 } },
+        500
+      )
+    );
+    await expect(AuthService.login('user@example.com', 'pass')).rejects.toMatchObject({
+      status: 500,
+    });
+
+    // 4xx on register (Companion returns 400 email-exists — must not mask or create session)
+    fetchMock.mockResolvedValueOnce(
+      mockJsonResponse(
+        { code: 'email-exists', message: 'Email already registered', data: { status: 400 } },
+        400
+      )
+    );
+    await expect(
+      AuthService.register({
+        username: 'dupuser',
+        email: 'dup@example.com',
+        password: 'VeryLongPassword1234!',
+      })
+    ).rejects.toMatchObject({ status: 400, message: 'Email already registered' });
+
+    // 5xx on register
+    fetchMock.mockResolvedValueOnce(
+      mockJsonResponse({ code: 'bad_gateway', message: 'Bad Gateway', data: { status: 502 } }, 502)
+    );
+    await expect(
+      AuthService.register({
+        username: 'srvuser',
+        email: 'srv@example.com',
+        password: 'VeryLongPassword1234!',
+      })
+    ).rejects.toMatchObject({ status: 502 });
   });
 
   it('registers via Companion endpoint first and falls back to LearnPress register endpoint on 404', async () => {

@@ -50,15 +50,25 @@ export const CRM_INQUIRY_PROMPTS: Record<CrmInquiryType, { en: string; bn: strin
  */
 export async function openWhatsAppChat(
   inquiryType: CrmInquiryType = 'general',
-  isBangla = false
+  isBangla = false,
+  customWhatsappNumber?: string | null
 ): Promise<boolean> {
+  const targetNumber =
+    typeof customWhatsappNumber === 'string' && customWhatsappNumber.trim().length > 0
+      ? customWhatsappNumber.replace(/[^\d]/g, '')
+      : CRM_CHANNELS.whatsappNumber;
+
+  if (!targetNumber) {
+    return false;
+  }
+
   const message = isBangla
     ? CRM_INQUIRY_PROMPTS[inquiryType].bn
     : CRM_INQUIRY_PROMPTS[inquiryType].en;
 
   const encoded = encodeURIComponent(message);
-  const appUrl = `whatsapp://send?phone=${CRM_CHANNELS.whatsappNumber}&text=${encoded}`;
-  const webUrl = `https://wa.me/${CRM_CHANNELS.whatsappNumber}?text=${encoded}`;
+  const appUrl = `whatsapp://send?phone=${targetNumber}&text=${encoded}`;
+  const webUrl = `https://wa.me/${targetNumber}?text=${encoded}`;
 
   try {
     const canOpen = await Linking.canOpenURL(appUrl);
@@ -127,8 +137,17 @@ export async function openFacebookPage(): Promise<boolean> {
 /**
  * Open phone dialer with official helpline
  */
-export async function openCallHelpline(): Promise<boolean> {
-  const telUrl = `tel:${CRM_CHANNELS.phone}`;
+export async function openCallHelpline(customPhone?: string | null): Promise<boolean> {
+  const targetPhone =
+    typeof customPhone === 'string' && customPhone.trim().length > 0
+      ? customPhone.trim()
+      : CRM_CHANNELS.phone;
+
+  if (!targetPhone) {
+    return false;
+  }
+
+  const telUrl = `tel:${targetPhone}`;
   try {
     await Linking.openURL(telUrl);
     return true;

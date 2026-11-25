@@ -64,20 +64,9 @@ export function getCategoryTheme(slug: string, name: string) {
   return { color: '#059669', icon: 'book' };
 }
 
-// Deterministic hash to generate consistent display metrics across re-renders
-function hashString(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash);
-}
-
 // Transform raw LearnPress course to our App Course model
 export function transformWpCourse(raw: any): Course {
   const id = String(raw.id || Math.random());
-  const seed = hashString(id);
   const title = cleanHtml(raw.name || raw.title || 'Untitled Course');
   const slug = raw.slug || id;
   const excerpt = cleanHtml(raw.excerpt || raw.content || '');
@@ -171,9 +160,18 @@ export function transformWpCourse(raw: any): Course {
     bio: cleanHtml(
       instructorRaw.bio || 'Experienced practitioner and instructor at Thriving Skills.'
     ),
-    rating: 4.8 + (seed % 3) / 10,
-    studentsCount: 200 + (seed % 650),
-    coursesCount: 5,
+    rating:
+      typeof instructorRaw.rating === 'number' && instructorRaw.rating > 0
+        ? Number(instructorRaw.rating.toFixed(1))
+        : null,
+    studentsCount:
+      typeof instructorRaw.students_count === 'number' && instructorRaw.students_count > 0
+        ? instructorRaw.students_count
+        : null,
+    coursesCount:
+      typeof instructorRaw.courses_count === 'number' && instructorRaw.courses_count > 0
+        ? instructorRaw.courses_count
+        : null,
   };
 
   // Modules / Sections
@@ -304,14 +302,15 @@ export function transformWpCourse(raw: any): Course {
     categorySlugs,
     categoryIds,
     level: 'All Levels',
-    rating:
-      typeof raw.rating === 'number' && raw.rating > 0
-        ? Number(raw.rating.toFixed(1))
-        : Number((4.8 + (seed % 3) / 10).toFixed(1)),
+    rating: typeof raw.rating === 'number' && raw.rating > 0 ? Number(raw.rating.toFixed(1)) : null,
     reviewsCount:
-      raw.rating_count ||
-      (raw.count_students ? Math.round(raw.count_students * 0.2) : 25 + (seed % 75)),
-    enrolledCount: raw.count_students || 150 + (seed % 850),
+      typeof raw.rating_count === 'number' && raw.rating_count > 0
+        ? raw.rating_count
+        : getLiveReviewsForCourse(id).length > 0
+          ? getLiveReviewsForCourse(id).length
+          : null,
+    enrolledCount:
+      typeof raw.count_students === 'number' && raw.count_students > 0 ? raw.count_students : null,
     price: priceData.usd || 15,
     priceBdt: bdtPrice,
     originalPrice: origPriceData.usd || 30,
@@ -380,6 +379,18 @@ export function transformCompanionCourse(raw: any): Course {
   const badge: Course['badge'] =
     bdtPrice === 0 || raw.is_free ? 'Top Rated' : bdtPrice <= 1000 ? 'Bestseller' : 'Trending';
 
+  const realRating =
+    typeof raw.rating === 'number' && raw.rating > 0 ? Number(raw.rating.toFixed(1)) : null;
+  const liveReviews = getLiveReviewsForCourse(id);
+  const realReviewsCount =
+    typeof raw.reviews_count === 'number' && raw.reviews_count > 0
+      ? raw.reviews_count
+      : liveReviews.length > 0
+        ? liveReviews.length
+        : null;
+  const realEnrolledCount =
+    typeof raw.students_count === 'number' && raw.students_count > 0 ? raw.students_count : null;
+
   return {
     id,
     title,
@@ -389,9 +400,9 @@ export function transformCompanionCourse(raw: any): Course {
     categorySlugs: [categorySlug],
     categoryIds,
     level: (raw.level || 'All Levels') as any,
-    rating: typeof raw.rating === 'number' ? raw.rating : 4.9,
-    reviewsCount: Math.round((raw.students_count || 100) * 0.25) || 25,
-    enrolledCount: raw.students_count || 120,
+    rating: realRating,
+    reviewsCount: realReviewsCount,
+    enrolledCount: realEnrolledCount,
     price: usdPrice,
     priceBdt: bdtPrice,
     originalPrice: origUsdPrice,
@@ -410,9 +421,18 @@ export function transformCompanionCourse(raw: any): Course {
       company: 'Thriving Skills Bangladesh',
       avatar: instructorAvatar,
       bio: 'Leading industry practitioner with extensive real-world experience.',
-      rating: 4.9,
-      studentsCount: (raw.students_count || 120) * 3,
-      coursesCount: 5,
+      rating:
+        typeof raw.instructor?.rating === 'number' && raw.instructor.rating > 0
+          ? Number(raw.instructor.rating.toFixed(1))
+          : null,
+      studentsCount:
+        typeof raw.instructor?.students_count === 'number' && raw.instructor.students_count > 0
+          ? raw.instructor.students_count
+          : null,
+      coursesCount:
+        typeof raw.instructor?.courses_count === 'number' && raw.instructor.courses_count > 0
+          ? raw.instructor.courses_count
+          : null,
     },
     modules: [],
     highlights: [
@@ -426,7 +446,7 @@ export function transformCompanionCourse(raw: any): Course {
       'Basic familiarity with relevant computer/web tools',
       'Eagerness to upskill and advance career',
     ],
-    reviews: getLiveReviewsForCourse(id),
+    reviews: liveReviews,
     skillTrack: title.includes('AI') ? 'Generative AI Career Track' : 'Professional Skills Track',
     _searchIndex: `${title} ${excerpt} ${instructorName} ${categorySlug}`.toLowerCase(),
   };

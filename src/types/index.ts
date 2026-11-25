@@ -64,9 +64,9 @@ export interface Instructor {
   company: string;
   avatar: string;
   bio: string;
-  rating: number;
-  studentsCount: number;
-  coursesCount: number;
+  rating: number | null;
+  studentsCount: number | null;
+  coursesCount: number | null;
 }
 
 export interface QuizQuestion {
@@ -118,9 +118,9 @@ export interface Course {
   categorySlugs?: string[];
   categoryIds?: (number | string)[];
   level: 'Beginner' | 'Intermediate' | 'Advanced' | 'All Levels';
-  rating: number;
-  reviewsCount: number;
-  enrolledCount: number;
+  rating: number | null;
+  reviewsCount: number | null;
+  enrolledCount: number | null;
   price: number; // in USD
   priceBdt?: number; // in BDT (e.g. 1500)
   originalPrice: number;

@@ -1,7 +1,6 @@
 import { AiTutorContext } from './aiTutorService';
 import { QuizItem } from '../../components/modals/QuizPlayerModal';
 import { Flashcard, SpacedRepetitionService } from '../study/spacedRepetitionService';
-import { Env } from '../../config/env';
 
 export interface LectureCheatSheet {
   lessonTitle: string;
@@ -24,18 +23,7 @@ export class AiAssessmentService {
     context: AiTutorContext,
     isBangla: boolean = false
   ): Promise<QuizItem[]> {
-    const geminiKey = Env.GEMINI_API_KEY;
-    if (geminiKey) {
-      try {
-        const cloudQuestions = await this.callGeminiForQuiz(context, isBangla, geminiKey);
-        if (cloudQuestions && cloudQuestions.length >= 2) {
-          return cloudQuestions;
-        }
-      } catch {
-        // Fall back gracefully to deterministic pedagogical generator
-      }
-    }
-
+    // Cloud LLM calls must be proxied server-side rather than shipping AI keys in EXPO_PUBLIC_* vars.
     return this.generateDeterministicQuiz(context, isBangla);
   }
 
@@ -113,75 +101,6 @@ export class AiAssessmentService {
     }
 
     return newCards;
-  }
-
-  /**
-   * Cloud Gemini 1.5 Flash structured quiz generation
-   */
-  private static async callGeminiForQuiz(
-    context: AiTutorContext,
-    isBangla: boolean,
-    apiKey: string
-  ): Promise<QuizItem[] | null> {
-    const prompt = `Generate a 3-question multiple choice diagnostic assessment to test a student's comprehension of this executive lecture:
-Course: "${context.courseTitle}"
-Module: "${context.moduleTitle}"
-Lesson: "${context.lessonTitle}"
-${context.lessonSummary ? `Summary: ${context.lessonSummary}` : ''}
-Language: ${isBangla ? 'Bengali (Bangla)' : 'English'}
-
-Respond ONLY with valid JSON in this exact structure:
-[
-  {
-    "id": "q1",
-    "question": "Clear question text?",
-    "options": ["Option A", "Option B", "Option C", "Option D"],
-    "correctIndex": 0,
-    "explanation": "Why Option A is correct."
-  }
-]`;
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-    try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.3,
-              responseMimeType: 'application/json',
-            },
-          }),
-          signal: controller.signal,
-        }
-      );
-
-      if (!res.ok) return null;
-      const json = await res.json();
-      const rawText = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!rawText) return null;
-
-      const parsed = JSON.parse(rawText);
-      if (Array.isArray(parsed) && parsed.length >= 2) {
-        return parsed.map((item: any, i: number) => ({
-          id: item.id || `ai-q-${i + 1}`,
-          question: item.question || 'Comprehension question',
-          options: Array.isArray(item.options) ? item.options : ['A', 'B', 'C', 'D'],
-          correctIndex: typeof item.correctIndex === 'number' ? item.correctIndex : 0,
-          explanation: item.explanation || 'Verified correct answer based on lecture.',
-        }));
-      }
-      return null;
-    } catch {
-      return null;
-    } finally {
-      clearTimeout(timeoutId);
-    }
   }
 
   /**

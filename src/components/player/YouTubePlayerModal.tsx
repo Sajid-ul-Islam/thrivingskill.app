@@ -499,26 +499,35 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
                   </Text>
 
                   <View style={styles.courseMetaRow}>
-                    <View style={styles.courseMetaItem}>
-                      <Ionicons name="star" size={13} color={colors.starColor} />
-                      <Text style={[styles.courseMetaText, { color: colors.text }]}>
-                        {relatedCourse.rating}
-                      </Text>
-                    </View>
-                    <Text style={styles.courseMetaDot}>•</Text>
+                    {typeof relatedCourse.rating === 'number' && relatedCourse.rating > 0 && (
+                      <>
+                        <View style={styles.courseMetaItem}>
+                          <Ionicons name="star" size={13} color={colors.starColor} />
+                          <Text style={[styles.courseMetaText, { color: colors.text }]}>
+                            {relatedCourse.rating}
+                          </Text>
+                        </View>
+                        <Text style={styles.courseMetaDot}>•</Text>
+                      </>
+                    )}
                     <View style={styles.courseMetaItem}>
                       <Ionicons name="time-outline" size={13} color={colors.textMuted} />
                       <Text style={[styles.courseMetaText, { color: colors.textMuted }]}>
                         {relatedCourse.durationHours} hrs
                       </Text>
                     </View>
-                    <Text style={styles.courseMetaDot}>•</Text>
-                    <View style={styles.courseMetaItem}>
-                      <Ionicons name="people-outline" size={13} color={colors.textMuted} />
-                      <Text style={[styles.courseMetaText, { color: colors.textMuted }]}>
-                        {relatedCourse.enrolledCount} enrolled
-                      </Text>
-                    </View>
+                    {typeof relatedCourse.enrolledCount === 'number' &&
+                      relatedCourse.enrolledCount > 0 && (
+                        <>
+                          <Text style={styles.courseMetaDot}>•</Text>
+                          <View style={styles.courseMetaItem}>
+                            <Ionicons name="people-outline" size={13} color={colors.textMuted} />
+                            <Text style={[styles.courseMetaText, { color: colors.textMuted }]}>
+                              {relatedCourse.enrolledCount} enrolled
+                            </Text>
+                          </View>
+                        </>
+                      )}
                   </View>
 
                   <TouchableOpacity

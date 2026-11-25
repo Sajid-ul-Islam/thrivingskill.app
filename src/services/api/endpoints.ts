@@ -82,5 +82,14 @@ export const Endpoints = {
     LESSON_DETAIL: (id: string | number) => `/thrivingskill/v1/lessons/${id}`,
     REGISTER_PUSH_TOKEN: '/thrivingskill/v1/register-push-token',
     REGISTER: '/thrivingskill/v1/register',
+    VERIFY_REGISTRATION: '/thrivingskill/v1/verify-registration',
+  },
+
+  // --------------------------------------------------------------------------
+  // Thriving Skills OTP Authentication Routes
+  // --------------------------------------------------------------------------
+  TSL: {
+    SEND_OTP: '/tsl/v1/auth/send-otp',
+    VERIFY_OTP: '/tsl/v1/auth/verify-otp',
   },
 } as const;

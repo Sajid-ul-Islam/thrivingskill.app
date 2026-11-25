@@ -3,15 +3,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 /**
  * Application Environment Configuration
  *
- * Supports dual-environment operation for:
+ * Supports dual-environment operation in development builds for:
  * 1. Live Production Site: https://thrivingskill.com
  * 2. Staging Testing Site: https://staging.thrivingskill.com
  *
- * Provides:
- * - Dynamic runtime environment switching with persistence in AsyncStorage
- * - Automatic dual-host network fallback/failover in HttpClient
- * - Reactive environment listeners for cache invalidation & UI updates
- * - Full backward-compatible static property getters
+ * Security & Release Guarantees:
+ * - Every EXPO_PUBLIC_* variable is read via a static literal `process.env.EXPO_PUBLIC_*`
+ *   property access so Metro/Babel inlines build-time values into Hermes release bundles.
+ * - Production builds NEVER fail over to staging and NEVER restore persisted staging overrides.
+ * - Runtime environment switching is restricted strictly to development builds (`__DEV__`).
  */
 
 export type ApiEnvironment = 'production' | 'staging';
@@ -52,29 +52,48 @@ export const ENVIRONMENTS: Record<ApiEnvironment, EnvironmentConfig> = {
 
 const normalizeUrl = (url?: string): string => {
   if (!url) return '';
-  return url.endsWith('/') ? url.slice(0, -1) : url;
+  const trimmed = url.trim();
+  return trimmed.endsWith('/') ? trimmed.slice(0, -1) : trimmed;
 };
 
-// Safe access helper for React Native / Expo environment variables
-const getEnvVar = (key: string): string | undefined => {
-  if (typeof process !== 'undefined' && process.env) {
-    return (process.env as Record<string, string | undefined>)[key];
+const isStagingUrl = (url?: string): boolean => {
+  if (!url) return false;
+  return url.toLowerCase().includes('staging.thrivingskill.com');
+};
+
+/**
+ * Resolves a safe fallback URL for the active environment.
+ * Production builds NEVER fail over to staging; only an explicit non-staging mirror is allowed.
+ */
+export const resolveFallbackUrl = (
+  explicitFallback: string | undefined,
+  env: ApiEnvironment,
+  stagingDefaultFallback: string
+): string => {
+  const normalized = normalizeUrl(explicitFallback);
+  if (env === 'production') {
+    if (normalized && !isStagingUrl(normalized)) {
+      return normalized;
+    }
+    return '';
   }
-  return undefined;
+  return normalized || stagingDefaultFallback;
 };
 
-// Initial environment determination from build-time vars or sensible live default
+const isDevRuntime = (): boolean => typeof __DEV__ !== 'undefined' && __DEV__;
+
+/**
+ * Determines the initial build-time environment using static literal `process.env.EXPO_PUBLIC_*`
+ * reads so Expo / Metro inlines them into Hermes release bundles.
+ */
 const determineInitialEnvironment = (): ApiEnvironment => {
-  const defaultEnv = getEnvVar('EXPO_PUBLIC_DEFAULT_ENVIRONMENT');
+  const defaultEnv = process.env.EXPO_PUBLIC_DEFAULT_ENVIRONMENT;
   if (defaultEnv === 'staging') return 'staging';
   if (defaultEnv === 'production') return 'production';
 
-  const explicitApi = getEnvVar('EXPO_PUBLIC_API_URL');
-  const explicitSite = getEnvVar('EXPO_PUBLIC_SITE_URL');
-  if (
-    (explicitApi && explicitApi.includes('staging.thrivingskill.com')) ||
-    (explicitSite && explicitSite.includes('staging.thrivingskill.com'))
-  ) {
+  const explicitApi = process.env.EXPO_PUBLIC_API_URL;
+  const explicitSite = process.env.EXPO_PUBLIC_SITE_URL;
+  if (isStagingUrl(explicitApi) || isStagingUrl(explicitSite)) {
     return 'staging';
   }
   return 'production';
@@ -93,6 +112,13 @@ export const Env = {
   ENVIRONMENTS,
 
   /**
+   * Whether runtime environment switching is permitted (development builds only).
+   */
+  get canSwitchEnvironment(): boolean {
+    return isDevRuntime();
+  },
+
+  /**
    * Active environment identifier ('production' | 'staging')
    */
   get currentEnvironment(): ApiEnvironment {
@@ -107,50 +133,138 @@ export const Env = {
   },
 
   /**
-   * Alternate environment used for automatic failover/fallback
+   * Alternate environment when operating in staging (development/staging only).
+   * Production never falls back to staging.
    */
-  get fallbackEnvironment(): ApiEnvironment {
-    return activeEnvironment === 'production' ? 'staging' : 'production';
+  get fallbackEnvironment(): ApiEnvironment | null {
+    return activeEnvironment === 'staging' ? 'production' : null;
   },
 
   /**
-   * Fallback base REST API URL
+   * Fallback base REST API URL.
+   * - In production: uses an explicit production mirror (`EXPO_PUBLIC_FALLBACK_API_URL`) if
+   *   configured and NOT pointing to staging; otherwise returns '' (never fails over to staging).
+   * - In staging: allows explicit fallback URL or production registry fallback.
    */
   get FALLBACK_API_URL(): string {
-    return ENVIRONMENTS[this.fallbackEnvironment].apiUrl;
+    return resolveFallbackUrl(
+      process.env.EXPO_PUBLIC_FALLBACK_API_URL,
+      activeEnvironment,
+      ENVIRONMENTS.production.apiUrl
+    );
   },
 
   /**
-   * Fallback main website URL
+   * Fallback main website URL.
+   * Never returns a staging host when activeEnvironment is 'production'.
    */
   get FALLBACK_SITE_URL(): string {
-    return ENVIRONMENTS[this.fallbackEnvironment].siteUrl;
+    return resolveFallbackUrl(
+      process.env.EXPO_PUBLIC_FALLBACK_SITE_URL,
+      activeEnvironment,
+      ENVIRONMENTS.production.siteUrl
+    );
   },
 
   /**
-   * Initialize and restore persisted environment preference from AsyncStorage
+   * Validates required EXPO_PUBLIC_* variables at startup in non-production builds
+   * so missing release/preview config fails loudly instead of silently falling back.
+   */
+  assertRequiredVars(options?: {
+    allowTestBypass?: boolean;
+    overrides?: { apiUrl?: string; siteUrl?: string };
+  }): {
+    apiUrl: string;
+    siteUrl: string;
+    environment: ApiEnvironment;
+  } {
+    const allowTestBypass = options?.allowTestBypass ?? true;
+    const isJestRunner = typeof process !== 'undefined' && Boolean(process.env.JEST_WORKER_ID);
+
+    const staticApiUrl = normalizeUrl(
+      options?.overrides && 'apiUrl' in options.overrides
+        ? options.overrides.apiUrl
+        : process.env.EXPO_PUBLIC_API_URL
+    );
+    const staticSiteUrl = normalizeUrl(
+      options?.overrides && 'siteUrl' in options.overrides
+        ? options.overrides.siteUrl
+        : process.env.EXPO_PUBLIC_SITE_URL
+    );
+    const missing: string[] = [];
+    if (!staticApiUrl) missing.push('EXPO_PUBLIC_API_URL');
+    if (!staticSiteUrl) missing.push('EXPO_PUBLIC_SITE_URL');
+
+    const isNonProductionProfile =
+      activeEnvironment !== 'production' ||
+      process.env.EXPO_PUBLIC_DEFAULT_ENVIRONMENT === 'staging' ||
+      isDevRuntime();
+
+    if (missing.length > 0 && isNonProductionProfile && !(allowTestBypass && isJestRunner)) {
+      throw new Error(
+        `[Env] Missing required build-time environment variable(s): ${missing.join(', ')}. ` +
+          'Define them via .env.<profile> or eas.json env blocks before building.'
+      );
+    }
+
+    return {
+      apiUrl: this.API_URL,
+      siteUrl: this.SITE_URL,
+      environment: activeEnvironment,
+    };
+  },
+
+  /**
+   * Initialize environment config and restore persisted preference (dev builds only).
+   * Production builds always use their build-time environment and ignore any persisted staging selection.
    */
   async init(): Promise<ApiEnvironment> {
     if (isInitialized) return activeEnvironment;
-    try {
-      if (AsyncStorage && typeof AsyncStorage.getItem === 'function') {
-        const stored = await AsyncStorage.getItem(ACTIVE_ENV_STORAGE_KEY);
-        if (stored === 'production' || stored === 'staging') {
-          activeEnvironment = stored;
-          hasExplicitUserSelection = true;
+
+    // Re-evaluate build-time environment and validate required vars in non-production profiles
+    activeEnvironment = determineInitialEnvironment();
+    hasExplicitUserSelection = false;
+    this.assertRequiredVars();
+
+    if (this.canSwitchEnvironment) {
+      try {
+        if (AsyncStorage && typeof AsyncStorage.getItem === 'function') {
+          const stored = await AsyncStorage.getItem(ACTIVE_ENV_STORAGE_KEY);
+          if (stored === 'production' || stored === 'staging') {
+            activeEnvironment = stored;
+            hasExplicitUserSelection = true;
+          }
         }
+      } catch {
+        // Keep build-time initial environment when storage is unavailable
       }
-    } catch {
-      // In tests or headless environments, keep initial default
+    } else {
+      // Production/release builds: clear any legacy persisted env override so users cannot stay pinned to staging
+      try {
+        if (AsyncStorage && typeof AsyncStorage.removeItem === 'function') {
+          await AsyncStorage.removeItem(ACTIVE_ENV_STORAGE_KEY);
+        }
+      } catch {}
     }
+
     isInitialized = true;
+
+    if (this.DEBUG_API || activeEnvironment !== 'production') {
+      console.log(
+        `[Env] Startup initialized: env=${activeEnvironment}, API_URL=${this.API_URL}, SITE_URL=${this.SITE_URL}`
+      );
+    }
+
     return activeEnvironment;
   },
 
   /**
-   * Dynamically switch server environment at runtime
+   * Dynamically switch server environment at runtime (development builds only).
    */
   async setEnvironment(newEnv: ApiEnvironment): Promise<void> {
+    if (!this.canSwitchEnvironment) {
+      return;
+    }
     if (newEnv !== 'production' && newEnv !== 'staging') return;
     activeEnvironment = newEnv;
     hasExplicitUserSelection = true;
@@ -161,7 +275,6 @@ export const Env = {
       }
     } catch {}
 
-    // Notify all active subscribers
     environmentListeners.forEach((listener) => {
       try {
         listener(newEnv);
@@ -174,9 +287,12 @@ export const Env = {
   },
 
   /**
-   * Toggle between production and staging
+   * Toggle between production and staging (development builds only).
    */
   async toggleEnvironment(): Promise<ApiEnvironment> {
+    if (!this.canSwitchEnvironment) {
+      return activeEnvironment;
+    }
     const nextEnv: ApiEnvironment = activeEnvironment === 'production' ? 'staging' : 'production';
     await this.setEnvironment(nextEnv);
     return nextEnv;
@@ -194,35 +310,36 @@ export const Env = {
 
   /**
    * Base REST API URL (WordPress / LearnPress REST API)
-   * Dynamically resolves to active environment
    */
   get API_URL(): string {
     if (hasExplicitUserSelection) {
       return ENVIRONMENTS[activeEnvironment].apiUrl;
     }
-    const explicit = normalizeUrl(getEnvVar('EXPO_PUBLIC_API_URL'));
+    const explicit = normalizeUrl(process.env.EXPO_PUBLIC_API_URL);
     if (explicit) return explicit;
     return ENVIRONMENTS[activeEnvironment].apiUrl;
   },
 
   /**
    * Main Website URL
-   * Dynamically resolves to active environment
    */
   get SITE_URL(): string {
     if (hasExplicitUserSelection) {
       return ENVIRONMENTS[activeEnvironment].siteUrl;
     }
-    const explicit = normalizeUrl(getEnvVar('EXPO_PUBLIC_SITE_URL'));
+    const explicit = normalizeUrl(process.env.EXPO_PUBLIC_SITE_URL);
     if (explicit) return explicit;
     return ENVIRONMENTS[activeEnvironment].siteUrl;
   },
 
   /**
    * WordPress Admin Console URL
-   * e.g. https://thrivingskill.com/wp-admin/ or https://staging.thrivingskill.com/wp-admin/
    */
   get WP_ADMIN_URL(): string {
+    if (!hasExplicitUserSelection) {
+      const explicit = process.env.EXPO_PUBLIC_WP_ADMIN_URL?.trim();
+      if (explicit) return explicit;
+    }
     return ENVIRONMENTS[activeEnvironment].wpAdminUrl;
   },
 
@@ -230,14 +347,14 @@ export const Env = {
    * Google Play Mandatory Account & Data Deletion Public URL
    */
   get ACCOUNT_DELETION_URL(): string {
-    return ENVIRONMENTS[activeEnvironment].accountDeletionUrl;
+    return `${this.SITE_URL}/delete-account/`;
   },
 
   /**
    * Request Timeout in milliseconds
    */
   get REQUEST_TIMEOUT_MS(): number {
-    const raw = getEnvVar('EXPO_PUBLIC_REQUEST_TIMEOUT_MS');
+    const raw = process.env.EXPO_PUBLIC_REQUEST_TIMEOUT_MS;
     const timeout = Number(raw);
     return !isNaN(timeout) && timeout > 0 ? timeout : 15000;
   },
@@ -246,7 +363,7 @@ export const Env = {
    * Maximum automatic retries for idempotent requests on network failure
    */
   get MAX_RETRIES(): number {
-    const raw = getEnvVar('EXPO_PUBLIC_MAX_RETRIES');
+    const raw = process.env.EXPO_PUBLIC_MAX_RETRIES;
     const retries = Number(raw);
     return !isNaN(retries) && retries >= 0 ? retries : 2;
   },
@@ -255,7 +372,7 @@ export const Env = {
    * Cache Time-To-Live in milliseconds
    */
   get CACHE_TTL_MS(): number {
-    const raw = getEnvVar('EXPO_PUBLIC_CACHE_TTL_MS');
+    const raw = process.env.EXPO_PUBLIC_CACHE_TTL_MS;
     const ttl = Number(raw);
     return !isNaN(ttl) && ttl > 0 ? ttl : 300000; // 5 minutes
   },
@@ -264,7 +381,7 @@ export const Env = {
    * Whether to fallback to alternate host or local seed data if network is unavailable
    */
   get ENABLE_FALLBACK(): boolean {
-    const raw = getEnvVar('EXPO_PUBLIC_ENABLE_FALLBACK');
+    const raw = process.env.EXPO_PUBLIC_ENABLE_FALLBACK;
     if (raw !== undefined) {
       return raw === 'true';
     }
@@ -275,24 +392,10 @@ export const Env = {
    * Whether to output detailed API request/response logs in console
    */
   get DEBUG_API(): boolean {
-    const raw = getEnvVar('EXPO_PUBLIC_DEBUG_API');
+    const raw = process.env.EXPO_PUBLIC_DEBUG_API;
     if (raw !== undefined) {
       return raw === 'true';
     }
-    return typeof __DEV__ !== 'undefined' ? __DEV__ : false;
-  },
-
-  /**
-   * Optional Google Gemini API Key
-   */
-  get GEMINI_API_KEY(): string | undefined {
-    return getEnvVar('EXPO_PUBLIC_GEMINI_API_KEY');
-  },
-
-  /**
-   * Optional Google API Key
-   */
-  get GOOGLE_API_KEY(): string | undefined {
-    return getEnvVar('EXPO_PUBLIC_GOOGLE_API_KEY');
+    return isDevRuntime();
   },
 };

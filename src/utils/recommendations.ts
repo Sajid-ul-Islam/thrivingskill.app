@@ -72,11 +72,15 @@ export function computeRecommendedCourses({
       if (matches) score += 30;
     }
 
-    // Rating quality score
-    score += (course.rating || 4.5) * 4;
+    // Rating quality score (only when authentic rating exists)
+    if (typeof course.rating === 'number' && course.rating > 0) {
+      score += course.rating * 4;
+    }
 
-    // Popularity score
-    score += Math.min(15, Math.log10((course.enrolledCount || 100) + 1) * 5);
+    // Popularity score (only when authentic enrollment count exists)
+    if (typeof course.enrolledCount === 'number' && course.enrolledCount > 0) {
+      score += Math.min(15, Math.log10(course.enrolledCount + 1) * 5);
+    }
 
     // Badges
     if (course.badge === 'Bestseller' || course.badge === 'Trending') score += 10;

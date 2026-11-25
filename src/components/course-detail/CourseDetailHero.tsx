@@ -173,36 +173,44 @@ export const CourseDetailHero: React.FC<CourseDetailHeroProps> = ({
         <Text style={[styles.courseTitle, { color: colors.text }]}>{course.title}</Text>
         <Text style={[styles.courseSubtitle, { color: colors.textMuted }]}>{course.subtitle}</Text>
 
-        {/* Stats Bar */}
+        {/* Stats Bar (shows only verified server metrics) */}
         <View
           style={[
             styles.statsBar,
             { backgroundColor: colors.surfaceCard, borderColor: colors.border },
           ]}
         >
-          <View style={styles.statCell}>
-            <Ionicons name="star" size={16} color={colors.starColor} />
-            <Text style={[styles.statValue, { color: colors.text }]} numberOfLines={1}>
-              {course.rating}
-            </Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]} numberOfLines={1}>
-              ({course.reviewsCount})
-            </Text>
-          </View>
+          {typeof course.rating === 'number' && course.rating > 0 && (
+            <>
+              <View style={styles.statCell}>
+                <Ionicons name="star" size={16} color={colors.starColor} />
+                <Text style={[styles.statValue, { color: colors.text }]} numberOfLines={1}>
+                  {course.rating.toFixed(1)}
+                </Text>
+                {typeof course.reviewsCount === 'number' && course.reviewsCount > 0 && (
+                  <Text style={[styles.statLabel, { color: colors.textMuted }]} numberOfLines={1}>
+                    ({course.reviewsCount})
+                  </Text>
+                )}
+              </View>
+              <View style={[styles.statDivider, { backgroundColor: colors.borderSubtle }]} />
+            </>
+          )}
 
-          <View style={[styles.statDivider, { backgroundColor: colors.borderSubtle }]} />
-
-          <View style={styles.statCell}>
-            <Ionicons name="people-outline" size={16} color={colors.primary} />
-            <Text style={[styles.statValue, { color: colors.text }]} numberOfLines={1}>
-              {course.enrolledCount.toLocaleString()}
-            </Text>
-            <Text style={[styles.statLabel, { color: colors.textMuted }]} numberOfLines={1}>
-              {isBangla ? 'এনরোল্ড' : 'Enrolled'}
-            </Text>
-          </View>
-
-          <View style={[styles.statDivider, { backgroundColor: colors.borderSubtle }]} />
+          {typeof course.enrolledCount === 'number' && course.enrolledCount > 0 && (
+            <>
+              <View style={styles.statCell}>
+                <Ionicons name="people-outline" size={16} color={colors.primary} />
+                <Text style={[styles.statValue, { color: colors.text }]} numberOfLines={1}>
+                  {course.enrolledCount.toLocaleString()}
+                </Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]} numberOfLines={1}>
+                  {isBangla ? 'এনরোল্ড' : 'Enrolled'}
+                </Text>
+              </View>
+              <View style={[styles.statDivider, { backgroundColor: colors.borderSubtle }]} />
+            </>
+          )}
 
           <View style={styles.statCell}>
             <Ionicons name="time-outline" size={16} color={colors.secondary} />

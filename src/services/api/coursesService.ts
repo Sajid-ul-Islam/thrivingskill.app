@@ -83,9 +83,9 @@ export class CoursesService {
    */
   static async getAllCourses(forceRefresh: boolean = false): Promise<Course[]> {
     const fetchAllFromNetwork = async (): Promise<Course[]> => {
-      // Strategy 1: Attempt high-speed Companion Plugin feed (/thrivingskill/v1/feed)
+      // Strategy 1: Attempt high-speed Companion Plugin paginated feed (/thrivingskill/v1/feed)
       try {
-        const leanCourses = await CompanionService.fetchLeanFeed(100);
+        const leanCourses = await CompanionService.fetchAllLeanFeed();
         if (Array.isArray(leanCourses) && leanCourses.length > 0) {
           if (Env.DEBUG_API) {
             console.log(
