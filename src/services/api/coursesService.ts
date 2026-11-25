@@ -617,12 +617,114 @@ export class CoursesService {
   }
 
   /**
-   * Enroll the authenticated user into a course
+   * Enroll the authenticated user into a course (server enforces payment for paid courses)
    */
   static async enrollCourse(
     courseId: string | number
-  ): Promise<{ success: boolean; message?: string }> {
-    return HttpClient.post(Endpoints.LEARNPRESS.COURSE_ENROLL, { id: courseId });
+  ): Promise<{ success: boolean; code?: string; message?: string }> {
+    const res = await HttpClient.post<{
+      success?: boolean;
+      status?: string;
+      code?: string;
+      message?: string;
+    }>(Endpoints.LEARNPRESS.COURSE_ENROLL, { id: courseId });
+
+    const succeeded =
+      res?.success === true || res?.status === 'success' || res?.code === 'already_enrolled';
+    if (!succeeded) {
+      throw new Error(res?.message || 'Course enrollment was rejected by the server.');
+    }
+
+    return {
+      success: true,
+      code: res?.code,
+      message: res?.message,
+    };
+  }
+
+  /**
+   * Verifies real enrollment against the server before unlocking course access.
+   * Never unlocks a course locally on unpaid, pending, cancelled, or failed orders.
+   */
+  static async verifyServerEnrollment(
+    courseId: string | number,
+    orderInfo?: { orderId?: string; orderKey?: string }
+  ): Promise<{
+    enrolled: boolean;
+    enrolledCourseIds: string[];
+    orderStatus?: string | null;
+    reason?:
+      'payment_failed' | 'payment_cancelled' | 'pending' | 'not_enrolled' | 'unauthenticated';
+  }> {
+    const courseIdStr = String(courseId);
+    const authToken = await HttpClient.getAuthToken();
+    if (!authToken) {
+      return {
+        enrolled: false,
+        enrolledCourseIds: [],
+        reason: 'unauthenticated',
+      };
+    }
+
+    const companionCheck = await CompanionService.checkServerEnrollment({
+      courseId: courseIdStr,
+      orderId: orderInfo?.orderId,
+      orderKey: orderInfo?.orderKey,
+    });
+
+    if (companionCheck) {
+      const orderStatus = companionCheck.orderStatus?.toLowerCase() ?? null;
+      if (orderStatus === 'failed') {
+        return {
+          enrolled: false,
+          enrolledCourseIds: companionCheck.enrolledCourseIds,
+          orderStatus,
+          reason: 'payment_failed',
+        };
+      }
+      if (orderStatus === 'cancelled' || orderStatus === 'refunded') {
+        return {
+          enrolled: false,
+          enrolledCourseIds: companionCheck.enrolledCourseIds,
+          orderStatus,
+          reason: 'payment_cancelled',
+        };
+      }
+
+      const isEnrolled =
+        companionCheck.enrolled || companionCheck.enrolledCourseIds.includes(courseIdStr);
+      if (isEnrolled) {
+        return {
+          enrolled: true,
+          enrolledCourseIds: companionCheck.enrolledCourseIds.includes(courseIdStr)
+            ? companionCheck.enrolledCourseIds
+            : [courseIdStr, ...companionCheck.enrolledCourseIds],
+          orderStatus,
+        };
+      }
+
+      return {
+        enrolled: false,
+        enrolledCourseIds: companionCheck.enrolledCourseIds,
+        orderStatus,
+        reason: orderStatus === 'pending' || orderStatus === 'on-hold' ? 'pending' : 'not_enrolled',
+      };
+    }
+
+    // Fallback when companion /enrollments route is unavailable: inspect live LearnPress course_data.status
+    const freshCourse = await this.getCourseDetail(courseIdStr, true);
+    if (freshCourse?.isEnrolled) {
+      return {
+        enrolled: true,
+        enrolledCourseIds: [courseIdStr],
+      };
+    }
+
+    return {
+      enrolled: false,
+      enrolledCourseIds: [],
+      reason: 'not_enrolled',
+    };
   }
 
   /**

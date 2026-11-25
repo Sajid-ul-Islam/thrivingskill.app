@@ -80,6 +80,7 @@ export const Endpoints = {
     CONFIG: '/thrivingskill/v1/config',
     FEED: '/thrivingskill/v1/feed',
     LESSON_DETAIL: (id: string | number) => `/thrivingskill/v1/lessons/${id}`,
+    ENROLLMENTS: '/thrivingskill/v1/enrollments',
     REGISTER_PUSH_TOKEN: '/thrivingskill/v1/register-push-token',
     REGISTER: '/thrivingskill/v1/register',
     VERIFY_REGISTRATION: '/thrivingskill/v1/verify-registration',

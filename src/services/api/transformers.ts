@@ -292,6 +292,14 @@ export function transformWpCourse(raw: any): Course {
     badge = 'Bestseller';
   }
 
+  const courseStatus = String(raw.course_data?.status || '').toLowerCase();
+  const isServerEnrolled =
+    raw.enrolled === true ||
+    raw.is_enrolled === true ||
+    courseStatus === 'enrolled' ||
+    courseStatus === 'finished' ||
+    courseStatus === 'purchased';
+
   return {
     id,
     title,
@@ -302,6 +310,7 @@ export function transformWpCourse(raw: any): Course {
     categorySlugs,
     categoryIds,
     level: 'All Levels',
+    isEnrolled: isServerEnrolled,
     rating: typeof raw.rating === 'number' && raw.rating > 0 ? Number(raw.rating.toFixed(1)) : null,
     reviewsCount:
       typeof raw.rating_count === 'number' && raw.rating_count > 0
@@ -391,6 +400,14 @@ export function transformCompanionCourse(raw: any): Course {
   const realEnrolledCount =
     typeof raw.students_count === 'number' && raw.students_count > 0 ? raw.students_count : null;
 
+  const courseStatus = String(raw.course_data?.status || '').toLowerCase();
+  const isServerEnrolled =
+    raw.enrolled === true ||
+    raw.is_enrolled === true ||
+    courseStatus === 'enrolled' ||
+    courseStatus === 'finished' ||
+    courseStatus === 'purchased';
+
   return {
     id,
     title,
@@ -400,6 +417,7 @@ export function transformCompanionCourse(raw: any): Course {
     categorySlugs: [categorySlug],
     categoryIds,
     level: (raw.level || 'All Levels') as any,
+    isEnrolled: isServerEnrolled,
     rating: realRating,
     reviewsCount: realReviewsCount,
     enrolledCount: realEnrolledCount,

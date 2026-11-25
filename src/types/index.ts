@@ -140,6 +140,7 @@ export interface Course {
   modules: CourseModule[];
   reviews: Review[];
   isProExclusive?: boolean;
+  isEnrolled?: boolean;
   skillTrack?: string;
   isCareerBundle?: boolean;
   bundleCourses?: { id: string; title: string; priceBdt?: number }[];

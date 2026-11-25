@@ -41,8 +41,11 @@ export class LessonsService {
           await CacheManager.set(cacheKey, detail, 300000);
           return detail;
         }
-      } catch (companionErr) {
-        // Fallback to standard LearnPress endpoint
+      } catch (companionErr: any) {
+        // Re-throw rate limit immediately; for 401/403 allow fallback only to LearnPress so preview lessons still work
+        if (companionErr?.status === 429) {
+          throw companionErr;
+        }
       }
 
       const raw = await HttpClient.get<any>(Endpoints.LEARNPRESS.LESSON_DETAIL(lessonId));
@@ -83,7 +86,10 @@ export class LessonsService {
 
       await CacheManager.set(cacheKey, detail, 300000);
       return detail;
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.status === 401 || err?.status === 403) {
+        throw err;
+      }
       const stale = await CacheManager.get<LessonDetail>(cacheKey, true);
       if (stale) return stale;
       throw err;

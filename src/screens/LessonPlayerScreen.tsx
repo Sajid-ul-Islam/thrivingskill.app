@@ -191,28 +191,34 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     return () => subscription?.remove();
   }, []);
 
-  // Fetch actual lesson details and video metadata from backend
+  // Fetch actual lesson details and video metadata from backend only when authorized
   useEffect(() => {
     let isMounted = true;
-    if (currentLesson?.id) {
-      setIsLoadingVideo(true);
-      LessonsService.getLessonDetail(currentLesson.id)
-        .then((detail) => {
-          if (isMounted) {
-            setLessonDetail(detail);
-            setIsLoadingVideo(false);
-          }
-        })
-        .catch(() => {
-          if (isMounted) {
-            setIsLoadingVideo(false);
-          }
-        });
+    if (!currentLesson?.id || !canPlayVideo) {
+      setLessonDetail(null);
+      setIsLoadingVideo(false);
+      return;
     }
+
+    setIsLoadingVideo(true);
+    LessonsService.getLessonDetail(currentLesson.id)
+      .then((detail) => {
+        if (isMounted) {
+          setLessonDetail(detail);
+          setIsLoadingVideo(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setLessonDetail(null);
+          setIsLoadingVideo(false);
+        }
+      });
+
     return () => {
       isMounted = false;
     };
-  }, [currentLesson?.id]);
+  }, [currentLesson?.id, canPlayVideo]);
 
   // Cleanup all timers on unmount conforming to AGENTS.md Rule 3
   useEffect(() => {
@@ -1091,7 +1097,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               }
             }
 
-            // Next-Lesson Background Pre-buffering (>85% watched)
+            // Next-Lesson Background Pre-buffering (>85% watched) only when user has access
             if (
               course &&
               totalLessonSeconds > 60 &&
@@ -1099,7 +1105,13 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               currentLessonIndex < allLessons.length - 1
             ) {
               const nextLessonObj = allLessons[currentLessonIndex + 1]?.lesson;
-              if (nextLessonObj && prefetchedNextLessonRef.current !== nextLessonObj.id) {
+              const canPrefetchNext =
+                isPrivileged || isEnrolled || Boolean(nextLessonObj?.isFreePreview);
+              if (
+                canPrefetchNext &&
+                nextLessonObj &&
+                prefetchedNextLessonRef.current !== nextLessonObj.id
+              ) {
                 prefetchedNextLessonRef.current = nextLessonObj.id;
                 LessonsService.getLessonDetail(nextLessonObj.id).catch(() => {});
               }
@@ -1591,8 +1603,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         visible={paymentModalVisible}
         course={course}
         onClose={() => setPaymentModalVisible(false)}
-        onSuccess={(cId) => {
-          enrollInCourse(cId);
+        onSuccess={() => {
           setPaymentModalVisible(false);
           Alert.alert(
             isBangla ? 'ভর্তি সফল হয়েছে! 🎓' : 'Enrollment Successful! 🎓',

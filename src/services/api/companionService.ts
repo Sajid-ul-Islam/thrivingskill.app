@@ -62,6 +62,13 @@ export interface LeanFeedPageResponse {
   courses: any[];
 }
 
+export interface ServerEnrollmentCheck {
+  enrolled: boolean;
+  enrolledCourseIds: string[];
+  orderStatus?: string | null;
+  paymentConfirmed?: boolean;
+}
+
 const CONFIG_CACHE_KEY = '@thrivingskill_remote_companion_config_v1';
 const CONFIG_CACHE_TTL = 300000; // 5 minutes
 export const MAX_COMPANION_FEED_LIMIT = 50;
@@ -227,5 +234,59 @@ export class CompanionService {
     }
 
     return allCourses;
+  }
+
+  /**
+   * Queries authenticated server enrollment & optional WooCommerce order status.
+   * Returns null if the companion plugin is unreachable or missing this route.
+   */
+  static async checkServerEnrollment(params?: {
+    courseId?: string | number;
+    orderId?: string;
+    orderKey?: string;
+  }): Promise<ServerEnrollmentCheck | null> {
+    const authToken = await HttpClient.getAuthToken();
+    if (!authToken) {
+      return null;
+    }
+
+    try {
+      const query: Record<string, any> = { _t: Date.now() };
+      if (params?.courseId !== undefined) query.course_id = String(params.courseId);
+      if (params?.orderId) query.order_id = String(params.orderId);
+      if (params?.orderKey) query.order_key = params.orderKey;
+
+      const res = await HttpClient.get<{
+        status?: string;
+        enrolled?: boolean;
+        enrolled_course_ids?: (number | string)[];
+        order_status?: string | null;
+        payment_confirmed?: boolean;
+      }>(Endpoints.COMPANION.ENROLLMENTS, query, {
+        retries: 1,
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          Pragma: 'no-cache',
+        },
+      });
+
+      if (!res || res.status !== 'success') {
+        return null;
+      }
+
+      return {
+        enrolled: Boolean(res.enrolled),
+        enrolledCourseIds: Array.isArray(res.enrolled_course_ids)
+          ? res.enrolled_course_ids.map((cid) => String(cid))
+          : [],
+        orderStatus: res.order_status ?? null,
+        paymentConfirmed: Boolean(res.payment_confirmed),
+      };
+    } catch (err) {
+      if (Env.DEBUG_API) {
+        console.warn('[CompanionService] Enrollment status endpoint unavailable:', err);
+      }
+      return null;
+    }
   }
 }

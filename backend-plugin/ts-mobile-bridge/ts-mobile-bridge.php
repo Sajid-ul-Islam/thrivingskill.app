@@ -387,6 +387,8 @@ class TSMB_Rest_API
     {
         add_action('rest_api_init', [__CLASS__, 'register_routes']);
         add_action('save_post_lp_course', [__CLASS__, 'clear_feed_cache']);
+        add_filter('rest_request_before_callbacks', [__CLASS__, 'guard_learnpress_paid_enroll'], 10, 3);
+        add_filter('learn_press_user_can_enroll_course', [__CLASS__, 'filter_learnpress_can_enroll_course'], 10, 3);
     }
 
     public static function register_routes(): void
@@ -416,12 +418,32 @@ class TSMB_Rest_API
         register_rest_route(self::NAMESPACE, '/lessons/(?P<id>\d+)', [
             'methods'             => 'GET',
             'callback'            => [__CLASS__, 'get_lesson_detail'],
-            'permission_callback' => '__return_true',
+            'permission_callback' => [__CLASS__, 'check_lesson_access'],
             'args'                => [
                 'id' => [
                     'validate_callback' => function ($param) {
                         return is_numeric($param) && intval($param) > 0;
                     },
+                ],
+            ],
+        ]);
+
+        register_rest_route(self::NAMESPACE, '/enrollments', [
+            'methods'             => 'GET',
+            'callback'            => [__CLASS__, 'get_user_enrollments'],
+            'permission_callback' => [__CLASS__, 'check_authenticated_user'],
+            'args'                => [
+                'course_id' => [
+                    'required'          => false,
+                    'sanitize_callback' => 'absint',
+                ],
+                'order_id' => [
+                    'required'          => false,
+                    'sanitize_callback' => 'absint',
+                ],
+                'order_key' => [
+                    'required'          => false,
+                    'sanitize_callback' => 'sanitize_text_field',
                 ],
             ],
         ]);
@@ -644,13 +666,100 @@ class TSMB_Rest_API
         return rest_ensure_response($response);
     }
 
-    public static function get_lesson_detail($request)
+    public static function check_authenticated_user()
     {
-        $lesson_id = intval($request['id']);
+        if (!is_user_logged_in() || get_current_user_id() <= 0) {
+            return new WP_Error(
+                'rest_not_logged_in',
+                __('Authentication is required to access this resource.', 'ts-mobile-bridge'),
+                ['status' => 401]
+            );
+        }
+
+        return true;
+    }
+
+    public static function check_lesson_access($request)
+    {
+        $auth_check = self::check_authenticated_user();
+        if (is_wp_error($auth_check)) {
+            return $auth_check;
+        }
+
+        if (current_user_can('manage_options')) {
+            return true;
+        }
+
+        $user_id = get_current_user_id();
+        $rl = TSMB_Security::consume_rate_limit(
+            'lesson_access_user',
+            (string) $user_id,
+            120,
+            MINUTE_IN_SECONDS
+        );
+        if (is_wp_error($rl)) {
+            return $rl;
+        }
+
+        $lesson_id = absint($request['id']);
         $post      = get_post($lesson_id);
 
+        // Return uniform 403 for missing, draft, private, or unenrolled lessons to prevent ID enumeration.
+        if (!$post || $post->post_type !== 'lp_lesson' || $post->post_status !== 'publish') {
+            return new WP_Error(
+                'tsmb_lesson_forbidden',
+                __('You must be enrolled in this course to access this lesson.', 'ts-mobile-bridge'),
+                ['status' => 403]
+            );
+        }
+
+        if (!self::is_user_enrolled_in_any_lesson_course($user_id, $lesson_id)) {
+            return new WP_Error(
+                'tsmb_not_enrolled',
+                __('You must be enrolled in this course to access this lesson.', 'ts-mobile-bridge'),
+                ['status' => 403]
+            );
+        }
+
+        return true;
+    }
+
+    public static function get_lesson_detail($request)
+    {
+        $auth_check = self::check_authenticated_user();
+        if (is_wp_error($auth_check)) {
+            return $auth_check;
+        }
+
+        $lesson_id = absint($request['id']);
+        $post      = get_post($lesson_id);
+        $is_admin  = current_user_can('manage_options');
+
         if (!$post || $post->post_type !== 'lp_lesson') {
-            return new WP_Error('not_found', __('Lesson not found', 'ts-mobile-bridge'), ['status' => 404]);
+            if ($is_admin) {
+                return new WP_Error('not_found', __('Lesson not found', 'ts-mobile-bridge'), ['status' => 404]);
+            }
+            return new WP_Error(
+                'tsmb_lesson_forbidden',
+                __('You must be enrolled in this course to access this lesson.', 'ts-mobile-bridge'),
+                ['status' => 403]
+            );
+        }
+
+        if ($post->post_status !== 'publish' && !$is_admin) {
+            return new WP_Error(
+                'tsmb_lesson_forbidden',
+                __('You must be enrolled in this course to access this lesson.', 'ts-mobile-bridge'),
+                ['status' => 403]
+            );
+        }
+
+        if (!$is_admin && !self::is_user_enrolled_in_any_lesson_course(get_current_user_id(), $lesson_id)) {
+            return new WP_Error(
+                'tsmb_not_enrolled',
+                __('You must be enrolled in this course to access this lesson.', 'ts-mobile-bridge'),
+                ['status' => 403]
+            );
         }
 
         $video_intro = get_post_meta($lesson_id, '_lp_lesson_video_intro', true);
@@ -690,6 +799,229 @@ class TSMB_Rest_API
             'video_type'  => $video_type,
             'duration'    => get_post_meta($lesson_id, '_lp_duration', true) ?: '10m',
         ]);
+    }
+
+    public static function get_user_enrollments($request)
+    {
+        $user_id             = get_current_user_id();
+        $course_id           = isset($request['course_id']) ? absint($request['course_id']) : 0;
+        $order_id            = isset($request['order_id']) ? absint($request['order_id']) : 0;
+        $order_key           = isset($request['order_key']) ? sanitize_text_field((string) $request['order_key']) : '';
+        $enrolled_course_ids = self::get_user_enrolled_course_ids($user_id);
+
+        $is_enrolled = false;
+        if ($course_id > 0) {
+            $is_enrolled = self::is_user_enrolled_in_course($user_id, $course_id);
+            if ($is_enrolled && !in_array($course_id, $enrolled_course_ids, true)) {
+                $enrolled_course_ids[] = $course_id;
+            }
+        }
+
+        $order_status      = null;
+        $payment_confirmed = false;
+        if ($order_id > 0 && function_exists('wc_get_order')) {
+            $order = wc_get_order($order_id);
+            if ($order) {
+                $order_user_id = intval($order->get_user_id());
+                $valid_key     = ($order_key === '' || hash_equals((string) $order->get_order_key(), $order_key));
+                if ($order_user_id === $user_id && $valid_key) {
+                    $order_status      = sanitize_key((string) $order->get_status());
+                    $payment_confirmed = ($order->is_paid() || in_array($order_status, ['completed', 'processing'], true));
+                }
+            }
+        }
+
+        return rest_ensure_response([
+            'status'              => 'success',
+            'user_id'             => $user_id,
+            'course_id'           => $course_id > 0 ? $course_id : null,
+            'enrolled'            => $is_enrolled,
+            'enrolled_course_ids' => array_values(array_unique(array_map('intval', $enrolled_course_ids))),
+            'order_id'            => $order_id > 0 ? $order_id : null,
+            'order_status'        => $order_status,
+            'payment_confirmed'   => $payment_confirmed,
+        ]);
+    }
+
+    public static function guard_learnpress_paid_enroll($response, $handler, $request)
+    {
+        if (is_wp_error($response) || !is_object($request) || !method_exists($request, 'get_route')) {
+            return $response;
+        }
+
+        if ($request->get_route() !== '/learnpress/v1/courses/enroll') {
+            return $response;
+        }
+
+        if (!is_user_logged_in()) {
+            return new WP_Error(
+                'rest_not_logged_in',
+                __('Authentication is required to enroll in a course.', 'ts-mobile-bridge'),
+                ['status' => 401]
+            );
+        }
+
+        if (current_user_can('manage_options')) {
+            return $response;
+        }
+
+        $course_id = absint($request->get_param('id'));
+        $user_id   = get_current_user_id();
+        if ($course_id > 0 && !self::can_user_enroll_paid_course($user_id, $course_id)) {
+            return new WP_Error(
+                'tsmb_payment_required',
+                __('Payment is required before enrolling in this paid course.', 'ts-mobile-bridge'),
+                ['status' => 403]
+            );
+        }
+
+        return $response;
+    }
+
+    public static function filter_learnpress_can_enroll_course($can_enroll, $course_id, $user_id = 0)
+    {
+        if (!$can_enroll) {
+            return false;
+        }
+
+        $uid = absint($user_id) > 0 ? absint($user_id) : get_current_user_id();
+        if ($uid > 0 && user_can($uid, 'manage_options')) {
+            return true;
+        }
+
+        return self::can_user_enroll_paid_course($uid, absint($course_id));
+    }
+
+    private static function can_user_enroll_paid_course(int $user_id, int $course_id): bool
+    {
+        if ($course_id <= 0 || get_post_status($course_id) !== 'publish') {
+            return false;
+        }
+
+        $price = floatval(get_post_meta($course_id, '_lp_price', true));
+        if ($price <= 0 && function_exists('learn_press_get_course')) {
+            $lp_course = learn_press_get_course($course_id);
+            if ($lp_course && method_exists($lp_course, 'get_price')) {
+                $price = floatval($lp_course->get_price());
+            }
+        }
+
+        if ($price <= 0) {
+            return true;
+        }
+
+        if ($user_id <= 0) {
+            return false;
+        }
+
+        return self::is_user_enrolled_in_course($user_id, $course_id);
+    }
+
+    private static function get_course_ids_for_lesson(int $lesson_id): array
+    {
+        global $wpdb;
+
+        if ($lesson_id <= 0) {
+            return [];
+        }
+
+        $items_table    = $wpdb->prefix . 'learnpress_section_items';
+        $sections_table = $wpdb->prefix . 'learnpress_sections';
+
+        if (
+            $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $items_table)) !== $items_table ||
+            $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $sections_table)) !== $sections_table
+        ) {
+            return [];
+        }
+
+        $rows = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT DISTINCT s.section_course_id
+                 FROM {$items_table} si
+                 INNER JOIN {$sections_table} s ON s.section_id = si.section_id
+                 INNER JOIN {$wpdb->posts} p ON p.ID = s.section_course_id
+                 WHERE si.item_id = %d
+                   AND si.item_type = 'lp_lesson'
+                   AND p.post_type = 'lp_course'
+                   AND p.post_status = 'publish'",
+                $lesson_id
+            )
+        );
+
+        return is_array($rows) ? array_values(array_unique(array_filter(array_map('intval', $rows)))) : [];
+    }
+
+    private static function get_user_enrolled_course_ids(int $user_id): array
+    {
+        global $wpdb;
+
+        if ($user_id <= 0) {
+            return [];
+        }
+
+        $lp_table = $wpdb->prefix . 'learnpress_user_items';
+        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $lp_table)) !== $lp_table) {
+            return [];
+        }
+
+        $rows = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT ui.item_id
+                 FROM {$lp_table} ui
+                 INNER JOIN (
+                     SELECT item_id, MAX(user_item_id) AS latest_id
+                     FROM {$lp_table}
+                     WHERE user_id = %d
+                       AND item_type = 'lp_course'
+                     GROUP BY item_id
+                 ) latest ON latest.latest_id = ui.user_item_id
+                 INNER JOIN {$wpdb->posts} p ON p.ID = ui.item_id
+                 WHERE p.post_type = 'lp_course'
+                   AND p.post_status = 'publish'
+                   AND ui.status IN ('enrolled', 'finished', 'purchased')",
+                $user_id
+            )
+        );
+
+        return is_array($rows) ? array_values(array_unique(array_filter(array_map('intval', $rows)))) : [];
+    }
+
+    private static function is_user_enrolled_in_course(int $user_id, int $course_id): bool
+    {
+        if ($user_id <= 0 || $course_id <= 0) {
+            return false;
+        }
+
+        $course_post = get_post($course_id);
+        if (!$course_post || $course_post->post_type !== 'lp_course' || $course_post->post_status !== 'publish') {
+            return false;
+        }
+
+        if (function_exists('learn_press_get_user')) {
+            $lp_user = learn_press_get_user($user_id);
+            if (
+                $lp_user &&
+                method_exists($lp_user, 'has_enrolled_or_finished') &&
+                $lp_user->has_enrolled_or_finished($course_id)
+            ) {
+                return true;
+            }
+        }
+
+        return in_array($course_id, self::get_user_enrolled_course_ids($user_id), true);
+    }
+
+    private static function is_user_enrolled_in_any_lesson_course(int $user_id, int $lesson_id): bool
+    {
+        $course_ids = self::get_course_ids_for_lesson($lesson_id);
+        foreach ($course_ids as $course_id) {
+            if (self::is_user_enrolled_in_course($user_id, intval($course_id))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static function register_user($request)

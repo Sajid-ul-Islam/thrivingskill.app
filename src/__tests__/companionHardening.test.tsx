@@ -9,6 +9,9 @@ import {
   isFlashSaleActive,
   resolveSupportContacts,
 } from '../services/api/companionService';
+import { CoursesService } from '../services/api/coursesService';
+import { LessonsService } from '../services/api/lessonsService';
+import { CacheManager } from '../services/cache/cacheManager';
 import { HttpClient } from '../services/api/httpClient';
 import { Env } from '../config/env';
 import { FlashSaleBanner } from '../components/home/FlashSaleBanner';
@@ -114,7 +117,18 @@ describe('Companion Plugin Hardening & Issues 7-9 Compliance', () => {
     expect(php).not.toContain('+8801700000000');
     expect(php).not.toContain('+88029876543');
     expect(php).not.toMatch(/\brating['"]?\s*=>\s*4\.9\b/);
-    expect(php).not.toContain('120');
+    expect(php).not.toMatch(/students_count['"]?\s*=>[^;\n]*\b120\b/);
+
+    // Issue 1 paywall invariants
+    expect(php).toContain("'permission_callback' => [__CLASS__, 'check_lesson_access']");
+    expect(php).not.toMatch(
+      /register_rest_route\(self::NAMESPACE,\s*'\/lessons\/\(\?P<id>\\d\+\)',\s*\[\s*'methods'\s*=>\s*'GET',\s*'callback'\s*=>\s*\[__CLASS__,\s*'get_lesson_detail'\],\s*'permission_callback'\s*=>\s*'__return_true'/
+    );
+    expect(php).toContain("post_status !== 'publish'");
+    expect(php).toContain('is_user_enrolled_in_any_lesson_course');
+    expect(php).toContain("'/enrollments'");
+    expect(php).toContain('guard_learnpress_paid_enroll');
+    expect(php).toContain('filter_learnpress_can_enroll_course');
   });
 
   it('transforms courses with null rating and student counts instead of fabricated defaults', () => {
@@ -284,6 +298,125 @@ describe('Companion Plugin Hardening & Issues 7-9 Compliance', () => {
       whatsapp: null,
       email: null,
       helpline: null,
+    });
+  });
+
+  it('rejects lesson detail when server returns 401/403 without falling back to stale cache', async () => {
+    const fetchMock = globalThis.fetch as jest.Mock;
+    await CacheManager.set(
+      'lesson_detail_86358',
+      {
+        id: 86358,
+        name: 'Stale Paid Lesson',
+        content: '',
+        videoUrl: 'https://player.vimeo.com/video/123',
+      },
+      -1
+    );
+
+    fetchMock
+      .mockResolvedValueOnce(
+        mockJson({ code: 'rest_not_logged_in', message: 'Auth required' }, 401)
+      )
+      .mockResolvedValueOnce(
+        mockJson({ code: 'lp_jwt_rest_cannot_view', message: 'Forbidden' }, 401)
+      );
+
+    await expect(LessonsService.getLessonDetail(86358)).rejects.toThrow();
+  });
+
+  it('enforces server-driven enrollment verification across cancelled, failed, pending, and confirmed orders', async () => {
+    const fetchMock = globalThis.fetch as jest.Mock;
+
+    // Unauthenticated check returns not enrolled
+    HttpClient.setAuthToken(null);
+    expect(await CoursesService.verifyServerEnrollment('88180')).toEqual({
+      enrolled: false,
+      enrolledCourseIds: [],
+      reason: 'unauthenticated',
+    });
+
+    HttpClient.setAuthToken('jwt_user_token');
+
+    // Failed WooCommerce order keeps course locked
+    fetchMock.mockResolvedValueOnce(
+      mockJson(
+        {
+          status: 'success',
+          enrolled: false,
+          enrolled_course_ids: [],
+          order_status: 'failed',
+          payment_confirmed: false,
+        },
+        200
+      )
+    );
+    expect(
+      await CoursesService.verifyServerEnrollment('88180', {
+        orderId: '997',
+        orderKey: 'wc_order_failed',
+      })
+    ).toMatchObject({ enrolled: false, orderStatus: 'failed', reason: 'payment_failed' });
+
+    // Cancelled WooCommerce order keeps course locked
+    fetchMock.mockResolvedValueOnce(
+      mockJson(
+        {
+          status: 'success',
+          enrolled: false,
+          enrolled_course_ids: [],
+          order_status: 'cancelled',
+          payment_confirmed: false,
+        },
+        200
+      )
+    );
+    expect(
+      await CoursesService.verifyServerEnrollment('88180', {
+        orderId: '997',
+        orderKey: 'wc_order_cancel',
+      })
+    ).toMatchObject({ enrolled: false, orderStatus: 'cancelled', reason: 'payment_cancelled' });
+
+    // Completed order with server enrollment unlocks course and bundle courses
+    fetchMock.mockResolvedValueOnce(
+      mockJson(
+        {
+          status: 'success',
+          enrolled: true,
+          enrolled_course_ids: [88180, 88181],
+          order_status: 'completed',
+          payment_confirmed: true,
+        },
+        200
+      )
+    );
+    expect(
+      await CoursesService.verifyServerEnrollment('88180', {
+        orderId: '998',
+        orderKey: 'wc_order_ok',
+      })
+    ).toEqual({
+      enrolled: true,
+      enrolledCourseIds: ['88180', '88181'],
+      orderStatus: 'completed',
+    });
+
+    // LearnPress fallback when companion route returns 404 still respects course_data.status
+    fetchMock.mockResolvedValueOnce(mockJson({ code: 'rest_no_route' }, 404)).mockResolvedValueOnce(
+      mockJson(
+        {
+          id: 86355,
+          name: 'Paid Course',
+          price: 500,
+          course_data: { status: '' },
+        },
+        200
+      )
+    );
+    expect(await CoursesService.verifyServerEnrollment('86355')).toMatchObject({
+      enrolled: false,
+      reason: 'not_enrolled',
     });
   });
 });

@@ -324,7 +324,6 @@ export const SkillAssessmentModal: React.FC<SkillAssessmentModalProps> = ({
 
   const handleEnrollTrack = () => {
     if (result && result.recommendedCourseIds.length > 0) {
-      result.recommendedCourseIds.forEach((cId) => enrollInCourse(cId));
       onClose();
       if (onNavigateToCourse) {
         onNavigateToCourse(result.recommendedCourseIds[0]);

@@ -99,6 +99,7 @@ interface LearningContextType {
   refreshCourses: () => Promise<void>;
   loadCourseDetail: (courseId: string) => Promise<Course>;
   enrollInCourse: (courseId: string) => void;
+  confirmServerEnrollments: (courseIds: string[]) => void;
   markLessonCompleted: (courseId: string, lessonId: string) => void;
   toggleBookmark: (courseId: string) => void;
   isBookmarked: (courseId: string) => boolean;
@@ -541,6 +542,33 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             setCertificates(JSON.parse(savedCertificates));
           } catch {}
         }
+
+        if (user?.id) {
+          const serverSync = await CompanionService.checkServerEnrollment();
+          if (active && serverSync?.enrolledCourseIds?.length) {
+            const uniqueIds = Array.from(
+              new Set(serverSync.enrolledCourseIds.map((id) => String(id)).filter(Boolean))
+            );
+            setUserProgress((prev) => {
+              let changed = false;
+              const next = { ...prev };
+              for (const cId of uniqueIds) {
+                if (next[cId]) continue;
+                next[cId] = {
+                  courseId: cId,
+                  enrolledDate: new Date().toISOString().split('T')[0],
+                  completedLessonIds: [],
+                  lastAccessedLessonId: `les-${cId}-1`,
+                  isCompleted: false,
+                };
+                changed = true;
+              }
+              if (!changed) return prev;
+              saveState(PROGRESS_STORAGE_KEY, next);
+              return next;
+            });
+          }
+        }
       } catch {
         // Safe fallback
       }
@@ -549,7 +577,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => {
       active = false;
     };
-  }, [userScope]);
+  }, [user?.id, userScope]);
 
   // 1. Initial live catalog fetch on mount
   useEffect(() => {
@@ -670,13 +698,45 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setUserProgress(updated);
     saveState(PROGRESS_STORAGE_KEY, updated);
 
-    // Queue enrollment mutation for offline-first sync with LearnPress
+    // Queue enrollment mutation for offline-first sync with LearnPress (free courses only)
     SyncQueueManager.enqueue('ENROLL_COURSE', Endpoints.LEARNPRESS.COURSE_ENROLL, {
       id: courseId,
     }).then(() => {
       SyncQueueManager.processQueue().catch(() => {});
     });
   };
+
+  /**
+   * Records enrollment locally ONLY after server-side confirmation (no blind queue mutation).
+   */
+  const confirmServerEnrollments = useCallback(
+    (courseIds: string[]) => {
+      const uniqueIds = Array.from(new Set(courseIds.map((id) => String(id)).filter(Boolean)));
+      if (uniqueIds.length === 0) return;
+
+      setUserProgress((prev) => {
+        let changed = false;
+        const next = { ...prev };
+        for (const courseId of uniqueIds) {
+          if (next[courseId]) continue;
+          const course = courses.find((c) => c.id === courseId);
+          const firstLessonId = course?.modules?.[0]?.lessons?.[0]?.id || `les-${courseId}-1`;
+          next[courseId] = {
+            courseId,
+            enrolledDate: new Date().toISOString().split('T')[0],
+            completedLessonIds: [],
+            lastAccessedLessonId: firstLessonId,
+            isCompleted: false,
+          };
+          changed = true;
+        }
+        if (!changed) return prev;
+        saveState(PROGRESS_STORAGE_KEY, next);
+        return next;
+      });
+    },
+    [courses, userScope]
+  );
 
   const markLessonCompleted = (courseId: string, lessonId: string) => {
     const course = courses.find((c) => c.id === courseId);
@@ -1103,6 +1163,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         refreshCourses,
         loadCourseDetail,
         enrollInCourse,
+        confirmServerEnrollments,
         markLessonCompleted,
         toggleBookmark,
         isBookmarked,

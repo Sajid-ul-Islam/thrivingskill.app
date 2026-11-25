@@ -210,6 +210,27 @@ export function isOrderCompletionUrl(
 }
 
 /**
+ * Safely extracts WooCommerce orderId and orderKey from a trusted order-received URL.
+ */
+export function parseWooOrderFromUrl(
+  rawUrl: string,
+  activeSiteUrl: string = 'https://thrivingskill.com'
+): { orderId?: string; orderKey?: string } {
+  if (!rawUrl || !isTrustedCheckoutOrigin(rawUrl, activeSiteUrl)) {
+    return {};
+  }
+  const parsed = parseUrlSafe(rawUrl);
+  if (!parsed) return {};
+
+  const orderIdMatch = parsed.pathname.match(/order-received\/(\d+)/i);
+  const orderId = orderIdMatch?.[1];
+  const rawKey = parsed.searchParams.get('key');
+  const orderKey = rawKey && /^wc_order_[A-Za-z0-9_-]+$/.test(rawKey) ? rawKey : undefined;
+
+  return { orderId, orderKey };
+}
+
+/**
  * Detects intermediate WooCommerce cart redirects on the checkout domain.
  */
 export function isCartRedirectUrl(

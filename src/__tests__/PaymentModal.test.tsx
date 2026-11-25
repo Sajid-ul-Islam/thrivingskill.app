@@ -77,6 +77,7 @@ jest.mock('../context/AuthContext', () => ({
 }));
 
 const mockEnrollInCourse = jest.fn();
+const mockConfirmServerEnrollments = jest.fn();
 const mockRefreshCourses = jest.fn(async () => undefined);
 const mockLoadCourseDetail = jest.fn(async () => null);
 
@@ -85,6 +86,7 @@ jest.mock('../context/LearningContext', () => ({
     courses: [],
     userProgress: {},
     enrollInCourse: mockEnrollInCourse,
+    confirmServerEnrollments: mockConfirmServerEnrollments,
     refreshCourses: mockRefreshCourses,
     loadCourseDetail: mockLoadCourseDetail,
   }),
@@ -97,7 +99,12 @@ jest.mock('../theme/responsive', () => ({
 jest.mock('../services/api/coursesService', () => ({
   CoursesService: {
     getWooCommerceProductPricing: jest.fn(),
-    enrollCourse: jest.fn(async () => true),
+    enrollCourse: jest.fn(async () => ({ success: false })),
+    verifyServerEnrollment: jest.fn(async () => ({
+      enrolled: false,
+      enrolledCourseIds: [],
+      reason: 'not_enrolled',
+    })),
   },
 }));
 
@@ -265,7 +272,41 @@ describe('PaymentModal (Issue 14 checkout hardening)', () => {
       '01999999999'
     );
 
-    // Duplicate order-received nav-change + alert click calls onSuccess EXACTLY ONCE
+    // Unpaid/failed order-received redirect MUST keep course locked (never unlock locally!)
+    (CoursesService.verifyServerEnrollment as jest.Mock).mockResolvedValueOnce({
+      enrolled: false,
+      enrolledCourseIds: [],
+      orderStatus: 'failed',
+      reason: 'payment_failed',
+    });
+
+    await act(async () => {
+      await capturedWebViewProps.onNavigationStateChange({
+        url: 'https://thrivingskill.com/checkout/order-received/997/?key=wc_order_failed',
+        canGoBack: true,
+      });
+    });
+
+    expect(CoursesService.verifyServerEnrollment).toHaveBeenCalledWith('88180', {
+      orderId: '997',
+      orderKey: 'wc_order_failed',
+    });
+    expect(mockConfirmServerEnrollments).not.toHaveBeenCalled();
+    expect(mockEnrollInCourse).not.toHaveBeenCalled();
+    expect(onSuccess).not.toHaveBeenCalled();
+
+    // Server-confirmed completion unlocks ONLY server-confirmed course IDs and calls onSuccess ONCE
+    (CoursesService.verifyServerEnrollment as jest.Mock).mockResolvedValue({
+      enrolled: true,
+      enrolledCourseIds: ['88180', '88181'],
+      orderStatus: 'completed',
+    });
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Proceed to Secure Checkout' }));
+    await waitFor(() => {
+      expect(capturedWebViewProps).not.toBeNull();
+    });
+
     await act(async () => {
       capturedWebViewProps.onNavigationStateChange({
         url: 'https://thrivingskill.com/checkout/order-received/998/?key=wc_order_xyz',
@@ -277,9 +318,14 @@ describe('PaymentModal (Issue 14 checkout hardening)', () => {
       });
     });
 
-    expect(onSuccess).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(onSuccess).toHaveBeenCalledTimes(1);
+    });
     expect(onSuccess).toHaveBeenCalledWith('88180');
-    expect(alertSpy).toHaveBeenCalledTimes(1);
+    expect(mockConfirmServerEnrollments).toHaveBeenCalledTimes(1);
+    expect(mockConfirmServerEnrollments).toHaveBeenCalledWith(['88180', '88181']);
+    expect(mockEnrollInCourse).not.toHaveBeenCalled();
+    expect(alertSpy).toHaveBeenCalled();
 
     canOpenSpy.mockRestore();
     openUrlSpy.mockRestore();

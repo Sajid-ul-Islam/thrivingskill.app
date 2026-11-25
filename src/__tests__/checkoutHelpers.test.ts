@@ -3,6 +3,7 @@ import {
   getCheckoutOriginWhitelist,
   isOrderCompletionUrl,
   isTrustedCheckoutOrigin,
+  parseWooOrderFromUrl,
   resolveServerCheckoutPricingAndBundle,
 } from '../services/checkout/checkoutHelpers';
 import { getBundleConfigById } from '../data/bundleCoursesMap';
@@ -158,6 +159,24 @@ describe('checkoutHelpers security & server pricing', () => {
       expect(
         isOrderCompletionUrl('https://thrivingskill.com/checkout/order-pay/123/?key=wc_order_abc')
       ).toBe(false);
+    });
+
+    it('parses order ID and validated wc_order key only on trusted checkout origins', () => {
+      expect(
+        parseWooOrderFromUrl(
+          'https://thrivingskill.com/checkout/order-received/998/?key=wc_order_xyz123',
+          'https://thrivingskill.com'
+        )
+      ).toEqual({
+        orderId: '998',
+        orderKey: 'wc_order_xyz123',
+      });
+      expect(
+        parseWooOrderFromUrl(
+          'https://evil.example.com/checkout/order-received/998/?key=wc_order_xyz123',
+          'https://thrivingskill.com'
+        )
+      ).toEqual({});
     });
   });
 

@@ -33,6 +33,7 @@ import {
   isCartRedirectUrl,
   isOrderCompletionUrl,
   isTrustedCheckoutOrigin,
+  parseWooOrderFromUrl,
   resolveServerCheckoutPricingAndBundle,
 } from '../../services/checkout/checkoutHelpers';
 import { triggerHaptic } from '../../utils/haptics';
@@ -66,7 +67,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const { isTablet } = useResponsive();
   const { t, isBangla } = useLanguage();
   const { user, isAuthenticated, setAuthModalVisible, updateUserProfile } = useAuth();
-  const { courses, userProgress, enrollInCourse, refreshCourses, loadCourseDetail } = useLearning();
+  const { courses, confirmServerEnrollments, refreshCourses } = useLearning();
 
   const [activeTab, setActiveTab] = useState<'checkout' | 'sync'>('checkout');
 
@@ -94,6 +95,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   // WebView & Guard Refs
   const webViewRef = useRef<any>(null);
   const hasCompletedPurchaseRef = useRef<boolean>(false);
+  const isVerifyingCheckoutRef = useRef<boolean>(false);
 
   // Focus Chaining Refs for Seamless Form UX
   const lastNameRef = useRef<React.ElementRef<typeof TextInput>>(null);
@@ -105,6 +107,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   // Sync State & Hygiene
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cartForwardTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMountedRef = useRef<boolean>(true);
@@ -198,6 +201,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   useEffect(() => {
     if (!visible) return;
     setIsSyncing(false);
+    setIsVerifyingPayment(false);
     setIsPlacingOrder(false);
     setCheckoutWebUrl(null);
     setCanGoBack(false);
@@ -207,6 +211,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     setAgreedToTerms(false);
     setServerProductData(null);
     hasCompletedPurchaseRef.current = false;
+    isVerifyingCheckoutRef.current = false;
 
     if (!course?.id) return;
     let active = true;
@@ -418,37 +423,83 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     );
   };
 
-  const completePurchaseOnce = useCallback(() => {
-    if (!course || hasCompletedPurchaseRef.current) return;
-    hasCompletedPurchaseRef.current = true;
+  const verifyCheckoutCompletionOnServer = useCallback(
+    async (redirectUrl: string) => {
+      if (!course || hasCompletedPurchaseRef.current || isVerifyingCheckoutRef.current) return;
+      isVerifyingCheckoutRef.current = true;
+      setIsVerifyingPayment(true);
 
-    triggerHaptic('success');
-    setCheckoutWebUrl(null);
-    enrollInCourse(course.id);
-    if (resolvedPricing.isBundle) {
-      resolvedPricing.subCourses.forEach((sub) => {
-        enrollInCourse(sub.id);
-      });
-    }
-    // Background verify with backend
-    CoursesService.enrollCourse(course.id).catch(() => {});
-    refreshCourses().catch(() => {});
+      try {
+        const orderInfo = parseWooOrderFromUrl(redirectUrl, Env.SITE_URL);
+        const verification = await CoursesService.verifyServerEnrollment(course.id, orderInfo);
+        if (!isMountedRef.current || isCancelledRef.current) return;
 
-    onClose();
-    onSuccess(course.id);
+        if (verification.enrolled) {
+          hasCompletedPurchaseRef.current = true;
+          const confirmedIds =
+            verification.enrolledCourseIds.length > 0
+              ? verification.enrolledCourseIds
+              : [course.id];
+          confirmServerEnrollments(confirmedIds);
+          refreshCourses().catch(() => {});
 
-    Alert.alert(
-      isBangla ? 'ভর্তি সফল হয়েছে! 🎉' : 'Enrollment Successful! 🎉',
-      isBangla
-        ? `অভিনন্দন! "${course.title}" কোর্সটিতে আপনার অ্যাক্সেস চালু হয়েছে। এখনই প্রথম লেসন শুরু করুন।`
-        : `Congratulations! Your access to "${course.title}" is now active. Let's begin learning!`,
-      [
-        {
-          text: isBangla ? 'ঠিক আছে' : 'Got it',
-        },
-      ]
-    );
-  }, [course, enrollInCourse, isBangla, onClose, onSuccess, refreshCourses, resolvedPricing]);
+          triggerHaptic('success');
+          setCheckoutWebUrl(null);
+          onClose();
+          onSuccess(course.id);
+
+          Alert.alert(
+            isBangla ? 'ভর্তি সফল হয়েছে! 🎉' : 'Enrollment Successful! 🎉',
+            isBangla
+              ? `অভিনন্দন! "${course.title}" কোর্সটিতে আপনার অ্যাক্সেস চালু হয়েছে। এখনই প্রথম লেসন শুরু করুন।`
+              : `Congratulations! Your access to "${course.title}" is now active. Let's begin learning!`,
+            [{ text: isBangla ? 'ঠিক আছে' : 'Got it' }]
+          );
+          return;
+        }
+
+        setCheckoutWebUrl(null);
+        triggerHaptic('error');
+
+        if (
+          verification.reason === 'payment_failed' ||
+          verification.reason === 'payment_cancelled'
+        ) {
+          Alert.alert(
+            isBangla ? 'পেমেন্ট সম্পন্ন হয়নি' : 'Payment Not Completed',
+            isBangla
+              ? 'পেমেন্ট বাতিল বা ব্যর্থ হওয়ায় কোর্সটি আনলক করা হয়নি। আপনি যেকোনো সময় পুনরায় চেষ্টা করতে পারেন।'
+              : 'Your payment was cancelled or failed, so the course remains locked. You can retry checkout at any time.'
+          );
+          return;
+        }
+
+        setActiveTab('sync');
+        Alert.alert(
+          isBangla ? 'পেমেন্ট নিশ্চিতকরণ মুলতুবি আছে' : 'Payment Confirmation Pending',
+          isBangla
+            ? 'সার্ভারে পেমেন্ট ও এনরোলমেন্ট এখনো নিশ্চিত হয়নি। পেমেন্ট সম্পন্ন হলে নিচের "অ্যাকাউন্ট এনরোলমেন্ট সিঙ্ক করুন" বাটনে ট্যাপ করুন।'
+            : 'The server has not confirmed your enrollment yet. Once your payment completes, tap "Sync Account Enrollments" below to verify and unlock access.'
+        );
+      } catch {
+        if (!isMountedRef.current || isCancelledRef.current) return;
+        setCheckoutWebUrl(null);
+        setActiveTab('sync');
+        Alert.alert(
+          isBangla ? 'যাচাই করা যায়নি' : 'Verification Unavailable',
+          isBangla
+            ? 'সার্ভারের সাথে এনরোলমেন্ট যাচাই করা যায়নি। অনুগ্রহ করে সিঙ্ক ট্যাব থেকে পুনরায় চেষ্টা করুন।'
+            : 'Could not verify your enrollment with the server right now. Please tap "Sync Account Enrollments" to check your status.'
+        );
+      } finally {
+        isVerifyingCheckoutRef.current = false;
+        if (isMountedRef.current) {
+          setIsVerifyingPayment(false);
+        }
+      }
+    },
+    [confirmServerEnrollments, course, isBangla, onClose, onSuccess, refreshCourses]
+  );
 
   // Verify real enrollment against WordPress / LearnPress backend
   const performEnrollmentSync = useCallback(async () => {
@@ -460,54 +511,34 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       return;
     }
 
-    if (userProgress[course.id]) {
-      if (!hasCompletedPurchaseRef.current) {
-        hasCompletedPurchaseRef.current = true;
-        onSuccess(course.id);
-      }
-      onClose();
-      return;
-    }
-
     setIsSyncing(true);
 
     try {
-      await refreshCourses();
+      const verification = await CoursesService.verifyServerEnrollment(course.id);
 
-      let backendVerified = false;
-      try {
-        const updatedCourse = await loadCourseDetail(course.id);
-        if ((updatedCourse as any)?.enrolled || (updatedCourse as any)?.isEnrolled) {
-          backendVerified = true;
-        }
-      } catch {
-        // Ignore detail fetch glitch and try enrollment handshake below
-      }
+      let isServerEnrolled = verification.enrolled;
+      let confirmedIds =
+        verification.enrolledCourseIds.length > 0 ? verification.enrolledCourseIds : [course.id];
 
-      if (!backendVerified) {
+      // Allow free course enrollment only when server explicitly accepts enrollment
+      if (!isServerEnrolled && coursePriceBdt === 0) {
         try {
           const enrollRes = await CoursesService.enrollCourse(course.id);
-          if (enrollRes && (enrollRes.success || (enrollRes as any).code === 'already_enrolled')) {
-            backendVerified = true;
+          if (enrollRes?.success) {
+            isServerEnrolled = true;
+            confirmedIds = [course.id];
           }
-        } catch (e: any) {
-          const msg = (e?.message || '').toLowerCase();
-          if (msg.includes('already') || msg.includes('enrolled')) {
-            backendVerified = true;
-          }
+        } catch {
+          isServerEnrolled = false;
         }
       }
 
       if (!isMountedRef.current || isCancelledRef.current) return;
       setIsSyncing(false);
 
-      if (backendVerified || userProgress[course.id]) {
-        enrollInCourse(course.id);
-        if (resolvedPricing.isBundle) {
-          resolvedPricing.subCourses.forEach((sub) => {
-            enrollInCourse(sub.id);
-          });
-        }
+      if (isServerEnrolled) {
+        confirmServerEnrollments(confirmedIds);
+        refreshCourses().catch(() => {});
         Alert.alert(t('syncSuccessTitle'), t('syncSuccessMsg'), [
           {
             text: isBangla ? 'শেখা শুরু করুন' : 'Start Learning',
@@ -541,13 +572,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     }
   }, [
     course,
+    coursePriceBdt,
     isAuthenticated,
     user,
-    userProgress,
     refreshCourses,
-    loadCourseDetail,
-    enrollInCourse,
-    resolvedPricing,
+    confirmServerEnrollments,
     onSuccess,
     onClose,
     setAuthModalVisible,
@@ -555,14 +584,14 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     isBangla,
   ]);
 
-  // Handle WebView Checkout URL changes (Detect completion redirect)
+  // Handle WebView Checkout URL changes (Trigger server enrollment verification, never unlock locally)
   const handleWebViewNavChange = (navState: WebViewNavigation) => {
     const url = navState.url || '';
     setCanGoBack(navState.canGoBack);
     setCurrentUrl(url);
 
     if (isOrderCompletionUrl(url, Env.SITE_URL)) {
-      completePurchaseOnce();
+      verifyCheckoutCompletionOnServer(url);
     }
   };
 
@@ -816,6 +845,25 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               allowsBackForwardNavigationGestures={true}
               originWhitelist={getCheckoutOriginWhitelist(Env.SITE_URL)}
             />
+
+            {isVerifyingPayment && (
+              <View
+                style={[
+                  styles.drawerLoadingState,
+                  { backgroundColor: isDark ? '#0F172A' : '#FFFFFF' },
+                ]}
+              >
+                <ActivityIndicator size="large" color={colors.primary} />
+                <Text style={[styles.drawerLoadingTitle, { color: colors.text }]}>
+                  {isBangla ? 'এনরোলমেন্ট যাচাই করা হচ্ছে...' : 'Verifying Payment & Enrollment...'}
+                </Text>
+                <Text style={[styles.drawerLoadingSubtitle, { color: colors.textMuted }]}>
+                  {isBangla
+                    ? 'সার্ভার থেকে নিশ্চিতকরণ পাওয়া মাত্রই কোর্স আনলক হবে।'
+                    : 'Waiting for server confirmation before unlocking access.'}
+                </Text>
+              </View>
+            )}
 
             {/* Bottom Safe Area Padding */}
             <View

@@ -205,9 +205,14 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
         setPaymentModalVisible(true);
         return;
       }
-      enrollInCourse(course.id);
       if (isAuthenticated) {
-        CoursesService.enrollCourse(course.id).catch(() => {});
+        CoursesService.enrollCourse(course.id)
+          .then(() => {
+            enrollInCourse(course.id);
+          })
+          .catch(() => {});
+      } else {
+        enrollInCourse(course.id);
       }
       Alert.alert(
         isBangla ? 'সফলভাবে ভর্তি সম্পন্ন হয়েছে! 🎉' : 'Enrolled Successfully! 🎉',
@@ -536,8 +541,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
         visible={paymentModalVisible}
         course={course}
         onClose={() => setPaymentModalVisible(false)}
-        onSuccess={(cId) => {
-          enrollInCourse(cId);
+        onSuccess={() => {
           const firstLessonId = course.modules?.[0]?.lessons?.[0]?.id;
           if (firstLessonId) onNavigateToLesson(course.id, firstLessonId);
         }}
