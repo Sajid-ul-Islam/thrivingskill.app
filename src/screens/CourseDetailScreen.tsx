@@ -58,7 +58,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     getCourseById,
     loadCourseDetail,
     userProgress,
-    enrollInCourse,
+    confirmServerEnrollments,
     isBookmarked,
     toggleBookmark,
     getCourseProgressPercentage,
@@ -70,7 +70,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     recordCategoryInteraction,
     refreshCourses,
   } = useLearning();
-  const { user, isAuthenticated, isAdmin, canBypassCourseLocks } = useAuth();
+  const { user, isAuthenticated, isAdmin, canBypassCourseLocks, setAuthModalVisible } = useAuth();
   const { videos, playVideo } = useYouTube();
   const isPrivileged = isAdmin || Boolean(canBypassCourseLocks);
 
@@ -78,6 +78,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     'curriculum'
   );
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [isEnrollingFree, setIsEnrollingFree] = useState(false);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [certPreviewVisible, setCertPreviewVisible] = useState(false);
   const [mandatoryReviewVisible, setMandatoryReviewVisible] = useState(false);
@@ -184,31 +185,55 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     );
   };
 
-  const handleEnrollOrResume = () => {
-    if (isPrivileged) {
-      const targetLessonId =
-        userProgress[course.id]?.lastAccessedLessonId ||
-        course.modules?.[0]?.lessons?.[0]?.id ||
-        '';
+  const resolveInitialLessonId = () => {
+    const savedId = userProgress[course.id]?.lastAccessedLessonId;
+    const allLessonIds = course.modules?.flatMap((m) => m.lessons || []).map((l) => l.id) || [];
+    if (savedId && (allLessonIds.length === 0 || allLessonIds.includes(savedId))) {
+      return savedId;
+    }
+    return allLessonIds[0] || '';
+  };
+
+  const handleEnrollOrResume = async () => {
+    if (isPrivileged || isEnrolled) {
+      const targetLessonId = resolveInitialLessonId();
       if (targetLessonId) {
         onNavigateToLesson(course.id, targetLessonId);
       }
       return;
     }
-    if (!isEnrolled) {
-      if ((course.priceBdt && course.priceBdt > 0) || (course.price && course.price > 0)) {
-        setPaymentModalVisible(true);
-        return;
-      }
-      if (isAuthenticated) {
-        CoursesService.enrollCourse(course.id)
-          .then(() => {
-            enrollInCourse(course.id);
-          })
-          .catch(() => {});
-      } else {
-        enrollInCourse(course.id);
-      }
+
+    const isPaid = Boolean(
+      (course.priceBdt && course.priceBdt > 0) || (course.price && course.price > 0)
+    );
+    if (isPaid) {
+      setPaymentModalVisible(true);
+      return;
+    }
+
+    if (!isAuthenticated) {
+      Alert.alert(
+        isBangla ? 'সাইন ইন প্রয়োজন' : 'Sign In Required',
+        isBangla
+          ? 'ফ্রি কোর্সে ভর্তি হতে ও অগ্রগতি সংরক্ষণ করতে অনুগ্রহ করে আপনার অ্যাকাউন্টে সাইন ইন করুন।'
+          : 'Please sign in to enroll in this free course and save your progress.',
+        [
+          { text: isBangla ? 'বাতিল' : 'Cancel', style: 'cancel' },
+          {
+            text: isBangla ? 'সাইন ইন করুন' : 'Sign In',
+            onPress: () => setAuthModalVisible(true),
+          },
+        ]
+      );
+      return;
+    }
+
+    if (isEnrollingFree) return;
+    setIsEnrollingFree(true);
+    try {
+      await CoursesService.enrollCourse(course.id);
+      confirmServerEnrollments([course.id]);
+      refreshCourses().catch(() => {});
       Alert.alert(
         isBangla ? 'সফলভাবে ভর্তি সম্পন্ন হয়েছে! 🎉' : 'Enrolled Successfully! 🎉',
         isBangla
@@ -224,16 +249,24 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
           },
         ]
       );
-    } else {
-      const targetLessonId =
-        userProgress[course.id]?.lastAccessedLessonId ||
-        course.modules?.[0]?.lessons?.[0]?.id ||
-        '';
-      onNavigateToLesson(course.id, targetLessonId);
+    } catch (err: any) {
+      Alert.alert(
+        isBangla ? 'ভর্তি সম্পন্ন করা যায়নি' : 'Enrollment Failed',
+        err?.message ||
+          (isBangla
+            ? 'এই মুহূর্তে কোর্সটিতে ভর্তি সম্পন্ন করা যায়নি। অনুগ্রহ করে ইন্টারনেট সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।'
+            : 'Could not complete enrollment right now. Please check your connection and try again.')
+      );
+    } finally {
+      setIsEnrollingFree(false);
     }
   };
 
   const handleSelectLesson = (lesson: Lesson) => {
+    if (!isPrivileged && !isEnrolled && !lesson.isFreePreview) {
+      handleEnrollOrResume();
+      return;
+    }
     onNavigateToLesson(course.id, lesson.id);
   };
 
@@ -491,6 +524,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                   isAdmin={isPrivileged}
                   isLoading={loadingDetail}
                   onSelectLesson={handleSelectLesson}
+                  onLockedLessonPress={handleSelectLesson}
                 />
               </View>
             )}
@@ -517,6 +551,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
         course={course}
         isEnrolled={isEnrolled}
         isAdmin={isPrivileged}
+        isEnrolling={isEnrollingFree}
         progressPercent={progressPercent}
         isCompleted={isCompleted}
         insetsBottom={insets.bottom}
@@ -546,6 +581,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
         onSubmitMandatoryReview={handleSubmitMandatoryReview}
         onClosePayment={() => setPaymentModalVisible(false)}
         onPaymentSuccess={() => {
+          setPaymentModalVisible(false);
           const firstLessonId = course.modules?.[0]?.lessons?.[0]?.id;
           if (firstLessonId) onNavigateToLesson(course.id, firstLessonId);
         }}

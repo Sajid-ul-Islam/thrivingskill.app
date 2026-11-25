@@ -109,7 +109,9 @@
           "color": "#102F53"
         }
       ],
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-build-properties",
+      "@sentry/react-native"
     ],
     "extra": {
       "eas": {

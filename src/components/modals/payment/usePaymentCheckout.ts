@@ -16,6 +16,8 @@ import {
 import { triggerHaptic } from '../../../utils/haptics';
 
 export const CHECKOUT_AUTOFILL_KEY = '@thrivingskill_checkout_autofill_v1';
+export const MAX_SYNC_ATTEMPTS = 4;
+export const RETRY_DELAYS_MS = [0, 1500, 2500, 4000];
 
 export function usePaymentCheckout({
   visible,
@@ -207,6 +209,10 @@ export function usePaymentCheckout({
       setAuthModalVisible(true);
       return;
     }
+    if (resolvedPricing.priceBdt === 0) {
+      performEnrollmentSync();
+      return;
+    }
     if (!validateBillingDetails()) {
       setIsEditingDetails(true);
       triggerHaptic('error');
@@ -322,7 +328,32 @@ export function usePaymentCheckout({
       setIsVerifyingPayment(true);
       try {
         const orderInfo = parseWooOrderFromUrl(redirectUrl, Env.SITE_URL);
-        const verification = await CoursesService.verifyServerEnrollment(course.id, orderInfo);
+        const pollDelaysMs = RETRY_DELAYS_MS.slice(0, MAX_SYNC_ATTEMPTS);
+        let verification = await CoursesService.verifyServerEnrollment(course.id, orderInfo);
+
+        for (let attempt = 1; attempt < pollDelaysMs.length; attempt++) {
+          if (!isMountedRef.current || isCancelledRef.current) return;
+          if (
+            verification.enrolled ||
+            verification.reason === 'payment_failed' ||
+            verification.reason === 'payment_cancelled' ||
+            verification.reason === 'unauthenticated'
+          ) {
+            break;
+          }
+
+          await new Promise<void>((resolve) => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            timeoutRef.current = setTimeout(() => {
+              timeoutRef.current = null;
+              resolve();
+            }, pollDelaysMs[attempt]);
+          });
+
+          if (!isMountedRef.current || isCancelledRef.current) return;
+          verification = await CoursesService.verifyServerEnrollment(course.id, orderInfo);
+        }
+
         if (!isMountedRef.current || isCancelledRef.current) return;
 
         if (verification.enrolled) {
@@ -384,6 +415,52 @@ export function usePaymentCheckout({
     },
     [confirmServerEnrollments, course, isBangla, onClose, onSuccess, refreshCourses]
   );
+
+  // Short background auto-poll when slow SSLCommerz webhook lands user on the sync tab
+  useEffect(() => {
+    if (!visible || activeTab !== 'sync' || !course || !isAuthenticated || hasCompletedPurchaseRef.current) {
+      return;
+    }
+    let cancelled = false;
+    let pollTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const runAutoPoll = async () => {
+      for (let attempt = 1; attempt < MAX_SYNC_ATTEMPTS; attempt++) {
+        const delayMs = RETRY_DELAYS_MS[attempt] ?? 3000;
+        await new Promise<void>((resolve) => {
+          pollTimer = setTimeout(() => {
+            pollTimer = null;
+            resolve();
+          }, delayMs);
+        });
+        if (cancelled || !isMountedRef.current || isCancelledRef.current || hasCompletedPurchaseRef.current) {
+          return;
+        }
+        try {
+          const check = await CoursesService.verifyServerEnrollment(course.id);
+          if (check.enrolled && !cancelled && isMountedRef.current && !hasCompletedPurchaseRef.current) {
+            hasCompletedPurchaseRef.current = true;
+            confirmServerEnrollments(
+              check.enrolledCourseIds.length > 0 ? check.enrolledCourseIds : [course.id]
+            );
+            refreshCourses().catch(() => {});
+            triggerHaptic('success');
+            onClose();
+            onSuccess(course.id);
+            return;
+          }
+        } catch {
+          // Continue remaining poll attempts silently
+        }
+      }
+    };
+
+    runAutoPoll();
+    return () => {
+      cancelled = true;
+      if (pollTimer) clearTimeout(pollTimer);
+    };
+  }, [visible, activeTab, course, isAuthenticated, confirmServerEnrollments, refreshCourses, onClose, onSuccess]);
 
   const performEnrollmentSync = useCallback(async () => {
     if (!course) return;

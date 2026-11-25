@@ -228,6 +228,9 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
   const effectiveHasVideo = hasVideo ?? Boolean(activeVideoUrl);
+  const isPaidCourse = Boolean(
+    (course.priceBdt && course.priceBdt > 0) || (course.price && course.price > 0)
+  );
 
   return (
     <View
@@ -256,12 +259,22 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
             <Ionicons name="lock-closed" size={34} color="#E34234" />
           </View>
           <Text style={styles.lockedTitle}>
-            {isBangla ? 'সদস্যদের জন্য সংরক্ষিত লেসন' : 'Enrolled Member Access'}
+            {isPaidCourse
+              ? isBangla
+                ? 'কোর্সটি আনলক করতে এনরোল করুন'
+                : 'Unlock Full Course Access'
+              : isBangla
+                ? 'ফ্রি কোর্সে এনরোল করুন'
+                : 'Enroll for Free Access'}
           </Text>
           <Text style={styles.lockedSub}>
-            {isBangla
-              ? 'এই লেসনের সম্পূর্ণ ভিডিও দেখতে অনুগ্রহ করে অ্যাকাউন্ট অ্যাক্সেস সিঙ্ক করুন।'
-              : 'Sign in with an enrolled account to access all lectures and certificates.'}
+            {isPaidCourse
+              ? isBangla
+                ? 'এই লেসন ও সম্পূর্ণ কোর্স আনলক করতে এনরোলমেন্ট সম্পন্ন করুন অথবা আপনার অ্যাকাউন্ট সিঙ্ক করুন।'
+                : 'Purchase enrollment to unlock all lectures and certificates, or sync your existing member access.'
+              : isBangla
+                ? 'এই ফ্রি কোর্সের সকল লেসন দেখতে এখনই এনরোল করুন অথবা অ্যাকাউন্ট সিঙ্ক করুন।'
+                : 'Enroll in this free course or sync your account to access all lectures.'}
           </Text>
           <View style={styles.lockedActionsCol}>
             <TouchableOpacity
@@ -269,11 +282,21 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
               onPress={onOpenPaymentModal}
               activeOpacity={0.88}
               accessibilityRole="button"
-              accessibilityLabel="Sync account access"
+              accessibilityLabel={isPaidCourse ? 'Enroll now to unlock' : 'Enroll and sync access'}
             >
-              <Ionicons name="sync" size={15} color="#FFFFFF" />
+              <Ionicons
+                name={isPaidCourse ? 'card-outline' : 'flash-outline'}
+                size={15}
+                color="#FFFFFF"
+              />
               <Text style={styles.lockedPurchaseBtnText}>
-                {isBangla ? 'অ্যাকাউন্ট অ্যাক্সেস সিঙ্ক করুন' : 'Sync Account Access'}
+                {isPaidCourse
+                  ? isBangla
+                    ? 'এনরোল ও পেমেন্ট করুন'
+                    : 'Enroll Now to Unlock'
+                  : isBangla
+                    ? 'ফ্রি এনরোল ও সিঙ্ক'
+                    : 'Enroll & Sync Access'}
               </Text>
             </TouchableOpacity>
 

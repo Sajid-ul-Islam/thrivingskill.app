@@ -27,14 +27,17 @@ import { triggerHaptic } from '../../utils/haptics';
 import { useResponsive } from '../../theme/responsive';
 import { paymentModalStyles as styles } from './payment/paymentModal.styles';
 import { buildCheckoutAutofillScript } from './payment/injectedCheckoutScript';
-import { CHECKOUT_AUTOFILL_KEY, usePaymentCheckout } from './payment/usePaymentCheckout';
+import {
+  CHECKOUT_AUTOFILL_KEY,
+  MAX_SYNC_ATTEMPTS,
+  RETRY_DELAYS_MS,
+  usePaymentCheckout,
+} from './payment/usePaymentCheckout';
 import { OrderSummaryCard } from './payment/OrderSummaryCard';
 import { BillingDetailsForm } from './payment/BillingDetailsForm';
 import { MemberSyncView } from './payment/MemberSyncView';
 
-export const MAX_SYNC_ATTEMPTS = 4;
-export const RETRY_DELAYS_MS = [0, 1500, 2500, 4000];
-export { CHECKOUT_AUTOFILL_KEY };
+export { CHECKOUT_AUTOFILL_KEY, MAX_SYNC_ATTEMPTS, RETRY_DELAYS_MS };
 
 export interface PaymentModalProps {
   visible: boolean;

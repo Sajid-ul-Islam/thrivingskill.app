@@ -250,12 +250,7 @@ export function resolveLessonVideoData(
       return failClosedResult(title, duration, summary);
     }
     const canonicalUrl = buildVimeoEmbedUrl(candidateUrl, videoId);
-    const hasSafeRawIframe =
-      Boolean(lesson.videoIntro?.includes('<iframe')) &&
-      Boolean(extractVideoUrlFromIntro(lesson.videoIntro));
-    const videoIntro = hasSafeRawIframe
-      ? decodeHtmlEntities(lesson.videoIntro!).trim()
-      : registryEntry?.videoIntro || makeResponsiveIframe(canonicalUrl);
+    const videoIntro = makeResponsiveIframe(canonicalUrl);
 
     return {
       hasVideo: true,
@@ -277,10 +272,7 @@ export function resolveLessonVideoData(
       return failClosedResult(title, duration, summary);
     }
     const canonicalUrl = `https://www.youtube-nocookie.com/embed/${videoId}`;
-    const videoIntro =
-      lesson.videoIntro && extractVideoUrlFromIntro(lesson.videoIntro)
-        ? decodeHtmlEntities(lesson.videoIntro).trim()
-        : makeResponsiveIframe(canonicalUrl);
+    const videoIntro = makeResponsiveIframe(canonicalUrl);
 
     return {
       hasVideo: true,

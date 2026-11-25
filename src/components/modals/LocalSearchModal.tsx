@@ -253,7 +253,7 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          {/* Gemini Nano On-Device Query Enhancement / Proofreading */}
+          {/* Deterministic Query Enhancement / Proofreading */}
           {suggestedEnhancement && (
             <TouchableOpacity
               style={[
@@ -266,7 +266,7 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
               onPress={handleApplyEnhancement}
               activeOpacity={0.8}
               accessibilityRole="button"
-              accessibilityLabel={`Gemini Nano suggested query: ${suggestedEnhancement}`}
+              accessibilityLabel={`Suggested query: ${suggestedEnhancement}`}
             >
               <Ionicons name="sparkles" size={14} color="#059669" />
               <Text style={[styles.nanoEnhanceText, { color: colors.text }]}>
@@ -274,7 +274,7 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
                 <Text style={{ fontWeight: '800', color: '#059669' }}>{suggestedEnhancement}</Text>
               </Text>
               <View style={styles.nanoBadgeTag}>
-                <Text style={styles.nanoBadgeText}>Nano AI</Text>
+                <Text style={styles.nanoBadgeText}>Smart Match</Text>
               </View>
             </TouchableOpacity>
           )}

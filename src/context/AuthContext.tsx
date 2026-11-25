@@ -55,12 +55,8 @@ interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
-  isAdminBypass: boolean;
   isDevMode: boolean;
-  devModeUnlocked: boolean;
-  setDevModeUnlocked: (unlocked: boolean) => Promise<void>;
   canBypassCourseLocks: boolean;
-  toggleAdminBypass: () => Promise<boolean>;
   isLoading: boolean;
   isGuest: boolean;
   isAuthModalVisible: boolean;
@@ -104,8 +100,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isGuest, setIsGuest] = useState<boolean>(false);
   const [isAuthModalVisible, setAuthModalVisible] = useState<boolean>(false);
   const [sessionExpiredNotice, setSessionExpiredNotice] = useState<boolean>(false);
-  const [isAdminBypass, setIsAdminBypass] = useState<boolean>(false);
-  const [devModeUnlocked, setDevModeUnlockedState] = useState<boolean>(false);
   const activeSessionRef = useRef<boolean>(false);
   const isHandlingUnauthorizedRef = useRef<boolean>(false);
   const isMountedRef = useRef<boolean>(true);
@@ -177,32 +171,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     (async () => {
       try {
-        const [savedUser, secureToken, savedBypass, savedAltBypass, devUnlockedStr] =
-          await Promise.all([
-            AsyncStorage.getItem(AUTH_USER_STORAGE_KEY),
-            SecureStorageService.getAuthToken(),
-            AsyncStorage.getItem(AUTH_ADMIN_BYPASS_KEY),
-            AsyncStorage.getItem(ALT_ADMIN_BYPASS_KEY),
-            AsyncStorage.getItem(AUTH_DEV_MODE_KEY),
-          ]);
+        const [savedUser, secureToken] = await Promise.all([
+          AsyncStorage.getItem(AUTH_USER_STORAGE_KEY),
+          SecureStorageService.getAuthToken(),
+        ]);
 
-        const devUnlocked = devUnlockedStr === 'true' || isDevMode;
-        if (isMountedRef.current) {
-          setDevModeUnlockedState(devUnlocked);
-        }
-        const isDevEffective = isDevMode || devUnlocked;
-        const hasBypass = savedBypass === 'true' || savedAltBypass === 'true';
-
-        if (isDevEffective && hasBypass) {
-          if (isMountedRef.current) {
-            setIsAdminBypass(true);
-          }
-        } else if (!isDevEffective && (savedBypass || savedAltBypass)) {
-          await Promise.all([
-            AsyncStorage.removeItem(AUTH_ADMIN_BYPASS_KEY),
-            AsyncStorage.removeItem(ALT_ADMIN_BYPASS_KEY),
-          ]);
-        }
+        // Clean up any legacy dev/bypass flags from AsyncStorage
+        AsyncStorage.multiRemove([
+          AUTH_ADMIN_BYPASS_KEY,
+          ALT_ADMIN_BYPASS_KEY,
+          AUTH_DEV_MODE_KEY,
+        ]).catch(() => {});
 
         if (savedUser) {
           let parsedUser: UserProfile | null = null;
@@ -291,38 +270,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     })();
   }, [clearPersistedSession, clearSessionAndPromptLogin]);
 
-  const setDevModeUnlocked = async (unlocked: boolean) => {
-    setDevModeUnlockedState(unlocked);
-    try {
-      await AsyncStorage.setItem(AUTH_DEV_MODE_KEY, String(unlocked));
-    } catch (e) {
-      console.warn('Failed to persist dev mode state:', e);
-    }
-  };
-
-  const toggleAdminBypass = async (): Promise<boolean> => {
-    const devUnlockedStr = await AsyncStorage.getItem(AUTH_DEV_MODE_KEY);
-    const devUnlocked = devUnlockedStr === 'true' || devModeUnlocked || isDevMode;
-    if (!devUnlocked) {
-      setIsAdminBypass(false);
-      return false;
-    }
-    const nextVal = !isAdminBypass;
-    setIsAdminBypass(nextVal);
-    try {
-      await Promise.all([
-        AsyncStorage.setItem(AUTH_ADMIN_BYPASS_KEY, String(nextVal)),
-        AsyncStorage.setItem(ALT_ADMIN_BYPASS_KEY, String(nextVal)),
-      ]);
-    } catch (e) {
-      console.warn('Failed to persist admin bypass state:', e);
-    }
-    return nextVal;
-  };
-
-  const isDevEffective = isDevMode || devModeUnlocked;
-  const isAdmin = ((isDevEffective || isAdminBypass) && isAdminBypass) || isUserAdmin(user);
-  const canBypassCourseLocks = isAdmin || isDevEffective;
+  const isAdmin = isUserAdmin(user);
+  const canBypassCourseLocks = isAdmin || isDevMode;
 
   const saveUserSession = async (
     loggedInUser: WpUser | UserProfile,
@@ -340,9 +289,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     activeSessionRef.current = true;
     isHandlingUnauthorizedRef.current = false;
     setSessionExpiredNotice(false);
-    setUser(userWithToken);
-    setToken(userToken);
     HttpClient.setAuthToken(userToken);
+    setToken(userToken);
+    setUser(userWithToken);
     setIsGuest(false);
     if (dismissModal) {
       setAuthModalVisible(false);
@@ -607,11 +556,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     activeSessionRef.current = false;
     isHandlingUnauthorizedRef.current = false;
     setSessionExpiredNotice(false);
-    setUser(null);
+    HttpClient.setAuthToken(null);
     setToken(null);
+    setUser(null);
     setIsGuest(true);
     setIsAdminBypass(false);
-    HttpClient.setAuthToken(null);
     await clearPersistedSession();
   };
 
@@ -621,14 +570,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     const uid = user.id;
     await UserService.deleteAccount(uid, password);
-    setIsAdminBypass(false);
     try {
       const allKeys = await AsyncStorage.getAllKeys();
       const userScopedKeys = allKeys.filter((k) => k.includes(`_u_${uid}`));
-      await Promise.all([
-        AsyncStorage.removeItem(AUTH_ADMIN_BYPASS_KEY),
-        userScopedKeys.length > 0 ? AsyncStorage.multiRemove(userScopedKeys) : Promise.resolve(),
-      ]);
+      await (userScopedKeys.length > 0 ? AsyncStorage.multiRemove(userScopedKeys) : Promise.resolve());
     } catch {}
     await logout();
   };
@@ -645,12 +590,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         token,
         isAuthenticated: !!user,
         isAdmin,
-        isAdminBypass,
         isDevMode,
-        devModeUnlocked,
-        setDevModeUnlocked,
         canBypassCourseLocks,
-        toggleAdminBypass,
         isLoading,
         isGuest,
         isAuthModalVisible,

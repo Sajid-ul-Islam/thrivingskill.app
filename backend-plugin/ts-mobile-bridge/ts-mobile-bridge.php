@@ -136,6 +136,8 @@ class TSMB_Lifecycle
             'tsmb_sms_gateway_url',
             'tsmb_sms_api_key',
             'tsmb_sms_sender_id',
+            'tsmb_android_sha256_fingerprints',
+            'tsmb_trust_proxy_headers',
             self::DB_VERSION_OPTION,
         ];
 
@@ -159,6 +161,10 @@ class TSMB_Lifecycle
         $wpdb->query("DROP TABLE IF EXISTS {$table_name}");
 
         wp_clear_scheduled_hook(self::CRON_RECEIPTS_HOOK);
+        wp_clear_scheduled_hook(TSMB_Notifications::BATCH_BROADCAST_HOOK);
+        if (function_exists('as_unschedule_all_actions')) {
+            as_unschedule_all_actions(TSMB_Notifications::BATCH_BROADCAST_HOOK);
+        }
     }
 }
 
@@ -178,12 +184,59 @@ class TSMB_Security
 {
     private const JWT_ISSUER = 'tsmb';
     private const TOKEN_TTL_SECONDS = 604800; // 7 days
+    public const TOKEN_VERSION_META = 'tsmb_token_version';
     private static $last_mail_error = null;
 
     public static function init(): void
     {
         add_filter('determine_current_user', [__CLASS__, 'determine_current_user'], 20);
         add_action('wp_mail_failed', [__CLASS__, 'log_mail_failure']);
+        add_action('after_password_reset', [__CLASS__, 'on_password_reset'], 10, 1);
+        add_action('profile_update', [__CLASS__, 'on_profile_update'], 10, 2);
+        add_action('wp_set_password', [__CLASS__, 'on_wp_set_password'], 10, 2);
+    }
+
+    public static function get_user_token_version(int $user_id): int
+    {
+        $ver = intval(get_user_meta($user_id, self::TOKEN_VERSION_META, true));
+        return $ver >= 1 ? $ver : 1;
+    }
+
+    public static function revoke_user_tokens(int $user_id): int
+    {
+        if ($user_id <= 0) {
+            return 1;
+        }
+        $next = self::get_user_token_version($user_id) + 1;
+        update_user_meta($user_id, self::TOKEN_VERSION_META, $next);
+        return $next;
+    }
+
+    public static function on_password_reset($user): void
+    {
+        if ($user instanceof WP_User && $user->ID > 0) {
+            self::revoke_user_tokens(intval($user->ID));
+        }
+    }
+
+    public static function on_profile_update($user_id, $old_user_data): void
+    {
+        $uid = intval($user_id);
+        if ($uid <= 0 || !($old_user_data instanceof WP_User)) {
+            return;
+        }
+        $new_user = get_userdata($uid);
+        if ($new_user instanceof WP_User && $new_user->user_pass !== $old_user_data->user_pass) {
+            self::revoke_user_tokens($uid);
+        }
+    }
+
+    public static function on_wp_set_password($password, $user_id): void
+    {
+        $uid = intval($user_id);
+        if ($uid > 0) {
+            self::revoke_user_tokens($uid);
+        }
     }
 
     public static function log_mail_failure($wp_error): void
@@ -393,6 +446,7 @@ class TSMB_Security
     public static function issue_bearer_token(int $user_id, int $ttl = self::TOKEN_TTL_SECONDS): string
     {
         $now = time();
+        $ver = self::get_user_token_version($user_id);
         $header = self::base64url_encode(wp_json_encode([
             'alg' => 'HS256',
             'typ' => 'JWT',
@@ -400,6 +454,7 @@ class TSMB_Security
         $payload = self::base64url_encode(wp_json_encode([
             'iss' => self::JWT_ISSUER,
             'sub' => $user_id,
+            'ver' => $ver,
             'iat' => $now,
             'exp' => $now + $ttl,
             'jti' => bin2hex(random_bytes(8)),
@@ -458,6 +513,11 @@ class TSMB_Security
 
         $user = get_userdata($sub);
         if (!$user) {
+            return $user_id;
+        }
+
+        $token_ver = intval($payload['ver'] ?? 0);
+        if ($token_ver !== self::get_user_token_version($sub)) {
             return $user_id;
         }
 
@@ -584,6 +644,29 @@ class TSMB_Rest_API
             'methods'             => 'POST',
             'callback'            => [__CLASS__, 'resend_registration'],
             'permission_callback' => '__return_true',
+        ]);
+
+        register_rest_route(self::NAMESPACE, '/revoke-token', [
+            'methods'             => 'POST',
+            'callback'            => [__CLASS__, 'revoke_token'],
+            'permission_callback' => [__CLASS__, 'check_authenticated_user'],
+        ]);
+    }
+
+    public static function revoke_token($request)
+    {
+        $user_id = get_current_user_id();
+        if ($user_id <= 0) {
+            return new WP_Error('rest_forbidden', __('Authentication required.', 'ts-mobile-bridge'), ['status' => 401]);
+        }
+
+        $new_ver = TSMB_Security::revoke_user_tokens($user_id);
+
+        return rest_ensure_response([
+            'status'        => 'success',
+            'revoked'       => true,
+            'token_version' => $new_ver,
+            'message'       => __('All active mobile sessions have been revoked.', 'ts-mobile-bridge'),
         ]);
     }
 
@@ -2216,6 +2299,8 @@ class TSMB_Notifications
 {
     private const EXPO_SEND_URL = 'https://exp.host/--/api/v2/push/send';
     private const EXPO_RECEIPTS_URL = 'https://exp.host/--/api/v2/push/getReceipts';
+    public const BATCH_BROADCAST_HOOK = 'tsmb_process_push_broadcast_batch';
+    private const BROADCAST_CHUNK_SIZE = 100;
 
     public static function init(): void
     {
@@ -2223,6 +2308,7 @@ class TSMB_Notifications
         add_action('rest_api_init', [__CLASS__, 'register_routes']);
         add_action('transition_post_status', [__CLASS__, 'handle_post_transition'], 10, 3);
         add_action(TSMB_Lifecycle::CRON_RECEIPTS_HOOK, [__CLASS__, 'process_expo_receipts'], 10, 1);
+        add_action(self::BATCH_BROADCAST_HOOK, [__CLASS__, 'process_broadcast_batch'], 10, 2);
     }
 
     public static function register_routes(): void
@@ -2295,7 +2381,7 @@ class TSMB_Notifications
             );
         }
 
-        TSMB_Lifecycle::install_schema();
+        TSMB_Lifecycle::maybe_upgrade();
         $table   = TSMB_Lifecycle::get_push_tokens_table();
         $now_gmt = current_time('mysql', true);
 
@@ -2444,20 +2530,71 @@ class TSMB_Notifications
 
         $table = TSMB_Lifecycle::get_push_tokens_table();
         if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table)) !== $table) {
-            return ['success' => false, 'count' => 0, 'pruned' => 0, 'error' => 'Push tokens table unavailable.'];
+            return ['success' => false, 'count' => 0, 'pruned' => 0, 'queued' => false, 'error' => 'Push tokens table unavailable.'];
         }
 
-        $push_tokens = $wpdb->get_col("SELECT token FROM {$table} ORDER BY id ASC");
-        if (empty($push_tokens) || !is_array($push_tokens)) {
-            return ['success' => false, 'count' => 0, 'pruned' => 0, 'error' => 'No registered devices found.'];
+        $total = intval($wpdb->get_var("SELECT COUNT(*) FROM {$table}"));
+        if ($total <= 0) {
+            return ['success' => false, 'count' => 0, 'pruned' => 0, 'queued' => false, 'error' => 'No registered devices found.'];
         }
 
-        $total       = count($push_tokens);
-        $batches     = array_chunk($push_tokens, 100);
+        // Queue batch chunks asynchronously via Action Scheduler (with WP-Cron fallback)
+        // so large token lists never block an admin HTTP request.
+        self::schedule_broadcast_batch($payload, 0);
+
+        return [
+            'success' => true,
+            'queued'  => true,
+            'count'   => $total,
+            'pruned'  => 0,
+        ];
+    }
+
+    private static function schedule_broadcast_batch(array $payload, int $after_id): void
+    {
+        if (function_exists('as_schedule_single_action')) {
+            as_schedule_single_action(time(), self::BATCH_BROADCAST_HOOK, [$payload, $after_id], 'tsmb-push');
+            return;
+        }
+        wp_schedule_single_event(time(), self::BATCH_BROADCAST_HOOK, [$payload, $after_id]);
+    }
+
+    public static function process_broadcast_batch(array $payload, int $after_id = 0): void
+    {
+        global $wpdb;
+
+        $table = TSMB_Lifecycle::get_push_tokens_table();
+        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table)) !== $table) {
+            return;
+        }
+
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT id, token FROM {$table} WHERE id > %d ORDER BY id ASC LIMIT %d",
+                $after_id,
+                self::BROADCAST_CHUNK_SIZE
+            ),
+            ARRAY_A
+        );
+
+        if (empty($rows) || !is_array($rows)) {
+            return;
+        }
+
+        $batch       = [];
+        $last_id     = $after_id;
         $dead_tokens = [];
         $receipt_map = [];
 
-        foreach ($batches as $batch) {
+        foreach ($rows as $row) {
+            $last_id = max($last_id, intval($row['id'] ?? 0));
+            $token   = (string) ($row['token'] ?? '');
+            if ($token !== '') {
+                $batch[] = $token;
+            }
+        }
+
+        if (!empty($batch)) {
             $messages = [];
             foreach ($batch as $token) {
                 $messages[] = [
@@ -2480,26 +2617,24 @@ class TSMB_Notifications
                 'blocking' => true,
             ]);
 
-            if (is_wp_error($res)) {
-                continue;
-            }
+            if (!is_wp_error($res)) {
+                $decoded = json_decode((string) wp_remote_retrieve_body($res), true);
+                $tickets = is_array($decoded) && isset($decoded['data']) && is_array($decoded['data'])
+                    ? $decoded['data']
+                    : [];
 
-            $decoded = json_decode((string) wp_remote_retrieve_body($res), true);
-            $tickets = is_array($decoded) && isset($decoded['data']) && is_array($decoded['data'])
-                ? $decoded['data']
-                : [];
-
-            foreach ($tickets as $idx => $ticket) {
-                if (!isset($batch[$idx]) || !is_array($ticket)) {
-                    continue;
-                }
-                if (
-                    ($ticket['status'] ?? '') === 'error' &&
-                    ($ticket['details']['error'] ?? '') === 'DeviceNotRegistered'
-                ) {
-                    $dead_tokens[] = $batch[$idx];
-                } elseif (($ticket['status'] ?? '') === 'ok' && !empty($ticket['id'])) {
-                    $receipt_map[(string) $ticket['id']] = $batch[$idx];
+                foreach ($tickets as $idx => $ticket) {
+                    if (!isset($batch[$idx]) || !is_array($ticket)) {
+                        continue;
+                    }
+                    if (
+                        ($ticket['status'] ?? '') === 'error' &&
+                        ($ticket['details']['error'] ?? '') === 'DeviceNotRegistered'
+                    ) {
+                        $dead_tokens[] = $batch[$idx];
+                    } elseif (($ticket['status'] ?? '') === 'ok' && !empty($ticket['id'])) {
+                        $receipt_map[(string) $ticket['id']] = $batch[$idx];
+                    }
                 }
             }
         }
@@ -2518,11 +2653,9 @@ class TSMB_Notifications
             }
         }
 
-        return [
-            'success' => true,
-            'count'   => $total,
-            'pruned'  => count($dead_tokens),
-        ];
+        if (count($rows) === self::BROADCAST_CHUNK_SIZE && $last_id > $after_id) {
+            self::schedule_broadcast_batch($payload, $last_id);
+        }
     }
 }
 
@@ -2578,11 +2711,9 @@ class TSMB_Admin
 
             $res = TSMB_Notifications::send_broadcast($title, $body, $data);
             if ($res['success']) {
-                $msg = sprintf(
-                    'Push broadcast dispatched to %d active devices (%d invalid tokens pruned).',
-                    intval($res['count']),
-                    intval($res['pruned'] ?? 0)
-                );
+                $msg = !empty($res['queued'])
+                    ? sprintf('Push broadcast queued for %d active devices via background batching.', intval($res['count']))
+                    : sprintf('Push broadcast dispatched to %d active devices (%d invalid tokens pruned).', intval($res['count']), intval($res['pruned'] ?? 0));
                 add_settings_error('tsmb_notices', 'push_sent', $msg, 'updated');
             } else {
                 add_settings_error('tsmb_notices', 'push_err', 'Notice: ' . esc_html((string) ($res['error'] ?? '')), 'warning');

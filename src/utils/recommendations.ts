@@ -1,4 +1,5 @@
 import { Category, Course, UserProgress } from '../types';
+import { LiteRtService } from '../services/ai/liteRtService';
 
 export interface RecommendationInput {
   courses: Course[];
@@ -15,9 +16,19 @@ export interface RecommendationResult {
   rationaleBn: string;
 }
 
+function dotProduct(vecA: number[], vecB: number[]): number {
+  const len = Math.min(vecA.length, vecB.length);
+  let sum = 0;
+  for (let i = 0; i < len; i++) {
+    sum += vecA[i] * vecB[i];
+  }
+  return sum;
+}
+
 /**
- * Pure behavior-based course recommendation engine.
- * Scores courses by category affinity, active/completed progress, recent searches, rating, and popularity.
+ * Pure behavior-based + LiteRT semantic course recommendation engine.
+ * Scores courses by category affinity, active/completed progress, recent searches,
+ * semantic similarity to engaged history, rating, and popularity.
  */
 export function computeRecommendedCourses({
   courses,
@@ -28,11 +39,15 @@ export function computeRecommendedCourses({
   limit = 6,
 }: RecommendationInput): RecommendationResult {
   const scoreByCat: Record<string, number> = { ...categoryAffinities };
+  const engagedTexts: string[] = [];
 
   Object.keys(userProgress).forEach((cId) => {
     const c = courses.find((item) => item.id === cId);
-    if (c && c.category) {
-      scoreByCat[c.category] = (scoreByCat[c.category] || 0) + 3;
+    if (c) {
+      if (c.category) {
+        scoreByCat[c.category] = (scoreByCat[c.category] || 0) + 3;
+      }
+      engagedTexts.push(`${c.title} ${c.category || ''} ${c.subtitle || ''}`);
     }
   });
 
@@ -46,6 +61,16 @@ export function computeRecommendedCourses({
   });
 
   const topCatObj = categories.find((c) => c.id === topCatId);
+  if (topCatObj && topScore > 0) {
+    engagedTexts.push(topCatObj.name);
+  }
+  if (searchKeywordsHistory.length > 0) {
+    engagedTexts.push(...searchKeywordsHistory.slice(0, 5));
+  }
+
+  const profileSource = engagedTexts.join(' ').trim();
+  const profileVector =
+    profileSource.length > 0 ? LiteRtService.generateEmbedding(profileSource) : null;
 
   const scoredCourses = courses.map((course) => {
     let score = 0;
@@ -72,6 +97,15 @@ export function computeRecommendedCourses({
       if (matches) score += 30;
     }
 
+    // On-device LiteRT semantic vector similarity against learner profile
+    if (profileVector) {
+      const courseVec = LiteRtService.generateEmbedding(
+        `${course.title} ${course.category || ''} ${course.subtitle || ''} ${course.description || ''}`
+      );
+      const similarity = Math.max(0, dotProduct(profileVector, courseVec));
+      score += Math.round(similarity * 20);
+    }
+
     // Rating quality score (only when authentic rating exists)
     if (typeof course.rating === 'number' && course.rating > 0) {
       score += course.rating * 4;
@@ -91,12 +125,12 @@ export function computeRecommendedCourses({
   scoredCourses.sort((a, b) => b.score - a.score);
   const recommended = scoredCourses.slice(0, limit).map((item) => item.course);
 
-  let rationale = '✨ Gemini Nano Recommendation: Curated for executive skill acceleration';
-  let rationaleBn = '✨ অন-ডিভাইস জেমিনাই ন্যানো সুপারিশ: পেশাগত দক্ষতা বৃদ্ধির জন্য বিশেষভাবে নির্বাচিত';
+  let rationale = 'Recommended for executive skill acceleration based on your learning activity';
+  let rationaleBn = 'আপনার শেখার কার্যক্রম অনুযায়ী পেশাগত দক্ষতা বৃদ্ধির জন্য নির্বাচিত';
 
   if (topCatObj && topScore > 2) {
-    rationale = `✨ Gemini Nano Match: Tailored for your interest in ${topCatObj.name}`;
-    rationaleBn = `✨ অন-ডিভাইস জেমিনাই ন্যানো সুপারিশ: আপনার "${topCatObj.banglaName || topCatObj.name}" বিষয়ক সক্রিয় আগ্রহের ভিত্তিতে প্রস্তাবিত`;
+    rationale = `Recommended Match: Tailored for your interest in ${topCatObj.name}`;
+    rationaleBn = `আপনার আগ্রহের ভিত্তিতে সুপারিশ: "${topCatObj.banglaName || topCatObj.name}" বিষয়ক প্রস্তাবিত কোর্স`;
   }
 
   return { courses: recommended, rationale, rationaleBn };

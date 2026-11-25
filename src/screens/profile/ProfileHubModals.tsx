@@ -280,20 +280,21 @@ export const ProfileHubModals: React.FC<ProfileHubModalsProps> = ({
       />
     )}
 
-    <DeveloperOptionsModal
-      visible={state.devModalVisible}
-      onClose={() => state.setDevModalVisible(false)}
-      onResetToStandardMode={() => {
-        state.setDevModeUnlocked(false);
-        state.setServerEnv('production');
-        state.setDevModalVisible(false);
-        showToast({
-          message: isBangla
-            ? 'স্বাভাবিক মোড সক্রিয় হয়েছে (লাইভ সার্ভার)'
-            : 'Standard Mode Restored (Live Production)',
-          type: 'success',
-        });
-      }}
-    />
+    {__DEV__ && (
+      <DeveloperOptionsModal
+        visible={state.devModalVisible}
+        onClose={() => state.setDevModalVisible(false)}
+        onResetToStandardMode={() => {
+          state.setServerEnv('production');
+          state.setDevModalVisible(false);
+          showToast({
+            message: isBangla
+              ? 'স্বাভাবিক মোড সক্রিয় হয়েছে (লাইভ সার্ভার)'
+              : 'Standard Mode Restored (Live Production)',
+            type: 'success',
+          });
+        }}
+      />
+    )}
   </>
 );

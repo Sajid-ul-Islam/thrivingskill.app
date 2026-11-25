@@ -18,16 +18,21 @@ import { useLanguage } from '../../context/LanguageContext';
 import { triggerHaptic } from '../../utils/haptics';
 import { AiTutorService, AiTutorContext, TutorMessage } from '../../services/ai/aiTutorService';
 import { AiAssessmentService } from '../../services/ai/aiAssessmentService';
+import { Course, Lesson } from '../../types';
 
 interface LessonAiTutorModalProps {
   visible: boolean;
   context: AiTutorContext;
+  course?: Course;
+  currentLesson?: Lesson;
   onClose: () => void;
 }
 
 export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
   visible,
   context,
+  course,
+  currentLesson,
   onClose,
 }) => {
   const { colors, isDark } = useTheme();
@@ -36,7 +41,7 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
   const [messages, setMessages] = useState<TutorMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isThinking, setIsThinking] = useState(false);
-  const [nanoStatus, setNanoStatus] = useState<string>('Gemini Nano On-Device');
+  const [nanoStatus, setNanoStatus] = useState<string>('Study Assistant');
   const [isNanoOfflineReady, setIsNanoOfflineReady] = useState(false);
   const [smartReplies, setSmartReplies] = useState<string[]>([]);
   const scrollRef = useRef<React.ElementRef<typeof ScrollView> | null>(null);
@@ -60,14 +65,20 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
     }, 100);
   };
 
-  // Load chat history & on-device Gemini Nano status when opened
+  // Load chat history & genuine on-device Gemini Nano availability when opened
   useEffect(() => {
-    if (visible) {
-      AiTutorService.getExecutionStatus().then((status) => {
-        setIsNanoOfflineReady(status.isSupported);
-        setNanoStatus(status.isSupported ? 'Gemini Nano (Offline ⚡)' : 'AI Edge Hybrid');
-      });
+    if (!visible) return;
 
+    AiTutorService.getExecutionStatus().then((status) => {
+      const ready = Boolean(status.isAvailable);
+      setIsNanoOfflineReady(ready);
+      setNanoStatus(
+        ready
+          ? 'Gemini Nano (On-Device)'
+          : isBangla
+            ? 'স্টাডি সহায়ক (AI অনুপলব্ধ)'
+            : 'Study Assistant (AI Unavailable)'
+      );
       AiTutorService.getSmartReplies('', isBangla).then(setSmartReplies);
 
       if (context.lessonId) {
@@ -75,20 +86,23 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
           if (history.length > 0) {
             setMessages(history);
           } else {
-            // Welcome message
             const welcomeMsg: TutorMessage = {
               id: 'welcome',
               role: 'assistant',
-              content: isBangla
-                ? `স্বাগতম! আমি "SkillBot", আপনার অন-ডিভাইস এআই লার্নিং টিউটর (Gemini Nano Powered)।\n\n"${context.lessonTitle}" লেকচার নিয়ে যেকোনো প্রশ্ন বা কনসেপ্ট পরিষ্কার করতে নিচে লিখুন অথবা দ্রুত বাটনগুলোতে ট্যাপ করুন। এটি ১০০% অফলাইনেও কাজ করে!`
-                : `Welcome! I'm "SkillBot", your in-lecture AI copilot powered by Gemini Nano on-device.\n\nAsk me anything about "${context.lessonTitle}", summarize key points, or tap one of the suggested prompts below to get started—even 100% offline!`,
+              content: ready
+                ? isBangla
+                  ? `স্বাগতম! আপনার ডিভাইসে অন-ডিভাইস Gemini Nano সক্রিয় আছে।\n\n"${context.lessonTitle}" লেকচার নিয়ে যেকোনো প্রশ্ন লিখুন বা দ্রুত বাটন ব্যবহার করুন।`
+                  : `Welcome! On-device Gemini Nano is active on your device.\n\nAsk anything about "${context.lessonTitle}" or use the quick study tools below.`
+                : isBangla
+                  ? `এই ডিভাইসে অন-ডিভাইস AI চ্যাট (Gemini Nano) সাপোর্ট নেই।\n\nতবুও আপনি "${context.lessonTitle}" পাঠের লিখিত বিবরণ সার্চ করতে, মূল পয়েন্ট বের করতে বা প্রাসঙ্গিক কুইজ ও ফ্ল্যাশকার্ড অনুশীলন করতে পারবেন।`
+                  : `On-device AI Tutor chat (Gemini Nano) is unavailable on this device.\n\nYou can still search published notes for "${context.lessonTitle}", extract real lesson takeaways, or practice verified quizzes.`,
               timestamp: Date.now(),
             };
             setMessages([welcomeMsg]);
           }
         });
       }
-    }
+    });
   }, [visible, context.lessonId, isBangla, context.lessonTitle]);
 
   const handleSendMessage = async (textToSend?: string) => {
@@ -142,25 +156,29 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
     if (isThinking) return;
     triggerHaptic('medium');
     setIsThinking(true);
-    const content = context.lessonSummary || context.lessonTitle;
+    const content = context.lessonSummary || '';
     try {
       const res = await AiTutorService.summarizeLectureOnDevice(content, isBangla);
+      const summaryText =
+        res.summary && res.source !== 'unavailable'
+          ? res.summary
+          : isBangla
+            ? `"${context.lessonTitle}" পাঠের জন্য কোনো লিখিত সারসংক্ষেপ এখনো প্রকাশিত হয়নি এবং অন-ডিভাইস AI উপলব্ধ নয়।`
+            : `No published lecture text is available to summarize "${context.lessonTitle}", and on-device AI is unavailable on this device.`;
       const summaryMsg: TutorMessage = {
         id: `summary-${Date.now()}`,
         role: 'assistant',
-        content: res.summary,
+        content: summaryText,
         timestamp: Date.now(),
       };
       const finalHistory = [...messages, summaryMsg];
       setMessages(finalHistory);
       AiTutorService.saveHistory(context.lessonId, finalHistory);
-      AiTutorService.getSmartReplies(res.summary, isBangla).then(setSmartReplies);
+      AiTutorService.getSmartReplies(summaryText, isBangla).then(setSmartReplies);
     } catch {
     } finally {
       setIsThinking(false);
-      setTimeout(() => {
-        scrollRef.current?.scrollToEnd({ animated: true });
-      }, 100);
+      scheduleScrollToEnd();
     }
   };
 
@@ -168,15 +186,19 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
     if (isThinking) return;
     triggerHaptic('medium');
     const sheet = AiAssessmentService.generateCheatSheet(context, isBangla);
-    const content = isBangla
-      ? `📋 **"${sheet.lessonTitle}" লেকচার চিটশিট:**\n\n` +
-        `**মূল পয়েন্টসমূহ:**\n${sheet.takeaways.map((t) => `• ${t}`).join('\n')}\n\n` +
-        `**কাজের সূত্র:**\n${sheet.practicalFormula}\n\n` +
-        `**অ্যাকশন স্টেপ:**\n${sheet.actionItem}`
-      : `📋 **"${sheet.lessonTitle}" Executive Cheat-Sheet:**\n\n` +
-        `**Key Takeaways:**\n${sheet.takeaways.map((t) => `• ${t}`).join('\n')}\n\n` +
-        `**Practical Formula:**\n${sheet.practicalFormula}\n\n` +
-        `**Immediate Action Item:**\n${sheet.actionItem}`;
+    const content = !sheet.available
+      ? isBangla
+        ? `"${context.lessonTitle}" পাঠের লিখিত বিবরণ না থাকায় মূল পয়েন্ট বের করা যায়নি। অনুগ্রহ করে লেকচার নোটসে নিজের নোট যোগ করুন।`
+        : `No published lesson summary is available for "${context.lessonTitle}" to extract takeaways from yet.`
+      : isBangla
+        ? `📋 **"${sheet.lessonTitle}" পাঠের মূল পয়েন্ট:**\n\n` +
+          `${sheet.takeaways.map((t) => `• ${t}`).join('\n')}\n\n` +
+          `**কোর্স:** ${sheet.practicalFormula}\n\n` +
+          `**অ্যাকশন স্টেপ:** ${sheet.actionItem}`
+        : `📋 **"${sheet.lessonTitle}" Key Takeaways:**\n\n` +
+          `${sheet.takeaways.map((t) => `• ${t}`).join('\n')}\n\n` +
+          `**Course:** ${sheet.practicalFormula}\n\n` +
+          `**Next Step:** ${sheet.actionItem}`;
 
     const cheatMsg: TutorMessage = {
       id: `cheat-${Date.now()}`,
@@ -195,26 +217,38 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
     triggerHaptic('medium');
     setIsThinking(true);
     try {
-      const quiz = await AiAssessmentService.generateDiagnosticQuiz(context, isBangla);
-      const quizContent = isBangla
-        ? `🎯 **"${context.lessonTitle}" ডায়াগনস্টিক কুইজ (${quiz.length}টি প্রশ্ন):**\n\n` +
-          quiz
-            .map(
-              (q, i) =>
-                `**প্রশ্ন ${i + 1}: ${q.question}**\n` +
-                q.options.map((opt, oi) => `  ${String.fromCharCode(65 + oi)}) ${opt}`).join('\n') +
-                `\n*সঠিক উত্তর:* ${String.fromCharCode(65 + q.correctIndex)}) ${q.options[q.correctIndex]}\n*ব্যাখ্যা:* ${q.explanation}`
-            )
-            .join('\n\n')
-        : `🎯 **"${context.lessonTitle}" Comprehension Check (${quiz.length} Questions):**\n\n` +
-          quiz
-            .map(
-              (q, i) =>
-                `**Question ${i + 1}: ${q.question}**\n` +
-                q.options.map((opt, oi) => `  ${String.fromCharCode(65 + oi)}) ${opt}`).join('\n') +
-                `\n*Answer:* ${String.fromCharCode(65 + q.correctIndex)}) ${q.options[q.correctIndex]}\n*Rationale:* ${q.explanation}`
-            )
-            .join('\n\n');
+      const quiz = await AiAssessmentService.generateDiagnosticQuiz(context, isBangla, {
+        currentLesson,
+        course,
+      });
+      const quizContent =
+        quiz.length === 0
+          ? isBangla
+            ? `"${context.lessonTitle}" পাঠের জন্য কোনো অনুশীলন কুইজ এখনো যুক্ত করা হয়নি।`
+            : `No practice quiz questions are available for "${context.lessonTitle}" yet.`
+          : isBangla
+            ? `🎯 **"${context.lessonTitle}" অনুশীলন কুইজ (${quiz.length}টি প্রশ্ন):**\n\n` +
+              quiz
+                .map(
+                  (q, i) =>
+                    `**প্রশ্ন ${i + 1}: ${q.question}**\n` +
+                    q.options
+                      .map((opt, oi) => `  ${String.fromCharCode(65 + oi)}) ${opt}`)
+                      .join('\n') +
+                    `\n*সঠিক উত্তর:* ${String.fromCharCode(65 + q.correctIndex)}) ${q.options[q.correctIndex]}\n*ব্যাখ্যা:* ${q.explanation}`
+                )
+                .join('\n\n')
+            : `🎯 **"${context.lessonTitle}" Practice Quiz (${quiz.length} Questions):**\n\n` +
+              quiz
+                .map(
+                  (q, i) =>
+                    `**Question ${i + 1}: ${q.question}**\n` +
+                    q.options
+                      .map((opt, oi) => `  ${String.fromCharCode(65 + oi)}) ${opt}`)
+                      .join('\n') +
+                    `\n*Answer:* ${String.fromCharCode(65 + q.correctIndex)}) ${q.options[q.correctIndex]}\n*Rationale:* ${q.explanation}`
+                )
+                .join('\n\n');
 
       const quizMsg: TutorMessage = {
         id: `quiz-${Date.now()}`,
@@ -287,27 +321,34 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
               </View>
               <View style={styles.headerTitleWrap}>
                 <View style={styles.headerBadgeRow}>
-                  <Text style={[styles.botName, { color: colors.text }]}>SkillBot Copilot</Text>
+                  <Text style={[styles.botName, { color: colors.text }]}>
+                    {isNanoOfflineReady
+                      ? 'SkillBot Copilot'
+                      : isBangla
+                        ? 'স্টাডি সহায়ক'
+                        : 'Study Assistant'}
+                  </Text>
                   <View
+                    testID="ai-tutor-status-badge"
                     style={[
                       styles.aiBadge,
                       {
                         backgroundColor: isNanoOfflineReady
                           ? 'rgba(16, 185, 129, 0.16)'
-                          : 'rgba(227, 66, 52, 0.12)',
+                          : 'rgba(100, 116, 139, 0.16)',
                       },
                     ]}
                   >
                     <Ionicons
-                      name={isNanoOfflineReady ? 'flash' : 'sparkles'}
+                      name={isNanoOfflineReady ? 'flash' : 'information-circle-outline'}
                       size={10}
-                      color={isNanoOfflineReady ? '#059669' : '#E34234'}
+                      color={isNanoOfflineReady ? '#059669' : colors.textMuted}
                       style={{ marginRight: 3 }}
                     />
                     <Text
                       style={[
                         styles.aiBadgeText,
-                        { color: isNanoOfflineReady ? '#059669' : '#E34234' },
+                        { color: isNanoOfflineReady ? '#059669' : colors.textMuted },
                       ]}
                     >
                       {nanoStatus}
@@ -410,25 +451,26 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
               </Text>
             </TouchableOpacity>
 
-            {QUICK_PROMPTS.map((p, idx) => (
-              <TouchableOpacity
-                key={idx}
-                style={[
-                  styles.quickPromptPill,
-                  {
-                    backgroundColor: isDark ? '#1E293B' : '#EFF6FF',
-                    borderColor: isDark ? '#334155' : '#BFDBFE',
-                  },
-                ]}
-                onPress={() => handleSendMessage(p.query)}
-                activeOpacity={0.75}
-                accessibilityRole="button"
-                accessibilityLabel={p.label}
-              >
-                <Ionicons name="flash-outline" size={12} color={colors.primary} />
-                <Text style={[styles.quickPromptText, { color: colors.primary }]}>{p.label}</Text>
-              </TouchableOpacity>
-            ))}
+            {isNanoOfflineReady &&
+              QUICK_PROMPTS.map((p, idx) => (
+                <TouchableOpacity
+                  key={idx}
+                  style={[
+                    styles.quickPromptPill,
+                    {
+                      backgroundColor: isDark ? '#1E293B' : '#EFF6FF',
+                      borderColor: isDark ? '#334155' : '#BFDBFE',
+                    },
+                  ]}
+                  onPress={() => handleSendMessage(p.query)}
+                  activeOpacity={0.75}
+                  accessibilityRole="button"
+                  accessibilityLabel={p.label}
+                >
+                  <Ionicons name="flash-outline" size={12} color={colors.primary} />
+                  <Text style={[styles.quickPromptText, { color: colors.primary }]}>{p.label}</Text>
+                </TouchableOpacity>
+              ))}
           </ScrollView>
 
           {/* Message Thread */}

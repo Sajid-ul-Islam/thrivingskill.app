@@ -130,28 +130,26 @@ class GeminiNanoModule(reactContext: ReactApplicationContext) : ReactContextBase
           }
           if (generateMethod != null) {
             val res = generateMethod.invoke(generativeModelInstance, prompt)
-            val text = res?.toString() ?: ""
-            withContext(Dispatchers.Main) {
-              val map = Arguments.createMap().apply {
-                putString("text", text)
-                putString("source", "Gemini Nano (On-Device AICore)")
-                putBoolean("isOffline", true)
+            val text = res?.toString()?.trim() ?: ""
+            if (text.isNotEmpty()) {
+              withContext(Dispatchers.Main) {
+                val map = Arguments.createMap().apply {
+                  putString("text", text)
+                  putString("source", "Gemini Nano (On-Device AICore)")
+                  putBoolean("isOffline", true)
+                }
+                promise.resolve(map)
               }
-              promise.resolve(map)
+              return@launch
             }
-            return@launch
           }
         }
 
-        // On-device deterministic synthesis if model is not loaded yet or on fallback devices
-        val synthesized = synthesizeOnDeviceResponse(prompt, options)
         withContext(Dispatchers.Main) {
-          val map = Arguments.createMap().apply {
-            putString("text", synthesized)
-            putString("source", "On-Device Edge Engine")
-            putBoolean("isOffline", true)
-          }
-          promise.resolve(map)
+          promise.reject(
+            "AICORE_UNAVAILABLE",
+            "On-device Gemini Nano (AICore) is not available on this device"
+          )
         }
       } catch (e: Exception) {
         withContext(Dispatchers.Main) {
@@ -169,31 +167,43 @@ class GeminiNanoModule(reactContext: ReactApplicationContext) : ReactContextBase
     }
 
     coroutineScope.launch {
-      val prompt = if (isBangla) {
-        "নিম্নলিখিত লেকচারটি ৩টি স্পষ্ট, প্রায়োগিক বুলেট পয়েন্টে সারসংক্ষেপ করুন:\n\n$lectureNotesOrTranscript"
-      } else {
-        "Summarize the following lecture into 3 clear, actionable bullet points with key workplace takeaways:\n\n$lectureNotesOrTranscript"
-      }
-
-      val summary = if (isBangla) {
-        "📌 **লেকচার সারসংক্ষেপ (Gemini Nano On-Device):**\n\n" +
-        "1. **মূল দর্শন:** লেকচারের প্রধান ফ্রেমওয়ার্ক এবং কনসেপ্ট কর্মক্ষেত্রের বাস্তব চ্যালেঞ্জ সমাধানে সহায়ক।\n" +
-        "2. **প্রায়োগিক বাস্তবায়ন:** কৌশলগুলো দ্রুত পরীক্ষার জন্য টিম মিটিং ও দৈনন্দিন টাস্কে ছোট পরিসরে প্রয়োগ করুন।\n" +
-        "3. **মূল লক্ষ্য:** সক্রিয় পুনরাবৃত্তি নিশ্চিত করতে গুরুত্বপূর্ণ পয়েন্টগুলো নোটস ট্যাবে লিখে রাখুন।"
-      } else {
-        "📌 **Lecture Summary (Gemini Nano On-Device):**\n\n" +
-        "1. **Core Concept:** The framework discussed provides actionable methodology for high-impact professional execution.\n" +
-        "2. **Workplace Application:** Implement key milestones within your day-to-day workflow to measure velocity differences.\n" +
-        "3. **Key Takeaway:** Retain critical insights by jotting down self-reflection points in your notes tab."
-      }
-
-      withContext(Dispatchers.Main) {
-        val map = Arguments.createMap().apply {
-          putString("summary", summary)
-          putString("source", "Gemini Nano (Google AI Edge)")
-          putBoolean("isOffline", true)
+      try {
+        if (isModelReady && generativeModelInstance != null) {
+          val prompt = if (isBangla) {
+            "নিম্নলিখিত লেকচারটি ৩টি স্পষ্ট, প্রায়োগিক বুলেট পয়েন্টে সারসংক্ষেপ করুন:\n\n$lectureNotesOrTranscript"
+          } else {
+            "Summarize the following lecture into 3 clear, actionable bullet points with key workplace takeaways:\n\n$lectureNotesOrTranscript"
+          }
+          val generateMethod = generativeModelInstance!!.javaClass.methods.firstOrNull {
+            it.name == "generateContent" && it.parameterCount >= 1
+          }
+          if (generateMethod != null) {
+            val res = generateMethod.invoke(generativeModelInstance, prompt)
+            val text = res?.toString()?.trim() ?: ""
+            if (text.isNotEmpty()) {
+              withContext(Dispatchers.Main) {
+                val map = Arguments.createMap().apply {
+                  putString("summary", text)
+                  putString("source", "Gemini Nano (Google AI Edge)")
+                  putBoolean("isOffline", true)
+                }
+                promise.resolve(map)
+              }
+              return@launch
+            }
+          }
         }
-        promise.resolve(map)
+
+        withContext(Dispatchers.Main) {
+          promise.reject(
+            "AICORE_UNAVAILABLE",
+            "On-device Gemini Nano (AICore) is not available on this device"
+          )
+        }
+      } catch (e: Exception) {
+        withContext(Dispatchers.Main) {
+          promise.reject("SUMMARIZATION_FAILED", e.message, e)
+        }
       }
     }
   }
@@ -242,19 +252,6 @@ class GeminiNanoModule(reactContext: ReactApplicationContext) : ReactContextBase
         }
         promise.resolve(map)
       }
-    }
-  }
-
-  private fun synthesizeOnDeviceResponse(prompt: String, options: ReadableMap?): String {
-    val isBangla = options?.hasKey("isBangla") == true && options.getBoolean("isBangla")
-    val pLower = prompt.lowercase()
-
-    return if (isBangla) {
-      "🤖 **SkillBot এআই কপাইলট (অন-ডিভাইস):**\n\n" +
-      "আপনার প্রশ্নের প্রেক্ষিতে এই লেকচারের মূল বার্তাটি হলো কর্মক্ষেত্রে প্রায়োগিক দক্ষতার সঠিক বাস্তবায়ন। কোনো নির্দিষ্ট অংশ বুঝতে চাইলে ভিডিওর টাইমস্ট্যাম্পে গিয়ে পুনরায় শুনুন এবং প্রয়োজনে নতুন প্রশ্ন করুন।"
-    } else {
-      "🤖 **SkillBot AI Copilot (On-Device):**\n\n" +
-      "Based on this lecture's core competencies, the primary objective is immediate workplace execution. Scrub back to key timestamps if needed, or ask for specific examples to solidify your learning."
     }
   }
 }

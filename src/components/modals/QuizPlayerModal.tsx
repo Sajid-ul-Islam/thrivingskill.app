@@ -15,6 +15,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useGamification } from '../../context/GamificationContext';
 import { LessonsService } from '../../services/api/lessonsService';
+import { AiAssessmentService } from '../../services/ai/aiAssessmentService';
 import { cleanHtml } from '../../services/api/transformers';
 import { getDomainQuestionsForCourse } from '../../data/domainQuizBank';
 import { triggerHaptic } from '../../utils/haptics';
@@ -245,6 +246,19 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
       timerRef.current = null;
     }
     setIsSubmitted(true);
+    const missedIndices = activeQuestions
+      .map((q, idx) => (selectedAnswers[idx] !== q.correctIndex ? idx : -1))
+      .filter((idx) => idx >= 0);
+    if (missedIndices.length > 0) {
+      AiAssessmentService.convertMissedQuestionsToFlashcards(
+        activeQuestions,
+        missedIndices,
+        String(quizId || courseCategory || 'course'),
+        String(quizId || 'quiz'),
+        courseTitle
+      );
+    }
+
     const score = calculateScore();
     if (score >= 70) {
       unlockBadge('quiz_master');

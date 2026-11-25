@@ -83,6 +83,7 @@ export function useLessonPlayerState({
   const [currentPositionSeconds, setCurrentPositionSeconds] = useState(0);
   const [lessonDetail, setLessonDetail] = useState<LessonDetail | null>(null);
   const [isLoadingVideo, setIsLoadingVideo] = useState(true);
+  const [isAccessBlocked, setIsAccessBlocked] = useState(false);
   const [isFlashcardsVisible, setIsFlashcardsVisible] = useState(false);
 
   const currentPosRef = useRef(currentPositionSeconds);
@@ -115,7 +116,8 @@ export function useLessonPlayerState({
   const isEnrolled = !!userProgress[course?.id || ''];
   const isFreePreview = Boolean(currentLesson?.isFreePreview);
   const isPrivileged = isAdmin || Boolean(canBypassCourseLocks);
-  const canPlayVideo = isPrivileged || isEnrolled || isFreePreview;
+  const hasAccessIntent = isPrivileged || isEnrolled || isFreePreview;
+  const canPlayVideo = hasAccessIntent && !isAccessBlocked;
 
   const progress = course ? userProgress[course.id] : undefined;
   const isLessonCompleted = progress?.completedLessonIds.includes(currentLesson?.id || '') || false;
@@ -138,7 +140,8 @@ export function useLessonPlayerState({
   useEffect(() => {
     let isMounted = true;
     setLessonDetail(null);
-    if (!currentLesson?.id || !canPlayVideo) {
+    setIsAccessBlocked(false);
+    if (!currentLesson?.id || !hasAccessIntent) {
       setIsLoadingVideo(false);
       return;
     }
@@ -147,19 +150,23 @@ export function useLessonPlayerState({
       .then((detail) => {
         if (isMounted) {
           setLessonDetail(detail);
+          setIsAccessBlocked(false);
           setIsLoadingVideo(false);
         }
       })
-      .catch(() => {
+      .catch((err: any) => {
         if (isMounted) {
           setLessonDetail(null);
+          if (err?.status === 401 || err?.status === 403) {
+            setIsAccessBlocked(true);
+          }
           setIsLoadingVideo(false);
         }
       });
     return () => {
       isMounted = false;
     };
-  }, [currentLesson?.id, canPlayVideo]);
+  }, [currentLesson?.id, hasAccessIntent]);
 
   useEffect(() => {
     return () => {

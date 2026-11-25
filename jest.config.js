@@ -11,4 +11,12 @@ module.exports = {
     '!src/**/__tests__/**',
   ],
   coverageReporters: ['text', 'text-summary', 'json-summary', 'lcov'],
+  coverageThreshold: {
+    global: {
+      statements: 20,
+      branches: 12,
+      functions: 12,
+      lines: 20,
+    },
+  },
 };

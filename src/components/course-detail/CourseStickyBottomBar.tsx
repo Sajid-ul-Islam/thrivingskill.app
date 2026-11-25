@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -11,6 +11,7 @@ interface CourseStickyBottomBarProps {
   course: Course;
   isEnrolled: boolean;
   isAdmin: boolean;
+  isEnrolling?: boolean;
   progressPercent: number;
   isCompleted: boolean;
   insetsBottom: number;
@@ -21,6 +22,7 @@ export const CourseStickyBottomBar: React.FC<CourseStickyBottomBarProps> = ({
   course,
   isEnrolled,
   isAdmin,
+  isEnrolling = false,
   progressPercent,
   isCompleted,
   insetsBottom,
@@ -152,6 +154,7 @@ export const CourseStickyBottomBar: React.FC<CourseStickyBottomBarProps> = ({
             },
           ]}
           onPress={onEnrollOrResume}
+          disabled={isEnrolling}
           activeOpacity={0.88}
           accessibilityRole="button"
           accessibilityLabel={
@@ -168,11 +171,15 @@ export const CourseStickyBottomBar: React.FC<CourseStickyBottomBarProps> = ({
                   : 'Enroll for Free'
           }
         >
-          <Ionicons
-            name={isAdmin ? 'play-circle' : isEnrolled ? 'play' : 'flash'}
-            size={18}
-            color="#FFFFFF"
-          />
+          {isEnrolling ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <Ionicons
+              name={isAdmin ? 'play-circle' : isEnrolled ? 'play' : 'flash'}
+              size={18}
+              color="#FFFFFF"
+            />
+          )}
           <Text
             style={[
               styles.enrollCTAText,
@@ -184,21 +191,25 @@ export const CourseStickyBottomBar: React.FC<CourseStickyBottomBarProps> = ({
             numberOfLines={1}
             ellipsizeMode="tail"
           >
-            {isAdmin
+            {isEnrolling
               ? isBangla
-                ? 'কোর্স ভিডিও দেখুন'
-                : 'Play Course (Admin)'
-              : isEnrolled
+                ? 'ভর্তি হচ্ছে...'
+                : 'Enrolling...'
+              : isAdmin
                 ? isBangla
-                  ? 'লেসনে যান'
-                  : 'Resume Course'
-                : isPaidCourse
+                  ? 'কোর্স ভিডিও দেখুন'
+                  : 'Play Course (Admin)'
+                : isEnrolled
                   ? isBangla
-                    ? 'এখনই ভর্তি হন'
-                    : 'Enroll Now'
-                  : isBangla
-                    ? 'বিনামূল্যে ভর্তি হন'
-                    : 'Enroll for Free'}
+                    ? 'লেসনে যান'
+                    : 'Resume Course'
+                  : isPaidCourse
+                    ? isBangla
+                      ? 'এখনই ভর্তি হন'
+                      : 'Enroll Now'
+                    : isBangla
+                      ? 'বিনামূল্যে ভর্তি হন'
+                      : 'Enroll for Free'}
           </Text>
         </SpringPressable>
       </View>

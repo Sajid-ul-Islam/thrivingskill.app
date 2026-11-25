@@ -119,16 +119,81 @@ describe('Companion Plugin Hardening & Issues 7-9 Compliance', () => {
     expect(php).not.toMatch(/\brating['"]?\s*=>\s*4\.9\b/);
     expect(php).not.toMatch(/students_count['"]?\s*=>[^;\n]*\b120\b/);
 
-    // Issue 1 paywall invariants
+    // Issue 1 & Issue B paywall invariants
     expect(php).toContain("'permission_callback' => [__CLASS__, 'check_lesson_access']");
     expect(php).not.toMatch(
       /register_rest_route\(self::NAMESPACE,\s*'\/lessons\/\(\?P<id>\\d\+\)',\s*\[\s*'methods'\s*=>\s*'GET',\s*'callback'\s*=>\s*\[__CLASS__,\s*'get_lesson_detail'\],\s*'permission_callback'\s*=>\s*'__return_true'/
     );
     expect(php).toContain("post_status !== 'publish'");
     expect(php).toContain('is_user_enrolled_in_any_lesson_course');
+    expect(php).toContain('is_lesson_free_preview');
+    expect(php).toContain("get_post_meta($lesson_id, '_lp_preview', true)");
     expect(php).toContain("'/enrollments'");
     expect(php).toContain('guard_learnpress_paid_enroll');
     expect(php).toContain('filter_learnpress_can_enroll_course');
+    expect(php).toContain("'learn-press/user/can-enroll/course'");
+    expect(php).toContain('has_user_paid_for_course');
+    expect(php).toContain('is_object($user_or_course)');
+  });
+
+  it('derives isFreePreview strictly from server preview flags rather than synthetic first-lesson overrides', () => {
+    const paidCourse = transformWpCourse({
+      id: 86355,
+      name: 'Emotional Intelligence',
+      price: 500,
+      sections: [
+        {
+          id: 1,
+          title: 'Module 1',
+          items: [
+            { id: 86356, title: 'Introduction', type: 'lp_lesson', preview: true },
+            { id: 86358, title: 'Importance of EI', type: 'lp_lesson', preview: false },
+          ],
+        },
+        {
+          id: 2,
+          title: 'Module 2',
+          items: [
+            { id: 86359, title: 'Brain and Mind', type: 'lp_lesson', preview: false },
+            { id: 86360, title: 'Practice Quiz', type: 'lp_quiz', preview: 'no' },
+          ],
+        },
+      ],
+    });
+
+    expect(paidCourse.modules?.[0].lessons[0].isFreePreview).toBe(true);
+    expect(paidCourse.modules?.[0].lessons[1].isFreePreview).toBe(false);
+    // Module 2 lesson 0 with preview: false must remain locked (not forced preview)
+    expect(paidCourse.modules?.[1].lessons[0].isFreePreview).toBe(false);
+    expect(paidCourse.modules?.[1].lessons[1].isFreePreview).toBe(false);
+  });
+
+  it('syncs enrolled course IDs from Companion /enrollments and falls back to LearnPress learned=true when unavailable', async () => {
+    const fetchMock = globalThis.fetch as jest.Mock;
+
+    HttpClient.setAuthToken(null);
+    expect(await CoursesService.fetchEnrolledCourseIdsFromServer()).toBeNull();
+
+    HttpClient.setAuthToken('jwt_user_token');
+
+    // Strategy 1: Companion /enrollments succeeds
+    fetchMock.mockResolvedValueOnce(
+      mockJson({ status: 'success', enrolled_course_ids: [88032, 86355] }, 200)
+    );
+    expect(await CoursesService.fetchEnrolledCourseIdsFromServer()).toEqual(['88032', '86355']);
+
+    // Strategy 2: Companion route 404 -> falls back to LearnPress /courses?learned=true
+    fetchMock.mockResolvedValueOnce(mockJson({ code: 'rest_no_route' }, 404)).mockResolvedValueOnce(
+      mockJson(
+        [
+          { id: 88032, name: 'Free Course', price: 0, course_data: { status: 'enrolled' } },
+          { id: 86355, name: 'Paid Course', price: 500, course_data: { status: 'finished' } },
+          { id: 99999, name: 'Unenrolled Course', price: 500, course_data: { status: '' } },
+        ],
+        200
+      )
+    );
+    expect(await CoursesService.fetchEnrolledCourseIdsFromServer()).toEqual(['88032', '86355']);
   });
 
   it('transforms courses with null rating and student counts instead of fabricated defaults', () => {

@@ -41,7 +41,7 @@ export const LessonActionBar: React.FC<LessonActionBarProps> = ({
       </View>
 
       <View style={styles.actionRowRight}>
-        {/* SkillBot AI Copilot Trigger */}
+        {/* Study Assistant Trigger */}
         <TouchableOpacity
           style={[
             styles.aiTutorBtn,
@@ -56,14 +56,14 @@ export const LessonActionBar: React.FC<LessonActionBarProps> = ({
           }}
           activeOpacity={0.8}
           accessibilityRole="button"
-          accessibilityLabel={isBangla ? 'এআই টিউটরের সাথে কথা বলুন' : 'Ask SkillBot AI Tutor'}
+          accessibilityLabel={isBangla ? 'স্টাডি অ্যাসিস্ট্যান্ট খুলুন' : 'Open Study Assistant'}
         >
           <Ionicons name="sparkles" size={14} color="#E34234" />
           <Text
             style={[styles.aiTutorBtnText, { color: isDark ? '#FF8A80' : '#E34234' }]}
             numberOfLines={1}
           >
-            {isBangla ? 'এআই' : 'Ask AI'}
+            {isBangla ? 'স্টাডি' : 'Study Helper'}
           </Text>
         </TouchableOpacity>
 

@@ -90,76 +90,88 @@ export class GeminiNanoService {
   }
 
   /**
-   * Whether on-device Gemini Nano inference is currently active
+   * Whether on-device Gemini Nano model weights are genuinely loaded and ready.
    */
   static async isAvailable(): Promise<boolean> {
     const status = await this.checkStatus();
-    return status.isSupported;
+    return status.isAvailable;
   }
 
   /**
-   * Generate text response through on-device Gemini Nano
+   * Generate text response through on-device Gemini Nano (throws when unavailable).
    */
   static async generateText(
     prompt: string,
     options?: { isBangla?: boolean; context?: any }
   ): Promise<NanoGenerationResult> {
-    if (this.isNativeModulePresent()) {
-      try {
-        const res = await GeminiNanoModule.generateText(prompt, options || {});
-        return {
-          text: res.text,
-          source: res.source || 'Gemini Nano (On-Device AICore)',
-          isOffline: true,
-        };
-      } catch (err) {
-        // Fall back to localized synthesis below
-      }
+    const isReady = await this.isAvailable();
+    if (!isReady || !this.isNativeModulePresent()) {
+      throw new Error('On-device Gemini Nano (AICore) is not available on this device.');
     }
 
-    const isBangla = options?.isBangla ?? false;
+    const res = await GeminiNanoModule.generateText(prompt, options || {});
+    if (!res?.text) {
+      throw new Error('On-device Gemini Nano returned an empty response.');
+    }
+
     return {
-      text: isBangla
-        ? '🤖 **SkillBot এআই কপাইলট (অন-ডিভাইস):**\n\nএই লেকচারের মূল বার্তাটি হলো কর্মক্ষেত্রে প্রায়োগিক দক্ষতার সঠিক বাস্তবায়ন। ভিডিওর নির্দিষ্ট অংশ প্রয়োজনে পুনরায় শুনুন এবং যেকোনো কনসেপ্ট স্পষ্ট করতে আমাকে প্রশ্ন করুন।'
-        : '🤖 **SkillBot AI Copilot (On-Device):**\n\nThe primary focus of this lecture is practical workplace execution. Review key timestamps or ask me to explain any concept in depth!',
-      source: 'On-Device Edge Engine',
+      text: res.text,
+      source: res.source || 'Gemini Nano (On-Device AICore)',
       isOffline: true,
     };
   }
 
   /**
-   * Summarize lecture transcript or notes using on-device Gemini Nano
+   * Summarize lecture transcript or notes using on-device Gemini Nano when available,
+   * or deterministic extractive sentences from genuine lecture text when non-empty.
    */
   static async summarizeLecture(
     content: string,
     isBangla: boolean = false
   ): Promise<{ summary: string; isOffline: boolean; source: string }> {
-    if (this.isNativeModulePresent()) {
+    const cleanContent = (content || '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!cleanContent) {
+      return { summary: '', isOffline: true, source: 'unavailable' };
+    }
+
+    if ((await this.isAvailable()) && this.isNativeModulePresent()) {
       try {
-        const res = await GeminiNanoModule.summarizeLecture(content, isBangla);
-        return {
-          summary: res.summary,
-          isOffline: true,
-          source: res.source || 'Gemini Nano (Google AI Edge)',
-        };
+        const res = await GeminiNanoModule.summarizeLecture(cleanContent, isBangla);
+        if (res?.summary) {
+          return {
+            summary: res.summary,
+            isOffline: true,
+            source: res.source || 'Gemini Nano (Google AI Edge)',
+          };
+        }
       } catch {}
     }
 
-    // High quality deterministic fallback summary
-    const summary = isBangla
-      ? '📌 **লেকচার সারসংক্ষেপ (Gemini Nano On-Device):**\n\n' +
-        '1. **মূল দর্শন:** লেকচারের প্রধান ফ্রেমওয়ার্ক এবং কনসেপ্ট কর্মক্ষেত্রের বাস্তব চ্যালেঞ্জ সমাধানে সহায়ক।\n' +
-        '2. **প্রায়োগিক বাস্তবায়ন:** কৌশলগুলো দ্রুত পরীক্ষার জন্য টিম মিটিং ও দৈনন্দিন টাস্কে ছোট পরিসরে প্রয়োগ করুন।\n' +
-        '3. **মূল লক্ষ্য:** সক্রিয় পুনরাবৃত্তি নিশ্চিত করতে গুরুত্বপূর্ণ পয়েন্টগুলো নোটস ট্যাবে লিখে রাখুন।'
-      : '📌 **Lecture Summary (Gemini Nano On-Device):**\n\n' +
-        '1. **Core Concept:** The framework discussed provides actionable methodology for high-impact professional execution.\n' +
-        '2. **Workplace Application:** Implement key milestones within your day-to-day workflow to measure velocity differences.\n' +
-        '3. **Key Takeaway:** Retain critical insights by jotting down self-reflection points in your notes tab.';
+    // Extractive fallback strictly from real lecture content (never generic canned filler)
+    const sentences = cleanContent
+      .split(/(?<=[.!?।])\s+/)
+      .map((s) => s.trim())
+      .filter((s) => s.length >= 25);
+
+    if (sentences.length === 0) {
+      return { summary: '', isOffline: true, source: 'unavailable' };
+    }
+
+    const header = isBangla
+      ? '📌 **লেকচারের মূল সারসংক্ষেপ (পাঠের তথ্য থেকে):**\n\n'
+      : '📌 **Lecture Key Excerpts (From Lesson Content):**\n\n';
+    const bullets = sentences
+      .slice(0, 3)
+      .map((s, idx) => `${idx + 1}. ${s}`)
+      .join('\n');
 
     return {
-      summary,
+      summary: `${header}${bullets}`,
       isOffline: true,
-      source: 'On-Device Edge Engine',
+      source: 'extractive',
     };
   }
 
@@ -265,19 +277,19 @@ export class GeminiNanoService {
 
     const rationale =
       userInterests.length > 0
-        ? `Gemini Nano On-Device Match: Tailored for your focus in ${userInterests.slice(0, 2).join(' & ')}.`
-        : 'Gemini Nano On-Device Recommendation: Optimized for executive skill progression.';
+        ? `Recommended Match: Tailored for your focus in ${userInterests.slice(0, 2).join(' & ')}.`
+        : 'Recommended Pick: Selected for your ongoing skill progression.';
 
     const rationaleBn =
       userInterests.length > 0
-        ? `অন-ডিভাইস জেমিনাই ন্যানো সুপারিশ: আপনার "${userInterests.slice(0, 2).join(' ও ')}" দক্ষতার অগ্রগতির জন্য নির্বাচিত।`
-        : 'অন-ডিভাইস জেমিনাই ন্যানো সুপারিশ: ক্যারিয়ার অগ্রগতি ও পেশাগত দক্ষতার জন্য বিশেষভাবে নির্বাচিত।';
+        ? `ব্যক্তিগত সুপারিশ: আপনার "${userInterests.slice(0, 2).join(' ও ')}" দক্ষতার আগ্রহের ভিত্তিতে নির্বাচিত।`
+        : 'ব্যক্তিগত সুপারিশ: ক্যারিয়ার অগ্রগতি ও পেশাগত দক্ষতার জন্য বিশেষভাবে নির্বাচিত।';
 
     return {
       recommended: topPicks,
       rationale,
       rationaleBn,
-      isOfflineAi: true,
+      isOfflineAi: false,
     };
   }
 }

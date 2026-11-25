@@ -16,6 +16,7 @@ interface CurriculumAccordionProps {
   isLoading?: boolean;
   activeLessonId?: string;
   onSelectLesson: (lesson: Lesson) => void;
+  onLockedLessonPress?: (lesson: Lesson) => void;
 }
 
 export const CurriculumAccordion: React.FC<CurriculumAccordionProps> = ({
@@ -26,6 +27,7 @@ export const CurriculumAccordion: React.FC<CurriculumAccordionProps> = ({
   isLoading = false,
   activeLessonId,
   onSelectLesson,
+  onLockedLessonPress,
 }) => {
   const { colors } = useTheme();
   const { userProgress } = useLearning();
@@ -149,9 +151,12 @@ export const CurriculumAccordion: React.FC<CurriculumAccordionProps> = ({
                           if (isAccessible) {
                             triggerHaptic('light');
                             onSelectLesson(lesson);
+                          } else if (onLockedLessonPress) {
+                            triggerHaptic('light');
+                            onLockedLessonPress(lesson);
                           }
                         }}
-                        disabled={!isAccessible}
+                        disabled={!isAccessible && !onLockedLessonPress}
                         activeOpacity={0.7}
                         accessibilityRole="button"
                         accessibilityLabel={`${lesson.title}, ${lesson.duration || ''}, ${isCompleted ? 'completed' : isActive ? 'current' : isAccessible ? 'available' : 'locked'}`}

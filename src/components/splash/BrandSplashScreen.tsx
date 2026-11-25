@@ -47,22 +47,9 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
   const heroScaleAnim = useRef(new Animated.Value(0.96)).current;
   const bottomDockAnim = useRef(new Animated.Value(0)).current;
 
-  // Developer mode unlock state & 5-tap tracker
-  const tapCountRef = useRef(0);
-  const lastTapTimeRef = useRef(0);
   const [devModalVisible, setDevModalVisible] = useState(false);
-  const [isDevModeUnlocked, setIsDevModeUnlocked] = useState(false);
 
   useEffect(() => {
-    // Check if dev mode was previously unlocked
-    AsyncStorage.getItem('@ts_dev_mode_unlocked')
-      .then((val) => {
-        if (val === 'true') {
-          setIsDevModeUnlocked(true);
-        }
-      })
-      .catch(() => {});
-
     // Choreographed Entrance Animation
     Animated.parallel([
       // Poster hero: gentle scale and fade in
@@ -125,27 +112,10 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
     triggerSmoothExit(onSignIn);
   };
 
-  const handleVersionTap = async () => {
-    const now = Date.now();
-    if (now - lastTapTimeRef.current > 2000) {
-      tapCountRef.current = 1;
-    } else {
-      tapCountRef.current += 1;
-    }
-    lastTapTimeRef.current = now;
-
-    if (tapCountRef.current >= 5) {
-      tapCountRef.current = 0;
-      setIsDevModeUnlocked(true);
-      await AsyncStorage.setItem('@ts_dev_mode_unlocked', 'true').catch(() => {});
-      triggerHaptic('success');
-      setDevModalVisible(true);
-    } else if (isDevModeUnlocked) {
-      triggerHaptic('selection');
-      setDevModalVisible(true);
-    } else if (tapCountRef.current >= 2) {
-      triggerHaptic('light');
-    }
+  const handleVersionTap = () => {
+    if (!__DEV__) return;
+    triggerHaptic('selection');
+    setDevModalVisible(true);
   };
 
   return (
@@ -239,33 +209,33 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
               </Text>
             </TouchableOpacity>
 
-            {/* Version name - Tap 5 times to unlock Developer Options */}
             <TouchableOpacity
               onPress={handleVersionTap}
               activeOpacity={0.75}
               style={styles.versionTouch}
               accessibilityRole="button"
-              accessibilityLabel="App Version - Tap 5 times for Developer Options"
+              accessibilityLabel="App Version"
               hitSlop={{ top: 12, bottom: 14, left: 24, right: 24 }}
             >
               <Text style={styles.versionText}>
-                v1.4.0 {isDevModeUnlocked ? '• [DEV MODE]' : ''}
+                v1.4.0 {__DEV__ ? '• [DEV]' : ''}
               </Text>
             </TouchableOpacity>
           </Animated.View>
         </View>
       </View>
 
-      {/* Developer Options Modal */}
-      <DeveloperOptionsModal
-        visible={devModalVisible}
-        onClose={() => setDevModalVisible(false)}
-        onDirectBypass={() => triggerSmoothExit(onDismiss || onGetStarted)}
-        onResetToStandardMode={() => {
-          setIsDevModeUnlocked(false);
-          setDevModalVisible(false);
-        }}
-      />
+      {/* Developer Options Modal (Dev builds only) */}
+      {__DEV__ && (
+        <DeveloperOptionsModal
+          visible={devModalVisible}
+          onClose={() => setDevModalVisible(false)}
+          onDirectBypass={() => triggerSmoothExit(onDismiss || onGetStarted)}
+          onResetToStandardMode={() => {
+            setDevModalVisible(false);
+          }}
+        />
+      )}
     </Animated.View>
   );
 };

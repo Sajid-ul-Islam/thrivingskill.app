@@ -1,63 +1,42 @@
 name: EAS Build & Release
 
 on:
-  pull_request:
-    branches: [ master, develop ]
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'EAS build profile (preview or production)'
+        required: true
+        default: 'preview'
+        type: choice
+        options:
+          - preview
+          - production
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  eas-preview:
-    name: EAS Preview Build (PR)
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-
-    steps:
-      - name: Checkout Codebase
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'npm'
-
-      - name: Setup Expo & EAS CLI
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Trigger EAS Preview Build (Android APK)
-        run: eas build --platform android --profile preview --non-interactive --no-wait
-
-  eas-production:
-    name: EAS Production Build (Release Tag)
-    if: startsWith(github.ref, 'refs/tags/v')
+  eas-android:
+    name: EAS Android Build
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
     steps:
       - name: Checkout Codebase
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Setup Node.js 22
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22
           cache: 'npm'
 
       - name: Setup Expo & EAS CLI
-        uses: expo/expo-github-action@v8
+        uses: expo/expo-github-action@c7b66a9c327a43a8fa7c0158e7f30d6040d2481e # v8
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
@@ -65,5 +44,7 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Trigger EAS Production Build (Android & iOS)
-        run: eas build --platform all --profile production --non-interactive --no-wait
+      - name: Trigger EAS Android Build
+        env:
+          BUILD_PROFILE: ${{ startsWith(github.ref, 'refs/tags/v') && 'production' || github.event.inputs.profile || 'preview' }}
+        run: eas build --platform android --profile "$BUILD_PROFILE" --non-interactive --no-wait

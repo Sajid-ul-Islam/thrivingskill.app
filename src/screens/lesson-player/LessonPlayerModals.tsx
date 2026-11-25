@@ -131,6 +131,8 @@ export const LessonPlayerModals: React.FC<LessonPlayerModalsProps> = ({
 
       <LessonAiTutorModal
         visible={aiTutorVisible}
+        course={course}
+        currentLesson={currentLesson}
         context={{
           courseId: course.id,
           courseTitle: course.title,

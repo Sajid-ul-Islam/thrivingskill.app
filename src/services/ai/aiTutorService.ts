@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GeminiNanoService, GeminiNanoStatus } from './geminiNanoService';
+import { LiteRtService } from './liteRtService';
 
 export interface AiTutorContext {
   courseId: string;
@@ -20,54 +21,148 @@ export interface TutorMessage {
   timestamp: number;
 }
 
+export interface AiTutorResponse {
+  available: boolean;
+  text: string;
+  source: 'gemini-nano' | 'lesson-search' | 'unavailable';
+}
+
 const STORAGE_KEY_PREFIX = '@thrivingskill_ai_tutor_';
 
 export class AiTutorService {
   /**
-   * Generates a grounded, pedagogical response from the SkillBot AI Tutor.
-   * Leverages On-Device Gemini Nano via Google AI Edge (AICore) when available for 100% offline,
-   * zero-cost inference, and coordinates with Google Gemini 1.5 Flash Cloud and contextual fallback.
+   * Answers a lecture question honestly without fabricated cloud/template filler:
+   * 1. Uses on-device Gemini Nano (AICore) when loaded on the device.
+   * 2. Otherwise searches real lesson text with LiteRT semantic similarity when available.
+   * 3. Otherwise returns an honest unavailable state so users are never fed canned filler.
    */
-  static async askTutor(
+  static async askTutorDetailed(
     question: string,
     context: AiTutorContext,
     _conversationHistory: TutorMessage[] = [],
     isBangla: boolean = false
-  ): Promise<string> {
+  ): Promise<AiTutorResponse> {
     const trimmed = question.trim();
     if (!trimmed) {
-      return isBangla
-        ? 'অনুগ্রহ করে লেকচার সংক্রান্ত যেকোনো প্রশ্ন বা বিষয় লিখুন।'
-        : 'Please ask a question or topic regarding this lecture.';
+      return {
+        available: false,
+        source: 'unavailable',
+        text: isBangla
+          ? 'অনুগ্রহ করে লেকচার সংক্রান্ত একটি প্রশ্ন লিখুন।'
+          : 'Please enter a question about this lecture.',
+      };
     }
 
-    // 1. Try On-Device Gemini Nano via Google AI Edge (Zero API cost, works 100% offline)
-    const isNanoReady = await GeminiNanoService.isAvailable();
-    if (isNanoReady) {
+    // 1. Try genuinely available On-Device Gemini Nano (AICore)
+    if (await GeminiNanoService.isAvailable()) {
       try {
         const nanoRes = await GeminiNanoService.generateText(trimmed, {
           isBangla,
           context: {
             courseTitle: context.courseTitle,
             lessonTitle: context.lessonTitle,
+            lessonSummary: context.lessonSummary,
             instructorName: context.instructorName,
           },
         });
-        if (nanoRes && nanoRes.text) {
-          return nanoRes.text;
+        if (nanoRes?.text) {
+          return {
+            available: true,
+            text: nanoRes.text,
+            source: 'gemini-nano',
+          };
         }
-      } catch (err) {
-        // Fall back gracefully to cloud or localized synthesis
+      } catch {
+        // Fall through to honest local search / unavailable state
       }
     }
 
-    // 2. Contextual intelligent synthesis grounded in lecture curriculum
-    // (Cloud LLM calls must be proxied server-side rather than shipping API keys in EXPO_PUBLIC_* vars)
-    return this.generateContextualResponse(trimmed, context, isBangla);
+    // 2. Semantic excerpt lookup strictly over real lesson summary/content via LiteRT embeddings
+    const excerptMatch = await this.findRelevantLessonExcerpt(
+      trimmed,
+      context.lessonSummary,
+      isBangla
+    );
+    if (excerptMatch) {
+      return {
+        available: true,
+        text: excerptMatch,
+        source: 'lesson-search',
+      };
+    }
+
+    // 3. Honest unavailable response when neither on-device LLM nor matching lesson text exists
+    return {
+      available: false,
+      source: 'unavailable',
+      text: isBangla
+        ? `এই ডিভাইসে লাইভ AI চ্যাট (Gemini Nano) সাপোর্ট নেই এবং "${context.lessonTitle}" পাঠে এই প্রশ্নের সাথে মিলে এমন লিখিত নোট পাওয়া যায়নি।\n\nআপনি নিচের বাস্তব কুইজ, ফ্ল্যাশকার্ড বা নোটস ট্যাব ব্যবহার করে অনুশীলন করতে পারেন।`
+        : `Live AI Tutor chat is unavailable on this device (requires on-device Gemini Nano), and no matching written excerpt was found in "${context.lessonTitle}".\n\nUse the Quiz, Flashcards, or Notes tools to practice with verified course materials.`,
+    };
   }
 
   /**
-   * Summarizes lecture transcript or notes using on-device Gemini Nano with zero API cost.
+   * Backwards-compatible wrapper returning text output from askTutorDetailed.
+   */
+  static async askTutor(
+    question: string,
+    context: AiTutorContext,
+    conversationHistory: TutorMessage[] = [],
+    isBangla: boolean = false
+  ): Promise<string> {
+    const res = await this.askTutorDetailed(question, context, conversationHistory, isBangla);
+    return res.text;
+  }
+
+  private static async findRelevantLessonExcerpt(
+    question: string,
+    lessonSummary?: string,
+    isBangla: boolean = false
+  ): Promise<string | null> {
+    const clean = (lessonSummary || '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (clean.length < 30) {
+      return null;
+    }
+
+    const sentences = clean
+      .split(/(?<=[.!?।])\s+/)
+      .map((s) => s.trim())
+      .filter((s) => s.length >= 20);
+    if (sentences.length === 0) {
+      return null;
+    }
+
+    const queryVec = LiteRtService.generateEmbedding(question);
+    const scored = await Promise.all(
+      sentences.map(async (sentence) => ({
+        sentence,
+        similarity: await LiteRtService.computeCosineSimilarity(
+          queryVec,
+          LiteRtService.generateEmbedding(sentence)
+        ),
+      }))
+    );
+
+    const best = scored
+      .filter((item) => item.similarity >= 0.28)
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, 2);
+
+    if (best.length === 0) {
+      return null;
+    }
+
+    const header = isBangla
+      ? '🔎 **লেকচার নোট থেকে প্রাসঙ্গিক অংশ (অফলাইন সার্চ):**\n\n'
+      : '🔎 **Relevant Excerpts From This Lesson:**\n\n';
+    return `${header}${best.map((b) => `• ${b.sentence}`).join('\n')}`;
+  }
+
+  /**
+   * Summarizes real lecture text via Gemini Nano when ready, or extractive sentences when available.
    */
   static async summarizeLectureOnDevice(
     content: string,
@@ -77,116 +172,21 @@ export class AiTutorService {
   }
 
   /**
-   * Generates on-device smart reply options for the current student.
+   * Returns prompt chips only when on-device AI or searchable lesson content exists.
    */
-  static async getSmartReplies(lastMessage: string, isBangla: boolean = false): Promise<string[]> {
-    return GeminiNanoService.generateSmartReplies(lastMessage, { isBangla });
+  static async getSmartReplies(_lastMessage: string, isBangla: boolean = false): Promise<string[]> {
+    const nanoReady = await GeminiNanoService.isAvailable();
+    if (!nanoReady) {
+      return [];
+    }
+    return GeminiNanoService.generateSmartReplies(_lastMessage, { isBangla });
   }
 
   /**
-   * Check status of on-device AI runtime (AICore / Gemini Nano)
+   * Check runtime status of on-device AI (AICore / Gemini Nano).
    */
   static async getExecutionStatus(): Promise<GeminiNanoStatus> {
     return GeminiNanoService.checkStatus();
-  }
-
-  /**
-   * Deterministic, zero-hallucination domain knowledge synthesizer grounded in lesson facts.
-   */
-  private static generateContextualResponse(
-    question: string,
-    context: AiTutorContext,
-    isBangla: boolean
-  ): string {
-    const qLower = question.toLowerCase();
-
-    // 1. Summary intent
-    if (
-      qLower.includes('summary') ||
-      qLower.includes('সারসংক্ষেপ') ||
-      qLower.includes('সামারি') ||
-      qLower.includes('পয়েন্ট') ||
-      qLower.includes('point')
-    ) {
-      if (isBangla) {
-        return (
-          `📌 **"${context.lessonTitle}" লেকচারের ৩টি মূল পয়েন্ট:**\n\n` +
-          `1. **মূল দর্শন:** ${context.instructorName}-এর নির্দেশনায় এই পাঠে ${context.moduleTitle}-এর কেন্দ্রীয় কৌশল ও প্রায়োগিক ফ্রেমওয়ার্ক শেখানো হয়েছে।\n` +
-          `2. **কর্মক্ষেত্রের দক্ষতা:** তত্ত্বীয় জ্ঞানের বাইরে সরাসরি প্রফেশনাল এক্সিকিউটিভ পরিবেশে সিদ্ধান্ত গ্রহণে এই পদ্ধতির সরাসরি ভূমিকা রয়েছে।\n` +
-          `3. **পরবর্তী পদক্ষেপ:** পরবর্তী লেকচারে যাওয়ার পূর্বে এই পাঠের টুলস ও এক্সারসাইজ নিজের ক্ষেত্রে প্রয়োগ করে যাচাই করে নিন।`
-        );
-      }
-      return (
-        `📌 **Core Summary for "${context.lessonTitle}":**\n\n` +
-        `1. **Core Concept:** Led by mentor ${context.instructorName}, this lesson outlines key execution principles within "${context.moduleTitle}".\n` +
-        `2. **Workplace Application:** Beyond theory, this lecture focuses on actionable frameworks you can implement directly in executive workflows.\n` +
-        `3. **Key Takeaway:** Solidify your understanding by bookmarking key timestamps and reviewing the active recall notes before advancing to the next module.`
-      );
-    }
-
-    // 2. Real-world application intent
-    if (
-      qLower.includes('apply') ||
-      qLower.includes('application') ||
-      qLower.includes('বাস্তব') ||
-      qLower.includes('প্রয়োগ') ||
-      qLower.includes('কর্মক্ষেত্র') ||
-      qLower.includes('workplace')
-    ) {
-      if (isBangla) {
-        return (
-          `💼 **বাস্তব কর্মক্ষেত্রে প্রয়োগের উপায়:**\n\n` +
-          `• **দৈনন্দিন রুটিন:** "${context.lessonTitle}"-এ আলোচিত কৌশলটি আপনার দৈনন্দিন কাজের সময়সূচি বা টিম মিটিংয়ে ছোট পরিসরে টেস্ট করুন।\n` +
-          `• **ফলাফল নিরীক্ষণ:** কাজ শেষে পূর্বের পদ্ধতির তুলনায় সময় বা দক্ষতার পার্থক্য পরিমাপ করুন।\n` +
-          `• **দলগত আলোচনা:** টিমের সাথে এই কনসেপ্ট শেয়ার করে ফিডব্যাক নিন এবং প্রয়োজন অনুযায়ী সমন্বয় করুন।`
-        );
-      }
-      return (
-        `💼 **Real-World Workplace Application:**\n\n` +
-        `• **Immediate Implementation:** Apply the technique from "${context.lessonTitle}" during your next project sync or personal workflow audit.\n` +
-        `• **Measure Impact:** Compare turnaround velocity and output quality against previous benchmarks.\n` +
-        `• **Team Alignment:** Share key insights with your colleagues to establish shared operational standards across your team.`
-      );
-    }
-
-    // 3. Quiz / Self-assessment intent
-    if (
-      qLower.includes('quiz') ||
-      qLower.includes('কুইজ') ||
-      qLower.includes('প্রশ্ন') ||
-      qLower.includes('test') ||
-      qLower.includes('exam')
-    ) {
-      if (isBangla) {
-        return (
-          `❓ **অনুশীলনের জন্য গুরুত্বপূর্ণ প্রশ্ন:**\n\n` +
-          `**প্রশ্ন:** "${context.lessonTitle}" লেকচারের প্রধান উদ্দেশ্য কী এবং এটি কীভাবে ${context.courseTitle}-এর লক্ষ্য অর্জনে সহায়তা করে?\n\n` +
-          `💡 *টিপ:* নিজের ভাষায় ১-২ লাইনে উত্তরটি লেকচার নোটস ট্যাবে লিখে রাখুন। এটি আপনার সক্রিয় স্মরণশক্তি (Active Recall) বহুগুণ বৃদ্ধি করবে!`
-        );
-      }
-      return (
-        `❓ **Quick Self-Assessment Question:**\n\n` +
-        `**Question:** What is the primary operational objective of "${context.lessonTitle}", and how does it advance your mastery in "${context.courseTitle}"?\n\n` +
-        `💡 *Pro Tip:* Jot down your 2-sentence response inside the "Notes" tab to reinforce active recall and retention!`
-      );
-    }
-
-    // 4. General concept explanation
-    if (isBangla) {
-      return (
-        `🤖 **SkillBot এআই টিউটর:**\n\n` +
-        `"${context.lessonTitle}" পাঠের মূল লক্ষ্য হলো আপনাকে ${context.moduleTitle}-এর ব্যবহারিক বিষয়গুলোতে দক্ষ করে তোলা।\n\n` +
-        `মেন্টর ${context.instructorName} এই পাঠে যেসব বিষয় ব্যাখ্যা করেছেন তা ভালোভাবে বুঝতে ভিডিওর মূল অংশগুলো প্রয়োজনে পুনরায় শুনুন এবং যেকোনো গুরুত্বপূর্ণ মুহূর্তে নিচের '+ Note' বাটনে ট্যাপ করে নোট সংরক্ষণ করুন।\n\n` +
-        `আপনার যদি এই পাঠের কোনো সুনির্দিষ্ট বিষয় নিয়ে প্রশ্ন থাকে, আমাকে নির্দ্বিধায় জানান!`
-      );
-    }
-
-    return (
-      `🤖 **SkillBot AI Tutor:**\n\n` +
-      `The core focus of "${context.lessonTitle}" is to empower you with practical mastery over "${context.moduleTitle}".\n\n` +
-      `Mentor ${context.instructorName} structured this lecture around key workplace competencies. If any step is unclear, scrub back to the timestamp or tap "+ Note" to capture your observations.\n\n` +
-      `Feel free to ask for a summary, real-world examples, or specific concept clarifications!`
-    );
   }
 
   /**
@@ -210,7 +210,7 @@ export class AiTutorService {
     try {
       await AsyncStorage.setItem(
         `${STORAGE_KEY_PREFIX}${lessonId}`,
-        JSON.stringify(messages.slice(-20)) // Persist up to 20 messages per lesson
+        JSON.stringify(messages.slice(-20))
       );
     } catch {}
   }

@@ -34,19 +34,12 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
 }) => {
   const insets = useSafeAreaInsets();
   const [currentEnv, setCurrentEnv] = useState<ApiEnvironment>(Env.currentEnvironment);
-  const [adminBypass, setAdminBypass] = useState<boolean>(false);
   const [isClearingCache, setIsClearingCache] = useState<boolean>(false);
   const [cacheClearSuccess, setCacheClearSuccess] = useState<boolean>(false);
 
   useEffect(() => {
     if (visible) {
       setCurrentEnv(Env.currentEnvironment);
-      Promise.all([
-        AsyncStorage.getItem('@thrivingskill_admin_bypass'),
-        AsyncStorage.getItem('@ts_auth_admin_bypass'),
-      ])
-        .then(([v1, v2]) => setAdminBypass(v1 === 'true' || v2 === 'true'))
-        .catch(() => {});
     }
   }, [visible]);
 
@@ -55,15 +48,6 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
     triggerHaptic('medium');
     await Env.setEnvironment(env);
     setCurrentEnv(env);
-  };
-
-  const handleToggleAdminBypass = async (value: boolean) => {
-    triggerHaptic('selection');
-    setAdminBypass(value);
-    await Promise.all([
-      AsyncStorage.setItem('@thrivingskill_admin_bypass', String(value)),
-      AsyncStorage.setItem('@ts_auth_admin_bypass', String(value)),
-    ]).catch(() => {});
   };
 
   const handleClearAppCache = async () => {
@@ -270,30 +254,8 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
               </View>
             )}
 
-            {/* Section 2: Admin & Bypass Controls */}
-            <View style={styles.sectionCard}>
-              <View style={styles.sectionHeader}>
-                <Ionicons name="shield-checkmark-outline" size={16} color="#E34234" />
-                <Text style={styles.sectionTitle}>Testing Bypass Modes</Text>
-              </View>
-
-              <View style={styles.settingItem}>
-                <View style={styles.settingItemText}>
-                  <Text style={styles.settingItemTitle}>Master Course & Video Bypass</Text>
-                  <Text style={styles.settingItemDesc}>
-                    Unrestricted access to all courses, video streaming, lessons, reviews, and
-                    certificates across both Staging and Live Production.
-                  </Text>
-                </View>
-                <Switch
-                  value={adminBypass}
-                  onValueChange={handleToggleAdminBypass}
-                  trackColor={{ false: '#334155', true: '#E34234' }}
-                  thumbColor="#FFFFFF"
-                />
-              </View>
-
-              {onDirectBypass && (
+            {onDirectBypass && (
+              <View style={styles.sectionCard}>
                 <TouchableOpacity
                   style={styles.actionBtn}
                   onPress={() => {
@@ -308,8 +270,8 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
                   <Ionicons name="flash-outline" size={16} color="#FFFFFF" />
                   <Text style={styles.actionBtnText}>Bypass Splash to Main App</Text>
                 </TouchableOpacity>
-              )}
-            </View>
+              </View>
+            )}
 
             {/* Section 3: Cache & Storage Management */}
             <View style={styles.sectionCard}>

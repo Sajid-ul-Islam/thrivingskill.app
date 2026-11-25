@@ -267,6 +267,13 @@ export function transformWpCourse(raw: any): Course {
                   videoIntro: item.video_intro || item.meta_data?._lp_lesson_video_intro,
                 }
               );
+          const rawPreview = item.preview ?? item.meta_data?._lp_preview;
+          const isFreePreview =
+            !isQuiz &&
+            (rawPreview === true ||
+              rawPreview === 1 ||
+              (typeof rawPreview === 'string' &&
+                ['yes', 'true', '1', 'on'].includes(rawPreview.trim().toLowerCase())));
           return {
             id: String(item.id || `les-${secIdx}-${itemIdx}`),
             title: realTitle,
@@ -275,7 +282,7 @@ export function transformWpCourse(raw: any): Course {
             videoIntro: videoData.videoIntro,
             videoId: videoData.videoId,
             videoType: videoData.videoType,
-            isFreePreview: Boolean(item.preview) || (!isQuiz && itemIdx === 0),
+            isFreePreview,
             summary: videoData.summary,
             type: isQuiz ? ('quiz' as const) : ('lesson' as const),
             quizId: isQuiz ? String(item.id) : undefined,

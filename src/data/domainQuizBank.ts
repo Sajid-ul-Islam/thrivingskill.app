@@ -284,7 +284,8 @@ export const DOMAIN_QUIZ_BANK: Record<string, DomainQuizQuestion[]> = {
 };
 
 /**
- * Returns domain-tailored questions for a given course title or category.
+ * Returns domain-tailored practice questions using strict word-boundary matching.
+ * Returns an empty array when no curated bank matches rather than falling back to unrelated topics.
  */
 export function getDomainQuestionsForCourse(
   courseTitle: string,
@@ -297,68 +298,33 @@ export function getDomainQuestionsForCourse(
   correctIndex: number;
   explanation: string;
 }[] {
-  const titleLower = (courseTitle || '').toLowerCase();
-  const cat = (categoryId || '').toLowerCase();
+  const combined = `${courseTitle || ''} ${categoryId || ''}`.toLowerCase();
 
-  let selectedDomain = 'general';
+  let selectedDomain: string | null = null;
 
   if (
-    cat.includes('ai') ||
-    cat.includes('generative') ||
-    titleLower.includes('ai') ||
-    titleLower.includes('chatgpt') ||
-    titleLower.includes('prompt') ||
-    titleLower.includes('notebooklm') ||
-    titleLower.includes('gemini')
+    /\b(ai|artificial intelligence|generative|chatgpt|prompt|notebooklm|gemini)\b/i.test(combined)
   ) {
     selectedDomain = 'generative-ai';
-  } else if (
-    titleLower.includes('excel') ||
-    titleLower.includes('spreadsheet') ||
-    titleLower.includes('vlookup')
-  ) {
+  } else if (/\b(excel|spreadsheet|vlookup|xlookup)\b/i.test(combined)) {
     selectedDomain = 'excel';
-  } else if (
-    cat.includes('finance') ||
-    cat.includes('banking') ||
-    cat.includes('account') ||
-    titleLower.includes('financ') ||
-    titleLower.includes('banking') ||
-    titleLower.includes('valuation') ||
-    titleLower.includes('stock') ||
-    titleLower.includes('credit') ||
-    titleLower.includes('cotton')
-  ) {
+  } else if (/\b(finance|financial|banking|accounting|valuation|stock|credit)\b/i.test(combined)) {
     selectedDomain = 'finance';
-  } else if (
-    cat.includes('data') ||
-    cat.includes('science') ||
-    cat.includes('analytics') ||
-    titleLower.includes('data') ||
-    titleLower.includes('analytics') ||
-    titleLower.includes('powerbi') ||
-    titleLower.includes('sql')
-  ) {
+  } else if (/\b(data science|analytics|powerbi|power bi|sql|cohort)\b/i.test(combined)) {
     selectedDomain = 'data-science';
   } else if (
-    cat.includes('leadership') ||
-    cat.includes('management') ||
-    cat.includes('hr') ||
-    titleLower.includes('leadership') ||
-    titleLower.includes('management') ||
-    titleLower.includes('presentation') ||
-    titleLower.includes('communication') ||
-    titleLower.includes('mindset')
+    /\b(leadership|management|hr|emotional intelligence|communication|presentation)\b/i.test(
+      combined
+    )
   ) {
     selectedDomain = 'leadership';
-  } else {
-    // Default to generative-ai if tech or general leadership
-    selectedDomain = 'generative-ai';
   }
 
-  const list = DOMAIN_QUIZ_BANK[selectedDomain] || DOMAIN_QUIZ_BANK['generative-ai'];
+  if (!selectedDomain || !DOMAIN_QUIZ_BANK[selectedDomain]) {
+    return [];
+  }
 
-  return list.map((item) => ({
+  return DOMAIN_QUIZ_BANK[selectedDomain].map((item) => ({
     id: item.id,
     question: isBangla && item.questionBn ? item.questionBn : item.question,
     options: isBangla && item.optionsBn ? item.optionsBn : item.options,

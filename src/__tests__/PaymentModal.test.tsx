@@ -330,4 +330,67 @@ describe('PaymentModal (Issue 14 checkout hardening)', () => {
     canOpenSpy.mockRestore();
     openUrlSpy.mockRestore();
   });
+
+  it('polls transient pending status after order-received redirect and unlocks once confirmed', async () => {
+    jest.useFakeTimers();
+    try {
+      const onClose = jest.fn();
+      const onSuccess = jest.fn();
+
+      (CoursesService.verifyServerEnrollment as jest.Mock)
+        .mockResolvedValueOnce({
+          enrolled: false,
+          enrolledCourseIds: [],
+          orderStatus: 'pending',
+          reason: 'pending',
+        })
+        .mockResolvedValueOnce({
+          enrolled: true,
+          enrolledCourseIds: ['88180'],
+          orderStatus: 'completed',
+        });
+
+      await render(
+        <PaymentModal
+          visible={true}
+          course={sampleCourse}
+          onClose={onClose}
+          onSuccess={onSuccess}
+        />
+      );
+
+      await waitFor(() => {
+        expect(screen.getAllByText(/1,?850/).length).toBeGreaterThan(0);
+      });
+
+      await fireEvent.press(screen.getByRole('checkbox'));
+      await fireEvent.press(screen.getByRole('button', { name: 'Proceed to Secure Checkout' }));
+
+      await waitFor(() => {
+        expect(capturedWebViewProps).not.toBeNull();
+      });
+
+      await act(async () => {
+        capturedWebViewProps.onNavigationStateChange({
+          url: 'https://thrivingskill.com/checkout/order-received/999/?key=wc_order_poll',
+          canGoBack: true,
+        });
+      });
+
+      expect(CoursesService.verifyServerEnrollment).toHaveBeenCalledTimes(1);
+      expect(onSuccess).not.toHaveBeenCalled();
+
+      await act(async () => {
+        jest.advanceTimersByTime(1600);
+      });
+
+      await waitFor(() => {
+        expect(CoursesService.verifyServerEnrollment).toHaveBeenCalledTimes(2);
+        expect(onSuccess).toHaveBeenCalledWith('88180');
+      });
+      expect(mockConfirmServerEnrollments).toHaveBeenCalledWith(['88180']);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });

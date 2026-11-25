@@ -742,6 +742,89 @@ export class CoursesService {
   }
 
   /**
+   * Fetches all server-confirmed enrolled course IDs for the authenticated learner.
+   * Uses the Companion `/enrollments` endpoint first and falls back to LearnPress
+   * `GET /learnpress/v1/courses?learned=true` when the companion route is unavailable.
+   * Returns `null` when unauthenticated or when server verification cannot be reached.
+   */
+  static async fetchEnrolledCourseIdsFromServer(): Promise<string[] | null> {
+    const authToken = await HttpClient.getAuthToken();
+    if (!authToken) {
+      return null;
+    }
+
+    const companionCheck = await CompanionService.checkServerEnrollment();
+    if (companionCheck) {
+      return Array.from(
+        new Set(companionCheck.enrolledCourseIds.map((cid) => String(cid)).filter(Boolean))
+      );
+    }
+
+    try {
+      const firstPage = await HttpClient.getWithMeta<any[]>(
+        Endpoints.LEARNPRESS.COURSES,
+        {
+          learned: true,
+          per_page: 100,
+          page: 1,
+          _t: Date.now(),
+        },
+        {
+          retries: 1,
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            Pragma: 'no-cache',
+          },
+        }
+      );
+
+      if (!Array.isArray(firstPage.data)) {
+        return null;
+      }
+
+      const totalPages = Math.max(1, firstPage.totalPages || 1);
+      const allRaw: any[] = [...firstPage.data];
+
+      if (totalPages > 1) {
+        const pagePromises: Promise<any[]>[] = [];
+        for (let page = 2; page <= Math.min(totalPages, 10); page++) {
+          pagePromises.push(
+            HttpClient.get<any[]>(
+              Endpoints.LEARNPRESS.COURSES,
+              {
+                learned: true,
+                per_page: 100,
+                page,
+                _t: Date.now(),
+              },
+              {
+                retries: 0,
+                headers: {
+                  'Cache-Control': 'no-cache, no-store, must-revalidate',
+                  Pragma: 'no-cache',
+                },
+              }
+            ).catch(() => [])
+          );
+        }
+        const pages = await Promise.all(pagePromises);
+        pages.forEach((p) => {
+          if (Array.isArray(p)) allRaw.push(...p);
+        });
+      }
+
+      const enrolledIds = allRaw
+        .map((raw) => transformWpCourse(raw))
+        .filter((course) => course.isEnrolled)
+        .map((course) => String(course.id));
+
+      return Array.from(new Set(enrolledIds.filter(Boolean)));
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * Verifies real enrollment against the server before unlocking course access.
    * Never unlocks a course locally on unpaid, pending, cancelled, or failed orders.
    */

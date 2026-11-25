@@ -75,10 +75,7 @@ export function useProfileScreenState(onNavigateTab: (tab: any) => void) {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   const [serverEnv, setServerEnv] = useState<ApiEnvironment>(Env.currentEnvironment);
-  const [devModeUnlocked, setDevModeUnlocked] = useState(Boolean(__DEV__));
   const [devModalVisible, setDevModalVisible] = useState(false);
-  const tapCountRef = useRef(0);
-  const lastTapTimeRef = useRef(0);
 
   const [currentPass, setCurrentPass] = useState('');
   const [newPass, setNewPass] = useState('');
@@ -88,15 +85,6 @@ export function useProfileScreenState(onNavigateTab: (tab: any) => void) {
   const [showNewPass, setShowNewPass] = useState(false);
   const [showConfirmPass, setShowConfirmPass] = useState(false);
   const [videoQuality, setVideoQuality] = useState<'Auto' | '1080p' | '720p' | '480p'>('Auto');
-
-  useEffect(() => {
-    AsyncStorage.getItem('@ts_dev_mode_unlocked')
-      .then((val) => {
-        if (val === 'true') setDevModeUnlocked(true);
-        else if (val === 'false' && !__DEV__) setDevModeUnlocked(false);
-      })
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
     return Env.subscribeEnvironment((newEnv) => setServerEnv(newEnv));
@@ -122,33 +110,9 @@ export function useProfileScreenState(onNavigateTab: (tab: any) => void) {
   }, [user]);
 
   const handleVersionTap = () => {
-    const now = Date.now();
-    tapCountRef.current = now - lastTapTimeRef.current > 2000 ? 1 : tapCountRef.current + 1;
-    lastTapTimeRef.current = now;
-
-    if (tapCountRef.current >= 5) {
-      const nextState = !devModeUnlocked;
-      setDevModeUnlocked(nextState);
-      AsyncStorage.setItem('@ts_dev_mode_unlocked', String(nextState)).catch(() => {});
-      tapCountRef.current = 0;
-      triggerHaptic('success');
-      if (nextState) setDevModalVisible(true);
-      showToast({
-        message: nextState
-          ? isBangla
-            ? 'ডেভেলপার অপশন সক্রিয় হয়েছে! 🎉'
-            : 'Developer Options Unlocked! 🎉'
-          : isBangla
-            ? 'স্বাভাবিক মোড সক্রিয় হয়েছে।'
-            : 'Standard Mode Restored.',
-        type: nextState ? 'success' : 'info',
-      });
-    } else if (tapCountRef.current >= 2) {
-      triggerHaptic('light');
-    } else if (devModeUnlocked) {
-      triggerHaptic('light');
-      setDevModalVisible(true);
-    }
+    if (!__DEV__) return;
+    triggerHaptic('light');
+    setDevModalVisible(true);
   };
 
   const cycleVideoQuality = () => {
@@ -634,8 +598,6 @@ export function useProfileScreenState(onNavigateTab: (tab: any) => void) {
     isSavingProfile,
     serverEnv,
     setServerEnv,
-    devModeUnlocked,
-    setDevModeUnlocked,
     devModalVisible,
     setDevModalVisible,
     currentPass,

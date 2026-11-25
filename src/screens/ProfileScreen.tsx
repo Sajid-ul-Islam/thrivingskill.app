@@ -193,7 +193,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           onClearCache={state.handleClearCache}
           serverEnvironment={state.serverEnv}
           onSwitchServerEnvironment={state.handleSwitchServerEnvironment}
-          isDevModeUnlocked={state.devModeUnlocked}
+          isDevModeUnlocked={Boolean(__DEV__)}
           onOpenDevOptions={() => state.setDevModalVisible(true)}
           onOpenCorporateModal={onOpenCorporateModal}
           onOpenHelpFaq={() => state.setHelpFaqModalVisible(true)}
@@ -239,8 +239,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             accessibilityLabel="App Version"
           >
             <Text style={[styles.versionTapText, { color: colors.textMuted }]}>
-              v1.4.0 • Thriving <Text style={{ color: '#E34234' }}>Skills</Text> App{' '}
-              {state.devModeUnlocked ? '• [DEV MODE]' : ''}
+              v1.4.0 • Thriving <Text style={{ color: '#E34234' }}>Skills</Text> App
+              {__DEV__ ? ' • [DEV]' : ''}
             </Text>
           </TouchableOpacity>
         </View>
