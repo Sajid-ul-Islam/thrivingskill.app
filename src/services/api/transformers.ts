@@ -3,6 +3,45 @@ import { resolveLessonVideoData } from '../../data/lessonVideosRegistry';
 import { getLiveReviewsForCourse } from '../../data/liveReviews';
 import { getSafeImageUri } from '../../utils/imageUtils';
 
+// Parse a real duration string such as "1 hours 9 minutes", "02 mins", or "12:30" into total minutes.
+export function parseDurationMinutes(duration?: string): number {
+  if (!duration || typeof duration !== 'string') return 0;
+  const trimmed = duration.trim().toLowerCase();
+  if (!trimmed || trimmed === 'lifetime' || trimmed === 'self-paced') return 0;
+
+  if (trimmed.includes(':')) {
+    const parts = trimmed.split(':').map((p) => parseInt(p, 10));
+    if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+      return parts[0] + parts[1] / 60;
+    }
+    if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+      return parts[0] * 60 + parts[1] + parts[2] / 60;
+    }
+  }
+
+  let totalMinutes = 0;
+  let matched = false;
+  const hourMatch = trimmed.match(/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i);
+  if (hourMatch) {
+    totalMinutes += parseFloat(hourMatch[1]) * 60;
+    matched = true;
+  }
+  const minMatch = trimmed.match(/(\d+(?:\.\d+)?)\s*(?:minutes?|mins?|m)\b/i);
+  if (minMatch) {
+    totalMinutes += parseFloat(minMatch[1]);
+    matched = true;
+  }
+  const secMatch = trimmed.match(/(\d+(?:\.\d+)?)\s*(?:seconds?|secs?|s)\b/i);
+  if (secMatch) {
+    totalMinutes += parseFloat(secMatch[1]) / 60;
+    matched = true;
+  }
+
+  if (matched) return totalMinutes;
+  const plainNum = parseFloat(trimmed);
+  return !isNaN(plainNum) ? plainNum : 0;
+}
+
 // Clean HTML tags and HTML entities from WordPress text
 export function cleanHtml(text?: string): string {
   if (!text) return '';
@@ -174,11 +213,10 @@ export function transformWpCourse(raw: any): Course {
         : null,
   };
 
-  // Modules / Sections
+  // Modules / Sections (strictly from real LearnPress data; never invent placeholder lessons or videos)
   let modules: CourseModule[] = [];
   let lecturesCount = 0;
   if (Array.isArray(raw.sections) && raw.sections.length > 0) {
-    let globalLessonIdx = 0;
     modules = raw.sections.map((sec: any, secIdx: number) => {
       const items = Array.isArray(sec.items) ? sec.items : [];
       lecturesCount += items.length;
@@ -187,97 +225,47 @@ export function transformWpCourse(raw: any): Course {
         title: cleanHtml(sec.title || `Module ${secIdx + 1}`),
         lessons: items.map((item: any, itemIdx: number) => {
           const isQuiz = item.type === 'lp_quiz' || item.format === 'quiz';
+          const realTitle = cleanHtml(
+            item.title || (isQuiz ? `Quiz: Module ${secIdx + 1}` : `Lesson ${itemIdx + 1}`)
+          );
+          const realDuration = cleanHtml(item.duration || '');
+          const realSummary = cleanHtml(item.summary || item.excerpt || '');
           const videoData = isQuiz
             ? {
-                duration: item.duration || '10:00',
+                duration: realDuration,
                 videoUrl: undefined,
                 videoIntro: undefined,
+                videoId: undefined,
                 videoType: 'none' as const,
-                summary: `Assessment quiz testing course competencies for ${cleanHtml(item.title || 'this module')}.`,
+                summary: realSummary,
               }
             : resolveLessonVideoData(
                 { id, title, category: catId },
-                { id: String(item.id), title: cleanHtml(item.title) },
-                globalLessonIdx++
+                {
+                  id: String(item.id || `les-${secIdx}-${itemIdx}`),
+                  title: realTitle,
+                  duration: realDuration,
+                  summary: realSummary,
+                  videoUrl: item.video_url || item.meta_data?.video_url,
+                  videoIntro: item.video_intro || item.meta_data?._lp_lesson_video_intro,
+                }
               );
           return {
             id: String(item.id || `les-${secIdx}-${itemIdx}`),
-            title: cleanHtml(
-              item.title || (isQuiz ? `Quiz: Module ${secIdx + 1}` : `Lesson ${itemIdx + 1}`)
-            ),
-            duration: item.duration || videoData.duration || (isQuiz ? '10:00' : '15:00'),
+            title: realTitle,
+            duration: videoData.duration,
             videoUrl: videoData.videoUrl,
             videoIntro: videoData.videoIntro,
+            videoId: videoData.videoId,
             videoType: videoData.videoType,
             isFreePreview: Boolean(item.preview) || (!isQuiz && itemIdx === 0),
-            summary:
-              item.summary ||
-              videoData.summary ||
-              `Interactive lesson covering ${item.title || 'course competencies'}.`,
+            summary: videoData.summary,
             type: isQuiz ? ('quiz' as const) : ('lesson' as const),
             quizId: isQuiz ? String(item.id) : undefined,
           };
         }),
       };
     });
-  } else {
-    const fallbackLessonsMod1 = [
-      { id: `les-${id}-1`, title: 'Course Orientation & Objectives', isFreePreview: true },
-      { id: `les-${id}-2`, title: 'Key Frameworks & Essential Concepts', isFreePreview: true },
-      { id: `les-${id}-3`, title: 'Practical Methodology & Use Cases', isFreePreview: false },
-    ].map((l, idx) => {
-      const v = resolveLessonVideoData({ id, title, category: catId }, l, idx);
-      return {
-        ...l,
-        duration: v.duration,
-        videoUrl: v.videoUrl,
-        videoIntro: v.videoIntro,
-        videoType: v.videoType,
-        summary: v.summary,
-      };
-    });
-
-    const fallbackLessonsMod2 = [
-      {
-        id: `les-${id}-4`,
-        title: 'Hands-on Execution & Real-world Workflows',
-        isFreePreview: false,
-      },
-      {
-        id: `les-${id}-5`,
-        title: 'Industry Best Practices & Troubleshooting',
-        isFreePreview: false,
-      },
-      {
-        id: `les-${id}-6`,
-        title: 'Final Project Evaluation & Certification',
-        isFreePreview: false,
-      },
-    ].map((l, idx) => {
-      const v = resolveLessonVideoData({ id, title, category: catId }, l, idx + 3);
-      return {
-        ...l,
-        duration: v.duration,
-        videoUrl: v.videoUrl,
-        videoIntro: v.videoIntro,
-        videoType: v.videoType,
-        summary: v.summary,
-      };
-    });
-
-    lecturesCount = 6;
-    modules = [
-      {
-        id: `mod-${id}-1`,
-        title: 'Foundations & Core Principles',
-        lessons: fallbackLessonsMod1,
-      },
-      {
-        id: `mod-${id}-2`,
-        title: 'Applied Skills & Implementation',
-        lessons: fallbackLessonsMod2,
-      },
-    ];
   }
 
   // Determine badge
@@ -299,6 +287,27 @@ export function transformWpCourse(raw: any): Course {
     courseStatus === 'enrolled' ||
     courseStatus === 'finished' ||
     courseStatus === 'purchased';
+
+  const moduleMinutes = modules.reduce(
+    (sum, m) => sum + m.lessons.reduce((lSum, l) => lSum + parseDurationMinutes(l.duration), 0),
+    0
+  );
+  const serverDurationMinutes = parseDurationMinutes(
+    raw.meta_data?.thim_course_duration || raw.duration
+  );
+  const computedHours =
+    serverDurationMinutes > 0
+      ? Math.round((serverDurationMinutes / 60) * 10) / 10
+      : moduleMinutes > 0
+        ? Math.round((moduleMinutes / 60) * 10) / 10
+        : 0;
+  const metaLessonCount = parseInt(String(raw.meta_data?._lp_offline_lesson_count || ''), 10);
+  const computedLecturesCount =
+    lecturesCount > 0
+      ? lecturesCount
+      : !isNaN(metaLessonCount) && metaLessonCount > 0
+        ? metaLessonCount
+        : 0;
 
   return {
     id,
@@ -326,11 +335,8 @@ export function transformWpCourse(raw: any): Course {
     originalPriceBdt: bdtOrigPrice,
     thumbnail,
     badge,
-    durationHours: Math.max(3, Math.round(lecturesCount * 0.4)),
-    lecturesCount: Math.max(
-      modules.reduce((acc, m) => acc + (m.lessons?.length || 0), 0),
-      6
-    ),
+    durationHours: computedHours,
+    lecturesCount: computedLecturesCount,
     certificateIncluded: true,
     language: 'Bangla & English',
     lastUpdated: raw.date_modified ? raw.date_modified.split('T')[0] : '2026-08',
@@ -427,8 +433,8 @@ export function transformCompanionCourse(raw: any): Course {
     originalPriceBdt: bdtOrigPrice,
     thumbnail,
     badge,
-    durationHours: 3.5,
-    lecturesCount: 8,
+    durationHours: Math.round((parseDurationMinutes(raw.duration) / 60) * 10) / 10,
+    lecturesCount: typeof raw.lectures_count === 'number' ? raw.lectures_count : 0,
     certificateIncluded: true,
     language: 'Bangla & English',
     lastUpdated: '2026-11',

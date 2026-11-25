@@ -218,29 +218,37 @@ export const CourseQuickPeekModal: React.FC<CourseQuickPeekModalProps> = ({
                   </>
                 )}
 
-                <View style={styles.metricItem}>
-                  <Ionicons name="time-outline" size={16} color={colors.primary} />
-                  <Text style={[styles.metricVal, { color: colors.text }]}>
-                    {course.durationHours ? `${course.durationHours}h` : '3.5h'}
-                  </Text>
-                  <Text style={[styles.metricLbl, { color: colors.textMuted }]}>
-                    {isBangla ? 'সময়কাল' : 'Duration'}
-                  </Text>
-                </View>
+                {course.durationHours > 0 && (
+                  <>
+                    <View style={styles.metricItem}>
+                      <Ionicons name="time-outline" size={16} color={colors.primary} />
+                      <Text style={[styles.metricVal, { color: colors.text }]}>
+                        {`${course.durationHours}h`}
+                      </Text>
+                      <Text style={[styles.metricLbl, { color: colors.textMuted }]}>
+                        {isBangla ? 'সময়কাল' : 'Duration'}
+                      </Text>
+                    </View>
 
-                <View style={[styles.metricDivider, { backgroundColor: colors.border }]} />
+                    <View style={[styles.metricDivider, { backgroundColor: colors.border }]} />
+                  </>
+                )}
 
-                <View style={styles.metricItem}>
-                  <Ionicons name="book-outline" size={16} color="#059669" />
-                  <Text style={[styles.metricVal, { color: colors.text }]}>
-                    {course.lecturesCount || 8}
-                  </Text>
-                  <Text style={[styles.metricLbl, { color: colors.textMuted }]}>
-                    {isBangla ? 'পাঠ' : 'Lectures'}
-                  </Text>
-                </View>
+                {course.lecturesCount > 0 && (
+                  <>
+                    <View style={styles.metricItem}>
+                      <Ionicons name="book-outline" size={16} color="#059669" />
+                      <Text style={[styles.metricVal, { color: colors.text }]}>
+                        {course.lecturesCount}
+                      </Text>
+                      <Text style={[styles.metricLbl, { color: colors.textMuted }]}>
+                        {isBangla ? 'পাঠ' : 'Lectures'}
+                      </Text>
+                    </View>
 
-                <View style={[styles.metricDivider, { backgroundColor: colors.border }]} />
+                    <View style={[styles.metricDivider, { backgroundColor: colors.border }]} />
+                  </>
+                )}
 
                 <View style={styles.metricItem}>
                   <Ionicons name="ribbon-outline" size={16} color="#E34234" />

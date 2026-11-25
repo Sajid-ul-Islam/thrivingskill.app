@@ -43,7 +43,7 @@ export class OfflineManager {
       courseId,
       courseTitle: courseTitle || 'Thriving Skills Professional Course',
       title: lesson.title,
-      duration: lesson.duration || '10 min',
+      duration: lesson.duration || '',
       summary:
         lesson.summary ||
         'Downloaded offline lesson content for flexible learning without internet.',

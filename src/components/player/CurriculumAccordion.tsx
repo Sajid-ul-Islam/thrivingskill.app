@@ -13,6 +13,7 @@ interface CurriculumAccordionProps {
   modules: CourseModule[];
   isEnrolled: boolean;
   isAdmin?: boolean;
+  isLoading?: boolean;
   activeLessonId?: string;
   onSelectLesson: (lesson: Lesson) => void;
 }
@@ -22,6 +23,7 @@ export const CurriculumAccordion: React.FC<CurriculumAccordionProps> = ({
   modules,
   isEnrolled,
   isAdmin = false,
+  isLoading = false,
   activeLessonId,
   onSelectLesson,
 }) => {
@@ -43,200 +45,233 @@ export const CurriculumAccordion: React.FC<CurriculumAccordionProps> = ({
 
   return (
     <View style={styles.container}>
-      {modules.map((mod, index) => {
-        const isExpanded = expandedModuleIds.includes(mod.id);
-        const moduleCompletedCount = mod.lessons.filter((l) =>
-          completedLessonIds.includes(l.id)
-        ).length;
+      {modules.length === 0 ? (
+        <View
+          style={[
+            styles.emptyCurriculumCard,
+            { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+          ]}
+        >
+          <Ionicons
+            name={isLoading ? 'sync-outline' : 'albums-outline'}
+            size={24}
+            color={colors.textMuted}
+          />
+          <Text style={[styles.emptyCurriculumText, { color: colors.textMuted }]}>
+            {isLoading
+              ? 'Loading course curriculum...'
+              : 'Curriculum lessons have not been published for this course yet.'}
+          </Text>
+        </View>
+      ) : (
+        modules.map((mod, index) => {
+          const isExpanded = expandedModuleIds.includes(mod.id);
+          const moduleCompletedCount = mod.lessons.filter((l) =>
+            completedLessonIds.includes(l.id)
+          ).length;
 
-        return (
-          <View
-            key={mod.id}
-            style={[
-              styles.moduleCard,
-              {
-                backgroundColor: colors.surfaceCard,
-                borderColor: colors.border,
-              },
-            ]}
-          >
-            <TouchableOpacity
-              style={styles.moduleHeader}
-              onPress={() => {
-                triggerHaptic('light');
-                toggleModule(mod.id);
-              }}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel={`${mod.title}, ${mod.lessons.length} lessons, ${moduleCompletedCount} completed, ${isExpanded ? 'expanded' : 'collapsed'}`}
-              accessibilityState={{ expanded: isExpanded }}
+          return (
+            <View
+              key={mod.id}
+              style={[
+                styles.moduleCard,
+                {
+                  backgroundColor: colors.surfaceCard,
+                  borderColor: colors.border,
+                },
+              ]}
             >
-              <View style={styles.moduleHeaderLeft}>
-                <View
-                  style={[
-                    styles.moduleNumberBadge,
-                    {
-                      backgroundColor:
-                        moduleCompletedCount === mod.lessons.length && mod.lessons.length > 0
-                          ? colors.primaryLight
-                          : colors.surfaceSubtle,
-                    },
-                  ]}
-                >
-                  {moduleCompletedCount === mod.lessons.length && mod.lessons.length > 0 ? (
-                    <Ionicons name="checkmark" size={14} color={colors.primary} />
-                  ) : (
-                    <Text style={[styles.moduleNumberText, { color: colors.text }]}>
-                      {index + 1}
+              <TouchableOpacity
+                style={styles.moduleHeader}
+                onPress={() => {
+                  triggerHaptic('light');
+                  toggleModule(mod.id);
+                }}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`${mod.title}, ${mod.lessons.length} lessons, ${moduleCompletedCount} completed, ${isExpanded ? 'expanded' : 'collapsed'}`}
+                accessibilityState={{ expanded: isExpanded }}
+              >
+                <View style={styles.moduleHeaderLeft}>
+                  <View
+                    style={[
+                      styles.moduleNumberBadge,
+                      {
+                        backgroundColor:
+                          moduleCompletedCount === mod.lessons.length && mod.lessons.length > 0
+                            ? colors.primaryLight
+                            : colors.surfaceSubtle,
+                      },
+                    ]}
+                  >
+                    {moduleCompletedCount === mod.lessons.length && mod.lessons.length > 0 ? (
+                      <Ionicons name="checkmark" size={14} color={colors.primary} />
+                    ) : (
+                      <Text style={[styles.moduleNumberText, { color: colors.text }]}>
+                        {index + 1}
+                      </Text>
+                    )}
+                  </View>
+
+                  <View style={styles.moduleTitleCol}>
+                    <Text style={[styles.moduleTitle, { color: colors.text }]}>{mod.title}</Text>
+                    <Text style={[styles.moduleMeta, { color: colors.textMuted }]}>
+                      {mod.lessons.length} lessons • {moduleCompletedCount}/{mod.lessons.length}{' '}
+                      completed
                     </Text>
-                  )}
+                  </View>
                 </View>
 
-                <View style={styles.moduleTitleCol}>
-                  <Text style={[styles.moduleTitle, { color: colors.text }]}>{mod.title}</Text>
-                  <Text style={[styles.moduleMeta, { color: colors.textMuted }]}>
-                    {mod.lessons.length} lessons • {moduleCompletedCount}/{mod.lessons.length}{' '}
-                    completed
-                  </Text>
-                </View>
-              </View>
+                <Ionicons
+                  name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                  size={18}
+                  color={colors.textMuted}
+                />
+              </TouchableOpacity>
 
-              <Ionicons
-                name={isExpanded ? 'chevron-up' : 'chevron-down'}
-                size={18}
-                color={colors.textMuted}
-              />
-            </TouchableOpacity>
+              {isExpanded && (
+                <View style={[styles.lessonsList, { borderTopColor: colors.border }]}>
+                  {mod.lessons.map((lesson) => {
+                    const isCompleted = completedLessonIds.includes(lesson.id);
+                    const isActive = activeLessonId === lesson.id;
+                    const isAccessible = isAdmin || isEnrolled || Boolean(lesson.isFreePreview);
+                    const isQuizItem = lesson.type === 'quiz' || Boolean(lesson.quiz);
 
-            {isExpanded && (
-              <View style={[styles.lessonsList, { borderTopColor: colors.border }]}>
-                {mod.lessons.map((lesson) => {
-                  const isCompleted = completedLessonIds.includes(lesson.id);
-                  const isActive = activeLessonId === lesson.id;
-                  const isAccessible = isAdmin || isEnrolled || Boolean(lesson.isFreePreview);
-                  const isQuizItem = lesson.type === 'quiz' || Boolean(lesson.quiz);
-
-                  return (
-                    <TouchableOpacity
-                      key={lesson.id}
-                      style={[
-                        styles.lessonRow,
-                        isActive && { backgroundColor: colors.surfaceSubtle },
-                        { borderBottomColor: colors.borderSubtle },
-                      ]}
-                      onPress={() => {
-                        if (isAccessible) {
-                          triggerHaptic('light');
-                          onSelectLesson(lesson);
-                        }
-                      }}
-                      disabled={!isAccessible}
-                      activeOpacity={0.7}
-                      accessibilityRole="button"
-                      accessibilityLabel={`${lesson.title}, ${lesson.duration || ''}, ${isCompleted ? 'completed' : isActive ? 'current' : isAccessible ? 'available' : 'locked'}`}
-                      accessibilityState={{ selected: isActive, disabled: !isAccessible }}
-                    >
-                      <View style={styles.lessonLeft}>
-                        <View
-                          style={[
-                            styles.lessonStatusIcon,
-                            {
-                              backgroundColor: isCompleted
-                                ? colors.primaryLight
-                                : isActive
-                                  ? colors.primary
-                                  : colors.surfaceSubtle,
-                            },
-                          ]}
-                        >
-                          {isCompleted ? (
-                            <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
-                          ) : isActive ? (
-                            <Ionicons
-                              name={isQuizItem ? 'help-circle' : 'play'}
-                              size={isQuizItem ? 14 : 12}
-                              color={colors.onPrimary}
-                            />
-                          ) : isAccessible ? (
-                            <Ionicons
-                              name={isQuizItem ? 'help-circle-outline' : 'play-outline'}
-                              size={14}
-                              color={isQuizItem ? colors.secondary : colors.textMuted}
-                            />
-                          ) : (
-                            <Ionicons name="lock-closed" size={14} color={colors.textMuted} />
-                          )}
-                        </View>
-
-                        <View style={styles.lessonTextCol}>
-                          <Text
+                    return (
+                      <TouchableOpacity
+                        key={lesson.id}
+                        style={[
+                          styles.lessonRow,
+                          isActive && { backgroundColor: colors.surfaceSubtle },
+                          { borderBottomColor: colors.borderSubtle },
+                        ]}
+                        onPress={() => {
+                          if (isAccessible) {
+                            triggerHaptic('light');
+                            onSelectLesson(lesson);
+                          }
+                        }}
+                        disabled={!isAccessible}
+                        activeOpacity={0.7}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${lesson.title}, ${lesson.duration || ''}, ${isCompleted ? 'completed' : isActive ? 'current' : isAccessible ? 'available' : 'locked'}`}
+                        accessibilityState={{ selected: isActive, disabled: !isAccessible }}
+                      >
+                        <View style={styles.lessonLeft}>
+                          <View
                             style={[
-                              styles.lessonTitle,
+                              styles.lessonStatusIcon,
                               {
-                                color: isActive
-                                  ? colors.primary
-                                  : isAccessible
-                                    ? colors.text
-                                    : colors.textMuted,
-                                fontWeight: isActive ? '700' : '500',
+                                backgroundColor: isCompleted
+                                  ? colors.primaryLight
+                                  : isActive
+                                    ? colors.primary
+                                    : colors.surfaceSubtle,
                               },
                             ]}
-                            numberOfLines={1}
                           >
-                            {lesson.title}
-                          </Text>
-                          <View style={styles.lessonDetailsRow}>
-                            <Ionicons name="time-outline" size={12} color={colors.textLight} />
-                            <Text style={[styles.lessonDuration, { color: colors.textLight }]}>
-                              {lesson.duration}
-                            </Text>
-                            {isQuizItem && (
-                              <View style={styles.quizTag}>
-                                <Ionicons
-                                  name="help-circle-outline"
-                                  size={12}
-                                  color={colors.secondary}
-                                />
-                                <Text style={[styles.quizTagText, { color: colors.secondary }]}>
-                                  Quiz
-                                </Text>
-                              </View>
+                            {isCompleted ? (
+                              <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
+                            ) : isActive ? (
+                              <Ionicons
+                                name={isQuizItem ? 'help-circle' : 'play'}
+                                size={isQuizItem ? 14 : 12}
+                                color={colors.onPrimary}
+                              />
+                            ) : isAccessible ? (
+                              <Ionicons
+                                name={isQuizItem ? 'help-circle-outline' : 'play-outline'}
+                                size={14}
+                                color={isQuizItem ? colors.secondary : colors.textMuted}
+                              />
+                            ) : (
+                              <Ionicons name="lock-closed" size={14} color={colors.textMuted} />
                             )}
                           </View>
-                        </View>
-                      </View>
 
-                      {lesson.isFreePreview && !isEnrolled && !isAdmin && (
-                        <View
-                          style={[styles.previewBadge, { backgroundColor: colors.secondaryLight }]}
-                        >
-                          <Text style={[styles.previewText, { color: colors.secondary }]}>
-                            Preview
-                          </Text>
+                          <View style={styles.lessonTextCol}>
+                            <Text
+                              style={[
+                                styles.lessonTitle,
+                                {
+                                  color: isActive
+                                    ? colors.primary
+                                    : isAccessible
+                                      ? colors.text
+                                      : colors.textMuted,
+                                  fontWeight: isActive ? '700' : '500',
+                                },
+                              ]}
+                              numberOfLines={1}
+                            >
+                              {lesson.title}
+                            </Text>
+                            <View style={styles.lessonDetailsRow}>
+                              {Boolean(lesson.duration) && (
+                                <>
+                                  <Ionicons
+                                    name="time-outline"
+                                    size={12}
+                                    color={colors.textLight}
+                                  />
+                                  <Text
+                                    style={[styles.lessonDuration, { color: colors.textLight }]}
+                                  >
+                                    {lesson.duration}
+                                  </Text>
+                                </>
+                              )}
+                              {isQuizItem && (
+                                <View style={styles.quizTag}>
+                                  <Ionicons
+                                    name="help-circle-outline"
+                                    size={12}
+                                    color={colors.secondary}
+                                  />
+                                  <Text style={[styles.quizTagText, { color: colors.secondary }]}>
+                                    Quiz
+                                  </Text>
+                                </View>
+                              )}
+                            </View>
+                          </View>
                         </View>
-                      )}
-                      {isAdmin && !isEnrolled && (
-                        <View
-                          style={[
-                            styles.previewBadge,
-                            { backgroundColor: 'rgba(227, 66, 52, 0.12)' },
-                          ]}
-                        >
-                          <Text
-                            style={[styles.previewText, { color: '#E34234', fontWeight: '700' }]}
+
+                        {lesson.isFreePreview && !isEnrolled && !isAdmin && (
+                          <View
+                            style={[
+                              styles.previewBadge,
+                              { backgroundColor: colors.secondaryLight },
+                            ]}
                           >
-                            Master Access
-                          </Text>
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            )}
-          </View>
-        );
-      })}
+                            <Text style={[styles.previewText, { color: colors.secondary }]}>
+                              Preview
+                            </Text>
+                          </View>
+                        )}
+                        {isAdmin && !isEnrolled && (
+                          <View
+                            style={[
+                              styles.previewBadge,
+                              { backgroundColor: 'rgba(227, 66, 52, 0.12)' },
+                            ]}
+                          >
+                            <Text
+                              style={[styles.previewText, { color: '#E34234', fontWeight: '700' }]}
+                            >
+                              Master Access
+                            </Text>
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              )}
+            </View>
+          );
+        })
+      )}
     </View>
   );
 };
@@ -244,6 +279,18 @@ export const CurriculumAccordion: React.FC<CurriculumAccordionProps> = ({
 const styles = StyleSheet.create({
   container: {
     gap: 12,
+  },
+  emptyCurriculumCard: {
+    padding: 20,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  emptyCurriculumText: {
+    ...typography.caption,
+    textAlign: 'center',
   },
   moduleCard: {
     borderRadius: 14,

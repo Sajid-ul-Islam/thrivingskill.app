@@ -5,6 +5,11 @@ import { WebView } from 'react-native-webview';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { triggerHaptic } from '../../utils/haptics';
+import { MIN_TOUCH_TARGET } from '../../theme/typography';
+import {
+  VIDEO_COMING_SOON_MESSAGE,
+  VIDEO_COMING_SOON_MESSAGE_BN,
+} from '../../data/lessonVideosRegistry';
 import { NativeMedia3Player, NativeMedia3PlayerRef } from './NativeMedia3Player';
 import { VideoPlayerGestureOverlay } from './VideoPlayerGestureOverlay';
 import { LessonCommuteCard } from './LessonCommuteCard';
@@ -15,6 +20,8 @@ interface LessonVideoContainerProps {
   currentLesson: Lesson;
   moduleTitle?: string;
   canPlayVideo: boolean;
+  hasVideo?: boolean;
+  videoComingSoonMessage?: string;
   isLessonCompleted: boolean;
   isCommuteMode: boolean;
   isPlaying: boolean;
@@ -66,6 +73,8 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
   currentLesson,
   moduleTitle,
   canPlayVideo,
+  hasVideo,
+  videoComingSoonMessage,
   isLessonCompleted,
   isCommuteMode,
   isPlaying,
@@ -113,6 +122,7 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
+  const effectiveHasVideo = hasVideo ?? Boolean(activeVideoUrl);
 
   return (
     <View
@@ -223,26 +233,13 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
             </Text>
           </TouchableOpacity>
         </View>
-      ) : isCommuteMode ? (
-        /* Interactive Commute Audio Mode */
-        <LessonCommuteCard
-          currentLesson={currentLesson}
-          course={course}
-          moduleTitle={moduleTitle}
-          isPlaying={isPlaying}
-          currentPositionSeconds={currentPositionSeconds}
-          totalLessonSeconds={totalLessonSeconds}
-          playbackSpeed={playbackSpeed}
-          hasPrevLesson={hasPrevLesson}
-          hasNextLesson={hasNextLesson}
-          onTogglePlay={onTogglePlay}
-          onRewind={onRewind}
-          onForward={onForward}
-          onPrevLesson={onPrevLesson}
-          onNextLesson={onNextLesson}
-          onCycleSpeed={onCycleSpeed}
-          formatSeconds={formatSeconds}
-        />
+      ) : isLoadingVideo ? (
+        <View style={styles.loadingVideoOverlay}>
+          <ActivityIndicator size="large" color="#E34234" />
+          <Text style={styles.loadingVideoText}>
+            {isBangla ? 'লেকচার ভিডিও লোড হচ্ছে...' : 'Loading lecture video...'}
+          </Text>
+        </View>
       ) : zoomMeetingUrl ? (
         /* LIVE COHORT MASTERCLASS: Direct Zoom Session Launcher */
         <View
@@ -304,15 +301,70 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
             </Text>
           </TouchableOpacity>
         </View>
+      ) : !effectiveHasVideo ? (
+        /* FAIL-CLOSED NO-VIDEO STATE: Shown whenever a lesson has no verified video */
+        <View
+          testID="video-coming-soon-card"
+          style={[
+            styles.comingSoonCard,
+            { backgroundColor: isDark ? colors.surfaceCard : '#102F53' },
+          ]}
+        >
+          <View style={styles.comingSoonIconBg}>
+            <Ionicons name="videocam-off-outline" size={28} color="#FFB606" />
+          </View>
+          <Text style={styles.comingSoonTitle}>
+            {isBangla
+              ? VIDEO_COMING_SOON_MESSAGE_BN
+              : videoComingSoonMessage || VIDEO_COMING_SOON_MESSAGE}
+          </Text>
+          <Text style={styles.comingSoonSub} numberOfLines={2}>
+            {isBangla
+              ? 'এই লেসনের ভিডিও এখনো যুক্ত করা হয়নি। নিচের পাঠ বিবরণ দেখুন অথবা পরবর্তী লেসনে যান।'
+              : 'This lesson does not have a published video yet. Review the lesson notes below or continue to the next lesson.'}
+          </Text>
+          {hasNextLesson && (
+            <TouchableOpacity
+              style={styles.comingSoonNextBtn}
+              onPress={() => {
+                triggerHaptic('light');
+                onNextLesson();
+              }}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel={isBangla ? 'পরবর্তী লেসনে যান' : 'Continue to next lesson'}
+            >
+              <Text style={styles.comingSoonNextBtnText}>
+                {isBangla ? 'পরবর্তী লেসন' : 'Next Lesson'}
+              </Text>
+              <Ionicons name="arrow-forward" size={15} color="#102F53" />
+            </TouchableOpacity>
+          )}
+        </View>
+      ) : isCommuteMode ? (
+        /* Interactive Commute Audio Mode */
+        <LessonCommuteCard
+          currentLesson={currentLesson}
+          course={course}
+          moduleTitle={moduleTitle}
+          isPlaying={isPlaying}
+          currentPositionSeconds={currentPositionSeconds}
+          totalLessonSeconds={totalLessonSeconds}
+          playbackSpeed={playbackSpeed}
+          hasPrevLesson={hasPrevLesson}
+          hasNextLesson={hasNextLesson}
+          onTogglePlay={onTogglePlay}
+          onRewind={onRewind}
+          onForward={onForward}
+          onPrevLesson={onPrevLesson}
+          onNextLesson={onNextLesson}
+          onCycleSpeed={onCycleSpeed}
+          formatSeconds={formatSeconds}
+        />
       ) : (
         /* ACTUAL REAL VIDEO PLAYER: WebView with Android Media3 / ExoPlayer & Gesture Overlay */
         <View style={styles.playerContainer}>
-          {isLoadingVideo ? (
-            <View style={styles.loadingVideoOverlay}>
-              <ActivityIndicator size="large" color="#E34234" />
-              <Text style={styles.loadingVideoText}>Loading video stream (Media3)...</Text>
-            </View>
-          ) : isDirectStream && activeVideoUrl ? (
+          {isDirectStream && activeVideoUrl ? (
             <NativeMedia3Player
               ref={nativePlayerRef}
               sourceUrl={activeVideoUrl}
@@ -785,6 +837,51 @@ const styles = StyleSheet.create({
   unlockPillText: {
     color: '#FFFFFF',
     fontSize: 12,
+    fontWeight: '800',
+  },
+  comingSoonCard: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  comingSoonIconBg: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255, 182, 6, 0.16)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  comingSoonTitle: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '800',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  comingSoonSub: {
+    color: 'rgba(255,255,255,0.78)',
+    fontSize: 12,
+    textAlign: 'center',
+    paddingHorizontal: 14,
+    lineHeight: 17,
+    marginBottom: 12,
+  },
+  comingSoonNextBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#FFB606',
+    paddingHorizontal: 16,
+    minHeight: MIN_TOUCH_TARGET,
+    borderRadius: 8,
+  },
+  comingSoonNextBtnText: {
+    color: '#102F53',
+    fontSize: 12.5,
     fontWeight: '800',
   },
   autoplayCountdownOverlay: {

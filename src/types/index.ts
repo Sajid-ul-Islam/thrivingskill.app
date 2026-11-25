@@ -83,6 +83,7 @@ export interface Lesson {
   duration: string;
   videoUrl?: string;
   videoIntro?: string;
+  videoId?: string;
   videoType?: 'vimeo' | 'youtube' | 'mp4' | 'iframe' | 'none';
   isFreePreview?: boolean;
   summary?: string;

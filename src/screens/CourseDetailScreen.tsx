@@ -494,6 +494,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                   modules={course.modules}
                   isEnrolled={isEnrolled}
                   isAdmin={isPrivileged}
+                  isLoading={loadingDetail}
                   onSelectLesson={handleSelectLesson}
                 />
               </View>

@@ -767,12 +767,13 @@ class TSMB_Rest_API
 
         $parsed_video_url = '';
         $video_type       = 'none';
+        $video_id         = null;
 
         if (!empty($video_url)) {
-            $parsed_video_url = (string) $video_url;
+            $parsed_video_url = html_entity_decode((string) $video_url, ENT_QUOTES, 'UTF-8');
         } elseif (!empty($video_intro)) {
             if (preg_match('/src=["\']([^"\']+)["\']/i', (string) $video_intro, $matches)) {
-                $parsed_video_url = $matches[1];
+                $parsed_video_url = html_entity_decode($matches[1], ENT_QUOTES, 'UTF-8');
             } elseif (filter_var($video_intro, FILTER_VALIDATE_URL)) {
                 $parsed_video_url = (string) $video_intro;
             }
@@ -780,9 +781,19 @@ class TSMB_Rest_API
 
         if (!empty($parsed_video_url)) {
             if (strpos($parsed_video_url, 'vimeo.com') !== false) {
-                $video_type = 'vimeo';
+                if (preg_match('/(?:player\.vimeo\.com\/video\/|vimeo\.com\/(?:channels\/[^\/]+\/|groups\/[^\/]+\/videos\/|video\/)?)(\d+)/i', $parsed_video_url, $id_matches)) {
+                    $video_type = 'vimeo';
+                    $video_id   = $id_matches[1];
+                } else {
+                    $parsed_video_url = '';
+                }
             } elseif (strpos($parsed_video_url, 'youtube.com') !== false || strpos($parsed_video_url, 'youtu.be') !== false) {
-                $video_type = 'youtube';
+                if (preg_match('/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:embed\/|v\/|shorts\/|live\/|watch\?(?:[^#]*&)?v=))([\w-]{11})/i', $parsed_video_url, $yt_matches)) {
+                    $video_type = 'youtube';
+                    $video_id   = $yt_matches[1];
+                } else {
+                    $parsed_video_url = '';
+                }
             } elseif (preg_match('/\.(mp4|m3u8|webm)($|\?)/i', $parsed_video_url)) {
                 $video_type = 'mp4';
             } else {
@@ -790,14 +801,18 @@ class TSMB_Rest_API
             }
         }
 
+        $raw_duration = get_post_meta($lesson_id, '_lp_duration', true);
+
         return rest_ensure_response([
             'id'          => $lesson_id,
             'title'       => wp_strip_all_tags($post->post_title),
             'content'     => wp_strip_all_tags($post->post_content),
+            'summary'     => wp_strip_all_tags($post->post_excerpt ?: ''),
             'raw_content' => $post->post_content,
             'video_url'   => $parsed_video_url ? set_url_scheme($parsed_video_url, 'https') : null,
+            'video_id'    => $video_id,
             'video_type'  => $video_type,
-            'duration'    => get_post_meta($lesson_id, '_lp_duration', true) ?: '10m',
+            'duration'    => !empty($raw_duration) ? wp_strip_all_tags((string) $raw_duration) : '',
         ]);
     }
 

@@ -198,9 +198,11 @@ export const LessonPlaylistTab: React.FC<LessonPlaylistTabProps> = ({
                     </View>
                   )}
                 </View>
-                <Text style={[styles.playlistDuration, { color: colors.textLight }]}>
-                  {item.lesson.duration}
-                </Text>
+                {Boolean(item.lesson.duration) && (
+                  <Text style={[styles.playlistDuration, { color: colors.textLight }]}>
+                    {item.lesson.duration}
+                  </Text>
+                )}
               </View>
 
               {item.lesson.isFreePreview && !isEnrolled && !isAdmin && (

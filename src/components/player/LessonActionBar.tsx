@@ -34,7 +34,9 @@ export const LessonActionBar: React.FC<LessonActionBarProps> = ({
           {currentLesson.title}
         </Text>
         <Text style={[styles.lessonInstructor, { color: colors.textMuted }]}>
-          {course.instructor.name} • {currentLesson.duration}
+          {currentLesson.duration
+            ? `${course.instructor.name} • ${currentLesson.duration}`
+            : course.instructor.name}
         </Text>
       </View>
 

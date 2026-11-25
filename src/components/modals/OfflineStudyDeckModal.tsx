@@ -109,7 +109,9 @@ export const OfflineStudyDeckModal: React.FC<OfflineStudyDeckModalProps> = ({
               </Text>
               <Text style={[styles.headerSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
                 {selectedLesson
-                  ? `${selectedLesson.courseTitle || 'Course Lesson'} • ${selectedLesson.duration}`
+                  ? selectedLesson.duration
+                    ? `${selectedLesson.courseTitle || 'Course Lesson'} • ${selectedLesson.duration}`
+                    : selectedLesson.courseTitle || 'Course Lesson'
                   : 'Distraction-free offline lecture summaries & study guides'}
               </Text>
             </View>

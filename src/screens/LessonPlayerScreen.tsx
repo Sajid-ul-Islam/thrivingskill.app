@@ -194,8 +194,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   // Fetch actual lesson details and video metadata from backend only when authorized
   useEffect(() => {
     let isMounted = true;
+    setLessonDetail(null);
     if (!currentLesson?.id || !canPlayVideo) {
-      setLessonDetail(null);
       setIsLoadingVideo(false);
       return;
     }
@@ -236,19 +236,64 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   }, []);
 
   const parseDurationToSeconds = (dur?: string): number => {
-    if (!dur) return 600;
-    if (dur.includes(':')) {
-      const parts = dur.split(':').map((p) => parseInt(p, 10));
+    if (!dur) return 0;
+    const trimmed = dur.trim().toLowerCase();
+    if (!trimmed) return 0;
+    if (trimmed.includes(':')) {
+      const parts = trimmed.split(':').map((p) => parseInt(p, 10));
       if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1]))
         return parts[0] * 60 + parts[1];
       if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2]))
         return parts[0] * 3600 + parts[1] * 60 + parts[2];
     }
-    const mins = parseInt(dur, 10);
-    return !isNaN(mins) ? mins * 60 : 600;
+    let totalSeconds = 0;
+    let matched = false;
+    const hrMatch = trimmed.match(/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i);
+    if (hrMatch) {
+      totalSeconds += parseFloat(hrMatch[1]) * 3600;
+      matched = true;
+    }
+    const minMatch = trimmed.match(/(\d+(?:\.\d+)?)\s*(?:minutes?|mins?|m)\b/i);
+    if (minMatch) {
+      totalSeconds += parseFloat(minMatch[1]) * 60;
+      matched = true;
+    }
+    const secMatch = trimmed.match(/(\d+(?:\.\d+)?)\s*(?:seconds?|secs?|s)\b/i);
+    if (secMatch) {
+      totalSeconds += parseFloat(secMatch[1]);
+      matched = true;
+    }
+    if (matched) return Math.round(totalSeconds);
+    const mins = parseInt(trimmed, 10);
+    return !isNaN(mins) ? mins * 60 : 0;
   };
 
-  const totalLessonSeconds = parseDurationToSeconds(currentLesson?.duration);
+  const activeLessonDetail =
+    lessonDetail && currentLesson && String(lessonDetail.id) === String(currentLesson.id)
+      ? lessonDetail
+      : null;
+
+  const totalLessonSeconds = parseDurationToSeconds(
+    activeLessonDetail?.duration || currentLesson?.duration
+  );
+
+  const mergedLessonForVideo = currentLesson
+    ? {
+        id: currentLesson.id,
+        title: activeLessonDetail?.name || currentLesson.title,
+        duration: activeLessonDetail?.duration || currentLesson.duration,
+        summary:
+          activeLessonDetail?.summary || activeLessonDetail?.content || currentLesson.summary,
+        videoUrl: activeLessonDetail?.videoUrl || currentLesson.videoUrl,
+        videoIntro: activeLessonDetail?.videoIntro || currentLesson.videoIntro,
+      }
+    : undefined;
+
+  const resolvedLessonVideo = resolveLessonVideoData(
+    course || { id: courseId, title: 'Course' },
+    mergedLessonForVideo
+  );
+  const hasPlayableVideo = resolvedLessonVideo.hasVideo && Boolean(resolvedLessonVideo.videoUrl);
 
   useEffect(() => {
     if (currentLesson?.id) {
@@ -296,7 +341,15 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
 
   // Video watch time tracking interval & continuous video auto-play
   useEffect(() => {
-    if (!isPlaying || !currentLesson || !course || autoplayCountdown !== null || !canPlayVideo)
+    if (
+      !isPlaying ||
+      !currentLesson ||
+      !course ||
+      autoplayCountdown !== null ||
+      !canPlayVideo ||
+      isLoadingVideo ||
+      !hasPlayableVideo
+    )
       return;
 
     if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
@@ -360,6 +413,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     currentLessonIndex,
     allLessons.length,
     canPlayVideo,
+    isLoadingVideo,
+    hasPlayableVideo,
   ]);
 
   // System lifecycle management for Background Audio & PiP
@@ -417,7 +472,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   };
 
   const handleSeekTo = (sec: number) => {
-    const next = Math.max(0, Math.min(sec, totalLessonSeconds));
+    const next =
+      totalLessonSeconds > 0 ? Math.max(0, Math.min(sec, totalLessonSeconds)) : Math.max(0, sec);
     currentPosRef.current = next;
     setCurrentPositionSeconds(next);
     if (nativePlayerRef.current) {
@@ -675,31 +731,27 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     (allLessons.length > 0 &&
       allLessons.every((item) => progress?.completedLessonIds.includes(item.lesson.id)));
 
-  // Fallback authentic video from Thriving Skills Lesson Video Registry
-  const fallbackLessonVideo = resolveLessonVideoData(
-    course || { id: courseId, title: 'Course' },
-    currentLesson,
-    currentLessonIndex >= 0 ? currentLessonIndex : 0
-  );
+  const displayLesson: Lesson = {
+    ...currentLesson,
+    title: resolvedLessonVideo.title || currentLesson.title,
+    duration: resolvedLessonVideo.duration || currentLesson.duration,
+    summary: resolvedLessonVideo.summary || currentLesson.summary,
+    videoUrl: resolvedLessonVideo.videoUrl,
+    videoIntro: resolvedLessonVideo.videoIntro,
+    videoId: resolvedLessonVideo.videoId,
+    videoType: resolvedLessonVideo.videoType,
+  };
 
-  const activeVideoIntro = lessonDetail?.videoIntro || currentLesson?.videoIntro;
-  const rawUrl = lessonDetail?.videoUrl || currentLesson?.videoUrl;
-  const activeVideoUrl =
-    rawUrl ||
-    (activeVideoIntro &&
-    !activeVideoIntro.includes('<iframe') &&
-    (activeVideoIntro.startsWith('http') ||
-      activeVideoIntro.includes('vimeo') ||
-      activeVideoIntro.includes('youtu'))
-      ? activeVideoIntro.trim()
-      : undefined) ||
-    fallbackLessonVideo.videoUrl;
+  const activeVideoIntro = resolvedLessonVideo.videoIntro;
+  const activeVideoUrl = resolvedLessonVideo.videoUrl;
+  const resolvedVideoUrl = activeVideoUrl;
 
-  const resolvedVideoUrl = activeVideoUrl || fallbackLessonVideo.videoUrl;
-
-  const rawContent = lessonDetail?.content || currentLesson?.summary || '';
+  const rawContent = activeLessonDetail?.content || currentLesson?.summary || '';
   const zoomMatch =
-    (activeVideoIntro && activeVideoIntro.match(/https?:\/\/[^\s"'<>]*zoom\.us\/[^\s"'<>]*/i)) ||
+    (activeLessonDetail?.videoIntro &&
+      activeLessonDetail.videoIntro.match(/https?:\/\/[^\s"'<>]*zoom\.us\/[^\s"'<>]*/i)) ||
+    (currentLesson?.videoIntro &&
+      currentLesson.videoIntro.match(/https?:\/\/[^\s"'<>]*zoom\.us\/[^\s"'<>]*/i)) ||
     (activeVideoUrl && activeVideoUrl.match(/https?:\/\/[^\s"'<>]*zoom\.us\/[^\s"'<>]*/i)) ||
     (rawContent && rawContent.match(/https?:\/\/[^\s"'<>]*zoom\.us\/[^\s"'<>]*/i));
   const zoomMeetingUrl = zoomMatch ? zoomMatch[0].replace(/&amp;/g, '&') : null;
@@ -733,11 +785,13 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         if (!activeVideoUrl.includes('player.vimeo.com/video/')) {
           const vMatch = activeVideoUrl.match(/vimeo\.com\/(\d+)/);
           const vId = vMatch ? vMatch[1] : '';
-          vSrc = `https://player.vimeo.com/video/${vId}`;
+          vSrc = vId ? `https://player.vimeo.com/video/${vId}` : '';
         }
-        const joinChar = vSrc.includes('?') ? '&' : '?';
-        const vUrlWithParams = `${vSrc}${joinChar}autoplay=1&controls=0&title=0&byline=0&portrait=0&dnt=1`;
-        embedMarkup = `<iframe src="${vUrlWithParams}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
+        if (vSrc) {
+          const joinChar = vSrc.includes('?') ? '&' : '?';
+          const vUrlWithParams = `${vSrc}${joinChar}autoplay=1&controls=0&title=0&byline=0&portrait=0&dnt=1`;
+          embedMarkup = `<iframe src="${vUrlWithParams}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
+        }
       } else if (activeVideoUrl.includes('youtube.com') || activeVideoUrl.includes('youtu.be')) {
         let ytId = '';
         const yMatch = activeVideoUrl.match(
@@ -760,7 +814,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         }
       }
     } else {
-      embedMarkup = `<div style="color:#FFF;font-family:system-ui,sans-serif;text-align:center;padding:40px 20px;"><div style="font-size:32px;margin-bottom:8px;">▶️</div><div>Loading lecture media stream...</div></div>`;
+      embedMarkup = `<div style="color:#FFF;font-family:system-ui,sans-serif;text-align:center;padding:40px 20px;"><div style="font-size:28px;margin-bottom:8px;">🎬</div><div>Video coming soon</div></div>`;
     }
 
     return `<!DOCTYPE html>
@@ -1013,9 +1067,11 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
       >
         <LessonVideoContainer
           course={course}
-          currentLesson={currentLesson}
+          currentLesson={displayLesson}
           moduleTitle={currentItem?.moduleTitle}
           canPlayVideo={canPlayVideo}
+          hasVideo={hasPlayableVideo}
+          videoComingSoonMessage={resolvedLessonVideo.comingSoonMessage}
           isLessonCompleted={isLessonCompleted}
           isCommuteMode={isCommuteMode}
           isPlaying={isPlaying}
@@ -1029,7 +1085,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
           activeVideoUrl={activeVideoUrl}
           resolvedVideoUrl={resolvedVideoUrl}
           zoomMeetingUrl={zoomMeetingUrl}
-          videoHtml={buildVideoHtml()}
+          videoHtml={hasPlayableVideo ? buildVideoHtml() : ''}
           windowDimensions={windowDimensions}
           currentPositionSeconds={currentPositionSeconds}
           totalLessonSeconds={totalLessonSeconds}
@@ -1302,7 +1358,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
             <>
               {/* Decomposed Lesson Action Bar with SkillBot AI Tutor trigger */}
               <LessonActionBar
-                currentLesson={currentLesson}
+                currentLesson={displayLesson}
                 course={course}
                 isLessonCompleted={isLessonCompleted}
                 onOpenFlashcards={() => {
@@ -1412,9 +1468,9 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                 >
                   <LessonTranscriptTab
                     currentPositionSeconds={currentPositionSeconds}
-                    lessonTitle={currentLesson.title}
+                    lessonTitle={displayLesson.title}
                     instructorName={course.instructor.name}
-                    lessonSummary={lessonDetail?.content || currentLesson.summary}
+                    lessonSummary={displayLesson.summary}
                     durationSeconds={totalLessonSeconds}
                     onSeekTo={handleSeekTo}
                   />
@@ -1474,9 +1530,9 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
           courseTitle: course.title,
           courseCategory: course.category,
           moduleTitle: currentItem?.moduleTitle || '',
-          lessonId: currentLesson.id,
-          lessonTitle: currentLesson.title,
-          lessonSummary: lessonDetail?.content || currentLesson.summary,
+          lessonId: displayLesson.id,
+          lessonTitle: displayLesson.title,
+          lessonSummary: displayLesson.summary,
           instructorName: course.instructor.name,
           currentTimestamp: formatSeconds(currentPositionSeconds),
         }}

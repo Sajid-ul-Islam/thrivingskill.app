@@ -2,21 +2,25 @@ import { HttpClient } from './httpClient';
 import { Endpoints } from './endpoints';
 import { CacheManager } from '../cache/cacheManager';
 import { cleanHtml } from './transformers';
+import { LessonVideoType, resolveLessonVideoData } from '../../data/lessonVideosRegistry';
 
 export interface LessonDetail {
   id: number | string;
   name: string;
   content: string;
+  summary?: string;
   videoUrl?: string;
   videoIntro?: string;
-  videoType?: 'vimeo' | 'youtube' | 'mp4' | 'iframe' | 'none';
+  videoId?: string;
+  videoType?: LessonVideoType;
   duration?: string;
   completed?: boolean;
 }
 
 export class LessonsService {
   /**
-   * Fetch lesson content and metadata including embedded video details
+   * Fetch lesson content and metadata including verified video details from WordPress/LearnPress.
+   * Fails closed (videoType: 'none', videoUrl: undefined) when no video is assigned.
    */
   static async getLessonDetail(lessonId: string | number): Promise<LessonDetail> {
     const cacheKey = `lesson_detail_${lessonId}`;
@@ -28,15 +32,30 @@ export class LessonsService {
       try {
         const companionRaw = await HttpClient.get<any>(Endpoints.COMPANION.LESSON_DETAIL(lessonId));
         if (companionRaw && companionRaw.id) {
+          const title = cleanHtml(companionRaw.title);
+          const content = cleanHtml(companionRaw.content);
+          const summary = cleanHtml(companionRaw.summary || companionRaw.excerpt || '');
+          const duration = cleanHtml(companionRaw.duration || '');
+          const resolvedVideo = resolveLessonVideoData(undefined, {
+            id: String(companionRaw.id),
+            title,
+            duration,
+            summary,
+            videoUrl: companionRaw.video_url || undefined,
+            videoIntro: companionRaw.video_intro || undefined,
+          });
+
           const detail: LessonDetail = {
             id: companionRaw.id,
-            name: cleanHtml(companionRaw.title),
-            content: cleanHtml(companionRaw.content),
-            videoUrl: companionRaw.video_url || undefined,
-            videoIntro: undefined,
-            videoType: companionRaw.video_type || 'none',
-            duration: companionRaw.duration,
-            completed: false,
+            name: title,
+            content,
+            summary: summary || undefined,
+            videoUrl: resolvedVideo.videoUrl,
+            videoIntro: resolvedVideo.videoIntro,
+            videoId: resolvedVideo.videoId,
+            videoType: resolvedVideo.videoType,
+            duration: resolvedVideo.duration,
+            completed: Boolean(companionRaw.completed),
           };
           await CacheManager.set(cacheKey, detail, 300000);
           return detail;
@@ -50,38 +69,33 @@ export class LessonsService {
 
       const raw = await HttpClient.get<any>(Endpoints.LEARNPRESS.LESSON_DETAIL(lessonId));
 
-      const videoIntro = raw.video_intro || raw.meta_data?._lp_lesson_video_intro || '';
-      let videoUrl = raw.video_url || raw.meta_data?.video_url || '';
+      const rawVideoIntro = raw.video_intro || raw.meta_data?._lp_lesson_video_intro || '';
+      const rawVideoUrl = raw.video_url || raw.meta_data?.video_url || '';
+      const title = cleanHtml(raw.name || raw.title);
+      const content = cleanHtml(raw.content);
+      const summary = cleanHtml(raw.excerpt || raw.summary || '');
+      const duration = cleanHtml(raw.duration || raw.meta_data?._lp_duration || '');
 
-      if (!videoUrl && videoIntro) {
-        const srcMatch = videoIntro.match(/src=["']([^"']+)["']/i);
-        if (srcMatch && srcMatch[1]) {
-          videoUrl = srcMatch[1];
-        } else if (videoIntro.startsWith('http://') || videoIntro.startsWith('https://')) {
-          videoUrl = videoIntro.trim();
-        }
-      }
-
-      let videoType: 'vimeo' | 'youtube' | 'mp4' | 'iframe' | 'none' = 'none';
-      if (videoUrl) {
-        if (videoUrl.includes('vimeo.com')) videoType = 'vimeo';
-        else if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be'))
-          videoType = 'youtube';
-        else if (videoUrl.match(/\.(mp4|m3u8|webm)($|\?)/i)) videoType = 'mp4';
-        else videoType = 'iframe';
-      } else if (videoIntro) {
-        videoType = 'iframe';
-      }
+      const resolvedVideo = resolveLessonVideoData(undefined, {
+        id: String(raw.id),
+        title,
+        duration,
+        summary,
+        videoUrl: rawVideoUrl || undefined,
+        videoIntro: rawVideoIntro || undefined,
+      });
 
       const detail: LessonDetail = {
         id: raw.id,
-        name: cleanHtml(raw.name || raw.title),
-        content: cleanHtml(raw.content),
-        videoUrl: videoUrl || undefined,
-        videoIntro: videoIntro || undefined,
-        videoType,
-        duration: raw.duration,
-        completed: raw.completed,
+        name: title,
+        content,
+        summary: summary || undefined,
+        videoUrl: resolvedVideo.videoUrl,
+        videoIntro: resolvedVideo.videoIntro,
+        videoId: resolvedVideo.videoId,
+        videoType: resolvedVideo.videoType,
+        duration: resolvedVideo.duration,
+        completed: Boolean(raw.completed),
       };
 
       await CacheManager.set(cacheKey, detail, 300000);
