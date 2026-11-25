@@ -82,6 +82,7 @@ All client environment variables live in [`src/config/env.ts`](./src/config/env.
 | `EXPO_PUBLIC_CACHE_TTL_MS` | Default cache TTL in milliseconds | `300000` |
 | `EXPO_PUBLIC_ENABLE_FALLBACK` | Enable secondary host fallback on GET failures | `true` |
 | `EXPO_PUBLIC_DEBUG_API` | Verbose HTTP logging | `false` (`__DEV__`) |
+| `EXPO_PUBLIC_SENTRY_DSN` | Sentry DSN for `@sentry/react-native` crash & error reporting | Optional (`SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN` upload source maps in Gradle/EAS) |
 
 > AI skill assessments & lesson AI tutor run deterministically on-device (`aiAssessmentService.ts`, `geminiNanoService.ts`, `liteRtService.ts`); no client LLM or WooCommerce secrets are stored in `EXPO_PUBLIC_*`.
 

@@ -71,7 +71,9 @@ const withOnDeviceAiMainApplication = (config) =>
     if (!contents.includes('LiteRtPackage()') || !contents.includes('GeminiNanoPackage()')) {
       const applyRegex = /(PackageList\(this\)\.packages\.apply\s*\{)/;
       if (!applyRegex.test(contents)) {
-        throw new Error('Could not locate PackageList(this).packages.apply { in MainApplication.kt');
+        throw new Error(
+          'Could not locate PackageList(this).packages.apply { in MainApplication.kt'
+        );
       }
       const additions = PACKAGE_REGISTRATIONS.filter((line) => !contents.includes(line))
         .map((line) => `          ${line}`)
