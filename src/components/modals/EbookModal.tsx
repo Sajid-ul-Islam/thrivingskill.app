@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,32 +11,69 @@ import {
   Platform,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { useFeedback } from '../../context/FeedbackContext';
 import { shape } from '../../theme/shapes';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
 import { SpringPressable } from '../common/SpringPressable';
 import { triggerHaptic } from '../../utils/haptics';
 import { SiteNavigationService, EbookItem } from '../../services/site/siteNavigationService';
+import { Env } from '../../config/env';
 
-interface EbookModalProps {
+export const STORAGE_KEY_PURCHASED_EBOOKS = '@ts_purchased_ebooks';
+
+export interface EbookModalProps {
   visible: boolean;
   onClose: () => void;
+  onBuyEbook?: (ebook: EbookItem) => void;
+  purchasedEbookIds?: string[];
+  onEbookPurchased?: (ebookId: string) => void;
 }
 
-export const EbookModal: React.FC<EbookModalProps> = ({ visible, onClose }) => {
+export const EbookModal: React.FC<EbookModalProps> = ({
+  visible,
+  onClose,
+  onBuyEbook,
+  purchasedEbookIds: propPurchasedIds,
+  onEbookPurchased,
+}) => {
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
   const insets = useSafeAreaInsets();
+  const { showToast } = useFeedback();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [localPurchasedIds, setLocalPurchasedIds] = useState<string[]>([]);
+
+  // Load purchased eBooks from persistent storage on mount / visibility
+  useEffect(() => {
+    if (!visible) return;
+    AsyncStorage.getItem(STORAGE_KEY_PURCHASED_EBOOKS)
+      .then((data) => {
+        if (data) {
+          try {
+            const parsed = JSON.parse(data);
+            if (Array.isArray(parsed)) {
+              setLocalPurchasedIds(parsed);
+            }
+          } catch {
+            // Ignore parse errors
+          }
+        }
+      })
+      .catch(() => {});
+  }, [visible]);
 
   if (!visible) return null;
 
   const ebooks = SiteNavigationService.getEbooks();
-
   const categories = ['all', ...Array.from(new Set(ebooks.map((e) => e.category)))];
+
+  const effectivePurchasedIds = propPurchasedIds || localPurchasedIds;
 
   const filteredEbooks = ebooks.filter((b) => {
     const matchesCat = selectedCategory === 'all' || b.category === selectedCategory;
@@ -51,6 +88,33 @@ export const EbookModal: React.FC<EbookModalProps> = ({ visible, onClose }) => {
   const handleOpenEbook = (url: string) => {
     triggerHaptic('light');
     Linking.openURL(url).catch(() => {});
+  };
+
+  const handleBuyEbook = async (book: EbookItem) => {
+    triggerHaptic('medium');
+    if (onBuyEbook) {
+      onBuyEbook(book);
+      return;
+    }
+
+    // Direct checkout path matching live site https://thrivingskill.com/courses/...
+    const checkoutUrl = book.courseId
+      ? `${Env.SITE_URL}/courses/${book.courseId}/`
+      : book.readUrl || `${Env.SITE_URL}/ebook/`;
+
+    showToast({
+      type: 'info',
+      message: isBangla
+        ? `৳${book.price} মূল্যের ই-বুকের চেকআউট পেজ ওপেন হচ্ছে...`
+        : `Opening secure checkout for ৳${book.price} eBook...`,
+    });
+
+    try {
+      await Linking.openURL(checkoutUrl);
+    } catch {
+      // Fallback to portal root if custom scheme fails
+      Linking.openURL(`${Env.SITE_URL}/ebook/`).catch(() => {});
+    }
   };
 
   return (
@@ -86,7 +150,7 @@ export const EbookModal: React.FC<EbookModalProps> = ({ visible, onClose }) => {
                 {isBangla ? 'ই-বুক লাইব্রেরি' : 'eBook Library'}
               </Text>
               <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>
-                {isBangla ? 'প্রফেশনাল গাইড ও রিসোর্স' : 'Expert Handbooks & Blueprints'}
+                {isBangla ? 'প্রফেশনাল হ্যান্ডবুক ও গাইড' : 'Expert Handbooks & Blueprints'}
               </Text>
             </View>
           </View>
@@ -131,7 +195,7 @@ export const EbookModal: React.FC<EbookModalProps> = ({ visible, onClose }) => {
             />
           </View>
 
-          {/* Category Filter Pills */}
+          {/* Category Filter Pills — High-contrast brand gold active state */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -151,8 +215,14 @@ export const EbookModal: React.FC<EbookModalProps> = ({ visible, onClose }) => {
                   style={[
                     styles.categoryPill,
                     {
-                      backgroundColor: isActive ? colors.primary : colors.surfaceSubtle,
-                      borderColor: isActive ? colors.primary : colors.border,
+                      backgroundColor: isActive
+                        ? isDark
+                          ? 'rgba(255, 182, 6, 0.22)'
+                          : '#FFB606'
+                        : isDark
+                          ? 'rgba(255, 255, 255, 0.05)'
+                          : colors.surfaceSubtle,
+                      borderColor: isActive ? '#FFB606' : colors.border,
                     },
                   ]}
                 >
@@ -160,7 +230,11 @@ export const EbookModal: React.FC<EbookModalProps> = ({ visible, onClose }) => {
                     style={[
                       styles.categoryPillText,
                       {
-                        color: isActive ? colors.onPrimary : colors.textMuted,
+                        color: isActive
+                          ? isDark
+                            ? '#FFB606'
+                            : '#102F53'
+                          : colors.textMuted,
                         fontWeight: isActive ? '700' : '500',
                       },
                     ]}
@@ -180,85 +254,147 @@ export const EbookModal: React.FC<EbookModalProps> = ({ visible, onClose }) => {
             { paddingBottom: Math.max(insets.bottom, 24) + 20 },
           ]}
         >
-          {filteredEbooks.map((book) => (
-            <View
-              key={book.id}
-              style={[
-                styles.ebookCard,
-                {
-                  backgroundColor: colors.surfaceCard,
-                  borderColor: colors.border,
-                  shadowColor: colors.cardShadow,
-                },
-              ]}
-            >
-              <View style={styles.cardHeader}>
-                <View
-                  style={[
-                    styles.bookIconBadge,
-                    { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : '#EFF6FF' },
-                  ]}
-                >
-                  <Ionicons
-                    name="document-text"
-                    size={24}
-                    color={isDark ? colors.primary : '#102F53'}
-                  />
+          {filteredEbooks.map((book) => {
+            const isPurchased = effectivePurchasedIds.includes(book.id) || !!book.isPurchased;
+            return (
+              <View
+                key={book.id}
+                style={[
+                  styles.ebookCard,
+                  {
+                    backgroundColor: colors.surfaceCard,
+                    borderColor: colors.border,
+                    shadowColor: colors.cardShadow,
+                  },
+                ]}
+              >
+                <View style={styles.cardHeader}>
+                  <View
+                    style={[
+                      styles.bookIconBadge,
+                      { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : '#EFF6FF' },
+                    ]}
+                  >
+                    <Ionicons
+                      name="document-text"
+                      size={24}
+                      color={isDark ? colors.primary : '#102F53'}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <View style={styles.categoryBadgeRow}>
+                      <View
+                        style={[
+                          styles.catBadge,
+                          { backgroundColor: isDark ? '#1C2E46' : '#E8EEF5' },
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.catBadgeText,
+                            { color: isDark ? colors.primary : '#102F53' },
+                          ]}
+                        >
+                          {book.category}
+                        </Text>
+                      </View>
+                      {book.pages && (
+                        <Text style={[styles.pagesText, { color: colors.textMuted }]}>
+                          {book.pages} {isBangla ? 'পৃষ্ঠা' : 'pages'}
+                        </Text>
+                      )}
+                    </View>
+                    <Text style={[styles.bookTitle, { color: colors.text }]} numberOfLines={2}>
+                      {isBangla ? book.banglaTitle : book.title}
+                    </Text>
+                    <Text style={[styles.bookAuthor, { color: colors.textMuted }]}>
+                      {book.author}
+                    </Text>
+                  </View>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <View style={styles.categoryBadgeRow}>
-                    <View
-                      style={[styles.catBadge, { backgroundColor: isDark ? '#1C2E46' : '#E8EEF5' }]}
+
+                <Text
+                  style={[styles.bookDescription, { color: colors.textMuted }]}
+                  numberOfLines={3}
+                >
+                  {isBangla ? book.banglaDescription : book.description}
+                </Text>
+
+                {/* Footer with Transparent Pricing & Buy Action */}
+                <View style={[styles.cardFooter, { borderTopColor: colors.border }]}>
+                  {/* Pricing Breakdown */}
+                  <View style={styles.priceContainer}>
+                    <View style={styles.priceRow}>
+                      <Text style={[styles.salePriceText, { color: colors.accent }]}>
+                        ৳{book.price}
+                      </Text>
+                      {book.regularPrice ? (
+                        <Text style={[styles.regularPriceText, { color: colors.textMuted }]}>
+                          ৳{book.regularPrice}
+                        </Text>
+                      ) : null}
+                    </View>
+                    <Text style={[styles.priceTagSubtext, { color: colors.textMuted }]}>
+                      {isPurchased
+                        ? isBangla
+                          ? '✓ আপনার সংগ্রহে রয়েছে'
+                          : '✓ In Your Library'
+                        : isBangla
+                          ? 'এককালীন ক্রয় • লাইফটাইম অ্যাক্সেস'
+                          : 'One-time purchase • Lifetime access'}
+                    </Text>
+                  </View>
+
+                  {/* Dynamic Paid CTA — Buy vs Read */}
+                  {isPurchased ? (
+                    <SpringPressable
+                      onPress={() => handleOpenEbook(book.readUrl)}
+                      style={[
+                        styles.readBtn,
+                        { backgroundColor: isDark ? '#1C2E46' : '#E8EEF5' },
+                      ]}
+                      activeScale={0.96}
+                      accessibilityRole="button"
+                      accessibilityLabel={isBangla ? `${book.title} পড়ুন` : `Read ${book.title}`}
                     >
+                      <Ionicons
+                        name="book-outline"
+                        size={16}
+                        color={isDark ? colors.primary : '#102F53'}
+                        style={{ marginRight: 6 }}
+                      />
                       <Text
                         style={[
-                          styles.catBadgeText,
+                          styles.readBtnText,
                           { color: isDark ? colors.primary : '#102F53' },
                         ]}
                       >
-                        {book.category}
+                        {isBangla ? 'পড়ুন / ডাউনলোড' : 'Read & Download'}
                       </Text>
-                    </View>
-                    {book.pages && (
-                      <Text style={[styles.pagesText, { color: colors.textMuted }]}>
-                        {book.pages} {isBangla ? 'পৃষ্ঠা' : 'pages'}
+                    </SpringPressable>
+                  ) : (
+                    <SpringPressable
+                      onPress={() => handleBuyEbook(book)}
+                      style={[styles.buyBtn, { backgroundColor: colors.accent }]}
+                      activeScale={0.96}
+                      accessibilityRole="button"
+                      accessibilityLabel={isBangla ? `${book.title} কিনুন` : `Buy ${book.title}`}
+                    >
+                      <Ionicons
+                        name="cart-outline"
+                        size={17}
+                        color={colors.onAccent}
+                        style={{ marginRight: 6 }}
+                      />
+                      <Text style={[styles.buyBtnText, { color: colors.onAccent }]}>
+                        {isBangla ? `কিনুন • ৳${book.price}` : `Buy eBook • ৳${book.price}`}
                       </Text>
-                    )}
-                  </View>
-                  <Text style={[styles.bookTitle, { color: colors.text }]} numberOfLines={2}>
-                    {isBangla ? book.banglaTitle : book.title}
-                  </Text>
-                  <Text style={[styles.bookAuthor, { color: colors.textMuted }]}>
-                    {book.author}
-                  </Text>
+                    </SpringPressable>
+                  )}
                 </View>
               </View>
-
-              <Text style={[styles.bookDescription, { color: colors.textMuted }]} numberOfLines={3}>
-                {isBangla ? book.banglaDescription : book.description}
-              </Text>
-
-              <View style={styles.cardActions}>
-                <SpringPressable
-                  onPress={() => handleOpenEbook(book.readUrl)}
-                  style={[styles.readBtn, { backgroundColor: colors.accent }]}
-                  activeScale={0.96}
-                  accessibilityRole="button"
-                  accessibilityLabel={isBangla ? `${book.title} পড়ুন` : `Read ${book.title}`}
-                >
-                  <Ionicons
-                    name="open-outline"
-                    size={16}
-                    color={colors.onAccent}
-                    style={{ marginRight: 6 }}
-                  />
-                  <Text style={[styles.readBtnText, { color: colors.onAccent }]}>
-                    {isBangla ? 'ই-বুক পড়ুন / ডাউনলোড' : 'Read & Download Free'}
-                  </Text>
-                </SpringPressable>
-              </View>
-            </View>
-          ))}
+            );
+          })}
         </ScrollView>
       </View>
     </Modal>
@@ -330,13 +466,16 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   categoryPill: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     borderRadius: shape.full,
-    borderWidth: 1,
+    borderWidth: 1.5,
+    minHeight: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   categoryPillText: {
-    fontSize: 12,
+    fontSize: 12.5,
   },
   scrollContent: {
     padding: 16,
@@ -398,21 +537,67 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginBottom: 14,
   },
-  cardActions: {
+  cardFooter: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    gap: 12,
+  },
+  priceContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 8,
+  },
+  salePriceText: {
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: -0.3,
+  },
+  regularPriceText: {
+    fontSize: 13,
+    fontWeight: '500',
+    textDecorationLine: 'line-through',
+  },
+  priceTagSubtext: {
+    fontSize: 10.5,
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  buyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: shape.medium,
+    minHeight: 44,
+    shadowColor: '#E34234',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  buyBtnText: {
+    fontSize: 13.5,
+    fontWeight: '800',
+    letterSpacing: 0.2,
   },
   readBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: shape.medium,
-    minHeight: 38,
+    minHeight: 44,
   },
   readBtnText: {
-    color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
   },

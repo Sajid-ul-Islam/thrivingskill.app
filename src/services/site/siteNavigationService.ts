@@ -41,6 +41,10 @@ export interface EbookItem {
   pages?: number;
   readUrl: string;
   downloadUrl?: string;
+  price: number;
+  regularPrice?: number;
+  courseId?: string;
+  isPurchased?: boolean;
 }
 
 export interface CourseAuthorItem {
@@ -399,12 +403,31 @@ export const CANONICAL_SERVICES: PortalServiceItem[] = [
 // Canonical curated eBooks from https://thrivingskill.com/ebook/
 export const CANONICAL_EBOOKS: EbookItem[] = [
   {
+    id: 'ebook-sales-pp',
+    title: 'ভাই, PP কতো ? (Sales Mastery & Closing)',
+    banglaTitle: 'ভাই, PP কতো ? (সেলস ও কাস্টমার সাইকোলজি)',
+    author: 'Thriving Skills Editorial Team',
+    category: 'Marketing & Sales',
+    pages: 72,
+    price: 199,
+    regularPrice: 399,
+    courseId: 'sales-ebook',
+    description:
+      'Master modern sales closing, customer psychology, objection handling, and converting social media leads into paying customers.',
+    banglaDescription:
+      'অনলাইন ও অফলাইন সেলস ক্লোজিং, কাস্টমার সাইকোলজি, অবজেকশন হ্যান্ডলিং এবং সোশ্যাল মিডিয়া লিড কনভার্সনের এক্সক্লুসিভ গাইড।',
+    readUrl: `${Env.SITE_URL}/courses/sales-ebook/`,
+  },
+  {
     id: 'ebook-comm-skills',
     title: 'Effective Communication in Workplace',
     banglaTitle: 'কর্মক্ষেত্রে ফলপ্রসূ যোগাযোগের কৌশল',
     author: 'Thriving Skills Editorial Team',
     category: 'Career & Leadership',
     pages: 64,
+    price: 199,
+    regularPrice: 399,
+    courseId: 'effective-communication-handbook',
     description:
       'Master interpersonal communication, persuasive email drafting, executive presentation, and conflict resolution.',
     banglaDescription:
@@ -418,6 +441,9 @@ export const CANONICAL_EBOOKS: EbookItem[] = [
     author: 'Leading Industry Experts',
     category: 'Operations & SCM',
     pages: 112,
+    price: 299,
+    regularPrice: 499,
+    courseId: 'supply-chain-management-handbook',
     description:
       'Comprehensive guide covering procurement, logistics, ERP operations, inventory control, and supply chain analytics.',
     banglaDescription:
@@ -431,6 +457,9 @@ export const CANONICAL_EBOOKS: EbookItem[] = [
     author: 'Growth & Performance Specialists',
     category: 'Marketing & Sales',
     pages: 88,
+    price: 199,
+    regularPrice: 399,
+    courseId: 'digital-marketing-playbook',
     description:
       'Actionable blueprints for performance ads, SEO optimization, social commerce, and brand positioning in Bangladesh.',
     banglaDescription:
@@ -444,6 +473,9 @@ export const CANONICAL_EBOOKS: EbookItem[] = [
     author: 'Certified Data Analysts',
     category: 'Data & Productivity',
     pages: 96,
+    price: 249,
+    regularPrice: 450,
+    courseId: 'excel-data-analysis-blueprint',
     description:
       'Formula shortcuts, XLOOKUP, dynamic PivotTables, financial modeling templates, and Power Query essentials.',
     banglaDescription:
@@ -457,6 +489,9 @@ export const CANONICAL_EBOOKS: EbookItem[] = [
     author: 'Senior HR Practitioners',
     category: 'Human Resources',
     pages: 120,
+    price: 299,
+    regularPrice: 499,
+    courseId: 'hr-management-labor-law',
     description:
       'Talent acquisition, KPI frameworks, employee engagement, and practical compliance with Bangladesh Labor Act.',
     banglaDescription: 'ট্যালেন্ট ম্যানেজমেন্ট, পারফরম্যান্স অ্যাপ্রাইজাল ও বাংলাদেশ শ্রম আইনের প্রয়োগবিধি।',
@@ -469,6 +504,9 @@ export const CANONICAL_EBOOKS: EbookItem[] = [
     author: 'AI Innovation Lab, Thriving Skills',
     category: 'Artificial Intelligence',
     pages: 80,
+    price: 299,
+    regularPrice: 599,
+    courseId: 'generative-ai-prompt-engineering',
     description:
       'Practical workflows with ChatGPT, Claude, Midjourney, and Gemini to multiply workplace productivity 10x.',
     banglaDescription: 'দৈনন্দিন কাজে এআই টুলের কার্যকর ব্যবহার, প্রম্পট ফ্রেমওয়ার্ক এবং অটোমেশন গাইড।',
