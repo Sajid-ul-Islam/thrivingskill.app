@@ -111,15 +111,17 @@ export const myLearningStyles = StyleSheet.create({
   syllabusBtnText: { fontSize: 13, fontWeight: '600' },
   resumeBtn: {
     flex: 1,
+    minWidth: 0,
     minHeight: MIN_TOUCH_TARGET,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 10,
+    paddingHorizontal: 10,
     borderRadius: 10,
     gap: 6,
   },
-  resumeBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
+  resumeBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700', flexShrink: 1 },
   completedBadge: {
     flexDirection: 'row',
     alignItems: 'center',

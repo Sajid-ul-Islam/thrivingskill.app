@@ -310,6 +310,7 @@ const styles = StyleSheet.create({
   },
   profileSegmentedBtn: {
     flex: 1,
+    minWidth: 0,
     minHeight: MIN_TOUCH_TARGET,
     flexDirection: 'row',
     alignItems: 'center',
@@ -321,5 +322,6 @@ const styles = StyleSheet.create({
   profileSegmentedText: {
     fontSize: 13,
     fontWeight: '700',
+    flexShrink: 1,
   },
 });

@@ -230,11 +230,7 @@ export const EbookModal: React.FC<EbookModalProps> = ({
                     style={[
                       styles.categoryPillText,
                       {
-                        color: isActive
-                          ? isDark
-                            ? '#FFB606'
-                            : '#102F53'
-                          : colors.textMuted,
+                        color: isActive ? (isDark ? '#FFB606' : '#102F53') : colors.textMuted,
                         fontWeight: isActive ? '700' : '500',
                       },
                     ]}
@@ -349,10 +345,7 @@ export const EbookModal: React.FC<EbookModalProps> = ({
                   {isPurchased ? (
                     <SpringPressable
                       onPress={() => handleOpenEbook(book.readUrl)}
-                      style={[
-                        styles.readBtn,
-                        { backgroundColor: isDark ? '#1C2E46' : '#E8EEF5' },
-                      ]}
+                      style={[styles.readBtn, { backgroundColor: isDark ? '#1C2E46' : '#E8EEF5' }]}
                       activeScale={0.96}
                       accessibilityRole="button"
                       accessibilityLabel={isBangla ? `${book.title} পড়ুন` : `Read ${book.title}`}
@@ -364,10 +357,7 @@ export const EbookModal: React.FC<EbookModalProps> = ({
                         style={{ marginRight: 6 }}
                       />
                       <Text
-                        style={[
-                          styles.readBtnText,
-                          { color: isDark ? colors.primary : '#102F53' },
-                        ]}
+                        style={[styles.readBtnText, { color: isDark ? colors.primary : '#102F53' }]}
                       >
                         {isBangla ? 'পড়ুন / ডাউনলোড' : 'Read & Download'}
                       </Text>

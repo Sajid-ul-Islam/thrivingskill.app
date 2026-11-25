@@ -564,14 +564,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 5,
     flex: 1,
+    minWidth: 0,
     justifyContent: 'center',
   },
   statValue: {
     fontSize: 13,
     fontWeight: '700',
+    flexShrink: 1,
   },
   statLabel: {
     fontSize: 12,
+    flexShrink: 1,
   },
   statDivider: {
     width: 1,
@@ -632,8 +635,9 @@ const styles = StyleSheet.create({
   },
   trustFeaturesRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 10,
     paddingTop: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(156, 163, 175, 0.25)',
@@ -641,13 +645,12 @@ const styles = StyleSheet.create({
   trustFeatureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    flex: 1,
-    justifyContent: 'center',
+    gap: 5,
   },
   trustFeatureText: {
-    fontSize: 10.5,
+    fontSize: 11,
     fontWeight: '600',
+    flexShrink: 1,
   },
   certPromoCard: {
     flexDirection: 'row',

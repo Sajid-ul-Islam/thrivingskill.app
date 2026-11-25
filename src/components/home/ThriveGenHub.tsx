@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, FlatList, Image, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { SpringPressable } from '../common/SpringPressable';
@@ -215,22 +214,51 @@ export const ThriveGenHub: React.FC<ThriveGenHubProps> = ({
     { id: 'masters', label: 'Masters', labelBn: 'মাস্টার্স', icon: 'briefcase' },
   ];
 
+  const pillars: {
+    id: string;
+    icon: keyof typeof Ionicons.glyphMap;
+    label: string;
+    labelBn: string;
+  }[] = [
+    {
+      id: 'faculty',
+      icon: 'people-outline',
+      label: 'Industry Faculty',
+      labelBn: 'শীর্ষ ফ্যাকাল্টি',
+    },
+    {
+      id: 'labs',
+      icon: 'laptop-outline',
+      label: 'Hands-on Labs',
+      labelBn: 'রিয়েল প্রজেক্ট',
+    },
+    {
+      id: 'certificates',
+      icon: 'ribbon-outline',
+      label: 'Certificates',
+      labelBn: 'সার্টিফিকেট',
+    },
+    {
+      id: 'self-paced',
+      icon: 'time-outline',
+      label: 'Self-Paced',
+      labelBn: 'নিজের সুবিধামতো',
+    },
+  ];
+
+  const pillarRows = [pillars.slice(0, 2), pillars.slice(2, 4)];
+
   return (
     <View style={styles.container}>
       {/* Header Banner */}
       <View style={styles.header}>
         <View style={styles.badgeRow}>
-          <View style={[styles.brandPill, { backgroundColor: '#E34234' }]}>
-            <Ionicons name="sparkles" size={11} color="#FFFFFF" />
-            <Text style={styles.brandPillText}>THRIVE GEN</Text>
+          <View style={[styles.brandPill, { backgroundColor: colors.accent }]}>
+            <Ionicons name="sparkles" size={11} color={colors.onAccent} />
+            <Text style={[styles.brandPillText, { color: colors.onAccent }]}>THRIVE GEN</Text>
           </View>
-          <View
-            style={[
-              styles.studentsTag,
-              { backgroundColor: isDark ? 'rgba(16, 47, 83, 0.4)' : '#E8EEF5' },
-            ]}
-          >
-            <Text style={[styles.studentsTagText, { color: colors.textMuted }]}>
+          <View style={[styles.studentsTag, { backgroundColor: colors.badgeBackground }]}>
+            <Text style={[styles.studentsTagText, { color: colors.badgeText }]}>
               {isBangla ? '১০,০০০+ শিক্ষার্থীর ভরসা' : 'Trusted by 10,000+ Students'}
             </Text>
           </View>
@@ -249,64 +277,35 @@ export const ThriveGenHub: React.FC<ThriveGenHubProps> = ({
         </Text>
       </View>
 
-      {/* 4 Pillars Mini-Capsules */}
+      {/* 4 Pillars Mini-Capsules (2x2 balanced grid to prevent wrapping/clipping on compact widths) */}
       <View style={styles.pillarsGrid}>
-        <View
-          style={[
-            styles.pillarItem,
-            {
-              backgroundColor: isDark ? colors.surfaceCard : '#F8FAFC',
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          <Text style={styles.pillarIcon}>👤</Text>
-          <Text style={[styles.pillarText, { color: colors.text }]}>
-            {isBangla ? 'শীর্ষ ফ্যাকাল্টি' : 'Industry Faculty'}
-          </Text>
-        </View>
-        <View
-          style={[
-            styles.pillarItem,
-            {
-              backgroundColor: isDark ? colors.surfaceCard : '#F8FAFC',
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          <Text style={styles.pillarIcon}>📝</Text>
-          <Text style={[styles.pillarText, { color: colors.text }]}>
-            {isBangla ? 'রিয়েল প্রজেক্ট' : 'Hands-on Labs'}
-          </Text>
-        </View>
-        <View
-          style={[
-            styles.pillarItem,
-            {
-              backgroundColor: isDark ? colors.surfaceCard : '#F8FAFC',
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          <Text style={styles.pillarIcon}>📜</Text>
-          <Text style={[styles.pillarText, { color: colors.text }]}>
-            {isBangla ? 'সার্টিফিকেট' : 'Certificates'}
-          </Text>
-        </View>
-        <View
-          style={[
-            styles.pillarItem,
-            {
-              backgroundColor: isDark ? colors.surfaceCard : '#F8FAFC',
-              borderColor: colors.border,
-            },
-          ]}
-        >
-          <Text style={styles.pillarIcon}>⏱️</Text>
-          <Text style={[styles.pillarText, { color: colors.text }]}>
-            {isBangla ? 'নিজের সুবিধামতো' : 'Self-Paced'}
-          </Text>
-        </View>
+        {pillarRows.map((row, rowIndex) => (
+          <View key={`pillar-row-${rowIndex}`} style={styles.pillarsRow}>
+            {row.map((pillar) => (
+              <View
+                key={pillar.id}
+                style={[
+                  styles.pillarItem,
+                  {
+                    backgroundColor: isDark ? colors.surfaceCard : colors.surfaceSubtle,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <View style={[styles.pillarIconBadge, { backgroundColor: colors.primaryLight }]}>
+                  <Ionicons name={pillar.icon} size={13} color={colors.primary} />
+                </View>
+                <Text
+                  style={[styles.pillarText, { color: colors.text }]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {isBangla ? pillar.labelBn : pillar.label}
+                </Text>
+              </View>
+            ))}
+          </View>
+        ))}
       </View>
 
       {/* Level Filter Tabs */}
@@ -336,7 +335,11 @@ export const ThriveGenHub: React.FC<ThriveGenHubProps> = ({
               accessibilityState={{ selected: isActive }}
               accessibilityLabel={isBangla ? tab.labelBn : tab.label}
             >
-              <Ionicons name={tab.icon} size={13} color={isActive ? '#FFFFFF' : colors.textMuted} />
+              <Ionicons
+                name={tab.icon}
+                size={13}
+                color={isActive ? colors.onPrimary : colors.textMuted}
+              />
               <Text
                 style={[styles.levelTabText, { color: isActive ? colors.onPrimary : colors.text }]}
               >
@@ -528,28 +531,41 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   pillarsGrid: {
-    flexDirection: 'row',
     paddingHorizontal: 16,
     gap: 8,
     marginVertical: 8,
   },
+  pillarsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
   pillarItem: {
     flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    paddingVertical: 6,
-    paddingHorizontal: 4,
+    gap: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
     borderRadius: shape.small,
     borderWidth: 1,
+    overflow: 'hidden',
   },
-  pillarIcon: {
-    fontSize: 11,
+  pillarIconBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: shape.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
   },
   pillarText: {
-    fontSize: 9.5,
-    fontWeight: '700',
+    flex: 1,
+    flexShrink: 1,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '600',
+    includeFontPadding: false,
   },
   levelTabsScroll: {
     paddingHorizontal: 16,

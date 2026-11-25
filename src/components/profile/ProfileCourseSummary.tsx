@@ -265,7 +265,10 @@ export const ProfileCourseSummary: React.FC<ProfileCourseSummaryProps> = ({
                     }}
                   >
                     <Ionicons name="eye-outline" size={12} color={colors.onPrimary} />
-                    <Text style={[styles.certBtnText, { color: colors.onPrimary }]}>
+                    <Text
+                      style={[styles.certBtnText, { color: colors.onPrimary }]}
+                      numberOfLines={1}
+                    >
                       {isBangla ? 'সনদ দেখুন' : 'View Cert'}
                     </Text>
                   </TouchableOpacity>
@@ -700,8 +703,9 @@ const styles = StyleSheet.create({
   certCourseTitle: {
     fontSize: 12,
     fontWeight: '700',
+    lineHeight: 16,
     marginBottom: 4,
-    height: 32,
+    minHeight: 32,
   },
   certIssueDate: {
     fontSize: 10,
@@ -717,16 +721,19 @@ const styles = StyleSheet.create({
   },
   certBtn: {
     flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 5,
+    paddingHorizontal: 6,
     borderRadius: 6,
     gap: 4,
   },
   certBtnText: {
     fontSize: 10.5,
     fontWeight: '700',
+    flexShrink: 1,
   },
   certShareBtn: {
     width: 28,

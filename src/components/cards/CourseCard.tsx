@@ -746,8 +746,6 @@ const styles = StyleSheet.create({
   horizontalCard: {
     flexDirection: 'row',
     minHeight: 112,
-    height: 112,
-    maxHeight: 116,
     borderRadius: 18,
     borderWidth: 1,
     overflow: 'hidden',
@@ -760,10 +758,10 @@ const styles = StyleSheet.create({
   },
   horizontalCardBody: {
     flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     padding: 12,
     alignItems: 'center',
-    height: '100%',
   },
   horizontalThumbWrapper: {
     position: 'relative',
@@ -794,10 +792,12 @@ const styles = StyleSheet.create({
   },
   horizontalContent: {
     flex: 1,
+    minWidth: 0,
     marginLeft: 12,
     justifyContent: 'space-between',
     paddingRight: 36,
-    height: 78,
+    minHeight: 78,
+    gap: 3,
   },
   horizontalCardTitle: {
     fontSize: 14,

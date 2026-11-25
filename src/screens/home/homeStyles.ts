@@ -126,6 +126,7 @@ export const homeStyles = StyleSheet.create({
   gatewayActionsRow: { flexDirection: 'row', gap: 10 },
   gatewaySecondaryBtn: {
     flex: 1,
+    minWidth: 0,
     minHeight: MIN_TOUCH_TARGET,
     borderRadius: shape.medium,
     borderWidth: 1,

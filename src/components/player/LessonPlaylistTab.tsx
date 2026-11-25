@@ -324,6 +324,7 @@ const styles = StyleSheet.create({
   },
   playlistInfo: {
     flex: 1,
+    minWidth: 0,
   },
   playlistTitleRow: {
     flexDirection: 'row',
@@ -331,12 +332,14 @@ const styles = StyleSheet.create({
     gap: 6,
     marginBottom: 2,
     flex: 1,
+    minWidth: 0,
   },
   nowPlayingTag: {
     backgroundColor: '#E34234',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
+    flexShrink: 0,
   },
   nowPlayingTagText: {
     fontSize: 9,
@@ -347,11 +350,13 @@ const styles = StyleSheet.create({
   playlistTitle: {
     fontSize: 13,
     marginBottom: 2,
+    flexShrink: 1,
   },
   playlistDuration: {
     fontSize: 11,
   },
   previewBadge: {
+    flexShrink: 0,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,

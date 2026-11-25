@@ -157,6 +157,7 @@ const styles = StyleSheet.create({
   },
   mainContent: {
     flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
@@ -187,6 +188,7 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     flex: 1,
+    minWidth: 0,
     justifyContent: 'center',
   },
   title: {
@@ -213,6 +215,7 @@ const styles = StyleSheet.create({
   controlsRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 0,
     gap: 6,
     marginLeft: 6,
   },

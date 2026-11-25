@@ -109,6 +109,7 @@ const styles = StyleSheet.create({
   },
   placeholderText: {
     flex: 1,
+    minWidth: 0,
     fontSize: 13,
   },
   cmdKChip: {
