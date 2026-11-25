@@ -102,14 +102,19 @@ export class SyncQueueManager {
     maxAttempts: number = 5
   ): Promise<OfflineMutation> {
     if (!isAllowedSyncEndpoint(endpoint)) {
-      throw new Error(`[SyncQueue] Untrusted or disallowed endpoint for offline synchronization: ${endpoint}`);
+      throw new Error(
+        `[SyncQueue] Untrusted or disallowed endpoint for offline synchronization: ${endpoint}`
+      );
     }
 
     const queue = await this.getPendingMutations();
 
     // Check for existing duplicate unattempted mutation to prevent redundant duplicate calls
     const duplicateIdx = queue.findIndex(
-      (m) => m.action === action && m.endpoint === endpoint && JSON.stringify(m.payload) === JSON.stringify(payload)
+      (m) =>
+        m.action === action &&
+        m.endpoint === endpoint &&
+        JSON.stringify(m.payload) === JSON.stringify(payload)
     );
 
     if (duplicateIdx >= 0) {
@@ -174,7 +179,9 @@ export class SyncQueueManager {
   /**
    * Process all pending mutations sequentially
    */
-  static async processQueue(force: boolean = false): Promise<{ processed: number; succeeded: number; failed: number }> {
+  static async processQueue(
+    force: boolean = false
+  ): Promise<{ processed: number; succeeded: number; failed: number }> {
     if (this.isSyncing && !force) {
       return { processed: 0, succeeded: 0, failed: 0 };
     }
@@ -196,7 +203,9 @@ export class SyncQueueManager {
 
     for (const mutation of queue) {
       if (!isAllowedSyncEndpoint(mutation.endpoint)) {
-        console.warn(`[SyncQueue] Skipping unauthorized endpoint in offline queue: ${mutation.endpoint}`);
+        console.warn(
+          `[SyncQueue] Skipping unauthorized endpoint in offline queue: ${mutation.endpoint}`
+        );
         failed++;
         continue;
       }

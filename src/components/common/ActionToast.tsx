@@ -71,11 +71,7 @@ const TOAST_THEME: Record<
   },
 };
 
-export const ActionToast: React.FC<ActionToastProps> = ({
-  toast,
-  onDismiss,
-  bottomOffset,
-}) => {
+export const ActionToast: React.FC<ActionToastProps> = ({ toast, onDismiss, bottomOffset }) => {
   const insets = useSafeAreaInsets();
   const isTop = toast?.position === 'top';
 
@@ -154,9 +150,7 @@ export const ActionToast: React.FC<ActionToastProps> = ({
 
   const theme = TOAST_THEME[toast.type];
   const resolvedTop = isTop ? Math.max(insets.top, Platform.OS === 'ios' ? 44 : 24) + 8 : undefined;
-  const resolvedBottom = !isTop
-    ? bottomOffset ?? Math.max(insets.bottom, 16) + 74
-    : undefined;
+  const resolvedBottom = !isTop ? (bottomOffset ?? Math.max(insets.bottom, 16) + 74) : undefined;
 
   const handleActionPress = () => {
     triggerHaptic('medium');
@@ -181,10 +175,7 @@ export const ActionToast: React.FC<ActionToastProps> = ({
         isTop ? { top: resolvedTop } : { bottom: resolvedBottom },
         {
           opacity: opacityAnim,
-          transform: [
-            { translateY: translateYAnim },
-            { scale: scaleAnim },
-          ],
+          transform: [{ translateY: translateYAnim }, { scale: scaleAnim }],
         },
       ]}
       pointerEvents="box-none"
@@ -204,11 +195,7 @@ export const ActionToast: React.FC<ActionToastProps> = ({
       >
         {/* Left Icon Pill */}
         <View style={[styles.iconWrap, { backgroundColor: theme.iconBg }]}>
-          <Ionicons
-            name={(toast.icon || theme.icon) as any}
-            size={18}
-            color="#FFFFFF"
-          />
+          <Ionicons name={(toast.icon || theme.icon) as any} size={18} color="#FFFFFF" />
         </View>
 
         {/* Message / Title Container */}

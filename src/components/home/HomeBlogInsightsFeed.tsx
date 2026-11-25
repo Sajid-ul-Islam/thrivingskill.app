@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  Image,
-  Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -28,7 +21,8 @@ const FALLBACK_INSIGHTS: WpPost[] = [
   {
     id: 88000,
     title: 'Staying Relevant in the AI Era: The Real Advantage Is Not AI, but What You Do With It',
-    excerpt: 'Practical AI frameworks, prompt engineering, and human-in-the-loop workflows that give professionals competitive advantage.',
+    excerpt:
+      'Practical AI frameworks, prompt engineering, and human-in-the-loop workflows that give professionals competitive advantage.',
     content: 'Full article on AI workflows and human adaptability in 2026...',
     date: '2026-11-15T00:00:00',
     link: 'https://thrivingskill.com/thriving-insights/',
@@ -39,34 +33,40 @@ const FALLBACK_INSIGHTS: WpPost[] = [
   {
     id: 82139,
     title: 'Elevate Your Career: The 10 Essential Skills Every Job Seeker Needs to Succeed',
-    excerpt: 'From digital presentation to emotional intelligence and dynamic spreadsheets, the must-have skills for modern enterprise employment.',
+    excerpt:
+      'From digital presentation to emotional intelligence and dynamic spreadsheets, the must-have skills for modern enterprise employment.',
     content: 'The 10 essential employability pillars...',
     date: '2026-10-20T00:00:00',
     link: 'https://thrivingskill.com/blog/',
     authorName: 'Tareq Siddiqui',
-    featuredImageUrl: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&auto=format&fit=crop&q=80',
+    featuredImageUrl:
+      'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&auto=format&fit=crop&q=80',
     categories: ['Career Growth'],
   },
   {
     id: 68428,
     title: 'Mastering Contract Management: The Keystone of Procurement Excellence',
-    excerpt: 'Navigating supplier risk, SLAs, dispute resolution, and international trade compliance in Bangladesh manufacturing.',
+    excerpt:
+      'Navigating supplier risk, SLAs, dispute resolution, and international trade compliance in Bangladesh manufacturing.',
     content: 'Comprehensive guide to contract management...',
     date: '2026-09-10T00:00:00',
     link: 'https://thrivingskill.com/blog/',
     authorName: 'Khandker Moniruzzaman',
-    featuredImageUrl: 'https://images.unsplash.com/photo-1450133064473-71024230f91b?w=800&auto=format&fit=crop&q=80',
+    featuredImageUrl:
+      'https://images.unsplash.com/photo-1450133064473-71024230f91b?w=800&auto=format&fit=crop&q=80',
     categories: ['Supply Chain'],
   },
   {
     id: 61641,
     title: 'How to Submit Your Income Tax eReturn in Bangladesh (Step-by-Step)',
-    excerpt: 'A complete practical walkthrough of the NBR eReturn portal, tax rebate calculations, and investment allowances.',
+    excerpt:
+      'A complete practical walkthrough of the NBR eReturn portal, tax rebate calculations, and investment allowances.',
     content: 'Step by step eReturn guide...',
     date: '2026-08-25T00:00:00',
     link: 'https://thrivingskill.com/blog/',
     authorName: 'Finance Faculty, TSL',
-    featuredImageUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&auto=format&fit=crop&q=80',
+    featuredImageUrl:
+      'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&auto=format&fit=crop&q=80',
     categories: ['Tax & Accounting'],
   },
 ];
@@ -90,7 +90,12 @@ export const HomeBlogInsightsFeed: React.FC<HomeBlogInsightsFeedProps> = ({
       <View style={styles.headerRow}>
         <View style={styles.titleWrap}>
           <View style={styles.badgeRow}>
-            <View style={[styles.badgePill, { backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : '#EFF6FF' }]}>
+            <View
+              style={[
+                styles.badgePill,
+                { backgroundColor: isDark ? 'rgba(59, 130, 246, 0.2)' : '#EFF6FF' },
+              ]}
+            >
               <Ionicons name="newspaper-outline" size={11} color="#3B82F6" />
               <Text style={[styles.badgeText, { color: '#2563EB' }]}>
                 {isBangla ? 'ইনসাইটস ও অ্যানালাইসিস' : 'EDITORIAL & INSIGHTS'}
@@ -135,13 +140,18 @@ export const HomeBlogInsightsFeed: React.FC<HomeBlogInsightsFeedProps> = ({
         renderItem={({ item }) => {
           const cleanTitle = cleanHtml(item.title);
           const cleanExcerpt = cleanHtml(item.excerpt);
-          const categoryName = item.categories && item.categories.length > 0 ? item.categories[0] : 'Insight';
+          const categoryName =
+            item.categories && item.categories.length > 0 ? item.categories[0] : 'Insight';
           let formattedDate = 'Recent';
           if (item.date) {
             try {
               const parsedD = new Date(item.date);
               if (!isNaN(parsedD.getTime())) {
-                formattedDate = parsedD.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                formattedDate = parsedD.toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                });
               }
             } catch {
               formattedDate = 'Recent';
@@ -170,7 +180,8 @@ export const HomeBlogInsightsFeed: React.FC<HomeBlogInsightsFeedProps> = ({
               <View style={styles.thumbnailContainer}>
                 <Image
                   source={getSafeImageSource(
-                    item.featuredImageUrl || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80'
+                    item.featuredImageUrl ||
+                      'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80'
                   )}
                   style={styles.thumbnailImage}
                   resizeMode="cover"

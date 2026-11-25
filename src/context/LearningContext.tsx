@@ -2,7 +2,17 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Env } from '../config/env';
-import { Course, UserProgress, Certificate, Note, CategoryId, Workshop, Category, WpPost, Review } from '../types';
+import {
+  Course,
+  UserProgress,
+  Certificate,
+  Note,
+  CategoryId,
+  Workshop,
+  Category,
+  WpPost,
+  Review,
+} from '../types';
 import { WORKSHOPS } from '../data/mockData';
 import { useAuth } from './AuthContext';
 import { useNetwork } from './NetworkContext';
@@ -52,11 +62,7 @@ function areCoursesEqual(a: Course[], b: Course[]): boolean {
   if (a[0]?.id !== b[0]?.id || a[a.length - 1]?.id !== b[b.length - 1]?.id) return false;
   const step = Math.max(1, Math.floor(a.length / 20));
   for (let i = 0; i < a.length; i += step) {
-    if (
-      a[i]?.id !== b[i]?.id ||
-      a[i]?.priceBdt !== b[i]?.priceBdt ||
-      a[i]?.title !== b[i]?.title
-    ) {
+    if (a[i]?.id !== b[i]?.id || a[i]?.priceBdt !== b[i]?.priceBdt || a[i]?.title !== b[i]?.title) {
       return false;
     }
   }
@@ -131,7 +137,9 @@ interface LearningContextType {
   // Local-First Outbox Sync (Phase 1)
   pendingSyncCount: number;
   isSyncingOffline: boolean;
-  syncOfflineData: (force?: boolean) => Promise<{ processed: number; succeeded: number; failed: number }>;
+  syncOfflineData: (
+    force?: boolean
+  ) => Promise<{ processed: number; succeeded: number; failed: number }>;
 
   // Dynamic Site Branding & Banners
   siteBranding: SiteBrandingInfo;
@@ -150,19 +158,123 @@ interface LearningContextType {
 }
 
 const INITIAL_CANONICAL_CATEGORIES: Category[] = [
-  { id: 'all', name: 'All Courses', banglaName: 'সব কোর্স', icon: 'grid', count: 382, color: '#059669', slug: 'all' },
-  { id: 'business', name: 'Business', banglaName: 'ব্যবসা ও বাণিজ্য', icon: 'business', count: 85, color: '#4F46E5', slug: 'business' },
-  { id: 'supply-chain-management', name: 'Supply Chain Management', banglaName: 'সাপ্লাই চেইন ম্যানেজমেন্ট', icon: 'cube', count: 59, color: '#0284C7', slug: 'supply-chain-management' },
-  { id: 'microsoft-excel-courses', name: 'Microsoft Excel', banglaName: 'মাইক্রোসফট এক্সেল', icon: 'grid', count: 47, color: '#107C41', slug: 'microsoft-excel-courses' },
-  { id: 'leadership-management', name: 'Leadership & Management', banglaName: 'নেতৃত্ব ও ব্যবস্থাপনা', icon: 'people', count: 39, color: '#D97706', slug: 'leadership-management' },
-  { id: 'personal-development', name: 'Personal Development', banglaName: 'ব্যক্তিগত দক্ষতা উন্নয়ন', icon: 'bulb', count: 39, color: '#EC4899', slug: 'personal-development' },
-  { id: 'generative-ai', name: 'Generative AI', banglaName: 'জেনারেটিভ এআই', icon: 'sparkles', count: 38, color: '#8B5CF6', slug: 'generative-ai' },
-  { id: 'finance-accounting-legal', name: 'Finance & Legal', banglaName: 'অর্থনীতি ও আইন', icon: 'cash', count: 35, color: '#059669', slug: 'finance-accounting-legal' },
-  { id: 'human-resource-management', name: 'Human Resource Management', banglaName: 'মানব সম্পদ ব্যবস্থাপনা', icon: 'briefcase', count: 28, color: '#6366F1', slug: 'human-resource-management' },
-  { id: 'sales-marketing', name: 'Sales & Marketing', banglaName: 'বিক্রয় ও বিপণন', icon: 'trending-up', count: 25, color: '#F59E0B', slug: 'sales-marketing' },
-  { id: 'data-science', name: 'Data Science', banglaName: 'ডাটা সায়েন্স', icon: 'analytics', count: 22, color: '#06B6D4', slug: 'data-science' },
-  { id: 'job-seekers-skills', name: 'Job Seekers Skills', banglaName: 'চাকরি প্রত্যাশীদের দক্ষতা', icon: 'school', count: 18, color: '#10B981', slug: 'job-seekers-skills' },
-  { id: 'research-courses', name: 'Research & Academic', banglaName: 'গবেষণা ও শিক্ষায়তনিক', icon: 'book', count: 15, color: '#64748B', slug: 'research-courses' },
+  {
+    id: 'all',
+    name: 'All Courses',
+    banglaName: 'সব কোর্স',
+    icon: 'grid',
+    count: 382,
+    color: '#059669',
+    slug: 'all',
+  },
+  {
+    id: 'business',
+    name: 'Business',
+    banglaName: 'ব্যবসা ও বাণিজ্য',
+    icon: 'business',
+    count: 85,
+    color: '#4F46E5',
+    slug: 'business',
+  },
+  {
+    id: 'supply-chain-management',
+    name: 'Supply Chain Management',
+    banglaName: 'সাপ্লাই চেইন ম্যানেজমেন্ট',
+    icon: 'cube',
+    count: 59,
+    color: '#0284C7',
+    slug: 'supply-chain-management',
+  },
+  {
+    id: 'microsoft-excel-courses',
+    name: 'Microsoft Excel',
+    banglaName: 'মাইক্রোসফট এক্সেল',
+    icon: 'grid',
+    count: 47,
+    color: '#107C41',
+    slug: 'microsoft-excel-courses',
+  },
+  {
+    id: 'leadership-management',
+    name: 'Leadership & Management',
+    banglaName: 'নেতৃত্ব ও ব্যবস্থাপনা',
+    icon: 'people',
+    count: 39,
+    color: '#D97706',
+    slug: 'leadership-management',
+  },
+  {
+    id: 'personal-development',
+    name: 'Personal Development',
+    banglaName: 'ব্যক্তিগত দক্ষতা উন্নয়ন',
+    icon: 'bulb',
+    count: 39,
+    color: '#EC4899',
+    slug: 'personal-development',
+  },
+  {
+    id: 'generative-ai',
+    name: 'Generative AI',
+    banglaName: 'জেনারেটিভ এআই',
+    icon: 'sparkles',
+    count: 38,
+    color: '#8B5CF6',
+    slug: 'generative-ai',
+  },
+  {
+    id: 'finance-accounting-legal',
+    name: 'Finance & Legal',
+    banglaName: 'অর্থনীতি ও আইন',
+    icon: 'cash',
+    count: 35,
+    color: '#059669',
+    slug: 'finance-accounting-legal',
+  },
+  {
+    id: 'human-resource-management',
+    name: 'Human Resource Management',
+    banglaName: 'মানব সম্পদ ব্যবস্থাপনা',
+    icon: 'briefcase',
+    count: 28,
+    color: '#6366F1',
+    slug: 'human-resource-management',
+  },
+  {
+    id: 'sales-marketing',
+    name: 'Sales & Marketing',
+    banglaName: 'বিক্রয় ও বিপণন',
+    icon: 'trending-up',
+    count: 25,
+    color: '#F59E0B',
+    slug: 'sales-marketing',
+  },
+  {
+    id: 'data-science',
+    name: 'Data Science',
+    banglaName: 'ডাটা সায়েন্স',
+    icon: 'analytics',
+    count: 22,
+    color: '#06B6D4',
+    slug: 'data-science',
+  },
+  {
+    id: 'job-seekers-skills',
+    name: 'Job Seekers Skills',
+    banglaName: 'চাকরি প্রত্যাশীদের দক্ষতা',
+    icon: 'school',
+    count: 18,
+    color: '#10B981',
+    slug: 'job-seekers-skills',
+  },
+  {
+    id: 'research-courses',
+    name: 'Research & Academic',
+    banglaName: 'গবেষণা ও শিক্ষায়তনিক',
+    icon: 'book',
+    count: 15,
+    color: '#64748B',
+    slug: 'research-courses',
+  },
 ];
 
 const LearningContext = createContext<LearningContextType>({} as LearningContextType);
@@ -218,31 +330,27 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [banners, setBanners] = useState<DynamicCarouselSlide[]>(DEFAULT_CURATED_SLIDES);
   const [partnerLogos, setPartnerLogos] = useState<PartnerLogoItem[]>(DEFAULT_PARTNER_LOGOS);
   const [homeFeatures, setHomeFeatures] = useState<HomeFeatureCardItem[]>(DEFAULT_HOME_FEATURES);
-  const [specialBundles, setSpecialBundles] = useState<SpecialBundlePosterItem[]>(DEFAULT_SPECIAL_BUNDLES);
-  const [studentTestimonials, setStudentTestimonials] = useState<StudentTestimonialItem[]>(DEFAULT_STUDENT_TESTIMONIALS);
+  const [specialBundles, setSpecialBundles] =
+    useState<SpecialBundlePosterItem[]>(DEFAULT_SPECIAL_BUNDLES);
+  const [studentTestimonials, setStudentTestimonials] = useState<StudentTestimonialItem[]>(
+    DEFAULT_STUDENT_TESTIMONIALS
+  );
   const [appRemoteConfig, setAppRemoteConfig] = useState<AppRemoteConfig | null>(null);
   const [isBrandingLoading, setIsBrandingLoading] = useState<boolean>(false);
 
   const refreshBranding = useCallback(async (forceRefresh: boolean = false) => {
     try {
       setIsBrandingLoading(true);
-      const [
-        brandingInfo,
-        bannerSlides,
-        remoteConfig,
-        partners,
-        features,
-        bundles,
-        testimonials,
-      ] = await Promise.all([
-        BrandingService.getSiteBranding(forceRefresh),
-        BrandingService.getDynamicBanners(forceRefresh),
-        CompanionService.fetchAppConfig(forceRefresh),
-        BrandingService.getPartnerLogos(forceRefresh),
-        BrandingService.getHomeFeatureCards(forceRefresh),
-        BrandingService.getSpecialBundles(forceRefresh),
-        BrandingService.getStudentTestimonials(forceRefresh),
-      ]);
+      const [brandingInfo, bannerSlides, remoteConfig, partners, features, bundles, testimonials] =
+        await Promise.all([
+          BrandingService.getSiteBranding(forceRefresh),
+          BrandingService.getDynamicBanners(forceRefresh),
+          CompanionService.fetchAppConfig(forceRefresh),
+          BrandingService.getPartnerLogos(forceRefresh),
+          BrandingService.getHomeFeatureCards(forceRefresh),
+          BrandingService.getSpecialBundles(forceRefresh),
+          BrandingService.getStudentTestimonials(forceRefresh),
+        ]);
       setSiteBranding(brandingInfo);
       if (bannerSlides && bannerSlides.length > 0) {
         setBanners(bannerSlides);
@@ -284,73 +392,78 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   // Fetch live courses, categories, workshops, and blog posts from WordPress with SWR
-  const loadWordPressData = useCallback(async (forceRefresh: boolean = false, silent: boolean = false) => {
-    // Only set blocking loading state if we have no cached courses in memory
-    setCourses((current) => {
-      if (current.length === 0 && !silent) {
-        setIsLoadingCourses(true);
-      } else {
-        setIsBackgroundSyncing(true);
-      }
-      return current;
-    });
-    setCoursesError(null);
+  const loadWordPressData = useCallback(
+    async (forceRefresh: boolean = false, silent: boolean = false) => {
+      // Only set blocking loading state if we have no cached courses in memory
+      setCourses((current) => {
+        if (current.length === 0 && !silent) {
+          setIsLoadingCourses(true);
+        } else {
+          setIsBackgroundSyncing(true);
+        }
+        return current;
+      });
+      setCoursesError(null);
 
-    try {
-      const [wpCourses, wpCategories, wpWorkshops, wpPosts] = await Promise.allSettled([
-        fetchWpCourses({ fetchAll: true, forceRefresh }),
-        fetchWpCategories({ forceRefresh }),
-        fetchWpLiveWorkshops({ forceRefresh }),
-        fetchWpPosts({ perPage: 6 }),
-      ]);
+      try {
+        const [wpCourses, wpCategories, wpWorkshops, wpPosts] = await Promise.allSettled([
+          fetchWpCourses({ fetchAll: true, forceRefresh }),
+          fetchWpCategories({ forceRefresh }),
+          fetchWpLiveWorkshops({ forceRefresh }),
+          fetchWpPosts({ perPage: 6 }),
+        ]);
 
-      if (wpCourses.status === 'fulfilled' && wpCourses.value.length > 0) {
-        setCourses((prev) => (areCoursesEqual(prev, wpCourses.value) ? prev : wpCourses.value));
-        setTotalCourseCount(wpCourses.value.length);
-      } else if (wpCourses.status === 'rejected' && !silent) {
-        setCoursesError(wpCourses.reason?.message || 'Unable to sync latest courses.');
-      }
+        if (wpCourses.status === 'fulfilled' && wpCourses.value.length > 0) {
+          setCourses((prev) => (areCoursesEqual(prev, wpCourses.value) ? prev : wpCourses.value));
+          setTotalCourseCount(wpCourses.value.length);
+        } else if (wpCourses.status === 'rejected' && !silent) {
+          setCoursesError(wpCourses.reason?.message || 'Unable to sync latest courses.');
+        }
 
-      if (wpCategories.status === 'fulfilled' && wpCategories.value.length > 0) {
-        const liveCount = wpCourses.status === 'fulfilled' ? wpCourses.value.length : 0;
-        const updatedCats = wpCategories.value.map((c) => {
-          if (c.id === 'all') {
-            return {
-              ...c,
-              count: Math.max(c.count, liveCount),
-            };
-          }
-          return c;
-        });
-        setCategories((prev) => (areDataEqual(prev, updatedCats) ? prev : updatedCats));
-      }
+        if (wpCategories.status === 'fulfilled' && wpCategories.value.length > 0) {
+          const liveCount = wpCourses.status === 'fulfilled' ? wpCourses.value.length : 0;
+          const updatedCats = wpCategories.value.map((c) => {
+            if (c.id === 'all') {
+              return {
+                ...c,
+                count: Math.max(c.count, liveCount),
+              };
+            }
+            return c;
+          });
+          setCategories((prev) => (areDataEqual(prev, updatedCats) ? prev : updatedCats));
+        }
 
-      if (wpWorkshops.status === 'fulfilled' && wpWorkshops.value.length > 0) {
-        setWorkshops((prev) => (areDataEqual(prev, wpWorkshops.value) ? prev : wpWorkshops.value));
-      } else if (!silent) {
-        setWorkshops(WORKSHOPS);
-      }
+        if (wpWorkshops.status === 'fulfilled' && wpWorkshops.value.length > 0) {
+          setWorkshops((prev) =>
+            areDataEqual(prev, wpWorkshops.value) ? prev : wpWorkshops.value
+          );
+        } else if (!silent) {
+          setWorkshops(WORKSHOPS);
+        }
 
-      if (wpPosts.status === 'fulfilled' && wpPosts.value.length > 0) {
-        setBlogPosts((prev) => (areDataEqual(prev, wpPosts.value) ? prev : wpPosts.value));
-      }
+        if (wpPosts.status === 'fulfilled' && wpPosts.value.length > 0) {
+          setBlogPosts((prev) => (areDataEqual(prev, wpPosts.value) ? prev : wpPosts.value));
+        }
 
-      setLastSyncedAt(Date.now());
-    } catch (err: any) {
-      if (!silent) {
-        setCoursesError(err?.message || 'Unable to connect to Thriving Skills.');
+        setLastSyncedAt(Date.now());
+      } catch (err: any) {
+        if (!silent) {
+          setCoursesError(err?.message || 'Unable to connect to Thriving Skills.');
+        }
+        if (Env.DEBUG_API) {
+          console.warn('Error fetching WordPress backend data:', err);
+        }
+      } finally {
+        if (!silent) {
+          setIsLoadingCourses(false);
+        } else {
+          setIsBackgroundSyncing(false);
+        }
       }
-      if (Env.DEBUG_API) {
-        console.warn('Error fetching WordPress backend data:', err);
-      }
-    } finally {
-      if (!silent) {
-        setIsLoadingCourses(false);
-      } else {
-        setIsBackgroundSyncing(false);
-      }
-    }
-  }, []);
+    },
+    []
+  );
 
   // Hydrate scoped user learning state whenever signed-in account changes
   useEffect(() => {
@@ -389,28 +502,44 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         if (!active) return;
         if (savedProgress) {
-          try { setUserProgress(JSON.parse(savedProgress)); } catch {}
+          try {
+            setUserProgress(JSON.parse(savedProgress));
+          } catch {}
         }
         if (savedBookmarks) {
-          try { setBookmarks(JSON.parse(savedBookmarks)); } catch {}
+          try {
+            setBookmarks(JSON.parse(savedBookmarks));
+          } catch {}
         }
         if (savedNotes) {
-          try { setNotes(JSON.parse(savedNotes)); } catch {}
+          try {
+            setNotes(JSON.parse(savedNotes));
+          } catch {}
         }
         if (savedWorkshops) {
-          try { setRsvpWorkshops(JSON.parse(savedWorkshops)); } catch {}
+          try {
+            setRsvpWorkshops(JSON.parse(savedWorkshops));
+          } catch {}
         }
         if (savedAffinities) {
-          try { setCategoryAffinities(JSON.parse(savedAffinities)); } catch {}
+          try {
+            setCategoryAffinities(JSON.parse(savedAffinities));
+          } catch {}
         }
         if (savedSearches) {
-          try { setSearchKeywordsHistory(JSON.parse(savedSearches)); } catch {}
+          try {
+            setSearchKeywordsHistory(JSON.parse(savedSearches));
+          } catch {}
         }
         if (savedReviews) {
-          try { setReviewedCourseIds(JSON.parse(savedReviews)); } catch {}
+          try {
+            setReviewedCourseIds(JSON.parse(savedReviews));
+          } catch {}
         }
         if (savedCertificates) {
-          try { setCertificates(JSON.parse(savedCertificates)); } catch {}
+          try {
+            setCertificates(JSON.parse(savedCertificates));
+          } catch {}
         }
       } catch {
         // Safe fallback
@@ -433,7 +562,9 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const handleAppStateChange = (nextState: AppStateStatus) => {
       if (nextState === 'active') {
         if (Env.DEBUG_API) {
-          console.log('[LearningContext] App returned to active. Silently syncing with thrivingskill.com...');
+          console.log(
+            '[LearningContext] App returned to active. Silently syncing with thrivingskill.com...'
+          );
         }
         loadWordPressData(true, true);
         refreshBranding(true);
@@ -482,7 +613,9 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     const unsubscribe = CoursesService.subscribeCatalogUpdates(() => {
       if (Env.DEBUG_API) {
-        console.log('[LearningContext] Received catalog update notification, revalidating state...');
+        console.log(
+          '[LearningContext] Received catalog update notification, revalidating state...'
+        );
       }
       loadWordPressData(false, true);
     });
@@ -538,7 +671,9 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     saveState(PROGRESS_STORAGE_KEY, updated);
 
     // Queue enrollment mutation for offline-first sync with LearnPress
-    SyncQueueManager.enqueue('ENROLL_COURSE', Endpoints.LEARNPRESS.COURSE_ENROLL, { id: courseId }).then(() => {
+    SyncQueueManager.enqueue('ENROLL_COURSE', Endpoints.LEARNPRESS.COURSE_ENROLL, {
+      id: courseId,
+    }).then(() => {
       SyncQueueManager.processQueue().catch(() => {});
     });
   };
@@ -577,7 +712,11 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         courseId: course.id,
         courseTitle: course.title,
         studentName: user?.displayName || user?.name || user?.username || 'Executive Graduate',
-        issueDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+        issueDate: new Date().toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        }),
         credentialId: certId,
         instructorName: course.instructor?.name || 'Course Instructor',
         verificationUrl: `${Env.SITE_URL}/verify/${certId}`,
@@ -597,7 +736,9 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         lastAccessedLessonId: lessonId,
         isCompleted,
         hasReviewed: userHasReviewed,
-        completedDate: isCompleted ? (current.completedDate || new Date().toISOString().split('T')[0]) : current.completedDate,
+        completedDate: isCompleted
+          ? current.completedDate || new Date().toISOString().split('T')[0]
+          : current.completedDate,
         certificateId: certId,
       },
     };
@@ -606,7 +747,10 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     saveState(PROGRESS_STORAGE_KEY, updated);
 
     // Queue lesson completion mutation for offline-first sync with LearnPress
-    SyncQueueManager.enqueue('COMPLETE_LESSON', Endpoints.LEARNPRESS.LESSON_FINISH, { id: lessonId, course_id: courseId }).then(() => {
+    SyncQueueManager.enqueue('COMPLETE_LESSON', Endpoints.LEARNPRESS.LESSON_FINISH, {
+      id: lessonId,
+      course_id: courseId,
+    }).then(() => {
       SyncQueueManager.processQueue().catch(() => {});
     });
   };
@@ -639,7 +783,11 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const newReview: Review = {
       ...reviewData,
       id: `rev-${Date.now()}`,
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      date: new Date().toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }),
     };
     setCourses((prevCourses) =>
       prevCourses.map((c) => {
@@ -683,8 +831,9 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!progress) return 0;
     if (progress.isCompleted) return 100;
 
-    const moduleLessons = course.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0) || 0;
-    const totalLessons = moduleLessons > 0 ? moduleLessons : (course.lecturesCount || 0);
+    const moduleLessons =
+      course.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0) || 0;
+    const totalLessons = moduleLessons > 0 ? moduleLessons : course.lecturesCount || 0;
     if (totalLessons === 0) return 0;
 
     return Math.min(100, Math.round((progress.completedLessonIds.length / totalLessons) * 100));
@@ -776,11 +925,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!course) return null;
 
     const recipientName =
-      studentName ||
-      user?.displayName ||
-      user?.name ||
-      user?.username ||
-      'Executive Developer';
+      studentName || user?.displayName || user?.name || user?.username || 'Executive Developer';
 
     const current = userProgress[courseId] || {
       courseId,
@@ -803,7 +948,11 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         courseId: course.id,
         courseTitle: course.title,
         studentName: recipientName,
-        issueDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+        issueDate: new Date().toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        }),
         credentialId: certId,
         instructorName: course.instructor?.name || 'Thriving Skills Instructor',
         verificationUrl: `${Env.SITE_URL}/verify/${certId}`,
@@ -825,7 +974,8 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       ...userProgress,
       [courseId]: {
         ...current,
-        completedLessonIds: course.modules?.flatMap((m) => m.lessons.map((l) => l.id)) || current.completedLessonIds,
+        completedLessonIds:
+          course.modules?.flatMap((m) => m.lessons.map((l) => l.id)) || current.completedLessonIds,
         isCompleted: true,
         hasReviewed: true,
         certificateId: certId,
@@ -881,7 +1031,11 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         courseId: course.id,
         courseTitle: course.title,
         studentName: userName,
-        issueDate: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+        issueDate: new Date().toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        }),
         credentialId: certId,
         instructorName: course.instructor?.name || 'Thriving Skills Instructor',
         verificationUrl: `${Env.SITE_URL}/verify/${certId}`,
@@ -910,7 +1064,11 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return cert;
   };
 
-  const getRecommendedCourses = (): { courses: Course[]; rationale: string; rationaleBn: string } => {
+  const getRecommendedCourses = (): {
+    courses: Course[];
+    rationale: string;
+    rationaleBn: string;
+  } => {
     return computeRecommendedCourses({
       courses,
       categories,

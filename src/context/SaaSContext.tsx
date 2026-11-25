@@ -11,20 +11,65 @@ import {
   PlanFeature,
 } from '../types';
 import { PushNotificationService } from '../services/notifications/pushNotificationService';
-import { SiteSyncNotificationService, SiteSyncResult } from '../services/notifications/siteSyncNotificationService';
+import {
+  SiteSyncNotificationService,
+  SiteSyncResult,
+} from '../services/notifications/siteSyncNotificationService';
 import { HabitNotificationQueue } from '../services/notifications/habitNotificationQueue';
 
 const SAAS_STORAGE_KEY = '@thriving_skill_saas_state_v1';
 
 export const SAAS_PLAN_FEATURES: PlanFeature[] = [
-  { id: '1', title: 'Full Course Library Access', starter: '3 Previews', pro: 'Unlimited 24+ Courses', enterprise: 'Unlimited + Custom Tracks' },
-  { id: '2', title: 'Executive AI Skill Copilot', starter: false, pro: 'Unlimited Queries', enterprise: 'Team Shared + Org Context' },
-  { id: '3', title: 'Verifiable Digital Credentials', starter: 'Basic Badge', pro: 'LinkedIn Verified + QR', enterprise: 'Corporate Branded + API' },
-  { id: '4', title: 'Live Cohort Masterclasses', starter: 'Pay per seat', pro: 'Included (Free RSVP)', enterprise: 'Dedicated Private Sessions' },
-  { id: '5', title: 'Team Admin & Skill Gap Radar', starter: false, pro: false, enterprise: 'Full Analytics Dashboard' },
-  { id: '6', title: 'Course Assignment & Deadlines', starter: false, pro: false, enterprise: 'Automated Reminders & Reports' },
+  {
+    id: '1',
+    title: 'Full Course Library Access',
+    starter: '3 Previews',
+    pro: 'Unlimited 24+ Courses',
+    enterprise: 'Unlimited + Custom Tracks',
+  },
+  {
+    id: '2',
+    title: 'Executive AI Skill Copilot',
+    starter: false,
+    pro: 'Unlimited Queries',
+    enterprise: 'Team Shared + Org Context',
+  },
+  {
+    id: '3',
+    title: 'Verifiable Digital Credentials',
+    starter: 'Basic Badge',
+    pro: 'LinkedIn Verified + QR',
+    enterprise: 'Corporate Branded + API',
+  },
+  {
+    id: '4',
+    title: 'Live Cohort Masterclasses',
+    starter: 'Pay per seat',
+    pro: 'Included (Free RSVP)',
+    enterprise: 'Dedicated Private Sessions',
+  },
+  {
+    id: '5',
+    title: 'Team Admin & Skill Gap Radar',
+    starter: false,
+    pro: false,
+    enterprise: 'Full Analytics Dashboard',
+  },
+  {
+    id: '6',
+    title: 'Course Assignment & Deadlines',
+    starter: false,
+    pro: false,
+    enterprise: 'Automated Reminders & Reports',
+  },
   { id: '7', title: 'Offline Mobile Downloads', starter: false, pro: true, enterprise: true },
-  { id: '8', title: 'Enterprise SSO & Dedicated SLA', starter: false, pro: false, enterprise: '24/7 Dedicated Support' },
+  {
+    id: '8',
+    title: 'Enterprise SSO & Dedicated SLA',
+    starter: false,
+    pro: false,
+    enterprise: '24/7 Dedicated Support',
+  },
 ];
 
 const INITIAL_WORKSPACES: Workspace[] = [
@@ -43,7 +88,8 @@ const INITIAL_NOTIFICATIONS: SaaSNotification[] = [
   {
     id: 'notif-welcome',
     title: 'Welcome to Thriving Skills 🎓',
-    message: 'Explore executive masterclasses, live training sessions, and verifiable certifications.',
+    message:
+      'Explore executive masterclasses, live training sessions, and verifiable certifications.',
     type: 'ai',
     timestamp: 'Just now',
     isRead: false,
@@ -103,7 +149,8 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [activeWorkspace, setActiveWorkspace] = useState<Workspace>(INITIAL_WORKSPACES[0]);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>(INITIAL_TEAM_MEMBERS);
   const [notifications, setNotifications] = useState<SaaSNotification[]>(INITIAL_NOTIFICATIONS);
-  const [copilotMessages, setCopilotMessages] = useState<CopilotMessage[]>(INITIAL_COPILOT_MESSAGES);
+  const [copilotMessages, setCopilotMessages] =
+    useState<CopilotMessage[]>(INITIAL_COPILOT_MESSAGES);
   const [assessmentResult, setAssessmentResult] = useState<SkillAssessmentResult | null>(null);
 
   const copilotTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -266,7 +313,9 @@ export const SaaSProvider: React.FC<{ children: React.ReactNode }> = ({ children
         type: inApp.type as any,
         timestamp: 'Just now',
         isRead: false,
-        actionRoute: inApp.data?.courseId ? { tab: 'Courses', courseId: inApp.data.courseId } : undefined,
+        actionRoute: inApp.data?.courseId
+          ? { tab: 'Courses', courseId: inApp.data.courseId }
+          : undefined,
         data: inApp.data,
       };
       addNotification(saasNotif);
@@ -333,8 +382,17 @@ When auditing an enterprise Discounted Cash Flow model, evaluate three non-negot
 3. **WACC Unlevering**: Re-lever Beta using $\\beta_L = \\beta_U \\times [1 + (1-t) \\times (D/E)]$.
 
 *Recommended Next Step:* Review Lecture 3.1 in **Financial Modeling & Valuation Masterclass**.`;
-        actions = ['Explore Sensitivity Table templates', 'Download DCF Excel Sheet', 'Ask about WACC'];
-      } else if (lower.includes('prompt') || lower.includes('rtcc') || lower.includes('ai') || lower.includes('llm')) {
+        actions = [
+          'Explore Sensitivity Table templates',
+          'Download DCF Excel Sheet',
+          'Ask about WACC',
+        ];
+      } else if (
+        lower.includes('prompt') ||
+        lower.includes('rtcc') ||
+        lower.includes('ai') ||
+        lower.includes('llm')
+      ) {
         reply = `### 🤖 Executive RTCC Prompt Blueprint
 To instruct enterprise AI models for strategic deliverables with zero hallucination, apply the **RTCC Framework**:
 
@@ -346,8 +404,17 @@ To instruct enterprise AI models for strategic deliverables with zero hallucinat
 \`\`\`
 
 This standard eliminates ambiguous responses and ensures board-ready formatting.`;
-        actions = ['Generate board presentation prompt', 'Create HR analytics prompt', 'Test with your data'];
-      } else if (lower.includes('roadmap') || lower.includes('team') || lower.includes('upskill') || lower.includes('analytics')) {
+        actions = [
+          'Generate board presentation prompt',
+          'Create HR analytics prompt',
+          'Test with your data',
+        ];
+      } else if (
+        lower.includes('roadmap') ||
+        lower.includes('team') ||
+        lower.includes('upskill') ||
+        lower.includes('analytics')
+      ) {
         reply = `### 🗺️ 30-Day Executive Upskilling Plan
 For your department to reach operational excellence:
 
@@ -356,14 +423,22 @@ For your department to reach operational excellence:
 - **Week 4: Executive Storytelling & Change Leadership**: Present top-down recommendations with Pyramid Principle structure (Course 5).
 
 Your team completion is currently tracking at **78%** across Apex Corp.`;
-        actions = ['Assign roadmap to team', 'Schedule Live Clinic RSVP', 'View Skill Gap Benchmark'];
+        actions = [
+          'Assign roadmap to team',
+          'Schedule Live Clinic RSVP',
+          'View Skill Gap Benchmark',
+        ];
       } else {
         reply = `I have analyzed your query based on the Thriving Skills Executive curriculum. 
 
 For maximum impact in your organization, align this objective with our core modules in **Generative AI Strategy**, **Financial Modeling**, and **Evidence-Based People Analytics**.
 
 Would you like a step-by-step framework, a downloadable template, or a targeted masterclass recommendation?`;
-        actions = ['Recommend specific course', 'Generate executive template', 'Assess my skill gaps'];
+        actions = [
+          'Recommend specific course',
+          'Generate executive template',
+          'Assess my skill gaps',
+        ];
       }
 
       const assistantMsg: CopilotMessage = {

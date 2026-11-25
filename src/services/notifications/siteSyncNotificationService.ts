@@ -34,12 +34,14 @@ export class SiteSyncNotificationService {
    * 4. Fetches live platform updates/posts and notifies learners.
    * 5. Computes automated course recommendations for Android & iOS notification panels.
    */
-  static async syncWithLiveSite(options: {
-    userProgress?: Record<string, UserProgress>;
-    isBangla?: boolean;
-    forceRefresh?: boolean;
-    allowInitialHighlights?: boolean;
-  } = {}): Promise<SiteSyncResult> {
+  static async syncWithLiveSite(
+    options: {
+      userProgress?: Record<string, UserProgress>;
+      isBangla?: boolean;
+      forceRefresh?: boolean;
+      allowInitialHighlights?: boolean;
+    } = {}
+  ): Promise<SiteSyncResult> {
     const result: SiteSyncResult = {
       newCoursesCount: 0,
       newOffersCount: 0,
@@ -69,7 +71,12 @@ export class SiteSyncNotificationService {
       }
 
       if (Array.isArray(rawCourses) && rawCourses.length > 0) {
-        await this.processCoursesAndOffers(rawCourses, isBangla, result, options.allowInitialHighlights);
+        await this.processCoursesAndOffers(
+          rawCourses,
+          isBangla,
+          result,
+          options.allowInitialHighlights
+        );
       }
 
       // 2. Fetch live updates / blog posts from https://thrivingskill.com/wp-json/wp/v2/posts
@@ -135,14 +142,19 @@ export class SiteSyncNotificationService {
 
       const title = cleanHtml(raw.name || raw.title || 'Executive Course');
       const priceData = parseBdtPrice(raw.price, raw.price_rendered);
-      const origPriceData = parseBdtPrice(raw.origin_price || raw.regular_price, raw.origin_price_rendered);
+      const origPriceData = parseBdtPrice(
+        raw.origin_price || raw.regular_price,
+        raw.origin_price_rendered
+      );
 
       const price = priceData.bdt;
       const origPrice = origPriceData.bdt > price ? origPriceData.bdt : Math.round(price * 1.5);
       const isOnSale = Boolean(raw.on_sale || (origPrice > price && price > 0));
-      const discountPercent = origPrice > price ? Math.round(((origPrice - price) / origPrice) * 100) : 0;
+      const discountPercent =
+        origPrice > price ? Math.round(((origPrice - price) / origPrice) * 100) : 0;
 
-      let thumbnail = 'https://thrivingskill.com/wp-content/uploads/2025/11/Ms-Excel-Advanced-Level.jpg';
+      let thumbnail =
+        'https://thrivingskill.com/wp-content/uploads/2025/11/Ms-Excel-Advanced-Level.jpg';
       if (typeof raw.image === 'string' && raw.image.trim()) {
         thumbnail = raw.image;
       } else if (raw.image?.src) {
@@ -155,12 +167,15 @@ export class SiteSyncNotificationService {
         const throttle = await HabitNotificationQueue.canDeliverNotificationNow('normal');
         const isReceptive = await HabitNotificationQueue.isReceptiveTimeNow();
         if (throttle.allowed && isReceptive) {
-          await PushNotificationService.notifyNewCourse({
-            id,
-            title,
-            priceBdt: price,
-            thumbnail,
-          }, isBangla);
+          await PushNotificationService.notifyNewCourse(
+            {
+              id,
+              title,
+              priceBdt: price,
+              thumbnail,
+            },
+            isBangla
+          );
           await HabitNotificationQueue.recordDelivery('normal');
         } else {
           const priceText = price ? ` (৳${price})` : '';
@@ -192,14 +207,17 @@ export class SiteSyncNotificationService {
             result.newOffersCount++;
             const throttle = await HabitNotificationQueue.canDeliverNotificationNow('high');
             if (throttle.allowed) {
-              await PushNotificationService.notifyCourseOffer({
-                id,
-                title,
-                priceBdt: price,
-                originalPriceBdt: origPrice,
-                discountPercent,
-                thumbnail,
-              }, isBangla);
+              await PushNotificationService.notifyCourseOffer(
+                {
+                  id,
+                  title,
+                  priceBdt: price,
+                  originalPriceBdt: origPrice,
+                  discountPercent,
+                  thumbnail,
+                },
+                isBangla
+              );
               await HabitNotificationQueue.recordDelivery('high');
             } else {
               const offerTitle = isBangla
@@ -259,11 +277,14 @@ export class SiteSyncNotificationService {
         const throttle = await HabitNotificationQueue.canDeliverNotificationNow('low');
         const isReceptive = await HabitNotificationQueue.isReceptiveTimeNow();
         if (throttle.allowed && isReceptive) {
-          await PushNotificationService.notifySiteUpdate({
-            id,
-            title,
-            link,
-          }, isBangla);
+          await PushNotificationService.notifySiteUpdate(
+            {
+              id,
+              title,
+              link,
+            },
+            isBangla
+          );
           await HabitNotificationQueue.recordDelivery('low');
         } else {
           await HabitNotificationQueue.enqueueOrDispatch(
@@ -326,7 +347,11 @@ export class SiteSyncNotificationService {
         // Recommend popular flagship courses
         const flagship = candidates.find((c: any) => {
           const name = (c.name || '').toLowerCase();
-          return name.includes('excel') || name.includes('generative ai') || name.includes('communication');
+          return (
+            name.includes('excel') ||
+            name.includes('generative ai') ||
+            name.includes('communication')
+          );
         });
         if (flagship) {
           recommended = flagship;
@@ -339,7 +364,8 @@ export class SiteSyncNotificationService {
         const hasAi = enrolledIds.some((id) => id.includes('ai') || id.includes('prompt'));
         const nextTarget = candidates.find((c: any) => {
           const name = (c.name || '').toLowerCase();
-          if (hasAi) return name.includes('research') || name.includes('lead') || name.includes('excel');
+          if (hasAi)
+            return name.includes('research') || name.includes('lead') || name.includes('excel');
           return name.includes('ai') || name.includes('mindset') || name.includes('intelligence');
         });
         if (nextTarget) {
@@ -352,7 +378,8 @@ export class SiteSyncNotificationService {
 
       const id = String(recommended.id);
       const title = cleanHtml(recommended.name || recommended.title || 'Executive Course');
-      let thumbnail = 'https://thrivingskill.com/wp-content/uploads/2025/11/Ms-Excel-Advanced-Level.jpg';
+      let thumbnail =
+        'https://thrivingskill.com/wp-content/uploads/2025/11/Ms-Excel-Advanced-Level.jpg';
       if (typeof recommended.image === 'string' && recommended.image.trim()) {
         thumbnail = recommended.image;
       } else if (recommended.image?.src) {
@@ -363,12 +390,15 @@ export class SiteSyncNotificationService {
       const isReceptive = await HabitNotificationQueue.isReceptiveTimeNow();
 
       if (force || (throttle.allowed && isReceptive)) {
-        await PushNotificationService.notifyCourseRecommendation({
-          id,
-          title,
-          reason,
-          thumbnail,
-        }, isBangla);
+        await PushNotificationService.notifyCourseRecommendation(
+          {
+            id,
+            title,
+            reason,
+            thumbnail,
+          },
+          isBangla
+        );
         await HabitNotificationQueue.recordDelivery('normal');
       } else {
         const recomTitle = isBangla ? '✨ আপনার জন্য বিশেষ কোর্স পরামর্শ' : '✨ Recommended For You';

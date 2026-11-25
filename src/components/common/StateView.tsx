@@ -20,10 +20,7 @@ interface StateViewProps {
   compact?: boolean;
 }
 
-const DEFAULT_META: Record<
-  AdaptiveStateMode,
-  { icon: string; title: string; message: string }
-> = {
+const DEFAULT_META: Record<AdaptiveStateMode, { icon: string; title: string; message: string }> = {
   loading: {
     icon: 'hourglass-outline',
     title: 'Loading content…',
@@ -68,18 +65,14 @@ export const StateView: React.FC<StateViewProps> = ({
   const resolvedIcon = icon || defaults.icon;
 
   const iconTint =
-    mode === 'error'
-      ? colors.danger
-      : mode === 'offline'
-      ? colors.brandGold
-      : colors.primary;
+    mode === 'error' ? colors.danger : mode === 'offline' ? colors.brandGold : colors.primary;
 
   const iconBg =
     mode === 'error'
       ? colors.dangerLight
       : mode === 'offline'
-      ? colors.brandGoldSubtle
-      : colors.primaryLight;
+        ? colors.brandGoldSubtle
+        : colors.primaryLight;
 
   return (
     <View
@@ -101,9 +94,7 @@ export const StateView: React.FC<StateViewProps> = ({
         )}
       </View>
 
-      <Text style={[typography.h4, styles.title, { color: colors.text }]}>
-        {resolvedTitle}
-      </Text>
+      <Text style={[typography.h4, styles.title, { color: colors.text }]}>{resolvedTitle}</Text>
 
       <Text style={[typography.bodySmall, styles.message, { color: colors.textMuted }]}>
         {resolvedMessage}

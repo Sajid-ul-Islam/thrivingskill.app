@@ -60,7 +60,9 @@ export const NotesModal: React.FC<NotesModalProps> = ({
 
   const lessonNotes = getNotesForLesson(courseId, lessonId);
   const currentCourse = courses.find((c) => c.id === courseId);
-  const currentLesson = currentCourse?.modules.flatMap((m) => m.lessons).find((l) => l.id === lessonId);
+  const currentLesson = currentCourse?.modules
+    .flatMap((m) => m.lessons)
+    .find((l) => l.id === lessonId);
 
   const handleSaveNote = () => {
     if (!newNoteText.trim()) return;
@@ -92,7 +94,11 @@ export const NotesModal: React.FC<NotesModalProps> = ({
 
     const courseTitle = currentCourse?.title || 'Thriving Skills Course';
     const lessonTitle = currentLesson?.title || 'Lesson Notes';
-    const dateStr = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    const dateStr = new Date().toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
 
     let markdown = `# 📝 Study Notes: ${lessonTitle}\n`;
     markdown += `**Course:** ${courseTitle}\n`;
@@ -101,7 +107,10 @@ export const NotesModal: React.FC<NotesModalProps> = ({
     markdown += `---\n\n`;
 
     lessonNotes.forEach((note, idx) => {
-      const time = new Date(note.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const time = new Date(note.createdAt).toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
       markdown += `### Note ${idx + 1} (${time})\n${note.text}\n\n`;
     });
 
@@ -143,8 +152,15 @@ export const NotesModal: React.FC<NotesModalProps> = ({
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
             <View style={styles.headerLeft}>
-              <Ionicons name="document-text" size={20} color={colors.primary} style={{ flexShrink: 0 }} />
-              <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>Study Notes</Text>
+              <Ionicons
+                name="document-text"
+                size={20}
+                color={colors.primary}
+                style={{ flexShrink: 0 }}
+              />
+              <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
+                Study Notes
+              </Text>
             </View>
             <View style={styles.headerRight}>
               {lessonNotes.length > 0 && (
@@ -218,7 +234,11 @@ export const NotesModal: React.FC<NotesModalProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Save study note"
               >
-                <Ionicons name="send" size={16} color={newNoteText.trim() ? colors.onPrimary : colors.textMuted} />
+                <Ionicons
+                  name="send"
+                  size={16}
+                  color={newNoteText.trim() ? colors.onPrimary : colors.textMuted}
+                />
               </TouchableOpacity>
             </View>
 
@@ -260,7 +280,9 @@ export const NotesModal: React.FC<NotesModalProps> = ({
                         <Text style={[styles.timeText, { color: colors.primary }]}>
                           {note.timestamp}
                         </Text>
-                        <Text style={{ fontSize: 9, color: colors.primary, fontWeight: '800' }}>▶ Jump</Text>
+                        <Text style={{ fontSize: 9, color: colors.primary, fontWeight: '800' }}>
+                          ▶ Jump
+                        </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         onPress={() => handleDeleteNote(note)}

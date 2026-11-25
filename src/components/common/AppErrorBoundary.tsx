@@ -63,7 +63,7 @@ export class AppErrorBoundary extends Component<Props, State> {
   private handleClearCacheAndReset = async () => {
     try {
       await CacheManager.clearAll();
-    } catch { }
+    } catch {}
     this.handleReset();
   };
 
@@ -89,9 +89,7 @@ export class AppErrorBoundary extends Component<Props, State> {
             <Text style={styles.wordmark}>
               Thriving <Text style={{ color: '#E34234' }}>Skills</Text>
             </Text>
-            <Text style={styles.tagline}>
-              জাতির দক্ষতা বিনির্মাণে • Building a Skilled Nation
-            </Text>
+            <Text style={styles.tagline}>জাতির দক্ষতা বিনির্মাণে • Building a Skilled Nation</Text>
 
             <View style={styles.card}>
               <View style={styles.iconCircle}>
@@ -99,7 +97,8 @@ export class AppErrorBoundary extends Component<Props, State> {
               </View>
               <Text style={styles.cardTitle}>Workspace Interrupted</Text>
               <Text style={styles.cardSubtitle}>
-                An unexpected UI layout issue occurred. Your courses, progress, and certificates remain 100% safe.
+                An unexpected UI layout issue occurred. Your courses, progress, and certificates
+                remain 100% safe.
               </Text>
 
               {/* Action Buttons */}
@@ -121,7 +120,12 @@ export class AppErrorBoundary extends Component<Props, State> {
                 accessibilityRole="button"
                 accessibilityLabel="Clear Cache and Reload"
               >
-                <Ionicons name="trash-outline" size={15} color="#94A3B8" style={{ marginRight: 6 }} />
+                <Ionicons
+                  name="trash-outline"
+                  size={15}
+                  color="#94A3B8"
+                  style={{ marginRight: 6 }}
+                />
                 <Text style={styles.secondaryBtnText}>Reset Cache & Reload</Text>
               </TouchableOpacity>
             </View>

@@ -421,7 +421,11 @@ export const FeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (buttons.length === 1) {
           primaryLabel = buttons[0].text || 'OK';
           const fn = buttons[0].onPress;
-          onConfirm = fn ? () => { fn(); } : undefined;
+          onConfirm = fn
+            ? () => {
+                fn();
+              }
+            : undefined;
           if (buttons[0].style === 'destructive') isDestructive = true;
         } else {
           const cancelBtn = buttons.find((b) => b.style === 'cancel');
@@ -430,12 +434,20 @@ export const FeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           if (cancelBtn) {
             secondaryLabel = cancelBtn.text || 'Cancel';
             const cFn = cancelBtn.onPress;
-            onCancel = cFn ? () => { cFn(); } : undefined;
+            onCancel = cFn
+              ? () => {
+                  cFn();
+                }
+              : undefined;
           }
           if (confirmBtn) {
             primaryLabel = confirmBtn.text || 'Confirm';
             const cfFn = confirmBtn.onPress;
-            onConfirm = cfFn ? () => { cfFn(); } : undefined;
+            onConfirm = cfFn
+              ? () => {
+                  cfFn();
+                }
+              : undefined;
             if (confirmBtn.style === 'destructive') {
               isDestructive = true;
               type = 'destructive';
@@ -453,7 +465,13 @@ export const FeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         primaryLabel,
         secondaryLabel,
         onConfirm,
-        onCancel: onCancel || (optDismiss ? () => { optDismiss(); } : undefined),
+        onCancel:
+          onCancel ||
+          (optDismiss
+            ? () => {
+                optDismiss();
+              }
+            : undefined),
         isDestructive,
       });
     };

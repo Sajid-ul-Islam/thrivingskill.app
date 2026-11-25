@@ -19,10 +19,7 @@ const TRENDING_TAGS = [
   { label: '🚀 Growth Marketing', query: 'marketing' },
 ];
 
-export const SearchSpotlightBar: React.FC<SearchSpotlightBarProps> = ({
-  onPress,
-  onSelectTag,
-}) => {
+export const SearchSpotlightBar: React.FC<SearchSpotlightBarProps> = ({ onPress, onSelectTag }) => {
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
   const { isTablet } = useResponsive();
@@ -43,7 +40,14 @@ export const SearchSpotlightBar: React.FC<SearchSpotlightBarProps> = ({
         activeOpacity={0.85}
       >
         <Ionicons name="search" size={isTablet ? 20 : 18} color={colors.primary} />
-        <Text style={[styles.placeholderText, isTablet && { fontSize: 14 }, { color: colors.textMuted }]} numberOfLines={1}>
+        <Text
+          style={[
+            styles.placeholderText,
+            isTablet && { fontSize: 14 },
+            { color: colors.textMuted },
+          ]}
+          numberOfLines={1}
+        >
           {isBangla ? 'আজকে আপনি কি শিখতে চান?' : 'What do you want to learn today?'}
         </Text>
         <View style={[styles.cmdKChip, { backgroundColor: colors.surfaceSubtle }]}>
@@ -54,9 +58,7 @@ export const SearchSpotlightBar: React.FC<SearchSpotlightBarProps> = ({
 
       {/* Trending Tag Chips */}
       <View style={styles.tagsRow}>
-        <Text style={[styles.trendingLabel, { color: colors.textMuted }]}>
-          TRENDING:
-        </Text>
+        <Text style={[styles.trendingLabel, { color: colors.textMuted }]}>TRENDING:</Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -72,7 +74,7 @@ export const SearchSpotlightBar: React.FC<SearchSpotlightBarProps> = ({
                   borderColor: colors.border,
                 },
               ]}
-              onPress={() => onSelectTag ? onSelectTag(tag.query) : onPress()}
+              onPress={() => (onSelectTag ? onSelectTag(tag.query) : onPress())}
               activeOpacity={0.7}
               hitSlop={{ top: 12, bottom: 12, left: 6, right: 6 }}
             >

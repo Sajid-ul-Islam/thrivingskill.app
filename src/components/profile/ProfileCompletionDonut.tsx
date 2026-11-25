@@ -26,7 +26,8 @@ export const ProfileCompletionDonut: React.FC<ProfileCompletionDonutProps> = ({
   isWide = false,
 }) => {
   const completion = calculateProfileCompletion(user);
-  const { percentage, strengthLevel, strengthLabel, strengthLabelBn, nextAction, isComplete } = completion;
+  const { percentage, strengthLevel, strengthLabel, strengthLabelBn, nextAction, isComplete } =
+    completion;
 
   // Donut geometry
   const size = isWide ? 66 : 56;
@@ -38,14 +39,14 @@ export const ProfileCompletionDonut: React.FC<ProfileCompletionDonutProps> = ({
 
   // Dynamic theme colors
   const trackColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(16, 47, 83, 0.08)';
-  const gradientStart = isComplete ? '#10B981' : (colors.primary || '#102F53');
+  const gradientStart = isComplete ? '#10B981' : colors.primary || '#102F53';
   const gradientEnd = isComplete ? '#059669' : '#E34234';
 
   const strengthBadgeColor = isComplete
     ? '#10B981'
     : strengthLevel === 'advanced'
-    ? '#3B82F6'
-    : '#E34234';
+      ? '#3B82F6'
+      : '#E34234';
 
   const handlePress = () => {
     triggerHaptic('light');
@@ -54,8 +55,12 @@ export const ProfileCompletionDonut: React.FC<ProfileCompletionDonutProps> = ({
 
   const currentLabel = isBangla ? strengthLabelBn : strengthLabel;
   const actionText = nextAction
-    ? (isBangla ? nextAction.actionTextBn : nextAction.actionText)
-    : (isBangla ? 'সম্পূর্ণ প্রোফাইল' : 'Profile Complete');
+    ? isBangla
+      ? nextAction.actionTextBn
+      : nextAction.actionText
+    : isBangla
+      ? 'সম্পূর্ণ প্রোফাইল'
+      : 'Profile Complete';
 
   return (
     <TouchableOpacity
@@ -66,7 +71,9 @@ export const ProfileCompletionDonut: React.FC<ProfileCompletionDonutProps> = ({
           backgroundColor: isDark ? 'rgba(30, 41, 59, 0.65)' : 'rgba(248, 250, 252, 0.95)',
           borderColor: isComplete
             ? 'rgba(16, 185, 129, 0.35)'
-            : (isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(226, 232, 240, 0.9)'),
+            : isDark
+              ? 'rgba(255, 255, 255, 0.1)'
+              : 'rgba(226, 232, 240, 0.9)',
         },
         style,
       ]}
@@ -111,16 +118,16 @@ export const ProfileCompletionDonut: React.FC<ProfileCompletionDonutProps> = ({
 
         {/* Center Percentage & Status */}
         <View style={styles.centerTextOverlay}>
-          <Text
-            style={[
-              styles.percentageText,
-              { color: colors.text, fontSize: isWide ? 15 : 13 },
-            ]}
-          >
+          <Text style={[styles.percentageText, { color: colors.text, fontSize: isWide ? 15 : 13 }]}>
             {`${percentage}%`}
           </Text>
           {isComplete ? (
-            <Ionicons name="checkmark-circle" size={11} color="#10B981" style={styles.completeIcon} />
+            <Ionicons
+              name="checkmark-circle"
+              size={11}
+              color="#10B981"
+              style={styles.completeIcon}
+            />
           ) : (
             <Text
               style={[
@@ -156,10 +163,12 @@ export const ProfileCompletionDonut: React.FC<ProfileCompletionDonutProps> = ({
 
           <Text style={[styles.guidanceText, { color: colors.textMuted }]} numberOfLines={2}>
             {isComplete
-              ? (isBangla ? 'আপনার প্রোফাইল সম্পূর্ণরূপে সক্রিয় ও যাচাইকৃত।' : 'All profile fields completed & verified.')
-              : (isBangla
-                  ? 'সার্টিফিকেট ও সম্পূর্ণ ফিচারের জন্য তথ্য পূরণ করুন।'
-                  : 'Complete all details for full learning certification.')}
+              ? isBangla
+                ? 'আপনার প্রোফাইল সম্পূর্ণরূপে সক্রিয় ও যাচাইকৃত।'
+                : 'All profile fields completed & verified.'
+              : isBangla
+                ? 'সার্টিফিকেট ও সম্পূর্ণ ফিচারের জন্য তথ্য পূরণ করুন।'
+                : 'Complete all details for full learning certification.'}
           </Text>
 
           {!isComplete && (
@@ -175,7 +184,10 @@ export const ProfileCompletionDonut: React.FC<ProfileCompletionDonutProps> = ({
       ) : (
         <View style={styles.compactLabelWrap}>
           <View style={[styles.compactLevelBadge, { backgroundColor: `${strengthBadgeColor}15` }]}>
-            <Text style={[styles.compactLevelText, { color: strengthBadgeColor }]} numberOfLines={1}>
+            <Text
+              style={[styles.compactLevelText, { color: strengthBadgeColor }]}
+              numberOfLines={1}
+            >
               {currentLabel}
             </Text>
           </View>

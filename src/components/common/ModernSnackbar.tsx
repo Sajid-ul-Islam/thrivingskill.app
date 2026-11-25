@@ -1,12 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Animated,
-  PanResponder,
-  Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, Animated, PanResponder, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SnackbarPayload } from '../../context/FeedbackContext';
 import { shape } from '../../theme/shapes';
@@ -89,13 +82,19 @@ export const ModernSnackbar: React.FC<ModernSnackbarProps> = ({
         useNativeDriver: false,
       }).start();
     }
-  }, [snackbar?.id, snackbar?.durationMs, snackbar?.showProgress, translateYAnim, opacityAnim, progressAnim]);
+  }, [
+    snackbar?.id,
+    snackbar?.durationMs,
+    snackbar?.showProgress,
+    translateYAnim,
+    opacityAnim,
+    progressAnim,
+  ]);
 
   if (!snackbar) return null;
 
   const resolvedBottom =
-    bottomOffset ??
-    Math.max(insets.bottom, Platform.OS === 'ios' ? 24 : 16) + 72;
+    bottomOffset ?? Math.max(insets.bottom, Platform.OS === 'ios' ? 24 : 16) + 72;
 
   const handleAction = () => {
     triggerHaptic('medium');
@@ -117,11 +116,7 @@ export const ModernSnackbar: React.FC<ModernSnackbarProps> = ({
       pointerEvents="box-none"
       {...panResponder.panHandlers}
     >
-      <View
-        style={styles.container}
-        accessibilityRole="alert"
-        accessibilityLiveRegion="polite"
-      >
+      <View style={styles.container} accessibilityRole="alert" accessibilityLiveRegion="polite">
         <View style={styles.contentRow}>
           <Text style={[typography.bodyMedium, styles.message]} numberOfLines={2}>
             {snackbar.message}

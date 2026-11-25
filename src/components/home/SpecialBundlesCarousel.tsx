@@ -1,12 +1,5 @@
 import React, { useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  Image,
-  Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -147,21 +140,18 @@ export const SpecialBundlesCarousel: React.FC<SpecialBundlesCarouselProps> = ({
                 <View style={styles.pricingRow}>
                   <View style={styles.priceColumn}>
                     <Text style={[styles.currentPrice, { color: colors.text }]}>
-                      {item.currency}{item.price.toLocaleString()}
+                      {item.currency}
+                      {item.price.toLocaleString()}
                     </Text>
                     {item.regularPrice > item.price && (
                       <Text style={[styles.regularPrice, { color: colors.textMuted }]}>
-                        {item.currency}{item.regularPrice.toLocaleString()}
+                        {item.currency}
+                        {item.regularPrice.toLocaleString()}
                       </Text>
                     )}
                   </View>
 
-                  <View
-                    style={[
-                      styles.ctaPill,
-                      { backgroundColor: colors.primary },
-                    ]}
-                  >
+                  <View style={[styles.ctaPill, { backgroundColor: colors.primary }]}>
                     <Text style={[styles.ctaPillText, { color: colors.onPrimary }]}>
                       {isBangla ? 'কোর্সসমূহ দেখুন' : 'Explore'}
                     </Text>

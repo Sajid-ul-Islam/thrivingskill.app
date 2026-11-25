@@ -179,29 +179,38 @@ export class PushNotificationService {
             enableVibrate: true,
           });
 
-          await Notifications.setNotificationChannelAsync(ANDROID_NOTIFICATION_CHANNELS.COURSES.id, {
-            name: ANDROID_NOTIFICATION_CHANNELS.COURSES.name,
-            importance: Notifications.AndroidImportance.HIGH,
-            vibrationPattern: [0, 200, 200, 200],
-            lightColor: '#102F53',
-            sound: 'default',
-            showBadge: true,
-            enableLights: true,
-            enableVibrate: true,
-          });
+          await Notifications.setNotificationChannelAsync(
+            ANDROID_NOTIFICATION_CHANNELS.COURSES.id,
+            {
+              name: ANDROID_NOTIFICATION_CHANNELS.COURSES.name,
+              importance: Notifications.AndroidImportance.HIGH,
+              vibrationPattern: [0, 200, 200, 200],
+              lightColor: '#102F53',
+              sound: 'default',
+              showBadge: true,
+              enableLights: true,
+              enableVibrate: true,
+            }
+          );
 
-          await Notifications.setNotificationChannelAsync(ANDROID_NOTIFICATION_CHANNELS.RECOMMENDATIONS.id, {
-            name: ANDROID_NOTIFICATION_CHANNELS.RECOMMENDATIONS.name,
-            importance: Notifications.AndroidImportance.HIGH,
-            sound: 'default',
-            showBadge: true,
-          });
+          await Notifications.setNotificationChannelAsync(
+            ANDROID_NOTIFICATION_CHANNELS.RECOMMENDATIONS.id,
+            {
+              name: ANDROID_NOTIFICATION_CHANNELS.RECOMMENDATIONS.name,
+              importance: Notifications.AndroidImportance.HIGH,
+              sound: 'default',
+              showBadge: true,
+            }
+          );
 
-          await Notifications.setNotificationChannelAsync(ANDROID_NOTIFICATION_CHANNELS.UPDATES.id, {
-            name: ANDROID_NOTIFICATION_CHANNELS.UPDATES.name,
-            importance: Notifications.AndroidImportance.DEFAULT,
-            showBadge: true,
-          });
+          await Notifications.setNotificationChannelAsync(
+            ANDROID_NOTIFICATION_CHANNELS.UPDATES.id,
+            {
+              name: ANDROID_NOTIFICATION_CHANNELS.UPDATES.name,
+              importance: Notifications.AndroidImportance.DEFAULT,
+              showBadge: true,
+            }
+          );
 
           this.channelsInitialized = true;
         } catch {}
@@ -235,7 +244,8 @@ export class PushNotificationService {
       }
 
       if (this.cachedToken) {
-        const platform = Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : 'web';
+        const platform =
+          Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : 'web';
         CompanionService.registerPushToken(this.cachedToken, platform).catch(() => {});
       }
 
@@ -305,15 +315,15 @@ export class PushNotificationService {
     // 2. Deliver to phone's native notification shade (pull down from status bar)
     if (Platform.OS !== 'web') {
       try {
-        const channelId = data?.channelId || (
-          type === 'offer'
+        const channelId =
+          data?.channelId ||
+          (type === 'offer'
             ? ANDROID_NOTIFICATION_CHANNELS.OFFERS.id
             : type === 'course'
-            ? ANDROID_NOTIFICATION_CHANNELS.COURSES.id
-            : type === 'recommendation'
-            ? ANDROID_NOTIFICATION_CHANNELS.RECOMMENDATIONS.id
-            : ANDROID_NOTIFICATION_CHANNELS.UPDATES.id
-        );
+              ? ANDROID_NOTIFICATION_CHANNELS.COURSES.id
+              : type === 'recommendation'
+                ? ANDROID_NOTIFICATION_CHANNELS.RECOMMENDATIONS.id
+                : ANDROID_NOTIFICATION_CHANNELS.UPDATES.id);
 
         await Notifications.scheduleNotificationAsync({
           content: {
@@ -357,12 +367,14 @@ export class PushNotificationService {
     listener: (data: Record<string, any>) => void
   ): () => void {
     try {
-      const subscription = Notifications.addNotificationResponseReceivedListener((response: Notifications.NotificationResponse) => {
-        const data = response?.notification?.request?.content?.data;
-        if (data) {
-          listener(data);
+      const subscription = Notifications.addNotificationResponseReceivedListener(
+        (response: Notifications.NotificationResponse) => {
+          const data = response?.notification?.request?.content?.data;
+          if (data) {
+            listener(data);
+          }
         }
-      });
+      );
       return () => {
         subscription.remove();
       };
@@ -453,22 +465,19 @@ export class PushNotificationService {
     const settings = await this.getSettings();
     if (!settings.courseUpdates) return null;
 
-    const title = isBangla ? '📢 নতুন আর্টিকেল ও ক্যারিয়ার আপডেট' : '📢 Career Insight & Platform Update';
+    const title = isBangla
+      ? '📢 নতুন আর্টিকেল ও ক্যারিয়ার আপডেট'
+      : '📢 Career Insight & Platform Update';
     const body = isBangla
       ? `"${post.title}" – থ্রাইভিং স্কিলস-এর নতুন ব্লগ পোস্টটি পড়ুন এবং জানুন গুরুত্বপূর্ণ ইনসাইট!`
       : `"${post.title}" – Read the latest expert insights and skills guide on Thriving Skills.`;
 
-    return this.dispatchNotification(
-      title,
-      body,
-      'update',
-      {
-        postId: post.id,
-        postTitle: post.title,
-        postUrl: post.link,
-        channelId: ANDROID_NOTIFICATION_CHANNELS.UPDATES.id,
-      }
-    );
+    return this.dispatchNotification(title, body, 'update', {
+      postId: post.id,
+      postTitle: post.title,
+      postUrl: post.link,
+      channelId: ANDROID_NOTIFICATION_CHANNELS.UPDATES.id,
+    });
   }
 
   /**
@@ -504,7 +513,10 @@ export class PushNotificationService {
   /**
    * Schedules a daily streak retention reminder (rate-limited to max once per calendar day)
    */
-  static async scheduleDailyStreakNudge(isBangla: boolean = false, force: boolean = false): Promise<void> {
+  static async scheduleDailyStreakNudge(
+    isBangla: boolean = false,
+    force: boolean = false
+  ): Promise<void> {
     const settings = await this.getSettings();
     if (!settings.streakReminders) return;
 
@@ -537,7 +549,10 @@ export class PushNotificationService {
   /**
    * Notifies user that their certificate is unlocked
    */
-  static async notifyCertificateReady(courseTitle: string, isBangla: boolean = false): Promise<void> {
+  static async notifyCertificateReady(
+    courseTitle: string,
+    isBangla: boolean = false
+  ): Promise<void> {
     await this.dispatchNotification(
       isBangla ? '🎓 ভেরিফাইড সার্টিফিকেট প্রস্তুত!' : '🎓 Verified Certificate Ready!',
       isBangla

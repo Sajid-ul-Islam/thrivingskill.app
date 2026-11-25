@@ -18,7 +18,8 @@ export const INSTRUCTORS: Record<string, Instructor> = {
     name: 'Humaira Sharmeen',
     title: 'Lead Microsoft Excel & Data Analytics Specialist',
     company: 'Thriving Skills Fellow',
-    avatar: 'https://thrivingskill.com/wp-content/uploads/2022/02/Humaira-Sharmeen-2-e1777453772809-200x200.webp',
+    avatar:
+      'https://thrivingskill.com/wp-content/uploads/2022/02/Humaira-Sharmeen-2-e1777453772809-200x200.webp',
     bio: 'Renowned corporate trainer for advanced Microsoft Excel, Power Query, and business intelligence models with 10+ years of enterprise coaching.',
     rating: 4.98,
     studentsCount: 28400,
@@ -29,7 +30,8 @@ export const INSTRUCTORS: Record<string, Instructor> = {
     name: 'Moinuddin Chowdhury',
     title: 'Corporate Sales & Leadership Strategist',
     company: 'Author & Senior Executive Advisor',
-    avatar: 'https://thrivingskill.com/wp-content/uploads/2019/10/Moinuddin-Chowdhury-p-1-200x200.webp',
+    avatar:
+      'https://thrivingskill.com/wp-content/uploads/2019/10/Moinuddin-Chowdhury-p-1-200x200.webp',
     bio: 'Veteran sales leadership consultant having trained thousands of executives in B2B business development, negotiation, and high-impact communication.',
     rating: 4.95,
     studentsCount: 22100,
@@ -141,7 +143,8 @@ export const SPECIAL_BUNDLES: SpecialBundle[] = [
     originalPriceBdt: 8500,
     priceUsd: 39.99,
     originalPriceUsd: 99.99,
-    thumbnail: 'https://thrivingskill.com/wp-content/uploads/2026/05/AI-Bundle-Promotional-Poster.jpg',
+    thumbnail:
+      'https://thrivingskill.com/wp-content/uploads/2026/05/AI-Bundle-Promotional-Poster.jpg',
     features: [
       'Strategic HR Management & People Operations',
       'AI in HR: Transforming Workplaces with Innovation',
@@ -182,7 +185,8 @@ export const COURSES: Course[] = [
     id: 'course-agentic-ai',
     title: 'Agentic AI & Multi-Agent Autonomous Workflows',
     slug: 'agentic-ai-multi-agent-autonomous-workflows',
-    subtitle: 'Build and deploy autonomous multi-agent systems (CrewAI, LangGraph & AutoGen) to automate enterprise operations, research, and data workflows.',
+    subtitle:
+      'Build and deploy autonomous multi-agent systems (CrewAI, LangGraph & AutoGen) to automate enterprise operations, research, and data workflows.',
     category: 'agentic-ai',
     level: 'Advanced',
     rating: 4.98,
@@ -192,7 +196,8 @@ export const COURSES: Course[] = [
     priceBdt: 2800,
     originalPrice: 149.99,
     originalPriceBdt: 6500,
-    thumbnail: 'https://thrivingskill.com/wp-content/uploads/2026/05/AI-Bundle-Promotional-Poster.jpg',
+    thumbnail:
+      'https://thrivingskill.com/wp-content/uploads/2026/05/AI-Bundle-Promotional-Poster.jpg',
     badge: 'Trending',
     durationHours: 10.5,
     lecturesCount: 32,
@@ -206,7 +211,8 @@ export const COURSES: Course[] = [
       'Integrate real-world tools: web search, corporate databases, REST APIs, and Excel automation',
       'Eliminate AI hallucinations through automated deterministic reflection and consensus voting',
     ],
-    description: 'Agentic AI is the defining 2026 technological frontier. Learn how to move past basic chatbots and engineer autonomous multi-agent software workers that plan, execute, and evaluate complex corporate tasks end-to-end.',
+    description:
+      'Agentic AI is the defining 2026 technological frontier. Learn how to move past basic chatbots and engineer autonomous multi-agent software workers that plan, execute, and evaluate complex corporate tasks end-to-end.',
     prerequisites: ['Basic Python or programming familiarity, understanding of LLM fundamentals.'],
     modules: [
       {
@@ -218,14 +224,16 @@ export const COURSES: Course[] = [
             title: '1.1 Monolithic Prompts vs. Multi-Agent Systems',
             duration: '14:30',
             isFreePreview: true,
-            summary: 'Why single-shot prompts fail at scale and how multi-agent role decomposition slashes error rates.',
+            summary:
+              'Why single-shot prompts fail at scale and how multi-agent role decomposition slashes error rates.',
           },
           {
             id: 'l2-agentic',
             title: '1.2 Building Your First Crew with CrewAI & LangGraph',
             duration: '22:15',
             isFreePreview: true,
-            summary: 'Step-by-step setup of agents, sequential processes, memory stores, and custom Python toolkits.',
+            summary:
+              'Step-by-step setup of agents, sequential processes, memory stores, and custom Python toolkits.',
           },
         ],
       },
@@ -236,7 +244,8 @@ export const COURSES: Course[] = [
     id: 'course-ai-exec-decision',
     title: 'AI for Business Leadership & Executive Decision Making',
     slug: 'ai-for-business-leadership-executive-decision-making',
-    subtitle: 'Strategic blueprints for C-suite directors, founders, and department heads to leverage predictive AI and autonomous workflows for bottom-line growth.',
+    subtitle:
+      'Strategic blueprints for C-suite directors, founders, and department heads to leverage predictive AI and autonomous workflows for bottom-line growth.',
     category: 'leadership',
     level: 'Intermediate',
     rating: 4.96,
@@ -259,7 +268,8 @@ export const COURSES: Course[] = [
       'Boardroom governance, data privacy compliance, and generative risk mitigation',
       'AI-augmented strategic planning, market scenario simulations, and competitive forecasting',
     ],
-    description: 'Designed specifically for corporate leaders who want to lead AI transformation rather than be disrupted by it.',
+    description:
+      'Designed specifically for corporate leaders who want to lead AI transformation rather than be disrupted by it.',
     prerequisites: ['Corporate management or leadership experience.'],
     modules: [],
     reviews: [],
@@ -268,7 +278,8 @@ export const COURSES: Course[] = [
     id: 'course-powerbi-storytelling',
     title: 'Data Storytelling & Executive Power BI Dashboards',
     slug: 'data-storytelling-executive-power-bi-dashboards',
-    subtitle: 'Translate complex enterprise numbers into compelling visual narratives and board-ready Power BI interactive dashboards.',
+    subtitle:
+      'Translate complex enterprise numbers into compelling visual narratives and board-ready Power BI interactive dashboards.',
     category: 'excel-data',
     level: 'Beginner',
     rating: 4.95,
@@ -291,7 +302,8 @@ export const COURSES: Course[] = [
       'Design clean, cognitive-friendly dashboards following Stephen Few principles',
       'Deliver persuasive 5-minute data presentations that influence executive sign-offs',
     ],
-    description: 'Master the art of combining quantitative precision in Power BI with persuasive storytelling for senior corporate leadership.',
+    description:
+      'Master the art of combining quantitative precision in Power BI with persuasive storytelling for senior corporate leadership.',
     prerequisites: ['Basic Excel familiarity.'],
     modules: [],
     reviews: [],
@@ -300,7 +312,8 @@ export const COURSES: Course[] = [
     id: 'course-esg-governance',
     title: 'ESG Strategy & Sustainable Corporate Governance',
     slug: 'esg-strategy-sustainable-corporate-governance',
-    subtitle: 'The comprehensive executive guide to Environmental, Social & Governance compliance, green finance, and international sustainability reporting.',
+    subtitle:
+      'The comprehensive executive guide to Environmental, Social & Governance compliance, green finance, and international sustainability reporting.',
     category: 'leadership',
     level: 'All Levels',
     rating: 4.92,
@@ -323,7 +336,8 @@ export const COURSES: Course[] = [
       'Calculate Scope 1, 2, and 3 corporate carbon emissions footprints',
       'Structure sustainable supply chain policies and access international green financing',
     ],
-    description: 'ESG is no longer optional for export-oriented, RMG, banking, and multinational enterprises in Bangladesh. Learn how to design and execute audit-ready ESG initiatives.',
+    description:
+      'ESG is no longer optional for export-oriented, RMG, banking, and multinational enterprises in Bangladesh. Learn how to design and execute audit-ready ESG initiatives.',
     prerequisites: ['None.'],
     modules: [],
     reviews: [],
@@ -332,7 +346,8 @@ export const COURSES: Course[] = [
     id: 'course-ai-1',
     title: 'Think, Communicate & Lead with AI',
     slug: 'think-communicate-lead-with-ai',
-    subtitle: 'Harness AI to improve the speed, quality, and consistency of your corporate work and executive leadership.',
+    subtitle:
+      'Harness AI to improve the speed, quality, and consistency of your corporate work and executive leadership.',
     category: 'generative-ai',
     level: 'All Levels',
     rating: 4.96,
@@ -342,7 +357,8 @@ export const COURSES: Course[] = [
     priceBdt: 2500,
     originalPrice: 129.99,
     originalPriceBdt: 5000,
-    thumbnail: 'https://thrivingskill.com/wp-content/uploads/2026/05/AI-Bundle-Promotional-Poster.jpg',
+    thumbnail:
+      'https://thrivingskill.com/wp-content/uploads/2026/05/AI-Bundle-Promotional-Poster.jpg',
     badge: 'Bestseller',
     durationHours: 8.5,
     lecturesCount: 28,
@@ -356,8 +372,11 @@ export const COURSES: Course[] = [
       'Build custom GPT workflows tailored for corporate productivity',
       'Manage enterprise AI safety, copyright, and confidential data protection',
     ],
-    description: 'Empower yourself with practical Generative AI capabilities. Designed specifically for working professionals, department heads, and managers looking to accelerate output and streamline complex workflows.',
-    prerequisites: ['No coding background required. Basic familiarity with browser and office tools.'],
+    description:
+      'Empower yourself with practical Generative AI capabilities. Designed specifically for working professionals, department heads, and managers looking to accelerate output and streamline complex workflows.',
+    prerequisites: [
+      'No coding background required. Basic familiarity with browser and office tools.',
+    ],
     modules: [
       {
         id: 'm1',
@@ -375,7 +394,8 @@ export const COURSES: Course[] = [
             title: '1.2 Demystifying Large Language Models for Decision Makers',
             duration: '14:20',
             isFreePreview: true,
-            summary: 'Understanding tokens, context windows, parameters, and foundational enterprise models.',
+            summary:
+              'Understanding tokens, context windows, parameters, and foundational enterprise models.',
             quiz: [
               {
                 id: 'q1',
@@ -387,7 +407,8 @@ export const COURSES: Course[] = [
                   'Removing the need for internet access',
                 ],
                 correctAnswerIndex: 0,
-                explanation: 'A larger context window allows the model to analyze comprehensive multi-page documents, datasets, or codebases in a single session.',
+                explanation:
+                  'A larger context window allows the model to analyze comprehensive multi-page documents, datasets, or codebases in a single session.',
               },
             ],
           },
@@ -400,7 +421,8 @@ export const COURSES: Course[] = [
     id: 'course-excel-chatgpt',
     title: 'Learn MS Excel using ChatGPT',
     slug: 'learn-ms-excel-with-chatgpt',
-    subtitle: 'Combine the computational power of Excel with ChatGPT to automate nested formulas, VBA macros, and dashboard charts.',
+    subtitle:
+      'Combine the computational power of Excel with ChatGPT to automate nested formulas, VBA macros, and dashboard charts.',
     category: 'excel-data',
     level: 'Beginner',
     rating: 4.95,
@@ -424,7 +446,8 @@ export const COURSES: Course[] = [
       'Write custom VBA scripts and Power Query transformations without coding experience',
       'Automate repetitive data cleaning and multi-table reconciliations',
     ],
-    description: 'Learn how to 5x your Excel productivity by using ChatGPT as your personal data co-pilot. Covers formula generation, error diagnosis, VBA automation, and visual pivot chart design.',
+    description:
+      'Learn how to 5x your Excel productivity by using ChatGPT as your personal data co-pilot. Covers formula generation, error diagnosis, VBA automation, and visual pivot chart design.',
     prerequisites: ['Basic familiarity with MS Excel.'],
     modules: [
       {
@@ -436,14 +459,16 @@ export const COURSES: Course[] = [
             title: '1.1 Prompting ChatGPT for Advanced Excel Formulas',
             duration: '12:30',
             isFreePreview: true,
-            summary: 'Structure queries to generate nested IFs, dynamic arrays, and multi-condition lookups.',
+            summary:
+              'Structure queries to generate nested IFs, dynamic arrays, and multi-condition lookups.',
           },
           {
             id: 'l2-ec',
             title: '1.2 Generating VBA Macro Scripts for Batch Tasks',
             duration: '18:15',
             isFreePreview: true,
-            summary: 'Automate repetitive workbook formatting and data export using AI-written macros.',
+            summary:
+              'Automate repetitive workbook formatting and data export using AI-written macros.',
           },
         ],
       },
@@ -454,7 +479,8 @@ export const COURSES: Course[] = [
     id: 'course-fin-model',
     title: 'Financial Modeling in Excel',
     slug: 'financial-modeling-in-excel',
-    subtitle: 'Build dynamic 3-statement forecast models, DCF valuations, and sensitivity tables from scratch.',
+    subtitle:
+      'Build dynamic 3-statement forecast models, DCF valuations, and sensitivity tables from scratch.',
     category: 'finance',
     level: 'Intermediate',
     rating: 4.92,
@@ -478,7 +504,8 @@ export const COURSES: Course[] = [
       'Create 2-way data tables, scenario switchers, and waterfall charts',
       'Download 15+ ready-to-use corporate Excel financial templates',
     ],
-    description: 'The definitive financial modeling curriculum used by corporate finance managers, investment analysts, and business strategists.',
+    description:
+      'The definitive financial modeling curriculum used by corporate finance managers, investment analysts, and business strategists.',
     prerequisites: ['Fundamental accounting knowledge.'],
     modules: [],
     reviews: [],
@@ -487,7 +514,8 @@ export const COURSES: Course[] = [
     id: 'course-ai-hr',
     title: 'AI in HR: Transforming Workplaces with Innovation',
     slug: 'al-in-hr-workplaces-with-innovation',
-    subtitle: 'Modernize recruiting, employee sentiment analytics, HR policy drafting, and talent management with AI.',
+    subtitle:
+      'Modernize recruiting, employee sentiment analytics, HR policy drafting, and talent management with AI.',
     category: 'hr',
     level: 'All Levels',
     rating: 4.88,
@@ -510,7 +538,8 @@ export const COURSES: Course[] = [
       'Generate employee engagement surveys and analyze sentiment in minutes',
       'Draft standardized HR policies, SOPs, and employee onboarding manuals',
     ],
-    description: 'Transform HR from administrative overhead into a strategic talent engine using modern AI tools.',
+    description:
+      'Transform HR from administrative overhead into a strategic talent engine using modern AI tools.',
     prerequisites: ['None.'],
     modules: [],
     reviews: [],
@@ -519,7 +548,8 @@ export const COURSES: Course[] = [
     id: 'course-real-estate',
     title: 'A Guide To Real Estate Business',
     slug: 'guide-to-real-estate-business',
-    subtitle: 'Comprehensive guide to commercial property development, project feasibility, legal compliance, and sales.',
+    subtitle:
+      'Comprehensive guide to commercial property development, project feasibility, legal compliance, and sales.',
     category: 'leadership',
     level: 'Intermediate',
     rating: 4.9,
@@ -542,7 +572,8 @@ export const COURSES: Course[] = [
       'Navigating Rajuk / municipal regulatory approvals and RAJUK bylaws',
       'B2B sales and high-net-worth property marketing tactics',
     ],
-    description: 'Step-by-step masterclass on launching, scaling, and managing profitable real estate projects in emerging markets.',
+    description:
+      'Step-by-step masterclass on launching, scaling, and managing profitable real estate projects in emerging markets.',
     prerequisites: ['Basic business acumen.'],
     modules: [],
     reviews: [],
@@ -551,7 +582,8 @@ export const COURSES: Course[] = [
     id: 'course-chatgpt-research',
     title: 'Using ChatGPT in Research & Academic Writing',
     slug: 'using-chatgpt-in-research',
-    subtitle: 'Accelerate literature reviews, citation synthesis, hypothesis framing, and academic data analysis ethically.',
+    subtitle:
+      'Accelerate literature reviews, citation synthesis, hypothesis framing, and academic data analysis ethically.',
     category: 'research',
     level: 'All Levels',
     rating: 4.93,
@@ -561,7 +593,8 @@ export const COURSES: Course[] = [
     priceBdt: 1800,
     originalPrice: 89.99,
     originalPriceBdt: 3500,
-    thumbnail: 'https://thrivingskill.com/wp-content/uploads/2026/05/AI-Bundle-Promotional-Poster.jpg',
+    thumbnail:
+      'https://thrivingskill.com/wp-content/uploads/2026/05/AI-Bundle-Promotional-Poster.jpg',
     badge: 'Bestseller',
     durationHours: 3.5,
     lecturesCount: 18,
@@ -575,7 +608,8 @@ export const COURSES: Course[] = [
       'Identify research gaps and frame rigorous methodology statements',
       'Avoid plagiarism and ensure strict academic integrity compliance',
     ],
-    description: 'Master ethical AI tools to streamline graduate, PhD, and corporate market research workflows without compromising academic rigor.',
+    description:
+      'Master ethical AI tools to streamline graduate, PhD, and corporate market research workflows without compromising academic rigor.',
     prerequisites: ['Interest in research and academic writing.'],
     modules: [],
     reviews: [],
@@ -584,7 +618,8 @@ export const COURSES: Course[] = [
     id: 'course-power-bi',
     title: 'Analyzing Data With Power BI',
     slug: 'analyzing-data-with-power-bi',
-    subtitle: 'Transform raw multi-source spreadsheets into executive dashboards with DAX and Power Query.',
+    subtitle:
+      'Transform raw multi-source spreadsheets into executive dashboards with DAX and Power Query.',
     category: 'excel-data',
     level: 'Intermediate',
     rating: 4.91,
@@ -607,7 +642,8 @@ export const COURSES: Course[] = [
       'Write DAX measures for Year-over-Year (YoY) and Month-to-Date metrics',
       'Build executive mobile-responsive BI dashboards with cross-filtering',
     ],
-    description: 'Master Microsoft Power BI to build automated reporting ecosystems for your organization.',
+    description:
+      'Master Microsoft Power BI to build automated reporting ecosystems for your organization.',
     prerequisites: ['Basic understanding of spreadsheets.'],
     modules: [],
     reviews: [],
@@ -616,7 +652,8 @@ export const COURSES: Course[] = [
     id: 'course-sales-comm',
     title: 'Communication & Sales Mastery for Professionals',
     slug: 'communication-sales-professionals',
-    subtitle: 'Master consultative B2B selling, high-stakes negotiation, objection handling, and executive presence.',
+    subtitle:
+      'Master consultative B2B selling, high-stakes negotiation, objection handling, and executive presence.',
     category: 'marketing',
     level: 'All Levels',
     rating: 4.94,
@@ -639,7 +676,8 @@ export const COURSES: Course[] = [
       'Active listening and handling hostile client objections',
       'Minto Pyramid structure for concise executive business proposals',
     ],
-    description: 'Learn the exact sales frameworks that convert cold prospects into high-ticket enterprise contracts.',
+    description:
+      'Learn the exact sales frameworks that convert cold prospects into high-ticket enterprise contracts.',
     prerequisites: ['None.'],
     modules: [],
     reviews: [],
@@ -656,7 +694,8 @@ export const SKILLS_SUMMITS: SkillsSummit[] = [
     attendeesCount: '5,000+ Attendees',
     keynoteSpeakers: ['DUCSU Leadership', 'Industry CXOs', 'Global AI Researchers'],
     bannerImage: 'https://thrivingskill.com/wp-content/uploads/2026/05/bundle.jpeg',
-    description: 'Co-organized with DUCSU (University of Dhaka) at Dhaka University Senate Bhaban. The premier national summit shaping future-ready talent, policy reforms, and 4IR competencies.',
+    description:
+      'Co-organized with DUCSU (University of Dhaka) at Dhaka University Senate Bhaban. The premier national summit shaping future-ready talent, policy reforms, and 4IR competencies.',
   },
   {
     id: 'summit-4ir',
@@ -665,9 +704,15 @@ export const SKILLS_SUMMITS: SkillsSummit[] = [
     date: 'Quarterly Executive Summit • NSU & Hybrid',
     status: 'Upcoming',
     attendeesCount: '3,200+ Executives',
-    keynoteSpeakers: ['North South University Faculty', 'Chief Technology Officers', 'AI Ethicists'],
-    bannerImage: 'https://thrivingskill.com/wp-content/uploads/2026/05/AI-Bundle-Promotional-Poster.jpg',
-    description: 'Co-organized with North South University (NSU). Deep dives into Generative AI implementation, agentic workflows, robotic process automation, and enterprise resilience.',
+    keynoteSpeakers: [
+      'North South University Faculty',
+      'Chief Technology Officers',
+      'AI Ethicists',
+    ],
+    bannerImage:
+      'https://thrivingskill.com/wp-content/uploads/2026/05/AI-Bundle-Promotional-Poster.jpg',
+    description:
+      'Co-organized with North South University (NSU). Deep dives into Generative AI implementation, agentic workflows, robotic process automation, and enterprise resilience.',
   },
   {
     id: 'summit-bd-blockchain',
@@ -678,7 +723,8 @@ export const SKILLS_SUMMITS: SkillsSummit[] = [
     attendeesCount: '2,800+ Delegates',
     keynoteSpeakers: ['FinTech Regulators', 'Cryptographic Engineers', 'Bank CIOs'],
     bannerImage: 'https://thrivingskill.com/wp-content/uploads/2024/12/project-Finance.jpeg',
-    description: 'National initiative exploring distributed ledger technology, smart contract audits, digital identity, and blockchain verifiable credentials for academic degrees.',
+    description:
+      'National initiative exploring distributed ledger technology, smart contract audits, digital identity, and blockchain verifiable credentials for academic degrees.',
   },
   {
     id: 'summit-bd-excel',
@@ -689,7 +735,8 @@ export const SKILLS_SUMMITS: SkillsSummit[] = [
     attendeesCount: '4,500+ Participants',
     keynoteSpeakers: ['Microsoft MVPs', 'Financial Modeler Fellows', 'BI Architects'],
     bannerImage: 'https://thrivingskill.com/wp-content/uploads/2026/10/sty-ai-era.png',
-    description: 'South Asia’s premier Excel and financial modeling championship with live spreadsheet audits, speed formula hacks, and enterprise Power BI showcases.',
+    description:
+      'South Asia’s premier Excel and financial modeling championship with live spreadsheet audits, speed formula hacks, and enterprise Power BI showcases.',
   },
   {
     id: 'summit-employability',
@@ -700,7 +747,8 @@ export const SKILLS_SUMMITS: SkillsSummit[] = [
     attendeesCount: '6,000+ Students & Grads',
     keynoteSpeakers: ['HR Directors', 'Startup Founders', 'University Placement Deans'],
     bannerImage: 'https://thrivingskill.com/wp-content/uploads/2026/05/bundle.jpeg',
-    description: 'Bridging top university graduates with corporate recruitment, resume audits, mock interviews, and direct placement pathways.',
+    description:
+      'Bridging top university graduates with corporate recruitment, resume audits, mock interviews, and direct placement pathways.',
   },
 ];
 
@@ -708,7 +756,8 @@ export const WORKSHOPS: Workshop[] = [
   {
     id: 'ws-1',
     title: 'Live Workshop: Think, Communicate & Lead with AI',
-    description: 'Join live cohort training on prompt engineering, workflow automation, and real-time leadership case studies with Q&A.',
+    description:
+      'Join live cohort training on prompt engineering, workflow automation, and real-time leadership case studies with Q&A.',
     speaker: INSTRUCTORS.sarah,
     date: 'Broadcasting Live Now',
     time: '7:30 PM - 9:30 PM (GMT+6)',
@@ -720,14 +769,16 @@ export const WORKSHOPS: Workshop[] = [
     joinUrl: 'https://thrivingskill.com/live-room/ai-leadership',
     streamType: 'zoom',
     category: 'generative-ai',
-    thumbnail: 'https://thrivingskill.com/wp-content/uploads/2026/05/AI-Bundle-Promotional-Poster.jpg',
+    thumbnail:
+      'https://thrivingskill.com/wp-content/uploads/2026/05/AI-Bundle-Promotional-Poster.jpg',
     price: 19.99,
     priceBdt: 1000,
   },
   {
     id: 'ws-2',
     title: 'MS Excel Masterclass: Advanced Lookup & Power Query',
-    description: 'Live interactive clinic solving real company messy spreadsheet problems with instant trainer feedback.',
+    description:
+      'Live interactive clinic solving real company messy spreadsheet problems with instant trainer feedback.',
     speaker: INSTRUCTORS.humaira,
     date: 'Sunday, Sep 6, 2026',
     time: '8:00 PM - 10:00 PM (GMT+6)',
@@ -745,7 +796,8 @@ export const WORKSHOPS: Workshop[] = [
   {
     id: 'ws-3',
     title: 'B2B Sales Leadership & Deal Closing Clinic',
-    description: 'Live consultative selling frameworks, roleplaying hostile client pushback, and structuring winning enterprise contracts.',
+    description:
+      'Live consultative selling frameworks, roleplaying hostile client pushback, and structuring winning enterprise contracts.',
     speaker: INSTRUCTORS.moinuddin,
     date: 'Thursday, Sep 17, 2026',
     time: '7:00 PM - 9:00 PM (GMT+6)',
@@ -855,7 +907,6 @@ export const REVIEWS_WALL: Review[] = [
       'https://secure.gravatar.com/avatar/5ac520474194482ab0ee61befa8909e312a53347406ed567f23493cd6f055dfa?s=500&d=mm&r=g',
     rating: 5,
     date: 'May 24, 2025',
-    comment:
-      'Excellent Course. Very structured and practical insights for operational excellence.',
+    comment: 'Excellent Course. Very structured and practical insights for operational excellence.',
   },
 ];

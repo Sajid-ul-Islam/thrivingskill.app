@@ -62,15 +62,69 @@ interface HotTopicItem {
 
 const HOT_TOPICS: HotTopicItem[] = [
   { id: 'all', label: 'All Courses', bnLabel: 'সব কোর্স', icon: 'sparkles', type: 'all' },
-  { id: 'thrive-gen', label: 'Thrive Gen (Youth)', bnLabel: 'থ্রাইভ জেন (ছাত্রছাত্রী)', icon: 'school-outline', type: 'dept' },
-  { id: 'bundle-courses', label: 'Career Bundles', bnLabel: 'ক্যারিয়ার বান্ডেল', icon: 'layers-outline', type: 'dept' },
-  { id: 'generative-ai', label: 'AI & ChatGPT', bnLabel: 'এআই ও চ্যাটজিপিটি', icon: 'hardware-chip-outline', type: 'dept' },
-  { id: 'microsoft-excel-courses', label: 'Excel Mastery', bnLabel: 'এক্সেল স্প্রেডশিট', icon: 'grid-outline', type: 'dept' },
-  { id: 'free-offer', label: '100% Free', bnLabel: 'সম্পূর্ণ ফ্রি', icon: 'gift-outline', type: 'price_free' },
-  { id: 'human-resource-management', label: 'HR Management', bnLabel: 'এইচআর ম্যানেজমেন্ট', icon: 'people-outline', type: 'dept' },
-  { id: 'supply-chain-management', label: 'Supply Chain', bnLabel: 'সাপ্লাই চেইন', icon: 'cube-outline', type: 'dept' },
-  { id: 'leadership-management', label: 'Leadership', bnLabel: 'লিডারশিপ', icon: 'compass-outline', type: 'dept' },
-  { id: 'job-seekers-skills', label: 'Career & Jobs', bnLabel: 'চাকরি ও ক্যারিয়ার', icon: 'briefcase-outline', type: 'dept' },
+  {
+    id: 'thrive-gen',
+    label: 'Thrive Gen (Youth)',
+    bnLabel: 'থ্রাইভ জেন (ছাত্রছাত্রী)',
+    icon: 'school-outline',
+    type: 'dept',
+  },
+  {
+    id: 'bundle-courses',
+    label: 'Career Bundles',
+    bnLabel: 'ক্যারিয়ার বান্ডেল',
+    icon: 'layers-outline',
+    type: 'dept',
+  },
+  {
+    id: 'generative-ai',
+    label: 'AI & ChatGPT',
+    bnLabel: 'এআই ও চ্যাটজিপিটি',
+    icon: 'hardware-chip-outline',
+    type: 'dept',
+  },
+  {
+    id: 'microsoft-excel-courses',
+    label: 'Excel Mastery',
+    bnLabel: 'এক্সেল স্প্রেডশিট',
+    icon: 'grid-outline',
+    type: 'dept',
+  },
+  {
+    id: 'free-offer',
+    label: '100% Free',
+    bnLabel: 'সম্পূর্ণ ফ্রি',
+    icon: 'gift-outline',
+    type: 'price_free',
+  },
+  {
+    id: 'human-resource-management',
+    label: 'HR Management',
+    bnLabel: 'এইচআর ম্যানেজমেন্ট',
+    icon: 'people-outline',
+    type: 'dept',
+  },
+  {
+    id: 'supply-chain-management',
+    label: 'Supply Chain',
+    bnLabel: 'সাপ্লাই চেইন',
+    icon: 'cube-outline',
+    type: 'dept',
+  },
+  {
+    id: 'leadership-management',
+    label: 'Leadership',
+    bnLabel: 'লিডারশিপ',
+    icon: 'compass-outline',
+    type: 'dept',
+  },
+  {
+    id: 'job-seekers-skills',
+    label: 'Career & Jobs',
+    bnLabel: 'চাকরি ও ক্যারিয়ার',
+    icon: 'briefcase-outline',
+    type: 'dept',
+  },
 ];
 
 export const CoursesScreen: React.FC<CoursesScreenProps> = ({
@@ -193,7 +247,9 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
       return (
         lowerCat.includes('personal') ||
         lowerCat.includes('habit') ||
-        slugs.some((s) => s.includes('personal') || s.includes('habit') || s.includes('productivity'))
+        slugs.some(
+          (s) => s.includes('personal') || s.includes('habit') || s.includes('productivity')
+        )
       );
     }
 
@@ -220,7 +276,9 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
 
     // 12. Career Bundles
     if (dId.includes('bundle')) {
-      return c.isCareerBundle || c.title.toLowerCase().includes('bundle') || lowerCat.includes('bundle');
+      return (
+        c.isCareerBundle || c.title.toLowerCase().includes('bundle') || lowerCat.includes('bundle')
+      );
     }
 
     // 13. Research & Academic
@@ -246,7 +304,10 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
 
   // Dynamically source canonical departments from the authentic live site categories
   const dynamicDepartments = useMemo(() => {
-    const canonicalMap = new Map<string, { id: string; title: string; slug: string; count: number }>();
+    const canonicalMap = new Map<
+      string,
+      { id: string; title: string; slug: string; count: number }
+    >();
 
     (categories || []).forEach((cat) => {
       const slug = (cat.slug || cat.id || '').toLowerCase();
@@ -311,7 +372,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     // Dynamic R&D: Add "🌟 Bestsellers & Top Rated" as the leading curated spotlight ribbon
     if (courses.length > 0) {
       const bestsellers = [...courses]
-        .filter((c) => (c.rating >= 4.5 || c.enrolledCount > 50 || c.badge))
+        .filter((c) => c.rating >= 4.5 || c.enrolledCount > 50 || c.badge)
         .sort((a, b) => (b.enrolledCount || 0) - (a.enrolledCount || 0))
         .slice(0, 8);
 
@@ -380,17 +441,20 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   }, []);
 
   // Fast responsive search change with 90ms debounce for 120Hz smooth input
-  const handleSearchChange = useCallback((text: string) => {
-    setLocalSearch(text);
-    if (searchDebounceTimerRef.current) {
-      clearTimeout(searchDebounceTimerRef.current);
-    }
-    searchDebounceTimerRef.current = setTimeout(() => {
-      startTransition(() => {
-        setSearchQuery(text);
-      });
-    }, 90);
-  }, [setSearchQuery]);
+  const handleSearchChange = useCallback(
+    (text: string) => {
+      setLocalSearch(text);
+      if (searchDebounceTimerRef.current) {
+        clearTimeout(searchDebounceTimerRef.current);
+      }
+      searchDebounceTimerRef.current = setTimeout(() => {
+        startTransition(() => {
+          setSearchQuery(text);
+        });
+      }, 90);
+    },
+    [setSearchQuery]
+  );
 
   const handleClearSearch = useCallback(() => {
     triggerHaptic('light');
@@ -402,14 +466,17 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   }, [setSearchQuery]);
 
   // Filter Selection Handlers with React 19 Concurrent Transitions & instant scroll-to-top
-  const handleCategorySelect = useCallback((catId: string) => {
-    triggerHaptic('selection');
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    startTransition(() => {
-      setSelectedCategory(catId);
-    });
-    flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
-  }, [setSelectedCategory]);
+  const handleCategorySelect = useCallback(
+    (catId: string) => {
+      triggerHaptic('selection');
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      startTransition(() => {
+        setSelectedCategory(catId);
+      });
+      flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
+    },
+    [setSelectedCategory]
+  );
 
   const handleLevelSelect = useCallback((lvl: LevelFilter) => {
     triggerHaptic('selection');
@@ -524,7 +591,12 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     } else if (isDeptFilter) {
       candidateList = courses.filter((c) => matchesDepartment(c, cat));
     } else if (cat === 'bundle' || cat === 'bundle-courses') {
-      candidateList = courses.filter((c) => c.isCareerBundle === true || c.title.toLowerCase().includes('bundle') || c.category === 'special-bundle');
+      candidateList = courses.filter(
+        (c) =>
+          c.isCareerBundle === true ||
+          c.title.toLowerCase().includes('bundle') ||
+          c.category === 'special-bundle'
+      );
     } else if (cat === 'thrive-gen') {
       candidateList = courses.filter((c) => {
         const t = c.title.toLowerCase();
@@ -539,7 +611,14 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
           t.includes('research') ||
           t.includes('interview') ||
           t.includes('job') ||
-          slugs.some((s) => s.includes('thrive') || s.includes('ssc') || s.includes('hsc') || s.includes('honours') || s.includes('masters'))
+          slugs.some(
+            (s) =>
+              s.includes('thrive') ||
+              s.includes('ssc') ||
+              s.includes('hsc') ||
+              s.includes('honours') ||
+              s.includes('masters')
+          )
         );
       });
     } else {
@@ -553,8 +632,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
           const slugList = c.categorySlugs;
           const slugMatch =
             slugList &&
-            (slugList.includes(cat) ||
-              slugList.some((s) => s.includes(cat) || cat.includes(s)));
+            (slugList.includes(cat) || slugList.some((s) => s.includes(cat) || cat.includes(s)));
           return directMatch || slugMatch;
         });
       }
@@ -575,7 +653,8 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
 
       // Price check
       if (pf !== 'all') {
-        const isFree = (!course.price || course.price === 0) && (!course.priceBdt || course.priceBdt === 0);
+        const isFree =
+          (!course.price || course.price === 0) && (!course.priceBdt || course.priceBdt === 0);
         if (pf === 'free' && !isFree) return false;
         if (pf === 'paid' && isFree) return false;
       }
@@ -609,32 +688,44 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     }
 
     return matched;
-  }, [courses, categoryIndex, selectedCategory, selectedLevel, selectedDurationFilter, selectedPriceFilter, selectedSort, searchQuery]);
+  }, [
+    courses,
+    categoryIndex,
+    selectedCategory,
+    selectedLevel,
+    selectedDurationFilter,
+    selectedPriceFilter,
+    selectedSort,
+    searchQuery,
+  ]);
 
-  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const offsetY = event.nativeEvent.contentOffset.y;
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const offsetY = event.nativeEvent.contentOffset.y;
 
-    // 1. Dynamic Header Elevation:
-    if (offsetY > 8 && !isScrolled) {
-      setIsScrolled(true);
-    } else if (offsetY <= 8 && isScrolled) {
-      setIsScrolled(false);
-    }
+      // 1. Dynamic Header Elevation:
+      if (offsetY > 8 && !isScrolled) {
+        setIsScrolled(true);
+      } else if (offsetY <= 8 && isScrolled) {
+        setIsScrolled(false);
+      }
 
-    // 2. Dynamic Sticky Search in Header:
-    if (offsetY > 70 && !showHeaderSearch) {
-      setShowHeaderSearch(true);
-    } else if (offsetY <= 70 && showHeaderSearch) {
-      setShowHeaderSearch(false);
-    }
+      // 2. Dynamic Sticky Search in Header:
+      if (offsetY > 70 && !showHeaderSearch) {
+        setShowHeaderSearch(true);
+      } else if (offsetY <= 70 && showHeaderSearch) {
+        setShowHeaderSearch(false);
+      }
 
-    // 3. Dynamic "Back to Top" Floating Pill:
-    if (offsetY > 450 && !showScrollTop) {
-      setShowScrollTop(true);
-    } else if (offsetY <= 450 && showScrollTop) {
-      setShowScrollTop(false);
-    }
-  }, [isScrolled, showHeaderSearch, showScrollTop]);
+      // 3. Dynamic "Back to Top" Floating Pill:
+      if (offsetY > 450 && !showScrollTop) {
+        setShowScrollTop(true);
+      } else if (offsetY <= 450 && showScrollTop) {
+        setShowScrollTop(false);
+      }
+    },
+    [isScrolled, showHeaderSearch, showScrollTop]
+  );
 
   const handleHeaderSearchPress = useCallback(() => {
     if (onOpenSearch) {
@@ -711,7 +802,12 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                 <Text style={[styles.deptRowTitle, { color: colors.text }]} numberOfLines={1}>
                   {dept.title}
                 </Text>
-                <View style={[styles.deptCountBadge, { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' }]}>
+                <View
+                  style={[
+                    styles.deptCountBadge,
+                    { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' },
+                  ]}
+                >
                   <Text style={[styles.deptCountText, { color: colors.textMuted }]}>
                     {dept.courses.length}
                   </Text>
@@ -747,9 +843,20 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                 </StaggeredFadeIn>
               </View>
             ) : isTablet && deptItemCount === 2 && !isLandscape ? (
-              <View style={{ flexDirection: 'row', paddingHorizontal: 16, gap: 12, alignItems: 'stretch' }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  paddingHorizontal: 16,
+                  gap: 12,
+                  alignItems: 'stretch',
+                }}
+              >
                 {dept.courses.map((courseItem, idx) => (
-                  <StaggeredFadeIn key={`dept-course-${dept.id}-${courseItem.id}`} index={idx} style={{ flex: 1, height: '100%', alignSelf: 'stretch' }}>
+                  <StaggeredFadeIn
+                    key={`dept-course-${dept.id}-${courseItem.id}`}
+                    index={idx}
+                    style={{ flex: 1, height: '100%', alignSelf: 'stretch' }}
+                  >
                     <CourseCard
                       course={courseItem}
                       isBookmarked={bookmarks.includes(courseItem.id)}
@@ -772,7 +879,10 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                 windowSize={3}
                 removeClippedSubviews={Platform.OS === 'android'}
                 renderItem={({ item: courseItem, index: cIdx }) => (
-                  <StaggeredFadeIn index={cIdx} style={{ width: deptCardWidth, alignSelf: 'stretch' }}>
+                  <StaggeredFadeIn
+                    index={cIdx}
+                    style={{ width: deptCardWidth, alignSelf: 'stretch' }}
+                  >
                     <CourseCard
                       course={courseItem}
                       isBookmarked={bookmarks.includes(courseItem.id)}
@@ -789,7 +899,10 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
       }
 
       return (
-        <StaggeredFadeIn index={index} style={[styles.cardItemWrapper, effectiveColumns > 1 && styles.gridCardItem]}>
+        <StaggeredFadeIn
+          index={index}
+          style={[styles.cardItemWrapper, effectiveColumns > 1 && styles.gridCardItem]}
+        >
           <CourseCard
             course={item as Course}
             horizontal={viewMode === 'list'}
@@ -801,7 +914,22 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
         </StaggeredFadeIn>
       );
     },
-    [isBrowsingDepartments, colors, isDark, isBangla, handleCategorySelect, onNavigateToCourse, viewMode, bookmarks, userProgress, effectiveColumns, width, isTablet, isLandscape, handleOpenQuickPeek]
+    [
+      isBrowsingDepartments,
+      colors,
+      isDark,
+      isBangla,
+      handleCategorySelect,
+      onNavigateToCourse,
+      viewMode,
+      bookmarks,
+      userProgress,
+      effectiveColumns,
+      width,
+      isTablet,
+      isLandscape,
+      handleOpenQuickPeek,
+    ]
   );
 
   const keyExtractor = useCallback(
@@ -825,7 +953,11 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
             <TextInput
               ref={searchInputRef}
               style={[styles.searchInput, { color: colors.text }]}
-              placeholder={isBangla ? 'কোর্স, জেনারেটিভ এআই, এক্সেল ফর্মুলা সার্চ করুন...' : 'Search courses, Generative AI, Excel formulas...'}
+              placeholder={
+                isBangla
+                  ? 'কোর্স, জেনারেটিভ এআই, এক্সেল ফর্মুলা সার্চ করুন...'
+                  : 'Search courses, Generative AI, Excel formulas...'
+              }
               placeholderTextColor={colors.textLight}
               value={localSearch}
               onChangeText={handleSearchChange}
@@ -853,7 +985,10 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               const isSelected =
                 (topic.type === 'dept' && selectedCategory === topic.id) ||
                 (topic.type === 'price_free' && selectedPriceFilter === 'free') ||
-                (topic.type === 'all' && selectedCategory === 'all' && selectedPriceFilter === 'all' && !searchQuery);
+                (topic.type === 'all' &&
+                  selectedCategory === 'all' &&
+                  selectedPriceFilter === 'all' &&
+                  !searchQuery);
 
               return (
                 <TouchableOpacity
@@ -861,8 +996,12 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                   style={[
                     styles.hotTopicChip,
                     {
-                      backgroundColor: isSelected ? colors.primary : (isDark ? colors.surfaceCard : '#F1F5F9'),
-                      borderColor: isSelected ? colors.primary : (isDark ? colors.border : '#E2E8F0'),
+                      backgroundColor: isSelected
+                        ? colors.primary
+                        : isDark
+                          ? colors.surfaceCard
+                          : '#F1F5F9',
+                      borderColor: isSelected ? colors.primary : isDark ? colors.border : '#E2E8F0',
                     },
                     isSelected && { shadowColor: colors.primary, elevation: 2 },
                   ]}
@@ -883,14 +1022,16 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                   <Ionicons
                     name={topic.icon as any}
                     size={13}
-                    color={isSelected ? colors.onPrimary : (isDark ? colors.textLight : colors.textMuted)}
+                    color={
+                      isSelected ? colors.onPrimary : isDark ? colors.textLight : colors.textMuted
+                    }
                     style={{ marginRight: 5 }}
                   />
                   <Text
                     style={[
                       styles.hotTopicText,
                       {
-                        color: isSelected ? colors.onPrimary : (isDark ? colors.text : '#334155'),
+                        color: isSelected ? colors.onPrimary : isDark ? colors.text : '#334155',
                         fontWeight: isSelected ? '800' : '600',
                       },
                     ]}
@@ -936,7 +1077,10 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               style={[
                 styles.quickFilterChip,
                 selectedLevel === 'Beginner'
-                  ? { backgroundColor: isDark ? '#FFFFFF' : '#102F53', borderColor: isDark ? '#FFFFFF' : '#102F53' }
+                  ? {
+                      backgroundColor: isDark ? '#FFFFFF' : '#102F53',
+                      borderColor: isDark ? '#FFFFFF' : '#102F53',
+                    }
                   : { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
               ]}
               onPress={() => handleLevelSelect(selectedLevel === 'Beginner' ? 'All' : 'Beginner')}
@@ -948,12 +1092,25 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               <Ionicons
                 name="school-outline"
                 size={12}
-                color={selectedLevel === 'Beginner' ? (isDark ? colors.onSecondary : '#FFFFFF') : colors.primary}
+                color={
+                  selectedLevel === 'Beginner'
+                    ? isDark
+                      ? colors.onSecondary
+                      : '#FFFFFF'
+                    : colors.primary
+                }
               />
               <Text
                 style={[
                   styles.quickFilterText,
-                  { color: selectedLevel === 'Beginner' ? (isDark ? colors.onSecondary : '#FFFFFF') : colors.text },
+                  {
+                    color:
+                      selectedLevel === 'Beginner'
+                        ? isDark
+                          ? colors.onSecondary
+                          : '#FFFFFF'
+                        : colors.text,
+                  },
                 ]}
               >
                 {isBangla ? 'বিগিনার' : 'Beginner'}
@@ -965,7 +1122,10 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               style={[
                 styles.quickFilterChip,
                 selectedLevel === 'Advanced'
-                  ? { backgroundColor: isDark ? '#FFFFFF' : '#102F53', borderColor: isDark ? '#FFFFFF' : '#102F53' }
+                  ? {
+                      backgroundColor: isDark ? '#FFFFFF' : '#102F53',
+                      borderColor: isDark ? '#FFFFFF' : '#102F53',
+                    }
                   : { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
               ]}
               onPress={() => handleLevelSelect(selectedLevel === 'Advanced' ? 'All' : 'Advanced')}
@@ -977,12 +1137,17 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               <Ionicons
                 name="trending-up-outline"
                 size={12}
-                color={selectedLevel === 'Advanced' ? (isDark ? '#0F192C' : '#FFFFFF') : colors.primary}
+                color={
+                  selectedLevel === 'Advanced' ? (isDark ? '#0F192C' : '#FFFFFF') : colors.primary
+                }
               />
               <Text
                 style={[
                   styles.quickFilterText,
-                  { color: selectedLevel === 'Advanced' ? (isDark ? '#0F192C' : '#FFFFFF') : colors.text },
+                  {
+                    color:
+                      selectedLevel === 'Advanced' ? (isDark ? '#0F192C' : '#FFFFFF') : colors.text,
+                  },
                 ]}
               >
                 {isBangla ? 'অ্যাডভান্সড' : 'Advanced'}
@@ -994,10 +1159,15 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               style={[
                 styles.quickFilterChip,
                 selectedDurationFilter === 'short'
-                  ? { backgroundColor: isDark ? '#FFFFFF' : '#102F53', borderColor: isDark ? '#FFFFFF' : '#102F53' }
+                  ? {
+                      backgroundColor: isDark ? '#FFFFFF' : '#102F53',
+                      borderColor: isDark ? '#FFFFFF' : '#102F53',
+                    }
                   : { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
               ]}
-              onPress={() => handleDurationFilterSelect(selectedDurationFilter === 'short' ? 'all' : 'short')}
+              onPress={() =>
+                handleDurationFilterSelect(selectedDurationFilter === 'short' ? 'all' : 'short')
+              }
               accessibilityRole="tab"
               accessibilityState={{ selected: selectedDurationFilter === 'short' }}
               accessibilityLabel={isBangla ? 'সংক্ষিপ্ত কোর্স ফিল্টার' : 'Filter by Short duration'}
@@ -1006,12 +1176,25 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               <Ionicons
                 name="flash-outline"
                 size={12}
-                color={selectedDurationFilter === 'short' ? (isDark ? '#0F192C' : '#FFFFFF') : colors.primary}
+                color={
+                  selectedDurationFilter === 'short'
+                    ? isDark
+                      ? '#0F192C'
+                      : '#FFFFFF'
+                    : colors.primary
+                }
               />
               <Text
                 style={[
                   styles.quickFilterText,
-                  { color: selectedDurationFilter === 'short' ? (isDark ? '#0F192C' : '#FFFFFF') : colors.text },
+                  {
+                    color:
+                      selectedDurationFilter === 'short'
+                        ? isDark
+                          ? '#0F192C'
+                          : '#FFFFFF'
+                        : colors.text,
+                  },
                 ]}
               >
                 {isBangla ? 'সংক্ষিপ্ত (<৩ঘ)' : 'Short (<3h)'}
@@ -1023,10 +1206,17 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               style={[
                 styles.quickFilterChip,
                 selectedDurationFilter === 'in-depth'
-                  ? { backgroundColor: isDark ? '#FFFFFF' : '#102F53', borderColor: isDark ? '#FFFFFF' : '#102F53' }
+                  ? {
+                      backgroundColor: isDark ? '#FFFFFF' : '#102F53',
+                      borderColor: isDark ? '#FFFFFF' : '#102F53',
+                    }
                   : { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
               ]}
-              onPress={() => handleDurationFilterSelect(selectedDurationFilter === 'in-depth' ? 'all' : 'in-depth')}
+              onPress={() =>
+                handleDurationFilterSelect(
+                  selectedDurationFilter === 'in-depth' ? 'all' : 'in-depth'
+                )
+              }
               accessibilityRole="tab"
               accessibilityState={{ selected: selectedDurationFilter === 'in-depth' }}
               accessibilityLabel={isBangla ? 'ইন-ডেপ্থ কোর্স ফিল্টার' : 'Filter by In-depth duration'}
@@ -1035,12 +1225,25 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               <Ionicons
                 name="time-outline"
                 size={12}
-                color={selectedDurationFilter === 'in-depth' ? (isDark ? '#0F192C' : '#FFFFFF') : colors.primary}
+                color={
+                  selectedDurationFilter === 'in-depth'
+                    ? isDark
+                      ? '#0F192C'
+                      : '#FFFFFF'
+                    : colors.primary
+                }
               />
               <Text
                 style={[
                   styles.quickFilterText,
-                  { color: selectedDurationFilter === 'in-depth' ? (isDark ? '#0F192C' : '#FFFFFF') : colors.text },
+                  {
+                    color:
+                      selectedDurationFilter === 'in-depth'
+                        ? isDark
+                          ? '#0F192C'
+                          : '#FFFFFF'
+                        : colors.text,
+                  },
                 ]}
               >
                 {isBangla ? 'ইন-ডেপ্থ (৩ঘ+)' : 'In-depth (3h+)'}
@@ -1052,10 +1255,15 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               style={[
                 styles.quickFilterChip,
                 selectedPriceFilter === 'free'
-                  ? { backgroundColor: isDark ? '#FFFFFF' : '#102F53', borderColor: isDark ? '#FFFFFF' : '#102F53' }
+                  ? {
+                      backgroundColor: isDark ? '#FFFFFF' : '#102F53',
+                      borderColor: isDark ? '#FFFFFF' : '#102F53',
+                    }
                   : { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
               ]}
-              onPress={() => handlePriceFilterSelect(selectedPriceFilter === 'free' ? 'all' : 'free')}
+              onPress={() =>
+                handlePriceFilterSelect(selectedPriceFilter === 'free' ? 'all' : 'free')
+              }
               accessibilityRole="tab"
               accessibilityState={{ selected: selectedPriceFilter === 'free' }}
               accessibilityLabel={isBangla ? 'ফ্রি কোর্স ফিল্টার' : 'Filter by Free courses'}
@@ -1064,12 +1272,21 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               <Ionicons
                 name="gift-outline"
                 size={12}
-                color={selectedPriceFilter === 'free' ? (isDark ? '#0F192C' : '#FFFFFF') : '#16A34A'}
+                color={
+                  selectedPriceFilter === 'free' ? (isDark ? '#0F192C' : '#FFFFFF') : '#16A34A'
+                }
               />
               <Text
                 style={[
                   styles.quickFilterText,
-                  { color: selectedPriceFilter === 'free' ? (isDark ? '#0F192C' : '#FFFFFF') : colors.text },
+                  {
+                    color:
+                      selectedPriceFilter === 'free'
+                        ? isDark
+                          ? '#0F192C'
+                          : '#FFFFFF'
+                        : colors.text,
+                  },
                 ]}
               >
                 {isBangla ? 'ফ্রি' : 'Free'}
@@ -1081,10 +1298,15 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               style={[
                 styles.quickFilterChip,
                 selectedPriceFilter === 'paid'
-                  ? { backgroundColor: isDark ? '#FFFFFF' : '#102F53', borderColor: isDark ? '#FFFFFF' : '#102F53' }
+                  ? {
+                      backgroundColor: isDark ? '#FFFFFF' : '#102F53',
+                      borderColor: isDark ? '#FFFFFF' : '#102F53',
+                    }
                   : { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
               ]}
-              onPress={() => handlePriceFilterSelect(selectedPriceFilter === 'paid' ? 'all' : 'paid')}
+              onPress={() =>
+                handlePriceFilterSelect(selectedPriceFilter === 'paid' ? 'all' : 'paid')
+              }
               accessibilityRole="tab"
               accessibilityState={{ selected: selectedPriceFilter === 'paid' }}
               accessibilityLabel={isBangla ? 'পেইড কোর্স ফিল্টার' : 'Filter by Paid courses'}
@@ -1093,12 +1315,21 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               <Ionicons
                 name="card-outline"
                 size={12}
-                color={selectedPriceFilter === 'paid' ? (isDark ? '#0F192C' : '#FFFFFF') : colors.accent}
+                color={
+                  selectedPriceFilter === 'paid' ? (isDark ? '#0F192C' : '#FFFFFF') : colors.accent
+                }
               />
               <Text
                 style={[
                   styles.quickFilterText,
-                  { color: selectedPriceFilter === 'paid' ? (isDark ? '#0F192C' : '#FFFFFF') : colors.text },
+                  {
+                    color:
+                      selectedPriceFilter === 'paid'
+                        ? isDark
+                          ? '#0F192C'
+                          : '#FFFFFF'
+                        : colors.text,
+                  },
                 ]}
               >
                 {isBangla ? 'পেইড' : 'Paid'}
@@ -1106,9 +1337,17 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
             </TouchableOpacity>
 
             {/* Reset / Clear Chip when any quick filter is active */}
-            {(selectedLevel !== 'All' || selectedDurationFilter !== 'all' || selectedPriceFilter !== 'all') && (
+            {(selectedLevel !== 'All' ||
+              selectedDurationFilter !== 'all' ||
+              selectedPriceFilter !== 'all') && (
               <TouchableOpacity
-                style={[styles.quickFilterChip, { backgroundColor: isDark ? 'rgba(227,66,52,0.2)' : '#FEE2E2', borderColor: '#E34234' }]}
+                style={[
+                  styles.quickFilterChip,
+                  {
+                    backgroundColor: isDark ? 'rgba(227,66,52,0.2)' : '#FEE2E2',
+                    borderColor: '#E34234',
+                  },
+                ]}
                 onPress={() => {
                   triggerHaptic('light');
                   handleLevelSelect('All');
@@ -1172,25 +1411,49 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
 
         {/* Result Header & Filters */}
         <View style={styles.resultMetaRow}>
-          <Text style={[styles.resultCount, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
+          <Text
+            style={[styles.resultCount, { color: colors.textMuted }]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
             {isBangla ? (
-              <>দেখাচ্ছে <Text style={{ color: colors.text, fontWeight: '700' }}>{filtered.length}</Text> টি কোর্স</>
+              <>
+                দেখাচ্ছে{' '}
+                <Text style={{ color: colors.text, fontWeight: '700' }}>{filtered.length}</Text> টি
+                কোর্স
+              </>
             ) : (
-              <>Showing <Text style={{ color: colors.text, fontWeight: '700' }}>{filtered.length}</Text> courses</>
+              <>
+                Showing{' '}
+                <Text style={{ color: colors.text, fontWeight: '700' }}>{filtered.length}</Text>{' '}
+                courses
+              </>
             )}
           </Text>
 
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 0 }}>
             {/* Free / Paid / All Segmented Pills */}
-            <View style={[styles.priceFilterGroup, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]} accessibilityRole="tablist">
+            <View
+              style={[
+                styles.priceFilterGroup,
+                { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+              ]}
+              accessibilityRole="tablist"
+            >
               {(['all', 'free', 'paid'] as PriceFilter[]).map((pf) => {
                 const isSelected = selectedPriceFilter === pf;
                 const pfLabel =
                   pf === 'all'
-                    ? (isBangla ? 'সকল' : 'All')
+                    ? isBangla
+                      ? 'সকল'
+                      : 'All'
                     : pf === 'free'
-                    ? (isBangla ? 'ফ্রি' : 'Free')
-                    : (isBangla ? 'মেম্বারস' : 'Members');
+                      ? isBangla
+                        ? 'ফ্রি'
+                        : 'Free'
+                      : isBangla
+                        ? 'মেম্বারস'
+                        : 'Members';
                 return (
                   <TouchableOpacity
                     key={pf}
@@ -1203,9 +1466,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                     accessibilityRole="tab"
                     accessibilityState={{ selected: isSelected }}
                     accessibilityLabel={
-                      isBangla
-                        ? `${pfLabel} কোর্স ফিল্টার`
-                        : `Filter by ${pfLabel} courses`
+                      isBangla ? `${pfLabel} কোর্স ফিল্টার` : `Filter by ${pfLabel} courses`
                     }
                   >
                     <Text
@@ -1222,7 +1483,10 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
             </View>
 
             <TouchableOpacity
-              style={[styles.sortBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+              style={[
+                styles.sortBtn,
+                { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+              ]}
               onPress={handleSortToggle}
               accessibilityRole="button"
               accessibilityLabel={
@@ -1235,14 +1499,24 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               <Ionicons name="swap-vertical" size={13} color={colors.primary} />
               <Text style={[styles.sortBtnText, { color: colors.text }]}>
                 {selectedSort === 'popular'
-                  ? (isBangla ? 'জনপ্রিয়' : 'Popular')
+                  ? isBangla
+                    ? 'জনপ্রিয়'
+                    : 'Popular'
                   : selectedSort === 'newest'
-                  ? (isBangla ? 'নতুন' : 'Newest')
-                  : selectedSort === 'rating'
-                  ? (isBangla ? 'সেরা রেটিং' : 'Top Rated')
-                  : selectedSort === 'price-low'
-                  ? (isBangla ? 'কম দাম' : 'Price: Low')
-                  : (isBangla ? 'বেশি দাম' : 'Price: High')}
+                    ? isBangla
+                      ? 'নতুন'
+                      : 'Newest'
+                    : selectedSort === 'rating'
+                      ? isBangla
+                        ? 'সেরা রেটিং'
+                        : 'Top Rated'
+                      : selectedSort === 'price-low'
+                        ? isBangla
+                          ? 'কম দাম'
+                          : 'Price: Low'
+                        : isBangla
+                          ? 'বেশি দাম'
+                          : 'Price: High'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -1258,7 +1532,10 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
             >
               {searchQuery.trim().length > 0 && (
                 <TouchableOpacity
-                  style={[styles.activeFilterChip, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                  style={[
+                    styles.activeFilterChip,
+                    { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                  ]}
                   onPress={handleClearSearch}
                   accessibilityRole="button"
                   accessibilityLabel={`Clear search: ${searchQuery}`}
@@ -1272,7 +1549,10 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               )}
               {selectedCategory !== 'all' && (
                 <TouchableOpacity
-                  style={[styles.activeFilterChip, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                  style={[
+                    styles.activeFilterChip,
+                    { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                  ]}
                   onPress={() => handleCategorySelect('all')}
                   accessibilityRole="button"
                   accessibilityLabel="Clear category filter"
@@ -1290,7 +1570,10 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               )}
               {selectedLevel !== 'All' && (
                 <TouchableOpacity
-                  style={[styles.activeFilterChip, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                  style={[
+                    styles.activeFilterChip,
+                    { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                  ]}
                   onPress={() => handleLevelSelect('All')}
                   accessibilityRole="button"
                   accessibilityLabel="Clear level filter"
@@ -1304,7 +1587,10 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               )}
               {selectedDurationFilter !== 'all' && (
                 <TouchableOpacity
-                  style={[styles.activeFilterChip, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                  style={[
+                    styles.activeFilterChip,
+                    { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                  ]}
                   onPress={() => handleDurationFilterSelect('all')}
                   accessibilityRole="button"
                   accessibilityLabel="Clear duration filter"
@@ -1312,22 +1598,35 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
                 >
                   <Text style={[styles.activeFilterChipText, { color: colors.text }]}>
                     {selectedDurationFilter === 'short'
-                      ? (isBangla ? 'সংক্ষিপ্ত (<৩ঘ)' : 'Short (<3h)')
-                      : (isBangla ? 'ইন-ডেপ্থ (৩ঘ+)' : 'In-depth (3h+)')}
+                      ? isBangla
+                        ? 'সংক্ষিপ্ত (<৩ঘ)'
+                        : 'Short (<3h)'
+                      : isBangla
+                        ? 'ইন-ডেপ্থ (৩ঘ+)'
+                        : 'In-depth (3h+)'}
                   </Text>
                   <Ionicons name="close-circle" size={14} color={colors.textMuted} />
                 </TouchableOpacity>
               )}
               {selectedPriceFilter !== 'all' && (
                 <TouchableOpacity
-                  style={[styles.activeFilterChip, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                  style={[
+                    styles.activeFilterChip,
+                    { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                  ]}
                   onPress={() => handlePriceFilterSelect('all')}
                   accessibilityRole="button"
                   accessibilityLabel="Clear price filter"
                   hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
                 >
                   <Text style={[styles.activeFilterChipText, { color: colors.text }]}>
-                    {selectedPriceFilter === 'free' ? (isBangla ? 'ফ্রি' : 'Free') : (isBangla ? 'পেইড' : 'Paid')}
+                    {selectedPriceFilter === 'free'
+                      ? isBangla
+                        ? 'ফ্রি'
+                        : 'Free'
+                      : isBangla
+                        ? 'পেইড'
+                        : 'Paid'}
                   </Text>
                   <Ionicons name="close-circle" size={14} color={colors.textMuted} />
                 </TouchableOpacity>
@@ -1431,7 +1730,10 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
           ).map((topic) => (
             <TouchableOpacity
               key={topic.label}
-              style={[styles.suggestionChip, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+              style={[
+                styles.suggestionChip,
+                { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+              ]}
               onPress={() => {
                 setLocalSearch(topic.q);
                 startTransition(() => {
@@ -1443,9 +1745,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
               }}
               accessibilityRole="button"
               accessibilityLabel={
-                isBangla
-                  ? `${topic.label} বিষয় সার্চ করুন`
-                  : `Search for ${topic.label}`
+                isBangla ? `${topic.label} বিষয় সার্চ করুন` : `Search for ${topic.label}`
               }
             >
               <Text style={[styles.suggestionText, { color: colors.text }]}>{topic.label}</Text>
@@ -1457,9 +1757,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
           style={[styles.resetBtn, { backgroundColor: colors.primary }]}
           onPress={handleClearAllFilters}
           accessibilityRole="button"
-          accessibilityLabel={
-            isBangla ? 'সকল ফিল্টার রিসেট করুন' : 'Reset All Filters'
-          }
+          accessibilityLabel={isBangla ? 'সকল ফিল্টার রিসেট করুন' : 'Reset All Filters'}
         >
           <Ionicons name="refresh" size={15} color={colors.onPrimary} />
           <Text style={[styles.resetBtnText, { color: colors.onPrimary }]}>

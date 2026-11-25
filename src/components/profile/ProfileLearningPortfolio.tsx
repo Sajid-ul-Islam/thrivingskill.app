@@ -1,5 +1,15 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Linking, Alert, Platform } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  Linking,
+  Alert,
+  Platform,
+} from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { shape } from '../../theme/shapes';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
@@ -116,9 +126,18 @@ export const ProfileLearningPortfolio: React.FC<ProfileLearningPortfolioProps> =
           onPress={() => onNavigateTab('MyLearning')}
           activeOpacity={0.85}
           accessibilityRole="button"
-          accessibilityLabel={isBangla ? 'মাই লার্নিং হাব-এ অ্যানালিটিক্স দেখুন' : 'View Learning Analytics in My Learning'}
+          accessibilityLabel={
+            isBangla
+              ? 'মাই লার্নিং হাব-এ অ্যানালিটিক্স দেখুন'
+              : 'View Learning Analytics in My Learning'
+          }
         >
-          <View style={[styles.analyticsHubIconBg, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.15)' : 'rgba(16, 47, 83, 0.08)' }]}>
+          <View
+            style={[
+              styles.analyticsHubIconBg,
+              { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.15)' : 'rgba(16, 47, 83, 0.08)' },
+            ]}
+          >
             <Ionicons name="analytics" size={20} color={isDark ? '#E34234' : colors.primary} />
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
@@ -126,7 +145,14 @@ export const ProfileLearningPortfolio: React.FC<ProfileLearningPortfolioProps> =
               <Text style={[styles.analyticsHubTitle, { color: colors.text }]}>
                 {isBangla ? 'লার্নিং অ্যানালিটিক্স ও ভেলোসিটি' : 'Learning Analytics & Velocity'}
               </Text>
-              <View style={[styles.analyticsHubStreakBadge, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.2)' : 'rgba(227, 66, 52, 0.12)' }]}>
+              <View
+                style={[
+                  styles.analyticsHubStreakBadge,
+                  {
+                    backgroundColor: isDark ? 'rgba(227, 66, 52, 0.2)' : 'rgba(227, 66, 52, 0.12)',
+                  },
+                ]}
+              >
                 <Text style={[styles.analyticsHubStreakText, { color: '#E34234' }]}>
                   {streakDays > 0 ? `🔥 ${streakDays}d` : '🔥 Streak'}
                 </Text>
@@ -173,7 +199,9 @@ export const ProfileLearningPortfolio: React.FC<ProfileLearningPortfolioProps> =
             accessibilityLabel="View all achievements"
           >
             <Text style={[styles.seeAllText, { color: colors.primary }]}>
-              {isBangla ? `সবগুলো দেখুন (${certificates.length}) →` : `View All (${certificates.length}) →`}
+              {isBangla
+                ? `সবগুলো দেখুন (${certificates.length}) →`
+                : `View All (${certificates.length}) →`}
             </Text>
           </TouchableOpacity>
         </View>
@@ -202,111 +230,159 @@ export const ProfileLearningPortfolio: React.FC<ProfileLearningPortfolioProps> =
                   elevation: 2,
                 }}
               >
-              {/* Top Row: Provider & Date */}
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#102F53', justifyContent: 'center', alignItems: 'center' }}>
-                    <Ionicons name="ribbon" size={13} color="#E34234" />
-                  </View>
-                  <Text style={{ fontSize: 11, fontWeight: '800', color: colors.text }}>
-                    Thriving <Text style={{ color: '#E34234' }}>Skills</Text>
-                  </Text>
-                </View>
-                <View style={{ backgroundColor: '#10B98118', paddingHorizontal: 6, paddingVertical: 2, borderRadius: shape.small }}>
-                  <Text style={{ fontSize: 10, fontWeight: '800', color: '#10B981' }}>
-                    96% Score
-                  </Text>
-                </View>
-              </View>
-
-              {/* Course Title */}
-              <Text
-                style={{ fontSize: 13, fontWeight: '700', color: colors.text, marginBottom: 4, height: 36 }}
-                numberOfLines={2}
-              >
-                {cert.courseTitle}
-              </Text>
-
-              {/* Issue Date */}
-              <Text style={{ fontSize: 10.5, color: colors.textMuted, marginBottom: 12 }}>
-                Issued: {cert.issueDate}
-              </Text>
-
-              {/* Action Row: View + Social Share Buttons */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border }}>
-                <TouchableOpacity
+                {/* Top Row: Provider & Date */}
+                <View
                   style={{
-                    backgroundColor: colors.primary,
-                    paddingHorizontal: 10,
-                    paddingVertical: 6,
-                    borderRadius: shape.small,
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: 8,
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <View
+                      style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: 12,
+                        backgroundColor: '#102F53',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Ionicons name="ribbon" size={13} color="#E34234" />
+                    </View>
+                    <Text style={{ fontSize: 11, fontWeight: '800', color: colors.text }}>
+                      Thriving <Text style={{ color: '#E34234' }}>Skills</Text>
+                    </Text>
+                  </View>
+                  <View
+                    style={{
+                      backgroundColor: '#10B98118',
+                      paddingHorizontal: 6,
+                      paddingVertical: 2,
+                      borderRadius: shape.small,
+                    }}
+                  >
+                    <Text style={{ fontSize: 10, fontWeight: '800', color: '#10B981' }}>
+                      96% Score
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Course Title */}
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: '700',
+                    color: colors.text,
+                    marginBottom: 4,
+                    height: 36,
+                  }}
+                  numberOfLines={2}
+                >
+                  {cert.courseTitle}
+                </Text>
+
+                {/* Issue Date */}
+                <Text style={{ fontSize: 10.5, color: colors.textMuted, marginBottom: 12 }}>
+                  Issued: {cert.issueDate}
+                </Text>
+
+                {/* Action Row: View + Social Share Buttons */}
+                <View
+                  style={{
                     flexDirection: 'row',
                     alignItems: 'center',
-                    gap: 4,
-                    minHeight: 32,
+                    justifyContent: 'space-between',
+                    paddingTop: 8,
+                    borderTopWidth: 1,
+                    borderTopColor: colors.border,
                   }}
-                  onPress={() => {
-                    triggerHaptic('light');
-                    onSelectCertificate(cert);
-                  }}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  accessibilityRole="button"
-                  accessibilityLabel={`View certificate for ${cert.courseTitle}`}
                 >
-                  <Ionicons name="eye-outline" size={12} color={colors.onPrimary} />
-                  <Text style={{ color: colors.onPrimary, fontSize: 11, fontWeight: '700' }}>
-                    {isBangla ? 'সনদ দেখুন' : 'Certificate'}
-                  </Text>
-                </TouchableOpacity>
-
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <TouchableOpacity
                     style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 16,
-                      backgroundColor: '#1877F218',
-                      justifyContent: 'center',
+                      backgroundColor: colors.primary,
+                      paddingHorizontal: 10,
+                      paddingVertical: 6,
+                      borderRadius: shape.small,
+                      flexDirection: 'row',
                       alignItems: 'center',
+                      gap: 4,
+                      minHeight: 32,
                     }}
                     onPress={() => {
                       triggerHaptic('light');
-                      const url = encodeURIComponent(cert.verificationUrl || 'https://thrivingskill.com');
-                      Linking.openURL(`https://www.facebook.com/sharer/sharer.php?u=${url}`).catch(() => {});
+                      onSelectCertificate(cert);
                     }}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     accessibilityRole="button"
-                    accessibilityLabel="Social share certificate post"
+                    accessibilityLabel={`View certificate for ${cert.courseTitle}`}
                   >
-                    <Ionicons name="logo-facebook" size={16} color="#1877F2" />
+                    <Ionicons name="eye-outline" size={12} color={colors.onPrimary} />
+                    <Text style={{ color: colors.onPrimary, fontSize: 11, fontWeight: '700' }}>
+                      {isBangla ? 'সনদ দেখুন' : 'Certificate'}
+                    </Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 16,
-                      backgroundColor: '#0A66C218',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    }}
-                    onPress={() => {
-                      triggerHaptic('light');
-                      const url = encodeURIComponent(cert.verificationUrl || 'https://thrivingskill.com');
-                      const title = encodeURIComponent(`Verified Certificate: ${cert.courseTitle}`);
-                      Linking.openURL(`https://www.linkedin.com/sharing/share-offsite/?url=${url}&title=${title}`).catch(() => {});
-                    }}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    accessibilityRole="button"
-                    accessibilityLabel="Share on LinkedIn"
-                  >
-                    <Ionicons name="logo-linkedin" size={16} color="#0A66C2" />
-                  </TouchableOpacity>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <TouchableOpacity
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 16,
+                        backgroundColor: '#1877F218',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      }}
+                      onPress={() => {
+                        triggerHaptic('light');
+                        const url = encodeURIComponent(
+                          cert.verificationUrl || 'https://thrivingskill.com'
+                        );
+                        Linking.openURL(
+                          `https://www.facebook.com/sharer/sharer.php?u=${url}`
+                        ).catch(() => {});
+                      }}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Social share certificate post"
+                    >
+                      <Ionicons name="logo-facebook" size={16} color="#1877F2" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 16,
+                        backgroundColor: '#0A66C218',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      }}
+                      onPress={() => {
+                        triggerHaptic('light');
+                        const url = encodeURIComponent(
+                          cert.verificationUrl || 'https://thrivingskill.com'
+                        );
+                        const title = encodeURIComponent(
+                          `Verified Certificate: ${cert.courseTitle}`
+                        );
+                        Linking.openURL(
+                          `https://www.linkedin.com/sharing/share-offsite/?url=${url}&title=${title}`
+                        ).catch(() => {});
+                      }}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Share on LinkedIn"
+                    >
+                      <Ionicons name="logo-linkedin" size={16} color="#0A66C2" />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               </View>
-            </View>
-          ))}
-        </ScrollView>
+            ))}
+          </ScrollView>
         ) : (
           <View
             style={{
@@ -404,20 +480,20 @@ export const ProfileLearningPortfolio: React.FC<ProfileLearningPortfolioProps> =
                   ? 'এখনো কোনো কোর্স উত্তীর্ণ হয়নি'
                   : 'No passed courses yet'
                 : portfolioTab === 'failed'
-                ? isBangla
-                  ? 'কোনো অনুত্তীর্ণ কোর্স নেই (চমৎকার!)'
-                  : 'No failed courses (Great job!)'
-                : portfolioTab === 'finished'
-                ? isBangla
-                  ? 'এখনো কোনো কোর্স সম্পন্ন হয়নি'
-                  : 'No finished courses yet'
-                : portfolioTab === 'in-progress'
-                ? isBangla
-                  ? 'চলমান কোনো কোর্স নেই'
-                  : 'No courses in progress'
-                : isBangla
-                ? 'কোনো কোর্স এনরোল করা নেই'
-                : 'No enrolled courses'}
+                  ? isBangla
+                    ? 'কোনো অনুত্তীর্ণ কোর্স নেই (চমৎকার!)'
+                    : 'No failed courses (Great job!)'
+                  : portfolioTab === 'finished'
+                    ? isBangla
+                      ? 'এখনো কোনো কোর্স সম্পন্ন হয়নি'
+                      : 'No finished courses yet'
+                    : portfolioTab === 'in-progress'
+                      ? isBangla
+                        ? 'চলমান কোনো কোর্স নেই'
+                        : 'No courses in progress'
+                      : isBangla
+                        ? 'কোনো কোর্স এনরোল করা নেই'
+                        : 'No enrolled courses'}
             </Text>
             <Text style={[styles.emptyCourseSub, { color: colors.textMuted }]}>
               {isBangla
@@ -440,10 +516,15 @@ export const ProfileLearningPortfolio: React.FC<ProfileLearningPortfolioProps> =
             const prog = userProgress[course.id];
             const courseStatus = getCourseStatus(course.id);
             const isGraduated = courseStatus === 'passed' || courseStatus === 'finished';
-            const totalLessons = course.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0) || 0;
+            const totalLessons =
+              course.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0) || 0;
             const completedCountForCourse = prog?.completedLessonIds?.length || 0;
-            const pct = totalLessons > 0 ? Math.min(100, Math.round((completedCountForCourse / totalLessons) * 100)) : 0;
-            const targetLessonId = prog?.lastAccessedLessonId || course.modules?.[0]?.lessons?.[0]?.id || '';
+            const pct =
+              totalLessons > 0
+                ? Math.min(100, Math.round((completedCountForCourse / totalLessons) * 100))
+                : 0;
+            const targetLessonId =
+              prog?.lastAccessedLessonId || course.modules?.[0]?.lessons?.[0]?.id || '';
             const cert = certificates.find((c) => c.courseId === course.id);
 
             const badgeConfig = {
@@ -484,8 +565,8 @@ export const ProfileLearningPortfolio: React.FC<ProfileLearningPortfolioProps> =
                       courseStatus === 'failed'
                         ? '#EF4444'
                         : courseStatus === 'passed'
-                        ? '#16A34A'
-                        : colors.border,
+                          ? '#16A34A'
+                          : colors.border,
                   },
                 ]}
               >
@@ -504,7 +585,9 @@ export const ProfileLearningPortfolio: React.FC<ProfileLearningPortfolioProps> =
                 </View>
                 <View style={styles.courseDetails}>
                   <View style={styles.courseHeaderBadgeRow}>
-                    <View style={[styles.courseCategoryTag, { backgroundColor: colors.primaryLight }]}>
+                    <View
+                      style={[styles.courseCategoryTag, { backgroundColor: colors.primaryLight }]}
+                    >
                       <Text style={[styles.courseCategoryText, { color: colors.primary }]}>
                         {course.level}
                       </Text>
@@ -517,8 +600,8 @@ export const ProfileLearningPortfolio: React.FC<ProfileLearningPortfolioProps> =
                             courseStatus === 'passed'
                               ? '#16A34A'
                               : courseStatus === 'failed'
-                              ? '#EF4444'
-                              : colors.primary,
+                                ? '#EF4444'
+                                : colors.primary,
                         },
                       ]}
                     >
@@ -529,7 +612,12 @@ export const ProfileLearningPortfolio: React.FC<ProfileLearningPortfolioProps> =
                     {course.title}
                   </Text>
                   <View style={styles.courseProgressRow}>
-                    <View style={[styles.courseProgressTrack, { backgroundColor: colors.surfaceSubtle }]}>
+                    <View
+                      style={[
+                        styles.courseProgressTrack,
+                        { backgroundColor: colors.surfaceSubtle },
+                      ]}
+                    >
                       <View
                         style={[
                           styles.courseProgressFill,
@@ -538,8 +626,8 @@ export const ProfileLearningPortfolio: React.FC<ProfileLearningPortfolioProps> =
                               courseStatus === 'passed'
                                 ? '#16A34A'
                                 : courseStatus === 'failed'
-                                ? '#EF4444'
-                                : colors.primary,
+                                  ? '#EF4444'
+                                  : colors.primary,
                             width: `${Math.max(pct, isGraduated ? 100 : 8)}%`,
                           },
                         ]}

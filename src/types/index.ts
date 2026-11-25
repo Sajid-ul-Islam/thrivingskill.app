@@ -372,5 +372,3 @@ export type ActiveScreen =
   | { name: 'CertificateView'; certificateId: string }
   | { name: 'SkillAssessment' }
   | { name: 'YouTubeVideos' };
-
-

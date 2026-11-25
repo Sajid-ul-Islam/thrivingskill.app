@@ -78,7 +78,10 @@ export class CompanionService {
       return null;
     } catch (err) {
       if (Env.DEBUG_API) {
-        console.warn('[CompanionService] Failed to fetch remote config, using stale fallback:', err);
+        console.warn(
+          '[CompanionService] Failed to fetch remote config, using stale fallback:',
+          err
+        );
       }
       return CacheManager.get<AppRemoteConfig>(CONFIG_CACHE_KEY, true);
     }
@@ -87,13 +90,19 @@ export class CompanionService {
   /**
    * Registers or updates learner device push token with the WordPress companion plugin
    */
-  static async registerPushToken(token: string, platform: 'android' | 'ios' | 'web' = 'android'): Promise<boolean> {
+  static async registerPushToken(
+    token: string,
+    platform: 'android' | 'ios' | 'web' = 'android'
+  ): Promise<boolean> {
     if (!token) return false;
     try {
-      const res = await HttpClient.post<{ status: string }>(Endpoints.COMPANION.REGISTER_PUSH_TOKEN, {
-        token,
-        platform,
-      });
+      const res = await HttpClient.post<{ status: string }>(
+        Endpoints.COMPANION.REGISTER_PUSH_TOKEN,
+        {
+          token,
+          platform,
+        }
+      );
       return res?.status === 'success';
     } catch (err) {
       if (Env.DEBUG_API) {
@@ -108,10 +117,13 @@ export class CompanionService {
    */
   static async fetchLeanFeed(limit: number = 30): Promise<any[] | null> {
     try {
-      const res = await HttpClient.get<{ count: number; courses: any[] }>(Endpoints.COMPANION.FEED, {
-        limit,
-        _t: Date.now(),
-      });
+      const res = await HttpClient.get<{ count: number; courses: any[] }>(
+        Endpoints.COMPANION.FEED,
+        {
+          limit,
+          _t: Date.now(),
+        }
+      );
       if (res && Array.isArray(res.courses)) {
         return res.courses;
       }

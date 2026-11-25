@@ -33,65 +33,156 @@ const ASSESSMENT_QUESTIONS: SkillAssessmentQuestion[] = [
     id: 'q1',
     domain: 'Generative AI & Tech',
     domainBn: 'জেনারেটিভ এআই ও টেকনোলজি',
-    question: 'How do you currently ensure reliable, hallucination-free output when instructing Enterprise AI models for executive analysis?',
-    questionBn: 'করপোরেট বা এক্সিকিউটিভ অ্যানালাইসিসে এআই মডেল যাতে ভুল বা কাল্পনিক তথ্য না দেয়, তা নিশ্চিত করতে আপনি কী কৌশল অবলম্বন করেন?',
+    question:
+      'How do you currently ensure reliable, hallucination-free output when instructing Enterprise AI models for executive analysis?',
+    questionBn:
+      'করপোরেট বা এক্সিকিউটিভ অ্যানালাইসিসে এআই মডেল যাতে ভুল বা কাল্পনিক তথ্য না দেয়, তা নিশ্চিত করতে আপনি কী কৌশল অবলম্বন করেন?',
     options: [
-      { text: 'I use conversational trial-and-error with basic prompts.', textBn: 'সাধারণ চ্যাট প্রম্পট দিয়ে বারবার চেষ্টা করি।', points: 40 },
-      { text: 'I provide few-shot examples and check manually.', textBn: 'কিছু উদাহরণ দিয়ে ম্যানুয়ালি যাচাই করি।', points: 70 },
-      { text: 'I apply structured RTCC prompt architectures with strict boundary constraints.', textBn: 'সুনির্দিষ্ট RTCC ফ্রেমওয়ার্ক ও কঠোর সীমাবদ্ধতা সহ স্ট্রাকচার্ড প্রম্পট ব্যবহার করি।', points: 100 },
-      { text: 'I do not use AI tools in my daily executive workflows yet.', textBn: 'আমি এখনো দৈনন্দিন প্রাতিষ্ঠানিক কাজে এআই টুল ব্যবহার করি না।', points: 20 },
+      {
+        text: 'I use conversational trial-and-error with basic prompts.',
+        textBn: 'সাধারণ চ্যাট প্রম্পট দিয়ে বারবার চেষ্টা করি।',
+        points: 40,
+      },
+      {
+        text: 'I provide few-shot examples and check manually.',
+        textBn: 'কিছু উদাহরণ দিয়ে ম্যানুয়ালি যাচাই করি।',
+        points: 70,
+      },
+      {
+        text: 'I apply structured RTCC prompt architectures with strict boundary constraints.',
+        textBn: 'সুনির্দিষ্ট RTCC ফ্রেমওয়ার্ক ও কঠোর সীমাবদ্ধতা সহ স্ট্রাকচার্ড প্রম্পট ব্যবহার করি।',
+        points: 100,
+      },
+      {
+        text: 'I do not use AI tools in my daily executive workflows yet.',
+        textBn: 'আমি এখনো দৈনন্দিন প্রাতিষ্ঠানিক কাজে এআই টুল ব্যবহার করি না।',
+        points: 20,
+      },
     ],
   },
   {
     id: 'q2',
     domain: 'Financial Strategy',
     domainBn: 'ফিন্যান্সিয়াল স্ট্র্যাটেজি ও ব্যাংকিং',
-    question: 'When stress-testing a Discounted Cash Flow (DCF) model for an acquisition, which factor is most crucial to avoid overvaluation?',
-    questionBn: 'একটি অধিগ্রহণের জন্য ডিসকাউন্টেড ক্যাশ ফ্লো (DCF) মডেল স্ট্রেস-টেস্ট করার সময় মাত্রাতিরিক্ত মূল্যায়ন এড়াতে সবচেয়ে জরুরি কোনটি?',
+    question:
+      'When stress-testing a Discounted Cash Flow (DCF) model for an acquisition, which factor is most crucial to avoid overvaluation?',
+    questionBn:
+      'একটি অধিগ্রহণের জন্য ডিসকাউন্টেড ক্যাশ ফ্লো (DCF) মডেল স্ট্রেস-টেস্ট করার সময় মাত্রাতিরিক্ত মূল্যায়ন এড়াতে সবচেয়ে জরুরি কোনটি?',
     options: [
-      { text: 'Limiting terminal growth rate below long-term GDP growth & running sensitivity matrices.', textBn: 'টার্মিনাল গ্রোথ রেটকে দীর্ঘমেয়াদী জিডিপি প্রবৃদ্ধির নিচে সীমাবদ্ধ রাখা ও সেনসিটিভিটি ম্যাট্রিক্স চালানো।', points: 100 },
-      { text: 'Assuming revenue will accelerate indefinitely without additional CapEx.', textBn: 'ধরে নেওয়া যে মূলধনী ব্যয় বৃদ্ধি ছাড়াই আয় অনির্দিষ্টকাল ধরে বাড়বে।', points: 20 },
-      { text: 'Using static unadjusted industry average P/E multiples.', textBn: 'অপরিবর্তিত শিল্পের গড় পি/ই মাল্টিপল ব্যবহার করা।', points: 50 },
-      { text: 'Excluding working capital changes to make cash flow look higher.', textBn: 'ক্যাশ ফ্লো বেশি দেখাতে কার্যকরী মূলধনের পরিবর্তন বাদ দেওয়া।', points: 10 },
+      {
+        text: 'Limiting terminal growth rate below long-term GDP growth & running sensitivity matrices.',
+        textBn:
+          'টার্মিনাল গ্রোথ রেটকে দীর্ঘমেয়াদী জিডিপি প্রবৃদ্ধির নিচে সীমাবদ্ধ রাখা ও সেনসিটিভিটি ম্যাট্রিক্স চালানো।',
+        points: 100,
+      },
+      {
+        text: 'Assuming revenue will accelerate indefinitely without additional CapEx.',
+        textBn: 'ধরে নেওয়া যে মূলধনী ব্যয় বৃদ্ধি ছাড়াই আয় অনির্দিষ্টকাল ধরে বাড়বে।',
+        points: 20,
+      },
+      {
+        text: 'Using static unadjusted industry average P/E multiples.',
+        textBn: 'অপরিবর্তিত শিল্পের গড় পি/ই মাল্টিপল ব্যবহার করা।',
+        points: 50,
+      },
+      {
+        text: 'Excluding working capital changes to make cash flow look higher.',
+        textBn: 'ক্যাশ ফ্লো বেশি দেখাতে কার্যকরী মূলধনের পরিবর্তন বাদ দেওয়া।',
+        points: 10,
+      },
     ],
   },
   {
     id: 'q3',
     domain: 'Data Analytics & BI',
     domainBn: 'ডেটা অ্যানালিটিক্স ও বিজনেস ইন্টেলিজেন্স',
-    question: 'How do you analyze customer retention trends and recurring revenue cohorts in your organization?',
-    questionBn: 'আপনার প্রতিষ্ঠানে গ্রাহক ধরে রাখা এবং পুনরাবৃত্ত আয়ের প্রবণতা বিশ্লেষণের জন্য কোন পদ্ধতি ব্যবহার করেন?',
+    question:
+      'How do you analyze customer retention trends and recurring revenue cohorts in your organization?',
+    questionBn:
+      'আপনার প্রতিষ্ঠানে গ্রাহক ধরে রাখা এবং পুনরাবৃত্ত আয়ের প্রবণতা বিশ্লেষণের জন্য কোন পদ্ধতি ব্যবহার করেন?',
     options: [
-      { text: 'Exporting raw transaction sheets and manual filtering in Excel.', textBn: 'এক্সেলে র ডেটা শিট নামিয়ে ম্যানুয়ালি ফিল্টার করি।', points: 40 },
-      { text: 'Writing SQL window functions with dynamic partition rankings and PowerBI dashboards.', textBn: 'এসকিউএল উইন্ডো ফাংশন ও ডাইনামিক পার্টিশন র‍্যাঙ্কিং সহ PowerBI ড্যাশবোর্ড তৈরি করি।', points: 100 },
-      { text: 'Relying on monthly sales summaries without cohort breakdowns.', textBn: 'কোহর্ট ব্রেকডাউন ছাড়াই কেবল মাসিক বিক্রয় সারসংক্ষেপের ওপর নির্ভর করি।', points: 30 },
-      { text: 'Delegating entirely without understanding the underlying metrics.', textBn: 'মূল মেট্রিক্স না বুঝেই অন্যদের ওপর ছেড়ে দিই।', points: 20 },
+      {
+        text: 'Exporting raw transaction sheets and manual filtering in Excel.',
+        textBn: 'এক্সেলে র ডেটা শিট নামিয়ে ম্যানুয়ালি ফিল্টার করি।',
+        points: 40,
+      },
+      {
+        text: 'Writing SQL window functions with dynamic partition rankings and PowerBI dashboards.',
+        textBn: 'এসকিউএল উইন্ডো ফাংশন ও ডাইনামিক পার্টিশন র‍্যাঙ্কিং সহ PowerBI ড্যাশবোর্ড তৈরি করি।',
+        points: 100,
+      },
+      {
+        text: 'Relying on monthly sales summaries without cohort breakdowns.',
+        textBn: 'কোহর্ট ব্রেকডাউন ছাড়াই কেবল মাসিক বিক্রয় সারসংক্ষেপের ওপর নির্ভর করি।',
+        points: 30,
+      },
+      {
+        text: 'Delegating entirely without understanding the underlying metrics.',
+        textBn: 'মূল মেট্রিক্স না বুঝেই অন্যদের ওপর ছেড়ে দিই।',
+        points: 20,
+      },
     ],
   },
   {
     id: 'q4',
     domain: 'People Analytics & HR',
     domainBn: 'পিপল অ্যানালিটিক্স ও এইচআর',
-    question: 'How does your organization proactively identify high-risk voluntary employee turnover before exits happen?',
-    questionBn: 'কর্মীদের পদত্যাগের আগেই প্রতিষ্ঠান কীভাবে উচ্চ ঝুঁকিপূর্ণ স্বেচ্ছা-বিদায় আগে থেকেই শনাক্ত করতে পারে?',
+    question:
+      'How does your organization proactively identify high-risk voluntary employee turnover before exits happen?',
+    questionBn:
+      'কর্মীদের পদত্যাগের আগেই প্রতিষ্ঠান কীভাবে উচ্চ ঝুঁকিপূর্ণ স্বেচ্ছা-বিদায় আগে থেকেই শনাক্ত করতে পারে?',
     options: [
-      { text: 'Exit interviews conducted after the resignation letter.', textBn: 'পদত্যাগপত্র পাওয়ার পর এক্সিট ইন্টারভিউ নিয়ে।', points: 30 },
-      { text: 'Annual generic satisfaction surveys.', textBn: 'বছরে একবার গৎবাঁধা সন্তুষ্টি জরিপ করে।', points: 50 },
-      { text: 'Tracking Employee Lifetime Value (ELTV) ramp curves and early burnout signal analytics.', textBn: 'এমপ্লয়ি লাইফটাইম ভ্যালু (ELTV) কার্ভ এবং প্রারম্ভিক ক্লান্তি সংকেত অ্যানালিটিক্স ট্র্যাক করে।', points: 100 },
-      { text: 'Informal gut-feel manager discussions.', textBn: 'ম্যানেজারদের ব্যক্তিগত অনুমানের ওপর ভিত্তি করে।', points: 35 },
+      {
+        text: 'Exit interviews conducted after the resignation letter.',
+        textBn: 'পদত্যাগপত্র পাওয়ার পর এক্সিট ইন্টারভিউ নিয়ে।',
+        points: 30,
+      },
+      {
+        text: 'Annual generic satisfaction surveys.',
+        textBn: 'বছরে একবার গৎবাঁধা সন্তুষ্টি জরিপ করে।',
+        points: 50,
+      },
+      {
+        text: 'Tracking Employee Lifetime Value (ELTV) ramp curves and early burnout signal analytics.',
+        textBn: 'এমপ্লয়ি লাইফটাইম ভ্যালু (ELTV) কার্ভ এবং প্রারম্ভিক ক্লান্তি সংকেত অ্যানালিটিক্স ট্র্যাক করে।',
+        points: 100,
+      },
+      {
+        text: 'Informal gut-feel manager discussions.',
+        textBn: 'ম্যানেজারদের ব্যক্তিগত অনুমানের ওপর ভিত্তি করে।',
+        points: 35,
+      },
     ],
   },
   {
     id: 'q5',
     domain: 'Executive Communication',
     domainBn: 'এক্সিকিউটিভ প্রেজেন্টেশন ও লিডারশিপ',
-    question: 'When presenting a multi-million dollar capital expenditure proposal to the Board of Directors, what is the best structural approach?',
-    questionBn: 'বোর্ড অব ডিরেক্টরসের কাছে বড় কোনো প্রস্তাবনা বা বাজেট অনুমোদনের উপস্থাপনায় সবচেয়ে কার্যকর কাঠামো কোনটি?',
+    question:
+      'When presenting a multi-million dollar capital expenditure proposal to the Board of Directors, what is the best structural approach?',
+    questionBn:
+      'বোর্ড অব ডিরেক্টরসের কাছে বড় কোনো প্রস্তাবনা বা বাজেট অনুমোদনের উপস্থাপনায় সবচেয়ে কার্যকর কাঠামো কোনটি?',
     options: [
-      { text: 'Starting with 20 slides of background history before revealing the budget request.', textBn: 'বাজেট চাওয়ার আগে ২০টি স্লাইড ব্যাকগ্রাউন্ড ইতিহাস দিয়ে শুরু করা।', points: 20 },
-      { text: 'The Minto Pyramid Principle: Lead with direct recommendation, followed by grouped key arguments.', textBn: 'মিন্টো পিরামিড প্রিন্সিপাল: মূল সিদ্ধান্ত ও সুপারিশ প্রথমে, এরপর সহায়ক যুক্তি ও তথ্য।', points: 100 },
-      { text: 'Reading full paragraphs verbatim from slide decks.', textBn: 'স্লাইড দেখে দেখে দীর্ঘ প্যারাগ্রাফ মুখস্থ পড়া।', points: 10 },
-      { text: 'Sending raw spreadsheets without an executive summary.', textBn: 'কোনো এক্সিকিউটিভ সামারি ছাড়া সরাসরি স্প্রেডশিট পাঠিয়ে দেওয়া।', points: 25 },
+      {
+        text: 'Starting with 20 slides of background history before revealing the budget request.',
+        textBn: 'বাজেট চাওয়ার আগে ২০টি স্লাইড ব্যাকগ্রাউন্ড ইতিহাস দিয়ে শুরু করা।',
+        points: 20,
+      },
+      {
+        text: 'The Minto Pyramid Principle: Lead with direct recommendation, followed by grouped key arguments.',
+        textBn: 'মিন্টো পিরামিড প্রিন্সিপাল: মূল সিদ্ধান্ত ও সুপারিশ প্রথমে, এরপর সহায়ক যুক্তি ও তথ্য।',
+        points: 100,
+      },
+      {
+        text: 'Reading full paragraphs verbatim from slide decks.',
+        textBn: 'স্লাইড দেখে দেখে দীর্ঘ প্যারাগ্রাফ মুখস্থ পড়া।',
+        points: 10,
+      },
+      {
+        text: 'Sending raw spreadsheets without an executive summary.',
+        textBn: 'কোনো এক্সিকিউটিভ সামারি ছাড়া সরাসরি স্প্রেডশিট পাঠিয়ে দেওয়া।',
+        points: 25,
+      },
     ],
   },
 ];
@@ -145,9 +236,12 @@ export const SkillAssessmentModal: React.FC<SkillAssessmentModalProps> = ({
     const overall = totalQuestions > 0 ? Math.round(totalScore / totalQuestions) : 0;
 
     let levelName = isBangla ? 'ইমার্জিং প্র্যাকটিশনার (লেভেল ১)' : 'Emerging Practitioner (Level I)';
-    if (overall >= 85) levelName = isBangla ? 'এক্সিকিউটিভ স্ট্র্যাটেজিস্ট (লেভেল ৪)' : 'Executive Strategist (Level IV)';
-    else if (overall >= 70) levelName = isBangla ? 'সিনিয়র স্পেশালিস্ট (লেভেল ৩)' : 'Senior Specialist (Level III)';
-    else if (overall >= 50) levelName = isBangla ? 'বিজনেস অ্যাসোসিয়েট (লেভেল ২)' : 'Business Associate (Level II)';
+    if (overall >= 85)
+      levelName = isBangla ? 'এক্সিকিউটিভ স্ট্র্যাটেজিস্ট (লেভেল ৪)' : 'Executive Strategist (Level IV)';
+    else if (overall >= 70)
+      levelName = isBangla ? 'সিনিয়র স্পেশালিস্ট (লেভেল ৩)' : 'Senior Specialist (Level III)';
+    else if (overall >= 50)
+      levelName = isBangla ? 'বিজনেস অ্যাসোসিয়েট (লেভেল ২)' : 'Business Associate (Level II)';
 
     // Match lowest-scoring competency domains to real courses
     const sortedDomains = [...domainScores].sort((a, b) => a.score - b.score);
@@ -157,15 +251,37 @@ export const SkillAssessmentModal: React.FC<SkillAssessmentModalProps> = ({
       const dName = d.domain.toLowerCase();
       let matched: Course | undefined;
       if (dName.includes('ai') || dName.includes('tech') || dName.includes('এআই')) {
-        matched = courses.find((c) => c.category === 'generative-ai' || /ai|prompt|chatgpt|notebooklm/i.test(c.title));
-      } else if (dName.includes('finan') || dName.includes('অর্থনীতি') || dName.includes('ফিন্যান্স')) {
-        matched = courses.find((c) => c.category === 'finance-accounting' || /excel|financ|bank|invest|stock/i.test(c.title));
+        matched = courses.find(
+          (c) => c.category === 'generative-ai' || /ai|prompt|chatgpt|notebooklm/i.test(c.title)
+        );
+      } else if (
+        dName.includes('finan') ||
+        dName.includes('অর্থনীতি') ||
+        dName.includes('ফিন্যান্স')
+      ) {
+        matched = courses.find(
+          (c) =>
+            c.category === 'finance-accounting' || /excel|financ|bank|invest|stock/i.test(c.title)
+        );
       } else if (dName.includes('analyt') || dName.includes('bi') || dName.includes('ডেটা')) {
-        matched = courses.find((c) => c.category === 'data-science' || /data|analyt|bi|power\s?bi/i.test(c.title));
+        matched = courses.find(
+          (c) => c.category === 'data-science' || /data|analyt|bi|power\s?bi/i.test(c.title)
+        );
       } else if (dName.includes('hr') || dName.includes('people') || dName.includes('এইচআর')) {
-        matched = courses.find((c) => c.category === 'hr-management' || /hr|talent|employ|people|leadership/i.test(c.title));
-      } else if (dName.includes('communicat') || dName.includes('যোগাযোগ') || dName.includes('প্রেজেন্টেশন')) {
-        matched = courses.find((c) => c.category === 'leadership-management' || /communicat|present|leadership|mindset/i.test(c.title));
+        matched = courses.find(
+          (c) =>
+            c.category === 'hr-management' || /hr|talent|employ|people|leadership/i.test(c.title)
+        );
+      } else if (
+        dName.includes('communicat') ||
+        dName.includes('যোগাযোগ') ||
+        dName.includes('প্রেজেন্টেশন')
+      ) {
+        matched = courses.find(
+          (c) =>
+            c.category === 'leadership-management' ||
+            /communicat|present|leadership|mindset/i.test(c.title)
+        );
       }
 
       if (matched && !matchedCourseIds.includes(matched.id)) {
@@ -238,7 +354,12 @@ export const SkillAssessmentModal: React.FC<SkillAssessmentModalProps> = ({
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
             <View style={styles.headerLeft}>
-              <Ionicons name="analytics" size={20} color={colors.primary} style={{ flexShrink: 0 }} />
+              <Ionicons
+                name="analytics"
+                size={20}
+                color={colors.primary}
+                style={{ flexShrink: 0 }}
+              />
               <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
                 {isBangla ? 'এক্সিকিউটিভ স্কিল ডায়াগনস্টিক' : 'Executive Skill Diagnostic'}
               </Text>
@@ -253,7 +374,10 @@ export const SkillAssessmentModal: React.FC<SkillAssessmentModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
             {!result ? (
               <>
                 {/* Progress bar */}
@@ -263,7 +387,12 @@ export const SkillAssessmentModal: React.FC<SkillAssessmentModalProps> = ({
                       {isBangla ? 'প্রশ্ন' : 'Question'} {currentIndex + 1} {isBangla ? 'এর' : 'of'}{' '}
                       {totalQuestions}
                     </Text>
-                    <Text style={[styles.domainBadge, { color: colors.primary, backgroundColor: colors.primaryLight }]}>
+                    <Text
+                      style={[
+                        styles.domainBadge,
+                        { color: colors.primary, backgroundColor: colors.primaryLight },
+                      ]}
+                    >
                       {isBangla && currentQ.domainBn ? currentQ.domainBn : currentQ.domain}
                     </Text>
                   </View>
@@ -300,8 +429,8 @@ export const SkillAssessmentModal: React.FC<SkillAssessmentModalProps> = ({
                                 ? 'rgba(16, 47, 83, 0.5)'
                                 : '#EEF2FF'
                               : isDark
-                              ? colors.surfaceSubtle
-                              : '#F8FAFC',
+                                ? colors.surfaceSubtle
+                                : '#F8FAFC',
                             borderColor: isSelected ? colors.primary : colors.border,
                           },
                         ]}
@@ -370,14 +499,15 @@ export const SkillAssessmentModal: React.FC<SkillAssessmentModalProps> = ({
                 </Text>
 
                 {/* 5-Axis Spider / Radar Competency Breakdown */}
-                <SkillRadarChart
-                  data={result.domainScores}
-                  colors={colors}
-                  size={270}
-                />
+                <SkillRadarChart data={result.domainScores} colors={colors} size={270} />
 
                 {/* Domain Breakdown Bars */}
-                <View style={[styles.domainsBreakdownCard, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+                <View
+                  style={[
+                    styles.domainsBreakdownCard,
+                    { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                  ]}
+                >
                   <Text style={[styles.domainSectionHeading, { color: colors.text }]}>
                     {isBangla ? 'দক্ষতা ও সক্ষমতার বিশ্লেষণ' : 'Competency Breakdown'}
                   </Text>
@@ -398,8 +528,8 @@ export const SkillAssessmentModal: React.FC<SkillAssessmentModalProps> = ({
                                 ds.score >= 80
                                   ? colors.primary
                                   : ds.score >= 60
-                                  ? colors.secondary
-                                  : colors.accent,
+                                    ? colors.secondary
+                                    : colors.accent,
                               width: `${ds.score}%`,
                             },
                           ]}
@@ -445,11 +575,19 @@ export const SkillAssessmentModal: React.FC<SkillAssessmentModalProps> = ({
                             {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
                           />
                           <View style={styles.recommendCourseInfo}>
-                            <Text style={[styles.recommendCourseTitle, { color: colors.text }]} numberOfLines={2}>
+                            <Text
+                              style={[styles.recommendCourseTitle, { color: colors.text }]}
+                              numberOfLines={2}
+                            >
                               {c.title}
                             </Text>
                             <View style={styles.recommendCourseMetaRow}>
-                              <View style={[styles.recommendCatBadge, { backgroundColor: colors.primaryLight }]}>
+                              <View
+                                style={[
+                                  styles.recommendCatBadge,
+                                  { backgroundColor: colors.primaryLight },
+                                ]}
+                              >
                                 <Text style={[styles.recommendCatText, { color: colors.primary }]}>
                                   {c.category}
                                 </Text>

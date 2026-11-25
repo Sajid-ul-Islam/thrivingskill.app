@@ -1,5 +1,16 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Linking, NativeSyntheticEvent, NativeScrollEvent, LayoutAnimation } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  RefreshControl,
+  Linking,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+  LayoutAnimation,
+} from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
@@ -74,19 +85,27 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
   };
 
   // Partition real live courses between cohort workshops and summits (memoized)
-  const summits = useMemo(() => workshops.filter(
-    (w) =>
-      w.title.toLowerCase().includes('summit') ||
-      w.category === '4ir_skills_summit' ||
-      w.category === 'blockchain-summit'
-  ), [workshops]);
+  const summits = useMemo(
+    () =>
+      workshops.filter(
+        (w) =>
+          w.title.toLowerCase().includes('summit') ||
+          w.category === '4ir_skills_summit' ||
+          w.category === 'blockchain-summit'
+      ),
+    [workshops]
+  );
 
-  const liveClasses = useMemo(() => workshops.filter(
-    (w) =>
-      !w.title.toLowerCase().includes('summit') &&
-      w.category !== '4ir_skills_summit' &&
-      w.category !== 'blockchain-summit'
-  ), [workshops]);
+  const liveClasses = useMemo(
+    () =>
+      workshops.filter(
+        (w) =>
+          !w.title.toLowerCase().includes('summit') &&
+          w.category !== '4ir_skills_summit' &&
+          w.category !== 'blockchain-summit'
+      ),
+    [workshops]
+  );
 
   const displayedWorkshops: Workshop[] = useMemo(() => {
     if (activeTab === 'all') return workshops;
@@ -101,7 +120,11 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
         title={isBangla ? 'লাইভ ক্লাস ও সামিট' : 'Live Class & Summits'}
-        subtitle={isBangla ? 'সরাসরি লাইভ ক্লাস ও ন্যাশনাল স্কিল সামিট' : 'Upcoming live sessions & skill summits'}
+        subtitle={
+          isBangla
+            ? 'সরাসরি লাইভ ক্লাস ও ন্যাশনাল স্কিল সামিট'
+            : 'Upcoming live sessions & skill summits'
+        }
         isScrolled={isScrolled}
         onOpenSubscription={onOpenSubscription}
         onOpenNotifications={onOpenNotifications}
@@ -178,7 +201,9 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
               style={styles.liveHeroEnterBtn}
               onPress={async () => {
                 triggerHaptic('medium');
-                const rawUrl = (liveWorkshopNow.joinUrl || 'https://thrivingskill.com/live-room').trim();
+                const rawUrl = (
+                  liveWorkshopNow.joinUrl || 'https://thrivingskill.com/live-room'
+                ).trim();
                 const isSafe = /^https?:\/\//i.test(rawUrl) || /^zoom(?:us|mtg):\/\//i.test(rawUrl);
                 if (!isSafe) {
                   showToast({ message: 'Invalid live room link', type: 'error' });
@@ -186,7 +211,9 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
                 }
                 try {
                   showToast({
-                    message: isBangla ? 'লাইভ ক্লাসরুমে যুক্ত করা হচ্ছে...' : 'Entering live classroom...',
+                    message: isBangla
+                      ? 'লাইভ ক্লাসরুমে যুক্ত করা হচ্ছে...'
+                      : 'Entering live classroom...',
                     type: 'info',
                   });
                   await Linking.openURL(rawUrl);
@@ -242,14 +269,14 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
           {[
             {
               id: 'all' as TabType,
-              label: isBangla
-                ? `সকল (${workshops.length})`
-                : `All Events (${workshops.length})`,
+              label: isBangla ? `সকল (${workshops.length})` : `All Events (${workshops.length})`,
               icon: 'calendar-outline' as const,
             },
             {
               id: 'live-classes' as TabType,
-              label: isBangla ? `লাইভ (${liveClasses.length})` : `Live Class (${liveClasses.length})`,
+              label: isBangla
+                ? `লাইভ (${liveClasses.length})`
+                : `Live Class (${liveClasses.length})`,
               icon: 'videocam-outline' as const,
             },
             {
@@ -264,10 +291,7 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
                 key={tab.id}
                 style={[
                   styles.segmentedTab,
-                  isActive && [
-                    styles.segmentedTabActive,
-                    { backgroundColor: colors.primary },
-                  ],
+                  isActive && [styles.segmentedTabActive, { backgroundColor: colors.primary }],
                 ]}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: isActive }}
@@ -330,19 +354,25 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
               mode="empty"
               title={
                 activeTab === 'summits'
-                  ? (isBangla ? 'বর্তমানে কোনো সামিট নির্ধারিত নেই' : 'No summits currently scheduled')
-                  : (isBangla ? 'এই ক্যাটাগরিতে কোনো লাইভ ইভেন্ট নেই' : 'No upcoming events in this category')
+                  ? isBangla
+                    ? 'বর্তমানে কোনো সামিট নির্ধারিত নেই'
+                    : 'No summits currently scheduled'
+                  : isBangla
+                    ? 'এই ক্যাটাগরিতে কোনো লাইভ ইভেন্ট নেই'
+                    : 'No upcoming events in this category'
               }
               message={
                 activeTab === 'summits'
-                  ? (isBangla
+                  ? isBangla
                     ? 'বাংলাদেশ স্কিল সামিটের পরবর্তী রাউন্ডের রেজিস্ট্রেশন শীঘ্রই শুরু হবে।'
-                    : 'Registrations for the next Bangladesh Skills Summit will open soon.')
-                  : (isBangla
+                    : 'Registrations for the next Bangladesh Skills Summit will open soon.'
+                  : isBangla
                     ? 'সকল আসন্ন লাইভ মাস্টারক্লাস দেখতে "সকল ইভেন্ট" ট্যাবে সুইচ করুন।'
-                    : 'Switch back to All Events to view scheduled masterclasses.')
+                    : 'Switch back to All Events to view scheduled masterclasses.'
               }
-              primaryActionLabel={activeTab !== 'all' ? (isBangla ? 'সকল ইভেন্ট দেখুন' : 'Show All Events') : undefined}
+              primaryActionLabel={
+                activeTab !== 'all' ? (isBangla ? 'সকল ইভেন্ট দেখুন' : 'Show All Events') : undefined
+              }
               onPrimaryAction={activeTab !== 'all' ? () => setActiveTab('all') : undefined}
             />
           </View>
@@ -555,4 +585,3 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
 });
-

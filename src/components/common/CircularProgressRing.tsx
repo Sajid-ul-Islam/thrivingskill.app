@@ -63,10 +63,7 @@ export const CircularProgressRing: React.FC<CircularProgressRingProps> = ({
           centerContent
         ) : showText ? (
           <Text
-            style={[
-              styles.percentText,
-              { fontSize: textSize, color: textColor || progressColor },
-            ]}
+            style={[styles.percentText, { fontSize: textSize, color: textColor || progressColor }]}
           >
             {Math.round(clampedProgress)}%
           </Text>

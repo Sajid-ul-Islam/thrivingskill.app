@@ -132,7 +132,9 @@ export const ProfileCourseSummary: React.FC<ProfileCourseSummaryProps> = ({
           onPress={() => onNavigateTab('MyLearning')}
           activeOpacity={0.7}
           accessibilityRole="button"
-          accessibilityLabel={isBangla ? `এনরোল্ড কোর্স ${enrolledCount}টি` : `Enrolled courses ${enrolledCount}`}
+          accessibilityLabel={
+            isBangla ? `এনরোল্ড কোর্স ${enrolledCount}টি` : `Enrolled courses ${enrolledCount}`
+          }
         >
           <Ionicons name="book-outline" size={15} color={colors.primary} />
           <Text style={[styles.kpiVal, { color: colors.primary }]}>{enrolledCount}</Text>
@@ -148,7 +150,9 @@ export const ProfileCourseSummary: React.FC<ProfileCourseSummaryProps> = ({
           onPress={() => onNavigateTab('MyLearning')}
           activeOpacity={0.7}
           accessibilityRole="button"
-          accessibilityLabel={isBangla ? `সম্পন্ন কোর্স ${completedCount}টি` : `Completed courses ${completedCount}`}
+          accessibilityLabel={
+            isBangla ? `সম্পন্ন কোর্স ${completedCount}টি` : `Completed courses ${completedCount}`
+          }
         >
           <Ionicons name="checkmark-done-circle-outline" size={15} color="#10B981" />
           <Text style={[styles.kpiVal, { color: '#10B981' }]}>{completedCount}</Text>
@@ -166,7 +170,9 @@ export const ProfileCourseSummary: React.FC<ProfileCourseSummaryProps> = ({
           }}
           activeOpacity={0.7}
           accessibilityRole="button"
-          accessibilityLabel={isBangla ? `সনদপত্র ${certificates.length}টি` : `Certificates ${certificates.length}`}
+          accessibilityLabel={
+            isBangla ? `সনদপত্র ${certificates.length}টি` : `Certificates ${certificates.length}`
+          }
         >
           <Ionicons name="ribbon-outline" size={15} color="#E34234" />
           <Text style={[styles.kpiVal, { color: '#E34234' }]}>{certificates.length}</Text>
@@ -182,7 +188,9 @@ export const ProfileCourseSummary: React.FC<ProfileCourseSummaryProps> = ({
           onPress={() => onNavigateTab('MyLearning')}
           activeOpacity={0.7}
           accessibilityRole="button"
-          accessibilityLabel={isBangla ? `স্টাডি স্ট্রিক ${streakDays} দিন` : `Study streak ${streakDays} days`}
+          accessibilityLabel={
+            isBangla ? `স্টাডি স্ট্রিক ${streakDays} দিন` : `Study streak ${streakDays} days`
+          }
         >
           <Ionicons name="flame" size={15} color="#E11D48" />
           <Text style={[styles.kpiVal, { color: '#E11D48' }]}>{streakDays}d</Text>
@@ -204,14 +212,20 @@ export const ProfileCourseSummary: React.FC<ProfileCourseSummaryProps> = ({
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Text style={[styles.headerActionLink, { color: colors.primary }]}>
-                {isBangla ? `সবগুলো (${certificates.length}) →` : `View All (${certificates.length}) →`}
+                {isBangla
+                  ? `সবগুলো (${certificates.length}) →`
+                  : `View All (${certificates.length}) →`}
               </Text>
             </TouchableOpacity>
           )}
         </View>
 
         {certificates.length > 0 ? (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.certsScroll}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.certsScroll}
+          >
             {certificates.map((cert) => (
               <View
                 key={cert.id}
@@ -257,7 +271,10 @@ export const ProfileCourseSummary: React.FC<ProfileCourseSummaryProps> = ({
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    style={[styles.certShareBtn, { borderColor: colors.border, backgroundColor: colors.surfaceSubtle }]}
+                    style={[
+                      styles.certShareBtn,
+                      { borderColor: colors.border, backgroundColor: colors.surfaceSubtle },
+                    ]}
                     onPress={() => {
                       triggerHaptic('light');
                       onSelectCertificate(cert);
@@ -270,7 +287,12 @@ export const ProfileCourseSummary: React.FC<ProfileCourseSummaryProps> = ({
             ))}
           </ScrollView>
         ) : (
-          <View style={[styles.emptyCertBanner, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.emptyCertBanner,
+              { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+            ]}
+          >
             <View style={[styles.emptyCertIconBg, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}>
               <Ionicons name="ribbon-outline" size={20} color="#E34234" />
             </View>
@@ -294,7 +316,11 @@ export const ProfileCourseSummary: React.FC<ProfileCourseSummaryProps> = ({
           <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 8 }]}>
             {isBangla ? 'অর্জিত স্কিল ব্যাজসমূহ' : 'Skill Mastery Badges'}
           </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.badgesScroll}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.badgesScroll}
+          >
             {badges.map((b) => (
               <View
                 key={b.id}
@@ -308,13 +334,25 @@ export const ProfileCourseSummary: React.FC<ProfileCourseSummaryProps> = ({
                 ]}
               >
                 <View style={[styles.badgeIconBox, { backgroundColor: b.color + '18' }]}>
-                  <Ionicons name={b.icon as any} size={18} color={b.isUnlocked ? b.color : colors.textMuted} />
+                  <Ionicons
+                    name={b.icon as any}
+                    size={18}
+                    color={b.isUnlocked ? b.color : colors.textMuted}
+                  />
                 </View>
                 <Text style={[styles.badgeTitle, { color: colors.text }]} numberOfLines={1}>
                   {isBangla ? b.banglaTitle : b.title}
                 </Text>
-                <Text style={[styles.badgeStatus, { color: b.isUnlocked ? b.color : colors.textMuted }]}>
-                  {b.isUnlocked ? (isBangla ? '✓ আনলক' : '✓ Unlocked') : (isBangla ? '🔒 লক' : '🔒 Locked')}
+                <Text
+                  style={[styles.badgeStatus, { color: b.isUnlocked ? b.color : colors.textMuted }]}
+                >
+                  {b.isUnlocked
+                    ? isBangla
+                      ? '✓ আনলক'
+                      : '✓ Unlocked'
+                    : isBangla
+                      ? '🔒 লক'
+                      : '🔒 Locked'}
                 </Text>
               </View>
             ))}
@@ -354,12 +392,21 @@ export const ProfileCourseSummary: React.FC<ProfileCourseSummaryProps> = ({
 
         {/* Course Cards List */}
         {displayedCourses.length === 0 ? (
-          <View style={[styles.emptyCourseCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.emptyCourseCard,
+              { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+            ]}
+          >
             <Ionicons name="school-outline" size={28} color={colors.textMuted} />
             <Text style={[styles.emptyCourseTitle, { color: colors.text }]}>
               {portfolioTab === 'passed'
-                ? (isBangla ? 'এখনো কোনো কোর্স উত্তীর্ণ হয়নি' : 'No passed courses yet')
-                : (isBangla ? 'কোনো কোর্স এনরোল করা নেই' : 'No enrolled courses found')}
+                ? isBangla
+                  ? 'এখনো কোনো কোর্স উত্তীর্ণ হয়নি'
+                  : 'No passed courses yet'
+                : isBangla
+                  ? 'কোনো কোর্স এনরোল করা নেই'
+                  : 'No enrolled courses found'}
             </Text>
             <TouchableOpacity
               style={[styles.browseCatalogBtn, { backgroundColor: colors.primary }]}
@@ -377,14 +424,29 @@ export const ProfileCourseSummary: React.FC<ProfileCourseSummaryProps> = ({
               const prog = userProgress[course.id];
               const courseStatus = getCourseStatus(course.id);
               const isGraduated = courseStatus === 'passed' || courseStatus === 'finished';
-              const totalLessons = course.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0) || 0;
+              const totalLessons =
+                course.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0) || 0;
               const completedCountForCourse = prog?.completedLessonIds?.length || 0;
-              const pct = totalLessons > 0 ? Math.min(100, Math.round((completedCountForCourse / totalLessons) * 100)) : 0;
-              const targetLessonId = prog?.lastAccessedLessonId || course.modules?.[0]?.lessons?.[0]?.id || '';
+              const pct =
+                totalLessons > 0
+                  ? Math.min(100, Math.round((completedCountForCourse / totalLessons) * 100))
+                  : 0;
+              const targetLessonId =
+                prog?.lastAccessedLessonId || course.modules?.[0]?.lessons?.[0]?.id || '';
               const cert = certificates.find((c) => c.courseId === course.id);
 
-              const badgeColor = courseStatus === 'passed' ? '#16A34A' : courseStatus === 'failed' ? '#EF4444' : '#8B5CF6';
-              const badgeBg = courseStatus === 'passed' ? '#DCFCE7' : courseStatus === 'failed' ? '#FEE2E2' : '#EDE9FE';
+              const badgeColor =
+                courseStatus === 'passed'
+                  ? '#16A34A'
+                  : courseStatus === 'failed'
+                    ? '#EF4444'
+                    : '#8B5CF6';
+              const badgeBg =
+                courseStatus === 'passed'
+                  ? '#DCFCE7'
+                  : courseStatus === 'failed'
+                    ? '#FEE2E2'
+                    : '#EDE9FE';
 
               return (
                 <View
@@ -401,7 +463,12 @@ export const ProfileCourseSummary: React.FC<ProfileCourseSummaryProps> = ({
                   />
                   <View style={styles.courseContent}>
                     <View style={styles.courseStatusRow}>
-                      <View style={[styles.statusPill, { backgroundColor: isDark ? `${badgeColor}25` : badgeBg }]}>
+                      <View
+                        style={[
+                          styles.statusPill,
+                          { backgroundColor: isDark ? `${badgeColor}25` : badgeBg },
+                        ]}
+                      >
                         <Text style={[styles.statusText, { color: badgeColor }]}>
                           {courseStatus.toUpperCase()}
                         </Text>
@@ -464,13 +531,20 @@ export const ProfileCourseSummary: React.FC<ProfileCourseSummaryProps> = ({
             {/* Expand / Collapse Button if more than 2 courses */}
             {displayedCourses.length > 2 && (
               <TouchableOpacity
-                style={[styles.toggleExpandBtn, { borderColor: colors.border, backgroundColor: colors.surfaceSubtle }]}
+                style={[
+                  styles.toggleExpandBtn,
+                  { borderColor: colors.border, backgroundColor: colors.surfaceSubtle },
+                ]}
                 onPress={toggleExpand}
               >
                 <Text style={[styles.toggleExpandText, { color: colors.primary }]}>
                   {isExpanded
-                    ? (isBangla ? 'সংক্ষিপ্ত করুন ↑' : 'Show Less ↑')
-                    : (isBangla ? `আরও ${displayedCourses.length - 2}টি কোর্স দেখুন ↓` : `Show All ${displayedCourses.length} Courses ↓`)}
+                    ? isBangla
+                      ? 'সংক্ষিপ্ত করুন ↑'
+                      : 'Show Less ↑'
+                    : isBangla
+                      ? `আরও ${displayedCourses.length - 2}টি কোর্স দেখুন ↓`
+                      : `Show All ${displayedCourses.length} Courses ↓`}
                 </Text>
               </TouchableOpacity>
             )}

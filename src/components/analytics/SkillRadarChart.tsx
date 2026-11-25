@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import Svg, { Polygon, Line, Circle, G, Text as SvgText, Defs, LinearGradient, Stop } from 'react-native-svg';
+import Svg, {
+  Polygon,
+  Line,
+  Circle,
+  G,
+  Text as SvgText,
+  Defs,
+  LinearGradient,
+  Stop,
+} from 'react-native-svg';
 import { ThemeColors } from '../../theme/colors';
 import { triggerHaptic } from '../../utils/haptics';
 
@@ -79,9 +88,17 @@ export const SkillRadarChart: React.FC<SkillRadarChartProps> = ({
   };
 
   const getScoreTier = (score: number) => {
-    if (score >= 85) return { label: isBangla ? 'উন্নত (Advanced)' : 'Advanced Mastery', color: '#10B981' };
-    if (score >= 60) return { label: isBangla ? 'দক্ষ (Proficient)' : 'Proficient', color: colors.brandGold || '#FFB606' };
-    return { label: isBangla ? 'উন্নতি প্রয়োজন (Growth Area)' : 'Growth Priority', color: colors.accent };
+    if (score >= 85)
+      return { label: isBangla ? 'উন্নত (Advanced)' : 'Advanced Mastery', color: '#10B981' };
+    if (score >= 60)
+      return {
+        label: isBangla ? 'দক্ষ (Proficient)' : 'Proficient',
+        color: colors.brandGold || '#FFB606',
+      };
+    return {
+      label: isBangla ? 'উন্নতি প্রয়োজন (Growth Area)' : 'Growth Priority',
+      color: colors.accent,
+    };
   };
 
   const tier = getScoreTier(activeDomain.score);
@@ -89,17 +106,25 @@ export const SkillRadarChart: React.FC<SkillRadarChartProps> = ({
   return (
     <View style={styles.container}>
       {/* Interactive Active Competency Callout Banner */}
-      <View style={[styles.activeCalloutCard, { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderSubtle }]}>
+      <View
+        style={[
+          styles.activeCalloutCard,
+          { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderSubtle },
+        ]}
+      >
         <View style={styles.calloutHeaderRow}>
           <View style={styles.calloutTitleWrap}>
             <Text style={[styles.calloutDomainTitle, { color: colors.text }]}>
               {isBangla ? shortInfo.bn : shortInfo.en}
             </Text>
-            <Text style={[styles.calloutTierText, { color: tier.color }]}>
-              {tier.label}
-            </Text>
+            <Text style={[styles.calloutTierText, { color: tier.color }]}>{tier.label}</Text>
           </View>
-          <View style={[styles.calloutScorePill, { backgroundColor: colors.surfaceCard, borderColor: colors.borderSubtle }]}>
+          <View
+            style={[
+              styles.calloutScorePill,
+              { backgroundColor: colors.surfaceCard, borderColor: colors.borderSubtle },
+            ]}
+          >
             <Text style={[styles.calloutScoreValue, { color: colors.primary }]}>
               {activeDomain.score}%
             </Text>
@@ -178,7 +203,7 @@ export const SkillRadarChart: React.FC<SkillRadarChartProps> = ({
                   cx={pt.x}
                   cy={pt.y}
                   r={isSelected ? 5.5 : 4}
-                  fill={isSelected ? (colors.brandGold || '#FFB606') : colors.primary}
+                  fill={isSelected ? colors.brandGold || '#FFB606' : colors.primary}
                   stroke="#FFFFFF"
                   strokeWidth={1.5}
                 />
@@ -201,7 +226,7 @@ export const SkillRadarChart: React.FC<SkillRadarChartProps> = ({
                 textAnchor="middle"
                 fontSize={isSelected ? '10.5' : '9.5'}
                 fontWeight={isSelected ? '800' : '600'}
-                fill={isSelected ? (colors.brandGold || '#FFB606') : colors.textMuted}
+                fill={isSelected ? colors.brandGold || '#FFB606' : colors.textMuted}
               >
                 {labelText}
               </SvgText>
@@ -222,9 +247,9 @@ export const SkillRadarChart: React.FC<SkillRadarChartProps> = ({
                 styles.domainPill,
                 {
                   backgroundColor: isSelected
-                    ? (colors.brandGoldSubtle || 'rgba(255, 182, 6, 0.16)')
+                    ? colors.brandGoldSubtle || 'rgba(255, 182, 6, 0.16)'
                     : colors.surfaceSubtle,
-                  borderColor: isSelected ? (colors.brandGold || '#FFB606') : colors.borderSubtle,
+                  borderColor: isSelected ? colors.brandGold || '#FFB606' : colors.borderSubtle,
                 },
               ]}
               onPress={() => {
@@ -241,7 +266,7 @@ export const SkillRadarChart: React.FC<SkillRadarChartProps> = ({
                 style={[
                   styles.domainPillText,
                   {
-                    color: isSelected ? (colors.brandGold || '#FFB606') : colors.text,
+                    color: isSelected ? colors.brandGold || '#FFB606' : colors.text,
                     fontWeight: isSelected ? '800' : '500',
                   },
                 ]}

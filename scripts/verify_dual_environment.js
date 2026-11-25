@@ -102,8 +102,9 @@ async function runVerification() {
   console.log('\n[STEP 3] Auditing src/utils/imageUtils.ts Media Sanitization...');
   const imageTs = fs.readFileSync(path.join(rootDir, 'src', 'utils', 'imageUtils.ts'), 'utf8');
 
-  assert('imageUtils.ts upgrades both live and staging http to https', 
-    imageTs.includes("trimmed.replace(/^http:\\/\\/(staging\\.)?thrivingskill\\.com/i, 'https://$1thrivingskill.com')")
+  assert('imageUtils.ts upgrades both live and staging http to https',
+    imageTs.includes('^http:\\/\\/(staging\\.)?thrivingskill\\.com') &&
+    imageTs.includes("'https://$1thrivingskill.com'")
   );
   assert('imageUtils.ts dynamically passes Referer matching active Env.SITE_URL', 
     imageTs.includes('const activeReferer = Env.SITE_URL ? `${Env.SITE_URL}/` : \'https://thrivingskill.com/\';')

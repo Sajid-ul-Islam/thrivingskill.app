@@ -49,22 +49,39 @@ const makeCourse = (overrides: Partial<Course> = {}): Course => ({
 describe('checkoutHelpers security & server pricing', () => {
   describe('evaluateCheckoutNavigationRequest (scheme & host allowlisting)', () => {
     it('allows HTTPS requests to active checkout and trusted gateway hosts', () => {
-      expect(evaluateCheckoutNavigationRequest('https://thrivingskill.com/checkout/', 'https://thrivingskill.com')).toEqual({
-        action: 'allow',
-      });
-      expect(evaluateCheckoutNavigationRequest('https://sandbox.sslcommerz.com/pay', 'https://thrivingskill.com')).toEqual({
+      expect(
+        evaluateCheckoutNavigationRequest(
+          'https://thrivingskill.com/checkout/',
+          'https://thrivingskill.com'
+        )
+      ).toEqual({
         action: 'allow',
       });
       expect(
-        evaluateCheckoutNavigationRequest('https://staging.thrivingskill.com/checkout/', 'https://staging.thrivingskill.com')
+        evaluateCheckoutNavigationRequest(
+          'https://sandbox.sslcommerz.com/pay',
+          'https://thrivingskill.com'
+        )
+      ).toEqual({
+        action: 'allow',
+      });
+      expect(
+        evaluateCheckoutNavigationRequest(
+          'https://staging.thrivingskill.com/checkout/',
+          'https://staging.thrivingskill.com'
+        )
       ).toEqual({
         action: 'allow',
       });
     });
 
     it('blocks cleartext http:// and untrusted https:// domains', () => {
-      expect(evaluateCheckoutNavigationRequest('http://thrivingskill.com/checkout/')).toEqual({ action: 'block' });
-      expect(evaluateCheckoutNavigationRequest('https://evil.example.com/phish')).toEqual({ action: 'block' });
+      expect(evaluateCheckoutNavigationRequest('http://thrivingskill.com/checkout/')).toEqual({
+        action: 'block',
+      });
+      expect(evaluateCheckoutNavigationRequest('https://evil.example.com/phish')).toEqual({
+        action: 'block',
+      });
     });
 
     it('allows only allowlisted non-HTTP payment/contact schemes', () => {
@@ -86,7 +103,9 @@ describe('checkoutHelpers security & server pricing', () => {
     it('blocks unknown custom URL schemes and malicious intent fallbacks', () => {
       expect(evaluateCheckoutNavigationRequest('javascript:alert(1)')).toEqual({ action: 'block' });
       expect(evaluateCheckoutNavigationRequest('file:///etc/passwd')).toEqual({ action: 'block' });
-      expect(evaluateCheckoutNavigationRequest('whatsapp://send?text=hi')).toEqual({ action: 'block' });
+      expect(evaluateCheckoutNavigationRequest('whatsapp://send?text=hi')).toEqual({
+        action: 'block',
+      });
       expect(evaluateCheckoutNavigationRequest('fb://profile/1')).toEqual({ action: 'block' });
       expect(
         evaluateCheckoutNavigationRequest(
@@ -110,16 +129,28 @@ describe('checkoutHelpers security & server pricing', () => {
     });
 
     it('validates message origin strictly against active HTTPS site origin', () => {
-      expect(isTrustedCheckoutOrigin('https://thrivingskill.com/checkout/', 'https://thrivingskill.com')).toBe(true);
-      expect(isTrustedCheckoutOrigin('https://evil.com/checkout/', 'https://thrivingskill.com')).toBe(false);
-      expect(isTrustedCheckoutOrigin('http://thrivingskill.com/checkout/', 'https://thrivingskill.com')).toBe(false);
+      expect(
+        isTrustedCheckoutOrigin('https://thrivingskill.com/checkout/', 'https://thrivingskill.com')
+      ).toBe(true);
+      expect(
+        isTrustedCheckoutOrigin('https://evil.com/checkout/', 'https://thrivingskill.com')
+      ).toBe(false);
+      expect(
+        isTrustedCheckoutOrigin('http://thrivingskill.com/checkout/', 'https://thrivingskill.com')
+      ).toBe(false);
       expect(isTrustedCheckoutOrigin(undefined, 'https://thrivingskill.com')).toBe(false);
     });
 
     it('detects completion redirects only on trusted checkout origin', () => {
-      expect(isOrderCompletionUrl('https://thrivingskill.com/checkout/order-received/123/?key=wc_order_abc')).toBe(true);
+      expect(
+        isOrderCompletionUrl(
+          'https://thrivingskill.com/checkout/order-received/123/?key=wc_order_abc'
+        )
+      ).toBe(true);
       expect(isOrderCompletionUrl('https://evil.com/checkout/order-received/123/')).toBe(false);
-      expect(isOrderCompletionUrl('https://thrivingskill.com/checkout/order-pay/123/?key=wc_order_abc')).toBe(false);
+      expect(
+        isOrderCompletionUrl('https://thrivingskill.com/checkout/order-pay/123/?key=wc_order_abc')
+      ).toBe(false);
     });
   });
 

@@ -59,7 +59,10 @@ export class SecureStorageService {
         await AsyncStorage.removeItem(LEGACY_ASYNC_TOKEN_KEY).catch(() => {});
         return;
       } catch (err) {
-        console.warn('[SecureStorage] Failed to write to SecureStore, falling back to AsyncStorage:', err);
+        console.warn(
+          '[SecureStorage] Failed to write to SecureStore, falling back to AsyncStorage:',
+          err
+        );
       }
     }
 
@@ -113,7 +116,10 @@ export class SecureStorageService {
 
         return null;
       } catch (err) {
-        console.warn('[SecureStorage] Error accessing SecureStore, checking AsyncStorage fallback:', err);
+        console.warn(
+          '[SecureStorage] Error accessing SecureStore, checking AsyncStorage fallback:',
+          err
+        );
       }
     }
 

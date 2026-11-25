@@ -47,10 +47,7 @@ import {
   SupportContactModal,
   StaggeredFadeIn,
 } from '../components';
-import type {
-  HomeFeatureCardItem,
-  SpecialBundlePosterItem,
-} from '../services/api/brandingService';
+import type { HomeFeatureCardItem, SpecialBundlePosterItem } from '../services/api/brandingService';
 import type { ThriveGenCourseItem } from '../components/home/ThriveGenHub';
 import type { WpPost } from '../types';
 import { triggerHaptic } from '../utils/haptics';
@@ -110,7 +107,11 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
 
   useEffect(() => {
     // Suppress auto-scroll if single item or if all items fit comfortably on screen without scrolling
-    if (itemCount <= 1 || (isTablet && itemCount <= (isLandscape ? 3 : 2) && (itemCount <= 2 && !isLandscape))) return;
+    if (
+      itemCount <= 1 ||
+      (isTablet && itemCount <= (isLandscape ? 3 : 2) && itemCount <= 2 && !isLandscape)
+    )
+      return;
 
     timerRef.current = setInterval(() => {
       if (isDraggingRef.current) return;
@@ -217,9 +218,20 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
         </View>
       ) : isTablet && itemCount === 2 && !isLandscape ? (
         /* If 2 courses on tablet portrait, display both side-by-side filling the width */
-        <View style={{ flexDirection: 'row', paddingHorizontal: 16, gap: CARD_GAP, alignItems: 'stretch' }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            paddingHorizontal: 16,
+            gap: CARD_GAP,
+            alignItems: 'stretch',
+          }}
+        >
           {displayCourses.map((item, idx) => (
-            <StaggeredFadeIn key={`cat-row-${title}-${item.id}`} index={idx} style={{ flex: 1, height: '100%', alignSelf: 'stretch' }}>
+            <StaggeredFadeIn
+              key={`cat-row-${title}-${item.id}`}
+              index={idx}
+              style={{ flex: 1, height: '100%', alignSelf: 'stretch' }}
+            >
               <CourseCard
                 course={item}
                 onPress={() => {
@@ -242,7 +254,12 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
           maxToRenderPerBatch={4}
           windowSize={3}
           removeClippedSubviews={Platform.OS === 'android'}
-          contentContainerStyle={{ paddingHorizontal: 16, gap: CARD_GAP, paddingBottom: 4, alignItems: 'stretch' }}
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            gap: CARD_GAP,
+            paddingBottom: 4,
+            alignItems: 'stretch',
+          }}
           getItemLayout={(_, index) => ({
             length: cardSnap,
             offset: cardSnap * index,
@@ -324,7 +341,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const { isBangla } = useLanguage();
   const { streakDays, dailyMinutesSpent, dailyGoalMinutes } = useGamification();
   const dailyTargetMinutes = dailyGoalMinutes && dailyGoalMinutes > 0 ? dailyGoalMinutes : 30;
-  const currentGoalPercent = Math.min(100, Math.round((dailyMinutesSpent / dailyTargetMinutes) * 100));
+  const currentGoalPercent = Math.min(
+    100,
+    Math.round((dailyMinutesSpent / dailyTargetMinutes) * 100)
+  );
   const isGoalAchieved = currentGoalPercent >= 100;
   const {
     courses,
@@ -422,24 +442,23 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   // ─── CR-3: Per-category filtered course lists ───────────────────────────────
 
   // Top popular courses across catalog (always guaranteed to populate if courses exist)
-  const popularCourses = useMemo(
-    () => {
-      if (courses.length === 0) return [];
-      return [...courses]
-        .sort((a, b) => (b.reviewsCount || 0) - (a.reviewsCount || 0) || (b.rating || 0) - (a.rating || 0))
-        .slice(0, 8);
-    },
-    [courses],
-  );
+  const popularCourses = useMemo(() => {
+    if (courses.length === 0) return [];
+    return [...courses]
+      .sort(
+        (a, b) => (b.reviewsCount || 0) - (a.reviewsCount || 0) || (b.rating || 0) - (a.rating || 0)
+      )
+      .slice(0, 8);
+  }, [courses]);
 
   const upcomingCourses = useMemo(
     () =>
       courses.filter(
         (c) =>
           c.category === 'upcoming' ||
-          (c.categorySlugs && c.categorySlugs.includes('upcoming-live-training')),
+          (c.categorySlugs && c.categorySlugs.includes('upcoming-live-training'))
       ),
-    [courses],
+    [courses]
   );
 
   const generativeAiCourses = useMemo(
@@ -450,9 +469,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           (c.categorySlugs && c.categorySlugs.includes('generative-ai')) ||
           c.title.toLowerCase().includes(' ai') ||
           c.title.toLowerCase().includes('gpt') ||
-          c.title.toLowerCase().includes('gemini'),
+          c.title.toLowerCase().includes('gemini')
       ),
-    [courses],
+    [courses]
   );
 
   const marketingCourses = useMemo(
@@ -464,9 +483,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           (c.categorySlugs &&
             (c.categorySlugs.includes('sales-marketing') ||
               c.categorySlugs.includes('sales-marketing-live-training') ||
-              c.categorySlugs.includes('marketing'))),
+              c.categorySlugs.includes('marketing')))
       ),
-    [courses],
+    [courses]
   );
 
   const businessCourses = useMemo(
@@ -481,9 +500,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               c.categorySlugs.includes('business-strategy') ||
               c.categorySlugs.includes('business-essentials') ||
               c.categorySlugs.includes('business-essentials-live-training') ||
-              c.categorySlugs.includes('siam-city-cement'))),
+              c.categorySlugs.includes('siam-city-cement')))
       ),
-    [courses],
+    [courses]
   );
 
   const careerCourses = useMemo(
@@ -495,9 +514,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           (c.categorySlugs &&
             (c.categorySlugs.includes('job-seekers-skills') ||
               c.categorySlugs.includes('get-offer') ||
-              c.categorySlugs.includes('career'))),
+              c.categorySlugs.includes('career')))
       ),
-    [courses],
+    [courses]
   );
 
   const hrCourses = useMemo(
@@ -505,17 +524,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       courses.filter(
         (c) =>
           c.category === 'human-resource-management' ||
-          (c.categorySlugs && c.categorySlugs.includes('human-resource-management')),
+          (c.categorySlugs && c.categorySlugs.includes('human-resource-management'))
       ),
-    [courses],
+    [courses]
   );
 
   const supplyChainCourses = useMemo(
     () =>
-      courses.filter(
-        (c) => c.categorySlugs && c.categorySlugs.includes('supply-chain-management'),
-      ),
-    [courses],
+      courses.filter((c) => c.categorySlugs && c.categorySlugs.includes('supply-chain-management')),
+    [courses]
   );
 
   const financeCourses = useMemo(
@@ -524,17 +541,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         (c) =>
           c.category === 'finance-accounting-legal' ||
           c.category === 'finance' ||
-          (c.categorySlugs && c.categorySlugs.includes('finance-accounting-legal')),
+          (c.categorySlugs && c.categorySlugs.includes('finance-accounting-legal'))
       ),
-    [courses],
+    [courses]
   );
 
   const bundleCourses = useMemo(
-    () =>
-      courses.filter(
-        (c) => c.isCareerBundle === true || c.title.includes('Bundle'),
-      ),
-    [courses],
+    () => courses.filter((c) => c.isCareerBundle === true || c.title.includes('Bundle')),
+    [courses]
   );
 
   // HeroCarousel slide handler
@@ -547,7 +561,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           c.id === slide.targetId ||
           c.category === 'generative-ai' ||
           c.category === 'agentic-ai' ||
-          c.title.toLowerCase().includes('ai'),
+          c.title.toLowerCase().includes('ai')
       );
       if (aiCourse) {
         onNavigateToCourse(aiCourse.id);
@@ -560,7 +574,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           c.id === slide.targetId ||
           c.category === 'excel' ||
           c.category === 'excel-data' ||
-          c.title.toLowerCase().includes('excel'),
+          c.title.toLowerCase().includes('excel')
       );
       if (excelCourse) {
         onNavigateToCourse(excelCourse.id);
@@ -571,7 +585,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       const bundleCourse = courses.find(
         (c) =>
           (slide.targetId && c.id.toLowerCase() === slide.targetId.toLowerCase()) ||
-          c.title.toLowerCase().includes(slide.title.toLowerCase()),
+          c.title.toLowerCase().includes(slide.title.toLowerCase())
       );
       if (bundleCourse) {
         onNavigateToCourse(bundleCourse.id);
@@ -603,10 +617,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       (c) =>
         c.id.toLowerCase() === bundle.targetSlug.toLowerCase() ||
         c.title.toLowerCase().includes(bundle.title.toLowerCase()) ||
-        (bundle.targetSlug.includes('finance') && (c.title.toLowerCase().includes('finance') || c.category === 'business')) ||
-        (bundle.targetSlug.includes('hr') && (c.title.toLowerCase().includes('hr') || c.category === 'business')) ||
-        (bundle.targetSlug.includes('excel') && (c.title.toLowerCase().includes('excel') || c.category === 'excel')) ||
-        (bundle.targetSlug.includes('leadership') && (c.title.toLowerCase().includes('leadership') || c.category === 'business'))
+        (bundle.targetSlug.includes('finance') &&
+          (c.title.toLowerCase().includes('finance') || c.category === 'business')) ||
+        (bundle.targetSlug.includes('hr') &&
+          (c.title.toLowerCase().includes('hr') || c.category === 'business')) ||
+        (bundle.targetSlug.includes('excel') &&
+          (c.title.toLowerCase().includes('excel') || c.category === 'excel')) ||
+        (bundle.targetSlug.includes('leadership') &&
+          (c.title.toLowerCase().includes('leadership') || c.category === 'business'))
     );
 
     if (matchingCourse) {
@@ -669,57 +687,64 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   };
 
   // Category rows definition with CR-01 Personalized Recommendations
-  const categoryRows = useMemo(
-    () => {
-      const recData = getRecommendedCourses ? getRecommendedCourses() : { courses: [], rationale: '', rationaleBn: '' };
-      const recommendedRow = recData.courses && recData.courses.length > 0 ? [{
-        title: isBangla ? 'আপনার জন্য বিশেষ প্রস্তাবিত' : 'Recommended For You',
-        subtitle: isBangla ? recData.rationaleBn : recData.rationale,
-        courses: recData.courses,
-      }] : [];
+  const categoryRows = useMemo(() => {
+    const recData = getRecommendedCourses
+      ? getRecommendedCourses()
+      : { courses: [], rationale: '', rationaleBn: '' };
+    const recommendedRow =
+      recData.courses && recData.courses.length > 0
+        ? [
+            {
+              title: isBangla ? 'আপনার জন্য বিশেষ প্রস্তাবিত' : 'Recommended For You',
+              subtitle: isBangla ? recData.rationaleBn : recData.rationale,
+              courses: recData.courses,
+            },
+          ]
+        : [];
 
-      const rows = [
-        ...recommendedRow,
-        { title: isBangla ? 'জনপ্রিয় কোর্সসমূহ' : 'Popular Courses', courses: popularCourses },
-        { title: isBangla ? 'আসন্ন লাইভ ট্রেনিং' : 'Upcoming Live', courses: upcomingCourses },
-        { title: isBangla ? 'জেনারেটিভ এআই' : 'Generative AI', courses: generativeAiCourses },
-        { title: isBangla ? 'মার্কেটিং ও সেলস' : 'Marketing & Sales', courses: marketingCourses },
-        { title: isBangla ? 'ব্যবসা ও লিডারশিপ' : 'Business & Leadership', courses: businessCourses },
-        { title: isBangla ? 'ফাইন্যান্স ও অ্যাকাউন্টিং' : 'Finance & Accounting', courses: financeCourses },
-        { title: isBangla ? 'হিউম্যান রিসোর্স' : 'Human Resource', courses: hrCourses },
-        { title: isBangla ? 'সাপ্লাই চেইন' : 'Supply Chain', courses: supplyChainCourses },
-        { title: isBangla ? 'ক্যারিয়ার ও জব স্কিলস' : 'Career & Job Skills', courses: careerCourses },
-        { title: isBangla ? 'বান্ডেল' : 'Bundle', courses: bundleCourses },
+    const rows = [
+      ...recommendedRow,
+      { title: isBangla ? 'জনপ্রিয় কোর্সসমূহ' : 'Popular Courses', courses: popularCourses },
+      { title: isBangla ? 'আসন্ন লাইভ ট্রেনিং' : 'Upcoming Live', courses: upcomingCourses },
+      { title: isBangla ? 'জেনারেটিভ এআই' : 'Generative AI', courses: generativeAiCourses },
+      { title: isBangla ? 'মার্কেটিং ও সেলস' : 'Marketing & Sales', courses: marketingCourses },
+      { title: isBangla ? 'ব্যবসা ও লিডারশিপ' : 'Business & Leadership', courses: businessCourses },
+      {
+        title: isBangla ? 'ফাইন্যান্স ও অ্যাকাউন্টিং' : 'Finance & Accounting',
+        courses: financeCourses,
+      },
+      { title: isBangla ? 'হিউম্যান রিসোর্স' : 'Human Resource', courses: hrCourses },
+      { title: isBangla ? 'সাপ্লাই চেইন' : 'Supply Chain', courses: supplyChainCourses },
+      { title: isBangla ? 'ক্যারিয়ার ও জব স্কিলস' : 'Career & Job Skills', courses: careerCourses },
+      { title: isBangla ? 'বান্ডেল' : 'Bundle', courses: bundleCourses },
+    ];
+
+    const activeRows = rows.filter((r) => r.courses && r.courses.length > 0);
+
+    // If activeRows has 1 or fewer rows but courses exist, display All Courses fallback
+    if (activeRows.length <= 1 && courses.length > 0) {
+      return [
+        { title: isBangla ? 'জনপ্রিয় ও সকল কোর্স' : 'All Featured Courses', courses },
+        ...activeRows,
       ];
+    }
 
-      const activeRows = rows.filter((r) => r.courses && r.courses.length > 0);
-
-      // If activeRows has 1 or fewer rows but courses exist, display All Courses fallback
-      if (activeRows.length <= 1 && courses.length > 0) {
-        return [
-          { title: isBangla ? 'জনপ্রিয় ও সকল কোর্স' : 'All Featured Courses', courses },
-          ...activeRows,
-        ];
-      }
-
-      return activeRows;
-    },
-    [
-      isBangla,
-      popularCourses,
-      upcomingCourses,
-      generativeAiCourses,
-      marketingCourses,
-      businessCourses,
-      financeCourses,
-      hrCourses,
-      supplyChainCourses,
-      careerCourses,
-      bundleCourses,
-      courses,
-      getRecommendedCourses,
-    ],
-  );
+    return activeRows;
+  }, [
+    isBangla,
+    popularCourses,
+    upcomingCourses,
+    generativeAiCourses,
+    marketingCourses,
+    businessCourses,
+    financeCourses,
+    hrCourses,
+    supplyChainCourses,
+    careerCourses,
+    bundleCourses,
+    courses,
+    getRecommendedCourses,
+  ]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -816,7 +841,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                       ]}
                     >
                       <Text style={styles.avatarInitialsText}>
-                        {(user?.name || user?.username || (isAuthenticated ? 'Student' : 'Learner')).charAt(0).toUpperCase()}
+                        {(user?.name || user?.username || (isAuthenticated ? 'Student' : 'Learner'))
+                          .charAt(0)
+                          .toUpperCase()}
                       </Text>
                     </View>
                   )}
@@ -851,16 +878,29 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                       {greetingInfo.salutation}
                     </Text>
                     {(subscriptionTier === 'pro' || subscriptionTier === 'enterprise') && (
-                      <View style={[styles.proBadge, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2' }]}>
+                      <View
+                        style={[
+                          styles.proBadge,
+                          { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2' },
+                        ]}
+                      >
                         <Ionicons name="star" size={10} color="#E34234" />
-                        <Text style={[styles.proBadgeText, { color: '#E34234' }]}>{subscriptionTier.toUpperCase()}</Text>
+                        <Text style={[styles.proBadgeText, { color: '#E34234' }]}>
+                          {subscriptionTier.toUpperCase()}
+                        </Text>
                       </View>
                     )}
                   </View>
-                  <Text style={[styles.tabletGreetingTitle, { color: colors.text }]} numberOfLines={1}>
+                  <Text
+                    style={[styles.tabletGreetingTitle, { color: colors.text }]}
+                    numberOfLines={1}
+                  >
                     {learnerDisplayName} 👋
                   </Text>
-                  <Text style={[styles.tabletGreetingSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
+                  <Text
+                    style={[styles.tabletGreetingSubtitle, { color: colors.textMuted }]}
+                    numberOfLines={1}
+                  >
                     {greetingSubtitleText}
                   </Text>
                 </TouchableOpacity>
@@ -882,18 +922,22 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   triggerHaptic('light');
                   Alert.alert(
                     isBangla ? 'দৈনিক লার্নিং মোমেন্টাম 🔥' : 'Learning Momentum 🔥',
-                    `${isBangla ? '• টানা স্ট্রিক' : '• Streak'}: ${streakDays} ${isBangla ? 'দিন' : 'Days'}\n${isBangla ? '• আজকের সময়' : '• Today\'s Time'}: ${dailyMinutesSpent}m / ${dailyTargetMinutes}m ${isBangla ? 'লক্ষ্য' : 'Goal'}\n\n${isBangla ? 'প্রতিদিন কোর্স ও ভিডিও দেখে নতুন ব্যাজ অর্জন করুন!' : 'Complete lessons and videos to keep up your daily streak!'}`,
+                    `${isBangla ? '• টানা স্ট্রিক' : '• Streak'}: ${streakDays} ${isBangla ? 'দিন' : 'Days'}\n${isBangla ? '• আজকের সময়' : "• Today's Time"}: ${dailyMinutesSpent}m / ${dailyTargetMinutes}m ${isBangla ? 'লক্ষ্য' : 'Goal'}\n\n${isBangla ? 'প্রতিদিন কোর্স ও ভিডিও দেখে নতুন ব্যাজ অর্জন করুন!' : 'Complete lessons and videos to keep up your daily streak!'}`,
                     [
                       {
                         text: isBangla ? 'মাই হাব দেখুন' : 'View My Hub',
                         onPress: () => onNavigateTab('MyLearning'),
                       },
                       { text: isBangla ? 'ঠিক আছে' : 'Got it', style: 'cancel' },
-                    ],
+                    ]
                   );
                 }}
                 accessibilityRole="button"
-                accessibilityLabel={isBangla ? `দৈনিক স্ট্রিক ${streakDays} দিন, আজকের স্টাডি ${dailyMinutesSpent} মিনিট` : `Daily streak ${streakDays} days, today study ${dailyMinutesSpent} minutes`}
+                accessibilityLabel={
+                  isBangla
+                    ? `দৈনিক স্ট্রিক ${streakDays} দিন, আজকের স্টাডি ${dailyMinutesSpent} মিনিট`
+                    : `Daily streak ${streakDays} days, today study ${dailyMinutesSpent} minutes`
+                }
                 haptic="selection"
                 activeScale={0.95}
               >
@@ -904,7 +948,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   <Text style={[styles.tabletWidgetTitle, { color: '#F97316' }]} numberOfLines={1}>
                     {streakDays} {isBangla ? 'দিন স্ট্রিক' : 'Days Streak'}
                   </Text>
-                  <Text style={[styles.tabletWidgetSub, { color: colors.textMuted }]} numberOfLines={1}>
+                  <Text
+                    style={[styles.tabletWidgetSub, { color: colors.textMuted }]}
+                    numberOfLines={1}
+                  >
                     {dailyMinutesSpent}m {isBangla ? 'আজকের স্টাডি' : 'studied today'}
                   </Text>
                 </View>
@@ -929,13 +976,20 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     isBangla ? 'দৈনিক লক্ষ্য ও মোমেন্টাম 🎯' : 'Daily Study Goal 🎯',
                     `${isBangla ? '• আজকের স্টাডি' : '• Today'}: ${dailyMinutesSpent}m / ${dailyTargetMinutes}m (${currentGoalPercent}% ${isBangla ? 'সম্পন্ন' : 'completed'})\n${isBangla ? '• স্টাডি স্ট্রিক' : '• Study Streak'}: ${streakDays} ${isBangla ? 'দিন' : 'days'} 🔥\n\n${
                       isGoalAchieved
-                        ? (isBangla ? 'অভিনন্দন! আজকের লক্ষ্য অর্জিত হয়েছে 🎉' : 'Awesome! You hit today\'s learning goal 🎉')
-                        : (isBangla ? `আর মাত্র ${Math.max(0, dailyTargetMinutes - dailyMinutesSpent)} মিনিট স্টাডি করলেই আজকের লক্ষ্য সম্পন্ন!` : `Only ${Math.max(0, dailyTargetMinutes - dailyMinutesSpent)} minutes left to complete today's goal!`)
+                        ? isBangla
+                          ? 'অভিনন্দন! আজকের লক্ষ্য অর্জিত হয়েছে 🎉'
+                          : "Awesome! You hit today's learning goal 🎉"
+                        : isBangla
+                          ? `আর মাত্র ${Math.max(0, dailyTargetMinutes - dailyMinutesSpent)} মিনিট স্টাডি করলেই আজকের লক্ষ্য সম্পন্ন!`
+                          : `Only ${Math.max(0, dailyTargetMinutes - dailyMinutesSpent)} minutes left to complete today's goal!`
                     }`,
                     [
-                      { text: isBangla ? 'কোর্স চালিয়ে যান' : 'Continue Course', onPress: () => onNavigateTab('MyLearning') },
+                      {
+                        text: isBangla ? 'কোর্স চালিয়ে যান' : 'Continue Course',
+                        onPress: () => onNavigateTab('MyLearning'),
+                      },
                       { text: isBangla ? 'ঠিক আছে' : 'OK', style: 'cancel' },
-                    ],
+                    ]
                   );
                 }}
                 accessibilityRole="button"
@@ -946,14 +1000,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   size={36}
                   strokeWidth={3.5}
                   trackColor={isDark ? colors.border : '#E2E8F0'}
-                  progressColor={isGoalAchieved ? '#10B981' : (colors.brandGold || '#FFB606')}
+                  progressColor={isGoalAchieved ? '#10B981' : colors.brandGold || '#FFB606'}
                   showText={false}
                   centerContent={
                     <Text
                       style={[
                         styles.radialCenterIcon,
                         {
-                          color: isGoalAchieved ? '#10B981' : (colors.brandGold || '#FFB606'),
+                          color: isGoalAchieved ? '#10B981' : colors.brandGold || '#FFB606',
                           fontSize: 10,
                         },
                       ]}
@@ -963,10 +1017,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                   }
                 />
                 <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={[styles.tabletWidgetTitle, { color: colors.text }]} numberOfLines={1}>
+                  <Text
+                    style={[styles.tabletWidgetTitle, { color: colors.text }]}
+                    numberOfLines={1}
+                  >
                     {dailyMinutesSpent}/{dailyTargetMinutes}m ({currentGoalPercent}%)
                   </Text>
-                  <Text style={[styles.tabletWidgetSub, { color: colors.textMuted }]} numberOfLines={1}>
+                  <Text
+                    style={[styles.tabletWidgetSub, { color: colors.textMuted }]}
+                    numberOfLines={1}
+                  >
                     {isBangla ? 'দৈনিক লক্ষ্য' : 'Daily Goal'}
                   </Text>
                 </View>
@@ -1008,7 +1068,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                       ]}
                     >
                       <Text style={styles.avatarInitialsText}>
-                        {(user?.name || user?.username || (isAuthenticated ? 'Student' : 'Learner')).charAt(0).toUpperCase()}
+                        {(user?.name || user?.username || (isAuthenticated ? 'Student' : 'Learner'))
+                          .charAt(0)
+                          .toUpperCase()}
                       </Text>
                     </View>
                   )}
@@ -1044,9 +1106,16 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                       {greetingInfo.salutation}
                     </Text>
                     {(subscriptionTier === 'pro' || subscriptionTier === 'enterprise') && (
-                      <View style={[styles.proBadge, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2' }]}>
+                      <View
+                        style={[
+                          styles.proBadge,
+                          { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2' },
+                        ]}
+                      >
                         <Ionicons name="star" size={10} color="#E34234" />
-                        <Text style={[styles.proBadgeText, { color: '#E34234' }]}>{subscriptionTier.toUpperCase()}</Text>
+                        <Text style={[styles.proBadgeText, { color: '#E34234' }]}>
+                          {subscriptionTier.toUpperCase()}
+                        </Text>
                       </View>
                     )}
                   </View>
@@ -1069,29 +1138,35 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                     Alert.alert(
                       isBangla ? 'দৈনিক লার্নিং মোমেন্টাম ও লক্ষ্য 🎯' : 'Learning Momentum & Goal 🎯',
                       `${isBangla ? '• টানা স্ট্রিক' : '• Streak'}: ${streakDays} ${isBangla ? 'দিন' : 'Days'} 🔥\n` +
-                      `${isBangla ? '• আজকের স্টাডি' : '• Today'}: ${dailyMinutesSpent}m / ${dailyTargetMinutes}m (${currentGoalPercent}% ${isBangla ? 'সম্পন্ন' : 'completed'})\n\n` +
-                      (isGoalAchieved
-                        ? (isBangla ? 'অভিনন্দন! আজকের লক্ষ্য অর্জিত হয়েছে 🎉' : 'Awesome! You hit today\'s learning goal 🎉')
-                        : (isBangla ? `আর মাত্র ${Math.max(0, dailyTargetMinutes - dailyMinutesSpent)} মিনিট স্টাডি করলেই আজকের লক্ষ্য সম্পন্ন!` : `Only ${Math.max(0, dailyTargetMinutes - dailyMinutesSpent)} minutes left to complete today's goal!`)),
+                        `${isBangla ? '• আজকের স্টাডি' : '• Today'}: ${dailyMinutesSpent}m / ${dailyTargetMinutes}m (${currentGoalPercent}% ${isBangla ? 'সম্পন্ন' : 'completed'})\n\n` +
+                        (isGoalAchieved
+                          ? isBangla
+                            ? 'অভিনন্দন! আজকের লক্ষ্য অর্জিত হয়েছে 🎉'
+                            : "Awesome! You hit today's learning goal 🎉"
+                          : isBangla
+                            ? `আর মাত্র ${Math.max(0, dailyTargetMinutes - dailyMinutesSpent)} মিনিট স্টাডি করলেই আজকের লক্ষ্য সম্পন্ন!`
+                            : `Only ${Math.max(0, dailyTargetMinutes - dailyMinutesSpent)} minutes left to complete today's goal!`),
                       [
                         {
                           text: isBangla ? 'মাই হাব দেখুন' : 'View My Hub',
                           onPress: () => onNavigateTab('MyLearning'),
                         },
                         { text: isBangla ? 'ঠিক আছে' : 'Got it', style: 'cancel' },
-                      ],
+                      ]
                     );
                   }}
                   accessibilityRole="button"
-                  accessibilityLabel={isBangla ? `দৈনিক স্ট্রিক ${streakDays} দিন, আজকের স্টাডি ${dailyMinutesSpent} মিনিট, লক্ষ্য ${dailyTargetMinutes} মিনিট` : `Daily streak ${streakDays} days, today study ${dailyMinutesSpent} of ${dailyTargetMinutes} minutes`}
+                  accessibilityLabel={
+                    isBangla
+                      ? `দৈনিক স্ট্রিক ${streakDays} দিন, আজকের স্টাডি ${dailyMinutesSpent} মিনিট, লক্ষ্য ${dailyTargetMinutes} মিনিট`
+                      : `Daily streak ${streakDays} days, today study ${dailyMinutesSpent} of ${dailyTargetMinutes} minutes`
+                  }
                   haptic="selection"
                   activeScale={0.94}
                 >
                   <View style={styles.momentumItem}>
                     <Text style={styles.flameEmoji}>🔥</Text>
-                    <Text style={[styles.momentumValue, { color: '#F97316' }]}>
-                      {streakDays}d
-                    </Text>
+                    <Text style={[styles.momentumValue, { color: '#F97316' }]}>{streakDays}d</Text>
                   </View>
 
                   <View style={[styles.momentumDivider, { backgroundColor: colors.border }]} />
@@ -1102,14 +1177,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
                       size={20}
                       strokeWidth={2.4}
                       trackColor={isDark ? colors.border : '#E2E8F0'}
-                      progressColor={isGoalAchieved ? '#10B981' : (colors.brandGold || '#FFB606')}
+                      progressColor={isGoalAchieved ? '#10B981' : colors.brandGold || '#FFB606'}
                       showText={false}
                       centerContent={
                         <Text
                           style={[
                             styles.radialCenterIcon,
                             {
-                              color: isGoalAchieved ? '#10B981' : (colors.brandGold || '#FFB606'),
+                              color: isGoalAchieved ? '#10B981' : colors.brandGold || '#FFB606',
                               fontSize: 7.5,
                             },
                           ]}
@@ -1127,7 +1202,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
               {/* Subtitle Row - Clean, Distraction-Free Breathing Room */}
               <View style={styles.greetingBottomRow}>
-                <Text style={[styles.greetingSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
+                <Text
+                  style={[styles.greetingSubtitle, { color: colors.textMuted }]}
+                  numberOfLines={1}
+                >
                   {greetingSubtitleText}
                 </Text>
               </View>
@@ -1173,10 +1251,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         <PartnerLogoMarquee logos={partnerLogos} />
 
         {/* ── Live Site 2x2 Feature Grid ("শিখুন এবং গড়ুন নিজের ক্যারিয়ার") ── */}
-        <HomeFeatureGrid
-          features={homeFeatures}
-          onSelectFeature={handleSelectFeature}
-        />
+        <HomeFeatureGrid features={homeFeatures} onSelectFeature={handleSelectFeature} />
 
         {/* ── Special Promotional Bundles Carousel ("স্পেশাল বান্ডেল কোর্স") ── */}
         <SpecialBundlesCarousel
@@ -1250,7 +1325,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={[typography.h4, { color: colors.text }]}>
-                  {isBangla ? 'থ্রাইভিং স্কিলস পরিচিতি ও ইকোসিস্টেম' : 'About Thriving Skills & Ecosystem'}
+                  {isBangla
+                    ? 'থ্রাইভিং স্কিলস পরিচিতি ও ইকোসিস্টেম'
+                    : 'About Thriving Skills & Ecosystem'}
                 </Text>
                 <Text style={[typography.bodySmall, { color: colors.textMuted }]} numberOfLines={2}>
                   {isBangla

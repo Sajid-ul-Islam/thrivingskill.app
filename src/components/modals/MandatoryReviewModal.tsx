@@ -60,7 +60,9 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
 
   const handleSubmit = () => {
     if (rating === 0) {
-      setErrorMessage(isBangla ? 'দয়া করে ১ থেকে ৫ এর মধ্যে স্টার রেটিং দিন।' : 'Please select a star rating (1-5).');
+      setErrorMessage(
+        isBangla ? 'দয়া করে ১ থেকে ৫ এর মধ্যে স্টার রেটিং দিন।' : 'Please select a star rating (1-5).'
+      );
       return;
     }
     if (feedback.trim().length < 5) {
@@ -95,13 +97,28 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent statusBarTranslucent={true} onRequestClose={handleDismiss}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent
+      statusBarTranslucent={true}
+      onRequestClose={handleDismiss}
+    >
       <KeyboardAvoidingView
         style={styles.overlay}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-        <View style={[styles.modalCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border, paddingBottom: Math.max(insets.bottom, 16) + 16 }]}>
+        <View
+          style={[
+            styles.modalCard,
+            {
+              backgroundColor: colors.surfaceCard,
+              borderColor: colors.border,
+              paddingBottom: Math.max(insets.bottom, 16) + 16,
+            },
+          ]}
+        >
           <ScrollView
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
@@ -113,7 +130,9 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
               <View style={[styles.badge, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}>
                 <Ionicons name="ribbon" size={16} color="#E34234" />
                 <Text style={[styles.badgeText, { color: '#E34234' }]}>
-                  {isBangla ? 'সার্টিফিকেট আনলক করতে রিভিউ আবশ্যক' : 'REVIEW REQUIRED FOR CERTIFICATE'}
+                  {isBangla
+                    ? 'সার্টিফিকেট আনলক করতে রিভিউ আবশ্যক'
+                    : 'REVIEW REQUIRED FOR CERTIFICATE'}
                 </Text>
               </View>
             </View>
@@ -164,7 +183,7 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
                     style={styles.starTouchArea}
                     accessibilityRole="button"
                     accessibilityState={{ selected: rating >= star }}
-                    accessibilityLabel={`Rate ${star} ${star === 1 ? "star" : "stars"}`}
+                    accessibilityLabel={`Rate ${star} ${star === 1 ? 'star' : 'stars'}`}
                   >
                     <Ionicons
                       name={rating >= star ? 'star' : 'star-outline'}
@@ -230,7 +249,9 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
             >
               <Ionicons name="lock-open" size={18} color="#FFFFFF" />
               <Text style={[styles.submitButtonText, { color: '#FFFFFF' }]}>
-                {isBangla ? 'রিভিউ জমা দিন ও সার্টিফিকেট আনলক করুন' : 'Submit Review & Unlock Certificate'}
+                {isBangla
+                  ? 'রিভিউ জমা দিন ও সার্টিফিকেট আনলক করুন'
+                  : 'Submit Review & Unlock Certificate'}
               </Text>
             </TouchableOpacity>
 
@@ -243,7 +264,9 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
                 accessibilityLabel={isBangla ? 'পরে রিভিউ দেব' : 'Review later'}
               >
                 <Text style={[styles.laterButtonText, { color: colors.textMuted }]}>
-                  {isBangla ? 'পরে রিভিউ দেব (সার্টিফিকেট লক থাকবে)' : 'I will review later (Keep certificate locked)'}
+                  {isBangla
+                    ? 'পরে রিভিউ দেব (সার্টিফিকেট লক থাকবে)'
+                    : 'I will review later (Keep certificate locked)'}
                 </Text>
               </TouchableOpacity>
             )}

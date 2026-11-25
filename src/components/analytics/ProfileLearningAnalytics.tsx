@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
-import Svg, { Circle, G, Text as SvgText, Defs, LinearGradient, Stop, Path, Line } from 'react-native-svg';
+import Svg, {
+  Circle,
+  G,
+  Text as SvgText,
+  Defs,
+  LinearGradient,
+  Stop,
+  Path,
+  Line,
+} from 'react-native-svg';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { ThemeColors } from '../../theme/colors';
 import { LearnPressCourseFilter } from '../../types';
@@ -63,7 +72,9 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
 
   const { width: windowWidth } = useWindowDimensions();
   const todayIdx = weeklyActivity.findIndex((d) => d.isToday);
-  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(todayIdx >= 0 ? todayIdx : weeklyActivity.length - 1);
+  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(
+    todayIdx >= 0 ? todayIdx : weeklyActivity.length - 1
+  );
 
   // Maximum hours for weekly scaling
   const maxHours = Math.max(...weeklyActivity.map((d) => d.hours), 3.5);
@@ -107,18 +118,29 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
 
   const linePath = buildSplinePath(points);
   const areaBottomY = padTop + plotH;
-  const areaPath = points.length > 0
-    ? `${linePath} L ${points[points.length - 1].x.toFixed(1)} ${areaBottomY.toFixed(1)} L ${points[0].x.toFixed(1)} ${areaBottomY.toFixed(1)} Z`
-    : '';
+  const areaPath =
+    points.length > 0
+      ? `${linePath} L ${points[points.length - 1].x.toFixed(1)} ${areaBottomY.toFixed(1)} L ${points[0].x.toFixed(1)} ${areaBottomY.toFixed(1)} Z`
+      : '';
 
   const activeDay = weeklyActivity[selectedDayIndex] || weeklyActivity[0];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+      ]}
+    >
       {/* Header with Title and Streak Pill */}
       <View style={styles.headerRow}>
         <View style={styles.titleWithIcon}>
-          <View style={[styles.titleIconBg, { backgroundColor: colors.brandGoldSubtle || 'rgba(255, 182, 6, 0.15)' }]}>
+          <View
+            style={[
+              styles.titleIconBg,
+              { backgroundColor: colors.brandGoldSubtle || 'rgba(255, 182, 6, 0.15)' },
+            ]}
+          >
             <Ionicons name="pie-chart" size={17} color={colors.brandGold || '#FFB606'} />
           </View>
           <View style={styles.titleTextWrap}>
@@ -126,7 +148,9 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
               {isBangla ? 'লার্নিং অ্যানালিটিক্স ও দক্ষতা চার্ট' : 'Learning Analytics & Progress'}
             </Text>
             <Text style={[styles.subtitle, { color: colors.textMuted }]} numberOfLines={2}>
-              {isBangla ? 'আপনার কোর্স সমাপ্তি ও অধ্যয়নের গতিবিধি' : 'Track course completions & study momentum'}
+              {isBangla
+                ? 'আপনার কোর্স সমাপ্তি ও অধ্যয়নের গতিবিধি'
+                : 'Track course completions & study momentum'}
             </Text>
           </View>
         </View>
@@ -135,8 +159,12 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
           <Ionicons name="flame" size={14} color="#E11D48" />
           <Text style={styles.streakText}>
             {streakDays > 0
-              ? (isBangla ? `${streakDays} দিন স্ট্রিক` : `${streakDays}-Day Streak`)
-              : (isBangla ? 'স্ট্রিক শুরু' : 'New Streak')}
+              ? isBangla
+                ? `${streakDays} দিন স্ট্রিক`
+                : `${streakDays}-Day Streak`
+              : isBangla
+                ? 'স্ট্রিক শুরু'
+                : 'New Streak'}
           </Text>
         </View>
       </View>
@@ -204,11 +232,17 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
           <TouchableOpacity
             style={[
               styles.legendRow,
-              activeCourseTab === 'in-progress' && { backgroundColor: colors.brandNavySubtle || 'rgba(16,47,83,0.06)' },
+              activeCourseTab === 'in-progress' && {
+                backgroundColor: colors.brandNavySubtle || 'rgba(16,47,83,0.06)',
+              },
             ]}
             onPress={() => onSelectTab && onSelectTab('in-progress')}
             accessibilityRole="button"
-            accessibilityLabel={isBangla ? `চলমান কোর্স: ${inProgressCount}` : `In Progress courses: ${inProgressCount}`}
+            accessibilityLabel={
+              isBangla
+                ? `চলমান কোর্স: ${inProgressCount}`
+                : `In Progress courses: ${inProgressCount}`
+            }
           >
             <View style={[styles.legendDot, { backgroundColor: colors.brandNavy }]} />
             <Text style={[styles.legendLabel, { color: colors.textMuted }]}>
@@ -226,7 +260,9 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
             ]}
             onPress={() => onSelectTab && onSelectTab('passed')}
             accessibilityRole="button"
-            accessibilityLabel={isBangla ? `উত্তীর্ণ কোর্স: ${completedCount}` : `Passed courses: ${completedCount}`}
+            accessibilityLabel={
+              isBangla ? `উত্তীর্ণ কোর্স: ${completedCount}` : `Passed courses: ${completedCount}`
+            }
           >
             <View style={[styles.legendDot, { backgroundColor: colors.brandGold }]} />
             <Text style={[styles.legendLabel, { color: colors.textMuted }]}>
@@ -270,10 +306,21 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
           </View>
 
           {/* Interactive Floating Tooltip Callout */}
-          <View style={[styles.activeTooltipPill, { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderSubtle }]}>
-            <View style={[styles.tooltipDot, { backgroundColor: activeDay.hours >= 2.0 ? colors.brandGold : colors.primary }]} />
+          <View
+            style={[
+              styles.activeTooltipPill,
+              { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderSubtle },
+            ]}
+          >
+            <View
+              style={[
+                styles.tooltipDot,
+                { backgroundColor: activeDay.hours >= 2.0 ? colors.brandGold : colors.primary },
+              ]}
+            />
             <Text style={[styles.tooltipText, { color: colors.text }]}>
-              {isBangla ? activeDay.dayBn : activeDay.day}: <Text style={{ fontWeight: '800', color: colors.primary }}>{activeDay.hours}h</Text>
+              {isBangla ? activeDay.dayBn : activeDay.day}:{' '}
+              <Text style={{ fontWeight: '800', color: colors.primary }}>{activeDay.hours}h</Text>
             </Text>
           </View>
         </View>
@@ -328,19 +375,15 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
               return (
                 <G key={idx}>
                   {isSelected && (
-                    <Circle
-                      cx={pt.x}
-                      cy={pt.y}
-                      r={9}
-                      fill={colors.brandGold}
-                      fillOpacity={0.25}
-                    />
+                    <Circle cx={pt.x} cy={pt.y} r={9} fill={colors.brandGold} fillOpacity={0.25} />
                   )}
                   <Circle
                     cx={pt.x}
                     cy={pt.y}
                     r={isSelected ? 5.5 : 3.5}
-                    fill={isToday ? colors.brandGold : isSelected ? colors.primary : colors.surfaceCard}
+                    fill={
+                      isToday ? colors.brandGold : isSelected ? colors.primary : colors.surfaceCard
+                    }
                     stroke={isSelected ? colors.brandGold : colors.primary}
                     strokeWidth={isSelected ? 2.5 : 1.5}
                   />
@@ -376,7 +419,7 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
                     style={[
                       styles.dayPillText,
                       {
-                        color: isSelected ? (colors.brandGold || '#FFB606') : colors.textMuted,
+                        color: isSelected ? colors.brandGold || '#FFB606' : colors.textMuted,
                         fontWeight: isSelected || item.isToday ? '800' : '600',
                       },
                     ]}
@@ -384,7 +427,9 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
                     {isBangla ? item.dayBn : item.day}
                   </Text>
                   {item.isToday && (
-                    <View style={[styles.todayIndicatorDot, { backgroundColor: colors.brandGold }]} />
+                    <View
+                      style={[styles.todayIndicatorDot, { backgroundColor: colors.brandGold }]}
+                    />
                   )}
                 </TouchableOpacity>
               );
@@ -399,11 +444,18 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
           style={[
             styles.kpiCard,
             { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderSubtle },
-            activeCourseTab === 'in-progress' && { borderColor: colors.brandNavy, borderWidth: 1.5 },
+            activeCourseTab === 'in-progress' && {
+              borderColor: colors.brandNavy,
+              borderWidth: 1.5,
+            },
           ]}
           onPress={() => onSelectTab && onSelectTab('in-progress')}
           accessibilityRole="button"
-          accessibilityLabel={isBangla ? `চলমান কোর্স ফিল্টার: ${inProgressCount}` : `Filter in-progress courses: ${inProgressCount}`}
+          accessibilityLabel={
+            isBangla
+              ? `চলমান কোর্স ফিল্টার: ${inProgressCount}`
+              : `Filter in-progress courses: ${inProgressCount}`
+          }
         >
           <Ionicons name="book-outline" size={17} color={colors.brandNavy} />
           <Text style={[styles.kpiNumber, { color: colors.brandNavy }]}>{inProgressCount}</Text>
@@ -423,7 +475,11 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
           ]}
           onPress={() => onSelectTab && onSelectTab('passed')}
           accessibilityRole="button"
-          accessibilityLabel={isBangla ? `উত্তীর্ণ কোর্স ফিল্টার: ${completedCount}` : `Filter completed courses: ${completedCount}`}
+          accessibilityLabel={
+            isBangla
+              ? `উত্তীর্ণ কোর্স ফিল্টার: ${completedCount}`
+              : `Filter completed courses: ${completedCount}`
+          }
         >
           <Ionicons name="school" size={17} color={colors.brandGold} />
           <Text style={[styles.kpiNumber, { color: colors.brandGold }]}>{completedCount}</Text>
@@ -432,7 +488,12 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
           </Text>
         </TouchableOpacity>
 
-        <View style={[styles.kpiCard, { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderSubtle }]}>
+        <View
+          style={[
+            styles.kpiCard,
+            { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderSubtle },
+          ]}
+        >
           <Ionicons name="time-outline" size={17} color="#10B981" />
           <Text style={[styles.kpiNumber, { color: '#10B981' }]}>{totalHours}h</Text>
           <Text style={[styles.kpiLabel, { color: colors.textMuted }]}>
@@ -440,7 +501,12 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
           </Text>
         </View>
 
-        <View style={[styles.kpiCard, { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderSubtle }]}>
+        <View
+          style={[
+            styles.kpiCard,
+            { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderSubtle },
+          ]}
+        >
           <Ionicons name="ribbon-outline" size={17} color={colors.accent} />
           <Text style={[styles.kpiNumber, { color: colors.accent }]}>{certificatesCount}</Text>
           <Text style={[styles.kpiLabel, { color: colors.textMuted }]}>

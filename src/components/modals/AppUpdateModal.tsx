@@ -81,7 +81,10 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={[styles.overlay, { paddingBottom: Math.max(insets.bottom, 24) }]}>
         <View
-          style={[styles.sheet, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
+          style={[
+            styles.sheet,
+            { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+          ]}
           accessibilityViewIsModal={true}
         >
           {/* Handle bar */}
@@ -100,7 +103,10 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
             </View>
             <TouchableOpacity
               style={[styles.closeBtn, { backgroundColor: colors.surfaceSubtle }]}
-              onPress={() => { triggerHaptic('light'); onClose(); }}
+              onPress={() => {
+                triggerHaptic('light');
+                onClose();
+              }}
               accessibilityRole="button"
               accessibilityLabel="Close"
             >
@@ -109,48 +115,92 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
           </View>
 
           {/* Channel Info Capsule */}
-          <View style={[styles.channelBadgeRow, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.channelBadgeRow,
+              { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+            ]}
+          >
             <View style={styles.channelBadgeItem}>
               <Ionicons name="git-branch-outline" size={13} color={colors.primary} />
-              <Text style={[styles.channelBadgeText, { color: colors.text }]}>EAS OTA Channel: <Text style={{ fontWeight: '700' }}>{updateInfo.channel}</Text></Text>
+              <Text style={[styles.channelBadgeText, { color: colors.text }]}>
+                EAS OTA Channel: <Text style={{ fontWeight: '700' }}>{updateInfo.channel}</Text>
+              </Text>
             </View>
             <View style={styles.channelBadgeItem}>
               <Ionicons name="layers-outline" size={13} color={colors.secondary} />
-              <Text style={[styles.channelBadgeText, { color: colors.text }]}>Runtime: <Text style={{ fontWeight: '700' }}>{updateInfo.runtimeVersion}</Text></Text>
+              <Text style={[styles.channelBadgeText, { color: colors.text }]}>
+                Runtime: <Text style={{ fontWeight: '700' }}>{updateInfo.runtimeVersion}</Text>
+              </Text>
             </View>
           </View>
 
           {/* State card */}
           {updateReady ? (
-            <View style={[styles.stateCard, { backgroundColor: colors.successLight, borderColor: colors.success }]}>
+            <View
+              style={[
+                styles.stateCard,
+                { backgroundColor: colors.successLight, borderColor: colors.success },
+              ]}
+            >
               <Ionicons name="checkmark-circle" size={40} color={colors.success} />
               <Text style={[styles.stateTitle, { color: colors.success }]}>OTA Update Ready!</Text>
               <Text style={[styles.stateBody, { color: colors.text }]}>
-                A new version of Thriving Skills is downloaded and ready over-the-air. Tap below to apply it now.
+                A new version of Thriving Skills is downloaded and ready over-the-air. Tap below to
+                apply it now.
               </Text>
             </View>
           ) : apkUpdateReady ? (
-            <View style={[styles.stateCard, { backgroundColor: isDark ? colors.surfaceSubtle : '#EFF6FF', borderColor: colors.primary }]}>
+            <View
+              style={[
+                styles.stateCard,
+                {
+                  backgroundColor: isDark ? colors.surfaceSubtle : '#EFF6FF',
+                  borderColor: colors.primary,
+                },
+              ]}
+            >
               <Ionicons name="arrow-down-circle-outline" size={40} color={colors.primary} />
-              <Text style={[styles.stateTitle, { color: colors.primary }]}>New Version Available (v{latestVersion})</Text>
+              <Text style={[styles.stateTitle, { color: colors.primary }]}>
+                New Version Available (v{latestVersion})
+              </Text>
               <Text style={[styles.stateBody, { color: colors.text }]}>
-                {changelog || 'A new build is published on the self-hosted distribution server. Tap below to download the latest APK.'}
+                {changelog ||
+                  'A new build is published on the self-hosted distribution server. Tap below to download the latest APK.'}
               </Text>
             </View>
           ) : checked ? (
-            <View style={[styles.stateCard, { backgroundColor: isDark ? colors.surfaceSubtle : '#F0FDF4', borderColor: colors.success }]}>
+            <View
+              style={[
+                styles.stateCard,
+                {
+                  backgroundColor: isDark ? colors.surfaceSubtle : '#F0FDF4',
+                  borderColor: colors.success,
+                },
+              ]}
+            >
               <Ionicons name="shield-checkmark-outline" size={40} color={colors.success} />
               <Text style={[styles.stateTitle, { color: colors.text }]}>You're up to date</Text>
               <Text style={[styles.stateBody, { color: colors.textMuted }]}>
-                Thriving Skills is running the latest version (v{updateInfo.currentVersion}). OTA updates are active on channel "{updateInfo.channel}".
+                Thriving Skills is running the latest version (v{updateInfo.currentVersion}). OTA
+                updates are active on channel "{updateInfo.channel}".
               </Text>
             </View>
           ) : (
-            <View style={[styles.stateCard, { backgroundColor: isDark ? colors.surfaceSubtle : '#F8FAFC', borderColor: colors.border }]}>
+            <View
+              style={[
+                styles.stateCard,
+                {
+                  backgroundColor: isDark ? colors.surfaceSubtle : '#F8FAFC',
+                  borderColor: colors.border,
+                },
+              ]}
+            >
               <Ionicons name="sync-circle-outline" size={40} color={colors.primary} />
               <Text style={[styles.stateTitle, { color: colors.text }]}>Keep Your App Fresh</Text>
               <Text style={[styles.stateBody, { color: colors.textMuted }]}>
-                Get new lessons, features, and fixes instantly via OTA updates or direct self-hosted server downloads.
+                Get new lessons, features, and fixes instantly via OTA updates or direct self-hosted
+                server downloads.
               </Text>
             </View>
           )}
@@ -164,7 +214,9 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
               accessibilityLabel="Apply update and restart"
             >
               <Ionicons name="refresh" size={18} color={colors.onSuccess} />
-              <Text style={[styles.btnText, { color: colors.onSuccess }]}>Apply Update & Restart</Text>
+              <Text style={[styles.btnText, { color: colors.onSuccess }]}>
+                Apply Update & Restart
+              </Text>
             </TouchableOpacity>
           ) : apkUpdateReady ? (
             <TouchableOpacity
@@ -174,11 +226,16 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
               accessibilityLabel="Download APK update"
             >
               <Ionicons name="download-outline" size={18} color={colors.onPrimary} />
-              <Text style={[styles.btnText, { color: colors.onPrimary }]}>Download Latest APK (v{latestVersion})</Text>
+              <Text style={[styles.btnText, { color: colors.onPrimary }]}>
+                Download Latest APK (v{latestVersion})
+              </Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
-              style={[styles.btn, { backgroundColor: colors.primary, opacity: isChecking ? 0.75 : 1 }]}
+              style={[
+                styles.btn,
+                { backgroundColor: colors.primary, opacity: isChecking ? 0.75 : 1 },
+              ]}
               onPress={handleCheck}
               disabled={isChecking}
               accessibilityRole="button"
@@ -192,7 +249,9 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
               ) : (
                 <>
                   <Ionicons name="sync-outline" size={18} color={colors.onPrimary} />
-                  <Text style={[styles.btnText, { color: colors.onPrimary }]}>Check for Updates</Text>
+                  <Text style={[styles.btnText, { color: colors.onPrimary }]}>
+                    Check for Updates
+                  </Text>
                 </>
               )}
             </TouchableOpacity>

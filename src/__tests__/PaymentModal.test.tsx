@@ -234,10 +234,14 @@ describe('PaymentModal (Issue 14 checkout hardening)', () => {
     expect(evilDecision).toBe(false);
     expect(openUrlSpy).not.toHaveBeenCalled();
 
-    const jsDecision = capturedWebViewProps.onShouldStartLoadWithRequest({ url: 'javascript:alert(1)' });
+    const jsDecision = capturedWebViewProps.onShouldStartLoadWithRequest({
+      url: 'javascript:alert(1)',
+    });
     expect(jsDecision).toBe(false);
 
-    const bkashDecision = capturedWebViewProps.onShouldStartLoadWithRequest({ url: 'bkash://pay?amount=1850' });
+    const bkashDecision = capturedWebViewProps.onShouldStartLoadWithRequest({
+      url: 'bkash://pay?amount=1850',
+    });
     expect(bkashDecision).toBe(false);
     await waitFor(() => {
       expect(canOpenSpy).toHaveBeenCalledWith('bkash://pay?amount=1850');
@@ -257,7 +261,9 @@ describe('PaymentModal (Issue 14 checkout hardening)', () => {
         },
       });
     });
-    expect(screen.queryByLabelText('Phone number')?.props.value ?? '01711223344').not.toBe('01999999999');
+    expect(screen.queryByLabelText('Phone number')?.props.value ?? '01711223344').not.toBe(
+      '01999999999'
+    );
 
     // Duplicate order-received nav-change + alert click calls onSuccess EXACTLY ONCE
     await act(async () => {

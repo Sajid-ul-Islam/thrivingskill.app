@@ -41,7 +41,7 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
   const insets = useSafeAreaInsets();
   const topInset = Math.max(
     insets.top,
-    Platform.OS === 'android' ? (RNStatusBar.currentHeight || 24) : 0
+    Platform.OS === 'android' ? RNStatusBar.currentHeight || 24 : 0
   );
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -56,10 +56,26 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
 
   const categories: { id: VideoCategory; label: string; icon: string; count?: number }[] = [
     { id: 'all', label: `${isBangla ? 'সব' : 'All'} (${videos.length})`, icon: 'apps-outline' },
-    { id: 'saved', label: `${isBangla ? 'সংরক্ষিত' : 'Saved'} (${savedVideos.length})`, icon: 'bookmark-outline' },
-    { id: 'ai-tech', label: isBangla ? 'এআই ও অ্যানালিটিক্স' : 'AI & Analytics', icon: 'hardware-chip-outline' },
-    { id: 'business', label: isBangla ? 'বিজনেস ও সাপ্লাই' : 'Business & Supply', icon: 'briefcase-outline' },
-    { id: 'finance', label: isBangla ? 'ফাইন্যান্স ও এক্সেল' : 'Finance & Excel', icon: 'stats-chart-outline' },
+    {
+      id: 'saved',
+      label: `${isBangla ? 'সংরক্ষিত' : 'Saved'} (${savedVideos.length})`,
+      icon: 'bookmark-outline',
+    },
+    {
+      id: 'ai-tech',
+      label: isBangla ? 'এআই ও অ্যানালিটিক্স' : 'AI & Analytics',
+      icon: 'hardware-chip-outline',
+    },
+    {
+      id: 'business',
+      label: isBangla ? 'বিজনেস ও সাপ্লাই' : 'Business & Supply',
+      icon: 'briefcase-outline',
+    },
+    {
+      id: 'finance',
+      label: isBangla ? 'ফাইন্যান্স ও এক্সেল' : 'Finance & Excel',
+      icon: 'stats-chart-outline',
+    },
     { id: 'career', label: isBangla ? 'ক্যারিয়ার ও এইচআর' : 'Career & HR', icon: 'people-outline' },
   ];
 
@@ -71,8 +87,7 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
       const titleLower = video.title.toLowerCase();
 
       // Search matching
-      const matchesSearch =
-        !searchQuery || titleLower.includes(searchQuery.trim().toLowerCase());
+      const matchesSearch = !searchQuery || titleLower.includes(searchQuery.trim().toLowerCase());
 
       // Category matching
       let matchesCat = true;
@@ -149,17 +164,31 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
           accessibilityLabel={isBangla ? 'ফিরে যান' : 'Back'}
           hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
         >
-          <Ionicons name={Platform.OS === 'ios' ? 'chevron-back' : 'arrow-back'} size={22} color={colors.text} />
+          <Ionicons
+            name={Platform.OS === 'ios' ? 'chevron-back' : 'arrow-back'}
+            size={22}
+            color={colors.text}
+          />
         </TouchableOpacity>
 
         <View style={styles.headerTitleContainer}>
           <View style={styles.headerLogoRow}>
             <Ionicons name="logo-youtube" size={20} color="#FF0000" />
-            <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1} ellipsizeMode="tail">
+            <Text
+              style={[styles.headerTitle, { color: colors.text }]}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
               {isBangla ? 'ইউটিউব শোকেস' : 'YouTube Showcase'}
             </Text>
           </View>
-          <Text style={[styles.headerSubtitle, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">{YOUTUBE_CHANNEL.handle}</Text>
+          <Text
+            style={[styles.headerSubtitle, { color: colors.textMuted }]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {YOUTUBE_CHANNEL.handle}
+          </Text>
         </View>
 
         <TouchableOpacity
@@ -177,7 +206,12 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
 
       {/* Search Bar & View Mode Toggle */}
       <View style={styles.searchSection}>
-        <View style={[styles.searchBar, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.searchBar,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
+        >
           <Ionicons name="search-outline" size={18} color={colors.textMuted} />
           <TextInput
             style={[styles.searchInput, { color: colors.text }]}
@@ -207,7 +241,10 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
         </View>
 
         <TouchableOpacity
-          style={[styles.viewToggleBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          style={[
+            styles.viewToggleBtn,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
           onPress={() => {
             triggerHaptic('light');
             setViewMode(viewMode === 'card' ? 'horizontal' : 'card');
@@ -255,12 +292,21 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
                 <Ionicons
                   name={cat.icon as any}
                   size={14}
-                  color={isSelected ? colors.onPrimary : cat.id === 'saved' && savedVideos.length > 0 ? colors.primary : colors.textMuted}
+                  color={
+                    isSelected
+                      ? colors.onPrimary
+                      : cat.id === 'saved' && savedVideos.length > 0
+                        ? colors.primary
+                        : colors.textMuted
+                  }
                 />
                 <Text
                   style={[
                     styles.pillText,
-                    { color: isSelected ? colors.onPrimary : colors.text, fontWeight: isSelected ? '700' : '500' },
+                    {
+                      color: isSelected ? colors.onPrimary : colors.text,
+                      fontWeight: isSelected ? '700' : '500',
+                    },
                   ]}
                 >
                   {cat.label}
@@ -307,7 +353,11 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
               onPress={handleOpenChannel}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               accessibilityRole="button"
-              accessibilityLabel={isBangla ? 'থ্রাইভিং স্কিলস ইউটিউব চ্যানেল খুলুন' : 'Open Thriving Skills YouTube channel'}
+              accessibilityLabel={
+                isBangla
+                  ? 'থ্রাইভিং স্কিলস ইউটিউব চ্যানেল খুলুন'
+                  : 'Open Thriving Skills YouTube channel'
+              }
             >
               <Ionicons name="open-outline" size={16} color={colors.danger} />
               <Text style={[styles.ytChannelLinkText, { color: colors.danger }]}>
@@ -318,11 +368,7 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
         }
         renderItem={({ item }) => (
           <View style={effectiveColumns > 1 ? styles.cardWrapperTablet : undefined}>
-            <YouTubeCard
-              video={item}
-              layout={viewMode}
-              onPress={handlePlay}
-            />
+            <YouTubeCard video={item} layout={viewMode} onPress={handlePlay} />
           </View>
         )}
         ListEmptyComponent={
@@ -331,22 +377,30 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
             icon={selectedCategory === 'saved' ? 'bookmark-outline' : 'videocam-off-outline'}
             title={
               selectedCategory === 'saved'
-                ? (isBangla ? 'কোনো সংরক্ষিত ভিডিও নেই' : 'No saved videos yet')
-                : (isBangla ? 'কোনো ভিডিও পাওয়া যায়নি' : 'No videos found')
+                ? isBangla
+                  ? 'কোনো সংরক্ষিত ভিডিও নেই'
+                  : 'No saved videos yet'
+                : isBangla
+                  ? 'কোনো ভিডিও পাওয়া যায়নি'
+                  : 'No videos found'
             }
             message={
               selectedCategory === 'saved'
-                ? (isBangla
-                    ? 'পরে দেখার জন্য আপনার পছন্দের মাস্টারক্লাসগুলো বুকমার্ক করে রাখুন।'
-                    : 'Bookmark masterclasses to save them to your watch later list.')
-                : (isBangla
-                    ? 'ভিন্ন কোনো শব্দ লিখে সার্চ করুন অথবা অন্য ক্যাটাগরি বেছে নিন।'
-                    : 'Try searching with a different term or select another category.')
+                ? isBangla
+                  ? 'পরে দেখার জন্য আপনার পছন্দের মাস্টারক্লাসগুলো বুকমার্ক করে রাখুন।'
+                  : 'Bookmark masterclasses to save them to your watch later list.'
+                : isBangla
+                  ? 'ভিন্ন কোনো শব্দ লিখে সার্চ করুন অথবা অন্য ক্যাটাগরি বেছে নিন।'
+                  : 'Try searching with a different term or select another category.'
             }
             primaryActionLabel={
               selectedCategory !== 'all' || searchQuery
-                ? (isBangla ? 'সকল ভিডিও দেখুন' : 'Show All Videos')
-                : (isBangla ? 'ভিডিও সিঙ্ক করুন' : 'Sync Videos')
+                ? isBangla
+                  ? 'সকল ভিডিও দেখুন'
+                  : 'Show All Videos'
+                : isBangla
+                  ? 'ভিডিও সিঙ্ক করুন'
+                  : 'Sync Videos'
             }
             onPrimaryAction={() => {
               if (selectedCategory !== 'all' || searchQuery) {
@@ -359,7 +413,6 @@ export const YouTubeVideosScreen: React.FC<YouTubeVideosScreenProps> = ({
           />
         }
       />
-
     </View>
   );
 };

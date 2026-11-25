@@ -15,7 +15,8 @@ export const CRM_CHANNELS = {
   workingHoursBn: 'শনিবার - বৃহস্পতিবার: সকাল ১০টা - রাত ৮টা',
 };
 
-export type CrmInquiryType = 'general' | 'course' | 'payment' | 'live' | 'certificate' | 'corporate';
+export type CrmInquiryType =
+  'general' | 'course' | 'payment' | 'live' | 'certificate' | 'corporate';
 
 export const CRM_INQUIRY_PROMPTS: Record<CrmInquiryType, { en: string; bn: string }> = {
   general: {
@@ -47,7 +48,10 @@ export const CRM_INQUIRY_PROMPTS: Record<CrmInquiryType, { en: string; bn: strin
 /**
  * Open official WhatsApp with pre-filled message
  */
-export async function openWhatsAppChat(inquiryType: CrmInquiryType = 'general', isBangla = false): Promise<boolean> {
+export async function openWhatsAppChat(
+  inquiryType: CrmInquiryType = 'general',
+  isBangla = false
+): Promise<boolean> {
   const message = isBangla
     ? CRM_INQUIRY_PROMPTS[inquiryType].bn
     : CRM_INQUIRY_PROMPTS[inquiryType].en;

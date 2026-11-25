@@ -80,7 +80,7 @@ const AuthorAvatar: React.FC<AuthorAvatarProps> = ({
             styles.avatar,
             styles.avatarFallback,
             {
-              backgroundColor: isFounder ? '#102F53' : (isDark ? '#1E293B' : '#E2E8F0'),
+              backgroundColor: isFounder ? '#102F53' : isDark ? '#1E293B' : '#E2E8F0',
               borderColor: isFounder ? '#E34234' : colors.border,
             },
           ]}
@@ -88,7 +88,7 @@ const AuthorAvatar: React.FC<AuthorAvatarProps> = ({
           <Text
             style={[
               styles.avatarInitials,
-              { color: isFounder ? '#FFFFFF' : (isDark ? '#F8FAFC' : '#102F53') },
+              { color: isFounder ? '#FFFFFF' : isDark ? '#F8FAFC' : '#102F53' },
             ]}
           >
             {getInitials(name)}
@@ -145,7 +145,9 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
     let list = instructorsList;
 
     if (activeFilter === 'leadership') {
-      list = list.filter((item) => item.category === 'founder' || item.category === 'leadership' || item.isFounder);
+      list = list.filter(
+        (item) => item.category === 'founder' || item.category === 'leadership' || item.isFounder
+      );
     } else if (activeFilter === 'faculty') {
       list = list.filter((item) => item.category === 'faculty' && !item.isFounder);
     }
@@ -153,10 +155,18 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
     if (searchQuery.trim().length > 0) {
       const q = searchQuery.toLowerCase().trim();
       list = list.filter((item) => {
-        const nameMatch = item.name.toLowerCase().includes(q) || (item.banglaName && item.banglaName.toLowerCase().includes(q));
-        const desigMatch = item.designation.toLowerCase().includes(q) || (item.banglaDesignation && item.banglaDesignation.toLowerCase().includes(q));
-        const orgMatch = item.organization.toLowerCase().includes(q) || (item.banglaOrganization && item.banglaOrganization.toLowerCase().includes(q));
-        const expMatch = item.expertise?.some((e) => e.toLowerCase().includes(q)) || item.banglaExpertise?.some((e) => e.toLowerCase().includes(q));
+        const nameMatch =
+          item.name.toLowerCase().includes(q) ||
+          (item.banglaName && item.banglaName.toLowerCase().includes(q));
+        const desigMatch =
+          item.designation.toLowerCase().includes(q) ||
+          (item.banglaDesignation && item.banglaDesignation.toLowerCase().includes(q));
+        const orgMatch =
+          item.organization.toLowerCase().includes(q) ||
+          (item.banglaOrganization && item.banglaOrganization.toLowerCase().includes(q));
+        const expMatch =
+          item.expertise?.some((e) => e.toLowerCase().includes(q)) ||
+          item.banglaExpertise?.some((e) => e.toLowerCase().includes(q));
         return nameMatch || desigMatch || orgMatch || expMatch;
       });
     }
@@ -182,12 +192,20 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
 
   const counts = {
     all: instructorsList.length,
-    leadership: instructorsList.filter((item) => item.category === 'founder' || item.category === 'leadership' || item.isFounder).length,
-    faculty: instructorsList.filter((item) => item.category === 'faculty' && !item.isFounder).length,
+    leadership: instructorsList.filter(
+      (item) => item.category === 'founder' || item.category === 'leadership' || item.isFounder
+    ).length,
+    faculty: instructorsList.filter((item) => item.category === 'faculty' && !item.isFounder)
+      .length,
   };
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Header */}
         <View
@@ -201,15 +219,24 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
           ]}
         >
           <View style={styles.headerLeft}>
-            <View style={[styles.iconWrap, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2' }]}>
+            <View
+              style={[
+                styles.iconWrap,
+                { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2' },
+              ]}
+            >
               <Ionicons name="people" size={20} color="#E34234" />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
-                {isBangla ? 'আমাদের সম্মানিত শিক্ষক ও পরিচালনা পর্ষদ' : 'Leadership & Certified Faculty'}
+                {isBangla
+                  ? 'আমাদের সম্মানিত শিক্ষক ও পরিচালনা পর্ষদ'
+                  : 'Leadership & Certified Faculty'}
               </Text>
               <Text style={[styles.headerSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
-                {isBangla ? 'থ্রাইভিং স্কিলসের প্রতিষ্ঠাতা, লিডারশিপ ও প্রশিক্ষক' : 'Founders, Industry Leaders & Master Mentors'}
+                {isBangla
+                  ? 'থ্রাইভিং স্কিলসের প্রতিষ্ঠাতা, লিডারশিপ ও প্রশিক্ষক'
+                  : 'Founders, Industry Leaders & Master Mentors'}
               </Text>
             </View>
           </View>
@@ -246,13 +273,25 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
         </View>
 
         {/* Search & Filter Bar */}
-        <View style={[styles.controlsBar, { backgroundColor: colors.surfaceCard, borderBottomColor: colors.border }]}>
+        <View
+          style={[
+            styles.controlsBar,
+            { backgroundColor: colors.surfaceCard, borderBottomColor: colors.border },
+          ]}
+        >
           {/* Search Input */}
-          <View style={[styles.searchBox, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.searchBox,
+              { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+            ]}
+          >
             <Ionicons name="search" size={17} color={colors.textMuted} style={{ marginRight: 8 }} />
             <TextInput
               style={[styles.searchInput, { color: colors.text }]}
-              placeholder={isBangla ? 'নাম, পদবি বা দক্ষতা দিয়ে খুঁজুন...' : 'Search by name, role, or skill...'}
+              placeholder={
+                isBangla ? 'নাম, পদবি বা দক্ষতা দিয়ে খুঁজুন...' : 'Search by name, role, or skill...'
+              }
               placeholderTextColor={colors.textMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -280,14 +319,20 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
               }}
               style={[
                 styles.segmentTab,
-                activeFilter === 'all' && [styles.segmentTabActive, { backgroundColor: colors.surfaceCard }],
+                activeFilter === 'all' && [
+                  styles.segmentTabActive,
+                  { backgroundColor: colors.surfaceCard },
+                ],
               ]}
               accessibilityRole="button"
             >
               <Text
                 style={[
                   styles.segmentTabText,
-                  { color: activeFilter === 'all' ? (isDark ? '#E34234' : '#102F53') : colors.textMuted },
+                  {
+                    color:
+                      activeFilter === 'all' ? (isDark ? '#E34234' : '#102F53') : colors.textMuted,
+                  },
                   activeFilter === 'all' && styles.segmentTabTextActive,
                 ]}
               >
@@ -302,14 +347,24 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
               }}
               style={[
                 styles.segmentTab,
-                activeFilter === 'leadership' && [styles.segmentTabActive, { backgroundColor: colors.surfaceCard }],
+                activeFilter === 'leadership' && [
+                  styles.segmentTabActive,
+                  { backgroundColor: colors.surfaceCard },
+                ],
               ]}
               accessibilityRole="button"
             >
               <Text
                 style={[
                   styles.segmentTabText,
-                  { color: activeFilter === 'leadership' ? (isDark ? '#E34234' : '#102F53') : colors.textMuted },
+                  {
+                    color:
+                      activeFilter === 'leadership'
+                        ? isDark
+                          ? '#E34234'
+                          : '#102F53'
+                        : colors.textMuted,
+                  },
                   activeFilter === 'leadership' && styles.segmentTabTextActive,
                 ]}
               >
@@ -324,14 +379,24 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
               }}
               style={[
                 styles.segmentTab,
-                activeFilter === 'faculty' && [styles.segmentTabActive, { backgroundColor: colors.surfaceCard }],
+                activeFilter === 'faculty' && [
+                  styles.segmentTabActive,
+                  { backgroundColor: colors.surfaceCard },
+                ],
               ]}
               accessibilityRole="button"
             >
               <Text
                 style={[
                   styles.segmentTabText,
-                  { color: activeFilter === 'faculty' ? (isDark ? '#E34234' : '#102F53') : colors.textMuted },
+                  {
+                    color:
+                      activeFilter === 'faculty'
+                        ? isDark
+                          ? '#E34234'
+                          : '#102F53'
+                        : colors.textMuted,
+                  },
                   activeFilter === 'faculty' && styles.segmentTabTextActive,
                 ]}
               >
@@ -342,7 +407,12 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
         </View>
 
         {/* Content */}
-        <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 24) + 20 }]}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: Math.max(insets.bottom, 24) + 20 },
+          ]}
+        >
           {/* Become an Instructor Callout Banner */}
           <View
             style={[
@@ -354,7 +424,9 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
             ]}
           >
             <View style={styles.joinBannerContent}>
-              <View style={[styles.joinIconWrap, { backgroundColor: isDark ? '#102F53' : '#DBEAFE' }]}>
+              <View
+                style={[styles.joinIconWrap, { backgroundColor: isDark ? '#102F53' : '#DBEAFE' }]}
+              >
                 <Ionicons name="school" size={22} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
@@ -375,10 +447,13 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
               accessibilityRole="button"
               accessibilityLabel={isBangla ? 'প্রশিক্ষক হিসেবে আবেদন করুন' : 'Apply as Instructor'}
             >
-              <Ionicons name="person-add-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
-              <Text style={styles.joinBtnText}>
-                {isBangla ? 'আবেদন করুন →' : 'Apply Now →'}
-              </Text>
+              <Ionicons
+                name="person-add-outline"
+                size={16}
+                color="#FFFFFF"
+                style={{ marginRight: 6 }}
+              />
+              <Text style={styles.joinBtnText}>{isBangla ? 'আবেদন করুন →' : 'Apply Now →'}</Text>
             </SpringPressable>
           </View>
 
@@ -390,12 +465,12 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
                   ? 'প্রতিষ্ঠাতা ও পরিচালনা পর্ষদ'
                   : 'FOUNDERS & EXECUTIVE LEADERSHIP'
                 : activeFilter === 'faculty'
-                ? isBangla
-                  ? 'সার্টিফাইড ফ্যাকাল্টি ও মাস্টার মেন্টর'
-                  : 'CERTIFIED FACULTY & MASTER MENTORS'
-                : isBangla
-                ? 'সকল প্রোফাইল ও প্রশিক্ষকবৃন্দ'
-                : 'ALL PROFILES & FACULTY MEMBERS'}
+                  ? isBangla
+                    ? 'সার্টিফাইড ফ্যাকাল্টি ও মাস্টার মেন্টর'
+                    : 'CERTIFIED FACULTY & MASTER MENTORS'
+                  : isBangla
+                    ? 'সকল প্রোফাইল ও প্রশিক্ষকবৃন্দ'
+                    : 'ALL PROFILES & FACULTY MEMBERS'}
             </Text>
             <Text style={[styles.resultsCountBadge, { color: colors.textMuted }]}>
               {filteredInstructors.length} {isBangla ? 'জন' : 'Profiles'}
@@ -404,13 +479,25 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
 
           {/* Empty State */}
           {filteredInstructors.length === 0 && (
-            <View style={[styles.emptyContainer, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
-              <Ionicons name="search-outline" size={36} color={colors.textMuted} style={{ marginBottom: 8 }} />
+            <View
+              style={[
+                styles.emptyContainer,
+                { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+              ]}
+            >
+              <Ionicons
+                name="search-outline"
+                size={36}
+                color={colors.textMuted}
+                style={{ marginBottom: 8 }}
+              />
               <Text style={[styles.emptyTitle, { color: colors.text }]}>
                 {isBangla ? 'কোনো প্রোফাইল পাওয়া যায়নি' : 'No Profiles Found'}
               </Text>
               <Text style={[styles.emptyText, { color: colors.textMuted }]}>
-                {isBangla ? 'ভিন্ন কোনো নাম বা কি-ওয়ার্ড দিয়ে আবার চেষ্টা করুন।' : 'Try searching with another name or specialty.'}
+                {isBangla
+                  ? 'ভিন্ন কোনো নাম বা কি-ওয়ার্ড দিয়ে আবার চেষ্টা করুন।'
+                  : 'Try searching with another name or specialty.'}
               </Text>
               <TouchableOpacity
                 onPress={() => setSearchQuery('')}
@@ -428,8 +515,9 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
           {/* Authors List */}
           {filteredInstructors.map((author) => {
             const isFounder = author.isFounder || author.category === 'founder';
-            const badgeLabel = (isBangla && author.banglaBadge) ? author.banglaBadge : author.badge;
-            const expertiseList = (isBangla && author.banglaExpertise) ? author.banglaExpertise : author.expertise;
+            const badgeLabel = isBangla && author.banglaBadge ? author.banglaBadge : author.badge;
+            const expertiseList =
+              isBangla && author.banglaExpertise ? author.banglaExpertise : author.expertise;
 
             return (
               <View
@@ -438,7 +526,11 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
                   styles.authorCard,
                   {
                     backgroundColor: colors.surfaceCard,
-                    borderColor: isFounder ? (isDark ? 'rgba(227, 66, 52, 0.45)' : '#FECACA') : colors.border,
+                    borderColor: isFounder
+                      ? isDark
+                        ? 'rgba(227, 66, 52, 0.45)'
+                        : '#FECACA'
+                      : colors.border,
                     borderWidth: isFounder ? 1.5 : 1,
                     shadowColor: colors.cardShadow,
                   },
@@ -460,15 +552,27 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
                       <Text style={[styles.authorName, { color: colors.text }]} numberOfLines={1}>
                         {isBangla && author.banglaName ? author.banglaName : author.name}
                       </Text>
-                      <Ionicons name="checkmark-circle" size={16} color="#10B981" style={{ marginLeft: 4 }} />
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={16}
+                        color="#10B981"
+                        style={{ marginLeft: 4 }}
+                      />
                     </View>
 
-                    <Text style={[styles.authorDesignation, { color: colors.primary }]} numberOfLines={2}>
-                      {isBangla && author.banglaDesignation ? author.banglaDesignation : author.designation}
+                    <Text
+                      style={[styles.authorDesignation, { color: colors.primary }]}
+                      numberOfLines={2}
+                    >
+                      {isBangla && author.banglaDesignation
+                        ? author.banglaDesignation
+                        : author.designation}
                     </Text>
 
                     <Text style={[styles.authorOrg, { color: colors.textMuted }]} numberOfLines={1}>
-                      {isBangla && author.banglaOrganization ? author.banglaOrganization : author.organization}
+                      {isBangla && author.banglaOrganization
+                        ? author.banglaOrganization
+                        : author.organization}
                     </Text>
 
                     {badgeLabel && (
@@ -477,16 +581,20 @@ export const InstructorsModal: React.FC<InstructorsModalProps> = ({
                           styles.badgePill,
                           {
                             backgroundColor: isFounder
-                              ? (isDark ? 'rgba(227, 66, 52, 0.2)' : '#FEE2E2')
-                              : (isDark ? 'rgba(16, 47, 83, 0.4)' : '#EFF6FF'),
-                            borderColor: isFounder ? '#E34234' : (isDark ? '#2563EB44' : '#BFDBFE'),
+                              ? isDark
+                                ? 'rgba(227, 66, 52, 0.2)'
+                                : '#FEE2E2'
+                              : isDark
+                                ? 'rgba(16, 47, 83, 0.4)'
+                                : '#EFF6FF',
+                            borderColor: isFounder ? '#E34234' : isDark ? '#2563EB44' : '#BFDBFE',
                           },
                         ]}
                       >
                         <Text
                           style={[
                             styles.badgeText,
-                            { color: isFounder ? '#E34234' : (isDark ? '#60A5FA' : '#1D4ED8') },
+                            { color: isFounder ? '#E34234' : isDark ? '#60A5FA' : '#1D4ED8' },
                           ]}
                         >
                           {badgeLabel}

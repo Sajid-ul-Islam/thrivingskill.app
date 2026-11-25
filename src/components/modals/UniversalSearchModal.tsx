@@ -37,9 +37,30 @@ interface UniversalSearchModalProps {
 type SearchFilterType = 'all' | 'courses' | 'youtube' | 'workshops';
 
 type UnifiedSearchResult =
-  | { type: 'course'; data: Course; id: string; title: string; subtitle: string; thumbnail?: string }
-  | { type: 'youtube'; data: YouTubeVideo; id: string; title: string; subtitle: string; thumbnail?: string }
-  | { type: 'workshop'; data: any; id: string; title: string; subtitle: string; thumbnail?: string };
+  | {
+      type: 'course';
+      data: Course;
+      id: string;
+      title: string;
+      subtitle: string;
+      thumbnail?: string;
+    }
+  | {
+      type: 'youtube';
+      data: YouTubeVideo;
+      id: string;
+      title: string;
+      subtitle: string;
+      thumbnail?: string;
+    }
+  | {
+      type: 'workshop';
+      data: any;
+      id: string;
+      title: string;
+      subtitle: string;
+      thumbnail?: string;
+    };
 
 export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
   visible,
@@ -101,7 +122,10 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
     const clean = term.trim();
     if (!clean || clean.length < 2) return;
     try {
-      const updated = [clean, ...recentSearches.filter((s) => s.toLowerCase() !== clean.toLowerCase())].slice(0, 6);
+      const updated = [
+        clean,
+        ...recentSearches.filter((s) => s.toLowerCase() !== clean.toLowerCase()),
+      ].slice(0, 6);
       setRecentSearches(updated);
       await AsyncStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
     } catch {}
@@ -229,15 +253,18 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
     >
       <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
         {/* Search Header */}
-        <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+        <View
+          style={[
+            styles.header,
+            { backgroundColor: colors.surface, borderBottomColor: colors.border },
+          ]}
+        >
           <View style={[styles.searchBar, { backgroundColor: isDark ? '#2C2C2E' : '#F3F4F6' }]}>
             <Ionicons name="search" size={18} color={colors.textMuted} />
             <TextInput
               style={[styles.searchInput, { color: colors.text }]}
               placeholder={
-                isBangla
-                  ? 'আজকে আপনি কি শিখতে চান?'
-                  : 'What do you want to learn today?'
+                isBangla ? 'আজকে আপনি কি শিখতে চান?' : 'What do you want to learn today?'
               }
               placeholderTextColor={colors.textMuted}
               value={query}
@@ -299,9 +326,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
             <Ionicons name="sparkles" size={14} color="#059669" />
             <Text style={[styles.nanoEnhanceText, { color: colors.text }]}>
               {isBangla ? 'সংশোধিত সার্চ:' : 'Search instead for:'}{' '}
-              <Text style={{ fontWeight: '800', color: '#059669' }}>
-                {suggestedEnhancement}
-              </Text>
+              <Text style={{ fontWeight: '800', color: '#059669' }}>{suggestedEnhancement}</Text>
             </Text>
             <View style={styles.nanoBadgeTag}>
               <Text style={styles.nanoBadgeText}>Nano AI</Text>
@@ -310,7 +335,10 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
         )}
 
         {/* Filter Pills */}
-        <View style={[styles.filterBar, { borderBottomColor: colors.border }]} accessibilityRole="tablist">
+        <View
+          style={[styles.filterBar, { borderBottomColor: colors.border }]}
+          accessibilityRole="tablist"
+        >
           {filterTabs.map((tab) => {
             const isSelected = activeFilter === tab.id;
             return (
@@ -326,9 +354,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 accessibilityRole="tab"
                 accessibilityState={{ selected: isSelected }}
                 accessibilityLabel={
-                  isBangla
-                    ? `${tab.label} ফিল্টার`
-                    : `Filter results by ${tab.label}`
+                  isBangla ? `${tab.label} ফিল্টার` : `Filter results by ${tab.label}`
                 }
                 onPress={() => {
                   triggerHaptic('selection');
@@ -339,7 +365,13 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 <Ionicons
                   name={tab.icon as any}
                   size={13}
-                  color={isSelected ? colors.onPrimary : tab.id === 'youtube' ? '#FF0000' : colors.textMuted}
+                  color={
+                    isSelected
+                      ? colors.onPrimary
+                      : tab.id === 'youtube'
+                        ? '#FF0000'
+                        : colors.textMuted
+                  }
                 />
                 <Text
                   style={[
@@ -417,8 +449,8 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                           item.type === 'course'
                             ? 'rgba(5, 150, 105, 0.12)'
                             : item.type === 'youtube'
-                            ? 'rgba(255, 0, 0, 0.1)'
-                            : 'rgba(59, 130, 246, 0.12)',
+                              ? 'rgba(255, 0, 0, 0.1)'
+                              : 'rgba(59, 130, 246, 0.12)',
                       },
                     ]}
                   >
@@ -430,16 +462,22 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                             item.type === 'course'
                               ? '#059669'
                               : item.type === 'youtube'
-                              ? '#FF0000'
-                              : '#3B82F6',
+                                ? '#FF0000'
+                                : '#3B82F6',
                         },
                       ]}
                     >
                       {item.type === 'course'
-                        ? (isBangla ? 'অ্যাক্রেডিটেড কোর্স' : 'ACCREDITED COURSE')
+                        ? isBangla
+                          ? 'অ্যাক্রেডিটেড কোর্স'
+                          : 'ACCREDITED COURSE'
                         : item.type === 'youtube'
-                        ? (isBangla ? 'ইউটিউব মাস্টারক্লাস' : 'YOUTUBE MASTERCLASS')
-                        : (isBangla ? 'লাইভ সামিট' : 'LIVE SUMMIT')}
+                          ? isBangla
+                            ? 'ইউটিউব মাস্টারক্লাস'
+                            : 'YOUTUBE MASTERCLASS'
+                          : isBangla
+                            ? 'লাইভ সামিট'
+                            : 'LIVE SUMMIT'}
                     </Text>
                   </View>
                 </View>
@@ -447,7 +485,10 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                 <Text style={[styles.resultTitle, { color: colors.text }]} numberOfLines={1}>
                   {item.title}
                 </Text>
-                <Text style={[styles.resultSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
+                <Text
+                  style={[styles.resultSubtitle, { color: colors.textMuted }]}
+                  numberOfLines={1}
+                >
                   {item.subtitle}
                 </Text>
               </View>
@@ -466,17 +507,21 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
               </View>
               <Text style={[styles.emptyTitle, { color: colors.text }]}>
                 {query.trim()
-                  ? (isBangla ? 'কোনো ফলাফল পাওয়া যায়নি' : 'No results found')
-                  : (isBangla ? 'জনপ্রিয় বিজনেস ও এআই স্কিলস' : 'Trending Business & AI Skills')}
+                  ? isBangla
+                    ? 'কোনো ফলাফল পাওয়া যায়নি'
+                    : 'No results found'
+                  : isBangla
+                    ? 'জনপ্রিয় বিজনেস ও এআই স্কিলস'
+                    : 'Trending Business & AI Skills'}
               </Text>
               <Text style={[styles.emptySub, { color: colors.textMuted }]}>
                 {query.trim()
-                  ? (isBangla
-                      ? `"${query}" এর সাথে মিলে এমন কিছু পাওয়া যায়নি। Agentic AI, Power BI বা Finance লিখে সার্চ করুন।`
-                      : `No content matching "${query}". Try searching for Agentic AI, Power BI, or Finance.`)
-                  : (isBangla
-                      ? 'জনপ্রিয় মাস্টারক্লাসগুলো দেখতে নিচের স্কিলে ট্যাপ করুন:'
-                      : 'Tap any high-demand skill below to discover accredited masterclasses:')}
+                  ? isBangla
+                    ? `"${query}" এর সাথে মিলে এমন কিছু পাওয়া যায়নি। Agentic AI, Power BI বা Finance লিখে সার্চ করুন।`
+                    : `No content matching "${query}". Try searching for Agentic AI, Power BI, or Finance.`
+                  : isBangla
+                    ? 'জনপ্রিয় মাস্টারক্লাসগুলো দেখতে নিচের স্কিলে ট্যাপ করুন:'
+                    : 'Tap any high-demand skill below to discover accredited masterclasses:'}
               </Text>
 
               {!query.trim() && recentSearches.length > 0 && (
@@ -509,7 +554,12 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                         ]}
                       >
                         <TouchableOpacity
-                          style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 }}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 6,
+                            flexShrink: 1,
+                          }}
                           onPress={() => {
                             triggerHaptic('light');
                             setQuery(term);
@@ -518,7 +568,10 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                           accessibilityLabel={`Search for ${term}`}
                         >
                           <Ionicons name="search" size={11} color={colors.textMuted} />
-                          <Text style={[styles.recentChipText, { color: colors.text }]} numberOfLines={1}>
+                          <Text
+                            style={[styles.recentChipText, { color: colors.text }]}
+                            numberOfLines={1}
+                          >
                             {term}
                           </Text>
                         </TouchableOpacity>
@@ -569,9 +622,7 @@ export const UniversalSearchModal: React.FC<UniversalSearchModalProps> = ({
                       onPress={() => setQuery(item.q)}
                       accessibilityRole="button"
                       accessibilityLabel={
-                        isBangla
-                          ? `${item.label} টপিক সার্চ করুন`
-                          : `Search for ${item.label}`
+                        isBangla ? `${item.label} টপিক সার্চ করুন` : `Search for ${item.label}`
                       }
                     >
                       <Text style={[styles.trendingModalPillText, { color: colors.text }]}>

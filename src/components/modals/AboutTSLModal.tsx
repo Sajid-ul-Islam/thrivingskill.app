@@ -24,7 +24,8 @@ import { getSafeImageSource } from '../../utils/imageUtils';
 
 import { LegalPolicyModal, LegalTabKey } from './LegalPolicyModal';
 
-export type AboutTabKey = 'overview' | 'pillars' | 'partners' | 'summits' | 'leadership' | 'contact';
+export type AboutTabKey =
+  'overview' | 'pillars' | 'partners' | 'summits' | 'leadership' | 'contact';
 
 interface AboutTSLModalProps {
   visible: boolean;
@@ -112,8 +113,8 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
               </Text>
               <Text style={[styles.companySubtitle, { color: colors.textMuted }]}>
                 {isBangla
-                  ? (siteBranding?.taglineBn || 'দক্ষ জাতি গঠনে মানুষের ক্ষমতায়ন')
-                  : (siteBranding?.tagline || 'Empowering People, Building a Skilled Nation')}
+                  ? siteBranding?.taglineBn || 'দক্ষ জাতি গঠনে মানুষের ক্ষমতায়ন'
+                  : siteBranding?.tagline || 'Empowering People, Building a Skilled Nation'}
               </Text>
             </View>
             <TouchableOpacity
@@ -136,12 +137,36 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
             contentContainerStyle={styles.tabsContainer}
           >
             {[
-              { key: 'overview', label: isBangla ? 'সংক্ষিপ্ত তথ্য' : 'Overview', icon: 'information-circle-outline' },
-              { key: 'pillars', label: isBangla ? '৪টি মূল স্তম্ভ' : '4 Pillars', icon: 'layers-outline' },
-              { key: 'partners', label: isBangla ? 'পার্টনার্স ও সহযোগী' : 'Partners & MoUs', icon: 'shield-checkmark-outline' },
-              { key: 'summits', label: isBangla ? 'সামিট ও ইভেন্ট' : 'Summits', icon: 'ribbon-outline' },
-              { key: 'leadership', label: isBangla ? 'নেতৃত্ব ও ফাউন্ডার্স' : 'Founders & Team', icon: 'people-outline' },
-              { key: 'contact', label: isBangla ? 'যোগাযোগ ও আইনি' : 'Contact & Legal', icon: 'call-outline' },
+              {
+                key: 'overview',
+                label: isBangla ? 'সংক্ষিপ্ত তথ্য' : 'Overview',
+                icon: 'information-circle-outline',
+              },
+              {
+                key: 'pillars',
+                label: isBangla ? '৪টি মূল স্তম্ভ' : '4 Pillars',
+                icon: 'layers-outline',
+              },
+              {
+                key: 'partners',
+                label: isBangla ? 'পার্টনার্স ও সহযোগী' : 'Partners & MoUs',
+                icon: 'shield-checkmark-outline',
+              },
+              {
+                key: 'summits',
+                label: isBangla ? 'সামিট ও ইভেন্ট' : 'Summits',
+                icon: 'ribbon-outline',
+              },
+              {
+                key: 'leadership',
+                label: isBangla ? 'নেতৃত্ব ও ফাউন্ডার্স' : 'Founders & Team',
+                icon: 'people-outline',
+              },
+              {
+                key: 'contact',
+                label: isBangla ? 'যোগাযোগ ও আইনি' : 'Contact & Legal',
+                icon: 'call-outline',
+              },
             ].map((tab) => {
               const isActive = activeTab === tab.key;
               return (
@@ -165,10 +190,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                     color={isActive ? colors.onPrimary : colors.textMuted}
                   />
                   <Text
-                    style={[
-                      styles.tabLabel,
-                      { color: isActive ? colors.onPrimary : colors.text },
-                    ]}
+                    style={[styles.tabLabel, { color: isActive ? colors.onPrimary : colors.text }]}
                   >
                     {tab.label}
                   </Text>
@@ -191,8 +213,18 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
           {activeTab === 'overview' && (
             <View style={styles.sectionContainer}>
               {/* Mission Hero Banner */}
-              <View style={[styles.heroCard, { backgroundColor: isDark ? colors.surfaceCard : '#F0FDF4', borderColor: '#BBF7D0' }]}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+              <View
+                style={[
+                  styles.heroCard,
+                  {
+                    backgroundColor: isDark ? colors.surfaceCard : '#F0FDF4',
+                    borderColor: '#BBF7D0',
+                  },
+                ]}
+              >
+                <View
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}
+                >
                   <Ionicons name="shield-checkmark" size={18} color="#10B981" />
                   <Text style={[styles.heroBadge, { color: '#059669' }]}>
                     OFFICIAL CORPORATE ECOSYSTEM
@@ -212,25 +244,45 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
 
               {/* Key Highlights Metrics */}
               <View style={styles.metricsGrid}>
-                <View style={[styles.metricCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+                <View
+                  style={[
+                    styles.metricCard,
+                    { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                  ]}
+                >
                   <Text style={[styles.metricNumber, { color: colors.primary }]}>300+</Text>
                   <Text style={[styles.metricLabel, { color: colors.textMuted }]}>
                     {isBangla ? 'অন-ডিমান্ড কোর্স' : 'Executive Courses'}
                   </Text>
                 </View>
-                <View style={[styles.metricCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+                <View
+                  style={[
+                    styles.metricCard,
+                    { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                  ]}
+                >
                   <Text style={[styles.metricNumber, { color: '#10B981' }]}>50,000+</Text>
                   <Text style={[styles.metricLabel, { color: colors.textMuted }]}>
                     {isBangla ? 'পেশাজীবী লার্নার' : 'Empowered Learners'}
                   </Text>
                 </View>
-                <View style={[styles.metricCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+                <View
+                  style={[
+                    styles.metricCard,
+                    { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                  ]}
+                >
                   <Text style={[styles.metricNumber, { color: '#E34234' }]}>5+</Text>
                   <Text style={[styles.metricLabel, { color: colors.textMuted }]}>
                     {isBangla ? 'জাতীয় সামিট' : 'National Summits'}
                   </Text>
                 </View>
-                <View style={[styles.metricCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+                <View
+                  style={[
+                    styles.metricCard,
+                    { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                  ]}
+                >
                   <Text style={[styles.metricNumber, { color: '#8B5CF6' }]}>150+</Text>
                   <Text style={[styles.metricLabel, { color: colors.textMuted }]}>
                     {isBangla ? 'কর্পোরেট পার্টনার' : 'Enterprise Partners'}
@@ -239,15 +291,24 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
               </View>
 
               {/* SDG-4 Commitment */}
-              <View style={[styles.infoBlock, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <View
+                style={[
+                  styles.infoBlock,
+                  { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                ]}
+              >
+                <View
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}
+                >
                   <Ionicons name="globe-outline" size={18} color="#0284C7" />
                   <Text style={[styles.infoBlockTitle, { color: colors.text }]}>
                     SDG-4 Quality Education & Decent Work
                   </Text>
                 </View>
                 <Text style={[styles.infoBlockDesc, { color: colors.textMuted }]}>
-                  Aligned with United Nations Sustainable Development Goals (SDG-4 & SDG-8), TSL delivers inclusive, high-impact digital learning accessible anywhere across Bangladesh and South Asia.
+                  Aligned with United Nations Sustainable Development Goals (SDG-4 & SDG-8), TSL
+                  delivers inclusive, high-impact digital learning accessible anywhere across
+                  Bangladesh and South Asia.
                 </Text>
               </View>
             </View>
@@ -257,48 +318,95 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
           {activeTab === 'pillars' && (
             <View style={styles.sectionContainer}>
               <Text style={[styles.subheading, { color: colors.textMuted }]}>
-                {isBangla ? 'আমাদের ৪টি প্রধান প্রাতিষ্ঠানিক সেবা স্তম্ভ:' : 'Our 4 Core Corporate Pillars:'}
+                {isBangla
+                  ? 'আমাদের ৪টি প্রধান প্রাতিষ্ঠানিক সেবা স্তম্ভ:'
+                  : 'Our 4 Core Corporate Pillars:'}
               </Text>
 
               {/* Pillar 1 */}
-              <View style={[styles.pillarCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
-                <View style={[styles.pillarIconBg, { backgroundColor: isDark ? 'rgba(79, 70, 229, 0.18)' : '#EEF2FF' }]}>
-                  <Ionicons name="laptop-outline" size={22} color={isDark ? '#818CF8' : '#4F46E5'} />
+              <View
+                style={[
+                  styles.pillarCard,
+                  { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.pillarIconBg,
+                    { backgroundColor: isDark ? 'rgba(79, 70, 229, 0.18)' : '#EEF2FF' },
+                  ]}
+                >
+                  <Ionicons
+                    name="laptop-outline"
+                    size={22}
+                    color={isDark ? '#818CF8' : '#4F46E5'}
+                  />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.pillarTitle, { color: colors.text }]}>
                     1. Digital Learning Solutions (LMS)
                   </Text>
                   <Text style={[styles.pillarSubtitle, { color: colors.primary }]}>
-                    {isBangla ? 'কর্পোরেট এলএমএস ও ডিজিটাল লার্নিং' : 'Enterprise LMS & SCORM Training'}
+                    {isBangla
+                      ? 'কর্পোরেট এলএমএস ও ডিজিটাল লার্নিং'
+                      : 'Enterprise LMS & SCORM Training'}
                   </Text>
                   <Text style={[styles.pillarDesc, { color: colors.textMuted }]}>
-                    Custom LMS deployments, employee competency analytics, progress tracking dashboards, and interactive SCORM e-learning module authoring.
+                    Custom LMS deployments, employee competency analytics, progress tracking
+                    dashboards, and interactive SCORM e-learning module authoring.
                   </Text>
                 </View>
               </View>
 
               {/* Pillar 2 */}
-              <View style={[styles.pillarCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
-                <View style={[styles.pillarIconBg, { backgroundColor: isDark ? 'rgba(5, 150, 105, 0.18)' : '#ECFDF5' }]}>
-                  <Ionicons name="school-outline" size={22} color={isDark ? '#34D399' : '#059669'} />
+              <View
+                style={[
+                  styles.pillarCard,
+                  { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.pillarIconBg,
+                    { backgroundColor: isDark ? 'rgba(5, 150, 105, 0.18)' : '#ECFDF5' },
+                  ]}
+                >
+                  <Ionicons
+                    name="school-outline"
+                    size={22}
+                    color={isDark ? '#34D399' : '#059669'}
+                  />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.pillarTitle, { color: colors.text }]}>
                     2. Professional Training & Cohorts
                   </Text>
                   <Text style={[styles.pillarSubtitle, { color: '#059669' }]}>
-                    {isBangla ? '৩০০+ কোর্স ও সাপ্তাহিক লাইভ সেশন' : '300+ Courses & Weekly Live Classes'}
+                    {isBangla
+                      ? '৩০০+ কোর্স ও সাপ্তাহিক লাইভ সেশন'
+                      : '300+ Courses & Weekly Live Classes'}
                   </Text>
                   <Text style={[styles.pillarDesc, { color: colors.textMuted }]}>
-                    Self-paced on-demand masterclasses and live executive bootcamps spanning Generative & Agentic AI, MS Excel & BI, Leadership, Financial Modeling, and HR Operations.
+                    Self-paced on-demand masterclasses and live executive bootcamps spanning
+                    Generative & Agentic AI, MS Excel & BI, Leadership, Financial Modeling, and HR
+                    Operations.
                   </Text>
                 </View>
               </View>
 
               {/* Pillar 3 */}
-              <View style={[styles.pillarCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
-                <View style={[styles.pillarIconBg, { backgroundColor: isDark ? 'rgba(147, 51, 234, 0.16)' : '#FAF5FF' }]}>
+              <View
+                style={[
+                  styles.pillarCard,
+                  { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.pillarIconBg,
+                    { backgroundColor: isDark ? 'rgba(147, 51, 234, 0.16)' : '#FAF5FF' },
+                  ]}
+                >
                   <Ionicons name="briefcase-outline" size={22} color="#9333EA" />
                 </View>
                 <View style={{ flex: 1 }}>
@@ -306,17 +414,30 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                     3. Strategic Advisory & Consultancy
                   </Text>
                   <Text style={[styles.pillarSubtitle, { color: '#9333EA' }]}>
-                    {isBangla ? 'বিজনেস কনসালটেন্সি ও এসএমই রূপান্তর' : 'Corporate & SME Transformation'}
+                    {isBangla
+                      ? 'বিজনেস কনসালটেন্সি ও এসএমই রূপান্তর'
+                      : 'Corporate & SME Transformation'}
                   </Text>
                   <Text style={[styles.pillarDesc, { color: colors.textMuted }]}>
-                    Strategic advisory services for SME scaling, ICT readiness, organizational culture, digital transformation roadmaps, and corporate governance.
+                    Strategic advisory services for SME scaling, ICT readiness, organizational
+                    culture, digital transformation roadmaps, and corporate governance.
                   </Text>
                 </View>
               </View>
 
               {/* Pillar 4 */}
-              <View style={[styles.pillarCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
-                <View style={[styles.pillarIconBg, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2' }]}>
+              <View
+                style={[
+                  styles.pillarCard,
+                  { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.pillarIconBg,
+                    { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2' },
+                  ]}
+                >
                   <Ionicons name="globe-outline" size={22} color="#E34234" />
                 </View>
                 <View style={{ flex: 1 }}>
@@ -324,10 +445,13 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                     4. Ecosystem & Community Initiatives
                   </Text>
                   <Text style={[styles.pillarSubtitle, { color: '#E34234' }]}>
-                    {isBangla ? 'জাতীয় সামিট ও বিশ্ববিদ্যালয় পার্টনারশিপ' : 'National Summits & University Alliances'}
+                    {isBangla
+                      ? 'জাতীয় সামিট ও বিশ্ববিদ্যালয় পার্টনারশিপ'
+                      : 'National Summits & University Alliances'}
                   </Text>
                   <Text style={[styles.pillarDesc, { color: colors.textMuted }]}>
-                    Flagship national summits bringing together government, universities, and industry leaders to bridge the skill gap between academia and modern enterprise.
+                    Flagship national summits bringing together government, universities, and
+                    industry leaders to bridge the skill gap between academia and modern enterprise.
                   </Text>
                 </View>
               </View>
@@ -340,11 +464,16 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
               <View
                 style={[
                   styles.verifiedHeaderBanner,
-                  { backgroundColor: isDark ? 'rgba(37, 99, 235, 0.12)' : '#EFF6FF', borderColor: '#2563EB44' },
+                  {
+                    backgroundColor: isDark ? 'rgba(37, 99, 235, 0.12)' : '#EFF6FF',
+                    borderColor: '#2563EB44',
+                  },
                 ]}
               >
                 <Ionicons name="ribbon" size={20} color="#2563EB" />
-                <Text style={[styles.verifiedHeaderText, { color: isDark ? '#93C5FD' : '#1E40AF' }]}>
+                <Text
+                  style={[styles.verifiedHeaderText, { color: isDark ? '#93C5FD' : '#1E40AF' }]}
+                >
                   {isBangla
                     ? 'শীর্ষস্থানীয় বিশ্ববিদ্যালয়, সরকারি উদ্ভাবনী বিভাগ ও শিল্প অংশীদারদের সাথে কার্যকর কোলাবরেশন'
                     : 'Strategic Partnerships, Signed MoUs & Academic Co-Organizers'}
@@ -352,18 +481,24 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
               </View>
 
               <Text style={[styles.subheading, { color: colors.textMuted }]}>
-                {isBangla ? 'থ্রাইভিং স্কিলসের প্রাতিষ্ঠানিক ও জাতীয় সহযোগীসমূহ:' : 'TSL Institutional & Strategic Alliances:'}
+                {isBangla
+                  ? 'থ্রাইভিং স্কিলসের প্রাতিষ্ঠানিক ও জাতীয় সহযোগীসমূহ:'
+                  : 'TSL Institutional & Strategic Alliances:'}
               </Text>
 
               {[
                 {
-                  category: isBangla ? 'জাতীয় বিশ্ববিদ্যালয় ও অ্যাকাডেমিক পার্টনার্স' : 'Academic & University Alliances',
+                  category: isBangla
+                    ? 'জাতীয় বিশ্ববিদ্যালয় ও অ্যাকাডেমিক পার্টনার্স'
+                    : 'Academic & University Alliances',
                   icon: 'school-outline',
                   color: '#2563EB',
                   items: [
                     {
                       name: 'University of Dhaka (DU) / DUCSU',
-                      role: isBangla ? 'জাতীয় স্কিলস সামিট কো-অর্গানাইজার' : 'National Skills Summit Co-Organizer',
+                      role: isBangla
+                        ? 'জাতীয় স্কিলস সামিট কো-অর্গানাইজার'
+                        : 'National Skills Summit Co-Organizer',
                       scope: isBangla
                         ? 'ঢাকা বিশ্ববিদ্যালয়ের সিনেট ভবনে বাংলাদেশ স্কিলস সামিট আয়োজনের যৌথ অংশীদার। জাতীয় পুনর্গঠন ও কর্মদক্ষতা রূপান্তরে অগ্রণী।'
                         : 'Co-organizer of the Bangladesh Skills Summit at the Senate Bhaban, University of Dhaka, advancing national workforce reform.',
@@ -371,7 +506,9 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                     },
                     {
                       name: 'North South University (NSU)',
-                      role: isBangla ? '৪আইআর সামিট ও প্লেসমেন্ট পার্টনার' : '4IR Skills Summit & Placement Partner',
+                      role: isBangla
+                        ? '৪আইআর সামিট ও প্লেসমেন্ট পার্টনার'
+                        : '4IR Skills Summit & Placement Partner',
                       scope: isBangla
                         ? 'নর্থ সাউথ ইউনিভার্সিটির ক্যারিয়ার অ্যান্ড প্লেসমেন্ট সেন্টারের (CPC) সাথে ফোর্থ ইন্ডাস্ট্রিয়াল রেভোলিউশন সামিট কো-অর্গানাইজার।'
                         : 'Organized the 4th Industrial Revolution (4IR) Skills Summit with NSU’s Career and Placement Center (CPC) to equip youth with modern AI capabilities.',
@@ -379,7 +516,9 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                     },
                     {
                       name: 'Eastern University (EU)',
-                      role: isBangla ? 'দ্বিপাক্ষিক সমঝোতা স্মারক (MoU) স্বাক্ষরিত' : 'Official Bilateral MoU Signed',
+                      role: isBangla
+                        ? 'দ্বিপাক্ষিক সমঝোতা স্মারক (MoU) স্বাক্ষরিত'
+                        : 'Official Bilateral MoU Signed',
                       scope: isBangla
                         ? 'শিক্ষা, গবেষণা ও প্রাতিষ্ঠানিক দক্ষতায় এআই (AI) অন্তর্ভুক্তির লক্ষ্যে আনুষ্ঠানিক চুক্তি (MoU) স্বাক্ষরিত। শিক্ষক ও কর্মকর্তাদের এআই প্রশিক্ষণ প্রদান।'
                         : 'Signed a formal Memorandum of Understanding (MoU) to integrate Artificial Intelligence into university teaching, student curricula, and administrative workflows.',
@@ -387,7 +526,9 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                     },
                     {
                       name: 'Ahsanullah University of Science & Tech (AUST)',
-                      role: isBangla ? 'এমপ্লয়েবিলিটি সামিট কো-অর্গানাইজার' : 'Employability & Skills Summit Co-Organizer',
+                      role: isBangla
+                        ? 'এমপ্লয়েবিলিটি সামিট কো-অর্গানাইজার'
+                        : 'Employability & Skills Summit Co-Organizer',
                       scope: isBangla
                         ? 'অস্ট স্কুল অব বিজনেস-এর যৌথ উদ্যোগে এমপ্লয়েবিলিটি অ্যান্ড স্কিলস সামিট, জব ফেয়ার এবং কর্পোরেট একাডেমি ডায়ালগ পরিচালনা।'
                         : 'Partnered with AUST School of Business to host the national Employability & Skills Summit, corporate job fairs, and industry masterclasses.',
@@ -395,7 +536,9 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                     },
                     {
                       name: 'Comilla University (CoU) & Manarat Int. University',
-                      role: isBangla ? 'দক্ষতা উন্নয়ন কর্মশালা ও ফ্যাকাল্টি পার্টনার' : 'Skills Workshop & Faculty Partner',
+                      role: isBangla
+                        ? 'দক্ষতা উন্নয়ন কর্মশালা ও ফ্যাকাল্টি পার্টনার'
+                        : 'Skills Workshop & Faculty Partner',
                       scope: isBangla
                         ? 'শিক্ষার্থীদের ক্যারিয়ার প্রস্তুতি, সফটওয়্যার স্কিলস এবং ডেটা অ্যানালিটিক্স প্রশিক্ষণে সক্রিয় প্রাতিষ্ঠানিক অংশীদার।'
                         : 'Delivering tailored masterclasses in data literacy, business presentation, and enterprise digital tools for graduating student cohorts.',
@@ -404,13 +547,17 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                   ],
                 },
                 {
-                  category: isBangla ? 'সরকারি সংস্থা ও আন্তর্জাতিক ফ্রেমওয়ার্ক' : 'Government & Innovation Frameworks',
+                  category: isBangla
+                    ? 'সরকারি সংস্থা ও আন্তর্জাতিক ফ্রেমওয়ার্ক'
+                    : 'Government & Innovation Frameworks',
                   icon: 'globe-outline',
                   color: '#10B981',
                   items: [
                     {
                       name: 'Aspire to Innovate (a2i) — ICT & Cabinet Division',
-                      role: isBangla ? 'স্মার্ট বাংলাদেশ ও ৪আইআর পার্টনার' : 'National 4IR & Smart Workforce Partner',
+                      role: isBangla
+                        ? 'স্মার্ট বাংলাদেশ ও ৪আইআর পার্টনার'
+                        : 'National 4IR & Smart Workforce Partner',
                       scope: isBangla
                         ? 'চতুর্থ শিল্প বিপ্লবের চ্যালেঞ্জ মোকাবিলা এবং জাতীয় তরুণদের ডিজিটাল কর্মসংস্থানে যৌথ উদ্যোগ ও কনফারেন্স কোলাবরেশন।'
                         : 'Strategic alignment with a2i (ICT Division & Cabinet Division, Bangladesh) for 4IR skills adoption and tech workforce readiness.',
@@ -418,7 +565,9 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                     },
                     {
                       name: 'United Nations SDG-4 (Quality Education)',
-                      role: isBangla ? 'টেকসই উন্নয়ন লক্ষ্যমাত্রা ৪.৪ বাস্তবায়ন' : 'UN SDG Goal 4.4 Framework',
+                      role: isBangla
+                        ? 'টেকসই উন্নয়ন লক্ষ্যমাত্রা ৪.৪ বাস্তবায়ন'
+                        : 'UN SDG Goal 4.4 Framework',
                       scope: isBangla
                         ? 'জীবনব্যাপী শিক্ষা নিশ্চিতকরণ এবং তরুণ প্রজন্মের কর্মসংস্থান ও উদ্যোক্তা দক্ষতায় অবদান রাখতে এসডিজি-৪ মানদণ্ড বাস্তবায়ন।'
                         : 'Dedicated to UN Sustainable Development Goal 4: Substantially increasing the percentage of skilled youth and adults ready for entrepreneurship and global careers.',
@@ -427,13 +576,17 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                   ],
                 },
                 {
-                  category: isBangla ? 'পেশাদার ও জাতীয় শিল্প সমিতি' : 'Professional & Industry Associations',
+                  category: isBangla
+                    ? 'পেশাদার ও জাতীয় শিল্প সমিতি'
+                    : 'Professional & Industry Associations',
                   icon: 'briefcase-outline',
                   color: '#8B5CF6',
                   items: [
                     {
                       name: 'ICMAB (Cost & Management Accountants)',
-                      role: isBangla ? 'প্রফেশনাল ফিন্যান্স স্কিলিং পার্টনার' : 'Professional Finance Skilling Partner',
+                      role: isBangla
+                        ? 'প্রফেশনাল ফিন্যান্স স্কিলিং পার্টনার'
+                        : 'Professional Finance Skilling Partner',
                       scope: isBangla
                         ? 'পেশাদার একাউন্ট্যান্টদের জন্য কৃত্রিম বুদ্ধিমত্তা (AI) ও প্রেডিক্টিভ বিজনেস অ্যানালিটিক্স কর্মশালা পরিচালনা।'
                         : 'Joint webinars and masterclasses equipping professional cost & management accountants with applied AI in corporate finance.',
@@ -441,7 +594,9 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                     },
                     {
                       name: 'BASIS (Software & Information Services)',
-                      role: isBangla ? 'আইটি ইন্ডাস্ট্রি লিংকেজ ও সফটএক্সপো' : 'BASIS SoftExpo & Committee Partner',
+                      role: isBangla
+                        ? 'আইটি ইন্ডাস্ট্রি লিংকেজ ও সফটএক্সপো'
+                        : 'BASIS SoftExpo & Committee Partner',
                       scope: isBangla
                         ? 'জাতীয় সফটএক্সপোতে সক্রিয় অংশগ্রহণ, আইটি কমিটির প্রতিনিধিত্ব এবং সফটওয়্যার ইন্ডাস্ট্রির স্কিলস গ্যাপ দূরীকরণে কাজ।'
                         : 'Engaged with BASIS SoftExpo and standing committees to connect software talent with tech employer demands.',
@@ -453,7 +608,9 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                 <View key={groupIdx} style={styles.partnerGroupBlock}>
                   <View style={styles.partnerGroupHeader}>
                     <Ionicons name={group.icon as any} size={18} color={group.color} />
-                    <Text style={[styles.partnerGroupTitle, { color: colors.text }]}>{group.category}</Text>
+                    <Text style={[styles.partnerGroupTitle, { color: colors.text }]}>
+                      {group.category}
+                    </Text>
                   </View>
 
                   {group.items.map((item, itemIdx) => (
@@ -469,15 +626,28 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                     >
                       <View style={styles.partnerCardTop}>
                         <View style={{ flex: 1 }}>
-                          <Text style={[styles.partnerOrgName, { color: colors.text }]}>{item.name}</Text>
-                          <Text style={[styles.partnerOrgRole, { color: colors.primary }]}>{item.role}</Text>
+                          <Text style={[styles.partnerOrgName, { color: colors.text }]}>
+                            {item.name}
+                          </Text>
+                          <Text style={[styles.partnerOrgRole, { color: colors.primary }]}>
+                            {item.role}
+                          </Text>
                         </View>
-                        <View style={[styles.partnerBadgeTag, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#F1F5F9' }]}>
+                        <View
+                          style={[
+                            styles.partnerBadgeTag,
+                            { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#F1F5F9' },
+                          ]}
+                        >
                           <Ionicons name="checkmark-circle" size={13} color="#10B981" />
-                          <Text style={[styles.partnerBadgeTagText, { color: colors.textMuted }]}>{item.badge}</Text>
+                          <Text style={[styles.partnerBadgeTagText, { color: colors.textMuted }]}>
+                            {item.badge}
+                          </Text>
                         </View>
                       </View>
-                      <Text style={[styles.partnerOrgScope, { color: colors.textMuted }]}>{item.scope}</Text>
+                      <Text style={[styles.partnerOrgScope, { color: colors.textMuted }]}>
+                        {item.scope}
+                      </Text>
                     </View>
                   ))}
                 </View>
@@ -489,7 +659,9 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
           {activeTab === 'summits' && (
             <View style={styles.sectionContainer}>
               <Text style={[styles.subheading, { color: colors.textMuted }]}>
-                {isBangla ? 'থ্রাইভিং স্কিলসের অফিসিয়াল জাতীয় সামিটসমূহ:' : 'Official TSL National Summits & Forums:'}
+                {isBangla
+                  ? 'থ্রাইভিং স্কিলসের অফিসিয়াল জাতীয় সামিটসমূহ:'
+                  : 'Official TSL National Summits & Forums:'}
               </Text>
 
               {[
@@ -541,24 +713,45 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
               ].map((summit, idx) => (
                 <View
                   key={idx}
-                  style={[styles.summitCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
+                  style={[
+                    styles.summitCard,
+                    { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                  ]}
                 >
                   <View style={styles.summitHeaderRow}>
-                    <View style={[styles.summitIconBg, { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' }]}>
+                    <View
+                      style={[
+                        styles.summitIconBg,
+                        { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' },
+                      ]}
+                    >
                       <Ionicons name={summit.icon as any} size={20} color={summit.color} />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={[styles.summitTitle, { color: colors.text }]}>{summit.title}</Text>
-                      <View style={[styles.summitBadge, { backgroundColor: isDark ? colors.surfaceSubtle : '#EEF2FF' }]}>
-                        <Text style={[styles.summitBadgeText, { color: summit.color }]}>{summit.badge}</Text>
+                      <Text style={[styles.summitTitle, { color: colors.text }]}>
+                        {summit.title}
+                      </Text>
+                      <View
+                        style={[
+                          styles.summitBadge,
+                          { backgroundColor: isDark ? colors.surfaceSubtle : '#EEF2FF' },
+                        ]}
+                      >
+                        <Text style={[styles.summitBadgeText, { color: summit.color }]}>
+                          {summit.badge}
+                        </Text>
                       </View>
                     </View>
                   </View>
                   <View style={styles.partnerRow}>
                     <Ionicons name="checkmark-circle" size={14} color="#10B981" />
-                    <Text style={[styles.summitPartnerText, { color: colors.text }]}>{summit.partner}</Text>
+                    <Text style={[styles.summitPartnerText, { color: colors.text }]}>
+                      {summit.partner}
+                    </Text>
                   </View>
-                  <Text style={[styles.summitDesc, { color: colors.textMuted }]}>{summit.desc}</Text>
+                  <Text style={[styles.summitDesc, { color: colors.textMuted }]}>
+                    {summit.desc}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -567,9 +760,19 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
           {/* TAB 4: LEADERSHIP & FOUNDERS */}
           {activeTab === 'leadership' && (
             <View style={styles.sectionContainer}>
-              <View style={[styles.verifiedHeaderBanner, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.12)' : '#ECFDF5', borderColor: '#10B981' }]}>
+              <View
+                style={[
+                  styles.verifiedHeaderBanner,
+                  {
+                    backgroundColor: isDark ? 'rgba(16, 185, 129, 0.12)' : '#ECFDF5',
+                    borderColor: '#10B981',
+                  },
+                ]}
+              >
                 <Ionicons name="shield-checkmark" size={18} color="#10B981" />
-                <Text style={[styles.verifiedHeaderText, { color: isDark ? '#34D399' : '#065F46' }]}>
+                <Text
+                  style={[styles.verifiedHeaderText, { color: isDark ? '#34D399' : '#065F46' }]}
+                >
                   {isBangla
                     ? 'অফিসিয়াল পোর্টাল (thrivingskill.com) থেকে ভেরিফাইড পরিচালনা পর্ষদ ও ফাউন্ডার্স'
                     : 'Official Verified Leadership & Founders from thrivingskill.com'}
@@ -577,13 +780,17 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
               </View>
 
               <Text style={[styles.subheading, { color: colors.textMuted }]}>
-                {isBangla ? 'থ্রাইভিং স্কিলস লিমিটেডের প্রতিষ্ঠাতা ও পরিচালনা পর্ষদ:' : 'Executive Leadership & Board of Directors:'}
+                {isBangla
+                  ? 'থ্রাইভিং স্কিলস লিমিটেডের প্রতিষ্ঠাতা ও পরিচালনা পর্ষদ:'
+                  : 'Executive Leadership & Board of Directors:'}
               </Text>
 
               {[
                 {
                   name: 'Md. Abdullah Al Mahmud',
-                  title: isBangla ? 'প্রতিষ্ঠাতা ও প্রধান নির্বাহী কর্মকর্তা (সিইও)' : 'Founder & Chief Executive Officer (CEO)',
+                  title: isBangla
+                    ? 'প্রতিষ্ঠাতা ও প্রধান নির্বাহী কর্মকর্তা (সিইও)'
+                    : 'Founder & Chief Executive Officer (CEO)',
                   badge: isBangla ? 'প্রতিষ্ঠাতা ও সিইও' : 'Founder & CEO',
                   isFounder: true,
                   desc: isBangla
@@ -603,39 +810,48 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                     ? 'কর্পোরেট সুশাসন, প্রাতিষ্ঠানিক কৌশল ও জাতীয় মানবসম্পদ উন্নয়নে নিবেদিতপ্রাণ দূরদর্শী উদ্যোক্তা ও প্রতিষ্ঠাতা চেয়ারম্যান।'
                     : 'Senior corporate governance leader, institutional strategist, and founder advocating for sustainable lifelong learning ecosystems and workforce empowerment.',
                   localAvatar: FOUNDER_IMAGES.syed_nuruddin_ahmed,
-                  webAvatar: 'https://thrivingskill.com/wp-content/uploads/2015/11/WhatsApp-Image-2020-10-28-at-2.09.53-PM.jpeg',
+                  webAvatar:
+                    'https://thrivingskill.com/wp-content/uploads/2015/11/WhatsApp-Image-2020-10-28-at-2.09.53-PM.jpeg',
                   profileUrl: 'https://thrivingskill.com/our_team/syed_nuruddin_ahmed/',
                   linkedin: undefined,
                 },
                 {
                   name: 'Yusuf Iqbal',
-                  title: isBangla ? 'কর্পোরেট একাউন্ট্যান্ট ও অপারেশনস' : 'Corporate Accountant & Operations',
+                  title: isBangla
+                    ? 'কর্পোরেট একাউন্ট্যান্ট ও অপারেশনস'
+                    : 'Corporate Accountant & Operations',
                   badge: 'Finance & Operations',
                   isFounder: false,
                   desc: isBangla
                     ? 'প্রাতিষ্ঠানিক আর্থিক পরিকল্পনা, প্রাতিষ্ঠানিক অডিট, বাণিজ্য সংগঠন ও জাতীয় বিশ্ববিদ্যালয় পার্টনারশিপ সমন্বয়কারী।'
                     : 'Leading institutional fiscal planning, university alliances, chambers of commerce partnerships, and operational financial compliance.',
                   localAvatar: FOUNDER_IMAGES.yusuf_iqbal,
-                  webAvatar: 'https://thrivingskill.com/wp-content/uploads/2023/06/Yusuf-Iqbal.jpeg',
+                  webAvatar:
+                    'https://thrivingskill.com/wp-content/uploads/2023/06/Yusuf-Iqbal.jpeg',
                   profileUrl: 'https://thrivingskill.com/our_team/yusuf-iqbal/',
                   linkedin: undefined,
                 },
                 {
                   name: 'Sayed Sirajul Islam',
-                  title: isBangla ? 'সিনিয়র অ্যাডমিন ও অ্যাকাউন্টস অফিসার' : 'Senior Admin & Accounts Officer',
+                  title: isBangla
+                    ? 'সিনিয়র অ্যাডমিন ও অ্যাকাউন্টস অফিসার'
+                    : 'Senior Admin & Accounts Officer',
                   badge: isBangla ? 'অ্যাডমিন ও অ্যাকাউন্টস' : 'Admin & Accounts',
                   isFounder: false,
                   desc: isBangla
                     ? 'থ্রাইভিং স্কিলস লিমিটেডের প্রশাসনিক কার্যক্রম, করপোরেট কমপ্লায়েন্স, লজিস্টিকস ও অ্যাকাউন্টস অপারেশনস ব্যবস্থাপনা।'
                     : 'Heading administrative operations, corporate compliance, office administration, logistics, and accounts management at Thriving Skills Limited.',
                   localAvatar: undefined,
-                  webAvatar: 'https://thrivingskill.com/wp-content/themes/eduma/images/demo_images/demo_image.jpg',
+                  webAvatar:
+                    'https://thrivingskill.com/wp-content/themes/eduma/images/demo_images/demo_image.jpg',
                   profileUrl: 'https://thrivingskill.com/our_team/sayed-sirajul-islam/',
                   linkedin: 'https://www.linkedin.com/in/islam-syed/',
                 },
                 {
                   name: 'Md. Tareq Siddiqui',
-                  title: isBangla ? 'সিনিয়র এক্সিকিউটিভ, প্রোডাকশন' : 'Senior Executive, Production & Content Strategy',
+                  title: isBangla
+                    ? 'সিনিয়র এক্সিকিউটিভ, প্রোডাকশন'
+                    : 'Senior Executive, Production & Content Strategy',
                   badge: 'Production & Media',
                   isFounder: false,
                   desc: isBangla
@@ -648,7 +864,9 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                 },
                 {
                   name: 'Md: Abdulla Al Noman',
-                  title: isBangla ? 'ওয়েব ডেভেলপার ও প্ল্যাটফর্ম অ্যাডমিনিস্ট্রেটর' : 'Web Developer & Platform Administrator',
+                  title: isBangla
+                    ? 'ওয়েব ডেভেলপার ও প্ল্যাটফর্ম অ্যাডমিনিস্ট্রেটর'
+                    : 'Web Developer & Platform Administrator',
                   badge: 'Platform Engineering',
                   isFounder: false,
                   desc: isBangla
@@ -666,7 +884,11 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                     styles.leaderCard,
                     {
                       backgroundColor: colors.surfaceCard,
-                      borderColor: leader.isFounder ? (isDark ? 'rgba(227, 66, 52, 0.4)' : 'rgba(227, 66, 52, 0.25)') : colors.border,
+                      borderColor: leader.isFounder
+                        ? isDark
+                          ? 'rgba(227, 66, 52, 0.4)'
+                          : 'rgba(227, 66, 52, 0.25)'
+                        : colors.border,
                       borderWidth: leader.isFounder ? 1.5 : 1,
                     },
                   ]}
@@ -698,8 +920,12 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                             styles.leaderBadgePill,
                             {
                               backgroundColor: leader.isFounder
-                                ? (isDark ? 'rgba(227, 66, 52, 0.2)' : 'rgba(227, 66, 52, 0.12)')
-                                : (isDark ? '#064E3B' : '#E0F2FE'),
+                                ? isDark
+                                  ? 'rgba(227, 66, 52, 0.2)'
+                                  : 'rgba(227, 66, 52, 0.12)'
+                                : isDark
+                                  ? '#064E3B'
+                                  : '#E0F2FE',
                             },
                           ]}
                         >
@@ -707,7 +933,11 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                             style={[
                               styles.leaderBadgePillText,
                               {
-                                color: leader.isFounder ? '#E34234' : (isDark ? '#6EE7B7' : '#0369A1'),
+                                color: leader.isFounder
+                                  ? '#E34234'
+                                  : isDark
+                                    ? '#6EE7B7'
+                                    : '#0369A1',
                               },
                             ]}
                           >
@@ -717,14 +947,21 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                       )}
                     </View>
 
-                    <Text style={[styles.leaderTitle, { color: colors.primary }]}>{leader.title}</Text>
-                    <Text style={[styles.leaderDesc, { color: colors.textMuted }]}>{leader.desc}</Text>
+                    <Text style={[styles.leaderTitle, { color: colors.primary }]}>
+                      {leader.title}
+                    </Text>
+                    <Text style={[styles.leaderDesc, { color: colors.textMuted }]}>
+                      {leader.desc}
+                    </Text>
 
                     {/* Official Verification Links */}
                     <View style={styles.leaderActionsRow}>
                       {leader.profileUrl && (
                         <TouchableOpacity
-                          style={[styles.leaderMiniBtn, { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#F1F5F9' }]}
+                          style={[
+                            styles.leaderMiniBtn,
+                            { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : '#F1F5F9' },
+                          ]}
                           onPress={() => handleOpenUrl(leader.profileUrl)}
                           activeOpacity={0.7}
                           accessibilityRole="button"
@@ -739,14 +976,19 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                       )}
                       {leader.linkedin && (
                         <TouchableOpacity
-                          style={[styles.leaderMiniBtn, { backgroundColor: isDark ? 'rgba(10, 102, 194, 0.15)' : '#EFF6FF' }]}
+                          style={[
+                            styles.leaderMiniBtn,
+                            { backgroundColor: isDark ? 'rgba(10, 102, 194, 0.15)' : '#EFF6FF' },
+                          ]}
                           onPress={() => handleOpenUrl(leader.linkedin)}
                           activeOpacity={0.7}
                           accessibilityRole="button"
                           accessibilityLabel={`Open LinkedIn profile for ${leader.name}`}
                         >
                           <Ionicons name="logo-linkedin" size={12} color="#0A66C2" />
-                          <Text style={[styles.leaderMiniBtnText, { color: '#0A66C2' }]}>LinkedIn</Text>
+                          <Text style={[styles.leaderMiniBtnText, { color: '#0A66C2' }]}>
+                            LinkedIn
+                          </Text>
                         </TouchableOpacity>
                       )}
                     </View>
@@ -759,7 +1001,12 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
           {/* TAB 5: CONTACT & COORDINATES */}
           {activeTab === 'contact' && (
             <View style={styles.sectionContainer}>
-              <View style={[styles.contactCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+              <View
+                style={[
+                  styles.contactCard,
+                  { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                ]}
+              >
                 <Text style={[styles.contactCardHeader, { color: colors.text }]}>
                   {isBangla ? 'অফিসিয়াল যোগাযোগ ও সাপোর্ট' : 'Official Coordinates & Support'}
                 </Text>
@@ -771,14 +1018,21 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                   accessibilityRole="button"
                   accessibilityLabel="Call direct helpline 01312 100288"
                 >
-                  <View style={[styles.contactIconBg, { backgroundColor: isDark ? 'rgba(37, 99, 235, 0.18)' : '#EFF6FF' }]}>
+                  <View
+                    style={[
+                      styles.contactIconBg,
+                      { backgroundColor: isDark ? 'rgba(37, 99, 235, 0.18)' : '#EFF6FF' },
+                    ]}
+                  >
                     <Ionicons name="call" size={18} color={isDark ? '#60A5FA' : '#2563EB'} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.contactLabel, { color: colors.textMuted }]}>
                       {isBangla ? 'অফিসিয়াল হটলাইন' : 'Direct Helpline'}
                     </Text>
-                    <Text style={[styles.contactValue, { color: colors.primary }]}>01312 100288</Text>
+                    <Text style={[styles.contactValue, { color: colors.primary }]}>
+                      01312 100288
+                    </Text>
                   </View>
                   <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
                 </TouchableOpacity>
@@ -790,14 +1044,21 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                   accessibilityRole="button"
                   accessibilityLabel="Open official WhatsApp +880 1312-100288"
                 >
-                  <View style={[styles.contactIconBg, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.18)' : '#ECFDF5' }]}>
+                  <View
+                    style={[
+                      styles.contactIconBg,
+                      { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.18)' : '#ECFDF5' },
+                    ]}
+                  >
                     <Ionicons name="logo-whatsapp" size={18} color="#10B981" />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.contactLabel, { color: colors.textMuted }]}>
                       {isBangla ? 'হোয়াটসঅ্যাপ সাপোর্ট' : 'WhatsApp Official Chat'}
                     </Text>
-                    <Text style={[styles.contactValue, { color: '#10B981' }]}>+880 1312-100288</Text>
+                    <Text style={[styles.contactValue, { color: '#10B981' }]}>
+                      +880 1312-100288
+                    </Text>
                   </View>
                   <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
                 </TouchableOpacity>
@@ -809,14 +1070,21 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                   accessibilityRole="button"
                   accessibilityLabel="Send email to info@thrivingskill.com"
                 >
-                  <View style={[styles.contactIconBg, { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.16)' : '#FAF5FF' }]}>
+                  <View
+                    style={[
+                      styles.contactIconBg,
+                      { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.16)' : '#FAF5FF' },
+                    ]}
+                  >
                     <Ionicons name="mail" size={18} color="#8B5CF6" />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.contactLabel, { color: colors.textMuted }]}>
                       {isBangla ? 'ইমেইল যোগাযোগ' : 'Inquiries & Support Email'}
                     </Text>
-                    <Text style={[styles.contactValue, { color: colors.text }]}>info@thrivingskill.com</Text>
+                    <Text style={[styles.contactValue, { color: colors.text }]}>
+                      info@thrivingskill.com
+                    </Text>
                   </View>
                   <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
                 </TouchableOpacity>
@@ -828,14 +1096,21 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                   accessibilityRole="button"
                   accessibilityLabel="Open official portal on web"
                 >
-                  <View style={[styles.contactIconBg, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.16)' : '#FEF2F2' }]}>
+                  <View
+                    style={[
+                      styles.contactIconBg,
+                      { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.16)' : '#FEF2F2' },
+                    ]}
+                  >
                     <Ionicons name="globe-outline" size={18} color="#EF4444" />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.contactLabel, { color: colors.textMuted }]}>
                       {isBangla ? 'অফিসিয়াল ওয়েবসাইট' : 'Official Portal'}
                     </Text>
-                    <Text style={[styles.contactValue, { color: colors.text }]}>{Env.SITE_URL.replace(/^https?:\/\//, '')}</Text>
+                    <Text style={[styles.contactValue, { color: colors.text }]}>
+                      {Env.SITE_URL.replace(/^https?:\/\//, '')}
+                    </Text>
                   </View>
                   <Ionicons name="open-outline" size={16} color={colors.textMuted} />
                 </TouchableOpacity>
@@ -881,7 +1156,10 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                 ].map((social, idx) => (
                   <TouchableOpacity
                     key={idx}
-                    style={[styles.socialPill, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
+                    style={[
+                      styles.socialPill,
+                      { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                    ]}
                     onPress={() => handleOpenUrl(social.url)}
                     accessibilityRole="button"
                     accessibilityLabel={`Visit Thriving Skills on ${social.name}`}
@@ -893,7 +1171,12 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
               </View>
 
               {/* LEGAL & COPYRIGHT POLICIES */}
-              <View style={[styles.legalAccessCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+              <View
+                style={[
+                  styles.legalAccessCard,
+                  { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                ]}
+              >
                 <View style={styles.legalAccessHeader}>
                   <Ionicons name="shield-checkmark" size={18} color={colors.primary} />
                   <Text style={[styles.legalAccessTitle, { color: colors.text }]}>
@@ -931,7 +1214,9 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                     accessibilityLabel="Open Privacy Policy"
                   >
                     <Ionicons name="lock-closed-outline" size={14} color={colors.secondary} />
-                    <Text style={[styles.legalBtnText, { color: colors.secondary }]}>Privacy Policy</Text>
+                    <Text style={[styles.legalBtnText, { color: colors.secondary }]}>
+                      Privacy Policy
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -940,7 +1225,8 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
               <View style={styles.copyrightBlock}>
                 <Ionicons name="ribbon" size={16} color="#E34234" />
                 <Text style={[styles.copyrightNoticeText, { color: colors.textMuted }]}>
-                  © 2026 Thriving <Text style={{ color: '#E34234' }}>Skills</Text> Limited. All Rights Reserved.{'\n'}
+                  © 2026 Thriving <Text style={{ color: '#E34234' }}>Skills</Text> Limited. All
+                  Rights Reserved.{'\n'}
                   Registered under Companies Act of Bangladesh • Gulshan-2, Dhaka
                 </Text>
               </View>

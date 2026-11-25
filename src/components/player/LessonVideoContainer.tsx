@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  Linking,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Linking } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { WebView } from 'react-native-webview';
 import { useTheme } from '../../context/ThemeContext';
@@ -141,7 +134,9 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
     >
       {!canPlayVideo ? (
         /* LOCKED PAYWALL STATE */
-        <View style={[styles.lockedCard, { backgroundColor: isDark ? colors.surfaceCard : '#102F53' }]}>
+        <View
+          style={[styles.lockedCard, { backgroundColor: isDark ? colors.surfaceCard : '#102F53' }]}
+        >
           <View style={styles.lockedIconBg}>
             <Ionicons name="lock-closed" size={34} color="#E34234" />
           </View>
@@ -185,7 +180,12 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
         </View>
       ) : currentLesson.type === 'quiz' ? (
         /* DEDICATED QUIZ HERO FRAME */
-        <View style={[styles.quizHeroCard, { backgroundColor: isDark ? colors.surfaceCard : '#102F53' }]}>
+        <View
+          style={[
+            styles.quizHeroCard,
+            { backgroundColor: isDark ? colors.surfaceCard : '#102F53' },
+          ]}
+        >
           <View style={styles.quizHeroBadge}>
             <Ionicons name="help-circle" size={32} color="#E34234" />
           </View>
@@ -198,8 +198,8 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
                 ? 'কুইজ সম্পন্ন • জ্ঞান অর্জন সফলভাবে যাচাই করা হয়েছে'
                 : 'Quiz Passed • Knowledge Milestone Achieved'
               : isBangla
-              ? 'অধ্যায়ভিত্তিক মূল্যায়ন পরীক্ষা • পাস মার্ক ৭০%'
-              : 'Chapter Assessment Quiz • 70% to Pass'}
+                ? 'অধ্যায়ভিত্তিক মূল্যায়ন পরীক্ষা • পাস মার্ক ৭০%'
+                : 'Chapter Assessment Quiz • 70% to Pass'}
           </Text>
           <TouchableOpacity
             style={[
@@ -211,24 +211,15 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Open Chapter Quiz"
           >
-            <Ionicons
-              name={isLessonCompleted ? 'refresh' : 'play'}
-              size={16}
-              color="#FFFFFF"
-            />
-            <Text
-              style={[
-                styles.quizHeroBtnText,
-                { color: '#FFFFFF' },
-              ]}
-            >
+            <Ionicons name={isLessonCompleted ? 'refresh' : 'play'} size={16} color="#FFFFFF" />
+            <Text style={[styles.quizHeroBtnText, { color: '#FFFFFF' }]}>
               {isLessonCompleted
                 ? isBangla
                   ? 'পুনরায় পরীক্ষা দিন'
                   : 'Retake Chapter Quiz'
                 : isBangla
-                ? 'কুইজ শুরু করুন'
-                : 'Start Chapter Quiz'}
+                  ? 'কুইজ শুরু করুন'
+                  : 'Start Chapter Quiz'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -254,11 +245,39 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
         />
       ) : zoomMeetingUrl ? (
         /* LIVE COHORT MASTERCLASS: Direct Zoom Session Launcher */
-        <View style={[styles.playerContainer, { backgroundColor: '#102F53', justifyContent: 'center', alignItems: 'center', padding: 20 }]}>
-          <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: '#2D8CFF25', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+        <View
+          style={[
+            styles.playerContainer,
+            {
+              backgroundColor: '#102F53',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: 20,
+            },
+          ]}
+        >
+          <View
+            style={{
+              width: 52,
+              height: 52,
+              borderRadius: 26,
+              backgroundColor: '#2D8CFF25',
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginBottom: 10,
+            }}
+          >
             <Ionicons name="videocam" size={26} color="#2D8CFF" />
           </View>
-          <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '800', textAlign: 'center', marginBottom: 4 }}>
+          <Text
+            style={{
+              color: '#FFFFFF',
+              fontSize: 16,
+              fontWeight: '800',
+              textAlign: 'center',
+              marginBottom: 4,
+            }}
+          >
             {isBangla ? 'লাইভ জুম মাস্টারক্লাস' : 'Live Cohort Masterclass'}
           </Text>
           <TouchableOpacity
@@ -342,7 +361,9 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
                         }
                       }}
                       accessibilityRole="button"
-                      accessibilityLabel={isBangla ? 'ব্রাউজারে ভিডিও চালু করুন' : 'Watch in Browser / App'}
+                      accessibilityLabel={
+                        isBangla ? 'ব্রাউজারে ভিডিও চালু করুন' : 'Watch in Browser / App'
+                      }
                     >
                       <Ionicons name="open-outline" size={14} color="#102F53" />
                       <Text style={styles.videoFallbackBtnText}>
@@ -409,7 +430,9 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
                     ]}
                     onPress={onToggleFullscreen}
                     accessibilityRole="button"
-                    accessibilityLabel={isFullscreen ? 'Exit landscape mode' : 'Enter landscape mode'}
+                    accessibilityLabel={
+                      isFullscreen ? 'Exit landscape mode' : 'Enter landscape mode'
+                    }
                   >
                     <Ionicons
                       name={isFullscreen ? 'contract-outline' : 'scan-outline'}
@@ -417,7 +440,13 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
                       color="#FFFFFF"
                     />
                     <Text style={styles.landscapePillText}>
-                      {isFullscreen ? (isBangla ? 'প্রস্থান' : 'Exit') : (isBangla ? 'ল্যান্ডস্কেপ' : 'Landscape')}
+                      {isFullscreen
+                        ? isBangla
+                          ? 'প্রস্থান'
+                          : 'Exit'
+                        : isBangla
+                          ? 'ল্যান্ডস্কেপ'
+                          : 'Landscape'}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -429,7 +458,9 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
                     style={styles.unlockPill}
                     onPress={onToggleScreenLock}
                     accessibilityRole="button"
-                    accessibilityLabel={isBangla ? 'ভিডিও কন্ট্রোল আনলক করুন' : 'Unlock video controls'}
+                    accessibilityLabel={
+                      isBangla ? 'ভিডিও কন্ট্রোল আনলক করুন' : 'Unlock video controls'
+                    }
                   >
                     <Ionicons name="lock-closed" size={18} color="#E34234" />
                     <Text style={styles.unlockPillText}>
@@ -453,7 +484,9 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
                   },
                 ]}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <View
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}
+                >
                   <Ionicons name="play-forward-circle" size={18} color="#6366F1" />
                   <Text style={styles.autoplayBadgeText}>
                     {isBangla ? 'স্বয়ংক্রিয় পরবর্তী পাঠ শুরু হচ্ছে' : 'CONTINUOUS AUTO-PLAY'}
@@ -481,7 +514,9 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
                     style={styles.autoplayPlayNowBtn}
                     onPress={onNextLesson}
                     accessibilityRole="button"
-                    accessibilityLabel={isBangla ? 'পরবর্তী লেসন এখনই চালু করুন' : 'Play next lesson now'}
+                    accessibilityLabel={
+                      isBangla ? 'পরবর্তী লেসন এখনই চালু করুন' : 'Play next lesson now'
+                    }
                   >
                     <Ionicons name="play" size={14} color="#FFFFFF" />
                     <Text style={styles.autoplayPlayNowText}>

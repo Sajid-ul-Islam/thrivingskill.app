@@ -86,8 +86,15 @@ export const QuizModal: React.FC<QuizModalProps> = ({ visible, questions, onClos
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
             <View style={styles.headerLeft}>
-              <Ionicons name="help-circle" size={22} color={colors.secondary} style={{ flexShrink: 0 }} />
-              <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>Knowledge Check</Text>
+              <Ionicons
+                name="help-circle"
+                size={22}
+                color={colors.secondary}
+                style={{ flexShrink: 0 }}
+              />
+              <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
+                Knowledge Check
+              </Text>
             </View>
             <TouchableOpacity
               onPress={() => {
@@ -117,16 +124,10 @@ export const QuizModal: React.FC<QuizModalProps> = ({ visible, questions, onClos
                   ]}
                 >
                   <Ionicons
-                    name={
-                      score >= Math.ceil(questions.length * 0.7)
-                        ? 'trophy'
-                        : 'alert-circle'
-                    }
+                    name={score >= Math.ceil(questions.length * 0.7) ? 'trophy' : 'alert-circle'}
                     size={48}
                     color={
-                      score >= Math.ceil(questions.length * 0.7)
-                        ? colors.primary
-                        : colors.danger
+                      score >= Math.ceil(questions.length * 0.7) ? colors.primary : colors.danger
                     }
                   />
                 </View>
@@ -143,7 +144,10 @@ export const QuizModal: React.FC<QuizModalProps> = ({ visible, questions, onClos
 
                 <View style={styles.resultActions}>
                   <TouchableOpacity
-                    style={[styles.retryBtn, { borderColor: colors.border, backgroundColor: colors.surfaceSubtle }]}
+                    style={[
+                      styles.retryBtn,
+                      { borderColor: colors.border, backgroundColor: colors.surfaceSubtle },
+                    ]}
                     onPress={handleReset}
                     accessibilityRole="button"
                     accessibilityLabel="Try quiz again"
@@ -157,7 +161,9 @@ export const QuizModal: React.FC<QuizModalProps> = ({ visible, questions, onClos
                     accessibilityRole="button"
                     accessibilityLabel="Continue course"
                   >
-                    <Text style={[styles.doneText, { color: colors.onPrimary }]}>Continue Course</Text>
+                    <Text style={[styles.doneText, { color: colors.onPrimary }]}>
+                      Continue Course
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -169,7 +175,9 @@ export const QuizModal: React.FC<QuizModalProps> = ({ visible, questions, onClos
                     Question {currentIndex + 1} of {questions.length}
                   </Text>
                   <View style={[styles.scoreTag, { backgroundColor: colors.surfaceSubtle }]}>
-                    <Text style={[styles.scoreText, { color: colors.primary }]}>Score: {score}</Text>
+                    <Text style={[styles.scoreText, { color: colors.primary }]}>
+                      Score: {score}
+                    </Text>
                   </View>
                 </View>
 
@@ -275,9 +283,7 @@ export const QuizModal: React.FC<QuizModalProps> = ({ visible, questions, onClos
                           },
                         ]}
                       >
-                        {selectedOption === currentQ.correctAnswerIndex
-                          ? 'Correct!'
-                          : 'Incorrect'}
+                        {selectedOption === currentQ.correctAnswerIndex ? 'Correct!' : 'Incorrect'}
                       </Text>
                     </View>
                     <Text style={[styles.explanationBody, { color: colors.text }]}>
@@ -316,7 +322,9 @@ export const QuizModal: React.FC<QuizModalProps> = ({ visible, questions, onClos
                       style={[styles.primaryActionBtn, { backgroundColor: colors.primary }]}
                       onPress={handleNext}
                       accessibilityRole="button"
-                      accessibilityLabel={currentIndex < questions.length - 1 ? 'Next question' : 'See results'}
+                      accessibilityLabel={
+                        currentIndex < questions.length - 1 ? 'Next question' : 'See results'
+                      }
                     >
                       <Text style={[styles.actionBtnText, { color: colors.onPrimary }]}>
                         {currentIndex < questions.length - 1 ? 'Next Question →' : 'See Results'}

@@ -59,9 +59,11 @@ export class PostsService {
         return {
           id: p.id,
           title: cleanHtml(p.title?.rendered || 'Skill Article'),
-          excerpt: cleanHtml(p.excerpt?.rendered || '').length > 160
-            ? `${cleanHtml(p.excerpt?.rendered || '').slice(0, 160)}...`
-            : cleanHtml(p.excerpt?.rendered || '') || 'Industry perspectives and career development insights.',
+          excerpt:
+            cleanHtml(p.excerpt?.rendered || '').length > 160
+              ? `${cleanHtml(p.excerpt?.rendered || '').slice(0, 160)}...`
+              : cleanHtml(p.excerpt?.rendered || '') ||
+                'Industry perspectives and career development insights.',
           content: cleanHtml(p.content?.rendered || ''),
           date: p.date ? p.date.split('T')[0] : '',
           link: p.link || 'https://thrivingskill.com',

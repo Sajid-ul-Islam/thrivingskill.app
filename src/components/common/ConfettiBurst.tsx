@@ -128,11 +128,7 @@ export const ConfettiBurst: React.FC<ConfettiBurstProps> = ({
                 borderRadius: p.isCircle ? p.size / 2 : 2,
                 backgroundColor: p.color,
                 opacity: p.opacity,
-                transform: [
-                  { translateX: p.x },
-                  { translateY: p.y },
-                  { rotate: spin },
-                ],
+                transform: [{ translateX: p.x }, { translateY: p.y }, { rotate: spin }],
               },
             ]}
           />

@@ -44,19 +44,19 @@ export function parseBdtPrice(price: any, rendered?: string): { bdt: number; usd
 export const CATEGORY_COLOR_MAP: Record<string, { color: string; icon: string }> = {
   'generative-ai': { color: '#8B5CF6', icon: 'sparkles' },
   '4ir': { color: '#06B6D4', icon: 'hardware-chip' },
-  'excel': { color: '#10B981', icon: 'grid' },
+  excel: { color: '#10B981', icon: 'grid' },
   'data-science': { color: '#3B82F6', icon: 'analytics' },
-  'business': { color: '#F59E0B', icon: 'briefcase' },
-  'finance': { color: '#EC4899', icon: 'cash' },
+  business: { color: '#F59E0B', icon: 'briefcase' },
+  finance: { color: '#EC4899', icon: 'cash' },
   'supply-chain': { color: '#14B8A6', icon: 'cube' },
-  'leadership': { color: '#6366F1', icon: 'people' },
-  'research': { color: '#0EA5E9', icon: 'flask' },
+  leadership: { color: '#6366F1', icon: 'people' },
+  research: { color: '#0EA5E9', icon: 'flask' },
   'job-seekers': { color: '#F97316', icon: 'ribbon' },
 };
 
 export function getCategoryTheme(slug: string, name: string) {
-  const key = Object.keys(CATEGORY_COLOR_MAP).find((k) =>
-    slug.toLowerCase().includes(k) || name.toLowerCase().includes(k)
+  const key = Object.keys(CATEGORY_COLOR_MAP).find(
+    (k) => slug.toLowerCase().includes(k) || name.toLowerCase().includes(k)
   );
   if (key && CATEGORY_COLOR_MAP[key]) {
     return CATEGORY_COLOR_MAP[key];
@@ -81,12 +81,18 @@ export function transformWpCourse(raw: any): Course {
   const title = cleanHtml(raw.name || raw.title || 'Untitled Course');
   const slug = raw.slug || id;
   const excerpt = cleanHtml(raw.excerpt || raw.content || '');
-  const description = raw.content ? cleanHtml(raw.content) : excerpt || 'Comprehensive professional training course on Thriving Skills.';
-  
+  const description = raw.content
+    ? cleanHtml(raw.content)
+    : excerpt || 'Comprehensive professional training course on Thriving Skills.';
+
   const priceData = parseBdtPrice(raw.price, raw.price_rendered);
-  const origPriceData = parseBdtPrice(raw.origin_price || raw.regular_price, raw.origin_price_rendered);
+  const origPriceData = parseBdtPrice(
+    raw.origin_price || raw.regular_price,
+    raw.origin_price_rendered
+  );
   const bdtPrice = priceData.bdt > 0 ? priceData.bdt : 0;
-  const bdtOrigPrice = origPriceData.bdt > bdtPrice ? origPriceData.bdt : Math.round(bdtPrice * 1.5) || 1200;
+  const bdtOrigPrice =
+    origPriceData.bdt > bdtPrice ? origPriceData.bdt : Math.round(bdtPrice * 1.5) || 1200;
 
   // Image / thumbnail
   let thumbnail = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=800';
@@ -118,17 +124,24 @@ export function transformWpCourse(raw: any): Course {
     const textToCheck = `${title} ${slug} ${excerpt}`.toLowerCase();
     if (textToCheck.match(/bank|financ|account|tax|vat|audit|cfo|investment/)) {
       primaryCatSlug = 'finance-accounting-legal';
-    } else if (textToCheck.match(/generative|prompt|gpt|llm|midjourney|claude|copilot|ai /) || textToCheck.includes(' ai')) {
+    } else if (
+      textToCheck.match(/generative|prompt|gpt|llm|midjourney|claude|copilot|ai /) ||
+      textToCheck.includes(' ai')
+    ) {
       primaryCatSlug = 'generative-ai';
     } else if (textToCheck.match(/excel|spreadsheet|vba|pivot/)) {
       primaryCatSlug = 'microsoft-excel-courses';
-    } else if (textToCheck.match(/data|python|power bi|tableau|analytics|sql|machine learning|deep learning/)) {
+    } else if (
+      textToCheck.match(/data|python|power bi|tableau|analytics|sql|machine learning|deep learning/)
+    ) {
       primaryCatSlug = 'data_science';
     } else if (textToCheck.match(/leader|manage|executive|c-suite|supervis/)) {
       primaryCatSlug = 'leadership-management';
     } else if (textToCheck.match(/market|sales|branding|seo|digital marketing|ad |copywriting/)) {
       primaryCatSlug = 'sales-marketing';
-    } else if (textToCheck.match(/supply chain|procurement|logistics|inventory|warehouse|contract/)) {
+    } else if (
+      textToCheck.match(/supply chain|procurement|logistics|inventory|warehouse|contract/)
+    ) {
       primaryCatSlug = 'supply-chain-management';
     } else if (textToCheck.match(/hr|human resource|talent|recruit|payroll|kpi/)) {
       primaryCatSlug = 'human-resource-management';
@@ -153,9 +166,12 @@ export function transformWpCourse(raw: any): Course {
     name: cleanHtml(instructorRaw.name || 'Thriving Skills Mentor'),
     title: 'Lead Industry Specialist',
     company: 'Thriving Skills Bangladesh',
-    avatar: getSafeImageUri(instructorRaw.avatar) || 'https://secure.gravatar.com/avatar/?d=mp&s=300',
-    bio: cleanHtml(instructorRaw.bio || 'Experienced practitioner and instructor at Thriving Skills.'),
-    rating: 4.8 + ((seed % 3) / 10),
+    avatar:
+      getSafeImageUri(instructorRaw.avatar) || 'https://secure.gravatar.com/avatar/?d=mp&s=300',
+    bio: cleanHtml(
+      instructorRaw.bio || 'Experienced practitioner and instructor at Thriving Skills.'
+    ),
+    rating: 4.8 + (seed % 3) / 10,
     studentsCount: 200 + (seed % 650),
     coursesCount: 5,
   };
@@ -188,13 +204,18 @@ export function transformWpCourse(raw: any): Course {
               );
           return {
             id: String(item.id || `les-${secIdx}-${itemIdx}`),
-            title: cleanHtml(item.title || (isQuiz ? `Quiz: Module ${secIdx + 1}` : `Lesson ${itemIdx + 1}`)),
+            title: cleanHtml(
+              item.title || (isQuiz ? `Quiz: Module ${secIdx + 1}` : `Lesson ${itemIdx + 1}`)
+            ),
             duration: item.duration || videoData.duration || (isQuiz ? '10:00' : '15:00'),
             videoUrl: videoData.videoUrl,
             videoIntro: videoData.videoIntro,
             videoType: videoData.videoType,
             isFreePreview: Boolean(item.preview) || (!isQuiz && itemIdx === 0),
-            summary: item.summary || videoData.summary || `Interactive lesson covering ${item.title || 'course competencies'}.`,
+            summary:
+              item.summary ||
+              videoData.summary ||
+              `Interactive lesson covering ${item.title || 'course competencies'}.`,
             type: isQuiz ? ('quiz' as const) : ('lesson' as const),
             quizId: isQuiz ? String(item.id) : undefined,
           };
@@ -219,9 +240,21 @@ export function transformWpCourse(raw: any): Course {
     });
 
     const fallbackLessonsMod2 = [
-      { id: `les-${id}-4`, title: 'Hands-on Execution & Real-world Workflows', isFreePreview: false },
-      { id: `les-${id}-5`, title: 'Industry Best Practices & Troubleshooting', isFreePreview: false },
-      { id: `les-${id}-6`, title: 'Final Project Evaluation & Certification', isFreePreview: false },
+      {
+        id: `les-${id}-4`,
+        title: 'Hands-on Execution & Real-world Workflows',
+        isFreePreview: false,
+      },
+      {
+        id: `les-${id}-5`,
+        title: 'Industry Best Practices & Troubleshooting',
+        isFreePreview: false,
+      },
+      {
+        id: `les-${id}-6`,
+        title: 'Final Project Evaluation & Certification',
+        isFreePreview: false,
+      },
     ].map((l, idx) => {
       const v = resolveLessonVideoData({ id, title, category: catId }, l, idx + 3);
       return {
@@ -253,7 +286,11 @@ export function transformWpCourse(raw: any): Course {
   let badge: Course['badge'] = undefined;
   if (raw.on_sale) badge = 'Trending';
   if (title.toLowerCase().includes('bundle')) badge = 'Special Bundle';
-  if (title.toLowerCase().includes('ai') || title.toLowerCase().includes('gemini') || title.toLowerCase().includes('chatgpt')) {
+  if (
+    title.toLowerCase().includes('ai') ||
+    title.toLowerCase().includes('gemini') ||
+    title.toLowerCase().includes('chatgpt')
+  ) {
     badge = 'Bestseller';
   }
 
@@ -261,13 +298,19 @@ export function transformWpCourse(raw: any): Course {
     id,
     title,
     slug,
-    subtitle: excerpt.slice(0, 120) || 'Practical skills and industry certification for career growth.',
+    subtitle:
+      excerpt.slice(0, 120) || 'Practical skills and industry certification for career growth.',
     category: catId,
     categorySlugs,
     categoryIds,
     level: 'All Levels',
-    rating: typeof raw.rating === 'number' && raw.rating > 0 ? Number(raw.rating.toFixed(1)) : Number((4.8 + ((seed % 3) / 10)).toFixed(1)),
-    reviewsCount: raw.rating_count || (raw.count_students ? Math.round(raw.count_students * 0.2) : 25 + (seed % 75)),
+    rating:
+      typeof raw.rating === 'number' && raw.rating > 0
+        ? Number(raw.rating.toFixed(1))
+        : Number((4.8 + (seed % 3) / 10).toFixed(1)),
+    reviewsCount:
+      raw.rating_count ||
+      (raw.count_students ? Math.round(raw.count_students * 0.2) : 25 + (seed % 75)),
     enrolledCount: raw.count_students || 150 + (seed % 850),
     price: priceData.usd || 15,
     priceBdt: bdtPrice,
@@ -276,7 +319,10 @@ export function transformWpCourse(raw: any): Course {
     thumbnail,
     badge,
     durationHours: Math.max(3, Math.round(lecturesCount * 0.4)),
-    lecturesCount: Math.max(modules.reduce((acc, m) => acc + (m.lessons?.length || 0), 0), 6),
+    lecturesCount: Math.max(
+      modules.reduce((acc, m) => acc + (m.lessons?.length || 0), 0),
+      6
+    ),
     certificateIncluded: true,
     language: 'Bangla & English',
     lastUpdated: raw.date_modified ? raw.date_modified.split('T')[0] : '2026-08',
@@ -288,11 +334,15 @@ export function transformWpCourse(raw: any): Course {
       'Verified Thriving Skills Certificate of Completion',
     ],
     description,
-    prerequisites: ['Basic familiarity with relevant computer/web tools', 'Eagerness to upskill and advance career'],
+    prerequisites: [
+      'Basic familiarity with relevant computer/web tools',
+      'Eagerness to upskill and advance career',
+    ],
     modules,
     reviews: getLiveReviewsForCourse(id),
     skillTrack: title.includes('AI') ? 'Generative AI Career Track' : 'Professional Skills Track',
-    _searchIndex: `${title} ${excerpt} ${instructor.name} ${catId} ${categorySlugs.join(' ')}`.toLowerCase(),
+    _searchIndex:
+      `${title} ${excerpt} ${instructor.name} ${catId} ${categorySlugs.join(' ')}`.toLowerCase(),
   };
 }
 
@@ -305,25 +355,30 @@ export function transformCompanionCourse(raw: any): Course {
   const title = cleanHtml(raw.title || 'Untitled Course');
   const excerpt = cleanHtml(raw.excerpt || '');
   const bdtPrice = typeof raw.price_bdt === 'number' ? raw.price_bdt : 0;
-  const bdtOrigPrice = typeof raw.origin_price_bdt === 'number' && raw.origin_price_bdt > bdtPrice
-    ? raw.origin_price_bdt
-    : (bdtPrice > 0 ? Math.round(bdtPrice * 1.5) : 1200);
+  const bdtOrigPrice =
+    typeof raw.origin_price_bdt === 'number' && raw.origin_price_bdt > bdtPrice
+      ? raw.origin_price_bdt
+      : bdtPrice > 0
+        ? Math.round(bdtPrice * 1.5)
+        : 1200;
 
   const usdPrice = Math.round((bdtPrice / 118) * 10) / 10;
   const origUsdPrice = Math.round((bdtOrigPrice / 118) * 10) / 10;
 
-  let thumbnail = raw.thumbnail || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=800';
+  let thumbnail =
+    raw.thumbnail || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=800';
   thumbnail = getSafeImageUri(thumbnail) || thumbnail;
 
   const categorySlug = raw.category?.slug || 'professional-skills';
   const categoryIds = raw.category?.id ? [raw.category.id] : [];
 
   const instructorName = raw.instructor?.name || 'Thriving Skills Fellow';
-  const instructorAvatar = getSafeImageUri(raw.instructor?.avatar) || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400';
+  const instructorAvatar =
+    getSafeImageUri(raw.instructor?.avatar) ||
+    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400';
 
-  const badge: Course['badge'] = (bdtPrice === 0 || raw.is_free) 
-    ? 'Top Rated' 
-    : (bdtPrice <= 1000 ? 'Bestseller' : 'Trending');
+  const badge: Course['badge'] =
+    bdtPrice === 0 || raw.is_free ? 'Top Rated' : bdtPrice <= 1000 ? 'Bestseller' : 'Trending';
 
   return {
     id,
@@ -367,7 +422,10 @@ export function transformCompanionCourse(raw: any): Course {
       'Verified Thriving Skills Certificate of Completion',
     ],
     description: excerpt || 'Comprehensive professional training course on Thriving Skills.',
-    prerequisites: ['Basic familiarity with relevant computer/web tools', 'Eagerness to upskill and advance career'],
+    prerequisites: [
+      'Basic familiarity with relevant computer/web tools',
+      'Eagerness to upskill and advance career',
+    ],
     reviews: getLiveReviewsForCourse(id),
     skillTrack: title.includes('AI') ? 'Generative AI Career Track' : 'Professional Skills Track',
     _searchIndex: `${title} ${excerpt} ${instructorName} ${categorySlug}`.toLowerCase(),

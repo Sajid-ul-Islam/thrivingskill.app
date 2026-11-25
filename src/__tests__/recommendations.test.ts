@@ -2,11 +2,27 @@ import { computeRecommendedCourses } from '../utils/recommendations';
 import { Category, Course, UserProgress } from '../types';
 
 const mockCategories: Category[] = [
-  { id: 'ai', name: 'AI & Automation', banglaName: 'এআই ও অটোমেশন', icon: 'sparkles', count: 5, color: '#102F53' },
-  { id: 'excel', name: 'Excel & Analytics', banglaName: 'এক্সেল ও অ্যানালিটিক্স', icon: 'grid', count: 4, color: '#059669' },
+  {
+    id: 'ai',
+    name: 'AI & Automation',
+    banglaName: 'এআই ও অটোমেশন',
+    icon: 'sparkles',
+    count: 5,
+    color: '#102F53',
+  },
+  {
+    id: 'excel',
+    name: 'Excel & Analytics',
+    banglaName: 'এক্সেল ও অ্যানালিটিক্স',
+    icon: 'grid',
+    count: 4,
+    color: '#059669',
+  },
 ];
 
-const makeCourse = (overrides: Partial<Course> & { id: string; title: string; category: string }): Course => ({
+const makeCourse = (
+  overrides: Partial<Course> & { id: string; title: string; category: string }
+): Course => ({
   id: overrides.id,
   title: overrides.title,
   slug: overrides.id,
@@ -47,8 +63,20 @@ const makeCourse = (overrides: Partial<Course> & { id: string; title: string; ca
 describe('computeRecommendedCourses (real engine)', () => {
   it('penalizes completed courses and prioritizes in-progress & affinity matches', () => {
     const courses: Course[] = [
-      makeCourse({ id: 'c1', title: 'Completed Excel Mastery', category: 'excel', rating: 5.0, enrolledCount: 5000 }),
-      makeCourse({ id: 'c2', title: 'ChatGPT Prompt Engineering', category: 'ai', rating: 4.9, badge: 'Bestseller' }),
+      makeCourse({
+        id: 'c1',
+        title: 'Completed Excel Mastery',
+        category: 'excel',
+        rating: 5.0,
+        enrolledCount: 5000,
+      }),
+      makeCourse({
+        id: 'c2',
+        title: 'ChatGPT Prompt Engineering',
+        category: 'ai',
+        rating: 4.9,
+        badge: 'Bestseller',
+      }),
       makeCourse({ id: 'c3', title: 'Gemini Office Automation', category: 'ai', rating: 4.8 }),
       makeCourse({ id: 'c4', title: 'Basic Accounting', category: 'finance', rating: 4.5 }),
     ];

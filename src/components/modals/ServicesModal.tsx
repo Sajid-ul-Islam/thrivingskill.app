@@ -17,7 +17,10 @@ import { shape } from '../../theme/shapes';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
 import { SpringPressable } from '../common/SpringPressable';
 import { triggerHaptic } from '../../utils/haptics';
-import { SiteNavigationService, PortalServiceItem } from '../../services/site/siteNavigationService';
+import {
+  SiteNavigationService,
+  PortalServiceItem,
+} from '../../services/site/siteNavigationService';
 
 interface ServicesModalProps {
   visible: boolean;
@@ -57,7 +60,12 @@ export const ServicesModal: React.FC<ServicesModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Header */}
         <View
@@ -71,7 +79,12 @@ export const ServicesModal: React.FC<ServicesModalProps> = ({
           ]}
         >
           <View style={styles.headerLeft}>
-            <View style={[styles.iconWrap, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : '#FFFBEB' }]}>
+            <View
+              style={[
+                styles.iconWrap,
+                { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : '#FFFBEB' },
+              ]}
+            >
               <Ionicons name="briefcase" size={20} color={isDark ? colors.primary : '#102F53'} />
             </View>
             <View>
@@ -79,7 +92,9 @@ export const ServicesModal: React.FC<ServicesModalProps> = ({
                 {isBangla ? 'কর্পোরেট ও প্রাতিষ্ঠানিক সেবা' : 'Services & Enterprise Solutions'}
               </Text>
               <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>
-                {isBangla ? 'ডিজিটাল রূপান্তর ও কর্পোরেট গ্রোথ' : 'Strategic Advisory & Workforce Enablement'}
+                {isBangla
+                  ? 'ডিজিটাল রূপান্তর ও কর্পোরেট গ্রোথ'
+                  : 'Strategic Advisory & Workforce Enablement'}
               </Text>
             </View>
           </View>
@@ -96,10 +111,25 @@ export const ServicesModal: React.FC<ServicesModalProps> = ({
         </View>
 
         {/* Services List */}
-        <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 24) + 20 }]}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: Math.max(insets.bottom, 24) + 20 },
+          ]}
+        >
           {/* Top National Advisory Banner */}
-          <View style={[styles.highlightBanner, { backgroundColor: isDark ? '#1C2E46' : '#EFF6FF', borderColor: colors.border }]}>
-            <Ionicons name="shield-checkmark" size={22} color={colors.primary} style={{ marginTop: 2 }} />
+          <View
+            style={[
+              styles.highlightBanner,
+              { backgroundColor: isDark ? '#1C2E46' : '#EFF6FF', borderColor: colors.border },
+            ]}
+          >
+            <Ionicons
+              name="shield-checkmark"
+              size={22}
+              color={colors.primary}
+              style={{ marginTop: 2 }}
+            />
             <View style={{ flex: 1 }}>
               <Text style={[styles.bannerTitle, { color: colors.primary }]}>
                 {isBangla ? 'জাতীয় পর্যায়ে বিশ্বস্ত পরামর্শক' : 'Trusted Institutional Partner'}
@@ -134,7 +164,12 @@ export const ServicesModal: React.FC<ServicesModalProps> = ({
                   accessibilityRole="button"
                   accessibilityLabel={isBangla ? item.banglaTitle : item.title}
                 >
-                  <View style={[styles.serviceIconWrap, { backgroundColor: isDark ? '#24364B' : '#F1F5F9' }]}>
+                  <View
+                    style={[
+                      styles.serviceIconWrap,
+                      { backgroundColor: isDark ? '#24364B' : '#F1F5F9' },
+                    ]}
+                  >
                     <Ionicons name={item.icon as any} size={22} color={colors.primary} />
                   </View>
                   <View style={{ flex: 1 }}>
@@ -163,7 +198,12 @@ export const ServicesModal: React.FC<ServicesModalProps> = ({
                     </Text>
                     {(isBangla ? item.banglaBullets : item.bullets).map((bullet, idx) => (
                       <View key={idx} style={styles.bulletRow}>
-                        <Ionicons name="checkmark-circle" size={16} color="#10B981" style={{ marginTop: 2 }} />
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={16}
+                          color="#10B981"
+                          style={{ marginTop: 2 }}
+                        />
                         <Text style={[styles.bulletText, { color: colors.text }]}>{bullet}</Text>
                       </View>
                     ))}
@@ -174,9 +214,16 @@ export const ServicesModal: React.FC<ServicesModalProps> = ({
                         style={[styles.inquireBtn, { backgroundColor: colors.accent }]}
                         activeScale={0.96}
                         accessibilityRole="button"
-                        accessibilityLabel={isBangla ? 'পরামর্শ ও সেবা নিন' : 'Inquire / Book Consultation'}
+                        accessibilityLabel={
+                          isBangla ? 'পরামর্শ ও সেবা নিন' : 'Inquire / Book Consultation'
+                        }
                       >
-                        <Ionicons name="mail-outline" size={16} color={colors.onAccent} style={{ marginRight: 6 }} />
+                        <Ionicons
+                          name="mail-outline"
+                          size={16}
+                          color={colors.onAccent}
+                          style={{ marginRight: 6 }}
+                        />
                         <Text style={[styles.inquireBtnText, { color: colors.onAccent }]}>
                           {isBangla ? 'পরামর্শ ও সেবা নিন' : 'Inquire / Book Consultation'}
                         </Text>

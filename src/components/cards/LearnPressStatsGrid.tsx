@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { ThemeColors } from '../../theme/colors';
 import { LearnPressCourseFilter } from '../../types';
@@ -61,13 +55,48 @@ export const LearnPressStatsGrid: React.FC<LearnPressStatsGridProps> = ({
     icon: keyof typeof Ionicons.glyphMap;
     color: string;
   }[] = [
-    { id: 'all', labelEn: 'All', labelBn: 'সকল', count: stats.enrolledCount, icon: 'layers-outline', color: '#0D9488' },
-    { id: 'in-progress', labelEn: 'In Progress', labelBn: 'চলমান', count: stats.inProgressCount, icon: 'time-outline', color: '#9333EA' },
-    { id: 'finished', labelEn: 'Finished', labelBn: 'সম্পন্ন', count: stats.finishedCount, icon: 'ribbon-outline', color: '#4F46E5' },
-    { id: 'passed', labelEn: 'Passed', labelBn: 'উত্তীর্ণ', count: stats.passedCount, icon: 'checkmark-circle-outline', color: '#16A34A' },
+    {
+      id: 'all',
+      labelEn: 'All',
+      labelBn: 'সকল',
+      count: stats.enrolledCount,
+      icon: 'layers-outline',
+      color: '#0D9488',
+    },
+    {
+      id: 'in-progress',
+      labelEn: 'In Progress',
+      labelBn: 'চলমান',
+      count: stats.inProgressCount,
+      icon: 'time-outline',
+      color: '#9333EA',
+    },
+    {
+      id: 'finished',
+      labelEn: 'Finished',
+      labelBn: 'সম্পন্ন',
+      count: stats.finishedCount,
+      icon: 'ribbon-outline',
+      color: '#4F46E5',
+    },
+    {
+      id: 'passed',
+      labelEn: 'Passed',
+      labelBn: 'উত্তীর্ণ',
+      count: stats.passedCount,
+      icon: 'checkmark-circle-outline',
+      color: '#16A34A',
+    },
   ];
   if (stats.failedCount > 0) {
-    filterPills.push({ id: 'failed', labelEn: 'Failed', labelBn: 'অনুত্তীর্ণ', count: stats.failedCount, icon: 'close-circle-outline', color: '#EF4444' });
+    filterPills.push({
+      id: 'failed',
+      labelEn: 'Failed',
+      labelBn: 'অনুত্তীর্ণ',
+      count: stats.failedCount,
+      icon: 'close-circle-outline',
+      color: '#EF4444',
+    });
   }
 
   if (compactTabs) {
@@ -88,11 +117,13 @@ export const LearnPressStatsGrid: React.FC<LearnPressStatsGridProps> = ({
                   styles.compactPill,
                   {
                     backgroundColor: isSelected
-                      ? (isDark ? 'rgba(227, 66, 52, 0.16)' : colors.primary)
-                      : (isDark ? colors.surfaceSubtle : '#F1F5F9'),
-                    borderColor: isSelected
-                      ? (isDark ? '#E34234' : colors.primary)
-                      : colors.border,
+                      ? isDark
+                        ? 'rgba(227, 66, 52, 0.16)'
+                        : colors.primary
+                      : isDark
+                        ? colors.surfaceSubtle
+                        : '#F1F5F9',
+                    borderColor: isSelected ? (isDark ? '#E34234' : colors.primary) : colors.border,
                   },
                 ]}
                 onPress={() => {
@@ -113,9 +144,7 @@ export const LearnPressStatsGrid: React.FC<LearnPressStatsGridProps> = ({
                   style={[
                     styles.compactPillLabel,
                     {
-                      color: isSelected
-                        ? (isDark ? '#E34234' : colors.onPrimary)
-                        : colors.text,
+                      color: isSelected ? (isDark ? '#E34234' : colors.onPrimary) : colors.text,
                       fontWeight: isSelected ? '700' : '500',
                     },
                   ]}
@@ -127,8 +156,12 @@ export const LearnPressStatsGrid: React.FC<LearnPressStatsGridProps> = ({
                     styles.compactCountBadge,
                     {
                       backgroundColor: isSelected
-                        ? (isDark ? '#E34234' : 'rgba(255, 255, 255, 0.25)')
-                        : (isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)'),
+                        ? isDark
+                          ? '#E34234'
+                          : 'rgba(255, 255, 255, 0.25)'
+                        : isDark
+                          ? 'rgba(255, 255, 255, 0.08)'
+                          : 'rgba(0, 0, 0, 0.06)',
                     },
                   ]}
                 >
@@ -137,7 +170,9 @@ export const LearnPressStatsGrid: React.FC<LearnPressStatsGridProps> = ({
                       styles.compactCountText,
                       {
                         color: isSelected
-                          ? (isDark ? '#FFFFFF' : colors.onPrimary)
+                          ? isDark
+                            ? '#FFFFFF'
+                            : colors.onPrimary
                           : colors.textMuted,
                         fontWeight: '700',
                       },
@@ -264,9 +299,7 @@ export const LearnPressStatsGrid: React.FC<LearnPressStatsGridProps> = ({
                 >
                   {isBangla ? card.titleBn : card.titleEn}
                 </Text>
-                <Text style={[styles.cardCount, { color: colors.text }]}>
-                  {card.count}
-                </Text>
+                <Text style={[styles.cardCount, { color: colors.text }]}>{card.count}</Text>
               </View>
             </TouchableOpacity>
           );

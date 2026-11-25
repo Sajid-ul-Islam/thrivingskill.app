@@ -30,13 +30,15 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop }) 
   }, [workshop.thumbnail, workshop.speaker.avatar]);
 
   const fallbackIcon = require('../../../assets/icon.png');
-  const imageSource = thumbError || !workshop.thumbnail
-    ? fallbackIcon
-    : getSafeImageSource(workshop.thumbnail, fallbackIcon);
+  const imageSource =
+    thumbError || !workshop.thumbnail
+      ? fallbackIcon
+      : getSafeImageSource(workshop.thumbnail, fallbackIcon);
 
-  const speakerAvatarSource = speakerAvatarError || !workshop.speaker.avatar
-    ? fallbackIcon
-    : getSafeImageSource(workshop.speaker.avatar, fallbackIcon);
+  const speakerAvatarSource =
+    speakerAvatarError || !workshop.speaker.avatar
+      ? fallbackIcon
+      : getSafeImageSource(workshop.speaker.avatar, fallbackIcon);
 
   const bdtPrice = workshop.priceBdt || (workshop.price > 0 ? Math.round(workshop.price * 120) : 0);
   const isFree = bdtPrice === 0 && (!workshop.price || workshop.price === 0);
@@ -85,7 +87,10 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop }) 
       <View style={styles.imageWrapper}>
         <Image
           source={imageSource}
-          style={[styles.thumbnail, (thumbError || !workshop.thumbnail) && { resizeMode: 'contain' }]}
+          style={[
+            styles.thumbnail,
+            (thumbError || !workshop.thumbnail) && { resizeMode: 'contain' },
+          ]}
           onError={() => setThumbError(true)}
           {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
         />
@@ -94,8 +99,12 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop }) 
             <View style={[styles.pulseDot, workshop.isLive && styles.pulseDotLive]} />
             <Text style={styles.liveText} numberOfLines={1}>
               {workshop.isLive
-                ? (isBangla ? 'সরাসরি লাইভ' : '🔴 LIVE BROADCASTING')
-                : (isBangla ? 'আসন্ন ওয়ার্কশপ' : 'UPCOMING WORKSHOP')}
+                ? isBangla
+                  ? 'সরাসরি লাইভ'
+                  : '🔴 LIVE BROADCASTING'
+                : isBangla
+                  ? 'আসন্ন ওয়ার্কশপ'
+                  : 'UPCOMING WORKSHOP'}
             </Text>
           </View>
 
@@ -108,10 +117,7 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop }) 
             </View>
           ) : (
             <View
-              style={[
-                styles.seatsBadge,
-                workshop.seatsLeft <= 5 && { backgroundColor: '#DC2626' },
-              ]}
+              style={[styles.seatsBadge, workshop.seatsLeft <= 5 && { backgroundColor: '#DC2626' }]}
             >
               <Ionicons
                 name={workshop.seatsLeft <= 5 ? 'flame' : 'people'}
@@ -120,8 +126,12 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop }) 
               />
               <Text style={styles.seatsText} numberOfLines={1}>
                 {workshop.seatsLeft <= 5
-                  ? (isBangla ? `বাকি মাত্র ${workshop.seatsLeft}টি সিট!` : `Only ${workshop.seatsLeft} seats left!`)
-                  : (isBangla ? `${workshop.seatsLeft}টি সিট খালি` : `${workshop.seatsLeft} seats left`)}
+                  ? isBangla
+                    ? `বাকি মাত্র ${workshop.seatsLeft}টি সিট!`
+                    : `Only ${workshop.seatsLeft} seats left!`
+                  : isBangla
+                    ? `${workshop.seatsLeft}টি সিট খালি`
+                    : `${workshop.seatsLeft} seats left`}
               </Text>
             </View>
           )}
@@ -150,7 +160,10 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop }) 
         <View style={styles.speakerRow}>
           <Image
             source={speakerAvatarSource}
-            style={[styles.speakerAvatar, (speakerAvatarError || !workshop.speaker.avatar) && { resizeMode: 'contain' }]}
+            style={[
+              styles.speakerAvatar,
+              (speakerAvatarError || !workshop.speaker.avatar) && { resizeMode: 'contain' },
+            ]}
             onError={() => setSpeakerAvatarError(true)}
             {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
           />
@@ -199,7 +212,11 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop }) 
               activeScale={0.96}
               accessibilityRole="button"
               accessibilityState={{ selected: registered }}
-              accessibilityLabel={registered ? `Cancel reservation for ${workshop.title}` : `Reserve seat for ${workshop.title}`}
+              accessibilityLabel={
+                registered
+                  ? `Cancel reservation for ${workshop.title}`
+                  : `Reserve seat for ${workshop.title}`
+              }
             >
               <Ionicons
                 name={registered ? 'checkmark-circle' : 'ticket-outline'}
@@ -207,15 +224,16 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop }) 
                 color={registered ? colors.primary : colors.onPrimary}
               />
               <Text
-                style={[
-                  styles.rsvpText,
-                  { color: registered ? colors.primary : colors.onPrimary },
-                ]}
+                style={[styles.rsvpText, { color: registered ? colors.primary : colors.onPrimary }]}
                 numberOfLines={1}
               >
                 {registered
-                  ? (isBangla ? 'বুকিং নিশ্চিত' : 'Seat Reserved')
-                  : (isBangla ? 'সিট বুক করুন' : 'Reserve Seat')}
+                  ? isBangla
+                    ? 'বুকিং নিশ্চিত'
+                    : 'Seat Reserved'
+                  : isBangla
+                    ? 'সিট বুক করুন'
+                    : 'Reserve Seat'}
               </Text>
             </SpringPressable>
           )}

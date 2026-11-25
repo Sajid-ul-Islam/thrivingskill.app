@@ -34,11 +34,7 @@ describe('resolveLessonVideoData', () => {
   });
 
   it('resolves course-specific playlist by course ID (e.g. 88180 -> generative-ai)', () => {
-    const data = resolveLessonVideoData(
-      { id: '88180', title: 'Unmatched Title' },
-      undefined,
-      1
-    );
+    const data = resolveLessonVideoData({ id: '88180', title: 'Unmatched Title' }, undefined, 1);
 
     expect(data).toEqual(CATEGORY_LESSON_PLAYLISTS['generative-ai'][1]);
   });

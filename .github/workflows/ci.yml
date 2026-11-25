@@ -16,28 +16,57 @@ permissions:
 
 jobs:
   quality-gate:
-    name: Code Quality, Typecheck & Automated Test Suite
+    name: Lint, Typecheck, Tests, Security & PHP Checks
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
       - name: Checkout Codebase
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
+
+      - name: Setup PHP 8.3 & PHPCS
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: phpcs
+          coverage: none
 
       - name: Install Dependencies
         run: npm ci
+
+      - name: Secret Scan (Gitleaks)
+        run: |
+          GITLEAKS_VERSION=8.24.2
+          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar -xz -C /tmp gitleaks
+          /tmp/gitleaks detect --source . --verbose --redact
+
+      - name: Dependency Vulnerability Audit
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: ESLint Check
+        run: npm run lint
+
+      - name: Prettier Format Check
+        run: npm run format:check
 
       - name: Strict TypeScript Compilation (0 Errors Allowed)
         run: npm run typecheck
 
       - name: Codebase Import & Timer Audit
         run: npm run audit
+
+      - name: WordPress Plugin PHP Syntax & Coding Standards (php -l / phpcs)
+        run: |
+          find backend-plugin -name '*.php' -print0 | xargs -0 -n1 php -l
+          phpcs --standard=backend-plugin/phpcs.xml backend-plugin
 
       - name: Run Jest Unit & Component Tests with Coverage (Offline)
         env:

@@ -24,9 +24,10 @@ export const SummitCard: React.FC<SummitCardProps> = ({ summit }) => {
   }, [summit.bannerImage]);
 
   const fallbackBanner = require('../../../assets/icon.png');
-  const bannerSource = bannerError || !summit.bannerImage
-    ? fallbackBanner
-    : getSafeImageSource(summit.bannerImage, fallbackBanner);
+  const bannerSource =
+    bannerError || !summit.bannerImage
+      ? fallbackBanner
+      : getSafeImageSource(summit.bannerImage, fallbackBanner);
 
   const handleRegister = () => {
     rsvpForWorkshop(summit.id);
@@ -37,8 +38,8 @@ export const SummitCard: React.FC<SummitCardProps> = ({ summit }) => {
           ? 'এই সামিটের সিট ইতিমধ্যে সংরক্ষিত আছে।'
           : 'Your summit seat reservation is already saved on this device.'
         : isBangla
-        ? 'সামিট সিট সফলভাবে সংরক্ষিত হয়েছে!'
-        : 'Seat reservation saved to your device schedule!'
+          ? 'সামিট সিট সফলভাবে সংরক্ষিত হয়েছে!'
+          : 'Seat reservation saved to your device schedule!'
     );
   };
 
@@ -56,7 +57,10 @@ export const SummitCard: React.FC<SummitCardProps> = ({ summit }) => {
       <View style={styles.imageContainer}>
         <Image
           source={bannerSource}
-          style={[styles.bannerImage, (bannerError || !summit.bannerImage) && { resizeMode: 'contain' }]}
+          style={[
+            styles.bannerImage,
+            (bannerError || !summit.bannerImage) && { resizeMode: 'contain' },
+          ]}
           onError={() => setBannerError(true)}
           {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
         />
@@ -90,17 +94,36 @@ export const SummitCard: React.FC<SummitCardProps> = ({ summit }) => {
           <SpringPressable
             style={[
               styles.rsvpBtn,
-              { backgroundColor: reserved ? colors.surfaceSubtle : colors.primary, borderWidth: reserved ? 1 : 0, borderColor: colors.primary },
+              {
+                backgroundColor: reserved ? colors.surfaceSubtle : colors.primary,
+                borderWidth: reserved ? 1 : 0,
+                borderColor: colors.primary,
+              },
             ]}
             onPress={handleRegister}
             activeScale={0.96}
             accessibilityRole="button"
-            accessibilityLabel={reserved ? `Reserved for ${summit.title}` : `RSVP Free for ${summit.title}`}
+            accessibilityLabel={
+              reserved ? `Reserved for ${summit.title}` : `RSVP Free for ${summit.title}`
+            }
           >
-            <Text style={[styles.rsvpBtnText, { color: reserved ? colors.primary : colors.onPrimary }]} numberOfLines={1}>
-              {reserved ? (isBangla ? 'সংরক্ষিত ✓' : 'Reserved ✓') : (isBangla ? 'ফ্রি সিট' : 'RSVP Free')}
+            <Text
+              style={[styles.rsvpBtnText, { color: reserved ? colors.primary : colors.onPrimary }]}
+              numberOfLines={1}
+            >
+              {reserved
+                ? isBangla
+                  ? 'সংরক্ষিত ✓'
+                  : 'Reserved ✓'
+                : isBangla
+                  ? 'ফ্রি সিট'
+                  : 'RSVP Free'}
             </Text>
-            <Ionicons name={reserved ? 'checkmark-circle' : 'arrow-forward'} size={13} color={reserved ? colors.primary : colors.onPrimary} />
+            <Ionicons
+              name={reserved ? 'checkmark-circle' : 'arrow-forward'}
+              size={13}
+              color={reserved ? colors.primary : colors.onPrimary}
+            />
           </SpringPressable>
         </View>
       </View>

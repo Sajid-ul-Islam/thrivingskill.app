@@ -59,7 +59,9 @@ describe('HttpClient', () => {
     expect(r2).toEqual([{ id: 101, name: 'AI Mastery' }]);
 
     // After resolution, a fresh GET triggers a new fetch call
-    (globalThis.fetch as jest.Mock).mockResolvedValueOnce(makeJsonResponse([{ id: 102, name: 'Excel' }]));
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce(
+      makeJsonResponse([{ id: 102, name: 'Excel' }])
+    );
     await HttpClient.get('/learnpress/v1/courses', { per_page: 5 }, { skipAuth: true });
     expect(globalThis.fetch).toHaveBeenCalledTimes(2);
   });
@@ -70,11 +72,11 @@ describe('HttpClient', () => {
       .mockRejectedValueOnce(new TypeError('Network request failed'))
       .mockResolvedValueOnce(makeJsonResponse({ ok: true }));
 
-    const result = await HttpClient.get(
-      '/learnpress/v1/courses',
-      undefined,
-      { skipAuth: true, retries: 1, allowFallback: false }
-    );
+    const result = await HttpClient.get('/learnpress/v1/courses', undefined, {
+      skipAuth: true,
+      retries: 1,
+      allowFallback: false,
+    });
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(result).toEqual({ ok: true });

@@ -46,7 +46,8 @@ interface MyLearningScreenProps {
   onOpenSupport?: () => void;
 }
 
-type TabMode = 'all' | 'in-progress' | 'finished' | 'passed' | 'failed' | 'certificates' | 'history' | 'saved';
+type TabMode =
+  'all' | 'in-progress' | 'finished' | 'passed' | 'failed' | 'certificates' | 'history' | 'saved';
 
 export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
   onNavigateToCourse,
@@ -90,60 +91,95 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
     }
   };
 
-  const getCourseStatus = useCallback((courseId: string): 'in-progress' | 'finished' | 'passed' | 'failed' => {
-    const prog = userProgress[courseId];
-    if (!prog) return 'in-progress';
-    if (prog.status === 'failed' || prog.grade === 'failed') return 'failed';
-    if (prog.status === 'passed' || prog.grade === 'passed' || prog.isCompleted) return 'passed';
-    if (prog.status === 'finished') return 'finished';
-    return 'in-progress';
-  }, [userProgress]);
+  const getCourseStatus = useCallback(
+    (courseId: string): 'in-progress' | 'finished' | 'passed' | 'failed' => {
+      const prog = userProgress[courseId];
+      if (!prog) return 'in-progress';
+      if (prog.status === 'failed' || prog.grade === 'failed') return 'failed';
+      if (prog.status === 'passed' || prog.grade === 'passed' || prog.isCompleted) return 'passed';
+      if (prog.status === 'finished') return 'finished';
+      return 'in-progress';
+    },
+    [userProgress]
+  );
 
   // Enrolled courses categorized according to live LearnPress (memoized)
-  const enrolledList = useMemo(() => courses.filter((c) => !!userProgress[c.id]), [courses, userProgress]);
-  const inProgressList = useMemo(() => enrolledList.filter((c) => getCourseStatus(c.id) === 'in-progress'), [enrolledList, getCourseStatus]);
-  const finishedList = useMemo(() => enrolledList.filter((c) => {
-    const st = getCourseStatus(c.id);
-    return st === 'finished' || st === 'passed' || st === 'failed';
-  }), [enrolledList, getCourseStatus]);
-  const passedList = useMemo(() => enrolledList.filter((c) => getCourseStatus(c.id) === 'passed'), [enrolledList, getCourseStatus]);
-  const failedList = useMemo(() => enrolledList.filter((c) => getCourseStatus(c.id) === 'failed'), [enrolledList, getCourseStatus]);
-  const savedList = useMemo(() => courses.filter((c) => bookmarks.includes(c.id)), [courses, bookmarks]);
+  const enrolledList = useMemo(
+    () => courses.filter((c) => !!userProgress[c.id]),
+    [courses, userProgress]
+  );
+  const inProgressList = useMemo(
+    () => enrolledList.filter((c) => getCourseStatus(c.id) === 'in-progress'),
+    [enrolledList, getCourseStatus]
+  );
+  const finishedList = useMemo(
+    () =>
+      enrolledList.filter((c) => {
+        const st = getCourseStatus(c.id);
+        return st === 'finished' || st === 'passed' || st === 'failed';
+      }),
+    [enrolledList, getCourseStatus]
+  );
+  const passedList = useMemo(
+    () => enrolledList.filter((c) => getCourseStatus(c.id) === 'passed'),
+    [enrolledList, getCourseStatus]
+  );
+  const failedList = useMemo(
+    () => enrolledList.filter((c) => getCourseStatus(c.id) === 'failed'),
+    [enrolledList, getCourseStatus]
+  );
+  const savedList = useMemo(
+    () => courses.filter((c) => bookmarks.includes(c.id)),
+    [courses, bookmarks]
+  );
 
-  const lpStats = useMemo(() => ({
-    enrolledCount: enrolledList.length,
-    inProgressCount: inProgressList.length,
-    finishedCount: finishedList.length,
-    passedCount: passedList.length,
-    failedCount: failedList.length,
-  }), [enrolledList.length, inProgressList.length, finishedList.length, passedList.length, failedList.length]);
+  const lpStats = useMemo(
+    () => ({
+      enrolledCount: enrolledList.length,
+      inProgressCount: inProgressList.length,
+      finishedCount: finishedList.length,
+      passedCount: passedList.length,
+      failedCount: failedList.length,
+    }),
+    [
+      enrolledList.length,
+      inProgressList.length,
+      finishedList.length,
+      passedList.length,
+      failedList.length,
+    ]
+  );
 
   // Build rich watch history list (Section 19 Spec) - memoized
-  const historyList = useMemo(() => enrolledList
-    .map((course) => {
-      const progress = userProgress[course.id];
-      const targetLessonId =
-        progress?.lastAccessedLessonId || course.modules?.[0]?.lessons?.[0]?.id || '';
-      const targetLesson =
-        course.modules?.flatMap((m) => m.lessons || []).find((l) => l.id === targetLessonId) ||
-        course.modules?.[0]?.lessons?.[0];
-      const watchSec = progress?.lastWatchPositionSeconds?.[targetLessonId] || 120;
-      const percent = getCourseProgressPercentage(course.id);
-      return {
-        course,
-        lesson: targetLesson,
-        watchSec,
-        progressPercent: percent,
-        dateWatched: isBangla ? 'আজ' : 'Today',
-      };
-    })
-    .filter((h) => !!h.lesson), [enrolledList, userProgress, getCourseProgressPercentage, isBangla]);
+  const historyList = useMemo(
+    () =>
+      enrolledList
+        .map((course) => {
+          const progress = userProgress[course.id];
+          const targetLessonId =
+            progress?.lastAccessedLessonId || course.modules?.[0]?.lessons?.[0]?.id || '';
+          const targetLesson =
+            course.modules?.flatMap((m) => m.lessons || []).find((l) => l.id === targetLessonId) ||
+            course.modules?.[0]?.lessons?.[0];
+          const watchSec = progress?.lastWatchPositionSeconds?.[targetLessonId] || 120;
+          const percent = getCourseProgressPercentage(course.id);
+          return {
+            course,
+            lesson: targetLesson,
+            watchSec,
+            progressPercent: percent,
+            dateWatched: isBangla ? 'আজ' : 'Today',
+          };
+        })
+        .filter((h) => !!h.lesson),
+    [enrolledList, userProgress, getCourseProgressPercentage, isBangla]
+  );
 
   // Compute total learning stats from actual watch time & gamification screen-time
-  const totalCompletedLessons = useMemo(() => Object.values(userProgress).reduce(
-    (acc, p) => acc + p.completedLessonIds.length,
-    0
-  ), [userProgress]);
+  const totalCompletedLessons = useMemo(
+    () => Object.values(userProgress).reduce((acc, p) => acc + p.completedLessonIds.length, 0),
+    [userProgress]
+  );
 
   const totalWatchedSeconds = useMemo(() => {
     return Object.values(userProgress).reduce((total, prog) => {
@@ -224,8 +260,8 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                     courseStatus === 'failed'
                       ? '#EF4444'
                       : courseStatus === 'passed'
-                      ? '#16A34A'
-                      : colors.border,
+                        ? '#16A34A'
+                        : colors.border,
                 },
               ]}
             >
@@ -243,11 +279,24 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                 </View>
               </View>
               <View style={styles.cardBody}>
-                <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'flex-start',
+                    justifyContent: 'space-between',
+                    gap: 8,
+                  }}
+                >
                   <Text
                     style={[
                       styles.cardTitle,
-                      { color: colors.text, flex: 1, minWidth: 0, marginRight: 8, lineHeight: isBangla ? 22 : 20 },
+                      {
+                        color: colors.text,
+                        flex: 1,
+                        minWidth: 0,
+                        marginRight: 8,
+                        lineHeight: isBangla ? 22 : 20,
+                      },
                     ]}
                     numberOfLines={2}
                   >
@@ -261,8 +310,8 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                       courseStatus === 'passed'
                         ? '#16A34A'
                         : courseStatus === 'failed'
-                        ? '#EF4444'
-                        : colors.primary
+                          ? '#EF4444'
+                          : colors.primary
                     }
                     trackColor={colors.surfaceSubtle}
                     textSize={10}
@@ -283,8 +332,8 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                             courseStatus === 'passed'
                               ? '#16A34A'
                               : courseStatus === 'failed'
-                              ? '#EF4444'
-                              : colors.primary,
+                                ? '#EF4444'
+                                : colors.primary,
                           width: `${courseStatus === 'passed' ? 100 : percent}%`,
                         },
                       ]}
@@ -298,8 +347,8 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                           courseStatus === 'passed'
                             ? '#16A34A'
                             : courseStatus === 'failed'
-                            ? '#EF4444'
-                            : colors.primary,
+                              ? '#EF4444'
+                              : colors.primary,
                       },
                     ]}
                   >
@@ -470,13 +519,25 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
         >
           {[
             { id: 'all', label: `${isBangla ? 'সকল' : 'All'} (${enrolledList.length})` },
-            { id: 'in-progress', label: `${isBangla ? 'চলমান' : 'In Progress'} (${inProgressList.length})` },
-            { id: 'finished', label: `${isBangla ? 'সম্পন্ন' : 'Finished'} (${finishedList.length})` },
+            {
+              id: 'in-progress',
+              label: `${isBangla ? 'চলমান' : 'In Progress'} (${inProgressList.length})`,
+            },
+            {
+              id: 'finished',
+              label: `${isBangla ? 'সম্পন্ন' : 'Finished'} (${finishedList.length})`,
+            },
             { id: 'passed', label: `${isBangla ? 'উত্তীর্ণ' : 'Passed'} (${passedList.length})` },
             { id: 'failed', label: `${isBangla ? 'অনুত্তীর্ণ' : 'Failed'} (${failedList.length})` },
-            { id: 'certificates', label: `${isBangla ? 'সার্টিফিকেট' : 'Certificates'} (${certificates.length})` },
+            {
+              id: 'certificates',
+              label: `${isBangla ? 'সার্টিফিকেট' : 'Certificates'} (${certificates.length})`,
+            },
             { id: 'history', label: `${isBangla ? 'হিস্ট্রি' : 'History'} (${historyList.length})` },
-            { id: 'saved', label: `${isBangla ? 'সংরক্ষিত' : 'Saved'} (${savedList.length + savedVideos.length})` },
+            {
+              id: 'saved',
+              label: `${isBangla ? 'সংরক্ষিত' : 'Saved'} (${savedList.length + savedVideos.length})`,
+            },
           ].map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -510,376 +571,449 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
         {/* Tab Content */}
         <View style={styles.tabContent}>
           <AnimatedTabContent tabKey={activeTab}>
-          {activeTab === 'all' && (
-            renderCourseList(
-              enrolledList,
-              isBangla ? 'কোনো কোর্স এনরোল করা নেই' : 'No enrolled courses',
-              isBangla
-                ? 'আমাদের শীর্ষ এক্সিকিউটিভ মাস্টারক্লাসগুলো দেখুন এবং নতুন স্কিল অর্জন শুরু করুন!'
-                : 'Explore our top-rated executive masterclasses and start learning!'
-            )
-          )}
-
-          {activeTab === 'in-progress' && (
-            renderCourseList(
-              inProgressList,
-              isBangla ? 'চলমান কোনো কোর্স নেই' : 'No courses in progress',
-              isBangla
-                ? 'আমাদের শীর্ষ এক্সিকিউটিভ মাস্টারক্লাসগুলো দেখুন এবং নতুন স্কিল অর্জন শুরু করুন!'
-                : 'Explore our top-rated executive masterclasses and start learning!'
-            )
-          )}
-
-          {activeTab === 'finished' && (
-            renderCourseList(
-              finishedList,
-              isBangla ? 'এখনো কোনো কোর্স সম্পন্ন হয়নি' : 'No finished courses yet',
-              isBangla
-                ? 'কোর্স শেষ করে সার্টিফিকেট অর্জন করতে সিলেবাস সম্পন্ন করুন।'
-                : 'Complete syllabus modules to finish courses and earn verified certificates.'
-            )
-          )}
-
-          {activeTab === 'passed' && (
-            renderCourseList(
-              passedList,
-              isBangla ? 'এখনো কোনো কোর্স উত্তীর্ণ হয়নি' : 'No passed courses yet',
-              isBangla
-                ? 'কোর্সের চূড়ান্ত কুইজ ও লেকচার সম্পন্ন করে পাসিং গ্রেড অর্জন করুন।'
-                : 'Achieve passing grade by completing final course quizzes and lectures.'
-            )
-          )}
-
-          {activeTab === 'failed' && (
-            renderCourseList(
-              failedList,
-              isBangla ? 'কোনো অনুত্তীর্ণ কোর্স নেই (চমৎকার!)' : 'No failed courses (Great job!)',
-              isBangla
-                ? 'আপনার কোনো ফেইল্ড কোর্স রেকর্ড নেই। আপনার শেখা অব্যাহত রাখুন!'
-                : 'You have no failed course records. Keep up the high standard!'
-            )
-          )}
-
-          {activeTab === 'history' && (
-            <>
-              {historyList.length === 0 ? (
-                <StateView
-                  mode="empty"
-                  icon="time-outline"
-                  title={isBangla ? 'এখনো কোনো হিস্ট্রি নেই' : 'No watch history yet'}
-                  message={
-                    isBangla
-                      ? 'আপনার দেখার ইতিহাস ট্র্যাক করতে কোর্সের লেকচার এবং মাস্টারক্লাস দেখা শুরু করুন।'
-                      : 'Start watching course lectures and masterclasses to track your viewing history.'
-                  }
-                  primaryActionLabel={isBangla ? 'কোর্স ব্রাউজ করুন' : 'Browse Courses'}
-                  onPrimaryAction={onBrowseCourses}
-                />
-              ) : (
-                historyList.map((item) => (
-                  <View
-                    key={item.course.id}
-                    style={[
-                      styles.learningCard,
-                      { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-                    ]}
-                  >
-                    <Image
-                      source={getSafeImageSource(item.course.thumbnail)}
-                      style={styles.cardImage}
-                      {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
-                    />
-                    <View style={styles.cardBody}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4, gap: 8 }}>
-                        <View style={[styles.completedBadge, { backgroundColor: colors.primaryLight, flexShrink: 1, minWidth: 0, marginRight: 8 }]}>
-                          <Ionicons name="time" size={12} color={colors.primary} />
-                          <Text style={[styles.completedBadgeText, { color: colors.primary }]} numberOfLines={1}>
-                            {item.dateWatched}
-                          </Text>
-                        </View>
-                        <Text style={{ fontSize: 11, color: colors.primary, fontWeight: '700', flexShrink: 0 }}>
-                          {item.progressPercent}% {isBangla ? 'সম্পন্ন' : 'Watched'}
-                        </Text>
-                      </View>
-
-                      <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={1}>
-                        {item.course.title}
-                      </Text>
-
-                      <Text style={{ fontSize: 12, color: colors.textMuted, marginBottom: 8 }} numberOfLines={1}>
-                        {isBangla ? 'সর্বশেষ লেসন: ' : 'Last Lesson: '}{item.lesson?.title || (isBangla ? 'কোর্স লেকচার' : 'Course Lecture')}
-                      </Text>
-
-                      <View style={styles.progressRow}>
-                        <View style={[styles.progressTrack, { backgroundColor: colors.surfaceSubtle }]}>
-                          <View
-                            style={[
-                              styles.progressFill,
-                              { backgroundColor: colors.primary, width: `${item.progressPercent}%` },
-                            ]}
-                          />
-                        </View>
-                        <Text style={[styles.progressText, { color: colors.primary }]}>
-                          {item.progressPercent}%
-                        </Text>
-                      </View>
-
-                      <TouchableOpacity
-                        style={[styles.resumeBtn, { backgroundColor: colors.primary, marginTop: 10 }]}
-                        onPress={() => onNavigateToLesson(item.course.id, item.lesson?.id || '')}
-                        accessibilityRole="button"
-                        accessibilityLabel={
-                          isBangla
-                            ? `${item.course.title} চালিয়ে যান`
-                            : `Resume ${item.course.title}`
-                        }
-                      >
-                        <Ionicons name="play" size={14} color={colors.onPrimary} />
-                        <Text style={[styles.resumeBtnText, { color: colors.onPrimary }]}>
-                          {isBangla ? 'চালিয়ে যান' : 'Resume'} ({Math.floor(item.watchSec / 60)}m {item.watchSec % 60}s)
-                        </Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                ))
+            {activeTab === 'all' &&
+              renderCourseList(
+                enrolledList,
+                isBangla ? 'কোনো কোর্স এনরোল করা নেই' : 'No enrolled courses',
+                isBangla
+                  ? 'আমাদের শীর্ষ এক্সিকিউটিভ মাস্টারক্লাসগুলো দেখুন এবং নতুন স্কিল অর্জন শুরু করুন!'
+                  : 'Explore our top-rated executive masterclasses and start learning!'
               )}
-            </>
-          )}
 
-          {activeTab === 'certificates' && (
-            <>
-              {certificates.length === 0 ? (
-                <StateView
-                  mode="empty"
-                  icon="ribbon-outline"
-                  title={isBangla ? 'কোনো সার্টিফিকেট ইস্যু হয়নি' : 'No certificates issued'}
-                  message={
-                    isBangla
-                      ? 'শেয়ারেবল ক্রেডেনশিয়াল আনলক করতে আপনার সক্রিয় কোর্সগুলো সম্পন্ন করুন।'
-                      : 'Finish your active courses to unlock shareable credentials.'
-                  }
-                  primaryActionLabel={isBangla ? 'কোর্স এক্সপ্লোর করুন' : 'Explore Courses'}
-                  onPrimaryAction={onBrowseCourses}
-                />
-              ) : (
-                certificates.map((cert) => {
-                const isReviewed = hasReviewedCourse(cert.courseId);
-                return (
-                  <TouchableOpacity
-                    key={cert.id}
-                    style={[
-                      styles.certItemCard,
-                      {
-                        backgroundColor: colors.surfaceCard,
-                        borderColor: isReviewed ? colors.border : '#F59E0B',
-                        shadowColor: colors.cardShadow,
-                      },
-                    ]}
-                    onPress={() => {
-                      if (!isReviewed) {
-                        const targetCourse = courses.find((c) => c.id === cert.courseId);
-                        if (targetCourse) {
-                          setReviewTargetCourse(targetCourse);
-                        } else {
-                          setReviewTargetCourse({
-                            id: cert.courseId,
-                            title: cert.courseTitle,
-                            instructor: { name: cert.instructorName },
-                          } as any);
-                        }
-                        setReviewModalVisible(true);
-                      } else {
-                        setSelectedCert(cert);
-                      }
-                    }}
-                    activeOpacity={0.85}
-                    accessibilityRole="button"
-                    accessibilityLabel={
-                      isReviewed
-                        ? (isBangla
-                            ? `${cert.courseTitle} এর ভেরিফাইড সার্টিফিকেট দেখুন`
-                            : `View verified digital certificate for ${cert.courseTitle}`)
-                        : (isBangla
-                            ? `${cert.courseTitle} এর সার্টিফিকেট আনলক করতে রিভিউ দিন`
-                            : `Review to unlock certificate for ${cert.courseTitle}`)
+            {activeTab === 'in-progress' &&
+              renderCourseList(
+                inProgressList,
+                isBangla ? 'চলমান কোনো কোর্স নেই' : 'No courses in progress',
+                isBangla
+                  ? 'আমাদের শীর্ষ এক্সিকিউটিভ মাস্টারক্লাসগুলো দেখুন এবং নতুন স্কিল অর্জন শুরু করুন!'
+                  : 'Explore our top-rated executive masterclasses and start learning!'
+              )}
+
+            {activeTab === 'finished' &&
+              renderCourseList(
+                finishedList,
+                isBangla ? 'এখনো কোনো কোর্স সম্পন্ন হয়নি' : 'No finished courses yet',
+                isBangla
+                  ? 'কোর্স শেষ করে সার্টিফিকেট অর্জন করতে সিলেবাস সম্পন্ন করুন।'
+                  : 'Complete syllabus modules to finish courses and earn verified certificates.'
+              )}
+
+            {activeTab === 'passed' &&
+              renderCourseList(
+                passedList,
+                isBangla ? 'এখনো কোনো কোর্স উত্তীর্ণ হয়নি' : 'No passed courses yet',
+                isBangla
+                  ? 'কোর্সের চূড়ান্ত কুইজ ও লেকচার সম্পন্ন করে পাসিং গ্রেড অর্জন করুন।'
+                  : 'Achieve passing grade by completing final course quizzes and lectures.'
+              )}
+
+            {activeTab === 'failed' &&
+              renderCourseList(
+                failedList,
+                isBangla ? 'কোনো অনুত্তীর্ণ কোর্স নেই (চমৎকার!)' : 'No failed courses (Great job!)',
+                isBangla
+                  ? 'আপনার কোনো ফেইল্ড কোর্স রেকর্ড নেই। আপনার শেখা অব্যাহত রাখুন!'
+                  : 'You have no failed course records. Keep up the high standard!'
+              )}
+
+            {activeTab === 'history' && (
+              <>
+                {historyList.length === 0 ? (
+                  <StateView
+                    mode="empty"
+                    icon="time-outline"
+                    title={isBangla ? 'এখনো কোনো হিস্ট্রি নেই' : 'No watch history yet'}
+                    message={
+                      isBangla
+                        ? 'আপনার দেখার ইতিহাস ট্র্যাক করতে কোর্সের লেকচার এবং মাস্টারক্লাস দেখা শুরু করুন।'
+                        : 'Start watching course lectures and masterclasses to track your viewing history.'
                     }
-                  >
+                    primaryActionLabel={isBangla ? 'কোর্স ব্রাউজ করুন' : 'Browse Courses'}
+                    onPrimaryAction={onBrowseCourses}
+                  />
+                ) : (
+                  historyList.map((item) => (
                     <View
+                      key={item.course.id}
                       style={[
-                        styles.certIconBadge,
-                        {
-                          backgroundColor: isReviewed
-                            ? (isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2')
-                            : (isDark ? 'rgba(239, 68, 68, 0.2)' : '#FEF2F2'),
-                        },
+                        styles.learningCard,
+                        { backgroundColor: colors.surfaceCard, borderColor: colors.border },
                       ]}
                     >
-                      <Ionicons
-                        name={isReviewed ? "ribbon" : "lock-closed"}
-                        size={26}
-                        color={isReviewed ? '#E34234' : '#EF4444'}
+                      <Image
+                        source={getSafeImageSource(item.course.thumbnail)}
+                        style={styles.cardImage}
+                        {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
                       />
-                    </View>
-
-                    <View style={styles.certCol}>
-                      <View style={styles.verifiedTag}>
-                        <Ionicons
-                          name={isReviewed ? "checkmark-circle" : "lock-closed"}
-                          size={11}
-                          color={isReviewed ? (isDark ? '#34D399' : '#047857') : '#EF4444'}
-                        />
-                        <Text
-                          style={[
-                            styles.verifiedTagText,
-                            { color: isReviewed ? (isDark ? '#34D399' : '#047857') : '#EF4444' },
-                          ]}
+                      <View style={styles.cardBody}>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            marginBottom: 4,
+                            gap: 8,
+                          }}
                         >
-                          {isReviewed
-                            ? (isBangla ? 'ভেরিফাইড ক্রেডেনশিয়াল' : 'VERIFIED CREDENTIAL')
-                            : (isBangla ? 'রিভিউ আবশ্যক (লক)' : 'REVIEW REQUIRED (LOCKED)')}
-                        </Text>
-                      </View>
-                      <Text style={[styles.certItemTitle, { color: colors.text }]} numberOfLines={2}>
-                        {cert.courseTitle}
-                      </Text>
-                      <Text style={[styles.certItemMeta, { color: colors.textMuted }]}>
-                        {isReviewed
-                          ? `${isBangla ? 'ইস্যুর তারিখ ' : 'Issued '}${cert.issueDate} • ID: ${cert.credentialId}`
-                          : (isBangla ? 'সার্টিফিকেট আনলক করতে ১-৫ স্টার রেটিং দিন' : 'Rate & review course to unlock certificate')}
-                      </Text>
-                    </View>
+                          <View
+                            style={[
+                              styles.completedBadge,
+                              {
+                                backgroundColor: colors.primaryLight,
+                                flexShrink: 1,
+                                minWidth: 0,
+                                marginRight: 8,
+                              },
+                            ]}
+                          >
+                            <Ionicons name="time" size={12} color={colors.primary} />
+                            <Text
+                              style={[styles.completedBadgeText, { color: colors.primary }]}
+                              numberOfLines={1}
+                            >
+                              {item.dateWatched}
+                            </Text>
+                          </View>
+                          <Text
+                            style={{
+                              fontSize: 11,
+                              color: colors.primary,
+                              fontWeight: '700',
+                              flexShrink: 0,
+                            }}
+                          >
+                            {item.progressPercent}% {isBangla ? 'সম্পন্ন' : 'Watched'}
+                          </Text>
+                        </View>
 
-                    <Ionicons
-                      name={isReviewed ? "chevron-forward" : "lock-closed-outline"}
-                      size={18}
-                      color={isReviewed ? colors.textMuted : '#F59E0B'}
-                    />
-                  </TouchableOpacity>
-                );
-              })
-              )}
-            </>
-          )}
-
-          {activeTab === 'saved' && (
-            <>
-              {savedList.length === 0 && savedVideos.length === 0 ? (
-                <View style={styles.emptyContainer}>
-                  <Ionicons name="bookmark-outline" size={48} color={colors.textLight} />
-                  <Text style={[styles.emptyTitle, { color: colors.text }]}>
-                    {isBangla ? 'কোনো সংরক্ষিত আইটেম নেই' : 'No saved items yet'}
-                  </Text>
-                  <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
-                    {isBangla
-                      ? 'পরে দেখার জন্য ক্যাটালগ থেকে কোর্স অথবা আমাদের ইউটিউব চ্যানেল থেকে মাস্টারক্লাস বুকমার্ক করুন।'
-                      : 'Bookmark courses from the catalog or masterclasses from our YouTube channel to watch later.'}
-                  </Text>
-                  {onOpenYouTube && (
-                    <TouchableOpacity
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 6,
-                        backgroundColor: '#FF0000',
-                        paddingHorizontal: 16,
-                        paddingVertical: 10,
-                        minHeight: MIN_TOUCH_TARGET,
-                        borderRadius: 10,
-                        marginTop: 14,
-                      }}
-                      onPress={onOpenYouTube}
-                      accessibilityRole="button"
-                      accessibilityLabel={
-                        isBangla
-                          ? 'ইউটিউব মাস্টারক্লাস ব্রাউজ করুন'
-                          : 'Browse YouTube Masterclasses'
-                      }
-                    >
-                      <Ionicons name="logo-youtube" size={16} color="#FFFFFF" />
-                      <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 13 }}>
-                        {isBangla ? 'ইউটিউব মাস্টারক্লাস ব্রাউজ করুন' : 'Browse YouTube Masterclasses'}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              ) : (
-                <>
-                  {/* Saved YouTube Videos Section */}
-                  {savedVideos.length > 0 && (
-                    <View style={{ marginBottom: 20 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-                        <Ionicons name="logo-youtube" size={18} color="#FF0000" />
-                        <Text style={[styles.sectionHeading, { color: colors.text }]}>
-                          {isBangla
-                            ? `সংরক্ষিত ইউটিউব মাস্টারক্লাস (${savedVideos.length})`
-                            : `Saved YouTube Masterclasses (${savedVideos.length})`}
+                        <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={1}>
+                          {item.course.title}
                         </Text>
-                      </View>
-                      {savedVideos.map((vid) => (
-                        <YouTubeCard
-                          key={vid.id}
-                          video={vid}
-                          layout="horizontal"
-                          onPress={(v) => playVideo(v, 'modal')}
-                        />
-                      ))}
-                    </View>
-                  )}
 
-                  {/* Saved Accredited Courses Section */}
-                  {savedList.length > 0 && (
-                    <View>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-                        <Ionicons name="school-outline" size={18} color={colors.primary} />
-                        <Text style={[styles.sectionHeading, { color: colors.text }]}>
-                          {isBangla
-                            ? `সংরক্ষিত অ্যাক্রেডিটেড কোর্স (${savedList.length})`
-                            : `Saved Accredited Courses (${savedList.length})`}
+                        <Text
+                          style={{ fontSize: 12, color: colors.textMuted, marginBottom: 8 }}
+                          numberOfLines={1}
+                        >
+                          {isBangla ? 'সর্বশেষ লেসন: ' : 'Last Lesson: '}
+                          {item.lesson?.title || (isBangla ? 'কোর্স লেকচার' : 'Course Lecture')}
                         </Text>
-                      </View>
-                      {savedList.map((course) => (
+
+                        <View style={styles.progressRow}>
+                          <View
+                            style={[
+                              styles.progressTrack,
+                              { backgroundColor: colors.surfaceSubtle },
+                            ]}
+                          >
+                            <View
+                              style={[
+                                styles.progressFill,
+                                {
+                                  backgroundColor: colors.primary,
+                                  width: `${item.progressPercent}%`,
+                                },
+                              ]}
+                            />
+                          </View>
+                          <Text style={[styles.progressText, { color: colors.primary }]}>
+                            {item.progressPercent}%
+                          </Text>
+                        </View>
+
                         <TouchableOpacity
-                          key={course.id}
                           style={[
-                            styles.savedCard,
-                            { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                            styles.resumeBtn,
+                            { backgroundColor: colors.primary, marginTop: 10 },
                           ]}
-                          onPress={() => onNavigateToCourse(course.id)}
-                          activeOpacity={0.85}
+                          onPress={() => onNavigateToLesson(item.course.id, item.lesson?.id || '')}
                           accessibilityRole="button"
                           accessibilityLabel={
                             isBangla
-                              ? `${course.title} কোর্সের বিস্তারিত দেখুন`
-                              : `View details for ${course.title}`
+                              ? `${item.course.title} চালিয়ে যান`
+                              : `Resume ${item.course.title}`
                           }
                         >
-                          <Image
-                            source={getSafeImageSource(course.thumbnail)}
-                            style={styles.savedThumb}
-                            {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+                          <Ionicons name="play" size={14} color={colors.onPrimary} />
+                          <Text style={[styles.resumeBtnText, { color: colors.onPrimary }]}>
+                            {isBangla ? 'চালিয়ে যান' : 'Resume'} ({Math.floor(item.watchSec / 60)}m{' '}
+                            {item.watchSec % 60}s)
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  ))
+                )}
+              </>
+            )}
+
+            {activeTab === 'certificates' && (
+              <>
+                {certificates.length === 0 ? (
+                  <StateView
+                    mode="empty"
+                    icon="ribbon-outline"
+                    title={isBangla ? 'কোনো সার্টিফিকেট ইস্যু হয়নি' : 'No certificates issued'}
+                    message={
+                      isBangla
+                        ? 'শেয়ারেবল ক্রেডেনশিয়াল আনলক করতে আপনার সক্রিয় কোর্সগুলো সম্পন্ন করুন।'
+                        : 'Finish your active courses to unlock shareable credentials.'
+                    }
+                    primaryActionLabel={isBangla ? 'কোর্স এক্সপ্লোর করুন' : 'Explore Courses'}
+                    onPrimaryAction={onBrowseCourses}
+                  />
+                ) : (
+                  certificates.map((cert) => {
+                    const isReviewed = hasReviewedCourse(cert.courseId);
+                    return (
+                      <TouchableOpacity
+                        key={cert.id}
+                        style={[
+                          styles.certItemCard,
+                          {
+                            backgroundColor: colors.surfaceCard,
+                            borderColor: isReviewed ? colors.border : '#F59E0B',
+                            shadowColor: colors.cardShadow,
+                          },
+                        ]}
+                        onPress={() => {
+                          if (!isReviewed) {
+                            const targetCourse = courses.find((c) => c.id === cert.courseId);
+                            if (targetCourse) {
+                              setReviewTargetCourse(targetCourse);
+                            } else {
+                              setReviewTargetCourse({
+                                id: cert.courseId,
+                                title: cert.courseTitle,
+                                instructor: { name: cert.instructorName },
+                              } as any);
+                            }
+                            setReviewModalVisible(true);
+                          } else {
+                            setSelectedCert(cert);
+                          }
+                        }}
+                        activeOpacity={0.85}
+                        accessibilityRole="button"
+                        accessibilityLabel={
+                          isReviewed
+                            ? isBangla
+                              ? `${cert.courseTitle} এর ভেরিফাইড সার্টিফিকেট দেখুন`
+                              : `View verified digital certificate for ${cert.courseTitle}`
+                            : isBangla
+                              ? `${cert.courseTitle} এর সার্টিফিকেট আনলক করতে রিভিউ দিন`
+                              : `Review to unlock certificate for ${cert.courseTitle}`
+                        }
+                      >
+                        <View
+                          style={[
+                            styles.certIconBadge,
+                            {
+                              backgroundColor: isReviewed
+                                ? isDark
+                                  ? 'rgba(227, 66, 52, 0.16)'
+                                  : '#FEE2E2'
+                                : isDark
+                                  ? 'rgba(239, 68, 68, 0.2)'
+                                  : '#FEF2F2',
+                            },
+                          ]}
+                        >
+                          <Ionicons
+                            name={isReviewed ? 'ribbon' : 'lock-closed'}
+                            size={26}
+                            color={isReviewed ? '#E34234' : '#EF4444'}
                           />
-                          <View style={styles.savedInfo}>
-                            <Text style={[styles.savedTitle, { color: colors.text }]} numberOfLines={2}>
-                              {course.title}
-                            </Text>
-                            <Text style={[styles.savedPrice, { color: colors.primary }]}>
-                              {course.priceBdt && course.priceBdt > 0
-                                ? `৳ ${course.priceBdt.toLocaleString()}`
-                                : course.price > 0
-                                ? `$${course.price.toLocaleString()}`
-                                : (isBangla ? 'বিনামূল্যে' : 'Free')}
+                        </View>
+
+                        <View style={styles.certCol}>
+                          <View style={styles.verifiedTag}>
+                            <Ionicons
+                              name={isReviewed ? 'checkmark-circle' : 'lock-closed'}
+                              size={11}
+                              color={isReviewed ? (isDark ? '#34D399' : '#047857') : '#EF4444'}
+                            />
+                            <Text
+                              style={[
+                                styles.verifiedTagText,
+                                {
+                                  color: isReviewed ? (isDark ? '#34D399' : '#047857') : '#EF4444',
+                                },
+                              ]}
+                            >
+                              {isReviewed
+                                ? isBangla
+                                  ? 'ভেরিফাইড ক্রেডেনশিয়াল'
+                                  : 'VERIFIED CREDENTIAL'
+                                : isBangla
+                                  ? 'রিভিউ আবশ্যক (লক)'
+                                  : 'REVIEW REQUIRED (LOCKED)'}
                             </Text>
                           </View>
-                          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  )}
-                </>
-              )}
-            </>
-          )}
+                          <Text
+                            style={[styles.certItemTitle, { color: colors.text }]}
+                            numberOfLines={2}
+                          >
+                            {cert.courseTitle}
+                          </Text>
+                          <Text style={[styles.certItemMeta, { color: colors.textMuted }]}>
+                            {isReviewed
+                              ? `${isBangla ? 'ইস্যুর তারিখ ' : 'Issued '}${cert.issueDate} • ID: ${cert.credentialId}`
+                              : isBangla
+                                ? 'সার্টিফিকেট আনলক করতে ১-৫ স্টার রেটিং দিন'
+                                : 'Rate & review course to unlock certificate'}
+                          </Text>
+                        </View>
+
+                        <Ionicons
+                          name={isReviewed ? 'chevron-forward' : 'lock-closed-outline'}
+                          size={18}
+                          color={isReviewed ? colors.textMuted : '#F59E0B'}
+                        />
+                      </TouchableOpacity>
+                    );
+                  })
+                )}
+              </>
+            )}
+
+            {activeTab === 'saved' && (
+              <>
+                {savedList.length === 0 && savedVideos.length === 0 ? (
+                  <View style={styles.emptyContainer}>
+                    <Ionicons name="bookmark-outline" size={48} color={colors.textLight} />
+                    <Text style={[styles.emptyTitle, { color: colors.text }]}>
+                      {isBangla ? 'কোনো সংরক্ষিত আইটেম নেই' : 'No saved items yet'}
+                    </Text>
+                    <Text style={[styles.emptySubtitle, { color: colors.textMuted }]}>
+                      {isBangla
+                        ? 'পরে দেখার জন্য ক্যাটালগ থেকে কোর্স অথবা আমাদের ইউটিউব চ্যানেল থেকে মাস্টারক্লাস বুকমার্ক করুন।'
+                        : 'Bookmark courses from the catalog or masterclasses from our YouTube channel to watch later.'}
+                    </Text>
+                    {onOpenYouTube && (
+                      <TouchableOpacity
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 6,
+                          backgroundColor: '#FF0000',
+                          paddingHorizontal: 16,
+                          paddingVertical: 10,
+                          minHeight: MIN_TOUCH_TARGET,
+                          borderRadius: 10,
+                          marginTop: 14,
+                        }}
+                        onPress={onOpenYouTube}
+                        accessibilityRole="button"
+                        accessibilityLabel={
+                          isBangla ? 'ইউটিউব মাস্টারক্লাস ব্রাউজ করুন' : 'Browse YouTube Masterclasses'
+                        }
+                      >
+                        <Ionicons name="logo-youtube" size={16} color="#FFFFFF" />
+                        <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 13 }}>
+                          {isBangla
+                            ? 'ইউটিউব মাস্টারক্লাস ব্রাউজ করুন'
+                            : 'Browse YouTube Masterclasses'}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                ) : (
+                  <>
+                    {/* Saved YouTube Videos Section */}
+                    {savedVideos.length > 0 && (
+                      <View style={{ marginBottom: 20 }}>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 6,
+                            marginBottom: 12,
+                          }}
+                        >
+                          <Ionicons name="logo-youtube" size={18} color="#FF0000" />
+                          <Text style={[styles.sectionHeading, { color: colors.text }]}>
+                            {isBangla
+                              ? `সংরক্ষিত ইউটিউব মাস্টারক্লাস (${savedVideos.length})`
+                              : `Saved YouTube Masterclasses (${savedVideos.length})`}
+                          </Text>
+                        </View>
+                        {savedVideos.map((vid) => (
+                          <YouTubeCard
+                            key={vid.id}
+                            video={vid}
+                            layout="horizontal"
+                            onPress={(v) => playVideo(v, 'modal')}
+                          />
+                        ))}
+                      </View>
+                    )}
+
+                    {/* Saved Accredited Courses Section */}
+                    {savedList.length > 0 && (
+                      <View>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 6,
+                            marginBottom: 12,
+                          }}
+                        >
+                          <Ionicons name="school-outline" size={18} color={colors.primary} />
+                          <Text style={[styles.sectionHeading, { color: colors.text }]}>
+                            {isBangla
+                              ? `সংরক্ষিত অ্যাক্রেডিটেড কোর্স (${savedList.length})`
+                              : `Saved Accredited Courses (${savedList.length})`}
+                          </Text>
+                        </View>
+                        {savedList.map((course) => (
+                          <TouchableOpacity
+                            key={course.id}
+                            style={[
+                              styles.savedCard,
+                              { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                            ]}
+                            onPress={() => onNavigateToCourse(course.id)}
+                            activeOpacity={0.85}
+                            accessibilityRole="button"
+                            accessibilityLabel={
+                              isBangla
+                                ? `${course.title} কোর্সের বিস্তারিত দেখুন`
+                                : `View details for ${course.title}`
+                            }
+                          >
+                            <Image
+                              source={getSafeImageSource(course.thumbnail)}
+                              style={styles.savedThumb}
+                              {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+                            />
+                            <View style={styles.savedInfo}>
+                              <Text
+                                style={[styles.savedTitle, { color: colors.text }]}
+                                numberOfLines={2}
+                              >
+                                {course.title}
+                              </Text>
+                              <Text style={[styles.savedPrice, { color: colors.primary }]}>
+                                {course.priceBdt && course.priceBdt > 0
+                                  ? `৳ ${course.priceBdt.toLocaleString()}`
+                                  : course.price > 0
+                                    ? `$${course.price.toLocaleString()}`
+                                    : isBangla
+                                      ? 'বিনামূল্যে'
+                                      : 'Free'}
+                              </Text>
+                            </View>
+                            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
+                  </>
+                )}
+              </>
+            )}
           </AnimatedTabContent>
         </View>
       </ScrollView>
@@ -913,7 +1047,6 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
           onDismissLater={() => setReviewModalVisible(false)}
         />
       )}
-
     </View>
   );
 };

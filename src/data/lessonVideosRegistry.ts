@@ -1,6 +1,6 @@
 /**
  * Thriving Skills Authentic Lesson Video Master Registry
- * 
+ *
  * Maps courses and curriculum lessons to authentic Vimeo video lectures hosted on
  * the official Thriving Skills platform (player.vimeo.com).
  * Completely eliminates generic YouTube fallbacks.
@@ -30,7 +30,8 @@ export const CATEGORY_LESSON_PLAYLISTS: Record<string, LessonVideoData[]> = {
       videoUrl: 'https://player.vimeo.com/video/441544660',
       videoIntro: makeVimeoIntro('https://player.vimeo.com/video/441544660'),
       videoType: 'vimeo',
-      summary: 'Foundations of Emotional Intelligence (EQ), self-awareness, and high-impact workplace dialogues.',
+      summary:
+        'Foundations of Emotional Intelligence (EQ), self-awareness, and high-impact workplace dialogues.',
     },
     {
       title: 'History & Evolution of Emotional Intelligence',
@@ -38,7 +39,8 @@ export const CATEGORY_LESSON_PLAYLISTS: Record<string, LessonVideoData[]> = {
       videoUrl: 'https://player.vimeo.com/video/441545037',
       videoIntro: makeVimeoIntro('https://player.vimeo.com/video/441545037'),
       videoType: 'vimeo',
-      summary: 'Theoretical origins of EQ, the Daniel Goleman framework, and modern organizational psychology.',
+      summary:
+        'Theoretical origins of EQ, the Daniel Goleman framework, and modern organizational psychology.',
     },
     {
       title: 'Awareness of Emotion & Psychological Safety',
@@ -46,7 +48,8 @@ export const CATEGORY_LESSON_PLAYLISTS: Record<string, LessonVideoData[]> = {
       videoUrl: 'https://player.vimeo.com/video/441545201',
       videoIntro: makeVimeoIntro('https://player.vimeo.com/video/441545201'),
       videoType: 'vimeo',
-      summary: 'Recognizing affective triggers, physiological signals, and fostering psychological safety.',
+      summary:
+        'Recognizing affective triggers, physiological signals, and fostering psychological safety.',
     },
     {
       title: 'What is Self Management & Emotional Stamina',
@@ -54,7 +57,8 @@ export const CATEGORY_LESSON_PLAYLISTS: Record<string, LessonVideoData[]> = {
       videoUrl: 'https://player.vimeo.com/video/441545412',
       videoIntro: makeVimeoIntro('https://player.vimeo.com/video/441545412'),
       videoType: 'vimeo',
-      summary: 'Habit engineering, emotional regulation under pressure, and executive self-control.',
+      summary:
+        'Habit engineering, emotional regulation under pressure, and executive self-control.',
     },
     {
       title: 'Social Awareness Purpose & Cultural Dynamics',
@@ -79,26 +83,38 @@ export const CATEGORY_LESSON_PLAYLISTS: Record<string, LessonVideoData[]> = {
     {
       title: 'AI Slide Orchestrator & Multimodal Workflows',
       duration: '02:00',
-      videoUrl: 'https://player.vimeo.com/video/1228513027?h=21ffa944fc&badge=0&autopause=0&player_id=0&app_id=58479',
-      videoIntro: makeVimeoIntro('https://player.vimeo.com/video/1228513027?h=21ffa944fc&badge=0&autopause=0&player_id=0&app_id=58479'),
+      videoUrl:
+        'https://player.vimeo.com/video/1228513027?h=21ffa944fc&badge=0&autopause=0&player_id=0&app_id=58479',
+      videoIntro: makeVimeoIntro(
+        'https://player.vimeo.com/video/1228513027?h=21ffa944fc&badge=0&autopause=0&player_id=0&app_id=58479'
+      ),
       videoType: 'vimeo',
-      summary: 'Core principles of generative slide workflows, LLM orchestration, and rapid outline framing.',
+      summary:
+        'Core principles of generative slide workflows, LLM orchestration, and rapid outline framing.',
     },
     {
       title: 'AI Presentation Design- Prompt Engineering & Data Visualization',
       duration: '05:00',
-      videoUrl: 'https://player.vimeo.com/video/1228513027?h=21ffa944fc&badge=0&autopause=0&player_id=0&app_id=58479',
-      videoIntro: makeVimeoIntro('https://player.vimeo.com/video/1228513027?h=21ffa944fc&badge=0&autopause=0&player_id=0&app_id=58479'),
+      videoUrl:
+        'https://player.vimeo.com/video/1228513027?h=21ffa944fc&badge=0&autopause=0&player_id=0&app_id=58479',
+      videoIntro: makeVimeoIntro(
+        'https://player.vimeo.com/video/1228513027?h=21ffa944fc&badge=0&autopause=0&player_id=0&app_id=58479'
+      ),
       videoType: 'vimeo',
-      summary: 'Zero-shot and few-shot prompt formulation for converting raw documents into presentation charts.',
+      summary:
+        'Zero-shot and few-shot prompt formulation for converting raw documents into presentation charts.',
     },
     {
       title: 'Advanced AI Slide Workflows & Brand Control',
       duration: '04:00',
-      videoUrl: 'https://player.vimeo.com/video/1228513027?h=21ffa944fc&badge=0&autopause=0&player_id=0&app_id=58479',
-      videoIntro: makeVimeoIntro('https://player.vimeo.com/video/1228513027?h=21ffa944fc&badge=0&autopause=0&player_id=0&app_id=58479'),
+      videoUrl:
+        'https://player.vimeo.com/video/1228513027?h=21ffa944fc&badge=0&autopause=0&player_id=0&app_id=58479',
+      videoIntro: makeVimeoIntro(
+        'https://player.vimeo.com/video/1228513027?h=21ffa944fc&badge=0&autopause=0&player_id=0&app_id=58479'
+      ),
       videoType: 'vimeo',
-      summary: 'Enforcing corporate palettes, typography, and SVG icon alignment with AI assistance.',
+      summary:
+        'Enforcing corporate palettes, typography, and SVG icon alignment with AI assistance.',
     },
     {
       title: 'Google Gemini & Microsoft Copilot Enterprise Integration',
@@ -122,7 +138,8 @@ export const CATEGORY_LESSON_PLAYLISTS: Record<string, LessonVideoData[]> = {
       videoUrl: 'https://player.vimeo.com/video/451384166',
       videoIntro: makeVimeoIntro('https://player.vimeo.com/video/451384166'),
       videoType: 'vimeo',
-      summary: 'Safe data governance, hallucination mitigation, and intellectual property compliance.',
+      summary:
+        'Safe data governance, hallucination mitigation, and intellectual property compliance.',
     },
   ],
 
@@ -134,7 +151,8 @@ export const CATEGORY_LESSON_PLAYLISTS: Record<string, LessonVideoData[]> = {
       videoUrl: 'https://player.vimeo.com/video/445183837',
       videoIntro: makeVimeoIntro('https://player.vimeo.com/video/445183837'),
       videoType: 'vimeo',
-      summary: 'Dynamic formula dragging, relative addresses, and multidirectional calculation models.',
+      summary:
+        'Dynamic formula dragging, relative addresses, and multidirectional calculation models.',
     },
     {
       title: 'Partial Absolute Cell Reference – Row or Column Locking',
@@ -150,7 +168,8 @@ export const CATEGORY_LESSON_PLAYLISTS: Record<string, LessonVideoData[]> = {
       videoUrl: 'https://player.vimeo.com/video/445183862',
       videoIntro: makeVimeoIntro('https://player.vimeo.com/video/445183862'),
       videoType: 'vimeo',
-      summary: 'Cross-worksheet lookup structures, error handling with IFERROR, and column indexing.',
+      summary:
+        'Cross-worksheet lookup structures, error handling with IFERROR, and column indexing.',
     },
     {
       title: 'Microsoft Excel: Basic to Intermediate Foundations',
@@ -166,7 +185,8 @@ export const CATEGORY_LESSON_PLAYLISTS: Record<string, LessonVideoData[]> = {
       videoUrl: 'https://player.vimeo.com/video/451384198',
       videoIntro: makeVimeoIntro('https://player.vimeo.com/video/451384198'),
       videoType: 'vimeo',
-      summary: 'Nested IF/AND/OR logic, conditional formatting rules, and data validation drop-downs.',
+      summary:
+        'Nested IF/AND/OR logic, conditional formatting rules, and data validation drop-downs.',
     },
     {
       title: 'Data Analysis, Pivot Tables & Power BI Dashboarding',
@@ -202,7 +222,8 @@ export const CATEGORY_LESSON_PLAYLISTS: Record<string, LessonVideoData[]> = {
       videoUrl: 'https://player.vimeo.com/video/445183862',
       videoIntro: makeVimeoIntro('https://player.vimeo.com/video/445183862'),
       videoType: 'vimeo',
-      summary: 'Value Added Tax (VAT) rate slabs, input tax credits (Mushak 6.3), and VDS certificates.',
+      summary:
+        'Value Added Tax (VAT) rate slabs, input tax credits (Mushak 6.3), and VDS certificates.',
     },
     {
       title: 'Project Financing & Loan Syndication for Banking Professionals',
@@ -218,7 +239,8 @@ export const CATEGORY_LESSON_PLAYLISTS: Record<string, LessonVideoData[]> = {
       videoUrl: 'https://player.vimeo.com/video/451384166',
       videoIntro: makeVimeoIntro('https://player.vimeo.com/video/451384166'),
       videoType: 'vimeo',
-      summary: 'Cash conversion cycle (CCC), accounts receivable factoring, and inventory controls.',
+      summary:
+        'Cash conversion cycle (CCC), accounts receivable factoring, and inventory controls.',
     },
     {
       title: 'Corporate Audit Defense & NBR Dispute Resolution',
@@ -238,7 +260,8 @@ export const CATEGORY_LESSON_PLAYLISTS: Record<string, LessonVideoData[]> = {
       videoUrl: 'https://player.vimeo.com/video/1228513027?h=21ffa944fc',
       videoIntro: makeVimeoIntro('https://player.vimeo.com/video/1228513027?h=21ffa944fc'),
       videoType: 'vimeo',
-      summary: 'Developing novel research questions, theoretical grounding, and hypothesis formulation.',
+      summary:
+        'Developing novel research questions, theoretical grounding, and hypothesis formulation.',
     },
     {
       title: 'Econometric Modeling & Quantitative Inference',
@@ -246,7 +269,8 @@ export const CATEGORY_LESSON_PLAYLISTS: Record<string, LessonVideoData[]> = {
       videoUrl: 'https://player.vimeo.com/video/441544660',
       videoIntro: makeVimeoIntro('https://player.vimeo.com/video/441544660'),
       videoType: 'vimeo',
-      summary: 'OLS regression, panel data techniques, fixed vs random effects, and multivariable modeling.',
+      summary:
+        'OLS regression, panel data techniques, fixed vs random effects, and multivariable modeling.',
     },
     {
       title: 'Systematic Literature Review & Citation Integrity',
@@ -254,7 +278,8 @@ export const CATEGORY_LESSON_PLAYLISTS: Record<string, LessonVideoData[]> = {
       videoUrl: 'https://player.vimeo.com/video/445183837',
       videoIntro: makeVimeoIntro('https://player.vimeo.com/video/445183837'),
       videoType: 'vimeo',
-      summary: 'PRISMA guidelines, Mendeley/Zotero citation managers, and plagiarism-free academic synthesis.',
+      summary:
+        'PRISMA guidelines, Mendeley/Zotero citation managers, and plagiarism-free academic synthesis.',
     },
     {
       title: 'Survey Instrument Design & Psychometric Validation',
@@ -270,7 +295,8 @@ export const CATEGORY_LESSON_PLAYLISTS: Record<string, LessonVideoData[]> = {
       videoUrl: 'https://player.vimeo.com/video/451384166',
       videoIntro: makeVimeoIntro('https://player.vimeo.com/video/451384166'),
       videoType: 'vimeo',
-      summary: 'Targeting Q1/Q2 indexed journals, writing structured abstracts, and addressing reviewer comments.',
+      summary:
+        'Targeting Q1/Q2 indexed journals, writing structured abstracts, and addressing reviewer comments.',
     },
     {
       title: 'Thesis Defense & Research Methodology Presentation',
@@ -278,7 +304,8 @@ export const CATEGORY_LESSON_PLAYLISTS: Record<string, LessonVideoData[]> = {
       videoUrl: 'https://player.vimeo.com/video/441545638',
       videoIntro: makeVimeoIntro('https://player.vimeo.com/video/441545638'),
       videoType: 'vimeo',
-      summary: 'Effective visual slide presentation for dissertation committees and academic conferences.',
+      summary:
+        'Effective visual slide presentation for dissertation committees and academic conferences.',
     },
   ],
 
@@ -290,7 +317,8 @@ export const CATEGORY_LESSON_PLAYLISTS: Record<string, LessonVideoData[]> = {
       videoUrl: 'https://player.vimeo.com/video/445183837',
       videoIntro: makeVimeoIntro('https://player.vimeo.com/video/445183837'),
       videoType: 'vimeo',
-      summary: 'NIST CSF, ISO/IEC 27001 standard alignment, and enterprise security perimeter defense.',
+      summary:
+        'NIST CSF, ISO/IEC 27001 standard alignment, and enterprise security perimeter defense.',
     },
     {
       title: 'Threat Modeling & Vulnerability Management',
@@ -306,7 +334,8 @@ export const CATEGORY_LESSON_PLAYLISTS: Record<string, LessonVideoData[]> = {
       videoUrl: 'https://player.vimeo.com/video/445183862',
       videoIntro: makeVimeoIntro('https://player.vimeo.com/video/445183862'),
       videoType: 'vimeo',
-      summary: 'Least-privilege access, conditional access policies, and enterprise MFA enforcement.',
+      summary:
+        'Least-privilege access, conditional access policies, and enterprise MFA enforcement.',
     },
     {
       title: 'Incident Response & Digital Forensics',
@@ -330,7 +359,8 @@ export const CATEGORY_LESSON_PLAYLISTS: Record<string, LessonVideoData[]> = {
       videoUrl: 'https://player.vimeo.com/video/441545037',
       videoIntro: makeVimeoIntro('https://player.vimeo.com/video/441545037'),
       videoType: 'vimeo',
-      summary: 'Bangladesh Cyber Security Act compliance, board risk reporting, and insurance evaluation.',
+      summary:
+        'Bangladesh Cyber Security Act compliance, board risk reporting, and insurance evaluation.',
     },
   ],
 };
@@ -392,7 +422,8 @@ export function resolveLessonVideoData(
 ): LessonVideoData {
   // If the lesson already has a direct valid Vimeo URL or iframe, preserve it
   if (lesson?.videoIntro && lesson.videoIntro.includes('vimeo')) {
-    const vMatch = lesson.videoIntro.match(/player\.vimeo\.com\/video\/(\d+)/i) ||
+    const vMatch =
+      lesson.videoIntro.match(/player\.vimeo\.com\/video\/(\d+)/i) ||
       lesson.videoIntro.match(/vimeo\.com\/(\d+)/i);
     const vId = vMatch ? vMatch[1] : '441544660';
     return {
@@ -424,7 +455,9 @@ export function resolveLessonVideoData(
   let targetCategory =
     COURSE_SPECIFIC_PLAYLISTS[courseIdStr] ||
     (Object.keys(COURSE_SPECIFIC_PLAYLISTS).find((k) => titleLower.includes(k)) &&
-      COURSE_SPECIFIC_PLAYLISTS[Object.keys(COURSE_SPECIFIC_PLAYLISTS).find((k) => titleLower.includes(k))!]);
+      COURSE_SPECIFIC_PLAYLISTS[
+        Object.keys(COURSE_SPECIFIC_PLAYLISTS).find((k) => titleLower.includes(k))!
+      ]);
 
   // 2. Category keyword match
   if (!targetCategory) {
@@ -469,7 +502,8 @@ export function resolveLessonVideoData(
     }
   }
 
-  const playlist = CATEGORY_LESSON_PLAYLISTS[targetCategory] || CATEGORY_LESSON_PLAYLISTS.leadership;
+  const playlist =
+    CATEGORY_LESSON_PLAYLISTS[targetCategory] || CATEGORY_LESSON_PLAYLISTS.leadership;
   const safeIdx = Math.abs(lessonIndex) % playlist.length;
   return playlist[safeIdx];
 }

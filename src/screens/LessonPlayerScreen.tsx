@@ -108,7 +108,9 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const [streamQuality, setStreamQuality] = useState<string>('720p HD');
   const [selectedDownloadQuality, setSelectedDownloadQuality] = useState<string>('720p HD');
   const [qualityModalVisible, setQualityModalVisible] = useState<boolean>(false);
-  const [qualityModalMode, setQualityModalMode] = useState<'download' | 'streamQuality'>('download');
+  const [qualityModalMode, setQualityModalMode] = useState<'download' | 'streamQuality'>(
+    'download'
+  );
   const [isDownloaded, setIsDownloaded] = useState<boolean>(false);
 
   // Modals
@@ -175,14 +177,17 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
 
   // Listen for screen orientation / dimension changes
   useEffect(() => {
-    const subscription = Dimensions.addEventListener('change', ({ window }: { window: { width: number; height: number } }) => {
-      setWindowDimensions(window as any);
-      if (window.width > window.height) {
-        setIsFullscreen(true);
-      } else if (window.width <= window.height && !isManualLandscapeRef.current) {
-        setIsFullscreen(false);
+    const subscription = Dimensions.addEventListener(
+      'change',
+      ({ window }: { window: { width: number; height: number } }) => {
+        setWindowDimensions(window as any);
+        if (window.width > window.height) {
+          setIsFullscreen(true);
+        } else if (window.width <= window.height && !isManualLandscapeRef.current) {
+          setIsFullscreen(false);
+        }
       }
-    });
+    );
     return () => subscription?.remove();
   }, []);
 
@@ -228,7 +233,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     if (!dur) return 600;
     if (dur.includes(':')) {
       const parts = dur.split(':').map((p) => parseInt(p, 10));
-      if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) return parts[0] * 60 + parts[1];
+      if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1]))
+        return parts[0] * 60 + parts[1];
       if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2]))
         return parts[0] * 3600 + parts[1] * 60 + parts[2];
     }
@@ -284,7 +290,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
 
   // Video watch time tracking interval & continuous video auto-play
   useEffect(() => {
-    if (!isPlaying || !currentLesson || !course || autoplayCountdown !== null || !canPlayVideo) return;
+    if (!isPlaying || !currentLesson || !course || autoplayCountdown !== null || !canPlayVideo)
+      return;
 
     if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
     progressIntervalRef.current = setInterval(() => {
@@ -420,7 +427,9 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         await nativePlayerRef.current.startPictureInPicture();
         setIsSystemPiPActive(true);
         showToast({
-          message: isBangla ? 'পিকচার-ইন-পিকচার (ভাসমান উইন্ডো) সক্রিয়' : 'Picture-in-Picture window activated',
+          message: isBangla
+            ? 'পিকচার-ইন-পিকচার (ভাসমান উইন্ডো) সক্রিয়'
+            : 'Picture-in-Picture window activated',
           type: 'success',
         });
         return;
@@ -583,7 +592,11 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
 
   const TABS: { id: PlayerTab; label: string; icon: any }[] = [
     { id: 'curriculum', label: isBangla ? 'লেকচার' : 'Lectures', icon: 'list' },
-    { id: 'notes', label: `${isBangla ? 'নোটস' : 'Notes'} (${lessonNotes.length})`, icon: 'document-text' },
+    {
+      id: 'notes',
+      label: `${isBangla ? 'নোটস' : 'Notes'} (${lessonNotes.length})`,
+      icon: 'document-text',
+    },
     { id: 'transcript', label: isBangla ? 'ট্রান্সক্রিপ্ট' : 'Transcript', icon: 'chatbox-ellipses' },
     { id: 'qna', label: isBangla ? 'প্রশ্ন-উত্তর' : 'Q&A', icon: 'chatbubbles' },
   ];
@@ -669,7 +682,9 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     rawUrl ||
     (activeVideoIntro &&
     !activeVideoIntro.includes('<iframe') &&
-    (activeVideoIntro.startsWith('http') || activeVideoIntro.includes('vimeo') || activeVideoIntro.includes('youtu'))
+    (activeVideoIntro.startsWith('http') ||
+      activeVideoIntro.includes('vimeo') ||
+      activeVideoIntro.includes('youtu'))
       ? activeVideoIntro.trim()
       : undefined) ||
     fallbackLessonVideo.videoUrl;
@@ -692,7 +707,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     if (activeVideoIntro && activeVideoIntro.includes('<iframe')) {
       const iframeSrcMatch = activeVideoIntro.match(/src=["']([^"']+)["']/i);
       const isSafeIframe =
-        !iframeSrcMatch || (/^(https:)?\/\//i.test(iframeSrcMatch[1]) && !/javascript:/i.test(iframeSrcMatch[1]));
+        !iframeSrcMatch ||
+        (/^(https:)?\/\//i.test(iframeSrcMatch[1]) && !/javascript:/i.test(iframeSrcMatch[1]));
       if (isSafeIframe) {
         embedMarkup = activeVideoIntro
           .replace(/src=["']\/\//gi, 'src="https://')
@@ -824,8 +840,12 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                   setIsFocusMode(!isFocusMode);
                   showToast({
                     message: !isFocusMode
-                      ? (isBangla ? 'ফোকাস মোড সক্রিয়: ডিস্ট্রাকশন-মুক্ত ভিউ' : 'Focus Mode active: distraction-free viewing')
-                      : (isBangla ? 'সাধারণ ভিউ সক্রিয়' : 'Standard View active'),
+                      ? isBangla
+                        ? 'ফোকাস মোড সক্রিয়: ডিস্ট্রাকশন-মুক্ত ভিউ'
+                        : 'Focus Mode active: distraction-free viewing'
+                      : isBangla
+                        ? 'সাধারণ ভিউ সক্রিয়'
+                        : 'Standard View active',
                     type: 'info',
                   });
                 }}
@@ -866,8 +886,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                         ? 'ব্যাকগ্রাউন্ড অডিও মোড সক্রিয় (স্ক্রিন বন্ধ করেও চলবে)'
                         : 'Background Audio Mode active (listens with screen locked)'
                       : isBangla
-                      ? 'স্ট্যান্ডার্ড প্লেয়ার সক্রিয়'
-                      : 'Standard Player active',
+                        ? 'স্ট্যান্ডার্ড প্লেয়ার সক্রিয়'
+                        : 'Standard Player active',
                     type: 'info',
                   });
                 }}
@@ -887,7 +907,12 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
 
       {/* Administrator / Developer Access Banner */}
       {isPrivileged && !isFullscreen && (
-        <View style={[styles.adminBanner, { backgroundColor: '#102F53', borderColor: 'rgba(227, 66, 52, 0.4)' }]}>
+        <View
+          style={[
+            styles.adminBanner,
+            { backgroundColor: '#102F53', borderColor: 'rgba(227, 66, 52, 0.4)' },
+          ]}
+        >
           <View style={styles.adminBannerLeft}>
             <Ionicons name="shield-checkmark" size={14} color="#E34234" />
             <Text style={styles.adminBannerTitle}>
@@ -1102,15 +1127,49 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                   padding: 16,
                 }}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(227, 66, 52, 0.12)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 14,
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 6,
+                      backgroundColor: 'rgba(227, 66, 52, 0.12)',
+                      paddingHorizontal: 10,
+                      paddingVertical: 4,
+                      borderRadius: 8,
+                    }}
+                  >
                     <Ionicons name="sparkles" size={13} color="#E34234" />
-                    <Text style={{ fontSize: 11, fontWeight: '800', color: '#E34234', letterSpacing: 0.5 }}>
+                    <Text
+                      style={{
+                        fontSize: 11,
+                        fontWeight: '800',
+                        color: '#E34234',
+                        letterSpacing: 0.5,
+                      }}
+                    >
                       {isBangla ? 'ফোকাস মোড সক্রিয়' : 'FOCUS MODE • DISTRACTION-FREE'}
                     </Text>
                   </View>
                   <TouchableOpacity
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surfaceSubtle }}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 4,
+                      paddingHorizontal: 10,
+                      paddingVertical: 5,
+                      borderRadius: 12,
+                      borderWidth: 1,
+                      borderColor: colors.border,
+                      backgroundColor: colors.surfaceSubtle,
+                    }}
                     onPress={() => {
                       triggerHaptic('light');
                       setIsFocusMode(false);
@@ -1127,7 +1186,15 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
 
                 {/* Progress bar */}
                 <View style={{ marginBottom: 16 }}>
-                  <View style={{ height: 6, borderRadius: 3, backgroundColor: colors.surfaceSubtle, overflow: 'hidden', marginBottom: 6 }}>
+                  <View
+                    style={{
+                      height: 6,
+                      borderRadius: 3,
+                      backgroundColor: colors.surfaceSubtle,
+                      overflow: 'hidden',
+                      marginBottom: 6,
+                    }}
+                  >
                     <View
                       style={{
                         height: '100%',
@@ -1137,12 +1204,24 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                       }}
                     />
                   </View>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                    }}
+                  >
                     <Text style={{ fontSize: 11, fontWeight: '500', color: colors.textMuted }}>
                       {formatSeconds(currentPositionSeconds)} / {formatSeconds(totalLessonSeconds)}
                     </Text>
                     <Text style={{ fontSize: 12, fontWeight: '700', color: '#E34234' }}>
-                      {totalLessonSeconds > 0 ? Math.min(100, Math.round((currentPositionSeconds / totalLessonSeconds) * 100)) : 0}% Complete
+                      {totalLessonSeconds > 0
+                        ? Math.min(
+                            100,
+                            Math.round((currentPositionSeconds / totalLessonSeconds) * 100)
+                          )
+                        : 0}
+                      % Complete
                     </Text>
                   </View>
                 </View>
@@ -1151,7 +1230,17 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   <TouchableOpacity
                     style={[
-                      { flex: 1, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: shape.medium, borderWidth: 1, paddingHorizontal: 12 },
+                      {
+                        flex: 1,
+                        minHeight: 44,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                        borderRadius: shape.medium,
+                        borderWidth: 1,
+                        paddingHorizontal: 12,
+                      },
                       currentLessonIndex === 0
                         ? { borderColor: colors.border, opacity: 0.4 }
                         : { borderColor: colors.border, backgroundColor: colors.surfaceSubtle },
@@ -1169,7 +1258,17 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
 
                   <TouchableOpacity
                     style={[
-                      { flex: 1, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: shape.medium, borderWidth: 1, paddingHorizontal: 12 },
+                      {
+                        flex: 1,
+                        minHeight: 44,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 6,
+                        borderRadius: shape.medium,
+                        borderWidth: 1,
+                        paddingHorizontal: 12,
+                      },
                       currentLessonIndex === allLessons.length - 1
                         ? { borderColor: colors.border, opacity: 0.4 }
                         : { backgroundColor: colors.primary, borderColor: colors.primary },
@@ -1296,7 +1395,9 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                 </View>
 
                 {/* TAB 3: TRANSCRIPT */}
-                <View style={{ width: screenWidth, flex: 1, paddingHorizontal: 16, paddingTop: 10 }}>
+                <View
+                  style={{ width: screenWidth, flex: 1, paddingHorizontal: 16, paddingTop: 10 }}
+                >
                   <LessonTranscriptTab
                     currentPositionSeconds={currentPositionSeconds}
                     lessonTitle={currentLesson.title}
@@ -1415,7 +1516,12 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         visible={quizPlayerVisible}
         courseTitle={course.title}
         courseCategory={course.category}
-        quizId={selectedQuizLesson?.quizId || selectedQuizLesson?.id || currentLesson.quizId || currentLesson.id}
+        quizId={
+          selectedQuizLesson?.quizId ||
+          selectedQuizLesson?.id ||
+          currentLesson.quizId ||
+          currentLesson.id
+        }
         questions={
           selectedQuizLesson?.quiz
             ? selectedQuizLesson.quiz.map((q) => ({
@@ -1426,14 +1532,14 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                 explanation: q.explanation,
               }))
             : currentLesson.quiz
-            ? currentLesson.quiz.map((q) => ({
-                id: q.id,
-                question: q.question,
-                options: q.options,
-                correctIndex: q.correctAnswerIndex,
-                explanation: q.explanation,
-              }))
-            : undefined
+              ? currentLesson.quiz.map((q) => ({
+                  id: q.id,
+                  question: q.question,
+                  options: q.options,
+                  correctIndex: q.correctAnswerIndex,
+                  explanation: q.explanation,
+                }))
+              : undefined
         }
         onClose={() => {
           setQuizPlayerVisible(false);
@@ -1490,7 +1596,9 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
           setPaymentModalVisible(false);
           Alert.alert(
             isBangla ? 'ভর্তি সফল হয়েছে! 🎓' : 'Enrollment Successful! 🎓',
-            isBangla ? 'কোর্সের সকল ভিডিও এখন আনলক করা হয়েছে।' : 'All course videos are now unlocked.'
+            isBangla
+              ? 'কোর্সের সকল ভিডিও এখন আনলক করা হয়েছে।'
+              : 'All course videos are now unlocked.'
           );
         }}
       />

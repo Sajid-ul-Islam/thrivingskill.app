@@ -96,11 +96,7 @@ export const SpringPressable: React.FC<SpringPressableProps> = ({
       inner.width = '100%';
     }
 
-    if (
-      outer.height !== undefined ||
-      outer.flex !== undefined ||
-      outer.flexGrow !== undefined
-    ) {
+    if (outer.height !== undefined || outer.flex !== undefined || outer.flexGrow !== undefined) {
       inner.flexGrow = 1;
     }
 

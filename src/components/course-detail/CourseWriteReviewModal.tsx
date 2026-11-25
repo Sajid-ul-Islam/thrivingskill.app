@@ -62,7 +62,12 @@ export const CourseWriteReviewModal: React.FC<CourseWriteReviewModalProps> = ({
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-        <View style={[styles.reviewModalCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.reviewModalCard,
+            { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+          ]}
+        >
           <View style={styles.reviewModalHeader}>
             <View style={styles.headerTitleRow}>
               <Ionicons name="star" size={20} color="#F59E0B" style={{ flexShrink: 0 }} />
@@ -87,9 +92,7 @@ export const CourseWriteReviewModal: React.FC<CourseWriteReviewModalProps> = ({
             keyboardDismissMode="on-drag"
             contentContainerStyle={{ paddingBottom: 20 }}
           >
-            <Text style={[styles.reviewCourseTitle, { color: colors.text }]}>
-              {courseTitle}
-            </Text>
+            <Text style={[styles.reviewCourseTitle, { color: colors.text }]}>{courseTitle}</Text>
             <Text style={[styles.reviewModalSub, { color: colors.textMuted }]}>
               {isBangla
                 ? 'আপনার অভিজ্ঞতার ওপর ভিত্তি করে রেটিং এবং মূল্যবান মতামত শেয়ার করুন।'
@@ -124,12 +127,12 @@ export const CourseWriteReviewModal: React.FC<CourseWriteReviewModalProps> = ({
               {rating === 5
                 ? '★★★★★ Outstanding / 5.0'
                 : rating === 4
-                ? '★★★★ Very Good / 4.0'
-                : rating === 3
-                ? '★★★ Good / 3.0'
-                : rating === 2
-                ? '★★ Fair / 2.0'
-                : '★ Needs Improvement / 1.0'}
+                  ? '★★★★ Very Good / 4.0'
+                  : rating === 3
+                    ? '★★★ Good / 3.0'
+                    : rating === 2
+                      ? '★★ Fair / 2.0'
+                      : '★ Needs Improvement / 1.0'}
             </Text>
 
             {/* Comment Input */}
@@ -176,7 +179,10 @@ export const CourseWriteReviewModal: React.FC<CourseWriteReviewModalProps> = ({
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.cancelReviewBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                style={[
+                  styles.cancelReviewBtn,
+                  { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                ]}
                 onPress={onClose}
                 accessibilityRole="button"
                 accessibilityLabel={isBangla ? 'বাতিল' : 'Cancel'}

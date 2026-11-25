@@ -27,11 +27,36 @@ interface CorporateInquiryModalProps {
 }
 
 const ENTERPRISE_SOLUTIONS = [
-  { id: 'Corporate Training', label: 'Corporate Training', desc: 'Tailored upskilling cohorts for teams', icon: 'school' },
-  { id: 'Digital LMS Platform', label: 'Digital Learning (LMS)', desc: 'White-label LMS deployment & hosting', icon: 'laptop' },
-  { id: 'SME Consultancy', label: 'SME Consultancy', desc: 'Process optimization & growth strategy', icon: 'briefcase' },
-  { id: 'ICT & Policy Consulting', label: 'ICT & Policy Consulting', desc: 'Digital transformation & AI governance', icon: 'shield-checkmark' },
-  { id: 'Team Training Access', label: 'Enterprise Team Access', desc: 'Bulk seat access to 300+ courses', icon: 'people' },
+  {
+    id: 'Corporate Training',
+    label: 'Corporate Training',
+    desc: 'Tailored upskilling cohorts for teams',
+    icon: 'school',
+  },
+  {
+    id: 'Digital LMS Platform',
+    label: 'Digital Learning (LMS)',
+    desc: 'White-label LMS deployment & hosting',
+    icon: 'laptop',
+  },
+  {
+    id: 'SME Consultancy',
+    label: 'SME Consultancy',
+    desc: 'Process optimization & growth strategy',
+    icon: 'briefcase',
+  },
+  {
+    id: 'ICT & Policy Consulting',
+    label: 'ICT & Policy Consulting',
+    desc: 'Digital transformation & AI governance',
+    icon: 'shield-checkmark',
+  },
+  {
+    id: 'Team Training Access',
+    label: 'Enterprise Team Access',
+    desc: 'Bulk seat access to 300+ courses',
+    icon: 'people',
+  },
 ] as const;
 
 const TEAM_SIZES = ['5-20', '20-50', '50-200', '200+'] as const;
@@ -158,9 +183,7 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
                   Enterprise Solutions
                 </Text>
                 <Text style={[typography.caption, { color: colors.textMuted }]} numberOfLines={1}>
-                  {submitted
-                    ? 'Request Confirmed'
-                    : `Step ${step} of 3 • ${stepLabels[step - 1]}`}
+                  {submitted ? 'Request Confirmed' : `Step ${step} of 3 • ${stepLabels[step - 1]}`}
                 </Text>
               </View>
             </View>
@@ -223,7 +246,13 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
                 <Text style={[typography.h3, styles.successTitle, { color: colors.text }]}>
                   Proposal Request Received!
                 </Text>
-                <Text style={[typography.bodySmall, styles.successSubtitle, { color: colors.textMuted }]}>
+                <Text
+                  style={[
+                    typography.bodySmall,
+                    styles.successSubtitle,
+                    { color: colors.textMuted },
+                  ]}
+                >
                   Our Enterprise Strategic Advisor will contact {contactName} at {workEmail} within
                   24 hours with a custom {selectedService} proposal for {teamSize} learners.
                 </Text>
@@ -254,7 +283,8 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
             ) : step === 1 ? (
               <>
                 <Text style={[typography.bodySmall, { color: colors.textMuted, marginBottom: 14 }]}>
-                  Select the primary solution your organization needs. You can adjust details in the next steps.
+                  Select the primary solution your organization needs. You can adjust details in the
+                  next steps.
                 </Text>
 
                 <View style={styles.solutionsList}>
@@ -266,7 +296,9 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
                         style={[
                           styles.solutionCard,
                           {
-                            backgroundColor: isSelected ? colors.primaryLight : colors.surfaceSubtle,
+                            backgroundColor: isSelected
+                              ? colors.primaryLight
+                              : colors.surfaceSubtle,
                             borderColor: isSelected ? colors.primary : colors.border,
                           },
                         ]}
@@ -435,7 +467,10 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
 
                 <View style={styles.wizardNavRow}>
                   <TouchableOpacity
-                    style={[styles.backBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                    style={[
+                      styles.backBtn,
+                      { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                    ]}
                     onPress={() => {
                       triggerHaptic('light');
                       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -495,16 +530,24 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
                       );
                     })}
                   </View>
-                  <View style={[styles.volumeDiscountPill, { backgroundColor: 'rgba(255, 182, 6, 0.12)', borderColor: 'rgba(255, 182, 6, 0.3)' }]}>
+                  <View
+                    style={[
+                      styles.volumeDiscountPill,
+                      {
+                        backgroundColor: 'rgba(255, 182, 6, 0.12)',
+                        borderColor: 'rgba(255, 182, 6, 0.3)',
+                      },
+                    ]}
+                  >
                     <Ionicons name="pricetag" size={13} color="#D97706" />
                     <Text style={[styles.volumeDiscountText, { color: '#B45309' }]}>
                       {teamSize === '5-20'
                         ? '10% Team Volume Discount Applied (Save ৳3,000+)'
                         : teamSize === '20-50'
-                        ? '20% Team Volume Discount Applied (Most Popular • Save ৳12,000+)'
-                        : teamSize === '50-200'
-                        ? '30% Enterprise Cohort Discount Applied (Save ৳45,000+)'
-                        : 'Custom White-Label LMS + Unlimited Enterprise Cohort Licensing'}
+                          ? '20% Team Volume Discount Applied (Most Popular • Save ৳12,000+)'
+                          : teamSize === '50-200'
+                            ? '30% Enterprise Cohort Discount Applied (Save ৳45,000+)'
+                            : 'Custom White-Label LMS + Unlimited Enterprise Cohort Licensing'}
                     </Text>
                   </View>
                 </View>
@@ -538,14 +581,20 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
                     </Text>
                   </View>
                   <View style={styles.summaryRow}>
-                    <Text style={[typography.caption, { color: colors.textMuted }]}>Work Email:</Text>
+                    <Text style={[typography.caption, { color: colors.textMuted }]}>
+                      Work Email:
+                    </Text>
                     <Text style={[typography.bodySmall, { color: colors.text, fontWeight: '700' }]}>
                       {workEmail}
                     </Text>
                   </View>
                   <View style={styles.summaryRow}>
-                    <Text style={[typography.caption, { color: colors.textMuted }]}>Team Size:</Text>
-                    <Text style={[typography.bodySmall, { color: colors.primary, fontWeight: '700' }]}>
+                    <Text style={[typography.caption, { color: colors.textMuted }]}>
+                      Team Size:
+                    </Text>
+                    <Text
+                      style={[typography.bodySmall, { color: colors.primary, fontWeight: '700' }]}
+                    >
                       {teamSize} learners
                     </Text>
                   </View>
@@ -553,7 +602,10 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
 
                 <View style={styles.wizardNavRow}>
                   <TouchableOpacity
-                    style={[styles.backBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                    style={[
+                      styles.backBtn,
+                      { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                    ]}
                     onPress={() => {
                       triggerHaptic('light');
                       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);

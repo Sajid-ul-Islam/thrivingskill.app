@@ -54,7 +54,8 @@ export class UserService {
           const lpUser = await this.getLearnPressUser(data.id);
           if (lpUser) {
             if (lpUser.avatar_url) lpAvatar = lpUser.avatar_url;
-            if (lpUser.cover_url || lpUser.cover_photo) lpCover = lpUser.cover_url || lpUser.cover_photo;
+            if (lpUser.cover_url || lpUser.cover_photo)
+              lpCover = lpUser.cover_url || lpUser.cover_photo;
             if (lpUser.social) lpSocial = lpUser.social;
             if (lpUser.city) lpCity = lpUser.city;
             if (lpUser.custom_register) {
@@ -70,8 +71,14 @@ export class UserService {
       }
 
       const phone = lpPhone || data.meta?.phone || data.meta?.billing_phone || '';
-      const city = lpCity || data.meta?.city || data.meta?.billing_city || data.meta?.shipping_city || '';
-      const avatar = lpAvatar || data.meta?.avatar_url || data.avatar_urls?.['96'] || data.avatar_urls?.['48'] || '';
+      const city =
+        lpCity || data.meta?.city || data.meta?.billing_city || data.meta?.shipping_city || '';
+      const avatar =
+        lpAvatar ||
+        data.meta?.avatar_url ||
+        data.avatar_urls?.['96'] ||
+        data.avatar_urls?.['48'] ||
+        '';
       const cover_photo = lpCover || data.meta?.cover_photo || data.meta?.cover_url || '';
 
       return {
@@ -174,7 +181,9 @@ export class UserService {
   /**
    * Change authenticated user password via LearnPress (/learnpress/v1/users/change-password)
    */
-  static async changePassword(payload: ChangePasswordPayload): Promise<{ code: string; message: string }> {
+  static async changePassword(
+    payload: ChangePasswordPayload
+  ): Promise<{ code: string; message: string }> {
     try {
       const response = await HttpClient.post<{ code: string; message: string }>(
         Endpoints.LEARNPRESS.USER_CHANGE_PASSWORD,
@@ -186,7 +195,10 @@ export class UserService {
       );
       return response;
     } catch (err: any) {
-      if (err?.code === 'rest_user_incorrect_password' || err?.data?.code === 'rest_user_incorrect_password') {
+      if (
+        err?.code === 'rest_user_incorrect_password' ||
+        err?.data?.code === 'rest_user_incorrect_password'
+      ) {
         const customErr = new Error(err.message || 'Your current password is incorrect.');
         (customErr as any).code = 'rest_user_incorrect_password';
         throw customErr;
@@ -211,7 +223,9 @@ export class UserService {
   ): Promise<{ code?: string; message?: string; status?: string }> {
     const numericId = Number(userId);
     if (!Number.isInteger(numericId) || numericId <= 0) {
-      throw new Error('This account does not have a valid server user ID. Please use the web deletion form.');
+      throw new Error(
+        'This account does not have a valid server user ID. Please use the web deletion form.'
+      );
     }
     if (!password || !password.trim()) {
       throw new Error('Password is required to confirm permanent account deletion.');

@@ -123,7 +123,11 @@ export const CelebrationToast: React.FC<CelebrationToastProps> = ({
           </Text>
         </View>
 
-        <TouchableOpacity onPress={onDismiss} style={styles.closeBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+        <TouchableOpacity
+          onPress={onDismiss}
+          style={styles.closeBtn}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
           <Ionicons name="close" size={16} color="rgba(255,255,255,0.7)" />
         </TouchableOpacity>
       </TouchableOpacity>

@@ -227,10 +227,14 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
               activeOpacity={0.8}
               style={styles.secondaryCtaBtn}
               accessibilityRole="button"
-              accessibilityLabel={isBangla ? 'ইতিমধ্যেই অ্যাকাউন্ট আছে? সাইন ইন করুন' : 'Already have an account? Sign In'}
+              accessibilityLabel={
+                isBangla ? 'ইতিমধ্যেই অ্যাকাউন্ট আছে? সাইন ইন করুন' : 'Already have an account? Sign In'
+              }
             >
               <Text style={styles.secondaryCtaText}>
-                {isBangla ? 'ইতিমধ্যেই অ্যাকাউন্ট আছে? সাইন ইন করুন' : 'Already have an account? Sign In'}
+                {isBangla
+                  ? 'ইতিমধ্যেই অ্যাকাউন্ট আছে? সাইন ইন করুন'
+                  : 'Already have an account? Sign In'}
               </Text>
             </TouchableOpacity>
 

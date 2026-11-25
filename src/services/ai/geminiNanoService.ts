@@ -263,13 +263,15 @@ export class GeminiNanoService {
     scored.sort((a, b) => b.score - a.score);
     const topPicks = scored.slice(0, 6).map((item) => item.course);
 
-    const rationale = userInterests.length > 0
-      ? `Gemini Nano On-Device Match: Tailored for your focus in ${userInterests.slice(0, 2).join(' & ')}.`
-      : 'Gemini Nano On-Device Recommendation: Optimized for executive skill progression.';
+    const rationale =
+      userInterests.length > 0
+        ? `Gemini Nano On-Device Match: Tailored for your focus in ${userInterests.slice(0, 2).join(' & ')}.`
+        : 'Gemini Nano On-Device Recommendation: Optimized for executive skill progression.';
 
-    const rationaleBn = userInterests.length > 0
-      ? `অন-ডিভাইস জেমিনাই ন্যানো সুপারিশ: আপনার "${userInterests.slice(0, 2).join(' ও ')}" দক্ষতার অগ্রগতির জন্য নির্বাচিত।`
-      : 'অন-ডিভাইস জেমিনাই ন্যানো সুপারিশ: ক্যারিয়ার অগ্রগতি ও পেশাগত দক্ষতার জন্য বিশেষভাবে নির্বাচিত।';
+    const rationaleBn =
+      userInterests.length > 0
+        ? `অন-ডিভাইস জেমিনাই ন্যানো সুপারিশ: আপনার "${userInterests.slice(0, 2).join(' ও ')}" দক্ষতার অগ্রগতির জন্য নির্বাচিত।`
+        : 'অন-ডিভাইস জেমিনাই ন্যানো সুপারিশ: ক্যারিয়ার অগ্রগতি ও পেশাগত দক্ষতার জন্য বিশেষভাবে নির্বাচিত।';
 
     return {
       recommended: topPicks,

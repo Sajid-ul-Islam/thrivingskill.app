@@ -82,12 +82,7 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
         </View>
       ) : null}
 
-      <View
-        style={[
-          styles.contentRow,
-          isUltraNarrow && styles.contentRowStacked,
-        ]}
-      >
+      <View style={[styles.contentRow, isUltraNarrow && styles.contentRowStacked]}>
         {/* Left Side: Avatar + Details - Tap opens Full Profile View */}
         <TouchableOpacity
           style={styles.userInfoGroup}
@@ -129,20 +124,32 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
                     backgroundColor: isAdmin
                       ? 'rgba(239, 68, 68, 0.12)'
                       : isAuthenticated
-                      ? colors.primaryLight
-                      : colors.surfaceSubtle,
+                        ? colors.primaryLight
+                        : colors.surfaceSubtle,
                   },
                 ]}
               >
                 <Ionicons
-                  name={isAdmin ? 'shield-checkmark' : isAuthenticated ? 'school-outline' : 'person-outline'}
+                  name={
+                    isAdmin
+                      ? 'shield-checkmark'
+                      : isAuthenticated
+                        ? 'school-outline'
+                        : 'person-outline'
+                  }
                   size={12}
                   color={isAdmin ? '#EF4444' : isAuthenticated ? colors.primary : colors.textMuted}
                 />
                 <Text
                   style={[
                     styles.verifiedText,
-                    { color: isAdmin ? '#EF4444' : isAuthenticated ? colors.primary : colors.textMuted },
+                    {
+                      color: isAdmin
+                        ? '#EF4444'
+                        : isAuthenticated
+                          ? colors.primary
+                          : colors.textMuted,
+                    },
                   ]}
                 >
                   {isAdmin ? 'ADMINISTRATOR' : isAuthenticated ? 'STUDENT' : 'GUEST'}
@@ -151,7 +158,8 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
             </View>
 
             <Text style={[styles.email, { color: colors.textMuted }]} numberOfLines={1}>
-              {user?.email || (isBangla ? 'কোর্স ক্যাটালগ এক্সপ্লোর করুন' : 'Explore catalog & courses freely')}
+              {user?.email ||
+                (isBangla ? 'কোর্স ক্যাটালগ এক্সপ্লোর করুন' : 'Explore catalog & courses freely')}
             </Text>
 
             {user?.city ? (
@@ -164,9 +172,11 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
             ) : null}
 
             <Text style={[styles.role, { color: colors.textMuted }]} numberOfLines={2}>
-              {user?.description || customBio || (isAuthenticated
-                ? `Connected to ${Env.SITE_URL.replace(/^https?:\/\//, '')} • ${activeWorkspaceName}`
-                : 'Thriving Skills Online Platform')}
+              {user?.description ||
+                customBio ||
+                (isAuthenticated
+                  ? `Connected to ${Env.SITE_URL.replace(/^https?:\/\//, '')} • ${activeWorkspaceName}`
+                  : 'Thriving Skills Online Platform')}
             </Text>
 
             <View
@@ -185,7 +195,13 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
         </TouchableOpacity>
 
         {/* Right Side: Profile Completion Donut Widget - Tap opens Full Profile View */}
-        <View style={[styles.donutArea, isWide && styles.donutAreaWide, isUltraNarrow && styles.donutAreaStacked]}>
+        <View
+          style={[
+            styles.donutArea,
+            isWide && styles.donutAreaWide,
+            isUltraNarrow && styles.donutAreaStacked,
+          ]}
+        >
           <ProfileCompletionDonut
             user={user}
             colors={colors}

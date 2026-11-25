@@ -120,7 +120,12 @@ By designing dashboards with high data-to-ink ratios and neutral corporate palet
   },
 ];
 
-export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelectCourse, initialPostId }) => {
+export const BlogModal: React.FC<BlogModalProps> = ({
+  visible,
+  onClose,
+  onSelectCourse,
+  initialPostId,
+}) => {
   const { colors } = useTheme();
   const { isBangla } = useLanguage();
   const { blogPosts } = useLearning();
@@ -135,17 +140,26 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
   const liveTransformed: BlogPostItem[] = (blogPosts || []).map((p) => ({
     id: p.id,
     title: p.title,
-    excerpt: cleanHtml(p.excerpt || '').length > 160
-      ? `${cleanHtml(p.excerpt || '').slice(0, 160)}...`
-      : cleanHtml(p.excerpt || '') || 'Practical insights and frameworks from industry experts.',
+    excerpt:
+      cleanHtml(p.excerpt || '').length > 160
+        ? `${cleanHtml(p.excerpt || '').slice(0, 160)}...`
+        : cleanHtml(p.excerpt || '') || 'Practical insights and frameworks from industry experts.',
     content: cleanHtml(p.content),
     category: 'live',
     categoryLabel: 'WordPress CMS',
     author: p.authorName || 'Thriving Skills Editorial',
     authorRole: 'Editorial Team',
-    date: p.date ? new Date(p.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent',
+    date: p.date
+      ? new Date(p.date).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        })
+      : 'Recent',
     readTime: '3 min read',
-    imageUrl: p.featuredImageUrl || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80',
+    imageUrl:
+      p.featuredImageUrl ||
+      'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&auto=format&fit=crop&q=80',
   }));
 
   const allArticles = [...CURATED_BLOGS, ...liveTransformed];
@@ -241,13 +255,23 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
             <View style={{ flex: 1, marginLeft: 10, minWidth: 0, marginRight: 8 }}>
               <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
                 {activeArticle
-                  ? isBangla ? 'নিবন্ধ পাঠ' : 'Article Reader'
-                  : isBangla ? 'থ্রাইভিং স্কিলস ব্লগ ও আর্টিকেল' : 'Thriving Skills Blog'}
+                  ? isBangla
+                    ? 'নিবন্ধ পাঠ'
+                    : 'Article Reader'
+                  : isBangla
+                    ? 'থ্রাইভিং স্কিলস ব্লগ ও আর্টিকেল'
+                    : 'Thriving Skills Blog'}
               </Text>
-              <Text style={[styles.headerSub, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
+              <Text
+                style={[styles.headerSub, { color: colors.textMuted }]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
                 {activeArticle
                   ? activeArticle.categoryLabel
-                  : isBangla ? 'কর্পোরেট ইনসাইটস ও স্কিল ডেভেলপমেন্ট' : 'Executive Insights, Tech & Leadership'}
+                  : isBangla
+                    ? 'কর্পোরেট ইনসাইটস ও স্কিল ডেভেলপমেন্ট'
+                    : 'Executive Insights, Tech & Leadership'}
               </Text>
             </View>
 
@@ -276,7 +300,11 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
                 <Ionicons name="search" size={18} color={colors.textMuted} />
                 <TextInput
                   style={[styles.searchInput, { color: colors.text }]}
-                  placeholder={isBangla ? 'আর্টিকেল খুঁজুন (যেমন: AI, Excel, Leadership)...' : 'Search articles (e.g. AI, Excel)...'}
+                  placeholder={
+                    isBangla
+                      ? 'আর্টিকেল খুঁজুন (যেমন: AI, Excel, Leadership)...'
+                      : 'Search articles (e.g. AI, Excel)...'
+                  }
                   placeholderTextColor={colors.textMuted}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
@@ -319,7 +347,10 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
                       <Text
                         style={[
                           styles.catPillText,
-                          { color: active ? colors.onPrimary : colors.text, fontWeight: active ? '700' : '500' },
+                          {
+                            color: active ? colors.onPrimary : colors.text,
+                            fontWeight: active ? '700' : '500',
+                          },
                         ]}
                       >
                         {cat.label}
@@ -335,7 +366,10 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
         {/* Body Content */}
         {activeArticle ? (
           /* Full Article Reader View */
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.readerContent}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.readerContent}
+          >
             <Image
               source={getSafeImageSource(activeArticle.imageUrl)}
               style={styles.articleHero}
@@ -350,7 +384,9 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
               </View>
 
               <Text style={[styles.readerTitle, { color: colors.text }]}>
-                {isBangla && activeArticle.banglaTitle ? activeArticle.banglaTitle : activeArticle.title}
+                {isBangla && activeArticle.banglaTitle
+                  ? activeArticle.banglaTitle
+                  : activeArticle.title}
               </Text>
 
               {/* Author Row */}
@@ -431,7 +467,11 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
                   />
                   <View style={styles.cardContent}>
                     <View style={styles.cardBadgeRow}>
-                      <Text style={[styles.cardCatText, { color: colors.primary }]} numberOfLines={1} ellipsizeMode="tail">
+                      <Text
+                        style={[styles.cardCatText, { color: colors.primary }]}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                      >
                         {article.categoryLabel}
                       </Text>
                       <Text style={[styles.cardDateText, { color: colors.textMuted }]}>
@@ -443,15 +483,28 @@ export const BlogModal: React.FC<BlogModalProps> = ({ visible, onClose, onSelect
                       {isBangla && article.banglaTitle ? article.banglaTitle : article.title}
                     </Text>
 
-                    <Text style={[styles.cardExcerpt, { color: colors.textMuted }]} numberOfLines={2}>
+                    <Text
+                      style={[styles.cardExcerpt, { color: colors.textMuted }]}
+                      numberOfLines={2}
+                    >
                       {article.excerpt}
                     </Text>
 
                     <View style={styles.cardFooter}>
-                      <Text style={[styles.authorSmall, { color: colors.textMuted }]} numberOfLines={1}>
+                      <Text
+                        style={[styles.authorSmall, { color: colors.textMuted }]}
+                        numberOfLines={1}
+                      >
                         By {article.author}
                       </Text>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, flexShrink: 0 }}>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 3,
+                          flexShrink: 0,
+                        }}
+                      >
                         <Text style={[styles.readTimeText, { color: colors.primary }]}>
                           Read Article
                         </Text>

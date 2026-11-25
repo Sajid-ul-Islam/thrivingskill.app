@@ -39,7 +39,11 @@ export function parseYouTubeRss(xmlText: string): YouTubeVideo[] {
       if (publishedMatch && publishedMatch[1]) {
         try {
           const date = new Date(publishedMatch[1]);
-          published = date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+          published = date.toLocaleDateString(undefined, {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+          });
         } catch {
           published = '';
         }
@@ -75,7 +79,7 @@ export async function syncLatestYouTubeVideos(): Promise<YouTubeVideo[]> {
     const response = await fetch(RSS_FEED_URL, {
       signal: controller.signal,
       headers: {
-        'Accept': 'application/xml, text/xml, */*',
+        Accept: 'application/xml, text/xml, */*',
       },
     });
     clearTimeout(timeoutId);
@@ -188,7 +192,13 @@ export function findRelatedCourse(video: YouTubeVideo, courses: Course[]): Cours
   // Keyword to course category / title scoring
   const keywords: { patterns: string[]; courseIdMatch?: string; categoryMatch?: string }[] = [
     {
-      patterns: ['chatgpt', 'gpt', 'generative ai', 'prompt engineering', 'artificial intelligence'],
+      patterns: [
+        'chatgpt',
+        'gpt',
+        'generative ai',
+        'prompt engineering',
+        'artificial intelligence',
+      ],
       courseIdMatch: 'course-ai-productivity',
       categoryMatch: 'generative-ai',
     },
@@ -198,12 +208,27 @@ export function findRelatedCourse(video: YouTubeVideo, courses: Course[]): Cours
       categoryMatch: 'excel-data',
     },
     {
-      patterns: ['financial model', 'valuation', 'accounting', 'balance sheet', 'stock market', 'finance'],
+      patterns: [
+        'financial model',
+        'valuation',
+        'accounting',
+        'balance sheet',
+        'stock market',
+        'finance',
+      ],
       courseIdMatch: 'course-financial-modeling',
       categoryMatch: 'finance',
     },
     {
-      patterns: ['procurement', 'supply chain', 'spinning', 'cotton', 'logistics', 'vendor', 'inventory'],
+      patterns: [
+        'procurement',
+        'supply chain',
+        'spinning',
+        'cotton',
+        'logistics',
+        'vendor',
+        'inventory',
+      ],
       courseIdMatch: 'course-supply-chain-analytics',
       categoryMatch: 'supply-chain',
     },
@@ -270,7 +295,10 @@ export async function saveLastWatchedVideo(video: YouTubeVideo): Promise<void> {
 /**
  * Reverse matching: finds a relevant YouTube masterclass/trailer for a course
  */
-export function findRelatedVideoForCourse(course: Course, videos: YouTubeVideo[]): YouTubeVideo | null {
+export function findRelatedVideoForCourse(
+  course: Course,
+  videos: YouTubeVideo[]
+): YouTubeVideo | null {
   if (!course || !videos || videos.length === 0) return null;
 
   const courseTitle = course.title.toLowerCase();
@@ -293,11 +321,24 @@ export function findRelatedVideoForCourse(course: Course, videos: YouTubeVideo[]
     }
 
     if (category && vTitle.includes(category)) score += 2;
-    if (category.includes('ai') && (vTitle.includes('ai') || vTitle.includes('chatgpt'))) score += 3;
+    if (category.includes('ai') && (vTitle.includes('ai') || vTitle.includes('chatgpt')))
+      score += 3;
     if (category.includes('excel') && vTitle.includes('excel')) score += 3;
-    if (category.includes('supply') && (vTitle.includes('procurement') || vTitle.includes('supply') || vTitle.includes('cotton'))) score += 3;
-    if (category.includes('finance') && (vTitle.includes('finance') || vTitle.includes('financial') || vTitle.includes('valuation'))) score += 3;
-    if (category.includes('leadership') && (vTitle.includes('leadership') || vTitle.includes('negotiation'))) score += 3;
+    if (
+      category.includes('supply') &&
+      (vTitle.includes('procurement') || vTitle.includes('supply') || vTitle.includes('cotton'))
+    )
+      score += 3;
+    if (
+      category.includes('finance') &&
+      (vTitle.includes('finance') || vTitle.includes('financial') || vTitle.includes('valuation'))
+    )
+      score += 3;
+    if (
+      category.includes('leadership') &&
+      (vTitle.includes('leadership') || vTitle.includes('negotiation'))
+    )
+      score += 3;
 
     if (score > highestScore) {
       highestScore = score;
@@ -305,6 +346,5 @@ export function findRelatedVideoForCourse(course: Course, videos: YouTubeVideo[]
     }
   }
 
-  return highestScore >= 3 ? bestVideo : (videos[0] || null);
+  return highestScore >= 3 ? bestVideo : videos[0] || null;
 }
-

@@ -1,13 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Modal,
-  ScrollView,
-  TouchableOpacity,
-  Linking,
-} from 'react-native';
+import { View, Text, StyleSheet, Modal, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
@@ -36,7 +28,9 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
   const insets = useSafeAreaInsets();
   const { containerClampStyle } = useResponsive();
   const [activeTab, setActiveTab] = useState<LegalTabKey>(initialTab);
-  const [privacyLang, setPrivacyLang] = useState<'en' | 'bn'>(initialPrivacyLang || (isBangla ? 'bn' : 'en'));
+  const [privacyLang, setPrivacyLang] = useState<'en' | 'bn'>(
+    initialPrivacyLang || (isBangla ? 'bn' : 'en')
+  );
 
   useEffect(() => {
     if (visible) {
@@ -84,7 +78,10 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
             </View>
           </View>
           <TouchableOpacity
-            style={[styles.closeBtn, { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' }]}
+            style={[
+              styles.closeBtn,
+              { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' },
+            ]}
             onPress={onClose}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             accessibilityLabel="Close Legal Modal"
@@ -94,10 +91,23 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
         </View>
 
         {/* Tab Selector - Clean 2-tab structure */}
-        <View style={[styles.tabBar, { backgroundColor: colors.surfaceCard, borderBottomColor: colors.border }]}>
+        <View
+          style={[
+            styles.tabBar,
+            { backgroundColor: colors.surfaceCard, borderBottomColor: colors.border },
+          ]}
+        >
           {[
-            { key: 'terms' as LegalTabKey, label: isBangla ? 'শর্তাবলী' : 'Terms & Conditions', icon: 'shield-checkmark-outline' },
-            { key: 'privacy' as LegalTabKey, label: isBangla ? 'প্রাইভেসি পলিসি' : 'Privacy Policy', icon: 'lock-closed-outline' },
+            {
+              key: 'terms' as LegalTabKey,
+              label: isBangla ? 'শর্তাবলী' : 'Terms & Conditions',
+              icon: 'shield-checkmark-outline',
+            },
+            {
+              key: 'privacy' as LegalTabKey,
+              label: isBangla ? 'প্রাইভেসি পলিসি' : 'Privacy Policy',
+              icon: 'lock-closed-outline',
+            },
           ].map((tab) => {
             const isActive = activeTab === tab.key;
             return (
@@ -120,7 +130,10 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
                 <Text
                   style={[
                     styles.tabLabel,
-                    { color: isActive ? colors.primary : colors.textMuted, fontWeight: isActive ? '700' : '500' },
+                    {
+                      color: isActive ? colors.primary : colors.textMuted,
+                      fontWeight: isActive ? '700' : '500',
+                    },
                   ]}
                 >
                   {tab.label}
@@ -142,36 +155,65 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
           {/* TAB 1: TERMS AND CONDITIONS */}
           {activeTab === 'terms' && (
             <View style={styles.contentBlock}>
-              <View style={[styles.metaBanner, { backgroundColor: isDark ? 'rgba(59, 130, 246, 0.1)' : '#EFF6FF', borderColor: '#3B82F644' }]}>
+              <View
+                style={[
+                  styles.metaBanner,
+                  {
+                    backgroundColor: isDark ? 'rgba(59, 130, 246, 0.1)' : '#EFF6FF',
+                    borderColor: '#3B82F644',
+                  },
+                ]}
+              >
                 <Ionicons name="information-circle" size={18} color="#3B82F6" />
                 <Text style={[styles.metaBannerText, { color: isDark ? '#93C5FD' : '#1E40AF' }]}>
-                  Please review our standard Terms & Conditions governing course enrollment, certifications, and acceptable use.
+                  Please review our standard Terms & Conditions governing course enrollment,
+                  certifications, and acceptable use.
                 </Text>
               </View>
 
-              <Text style={[styles.sectionHeading, { color: colors.text }]}>1. Intellectual Property Rights</Text>
+              <Text style={[styles.sectionHeading, { color: colors.text }]}>
+                1. Intellectual Property Rights
+              </Text>
               <Text style={[styles.bodyText, { color: colors.textMuted }]}>
-                All masterclass videos, slides, quizzes, financial models, datasets, and source files hosted on Thriving Skills Limited (thrivingskill.com) are the intellectual property of Thriving Skills Limited and verified instructors. Content is licensed for individual educational use only.
+                All masterclass videos, slides, quizzes, financial models, datasets, and source
+                files hosted on Thriving Skills Limited (thrivingskill.com) are the intellectual
+                property of Thriving Skills Limited and verified instructors. Content is licensed
+                for individual educational use only.
               </Text>
 
-              <Text style={[styles.sectionHeading, { color: colors.text }]}>2. Non-Transferable Single-User License</Text>
+              <Text style={[styles.sectionHeading, { color: colors.text }]}>
+                2. Non-Transferable Single-User License
+              </Text>
               <Text style={[styles.bodyText, { color: colors.textMuted }]}>
-                Your learner account and course credentials are strictly for your personal, non-commercial use. Account sharing, unauthorized screen recording, ripping, or distributing proprietary training material without written corporate authorization is strictly prohibited.
+                Your learner account and course credentials are strictly for your personal,
+                non-commercial use. Account sharing, unauthorized screen recording, ripping, or
+                distributing proprietary training material without written corporate authorization
+                is strictly prohibited.
               </Text>
 
-              <Text style={[styles.sectionHeading, { color: colors.text }]}>3. Account Access & Sync</Text>
+              <Text style={[styles.sectionHeading, { color: colors.text }]}>
+                3. Account Access & Sync
+              </Text>
               <Text style={[styles.bodyText, { color: colors.textMuted }]}>
-                Access to course materials inside the mobile application is synchronized with your registered Thriving Skills account and active LearnPress enrollments. Free courses can be started directly within the app.
+                Access to course materials inside the mobile application is synchronized with your
+                registered Thriving Skills account and active LearnPress enrollments. Free courses
+                can be started directly within the app.
               </Text>
 
-              <Text style={[styles.sectionHeading, { color: colors.text }]}>4. User Code of Conduct</Text>
+              <Text style={[styles.sectionHeading, { color: colors.text }]}>
+                4. User Code of Conduct
+              </Text>
               <Text style={[styles.bodyText, { color: colors.textMuted }]}>
-                Users agree not to post defamatory, offensive, or unlawful material in discussion boards, Q&A forums, or course discussion prompts. Thriving Skills reserves the right to moderate and revoke access in cases of ethical breach or harmful conduct.
+                Users agree not to post defamatory, offensive, or unlawful material in discussion
+                boards, Q&A forums, or course discussion prompts. Thriving Skills reserves the right
+                to moderate and revoke access in cases of ethical breach or harmful conduct.
               </Text>
 
               <TouchableOpacity
                 style={[styles.webLinkBtn, { borderColor: colors.primary }]}
-                onPress={() => handleOpenWebLegal('https://thrivingskill.com/terms-and-conditions/')}
+                onPress={() =>
+                  handleOpenWebLegal('https://thrivingskill.com/terms-and-conditions/')
+                }
                 accessibilityRole="button"
                 accessibilityLabel="View live terms and conditions on website"
               >
@@ -236,36 +278,75 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
 
               {privacyLang === 'en' ? (
                 <>
-                  <View style={[styles.metaBanner, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.1)' : '#ECFDF5', borderColor: '#10B98144' }]}>
+                  <View
+                    style={[
+                      styles.metaBanner,
+                      {
+                        backgroundColor: isDark ? 'rgba(16, 185, 129, 0.1)' : '#ECFDF5',
+                        borderColor: '#10B98144',
+                      },
+                    ]}
+                  >
                     <Ionicons name="shield-checkmark" size={18} color="#10B981" />
-                    <Text style={[styles.metaBannerText, { color: isDark ? '#6EE7B7' : '#065F46' }]}>
-                      We prioritize your privacy. Learn how your learner data is safeguarded and encrypted.
+                    <Text
+                      style={[styles.metaBannerText, { color: isDark ? '#6EE7B7' : '#065F46' }]}
+                    >
+                      We prioritize your privacy. Learn how your learner data is safeguarded and
+                      encrypted.
                     </Text>
                   </View>
 
-                  <Text style={[styles.sectionHeading, { color: colors.text }]}>1. Overview & Scope</Text>
+                  <Text style={[styles.sectionHeading, { color: colors.text }]}>
+                    1. Overview & Scope
+                  </Text>
                   <Text style={[styles.bodyText, { color: colors.textMuted }]}>
-                    At thrivingskill.com, accessible from https://www.thrivingskill.com, one of our main priorities is the privacy and security of our visitors and learners. This Privacy Policy document outlines the types of information that is collected and recorded by Thriving Skills Limited and how we securely utilize it.
+                    At thrivingskill.com, accessible from https://www.thrivingskill.com, one of our
+                    main priorities is the privacy and security of our visitors and learners. This
+                    Privacy Policy document outlines the types of information that is collected and
+                    recorded by Thriving Skills Limited and how we securely utilize it.
                   </Text>
 
-                  <Text style={[styles.sectionHeading, { color: colors.text }]}>2. Information We Collect</Text>
+                  <Text style={[styles.sectionHeading, { color: colors.text }]}>
+                    2. Information We Collect
+                  </Text>
                   <Text style={[styles.bodyText, { color: colors.textMuted }]}>
-                    When you create an account, enroll in courses, or contact our support desk, we may collect your name, email address, phone number, institutional affiliation, course progress metrics, and certificate verification records. Standard log files capture IP addresses, browser types, and session timestamps for analytics and system security.
+                    When you create an account, enroll in courses, or contact our support desk, we
+                    may collect your name, email address, phone number, institutional affiliation,
+                    course progress metrics, and certificate verification records. Standard log
+                    files capture IP addresses, browser types, and session timestamps for analytics
+                    and system security.
                   </Text>
 
-                  <Text style={[styles.sectionHeading, { color: colors.text }]}>3. Data Protection & Cookies</Text>
+                  <Text style={[styles.sectionHeading, { color: colors.text }]}>
+                    3. Data Protection & Cookies
+                  </Text>
                   <Text style={[styles.bodyText, { color: colors.textMuted }]}>
-                    We employ industry-standard encryption, SSL transmission protocols, and tokenized authorization. Cookies are utilized to remember learner session states, course playback positions, and personalized language preferences.
+                    We employ industry-standard encryption, SSL transmission protocols, and
+                    tokenized authorization. Cookies are utilized to remember learner session
+                    states, course playback positions, and personalized language preferences.
                   </Text>
 
-                  <Text style={[styles.sectionHeading, { color: colors.text }]}>4. Children’s Information Protection</Text>
+                  <Text style={[styles.sectionHeading, { color: colors.text }]}>
+                    4. Children’s Information Protection
+                  </Text>
                   <Text style={[styles.bodyText, { color: colors.textMuted }]}>
-                    thrivingskill.com does not knowingly collect Personally Identifiable Information from children under the age of 13. If you believe such data has been entered without parental consent, contact our Data Protection Officer immediately for swift removal.
+                    thrivingskill.com does not knowingly collect Personally Identifiable Information
+                    from children under the age of 13. If you believe such data has been entered
+                    without parental consent, contact our Data Protection Officer immediately for
+                    swift removal.
                   </Text>
 
-                  <Text style={[styles.sectionHeading, { color: colors.text }]}>5. Account Deletion & Right to Erasure (Google Play Policy)</Text>
+                  <Text style={[styles.sectionHeading, { color: colors.text }]}>
+                    5. Account Deletion & Right to Erasure (Google Play Policy)
+                  </Text>
                   <Text style={[styles.bodyText, { color: colors.textMuted }]}>
-                    In compliance with Google Play User Data policies, any registered user can request permanent deletion of their account and all associated data at any time. You may initiate deletion in the app via Profile → Account Settings → Delete Account, or submit an online request directly at https://thrivingskill.com/delete-account/ without having the app installed. Upon confirmation, your user profile, course progress records, and personal identifiers will be purged within 48 hours.
+                    In compliance with Google Play User Data policies, any registered user can
+                    request permanent deletion of their account and all associated data at any time.
+                    You may initiate deletion in the app via Profile → Account Settings → Delete
+                    Account, or submit an online request directly at
+                    https://thrivingskill.com/delete-account/ without having the app installed. Upon
+                    confirmation, your user profile, course progress records, and personal
+                    identifiers will be purged within 48 hours.
                   </Text>
 
                   <TouchableOpacity
@@ -296,31 +377,54 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
                 </>
               ) : (
                 <>
-                  <View style={[styles.metaBanner, { backgroundColor: isDark ? 'rgba(168, 85, 247, 0.1)' : '#FAF5FF', borderColor: '#A855F744' }]}>
+                  <View
+                    style={[
+                      styles.metaBanner,
+                      {
+                        backgroundColor: isDark ? 'rgba(168, 85, 247, 0.1)' : '#FAF5FF',
+                        borderColor: '#A855F744',
+                      },
+                    ]}
+                  >
                     <Ionicons name="lock-closed" size={18} color="#A855F7" />
-                    <Text style={[styles.metaBannerText, { color: isDark ? '#D8B4FE' : '#6B21A8' }]}>
+                    <Text
+                      style={[styles.metaBannerText, { color: isDark ? '#D8B4FE' : '#6B21A8' }]}
+                    >
                       থ্রাইভিং স্কিলস লিমিটেডের অফিসিয়াল প্রাইভেসি পলিসি।
                     </Text>
                   </View>
 
-                  <Text style={[styles.sectionHeading, { color: colors.text }]}>১. সাধারণ তথ্য ও সম্মতি</Text>
+                  <Text style={[styles.sectionHeading, { color: colors.text }]}>
+                    ১. সাধারণ তথ্য ও সম্মতি
+                  </Text>
                   <Text style={[styles.bodyText, { color: colors.textMuted }]}>
-                    thrivingskill.com-এ আমাদের প্রধান অগ্রাধিকার হল আমাদের শিক্ষার্থী ও ভিজিটরদের তথ্যের সর্বোচ্চ সুরক্ষা নিশ্চিত করা। আমাদের প্ল্যাটফর্ম ব্যবহারের মাধ্যমে আপনি এই নীতিমালায় সম্মতি প্রকাশ করছেন।
+                    thrivingskill.com-এ আমাদের প্রধান অগ্রাধিকার হল আমাদের শিক্ষার্থী ও ভিজিটরদের তথ্যের
+                    সর্বোচ্চ সুরক্ষা নিশ্চিত করা। আমাদের প্ল্যাটফর্ম ব্যবহারের মাধ্যমে আপনি এই নীতিমালায় সম্মতি
+                    প্রকাশ করছেন।
                   </Text>
 
-                  <Text style={[styles.sectionHeading, { color: colors.text }]}>২. সংগৃহীত তথ্য ও ব্যবহার</Text>
+                  <Text style={[styles.sectionHeading, { color: colors.text }]}>
+                    ২. সংগৃহীত তথ্য ও ব্যবহার
+                  </Text>
                   <Text style={[styles.bodyText, { color: colors.textMuted }]}>
-                    লার্নার অ্যাকাউন্ট, কোর্স এনরোলমেন্ট এবং সার্টিফিকেট ভেরিফিকেশনের জন্য নাম, ইমেইল, মোবাইল নম্বর এবং প্রগ্রেস ডাটা ব্যবহৃত হয়। এই তথ্য তৃতীয় পক্ষের কাছে বিক্রি বা অপব্যবহার করা হয় না।
+                    লার্নার অ্যাকাউন্ট, কোর্স এনরোলমেন্ট এবং সার্টিফিকেট ভেরিফিকেশনের জন্য নাম, ইমেইল,
+                    মোবাইল নম্বর এবং প্রগ্রেস ডাটা ব্যবহৃত হয়। এই তথ্য তৃতীয় পক্ষের কাছে বিক্রি বা অপব্যবহার
+                    করা হয় না।
                   </Text>
 
-                  <Text style={[styles.sectionHeading, { color: colors.text }]}>৩. কুকিজ এবং নিরাপত্তা</Text>
+                  <Text style={[styles.sectionHeading, { color: colors.text }]}>
+                    ৩. কুকিজ এবং নিরাপত্তা
+                  </Text>
                   <Text style={[styles.bodyText, { color: colors.textMuted }]}>
-                    ব্যবহারকারীদের পছন্দ এবং লগইন সেশন সংরক্ষণের জন্য কুকিজ ও নিরাপদ এনক্রিপশন প্রোটোকল ব্যবহার করা হয়।
+                    ব্যবহারকারীদের পছন্দ এবং লগইন সেশন সংরক্ষণের জন্য কুকিজ ও নিরাপদ এনক্রিপশন প্রোটোকল
+                    ব্যবহার করা হয়।
                   </Text>
 
                   <TouchableOpacity
                     style={[styles.webLinkBtn, { borderColor: colors.primary }]}
-                    onPress={() => handleOpenWebLegal('https://thrivingskill.com/privacy-policy-bangla/')}
+                    onPress={() =>
+                      handleOpenWebLegal('https://thrivingskill.com/privacy-policy-bangla/')
+                    }
                     accessibilityRole="button"
                     accessibilityLabel="ওয়েবসাইটে প্রাইভেসি পলিসি দেখুন"
                   >
@@ -336,12 +440,19 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
           )}
 
           {/* ALL RIGHTS RESERVED COPYRIGHT FOOTER */}
-          <View style={[styles.copyrightContainer, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.copyrightContainer,
+              { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+            ]}
+          >
             <View style={styles.sealRow}>
               <Ionicons name="ribbon" size={22} color="#F59E0B" />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.sealTitle, { color: colors.text }]}>
-                  {isBangla ? 'সর্বস্বত্ব সংরক্ষিত • থ্রাইভিং স্কিলস লিমিটেড' : 'All Rights Reserved • Thriving Skills Ltd.'}
+                  {isBangla
+                    ? 'সর্বস্বত্ব সংরক্ষিত • থ্রাইভিং স্কিলস লিমিটেড'
+                    : 'All Rights Reserved • Thriving Skills Ltd.'}
                 </Text>
                 <Text style={[styles.sealDesc, { color: colors.textMuted }]}>
                   Registered Corporate Enterprise under the Companies Act of Bangladesh
@@ -373,7 +484,9 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
             </View>
 
             <Text style={[styles.copyrightNotice, { color: colors.textMuted }]}>
-              © 2026 Thriving Skills Limited. All rights reserved. No part of this mobile application or associated digital learning platforms may be reproduced, distributed, or transmitted in any form without prior written authorization.
+              © 2026 Thriving Skills Limited. All rights reserved. No part of this mobile
+              application or associated digital learning platforms may be reproduced, distributed,
+              or transmitted in any form without prior written authorization.
             </Text>
           </View>
         </ScrollView>

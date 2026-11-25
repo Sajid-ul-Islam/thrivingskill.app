@@ -185,10 +185,14 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
                 <Text style={[styles.brandTitle, { color: colors.text }]} numberOfLines={1}>
                   Thriving<Text style={{ color: '#E34234' }}>Skills</Text>
                 </Text>
-                <Text style={[styles.brandSlogan, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
+                <Text
+                  style={[styles.brandSlogan, { color: colors.textMuted }]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
                   {isBangla
-                    ? (siteBranding?.taglineBn || 'দক্ষ জাতি গঠনে মানুষের ক্ষমতায়ন')
-                    : (siteBranding?.tagline || 'Empowering People, Building a Skilled Nation')}
+                    ? siteBranding?.taglineBn || 'দক্ষ জাতি গঠনে মানুষের ক্ষমতায়ন'
+                    : siteBranding?.tagline || 'Empowering People, Building a Skilled Nation'}
                 </Text>
               </View>
             </View>
@@ -205,9 +209,17 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
           </View>
 
           {/* Scrollable Body */}
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollBody}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollBody}
+          >
             {/* Workspace & Tier Pill */}
-            <View style={[styles.workspaceCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+            <View
+              style={[
+                styles.workspaceCard,
+                { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+              ]}
+            >
               <View style={styles.workspaceInfo}>
                 <View style={[styles.wsIconCircle, { backgroundColor: colors.primaryLight }]}>
                   <Ionicons
@@ -221,14 +233,20 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
                     {activeWorkspace.name}
                   </Text>
                   <Text style={[styles.workspaceTier, { color: colors.primary }]}>
-                    {subscriptionTier.toUpperCase()} PLAN • {activeWorkspace.type === 'enterprise' ? `${activeWorkspace.activeSeats}/${activeWorkspace.totalSeats} Seats` : 'Learner'}
+                    {subscriptionTier.toUpperCase()} PLAN •{' '}
+                    {activeWorkspace.type === 'enterprise'
+                      ? `${activeWorkspace.activeSeats}/${activeWorkspace.totalSeats} Seats`
+                      : 'Learner'}
                   </Text>
                 </View>
               </View>
 
               {workspaces.length > 1 && (
                 <TouchableOpacity
-                  style={[styles.switchWsBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                  style={[
+                    styles.switchWsBtn,
+                    { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                  ]}
                   onPress={() => {
                     const nextWs = workspaces.find((w) => w.id !== activeWorkspace.id);
                     if (nextWs) switchWorkspace(nextWs.id);
@@ -244,7 +262,12 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
             </View>
 
             {/* Official Partner Spotlight Banner */}
-            <View style={[styles.partnerBanner, { backgroundColor: colors.primaryLight, borderColor: colors.borderSubtle }]}>
+            <View
+              style={[
+                styles.partnerBanner,
+                { backgroundColor: colors.primaryLight, borderColor: colors.borderSubtle },
+              ]}
+            >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                 <Ionicons name="shield-checkmark" size={15} color={colors.primary} />
                 <Text style={[styles.partnerHeading, { color: colors.primary }]}>
@@ -252,7 +275,9 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
                 </Text>
               </View>
               <Text style={[styles.partnerSub, { color: colors.text }]}>
-                Co-organizer of Bangladesh Skills Summit with <Text style={{ fontWeight: '800' }}>DUCSU (University of Dhaka)</Text> & 4IR Summit with <Text style={{ fontWeight: '800' }}>NSU</Text>.
+                Co-organizer of Bangladesh Skills Summit with{' '}
+                <Text style={{ fontWeight: '800' }}>DUCSU (University of Dhaka)</Text> & 4IR Summit
+                with <Text style={{ fontWeight: '800' }}>NSU</Text>.
               </Text>
             </View>
 
@@ -265,8 +290,17 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               style={styles.navItem}
               onPress={() => handleNav(() => onNavigateTab('Courses'))}
             >
-              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : '#EFF6FF' }]}>
-                <Ionicons name="compass-outline" size={18} color={isDark ? colors.primary : '#102F53'} />
+              <View
+                style={[
+                  styles.navIconBg,
+                  { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : '#EFF6FF' },
+                ]}
+              >
+                <Ionicons
+                  name="compass-outline"
+                  size={18}
+                  color={isDark ? colors.primary : '#102F53'}
+                />
               </View>
               <Text style={[styles.navLabel, { color: colors.text }]}>
                 {isBangla ? 'সকল কোর্স ও বান্ডেল' : 'All Courses & Bundles'}
@@ -275,11 +309,13 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
             </TouchableOpacity>
 
             {/* 1. eBook */}
-            <TouchableOpacity
-              style={styles.navItem}
-              onPress={() => setEbookModalVisible(true)}
-            >
-              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2' }]}>
+            <TouchableOpacity style={styles.navItem} onPress={() => setEbookModalVisible(true)}>
+              <View
+                style={[
+                  styles.navIconBg,
+                  { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2' },
+                ]}
+              >
                 <Ionicons name="book-outline" size={18} color="#E34234" />
               </View>
               <View style={{ flex: 1 }}>
@@ -293,12 +329,18 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
             </TouchableOpacity>
 
             {/* 2. Blog */}
-            <TouchableOpacity
-              style={styles.navItem}
-              onPress={() => setBlogModalVisible(true)}
-            >
-              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.18)' : '#F5F3FF' }]}>
-                <Ionicons name="newspaper-outline" size={18} color={isDark ? '#A78BFA' : '#8B5CF6'} />
+            <TouchableOpacity style={styles.navItem} onPress={() => setBlogModalVisible(true)}>
+              <View
+                style={[
+                  styles.navIconBg,
+                  { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.18)' : '#F5F3FF' },
+                ]}
+              >
+                <Ionicons
+                  name="newspaper-outline"
+                  size={18}
+                  color={isDark ? '#A78BFA' : '#8B5CF6'}
+                />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.navLabel, { color: colors.text }]}>
@@ -313,7 +355,12 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               style={styles.navItem}
               onPress={() => setInstructorsModalVisible(true)}
             >
-              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.16)' : '#ECFDF5' }]}>
+              <View
+                style={[
+                  styles.navIconBg,
+                  { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.16)' : '#ECFDF5' },
+                ]}
+              >
                 <Ionicons name="people-outline" size={18} color={isDark ? '#34D399' : '#059669'} />
               </View>
               <View style={{ flex: 1 }}>
@@ -321,7 +368,12 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
                   {isBangla ? 'আমাদের কোর্স ইন্সট্রাক্টর (Our Course Author)' : 'Our Course Author'}
                 </Text>
               </View>
-              <View style={[styles.pillState, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2' }]}>
+              <View
+                style={[
+                  styles.pillState,
+                  { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2' },
+                ]}
+              >
                 <Text style={[styles.pillStateText, { color: '#E34234' }]}>FACULTY</Text>
               </View>
             </TouchableOpacity>
@@ -329,9 +381,16 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
             {/* 6. Become An Instructor */}
             <TouchableOpacity
               style={styles.navItem}
-              onPress={() => Linking.openURL(`${Env.SITE_URL}/become-an-instructor/`).catch(() => {})}
+              onPress={() =>
+                Linking.openURL(`${Env.SITE_URL}/become-an-instructor/`).catch(() => {})
+              }
             >
-              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2' }]}>
+              <View
+                style={[
+                  styles.navIconBg,
+                  { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2' },
+                ]}
+              >
                 <Ionicons name="school-outline" size={18} color="#E34234" />
               </View>
               <View style={{ flex: 1 }}>
@@ -347,7 +406,12 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               style={styles.navItem}
               onPress={() => handleNav(() => onNavigateTab('Workshops'))}
             >
-              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.18)' : '#FEE2E2' }]}>
+              <View
+                style={[
+                  styles.navIconBg,
+                  { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.18)' : '#FEE2E2' },
+                ]}
+              >
                 <Ionicons name="calendar-outline" size={18} color="#E34234" />
               </View>
               <Text style={[styles.navLabel, { color: colors.text }]}>
@@ -361,7 +425,12 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               style={styles.navItem}
               onPress={() => handleNav(() => onOpenYouTube?.())}
             >
-              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.18)' : '#FEF2F2' }]}>
+              <View
+                style={[
+                  styles.navIconBg,
+                  { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.18)' : '#FEF2F2' },
+                ]}
+              >
                 <Ionicons name="logo-youtube" size={18} color="#EF4444" />
               </View>
               <Text style={[styles.navLabel, { color: colors.text }]}>YouTube Masterclasses</Text>
@@ -372,8 +441,17 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               style={styles.navItem}
               onPress={() => handleNav(() => onOpenAssessment?.())}
             >
-              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.18)' : '#F5F3FF' }]}>
-                <Ionicons name="analytics-outline" size={18} color={isDark ? '#A78BFA' : '#8B5CF6'} />
+              <View
+                style={[
+                  styles.navIconBg,
+                  { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.18)' : '#F5F3FF' },
+                ]}
+              >
+                <Ionicons
+                  name="analytics-outline"
+                  size={18}
+                  color={isDark ? '#A78BFA' : '#8B5CF6'}
+                />
               </View>
               <Text style={[styles.navLabel, { color: colors.text }]}>Skill Assessment Center</Text>
               <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
@@ -394,8 +472,17 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
                 setServicesModalVisible(true);
               }}
             >
-              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(16, 47, 83, 0.24)' : '#EFF6FF' }]}>
-                <Ionicons name="briefcase-outline" size={18} color={isDark ? colors.primary : '#102F53'} />
+              <View
+                style={[
+                  styles.navIconBg,
+                  { backgroundColor: isDark ? 'rgba(16, 47, 83, 0.24)' : '#EFF6FF' },
+                ]}
+              >
+                <Ionicons
+                  name="briefcase-outline"
+                  size={18}
+                  color={isDark ? colors.primary : '#102F53'}
+                />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.navLabel, { color: colors.text }]}>
@@ -405,7 +492,12 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               <View style={[styles.pillState, { backgroundColor: isDark ? '#1C2E46' : '#E0F2FE' }]}>
                 <Text style={[styles.pillStateText, { color: colors.primary }]}>6 SOLUTIONS</Text>
               </View>
-              <Ionicons name="chevron-forward" size={16} color={colors.textMuted} style={{ marginLeft: 4 }} />
+              <Ionicons
+                name="chevron-forward"
+                size={16}
+                color={colors.textMuted}
+                style={{ marginLeft: 4 }}
+              />
             </TouchableOpacity>
 
             {/* 7. Buy For Team */}
@@ -420,8 +512,17 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
                 }
               }}
             >
-              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.18)' : '#ECFDF5' }]}>
-                <Ionicons name="business-outline" size={18} color={isDark ? '#34D399' : '#059669'} />
+              <View
+                style={[
+                  styles.navIconBg,
+                  { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.18)' : '#ECFDF5' },
+                ]}
+              >
+                <Ionicons
+                  name="business-outline"
+                  size={18}
+                  color={isDark ? '#34D399' : '#059669'}
+                />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.navLabel, { color: colors.text }]}>
@@ -441,8 +542,17 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
                 setServicesModalVisible(true);
               }}
             >
-              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.18)' : '#ECFDF5' }]}>
-                <Ionicons name="trending-up-outline" size={18} color={isDark ? '#34D399' : '#059669'} />
+              <View
+                style={[
+                  styles.navIconBg,
+                  { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.18)' : '#ECFDF5' },
+                ]}
+              >
+                <Ionicons
+                  name="trending-up-outline"
+                  size={18}
+                  color={isDark ? '#34D399' : '#059669'}
+                />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.navLabel, { color: colors.text }]}>
@@ -457,7 +567,12 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               style={styles.navItem}
               onPress={() => Linking.openURL(`${Env.SITE_URL}/affiliate/`).catch(() => {})}
             >
-              <View style={[styles.navIconBg, { backgroundColor: isDark ? 'rgba(236, 72, 153, 0.18)' : '#FCE7F3' }]}>
+              <View
+                style={[
+                  styles.navIconBg,
+                  { backgroundColor: isDark ? 'rgba(236, 72, 153, 0.18)' : '#FCE7F3' },
+                ]}
+              >
                 <Ionicons name="gift-outline" size={18} color={isDark ? '#F472B6' : '#DB2777'} />
               </View>
               <View style={{ flex: 1 }}>
@@ -505,7 +620,9 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
             >
               <View style={styles.actionLeft}>
                 <Ionicons name="people-outline" size={18} color="#E34234" />
-                <Text style={[styles.actionLabel, { color: colors.text }]}>Founders & Leadership</Text>
+                <Text style={[styles.actionLabel, { color: colors.text }]}>
+                  Founders & Leadership
+                </Text>
               </View>
               <View style={[styles.pillState, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}>
                 <Text style={[styles.pillStateText, { color: '#E34234' }]}>Exec Board</Text>
@@ -530,14 +647,15 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
                   {isBangla ? 'যোগাযোগ (Contact)' : 'Contact'}
                 </Text>
               </View>
-              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.primary, flexShrink: 0 }}>01312 100288</Text>
+              <Text
+                style={{ fontSize: 12, fontWeight: '700', color: colors.primary, flexShrink: 0 }}
+              >
+                01312 100288
+              </Text>
             </TouchableOpacity>
 
             {/* 14. HELP */}
-            <TouchableOpacity
-              style={styles.actionRow}
-              onPress={() => setHelpFaqModalVisible(true)}
-            >
+            <TouchableOpacity style={styles.actionRow} onPress={() => setHelpFaqModalVisible(true)}>
               <View style={styles.actionLeft}>
                 <Ionicons name="help-circle-outline" size={18} color="#6366F1" />
                 <Text style={[styles.actionLabel, { color: colors.text }]}>
@@ -554,9 +672,13 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
             >
               <View style={styles.actionLeft}>
                 <Ionicons name="logo-whatsapp" size={18} color="#25D366" />
-                <Text style={[styles.actionLabel, { color: colors.text }]} numberOfLines={1}>WhatsApp Live Support</Text>
+                <Text style={[styles.actionLabel, { color: colors.text }]} numberOfLines={1}>
+                  WhatsApp Live Support
+                </Text>
               </View>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: '#25D366', flexShrink: 0 }}>Active</Text>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: '#25D366', flexShrink: 0 }}>
+                Active
+              </Text>
             </TouchableOpacity>
 
             {/* Messenger Support */}
@@ -566,9 +688,13 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
             >
               <View style={styles.actionLeft}>
                 <MessengerIcon size={18} color="#0084FF" />
-                <Text style={[styles.actionLabel, { color: colors.text }]} numberOfLines={1}>Messenger</Text>
+                <Text style={[styles.actionLabel, { color: colors.text }]} numberOfLines={1}>
+                  Messenger
+                </Text>
               </View>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: '#0084FF', flexShrink: 0 }}>@thrivingskills</Text>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: '#0084FF', flexShrink: 0 }}>
+                @thrivingskills
+              </Text>
             </TouchableOpacity>
 
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
@@ -607,7 +733,9 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
             >
               <View style={styles.actionLeft}>
                 <Ionicons name="shield-checkmark-outline" size={18} color={colors.textMuted} />
-                <Text style={[styles.actionLabel, { color: colors.text }]}>Privacy Policy Bangla (বাংলা)</Text>
+                <Text style={[styles.actionLabel, { color: colors.text }]}>
+                  Privacy Policy Bangla (বাংলা)
+                </Text>
               </View>
               <View style={[styles.pillState, { backgroundColor: isDark ? '#1C2E46' : '#EFF6FF' }]}>
                 <Text style={[styles.pillStateText, { color: colors.primary }]}>বাংলা</Text>
@@ -624,7 +752,9 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
             >
               <View style={styles.actionLeft}>
                 <Ionicons name="document-text-outline" size={18} color={colors.textMuted} />
-                <Text style={[styles.actionLabel, { color: colors.text }]}>Terms and Conditions</Text>
+                <Text style={[styles.actionLabel, { color: colors.text }]}>
+                  Terms and Conditions
+                </Text>
               </View>
               <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
             </TouchableOpacity>
@@ -632,12 +762,18 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
             <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
             {/* Section 5: Preferences & Settings */}
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>PREFERENCES & SETTINGS</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+              PREFERENCES & SETTINGS
+            </Text>
 
             {/* Dark Mode Toggle Row */}
             <TouchableOpacity style={styles.actionRow} onPress={toggleTheme}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <Ionicons name={isDark ? 'moon' : 'sunny'} size={18} color={isDark ? '#FBBF24' : '#F59E0B'} />
+                <Ionicons
+                  name={isDark ? 'moon' : 'sunny'}
+                  size={18}
+                  color={isDark ? '#FBBF24' : '#F59E0B'}
+                />
                 <Text style={[styles.actionLabel, { color: colors.text }]}>
                   {isDark ? 'Dark Theme' : 'Light Theme'}
                 </Text>
@@ -709,7 +845,10 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
                 </TouchableOpacity>
               ) : (
                 <TouchableOpacity
-                  style={[styles.sessionBtn, { backgroundColor: colors.primary, borderColor: colors.primary }]}
+                  style={[
+                    styles.sessionBtn,
+                    { backgroundColor: colors.primary, borderColor: colors.primary },
+                  ]}
                   onPress={() => {
                     onClose();
                     setAuthModalVisible(true);
@@ -753,20 +892,11 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
         initialPrivacyLang={legalPrivacyLang}
       />
 
-      <HelpFaqModal
-        visible={helpFaqModalVisible}
-        onClose={() => setHelpFaqModalVisible(false)}
-      />
+      <HelpFaqModal visible={helpFaqModalVisible} onClose={() => setHelpFaqModalVisible(false)} />
 
-      <BlogModal
-        visible={blogModalVisible}
-        onClose={() => setBlogModalVisible(false)}
-      />
+      <BlogModal visible={blogModalVisible} onClose={() => setBlogModalVisible(false)} />
 
-      <EbookModal
-        visible={ebookModalVisible}
-        onClose={() => setEbookModalVisible(false)}
-      />
+      <EbookModal visible={ebookModalVisible} onClose={() => setEbookModalVisible(false)} />
 
       <ServicesModal
         visible={servicesModalVisible}

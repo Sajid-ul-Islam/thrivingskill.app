@@ -55,7 +55,8 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
     if (filterType === 'courses') return n.type === 'course';
     if (filterType === 'recommendations') return n.type === 'recommendation';
     if (filterType === 'updates') return n.type === 'update';
-    if (filterType === 'campus') return n.type === 'workshop' || n.type === 'assignment' || n.type === 'certificate';
+    if (filterType === 'campus')
+      return n.type === 'workshop' || n.type === 'assignment' || n.type === 'certificate';
     return n.type === filterType;
   });
 
@@ -129,7 +130,12 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
             <View style={styles.headerTitleRow}>
-              <Ionicons name="notifications" size={20} color={colors.primary} style={{ flexShrink: 0 }} />
+              <Ionicons
+                name="notifications"
+                size={20}
+                color={colors.primary}
+                style={{ flexShrink: 0 }}
+              />
               <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
                 Notifications & Offers
               </Text>
@@ -214,8 +220,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                 style={[
                   styles.filterPill,
                   {
-                    backgroundColor:
-                      filterType === f.id ? colors.primary : colors.surfaceSubtle,
+                    backgroundColor: filterType === f.id ? colors.primary : colors.surfaceSubtle,
                     borderColor: filterType === f.id ? colors.primary : colors.border,
                   },
                 ]}

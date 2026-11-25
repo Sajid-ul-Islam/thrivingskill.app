@@ -50,13 +50,16 @@ export function sanitizeWpMessage(message?: string): string {
 
 export class HttpClient {
   private static activeToken: string | null = null;
-  private static connectivityListener: ((isOnline: boolean, errorMsg?: string) => void) | null = null;
+  private static connectivityListener: ((isOnline: boolean, errorMsg?: string) => void) | null =
+    null;
   private static inFlightRequests = new Map<string, Promise<any>>();
 
   /**
    * Register a global listener for network reachability changes detected by HTTP calls
    */
-  static setConnectivityListener(listener: ((isOnline: boolean, errorMsg?: string) => void) | null): void {
+  static setConnectivityListener(
+    listener: ((isOnline: boolean, errorMsg?: string) => void) | null
+  ): void {
     this.connectivityListener = listener;
   }
 
@@ -84,7 +87,11 @@ export class HttpClient {
   /**
    * Build complete URL with query parameters
    */
-  private static buildUrl(endpoint: string, params?: RequestOptions['params'], customBase?: string): string {
+  private static buildUrl(
+    endpoint: string,
+    params?: RequestOptions['params'],
+    customBase?: string
+  ): string {
     const base = customBase || Env.API_URL;
     const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
     let url = `${base}${cleanEndpoint}`;
@@ -129,7 +136,10 @@ export class HttpClient {
     return task;
   }
 
-  private static async executeRequest<T = any>(endpoint: string, options: RequestOptions = {}): Promise<T> {
+  private static async executeRequest<T = any>(
+    endpoint: string,
+    options: RequestOptions = {}
+  ): Promise<T> {
     const {
       params,
       timeoutMs = Env.REQUEST_TIMEOUT_MS,
@@ -208,8 +218,16 @@ export class HttpClient {
         }
 
         // Handle WordPress / LearnPress error structures
-        if (!response.ok || (responseData && typeof responseData === 'object' && responseData.code && responseData.message && responseData.data?.status)) {
-          const rawMessage = responseData?.message || `Request failed with HTTP status ${response.status}`;
+        if (
+          !response.ok ||
+          (responseData &&
+            typeof responseData === 'object' &&
+            responseData.code &&
+            responseData.message &&
+            responseData.data?.status)
+        ) {
+          const rawMessage =
+            responseData?.message || `Request failed with HTTP status ${response.status}`;
           const cleanMessage = sanitizeWpMessage(rawMessage);
           const errorCode = responseData?.code || `HTTP_${response.status}`;
 
@@ -237,10 +255,16 @@ export class HttpClient {
         // Dual-host failover: if primary host encounters network failure or gateway error, try fallback host
         const isServerOutage =
           err instanceof ApiError &&
-          (err.status === 502 || err.status === 503 || err.status === 504 || err.status === 521 || err.status === 522);
+          (err.status === 502 ||
+            err.status === 503 ||
+            err.status === 504 ||
+            err.status === 521 ||
+            err.status === 522);
         if (canAttemptFallback && (isNetworkErr || isServerOutage)) {
           if (Env.DEBUG_API) {
-            console.log(`[API Failover] Primary ${fullUrl} failed. Attempting failover to ${Env.FALLBACK_API_URL}...`);
+            console.log(
+              `[API Failover] Primary ${fullUrl} failed. Attempting failover to ${Env.FALLBACK_API_URL}...`
+            );
           }
           try {
             return await this.executeRequest<T>(endpoint, {
@@ -266,22 +290,19 @@ export class HttpClient {
           throw err;
         }
 
-        let userFriendlyMsg = err.message || 'Network request failed. Please check your internet connection.';
+        let userFriendlyMsg =
+          err.message || 'Network request failed. Please check your internet connection.';
         if (
           userFriendlyMsg.includes('UnknownHostException') ||
           userFriendlyMsg.includes('Unable to resolve host') ||
           userFriendlyMsg.includes('ENOTFOUND')
         ) {
-          userFriendlyMsg = 'Cannot reach server (DNS resolution failed). Please check your internet connection, try mobile data (4G), or enable Private DNS in Android settings.';
+          userFriendlyMsg =
+            'Cannot reach server (DNS resolution failed). Please check your internet connection, try mobile data (4G), or enable Private DNS in Android settings.';
         }
 
         this.connectivityListener?.(false, userFriendlyMsg);
-        throw new ApiError(
-          userFriendlyMsg,
-          0,
-          'NETWORK_ERROR',
-          err
-        );
+        throw new ApiError(userFriendlyMsg, 0, 'NETWORK_ERROR', err);
       }
     }
 
@@ -289,11 +310,19 @@ export class HttpClient {
   }
 
   // HTTP Verb Convenience Methods
-  static get<T = any>(endpoint: string, params?: RequestOptions['params'], options?: Omit<RequestOptions, 'params' | 'method'>): Promise<T> {
+  static get<T = any>(
+    endpoint: string,
+    params?: RequestOptions['params'],
+    options?: Omit<RequestOptions, 'params' | 'method'>
+  ): Promise<T> {
     return this.request<T>(endpoint, { ...options, method: 'GET', params });
   }
 
-  static post<T = any>(endpoint: string, body?: any, options?: Omit<RequestOptions, 'body' | 'method'>): Promise<T> {
+  static post<T = any>(
+    endpoint: string,
+    body?: any,
+    options?: Omit<RequestOptions, 'body' | 'method'>
+  ): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'POST',
@@ -301,7 +330,11 @@ export class HttpClient {
     });
   }
 
-  static put<T = any>(endpoint: string, body?: any, options?: Omit<RequestOptions, 'body' | 'method'>): Promise<T> {
+  static put<T = any>(
+    endpoint: string,
+    body?: any,
+    options?: Omit<RequestOptions, 'body' | 'method'>
+  ): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'PUT',
@@ -309,7 +342,11 @@ export class HttpClient {
     });
   }
 
-  static patch<T = any>(endpoint: string, body?: any, options?: Omit<RequestOptions, 'body' | 'method'>): Promise<T> {
+  static patch<T = any>(
+    endpoint: string,
+    body?: any,
+    options?: Omit<RequestOptions, 'body' | 'method'>
+  ): Promise<T> {
     return this.request<T>(endpoint, {
       ...options,
       method: 'PATCH',
@@ -405,7 +442,8 @@ export class HttpClient {
             responseData.message &&
             responseData.data?.status)
         ) {
-          const rawMessage = responseData?.message || `Request failed with HTTP status ${response.status}`;
+          const rawMessage =
+            responseData?.message || `Request failed with HTTP status ${response.status}`;
           const cleanMessage = sanitizeWpMessage(rawMessage);
           const errorCode = responseData?.code || `HTTP_${response.status}`;
           throw new ApiError(cleanMessage, response.status, errorCode, responseData);
@@ -413,13 +451,15 @@ export class HttpClient {
 
         this.connectivityListener?.(true);
 
-        const totalCountHeader = response.headers.get('x-wp-total') || response.headers.get('X-WP-Total');
-        const totalPagesHeader = response.headers.get('x-wp-totalpages') || response.headers.get('X-WP-TotalPages');
+        const totalCountHeader =
+          response.headers.get('x-wp-total') || response.headers.get('X-WP-Total');
+        const totalPagesHeader =
+          response.headers.get('x-wp-totalpages') || response.headers.get('X-WP-TotalPages');
         const totalCount = totalCountHeader
           ? parseInt(totalCountHeader, 10)
           : Array.isArray(responseData)
-          ? responseData.length
-          : 0;
+            ? responseData.length
+            : 0;
         const totalPages = totalPagesHeader ? parseInt(totalPagesHeader, 10) : 1;
 
         const headerMap: Record<string, string> = {};
@@ -453,10 +493,16 @@ export class HttpClient {
         // Dual-host failover: if primary host encounters network failure or gateway error, try fallback host
         const isServerOutage =
           err instanceof ApiError &&
-          (err.status === 502 || err.status === 503 || err.status === 504 || err.status === 521 || err.status === 522);
+          (err.status === 502 ||
+            err.status === 503 ||
+            err.status === 504 ||
+            err.status === 521 ||
+            err.status === 522);
         if (canAttemptFallback && (isNetworkErr || isServerOutage)) {
           if (Env.DEBUG_API) {
-            console.log(`[API Failover withMeta] Primary ${fullUrl} failed. Attempting failover to ${Env.FALLBACK_API_URL}...`);
+            console.log(
+              `[API Failover withMeta] Primary ${fullUrl} failed. Attempting failover to ${Env.FALLBACK_API_URL}...`
+            );
           }
           try {
             return await this.requestWithMeta<T>(endpoint, {
@@ -482,7 +528,8 @@ export class HttpClient {
           throw err;
         }
 
-        let userFriendlyMsg = err.message || 'Network request failed. Please check your internet connection.';
+        let userFriendlyMsg =
+          err.message || 'Network request failed. Please check your internet connection.';
         if (
           userFriendlyMsg.includes('UnknownHostException') ||
           userFriendlyMsg.includes('Unable to resolve host') ||

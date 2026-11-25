@@ -27,7 +27,13 @@ const ReviewAvatar: React.FC<{
 
   if (!uri || error) {
     return (
-      <View style={[styles.reviewAvatar, styles.avatarInitialsCircle, { backgroundColor: primaryColor }]}>
+      <View
+        style={[
+          styles.reviewAvatar,
+          styles.avatarInitialsCircle,
+          { backgroundColor: primaryColor },
+        ]}
+      >
         <Text style={styles.avatarInitialsText}>{initial}</Text>
       </View>
     );
@@ -76,8 +82,8 @@ export const CourseReviewsSection: React.FC<CourseReviewsSectionProps> = ({
             backgroundColor: isEnrolled
               ? colors.primaryLight
               : isDark
-              ? colors.surfaceSubtle
-              : '#F1F5F9',
+                ? colors.surfaceSubtle
+                : '#F1F5F9',
             borderColor: isEnrolled ? colors.primary : colors.border,
           },
         ]}
@@ -90,8 +96,8 @@ export const CourseReviewsSection: React.FC<CourseReviewsSectionProps> = ({
               ? 'কোর্সের রিভিউ ও রেটিং দিন'
               : 'Rate & Write a Review'
             : isBangla
-            ? 'রিভিউ দিতে কোর্সে এনরোল করুন'
-            : 'Enroll to Leave a Review'
+              ? 'রিভিউ দিতে কোর্সে এনরোল করুন'
+              : 'Enroll to Leave a Review'
         }
       >
         <Ionicons
@@ -110,8 +116,8 @@ export const CourseReviewsSection: React.FC<CourseReviewsSectionProps> = ({
               ? 'আপনার মূল্যবান রিভিউ ও রেটিং দিন ★'
               : 'Rate & Write a Review ★'
             : isBangla
-            ? 'রিভিউ দিতে কোর্সে এনরোল করুন (লকড)'
-            : 'Enroll in Course to Leave a Review (Locked)'}
+              ? 'রিভিউ দিতে কোর্সে এনরোল করুন (লকড)'
+              : 'Enroll in Course to Leave a Review (Locked)'}
         </Text>
       </TouchableOpacity>
 
@@ -129,27 +135,34 @@ export const CourseReviewsSection: React.FC<CourseReviewsSectionProps> = ({
             ]}
           >
             <View style={styles.reviewTop}>
-              <ReviewAvatar uri={rev.userAvatar} name={rev.userName} primaryColor={colors.primary} />
+              <ReviewAvatar
+                uri={rev.userAvatar}
+                name={rev.userName}
+                primaryColor={colors.primary}
+              />
               <View style={styles.reviewMeta}>
-                <Text style={[styles.reviewUser, { color: colors.text }]} numberOfLines={1} ellipsizeMode="tail">
+                <Text
+                  style={[styles.reviewUser, { color: colors.text }]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
                   {rev.userName}
                 </Text>
-                <Text style={[styles.reviewRole, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
+                <Text
+                  style={[styles.reviewRole, { color: colors.textMuted }]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
                   {rev.userRole}
                 </Text>
               </View>
               <View style={styles.ratingStars}>
                 <Ionicons name="star" size={14} color={colors.starColor} />
-                <Text style={[styles.ratingValText, { color: colors.text }]}>
-                  {rev.rating}
-                </Text>
+                <Text style={[styles.ratingValText, { color: colors.text }]}>{rev.rating}</Text>
               </View>
             </View>
             <Text
-              style={[
-                styles.reviewComment,
-                { color: colors.text, lineHeight: isBangla ? 22 : 19 },
-              ]}
+              style={[styles.reviewComment, { color: colors.text, lineHeight: isBangla ? 22 : 19 }]}
             >
               {rev.comment}
             </Text>

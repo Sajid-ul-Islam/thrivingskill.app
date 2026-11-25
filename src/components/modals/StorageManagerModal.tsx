@@ -118,7 +118,9 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({ visibl
     try {
       await AsyncStorage.setItem(DATA_SAVER_STORAGE_KEY, val ? 'true' : 'false');
       showToast({
-        message: val ? 'Data Saver enabled: heavy prefetching paused' : 'Data Saver disabled: full prefetching active',
+        message: val
+          ? 'Data Saver enabled: heavy prefetching paused'
+          : 'Data Saver disabled: full prefetching active',
         type: 'info',
       });
     } catch {}
@@ -195,7 +197,10 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({ visibl
         type: 'success',
       });
     } catch (err: any) {
-      showToast({ message: err?.message || 'Sync failed. Will retry automatically.', type: 'error' });
+      showToast({
+        message: err?.message || 'Sync failed. Will retry automatically.',
+        type: 'error',
+      });
     }
   };
 
@@ -220,14 +225,23 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({ visibl
           {/* Header */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
             <View style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
-              <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>Local Storage & Sync</Text>
-              <Text style={[styles.headerSubtitle, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
+              <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
+                Local Storage & Sync
+              </Text>
+              <Text
+                style={[styles.headerSubtitle, { color: colors.textMuted }]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
                 Offline mutation queue, local cache & data economy
               </Text>
             </View>
             <TouchableOpacity
               onPress={onClose}
-              style={[styles.closeButton, { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' }]}
+              style={[
+                styles.closeButton,
+                { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' },
+              ]}
               accessibilityRole="button"
               accessibilityLabel="Close Storage Manager"
             >
@@ -235,12 +249,22 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({ visibl
             </TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
             {/* Storage Usage Summary Card */}
-            <View style={[styles.card, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+            <View
+              style={[
+                styles.card,
+                { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+              ]}
+            >
               <View style={styles.cardHeader}>
                 <Ionicons name="pie-chart-outline" size={20} color={colors.primary} />
-                <Text style={[styles.cardTitle, { color: colors.text }]}>Storage Usage Breakdown</Text>
+                <Text style={[styles.cardTitle, { color: colors.text }]}>
+                  Storage Usage Breakdown
+                </Text>
               </View>
 
               {isLoadingStats ? (
@@ -255,9 +279,13 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({ visibl
                   <View style={styles.metricRow}>
                     <View style={styles.metricLeft}>
                       <View style={[styles.dot, { backgroundColor: colors.primary }]} />
-                      <Text style={[styles.metricLabel, { color: colors.text }]}>Course Catalog & Images</Text>
+                      <Text style={[styles.metricLabel, { color: colors.text }]}>
+                        Course Catalog & Images
+                      </Text>
                     </View>
-                    <Text style={[styles.metricValue, { color: colors.textMuted }]}>{formatSize(stats.cacheSizeKb)}</Text>
+                    <Text style={[styles.metricValue, { color: colors.textMuted }]}>
+                      {formatSize(stats.cacheSizeKb)}
+                    </Text>
                   </View>
 
                   <View style={styles.metricRow}>
@@ -267,31 +295,52 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({ visibl
                         Downloaded Study Lessons ({stats.downloadedCount})
                       </Text>
                     </View>
-                    <Text style={[styles.metricValue, { color: colors.textMuted }]}>{formatSize(stats.offlineSizeKb)}</Text>
+                    <Text style={[styles.metricValue, { color: colors.textMuted }]}>
+                      {formatSize(stats.offlineSizeKb)}
+                    </Text>
                   </View>
 
                   <View style={styles.metricRow}>
                     <View style={styles.metricLeft}>
                       <View style={[styles.dot, { backgroundColor: '#10B981' }]} />
-                      <Text style={[styles.metricLabel, { color: colors.text }]}>Notes, Progress & Certificates</Text>
+                      <Text style={[styles.metricLabel, { color: colors.text }]}>
+                        Notes, Progress & Certificates
+                      </Text>
                     </View>
-                    <Text style={[styles.metricValue, { color: colors.textMuted }]}>{formatSize(stats.userStatsKb)}</Text>
+                    <Text style={[styles.metricValue, { color: colors.textMuted }]}>
+                      {formatSize(stats.userStatsKb)}
+                    </Text>
                   </View>
 
                   <View style={[styles.totalRow, { borderTopColor: colors.borderSubtle }]}>
-                    <Text style={[styles.totalLabel, { color: colors.text }]}>Total Storage Used</Text>
-                    <Text style={[styles.totalValue, { color: colors.primary }]}>{formatSize(stats.totalSizeKb)}</Text>
+                    <Text style={[styles.totalLabel, { color: colors.text }]}>
+                      Total Storage Used
+                    </Text>
+                    <Text style={[styles.totalValue, { color: colors.primary }]}>
+                      {formatSize(stats.totalSizeKb)}
+                    </Text>
                   </View>
                 </>
               )}
             </View>
 
             {/* Offline Mutation Queue (Outbox Pattern) Card */}
-            <View style={[styles.card, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+            <View
+              style={[
+                styles.card,
+                { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+              ]}
+            >
               <View style={styles.cardHeader}>
-                <Ionicons name="cloud-offline-outline" size={20} color={pendingSyncCount > 0 ? colors.brandGold : colors.success} />
+                <Ionicons
+                  name="cloud-offline-outline"
+                  size={20}
+                  color={pendingSyncCount > 0 ? colors.brandGold : colors.success}
+                />
                 <View style={{ flex: 1, marginLeft: 8 }}>
-                  <Text style={[styles.cardTitle, { color: colors.text }]}>Offline Sync Queue (Outbox)</Text>
+                  <Text style={[styles.cardTitle, { color: colors.text }]}>
+                    Offline Sync Queue (Outbox)
+                  </Text>
                   <Text style={[styles.subtext, { color: colors.textMuted }]}>
                     {pendingSyncCount === 0
                       ? 'All changes synchronized with server'
@@ -301,13 +350,31 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({ visibl
                 <View
                   style={[
                     styles.syncBadge,
-                    { backgroundColor: pendingSyncCount > 0 ? (isDark ? '#78350F' : '#FEF3C7') : (isDark ? '#064E3B' : '#D1FAE5') },
+                    {
+                      backgroundColor:
+                        pendingSyncCount > 0
+                          ? isDark
+                            ? '#78350F'
+                            : '#FEF3C7'
+                          : isDark
+                            ? '#064E3B'
+                            : '#D1FAE5',
+                    },
                   ]}
                 >
                   <Text
                     style={[
                       styles.syncBadgeText,
-                      { color: pendingSyncCount > 0 ? (isDark ? '#FCD34D' : '#92400E') : (isDark ? '#6EE7B7' : '#065F46') },
+                      {
+                        color:
+                          pendingSyncCount > 0
+                            ? isDark
+                              ? '#FCD34D'
+                              : '#92400E'
+                            : isDark
+                              ? '#6EE7B7'
+                              : '#065F46',
+                      },
                     ]}
                   >
                     {pendingSyncCount > 0 ? `${pendingSyncCount} Pending` : 'Up to date'}
@@ -318,14 +385,20 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({ visibl
               {pendingMutations.length > 0 && (
                 <View style={{ marginTop: 10 }}>
                   {pendingMutations.slice(0, 3).map((item) => (
-                    <View key={item.id} style={[styles.mutationItem, { borderColor: colors.borderSubtle }]}>
+                    <View
+                      key={item.id}
+                      style={[styles.mutationItem, { borderColor: colors.borderSubtle }]}
+                    >
                       <Ionicons name="arrow-up-circle-outline" size={16} color={colors.primary} />
-                      <Text style={[styles.mutationAction, { color: colors.text }]} numberOfLines={1}>
+                      <Text
+                        style={[styles.mutationAction, { color: colors.text }]}
+                        numberOfLines={1}
+                      >
                         {item.action === 'COMPLETE_LESSON'
                           ? `Complete Lesson #${item.payload?.id}`
                           : item.action === 'ENROLL_COURSE'
-                          ? `Enroll Course #${item.payload?.id}`
-                          : item.action}
+                            ? `Enroll Course #${item.payload?.id}`
+                            : item.action}
                       </Text>
                       <Text style={[styles.mutationAttempt, { color: colors.textMuted }]}>
                         {item.attempts > 0 ? `Retry #${item.attempts}` : 'Queued'}
@@ -363,7 +436,9 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({ visibl
                         { color: pendingSyncCount > 0 ? colors.onPrimary : colors.textMuted },
                       ]}
                     >
-                      {pendingSyncCount > 0 ? 'Sync Pending Changes Now' : 'Queue Empty (Up to date)'}
+                      {pendingSyncCount > 0
+                        ? 'Sync Pending Changes Now'
+                        : 'Queue Empty (Up to date)'}
                     </Text>
                   </>
                 )}
@@ -371,15 +446,26 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({ visibl
             </View>
 
             {/* Smart Data Saver Mode Card */}
-            <View style={[styles.card, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+            <View
+              style={[
+                styles.card,
+                { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+              ]}
+            >
               <View style={styles.switchRow}>
                 <View style={{ flex: 1, paddingRight: 12 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <Ionicons name="cellular-outline" size={20} color="#3B82F6" style={{ marginRight: 6 }} />
+                    <Ionicons
+                      name="cellular-outline"
+                      size={20}
+                      color="#3B82F6"
+                      style={{ marginRight: 6 }}
+                    />
                     <Text style={[styles.cardTitle, { color: colors.text }]}>Smart Data Saver</Text>
                   </View>
                   <Text style={[styles.subtext, { color: colors.textMuted, marginTop: 4 }]}>
-                    Conserves mobile data on cellular networks by pausing non-critical image pre-fetching and using compressed responses.
+                    Conserves mobile data on cellular networks by pausing non-critical image
+                    pre-fetching and using compressed responses.
                   </Text>
                 </View>
                 <Switch
@@ -392,17 +478,28 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({ visibl
             </View>
 
             {/* Google LiteRT On-Device AI Acceleration Card (Phase 4) */}
-            <View style={[styles.card, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+            <View
+              style={[
+                styles.card,
+                { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+              ]}
+            >
               <View style={styles.cardHeader}>
                 <Ionicons name="hardware-chip-outline" size={20} color="#7C3AED" />
                 <View style={{ flex: 1, marginLeft: 8 }}>
-                  <Text style={[styles.cardTitle, { color: colors.text }]}>Google LiteRT On-Device AI</Text>
+                  <Text style={[styles.cardTitle, { color: colors.text }]}>
+                    Google LiteRT On-Device AI
+                  </Text>
                   <Text style={[styles.subtext, { color: colors.textMuted }]}>
                     {liteRtStatus?.runtimeSource || 'On-device machine learning acceleration'}
                   </Text>
                 </View>
-                <View style={[styles.syncBadge, { backgroundColor: isDark ? '#3B0764' : '#EDE9FE' }]}>
-                  <Text style={[styles.syncBadgeText, { color: '#7C3AED' }]}>Play Services Ready</Text>
+                <View
+                  style={[styles.syncBadge, { backgroundColor: isDark ? '#3B0764' : '#EDE9FE' }]}
+                >
+                  <Text style={[styles.syncBadgeText, { color: '#7C3AED' }]}>
+                    Play Services Ready
+                  </Text>
                 </View>
               </View>
 
@@ -414,11 +511,17 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({ visibl
                   </Text>
                 </View>
                 <View style={styles.metricRow}>
-                  <Text style={[styles.metricLabel, { color: colors.text }]}>APK Binary Bloat Avoided</Text>
-                  <Text style={[styles.metricValue, { color: '#10B981', fontWeight: '700' }]}>~8 MB Saved</Text>
+                  <Text style={[styles.metricLabel, { color: colors.text }]}>
+                    APK Binary Bloat Avoided
+                  </Text>
+                  <Text style={[styles.metricValue, { color: '#10B981', fontWeight: '700' }]}>
+                    ~8 MB Saved
+                  </Text>
                 </View>
                 <View style={styles.metricRow}>
-                  <Text style={[styles.metricLabel, { color: colors.text }]}>GPU Drift Acceleration</Text>
+                  <Text style={[styles.metricLabel, { color: colors.text }]}>
+                    GPU Drift Acceleration
+                  </Text>
                   <Text style={[styles.metricValue, { color: colors.textMuted }]}>
                     {liteRtStatus?.isGpuEnabled ? 'Active (1.4x faster)' : 'Supported'}
                   </Text>
@@ -427,8 +530,15 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({ visibl
             </View>
 
             {/* Storage Actions Card */}
-            <View style={[styles.card, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
-              <Text style={[styles.cardTitle, { color: colors.text, marginBottom: 12 }]}>Storage Cleanup Actions</Text>
+            <View
+              style={[
+                styles.card,
+                { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+              ]}
+            >
+              <Text style={[styles.cardTitle, { color: colors.text, marginBottom: 12 }]}>
+                Storage Cleanup Actions
+              </Text>
 
               <TouchableOpacity
                 style={[styles.actionRow, { borderBottomColor: colors.borderSubtle }]}
@@ -438,9 +548,12 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({ visibl
                 accessibilityLabel="Clear temporary cache"
               >
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.actionTitle, { color: colors.text }]}>Clear Temporary Course Cache</Text>
+                  <Text style={[styles.actionTitle, { color: colors.text }]}>
+                    Clear Temporary Course Cache
+                  </Text>
                   <Text style={[styles.subtext, { color: colors.textMuted }]}>
-                    Frees up {formatSize(stats.cacheSizeKb)} of stored course pages. Does not log you out.
+                    Frees up {formatSize(stats.cacheSizeKb)} of stored course pages. Does not log
+                    you out.
                   </Text>
                 </View>
                 {isClearingCache ? (
@@ -458,7 +571,12 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({ visibl
                 accessibilityLabel="Remove all offline lessons"
               >
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.actionTitle, { color: stats.downloadedCount > 0 ? colors.text : colors.textMuted }]}>
+                  <Text
+                    style={[
+                      styles.actionTitle,
+                      { color: stats.downloadedCount > 0 ? colors.text : colors.textMuted },
+                    ]}
+                  >
                     Remove All Offline Lessons ({stats.downloadedCount})
                   </Text>
                   <Text style={[styles.subtext, { color: colors.textMuted }]}>

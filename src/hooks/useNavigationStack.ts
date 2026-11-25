@@ -120,52 +120,64 @@ export function useNavigationStack(options: UseNavigationStackOptions = {}): Nav
   /**
    * Reset navigation stack back to the root tabs.
    */
-  const resetToTabs = useCallback((tab?: RootTab) => {
-    setDirection('fade');
-    setStack((prev) => {
-      const targetTab = tab || activeTab;
-      setActiveTab(targetTab);
-      const rootScreen: ActiveScreen = { name: 'MainTabs', tab: targetTab };
-      stackRef.current = [rootScreen];
-      return [rootScreen];
-    });
-  }, [activeTab]);
+  const resetToTabs = useCallback(
+    (tab?: RootTab) => {
+      setDirection('fade');
+      setStack((prev) => {
+        const targetTab = tab || activeTab;
+        setActiveTab(targetTab);
+        const rootScreen: ActiveScreen = { name: 'MainTabs', tab: targetTab };
+        stackRef.current = [rootScreen];
+        return [rootScreen];
+      });
+    },
+    [activeTab]
+  );
 
   /**
    * Navigate to a primary bottom tab.
    */
-  const navigateToTab = useCallback((tab: RootTab) => {
-    const current = stackRef.current[stackRef.current.length - 1];
-    if (tab !== activeTab || !current || current.name !== 'MainTabs') {
-      triggerHaptic('selection');
-    }
-    setDirection('fade');
-    setActiveTab(tab);
-    const rootScreen: ActiveScreen = { name: 'MainTabs', tab };
-    stackRef.current = [rootScreen];
-    setStack([rootScreen]);
-  }, [activeTab]);
+  const navigateToTab = useCallback(
+    (tab: RootTab) => {
+      const current = stackRef.current[stackRef.current.length - 1];
+      if (tab !== activeTab || !current || current.name !== 'MainTabs') {
+        triggerHaptic('selection');
+      }
+      setDirection('fade');
+      setActiveTab(tab);
+      const rootScreen: ActiveScreen = { name: 'MainTabs', tab };
+      stackRef.current = [rootScreen];
+      setStack([rootScreen]);
+    },
+    [activeTab]
+  );
 
   /**
    * Navigate to course details screen.
    */
-  const navigateToCourse = useCallback((courseId: string) => {
-    push({ name: 'CourseDetail', courseId });
-  }, [push]);
+  const navigateToCourse = useCallback(
+    (courseId: string) => {
+      push({ name: 'CourseDetail', courseId });
+    },
+    [push]
+  );
 
   /**
    * Navigate to lesson player screen.
    * If already inside the player for the same course, replaces the current lesson
    * to keep the back stack concise (Jakob's Law).
    */
-  const navigateToLesson = useCallback((courseId: string, lessonId: string) => {
-    const top = stackRef.current[stackRef.current.length - 1];
-    if (top && top.name === 'LessonPlayer' && top.courseId === courseId) {
-      replace({ name: 'LessonPlayer', courseId, lessonId });
-    } else {
-      push({ name: 'LessonPlayer', courseId, lessonId });
-    }
-  }, [push, replace]);
+  const navigateToLesson = useCallback(
+    (courseId: string, lessonId: string) => {
+      const top = stackRef.current[stackRef.current.length - 1];
+      if (top && top.name === 'LessonPlayer' && top.courseId === courseId) {
+        replace({ name: 'LessonPlayer', courseId, lessonId });
+      } else {
+        push({ name: 'LessonPlayer', courseId, lessonId });
+      }
+    },
+    [push, replace]
+  );
 
   const canGoBack = stack.length > 1;
 

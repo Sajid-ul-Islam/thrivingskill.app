@@ -101,14 +101,18 @@ export const ProfileChangePasswordModal: React.FC<ProfileChangePasswordModalProp
                   {isBangla ? 'পাসওয়ার্ড পরিবর্তন' : 'Change Password'}
                 </Text>
                 <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
-                  {isBangla ? 'আপনার অ্যাকাউন্টের নিরাপত্তা আপডেট করুন' : 'Update your account credentials'}
+                  {isBangla
+                    ? 'আপনার অ্যাকাউন্টের নিরাপত্তা আপডেট করুন'
+                    : 'Update your account credentials'}
                 </Text>
               </View>
               <TouchableOpacity
                 onPress={onClose}
                 style={styles.modalCloseBtn}
                 accessibilityRole="button"
-                accessibilityLabel={isBangla ? 'পাসওয়ার্ড উইন্ডো বন্ধ করুন' : 'Close change password modal'}
+                accessibilityLabel={
+                  isBangla ? 'পাসওয়ার্ড উইন্ডো বন্ধ করুন' : 'Close change password modal'
+                }
               >
                 <Ionicons name="close" size={20} color={colors.text} />
               </TouchableOpacity>
@@ -146,7 +150,9 @@ export const ProfileChangePasswordModal: React.FC<ProfileChangePasswordModalProp
                       setShowCurrentPass(!showCurrentPass);
                     }}
                     accessibilityRole="button"
-                    accessibilityLabel={showCurrentPass ? 'Hide current password' : 'Show current password'}
+                    accessibilityLabel={
+                      showCurrentPass ? 'Hide current password' : 'Show current password'
+                    }
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     <Ionicons
@@ -167,7 +173,8 @@ export const ProfileChangePasswordModal: React.FC<ProfileChangePasswordModalProp
                     styles.passwordInputRow,
                     {
                       backgroundColor: colors.surfaceSubtle,
-                      borderColor: newPass.length > 0 && newPass.length < 12 ? colors.danger : colors.border,
+                      borderColor:
+                        newPass.length > 0 && newPass.length < 12 ? colors.danger : colors.border,
                     },
                   ]}
                 >
@@ -206,7 +213,9 @@ export const ProfileChangePasswordModal: React.FC<ProfileChangePasswordModalProp
                   </TouchableOpacity>
                 </View>
                 {newPass.length > 0 && newPass.length < 12 && (
-                  <Text style={{ fontSize: 11, color: colors.danger, marginTop: 4, fontWeight: '600' }}>
+                  <Text
+                    style={{ fontSize: 11, color: colors.danger, marginTop: 4, fontWeight: '600' }}
+                  >
                     {isBangla
                       ? 'পাসওয়ার্ড কমপক্ষে ১২ অক্ষরের হতে হবে।'
                       : 'Password should be at least 12 characters long.'}
@@ -216,14 +225,23 @@ export const ProfileChangePasswordModal: React.FC<ProfileChangePasswordModalProp
                 <View
                   style={[
                     styles.siteHintBox,
-                    { backgroundColor: colors.surfaceSubtle, borderColor: colors.border, marginTop: 8 },
+                    {
+                      backgroundColor: colors.surfaceSubtle,
+                      borderColor: colors.border,
+                      marginTop: 8,
+                    },
                   ]}
                 >
-                  <Ionicons name="information-circle" size={16} color={colors.primary} style={{ marginTop: 1 }} />
+                  <Ionicons
+                    name="information-circle"
+                    size={16}
+                    color={colors.primary}
+                    style={{ marginTop: 1 }}
+                  />
                   <Text style={[styles.siteHintText, { color: colors.textMuted }]}>
                     <Text style={{ fontWeight: '700', color: colors.text }}>Hint: </Text>
-                    The password should be at least twelve characters long. To make it stronger, use upper and lower case
-                    letters, numbers, and symbols like ! " ? $ % ^ & ).
+                    The password should be at least twelve characters long. To make it stronger, use
+                    upper and lower case letters, numbers, and symbols like ! " ? $ % ^ & ).
                   </Text>
                 </View>
               </View>
@@ -238,7 +256,9 @@ export const ProfileChangePasswordModal: React.FC<ProfileChangePasswordModalProp
                     {
                       backgroundColor: colors.surfaceSubtle,
                       borderColor:
-                        confirmPass.length > 0 && confirmPass !== newPass ? colors.danger : colors.border,
+                        confirmPass.length > 0 && confirmPass !== newPass
+                          ? colors.danger
+                          : colors.border,
                     },
                   ]}
                 >
@@ -262,7 +282,9 @@ export const ProfileChangePasswordModal: React.FC<ProfileChangePasswordModalProp
                       setShowConfirmPass(!showConfirmPass);
                     }}
                     accessibilityRole="button"
-                    accessibilityLabel={showConfirmPass ? 'Hide confirm password' : 'Show confirm password'}
+                    accessibilityLabel={
+                      showConfirmPass ? 'Hide confirm password' : 'Show confirm password'
+                    }
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     <Ionicons
@@ -273,7 +295,9 @@ export const ProfileChangePasswordModal: React.FC<ProfileChangePasswordModalProp
                   </TouchableOpacity>
                 </View>
                 {confirmPass.length > 0 && confirmPass !== newPass && (
-                  <Text style={{ fontSize: 11, color: colors.danger, marginTop: 4, fontWeight: '600' }}>
+                  <Text
+                    style={{ fontSize: 11, color: colors.danger, marginTop: 4, fontWeight: '600' }}
+                  >
                     {isBangla ? 'পাসওয়ার্ড মেলেনি।' : 'Passwords do not match.'}
                   </Text>
                 )}
@@ -292,7 +316,10 @@ export const ProfileChangePasswordModal: React.FC<ProfileChangePasswordModalProp
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.saveBtn, { backgroundColor: colors.primary, opacity: isChangingPass ? 0.7 : 1 }]}
+                style={[
+                  styles.saveBtn,
+                  { backgroundColor: colors.primary, opacity: isChangingPass ? 0.7 : 1 },
+                ]}
                 onPress={handleChangePassword}
                 disabled={isChangingPass}
                 accessibilityRole="button"
@@ -305,8 +332,8 @@ export const ProfileChangePasswordModal: React.FC<ProfileChangePasswordModalProp
                       ? 'আপডেট হচ্ছে...'
                       : 'Updating...'
                     : isBangla
-                    ? 'পাসওয়ার্ড আপডেট'
-                    : 'Update Password'}
+                      ? 'পাসওয়ার্ড আপডেট'
+                      : 'Update Password'}
                 </Text>
               </TouchableOpacity>
             </View>

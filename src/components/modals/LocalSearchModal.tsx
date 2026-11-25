@@ -48,7 +48,9 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
   const [query, setQuery] = useState('');
   const [filterType, setFilterType] = useState<FilterOption>('all');
   const [results, setResults] = useState<SearchResult[]>([]);
-  const [isSemanticActive, setIsSemanticActive] = useState<boolean>(LiteRtService.isSemanticEnabled());
+  const [isSemanticActive, setIsSemanticActive] = useState<boolean>(
+    LiteRtService.isSemanticEnabled()
+  );
   const [suggestedEnhancement, setSuggestedEnhancement] = useState<string | null>(null);
   const [autoSuggestions, setAutoSuggestions] = useState<string[]>([]);
   const inputRef = useRef<React.ElementRef<typeof TextInput>>(null);
@@ -93,51 +95,42 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
     }
   }, [visible, courses, notes]);
 
-  const handleSearch = useCallback(
-    (text: string, filter: FilterOption) => {
-      setQuery(text);
-      const clean = text.trim();
-      if (!clean) {
-        setResults([]);
-        setSuggestedEnhancement(null);
-        setAutoSuggestions([]);
-        return;
-      }
+  const handleSearch = useCallback((text: string, filter: FilterOption) => {
+    setQuery(text);
+    const clean = text.trim();
+    if (!clean) {
+      setResults([]);
+      setSuggestedEnhancement(null);
+      setAutoSuggestions([]);
+      return;
+    }
 
-      // Fast In-Memory Prefix Trie suggestions (<1ms)
-      const suggestions = LocalSearchEngine.getAutoSuggestions(clean, 5);
-      setAutoSuggestions(suggestions.filter((s) => s.toLowerCase() !== clean.toLowerCase()));
+    // Fast In-Memory Prefix Trie suggestions (<1ms)
+    const suggestions = LocalSearchEngine.getAutoSuggestions(clean, 5);
+    setAutoSuggestions(suggestions.filter((s) => s.toLowerCase() !== clean.toLowerCase()));
 
-      // Check on-device Gemini Nano query proofreading / semantic expansion
-      if (clean.length >= 2) {
-        GeminiNanoService.enhanceSearchQuery(clean).then((res) => {
-          if (res.isExpanded && res.enhanced.toLowerCase() !== clean.toLowerCase()) {
-            setSuggestedEnhancement(res.enhanced);
-          } else {
-            setSuggestedEnhancement(null);
-          }
-        });
-      } else {
-        setSuggestedEnhancement(null);
-      }
+    // Check on-device Gemini Nano query proofreading / semantic expansion
+    if (clean.length >= 2) {
+      GeminiNanoService.enhanceSearchQuery(clean).then((res) => {
+        if (res.isExpanded && res.enhanced.toLowerCase() !== clean.toLowerCase()) {
+          setSuggestedEnhancement(res.enhanced);
+        } else {
+          setSuggestedEnhancement(null);
+        }
+      });
+    } else {
+      setSuggestedEnhancement(null);
+    }
 
-      const res = LocalSearchEngine.search(
-        clean,
-        filter === 'all' ? undefined : filter
-      );
-      setResults(res);
-    },
-    []
-  );
+    const res = LocalSearchEngine.search(clean, filter === 'all' ? undefined : filter);
+    setResults(res);
+  }, []);
 
   const handleFilterChange = (filter: FilterOption) => {
     triggerHaptic('selection');
     setFilterType(filter);
     if (query.trim()) {
-      const res = LocalSearchEngine.search(
-        query.trim(),
-        filter === 'all' ? undefined : filter
-      );
+      const res = LocalSearchEngine.search(query.trim(), filter === 'all' ? undefined : filter);
       setResults(res);
     }
   };
@@ -221,7 +214,12 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
                 },
               ]}
             >
-              <Ionicons name="search" size={20} color={colors.textMuted} style={{ marginRight: 8 }} />
+              <Ionicons
+                name="search"
+                size={20}
+                color={colors.textMuted}
+                style={{ marginRight: 8 }}
+              />
               <TextInput
                 ref={inputRef}
                 style={[styles.searchInput, { color: colors.text }]}
@@ -273,9 +271,7 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
               <Ionicons name="sparkles" size={14} color="#059669" />
               <Text style={[styles.nanoEnhanceText, { color: colors.text }]}>
                 Search instead for:{' '}
-                <Text style={{ fontWeight: '800', color: '#059669' }}>
-                  {suggestedEnhancement}
-                </Text>
+                <Text style={{ fontWeight: '800', color: '#059669' }}>{suggestedEnhancement}</Text>
               </Text>
               <View style={styles.nanoBadgeTag}>
                 <Text style={styles.nanoBadgeText}>Nano AI</Text>
@@ -301,7 +297,9 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
                     style={[
                       styles.suggestionPill,
                       {
-                        backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : 'rgba(16, 47, 83, 0.08)',
+                        backgroundColor: isDark
+                          ? 'rgba(255, 182, 6, 0.16)'
+                          : 'rgba(16, 47, 83, 0.08)',
                         borderColor: isDark ? 'rgba(255, 182, 6, 0.3)' : 'rgba(16, 47, 83, 0.15)',
                       },
                     ]}
@@ -313,8 +311,17 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
                     accessibilityRole="button"
                     accessibilityLabel={`Auto-complete query: ${suggestion}`}
                   >
-                    <Ionicons name="sparkles-outline" size={11} color={isDark ? colors.primary : '#102F53'} />
-                    <Text style={[styles.suggestionPillText, { color: isDark ? colors.primary : '#102F53' }]}>
+                    <Ionicons
+                      name="sparkles-outline"
+                      size={11}
+                      color={isDark ? colors.primary : '#102F53'}
+                    />
+                    <Text
+                      style={[
+                        styles.suggestionPillText,
+                        { color: isDark ? colors.primary : '#102F53' },
+                      ]}
+                    >
                       {suggestion}
                     </Text>
                   </TouchableOpacity>
@@ -336,7 +343,11 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
                 style={[
                   styles.filterChip,
                   {
-                    backgroundColor: isSemanticActive ? (isDark ? '#3B0764' : '#EDE9FE') : colors.surfaceSubtle,
+                    backgroundColor: isSemanticActive
+                      ? isDark
+                        ? '#3B0764'
+                        : '#EDE9FE'
+                      : colors.surfaceSubtle,
                     borderColor: isSemanticActive ? '#7C3AED' : colors.border,
                     flexDirection: 'row',
                     alignItems: 'center',
@@ -413,7 +424,8 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
                   On-Device Fast Search (FTS)
                 </Text>
                 <Text style={[styles.emptyStateDesc, { color: colors.textMuted }]}>
-                  Instant offline inverted-index search across all courses, downloaded lessons, study summaries, and personal notes with sub-10ms response time.
+                  Instant offline inverted-index search across all courses, downloaded lessons,
+                  study summaries, and personal notes with sub-10ms response time.
                 </Text>
               </View>
             ) : results.length === 0 ? (
@@ -423,7 +435,8 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
                   No Local Results Found
                 </Text>
                 <Text style={[styles.emptyStateDesc, { color: colors.textMuted }]}>
-                  Try checking your spelling or selecting "All Results" to broaden your local search.
+                  Try checking your spelling or selecting "All Results" to broaden your local
+                  search.
                 </Text>
               </View>
             ) : (
@@ -433,7 +446,10 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
                 return (
                   <TouchableOpacity
                     key={res.doc.id}
-                    style={[styles.resultCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}
+                    style={[
+                      styles.resultCard,
+                      { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                    ]}
                     onPress={() => handleSelectResult(res)}
                     accessibilityRole="button"
                     accessibilityLabel={`Open ${res.doc.type}: ${res.doc.title}`}
@@ -441,18 +457,35 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
                     <View style={styles.resultHeader}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                         <View style={[styles.typeBadge, { backgroundColor: color + '20' }]}>
-                          <Ionicons name={icon} size={14} color={color} style={{ marginRight: 4 }} />
-                          <Text style={[styles.typeBadgeText, { color }]}>{res.doc.type.toUpperCase()}</Text>
+                          <Ionicons
+                            name={icon}
+                            size={14}
+                            color={color}
+                            style={{ marginRight: 4 }}
+                          />
+                          <Text style={[styles.typeBadgeText, { color }]}>
+                            {res.doc.type.toUpperCase()}
+                          </Text>
                         </View>
                         {res.isSemanticMatch && (
                           <View style={[styles.typeBadge, { backgroundColor: '#7C3AED20' }]}>
-                            <Ionicons name="bulb-outline" size={11} color="#7C3AED" style={{ marginRight: 3 }} />
-                            <Text style={[styles.typeBadgeText, { color: '#7C3AED' }]}>SEMANTIC MATCH</Text>
+                            <Ionicons
+                              name="bulb-outline"
+                              size={11}
+                              color="#7C3AED"
+                              style={{ marginRight: 3 }}
+                            />
+                            <Text style={[styles.typeBadgeText, { color: '#7C3AED' }]}>
+                              SEMANTIC MATCH
+                            </Text>
                           </View>
                         )}
                       </View>
                       {res.doc.badge ? (
-                        <Text style={[styles.badgeText, { color: colors.textMuted }]} numberOfLines={1}>
+                        <Text
+                          style={[styles.badgeText, { color: colors.textMuted }]}
+                          numberOfLines={1}
+                        >
                           {res.doc.badge}
                         </Text>
                       ) : null}
@@ -462,7 +495,10 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
                       {res.doc.title}
                     </Text>
 
-                    <Text style={[styles.resultSnippet, { color: colors.textMuted }]} numberOfLines={2}>
+                    <Text
+                      style={[styles.resultSnippet, { color: colors.textMuted }]}
+                      numberOfLines={2}
+                    >
                       {res.snippet}
                     </Text>
                   </TouchableOpacity>

@@ -10,9 +10,7 @@ interface CourseInstructorSectionProps {
   instructor: Instructor;
 }
 
-export const CourseInstructorSection: React.FC<CourseInstructorSectionProps> = ({
-  instructor,
-}) => {
+export const CourseInstructorSection: React.FC<CourseInstructorSectionProps> = ({ instructor }) => {
   const { colors } = useTheme();
   const { isBangla } = useLanguage();
   const [avatarError, setAvatarError] = useState(false);
@@ -53,9 +51,7 @@ export const CourseInstructorSection: React.FC<CourseInstructorSectionProps> = (
         )}
         <View style={styles.instructorMeta}>
           <View style={styles.instructorNameRow}>
-            <Text style={[styles.instructorName, { color: colors.text }]}>
-              {instructor.name}
-            </Text>
+            <Text style={[styles.instructorName, { color: colors.text }]}>{instructor.name}</Text>
             <Ionicons name="checkmark-circle" size={15} color="#10B981" style={{ marginLeft: 4 }} />
           </View>
           <Text style={[styles.instructorTitle, { color: colors.primary }]}>
@@ -67,15 +63,11 @@ export const CourseInstructorSection: React.FC<CourseInstructorSectionProps> = (
         </View>
       </View>
 
-      <Text style={[styles.instructorBio, { color: colors.text }]}>
-        {instructor.bio}
-      </Text>
+      <Text style={[styles.instructorBio, { color: colors.text }]}>{instructor.bio}</Text>
 
       <View style={[styles.instructorStats, { backgroundColor: colors.surfaceSubtle }]}>
         <View style={styles.instStatItem}>
-          <Text style={[styles.instStatVal, { color: colors.text }]}>
-            {instructor.rating}
-          </Text>
+          <Text style={[styles.instStatVal, { color: colors.text }]}>{instructor.rating}</Text>
           <Text style={[styles.instStatLbl, { color: colors.textMuted }]}>
             {isBangla ? 'রেটিং' : 'Rating'}
           </Text>

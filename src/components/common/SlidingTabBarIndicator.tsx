@@ -1,11 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  Animated,
-  StyleSheet,
-  View,
-  AccessibilityInfo,
-  Platform,
-} from 'react-native';
+import { Animated, StyleSheet, View, AccessibilityInfo, Platform } from 'react-native';
 
 export interface SlidingTabBarIndicatorProps {
   activeIndex: number;
@@ -117,7 +111,16 @@ export const SlidingTabBarIndicator: React.FC<SlidingTabBarIndicatorProps> = ({
         }),
       ]),
     ]).start();
-  }, [activeIndex, tabWidth, pillWidth, topBarWidth, reduceMotion, pillTranslateX, topBarTranslateX, pillScaleX]);
+  }, [
+    activeIndex,
+    tabWidth,
+    pillWidth,
+    topBarWidth,
+    reduceMotion,
+    pillTranslateX,
+    topBarTranslateX,
+    pillScaleX,
+  ]);
 
   if (containerWidth <= 0 || tabWidth <= 0) {
     return null;
@@ -143,16 +146,9 @@ export const SlidingTabBarIndicator: React.FC<SlidingTabBarIndicatorProps> = ({
           styles.capsulePill,
           {
             width: pillWidth,
-            backgroundColor: isDark
-              ? 'rgba(255, 255, 255, 0.12)'
-              : 'rgba(16, 47, 83, 0.08)',
-            borderColor: isDark
-              ? 'rgba(255, 255, 255, 0.16)'
-              : 'rgba(227, 66, 52, 0.20)',
-            transform: [
-              { translateX: pillTranslateX },
-              { scaleX: pillScaleX },
-            ],
+            backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(16, 47, 83, 0.08)',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : 'rgba(227, 66, 52, 0.20)',
+            transform: [{ translateX: pillTranslateX }, { scaleX: pillScaleX }],
           },
         ]}
       />

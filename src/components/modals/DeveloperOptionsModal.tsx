@@ -184,7 +184,9 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
                     </View>
                   </View>
                   <Text style={styles.standardModeDesc}>
-                    Exit developer mode and return to standard user experience. Resets server to Live Production (thrivingskill.com), disables test bypasses, and hides developer console.
+                    Exit developer mode and return to standard user experience. Resets server to
+                    Live Production (thrivingskill.com), disables test bypasses, and hides developer
+                    console.
                   </Text>
                 </View>
               </View>
@@ -213,10 +215,7 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
 
               <View style={styles.envGrid}>
                 <TouchableOpacity
-                  style={[
-                    styles.envOption,
-                    currentEnv === 'production' && styles.envOptionActive,
-                  ]}
+                  style={[styles.envOption, currentEnv === 'production' && styles.envOptionActive]}
                   onPress={() => handleSwitchEnv('production')}
                   activeOpacity={0.8}
                   accessibilityRole="button"
@@ -277,7 +276,8 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
                 <View style={styles.settingItemText}>
                   <Text style={styles.settingItemTitle}>Master Course & Video Bypass</Text>
                   <Text style={styles.settingItemDesc}>
-                    Unrestricted access to all courses, video streaming, lessons, reviews, and certificates across both Staging and Live Production.
+                    Unrestricted access to all courses, video streaming, lessons, reviews, and
+                    certificates across both Staging and Live Production.
                   </Text>
                 </View>
                 <Switch
@@ -331,10 +331,7 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
                       color={cacheClearSuccess ? '#10B981' : '#38BDF8'}
                     />
                     <Text
-                      style={[
-                        styles.outlineBtnText,
-                        cacheClearSuccess && { color: '#10B981' },
-                      ]}
+                      style={[styles.outlineBtnText, cacheClearSuccess && { color: '#10B981' }]}
                     >
                       {cacheClearSuccess ? 'Cache Cleared Successfully!' : 'Clear All Cached Data'}
                     </Text>
@@ -368,7 +365,12 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
               </View>
               <View style={styles.infoRow}>
                 <Text style={styles.infoKey}>Active API Host</Text>
-                <Text style={[styles.infoVal, { color: currentEnv === 'production' ? '#10B981' : '#E34234' }]}>
+                <Text
+                  style={[
+                    styles.infoVal,
+                    { color: currentEnv === 'production' ? '#10B981' : '#E34234' },
+                  ]}
+                >
                   {Env.API_URL.replace(/^https?:\/\//, '')}
                 </Text>
               </View>

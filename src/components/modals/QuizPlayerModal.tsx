@@ -100,10 +100,10 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
           const rawList = Array.isArray(raw?.questions)
             ? raw.questions
             : Array.isArray(raw?.items)
-            ? raw.items
-            : Array.isArray(raw)
-            ? raw
-            : [];
+              ? raw.items
+              : Array.isArray(raw)
+                ? raw
+                : [];
 
           if (rawList.length > 0) {
             parsed = rawList.map((q: any, idx: number) => {
@@ -142,7 +142,8 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
               return {
                 id: String(q.id || `lp-q-${idx}`),
                 question: qText,
-                options: opts.length >= 2 ? opts : [isBangla ? 'সঠিক' : 'True', isBangla ? 'ভুল' : 'False'],
+                options:
+                  opts.length >= 2 ? opts : [isBangla ? 'সঠিক' : 'True', isBangla ? 'ভুল' : 'False'],
                 correctIndex: cIndex,
                 explanation: cleanHtml(
                   q.explanation ||
@@ -313,8 +314,15 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
                     </Text>
                   </View>
                 ) : (
-                  <View style={[styles.domainBadge, { backgroundColor: isDark ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF' }]}>
-                    <Text style={[styles.domainBadgeText, { color: isDark ? '#93C5FD' : '#2563EB' }]}>
+                  <View
+                    style={[
+                      styles.domainBadge,
+                      { backgroundColor: isDark ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF' },
+                    ]}
+                  >
+                    <Text
+                      style={[styles.domainBadgeText, { color: isDark ? '#93C5FD' : '#2563EB' }]}
+                    >
                       {isBangla ? 'কোর্স মূল্যায়ন' : 'Curriculum Assessment'}
                     </Text>
                   </View>
@@ -326,9 +334,16 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
             </View>
 
             {!isSubmitted && !isLoadingQuiz && activeQuestions.length > 0 && (
-              <View style={[styles.timerBadge, { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' }]}>
+              <View
+                style={[
+                  styles.timerBadge,
+                  { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' },
+                ]}
+              >
                 <Ionicons name="time-outline" size={16} color={colors.primary} />
-                <Text style={[styles.timerText, { color: colors.primary }]}>{formatTime(timeLeft)}</Text>
+                <Text style={[styles.timerText, { color: colors.primary }]}>
+                  {formatTime(timeLeft)}
+                </Text>
               </View>
             )}
 
@@ -369,7 +384,12 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
                       {isBangla ? 'প্রশ্ন' : 'Question'} {currentIndex + 1} {isBangla ? 'এর' : 'of'}{' '}
                       {activeQuestions.length}
                     </Text>
-                    <View style={[styles.progressBar, { backgroundColor: isDark ? colors.surfaceSubtle : '#E2E8F0' }]}>
+                    <View
+                      style={[
+                        styles.progressBar,
+                        { backgroundColor: isDark ? colors.surfaceSubtle : '#E2E8F0' },
+                      ]}
+                    >
                       <View
                         style={[
                           styles.progressFill,
@@ -384,7 +404,9 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
 
                   {/* Question text */}
                   {currentQ && (
-                    <Text style={[styles.questionText, { color: colors.text }]}>{currentQ.question}</Text>
+                    <Text style={[styles.questionText, { color: colors.text }]}>
+                      {currentQ.question}
+                    </Text>
                   )}
 
                   {/* Options */}
@@ -403,8 +425,8 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
                                     ? 'rgba(16, 47, 83, 0.5)'
                                     : '#EEF2FF'
                                   : isDark
-                                  ? colors.surfaceSubtle
-                                  : '#F8FAFC',
+                                    ? colors.surfaceSubtle
+                                    : '#F8FAFC',
                                 borderColor: isSelected ? colors.primary : colors.border,
                               },
                             ]}
@@ -423,7 +445,9 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
                               ]}
                             >
                               {isSelected && (
-                                <View style={[styles.radioDot, { backgroundColor: colors.onPrimary }]} />
+                                <View
+                                  style={[styles.radioDot, { backgroundColor: colors.onPrimary }]}
+                                />
                               )}
                             </View>
                             <Text
@@ -444,7 +468,10 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
                   <View style={styles.navButtonsRow}>
                     {currentIndex > 0 && (
                       <TouchableOpacity
-                        style={[styles.prevBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                        style={[
+                          styles.prevBtn,
+                          { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                        ]}
                         onPress={() => setCurrentIndex((prev) => prev - 1)}
                         accessibilityRole="button"
                         accessibilityLabel="Previous question"
@@ -475,7 +502,12 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
                         accessibilityRole="button"
                         accessibilityLabel="Submit quiz"
                       >
-                        <Ionicons name="checkmark-done" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+                        <Ionicons
+                          name="checkmark-done"
+                          size={18}
+                          color="#FFFFFF"
+                          style={{ marginRight: 6 }}
+                        />
                         <Text style={styles.nextBtnText}>
                           {isBangla ? 'কুইজ জমা দিন' : t('submitAnswer')}
                         </Text>
@@ -490,7 +522,13 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
                     style={[
                       styles.scoreRing,
                       {
-                        backgroundColor: passed ? (isDark ? 'rgba(16, 185, 129, 0.15)' : '#ECFDF5') : (isDark ? 'rgba(239, 68, 68, 0.15)' : '#FEF2F2'),
+                        backgroundColor: passed
+                          ? isDark
+                            ? 'rgba(16, 185, 129, 0.15)'
+                            : '#ECFDF5'
+                          : isDark
+                            ? 'rgba(239, 68, 68, 0.15)'
+                            : '#FEF2F2',
                         borderColor: passed ? '#10B981' : '#EF4444',
                       },
                     ]}
@@ -511,8 +549,8 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
                         ? 'অভিনন্দন! আপনি কুইজে উত্তীর্ণ হয়েছেন 🎉'
                         : t('passed')
                       : isBangla
-                      ? 'আবার চেষ্টা করুন (পাস মার্ক ৭০%)'
-                      : t('failed')}
+                        ? 'আবার চেষ্টা করুন (পাস মার্ক ৭০%)'
+                        : t('failed')}
                   </Text>
 
                   {/* Explanations List */}
@@ -541,7 +579,8 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
                             color={isCorrect ? '#10B981' : '#EF4444'}
                           />
                           <Text style={[styles.explQuestion, { color: colors.text }]}>
-                            {isBangla ? 'প্রশ্ন' : 'Q'}{qIdx + 1}: {q.question}
+                            {isBangla ? 'প্রশ্ন' : 'Q'}
+                            {qIdx + 1}: {q.question}
                           </Text>
                         </View>
                         <Text style={[styles.correctAnswerText, { color: '#059669' }]}>
@@ -563,7 +602,12 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
                         accessibilityRole="button"
                         accessibilityLabel="Retake quiz"
                       >
-                        <Ionicons name="refresh" size={18} color={colors.onPrimary} style={{ marginRight: 6 }} />
+                        <Ionicons
+                          name="refresh"
+                          size={18}
+                          color={colors.onPrimary}
+                          style={{ marginRight: 6 }}
+                        />
                         <Text style={[styles.retryBtnText, { color: colors.onPrimary }]}>
                           {isBangla ? 'পুনরায় পরীক্ষা দিন' : 'Retake Quiz'}
                         </Text>
@@ -575,7 +619,12 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
                         accessibilityRole="button"
                         accessibilityLabel="Complete and continue"
                       >
-                        <Ionicons name="checkmark-circle" size={18} color="#FFFFFF" style={{ marginRight: 6 }} />
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={18}
+                          color="#FFFFFF"
+                          style={{ marginRight: 6 }}
+                        />
                         <Text style={styles.retryBtnText}>
                           {isBangla ? 'সম্পন্ন ও পরবর্তী পাঠ' : 'Complete & Continue'}
                         </Text>

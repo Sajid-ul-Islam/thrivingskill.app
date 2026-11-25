@@ -53,9 +53,10 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
     // On web browser, cross-origin ping to WordPress without Access-Control-Allow-Origin triggers CORS failure.
     // Use native window.navigator.onLine to reliably determine internet reachability without false offline banners.
     if (Platform.OS === 'web') {
-      const isOnline = typeof window !== 'undefined' && typeof window.navigator !== 'undefined'
-        ? window.navigator.onLine
-        : true;
+      const isOnline =
+        typeof window !== 'undefined' && typeof window.navigator !== 'undefined'
+          ? window.navigator.onLine
+          : true;
       if (isMountedRef.current) {
         setIsOffline(!isOnline);
         if (isOnline) setLastErrorMessage(null);
@@ -158,13 +159,15 @@ export const NetworkProvider: React.FC<{ children: React.ReactNode }> = ({ child
         SyncQueueManager.processQueue().catch(() => {});
       } else {
         // Double-check reachability before immediately locking into offline mode from transient errors
-        checkReachability().then((reachable) => {
-          if (!isMountedRef.current) return;
-          if (!reachable) {
-            setIsOffline(true);
-            setLastErrorMessage(errorMsg || 'Limited connectivity.');
-          }
-        }).catch(() => {});
+        checkReachability()
+          .then((reachable) => {
+            if (!isMountedRef.current) return;
+            if (!reachable) {
+              setIsOffline(true);
+              setLastErrorMessage(errorMsg || 'Limited connectivity.');
+            }
+          })
+          .catch(() => {});
       }
     });
 

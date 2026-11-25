@@ -12,7 +12,12 @@ interface LessonNotesTabProps {
   onOpenNewNote: () => void;
   onSeekTo: (seconds: number) => void;
   onDeleteNote: (note: Note) => void;
-  showToast: (options: { message: string; type?: 'info' | 'success' | 'warning' | 'error'; actionLabel?: string; onAction?: () => void }) => void;
+  showToast: (options: {
+    message: string;
+    type?: 'info' | 'success' | 'warning' | 'error';
+    actionLabel?: string;
+    onAction?: () => void;
+  }) => void;
 }
 
 export const LessonNotesTab: React.FC<LessonNotesTabProps> = ({
@@ -32,9 +37,7 @@ export const LessonNotesTab: React.FC<LessonNotesTabProps> = ({
     const header = isBangla
       ? '# থ্রাইভিং স্কিলস লেকচার নোটস\n\n'
       : '# Thriving Skills Lecture Notes\n\n';
-    const body = lessonNotes
-      .map((n) => `* **[${n.timestamp}]** ${n.text}`)
-      .join('\n\n');
+    const body = lessonNotes.map((n) => `* **[${n.timestamp}]** ${n.text}`).join('\n\n');
     const fullText = `${header}${body}\n\n---\n*Exported from Thriving Skills App*`;
     try {
       await Share.share({
@@ -52,13 +55,18 @@ export const LessonNotesTab: React.FC<LessonNotesTabProps> = ({
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={[styles.tabContentScroll, { paddingBottom: Math.max(insetsBottom, 16) + 80 }]}
+      contentContainerStyle={[
+        styles.tabContentScroll,
+        { paddingBottom: Math.max(insetsBottom, 16) + 80 },
+      ]}
       nestedScrollEnabled
     >
       <View style={styles.notesHeader}>
         <View style={styles.notesTitleCol}>
           <Text style={[styles.notesTitle, { color: colors.text }]}>
-            {isBangla ? `লেকচার নোটস (${lessonNotes.length})` : `Lecture Notes (${lessonNotes.length})`}
+            {isBangla
+              ? `লেকচার নোটস (${lessonNotes.length})`
+              : `Lecture Notes (${lessonNotes.length})`}
           </Text>
           <Text style={[styles.notesSub, { color: colors.textMuted }]}>
             {isBangla ? 'টাইমস্ট্যাম্পযুক্ত বুকমার্ক ও ব্যক্তিগত পয়েন্ট' : 'Timestamped bookmarks & insights'}
@@ -67,7 +75,10 @@ export const LessonNotesTab: React.FC<LessonNotesTabProps> = ({
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           {lessonNotes.length > 0 && (
             <TouchableOpacity
-              style={[styles.exportBtn, { borderColor: colors.border, backgroundColor: colors.surfaceCard }]}
+              style={[
+                styles.exportBtn,
+                { borderColor: colors.border, backgroundColor: colors.surfaceCard },
+              ]}
               onPress={handleExportNotes}
               accessibilityRole="button"
               accessibilityLabel="Export Notes"
@@ -127,12 +138,7 @@ export const LessonNotesTab: React.FC<LessonNotesTabProps> = ({
                 hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
               >
                 <Ionicons name="time-outline" size={12} color={isDark ? '#FFFFFF' : '#102F53'} />
-                <Text
-                  style={[
-                    styles.noteTimestampText,
-                    { color: isDark ? '#FFFFFF' : '#102F53' },
-                  ]}
-                >
+                <Text style={[styles.noteTimestampText, { color: isDark ? '#FFFFFF' : '#102F53' }]}>
                   {n.timestamp}
                 </Text>
               </TouchableOpacity>

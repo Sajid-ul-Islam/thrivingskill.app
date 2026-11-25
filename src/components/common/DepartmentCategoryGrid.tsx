@@ -131,17 +131,28 @@ export const matchesDepartment = (c: Course, deptId: string): boolean => {
   return false;
 };
 
-
 export const getIconForCategory = (slug: string = '', name: string = ''): CategoryDepartmentId => {
   const s = slug.toLowerCase();
   const n = name.toLowerCase();
 
   // 1. Supply Chain & Logistics (check early before any substrings)
-  if (s.includes('supply') || s.includes('logistics') || s.includes('procurement') || n.includes('supply') || n.includes('logistics')) {
+  if (
+    s.includes('supply') ||
+    s.includes('logistics') ||
+    s.includes('procurement') ||
+    n.includes('supply') ||
+    n.includes('logistics')
+  ) {
     return 'supply-chain-management';
   }
   // 2. Generative AI & 4IR
-  if (s.includes('generative') || s.includes('4ir') || /\bai\b/i.test(s) || /\bai\b/i.test(n) || s.includes('artificial')) {
+  if (
+    s.includes('generative') ||
+    s.includes('4ir') ||
+    /\bai\b/i.test(s) ||
+    /\bai\b/i.test(n) ||
+    s.includes('artificial')
+  ) {
     return 'generative-ai';
   }
   // 3. Microsoft Excel & Spreadsheets
@@ -149,15 +160,37 @@ export const getIconForCategory = (slug: string = '', name: string = ''): Catego
     return 'excel';
   }
   // 4. Finance, Accounting & Legal
-  if (s.includes('finance') || s.includes('account') || s.includes('legal') || s.includes('tax') || n.includes('finance') || n.includes('account') || n.includes('legal')) {
+  if (
+    s.includes('finance') ||
+    s.includes('account') ||
+    s.includes('legal') ||
+    s.includes('tax') ||
+    n.includes('finance') ||
+    n.includes('account') ||
+    n.includes('legal')
+  ) {
     return 'finance-accounting-legal';
   }
   // 5. Human Resource Management (HRM)
-  if (s.includes('human-resource') || s.includes('hrm') || s.includes('recruitment') || s.includes('talent') || n.includes('human resource') || /\bhr\b/i.test(s) || /\bhr\b/i.test(n)) {
+  if (
+    s.includes('human-resource') ||
+    s.includes('hrm') ||
+    s.includes('recruitment') ||
+    s.includes('talent') ||
+    n.includes('human resource') ||
+    /\bhr\b/i.test(s) ||
+    /\bhr\b/i.test(n)
+  ) {
     return 'human-resource-management';
   }
   // 6. Data Science & Big Data
-  if (s.includes('data') || s.includes('analytics') || s.includes('bi') || n.includes('data science') || n.includes('analytics')) {
+  if (
+    s.includes('data') ||
+    s.includes('analytics') ||
+    s.includes('bi') ||
+    n.includes('data science') ||
+    n.includes('analytics')
+  ) {
     return 'data-science';
   }
   // 7. Leadership & Executive Management
@@ -165,15 +198,35 @@ export const getIconForCategory = (slug: string = '', name: string = ''): Catego
     return 'leadership-management';
   }
   // 8. Personal Development & Soft Skills
-  if (s.includes('personal') || s.includes('habit') || s.includes('soft-skill') || s.includes('productivity') || n.includes('personal') || n.includes('self')) {
+  if (
+    s.includes('personal') ||
+    s.includes('habit') ||
+    s.includes('soft-skill') ||
+    s.includes('productivity') ||
+    n.includes('personal') ||
+    n.includes('self')
+  ) {
     return 'personal-development';
   }
   // 9. Job Seekers Skills & Career
-  if (s.includes('job') || s.includes('career') || s.includes('resume') || s.includes('interview') || n.includes('job') || n.includes('career')) {
+  if (
+    s.includes('job') ||
+    s.includes('career') ||
+    s.includes('resume') ||
+    s.includes('interview') ||
+    n.includes('job') ||
+    n.includes('career')
+  ) {
     return 'job-seekers-skills';
   }
   // 10. Research & Academic
-  if (s.includes('research') || s.includes('academic') || s.includes('thesis') || n.includes('research') || n.includes('academic')) {
+  if (
+    s.includes('research') ||
+    s.includes('academic') ||
+    s.includes('thesis') ||
+    n.includes('research') ||
+    n.includes('academic')
+  ) {
     return 'research-courses';
   }
   // 11. Business Strategy & Consulting
@@ -181,15 +234,35 @@ export const getIconForCategory = (slug: string = '', name: string = ''): Catego
     return 'business-strategy';
   }
   // 12. Sales & Marketing
-  if (s.includes('market') || s.includes('sales') || s.includes('brand') || s.includes('seo') || n.includes('market') || n.includes('sales')) {
+  if (
+    s.includes('market') ||
+    s.includes('sales') ||
+    s.includes('brand') ||
+    s.includes('seo') ||
+    n.includes('market') ||
+    n.includes('sales')
+  ) {
     return 'marketing';
   }
   // 13. Design, Presentation & Creative
-  if (s.includes('design') || s.includes('creative') || s.includes('presentation') || s.includes('ui') || s.includes('ux') || n.includes('design')) {
+  if (
+    s.includes('design') ||
+    s.includes('creative') ||
+    s.includes('presentation') ||
+    s.includes('ui') ||
+    s.includes('ux') ||
+    n.includes('design')
+  ) {
     return 'design';
   }
   // 14. Cyber Security & Hacking
-  if (s.includes('hack') || s.includes('cyber') || s.includes('security') || n.includes('cyber') || n.includes('security')) {
+  if (
+    s.includes('hack') ||
+    s.includes('cyber') ||
+    s.includes('security') ||
+    n.includes('cyber') ||
+    n.includes('security')
+  ) {
     return 'hacking';
   }
   // 15. Software & Tech Tools
@@ -197,15 +270,33 @@ export const getIconForCategory = (slug: string = '', name: string = ''): Catego
     return 'software';
   }
   // 16. Development, Coding & Programming
-  if (s.includes('dev') || s.includes('python') || s.includes('code') || s.includes('programming') || n.includes('dev') || n.includes('code')) {
+  if (
+    s.includes('dev') ||
+    s.includes('python') ||
+    s.includes('code') ||
+    s.includes('programming') ||
+    n.includes('dev') ||
+    n.includes('code')
+  ) {
     return 'development';
   }
   // 17. Networking & Cloud Infrastructure
-  if (s.includes('network') || s.includes('cloud') || s.includes('infrastructure') || n.includes('network')) {
+  if (
+    s.includes('network') ||
+    s.includes('cloud') ||
+    s.includes('infrastructure') ||
+    n.includes('network')
+  ) {
     return 'networking';
   }
   // 18. Fitness & Health
-  if (s.includes('fitness') || s.includes('health') || s.includes('wellness') || n.includes('fitness') || n.includes('health')) {
+  if (
+    s.includes('fitness') ||
+    s.includes('health') ||
+    s.includes('wellness') ||
+    n.includes('fitness') ||
+    n.includes('health')
+  ) {
     return 'fitness';
   }
   // 19. Business, Management & Corporate (Default)
@@ -219,14 +310,20 @@ export interface CanonicalDepartmentConfig {
 
 export const CANONICAL_DEPARTMENTS_MAP: Record<string, CanonicalDepartmentConfig> = {
   'generative-ai': { name: 'Generative AI', banglaName: 'জেনারেটিভ এআই' },
-  'business': { name: 'Business', banglaName: 'ব্যবসা ও বাণিজ্য' },
+  business: { name: 'Business', banglaName: 'ব্যবসা ও বাণিজ্য' },
   'microsoft-excel-courses': { name: 'Microsoft Excel', banglaName: 'মাইক্রোসফট এক্সেল' },
   'finance-accounting-legal': { name: 'Finance & Legal', banglaName: 'অর্থনীতি ও আইন' },
-  'human-resource-management': { name: 'Human Resource Management', banglaName: 'মানব সম্পদ ব্যবস্থাপনা' },
+  'human-resource-management': {
+    name: 'Human Resource Management',
+    banglaName: 'মানব সম্পদ ব্যবস্থাপনা',
+  },
   'leadership-management': { name: 'Leadership & Management', banglaName: 'নেতৃত্ব ও ব্যবস্থাপনা' },
   'personal-development': { name: 'Personal Development', banglaName: 'ব্যক্তিগত দক্ষতা উন্নয়ন' },
   'sales-marketing': { name: 'Sales & Marketing', banglaName: 'বিক্রয় ও বিপণন' },
-  'supply-chain-management': { name: 'Supply Chain Management', banglaName: 'সাপ্লাই চেইন ম্যানেজমেন্ট' },
+  'supply-chain-management': {
+    name: 'Supply Chain Management',
+    banglaName: 'সাপ্লাই চেইন ম্যানেজমেন্ট',
+  },
   'data-science': { name: 'Data Science', banglaName: 'ডাটা সায়েন্স' },
   'job-seekers-skills': { name: 'Job Seekers Skills', banglaName: 'চাকরি প্রত্যাশীদের দক্ষতা' },
   'research-courses': { name: 'Research & Academic', banglaName: 'গবেষণা ও শিক্ষায়তনিক' },
@@ -267,11 +364,23 @@ export const getCanonicalDepartmentId = (slug: string = '', name: string = ''): 
   }
 
   // Supply Chain & Logistics
-  if (s.includes('supply') || s.includes('logistics') || s.includes('procurement') || n.includes('supply') || n.includes('logistics')) {
+  if (
+    s.includes('supply') ||
+    s.includes('logistics') ||
+    s.includes('procurement') ||
+    n.includes('supply') ||
+    n.includes('logistics')
+  ) {
     return 'supply-chain-management';
   }
   // Generative AI & 4IR
-  if (s.includes('generative') || s.includes('4ir') || /\bai\b/i.test(s) || /\bai\b/i.test(n) || s.includes('artificial')) {
+  if (
+    s.includes('generative') ||
+    s.includes('4ir') ||
+    /\bai\b/i.test(s) ||
+    /\bai\b/i.test(n) ||
+    s.includes('artificial')
+  ) {
     return 'generative-ai';
   }
   // Microsoft Excel
@@ -279,15 +388,39 @@ export const getCanonicalDepartmentId = (slug: string = '', name: string = ''): 
     return 'microsoft-excel-courses';
   }
   // Finance, Accounting & Legal
-  if (s.includes('finance') || s.includes('account') || s.includes('legal') || s.includes('tax') || n.includes('finance') || n.includes('account') || n.includes('legal')) {
+  if (
+    s.includes('finance') ||
+    s.includes('account') ||
+    s.includes('legal') ||
+    s.includes('tax') ||
+    n.includes('finance') ||
+    n.includes('account') ||
+    n.includes('legal')
+  ) {
     return 'finance-accounting-legal';
   }
   // Human Resource Management (HRM)
-  if (s.includes('human-resource') || s.includes('hrm') || s.includes('recruitment') || s.includes('talent') || n.includes('human resource') || /\bhr\b/i.test(s) || /\bhr\b/i.test(n)) {
+  if (
+    s.includes('human-resource') ||
+    s.includes('hrm') ||
+    s.includes('recruitment') ||
+    s.includes('talent') ||
+    n.includes('human resource') ||
+    /\bhr\b/i.test(s) ||
+    /\bhr\b/i.test(n)
+  ) {
     return 'human-resource-management';
   }
   // Data Science & Big Data
-  if (s.includes('data') || s.includes('analytics') || s === 'python' || s === 'r' || s.includes('bi') || n.includes('data science') || n.includes('analytics')) {
+  if (
+    s.includes('data') ||
+    s.includes('analytics') ||
+    s === 'python' ||
+    s === 'r' ||
+    s.includes('bi') ||
+    n.includes('data science') ||
+    n.includes('analytics')
+  ) {
     return 'data-science';
   }
   // Leadership & Executive Management
@@ -295,15 +428,35 @@ export const getCanonicalDepartmentId = (slug: string = '', name: string = ''): 
     return 'leadership-management';
   }
   // Personal Development & Soft Skills
-  if (s.includes('personal') || s.includes('habit') || s.includes('soft-skill') || s.includes('productivity') || n.includes('personal') || n.includes('self')) {
+  if (
+    s.includes('personal') ||
+    s.includes('habit') ||
+    s.includes('soft-skill') ||
+    s.includes('productivity') ||
+    n.includes('personal') ||
+    n.includes('self')
+  ) {
     return 'personal-development';
   }
   // Job Seekers Skills & Career
-  if (s.includes('job') || s.includes('career') || s.includes('resume') || s.includes('interview') || n.includes('job') || n.includes('career')) {
+  if (
+    s.includes('job') ||
+    s.includes('career') ||
+    s.includes('resume') ||
+    s.includes('interview') ||
+    n.includes('job') ||
+    n.includes('career')
+  ) {
     return 'job-seekers-skills';
   }
   // Research & Academic
-  if (s.includes('research') || s.includes('academic') || s.includes('thesis') || n.includes('research') || n.includes('academic')) {
+  if (
+    s.includes('research') ||
+    s.includes('academic') ||
+    s.includes('thesis') ||
+    n.includes('research') ||
+    n.includes('academic')
+  ) {
     return 'research-courses';
   }
   // Business Strategy & Consulting
@@ -311,11 +464,23 @@ export const getCanonicalDepartmentId = (slug: string = '', name: string = ''): 
     return 'business-strategy';
   }
   // Sales & Marketing
-  if (s.includes('market') || s.includes('sales') || s.includes('brand') || s.includes('seo') || n.includes('market') || n.includes('sales')) {
+  if (
+    s.includes('market') ||
+    s.includes('sales') ||
+    s.includes('brand') ||
+    s.includes('seo') ||
+    n.includes('market') ||
+    n.includes('sales')
+  ) {
     return 'sales-marketing';
   }
   // General Business & Management
-  if (s === 'business' || s.startsWith('business-essentials') || n === 'business' || n.startsWith('business essentials')) {
+  if (
+    s === 'business' ||
+    s.startsWith('business-essentials') ||
+    n === 'business' ||
+    n.startsWith('business essentials')
+  ) {
     return 'business';
   }
 
@@ -364,7 +529,9 @@ export const DepartmentCategoryGrid: React.FC<DepartmentCategoryGridProps> = ({
       if (!canonicalId || !CANONICAL_DEPARTMENTS_MAP[canonicalId]) continue;
 
       const conf = CANONICAL_DEPARTMENTS_MAP[canonicalId];
-      const liveCalculatedCount = courses ? courses.filter((c) => matchesDepartment(c, canonicalId)).length : 0;
+      const liveCalculatedCount = courses
+        ? courses.filter((c) => matchesDepartment(c, canonicalId)).length
+        : 0;
       const count =
         departmentCounts[canonicalId] ??
         departmentCounts[cat.id] ??
@@ -390,7 +557,9 @@ export const DepartmentCategoryGrid: React.FC<DepartmentCategoryGridProps> = ({
     // Comprehensive Fallback: Ensure all canonical departments exist with live course counts
     Object.entries(CANONICAL_DEPARTMENTS_MAP).forEach(([deptId, conf]) => {
       if (!canonicalMap.has(deptId)) {
-        const liveCalculatedCount = courses ? courses.filter((c) => matchesDepartment(c, deptId)).length : 0;
+        const liveCalculatedCount = courses
+          ? courses.filter((c) => matchesDepartment(c, deptId)).length
+          : 0;
         const count = departmentCounts[deptId] ?? liveCalculatedCount;
         canonicalMap.set(deptId, {
           id: deptId,
@@ -420,9 +589,13 @@ export const DepartmentCategoryGrid: React.FC<DepartmentCategoryGridProps> = ({
     if (!isCollapsible || isExpanded) return validDepartments;
     const topSlice = validDepartments.slice(0, initialVisibleCount);
     if (selectedDeptId && selectedDeptId !== 'all') {
-      const isSelectedInTop = topSlice.some((d) => d.id === selectedDeptId || d.slug === selectedDeptId);
+      const isSelectedInTop = topSlice.some(
+        (d) => d.id === selectedDeptId || d.slug === selectedDeptId
+      );
       if (!isSelectedInTop) {
-        const found = validDepartments.find((d) => d.id === selectedDeptId || d.slug === selectedDeptId);
+        const found = validDepartments.find(
+          (d) => d.id === selectedDeptId || d.slug === selectedDeptId
+        );
         if (found) return [...topSlice.slice(0, Math.max(1, initialVisibleCount - 1)), found];
       }
     }
@@ -464,9 +637,7 @@ export const DepartmentCategoryGrid: React.FC<DepartmentCategoryGridProps> = ({
         {displayedDepartments.map((dept) => {
           const isSelected = selectedDeptId === dept.id || selectedDeptId === dept.slug;
           const count = departmentCounts[dept.id] ?? dept.count ?? 0;
-          const displayName = isBangla
-            ? (dept.banglaName || dept.name)
-            : dept.name;
+          const displayName = isBangla ? dept.banglaName || dept.name : dept.name;
           const iconType = getIconForCategory(dept.slug || dept.id, dept.name);
 
           return (
@@ -476,7 +647,7 @@ export const DepartmentCategoryGrid: React.FC<DepartmentCategoryGridProps> = ({
                 styles.card,
                 {
                   backgroundColor: isDark ? colors.surfaceCard : '#FFFFFF',
-                  borderColor: isSelected ? colors.primary : (isDark ? colors.border : '#F1F5F9'),
+                  borderColor: isSelected ? colors.primary : isDark ? colors.border : '#F1F5F9',
                   borderWidth: isSelected ? 2 : 1,
                   shadowColor: isDark ? '#000000' : '#0F172A',
                 },
@@ -524,7 +695,9 @@ export const DepartmentCategoryGrid: React.FC<DepartmentCategoryGridProps> = ({
                       {
                         backgroundColor: isSelected
                           ? colors.primaryLight
-                          : (isDark ? colors.surfaceSubtle : '#F8FAFC'),
+                          : isDark
+                            ? colors.surfaceSubtle
+                            : '#F8FAFC',
                       },
                     ]}
                   >
@@ -566,8 +739,12 @@ export const DepartmentCategoryGrid: React.FC<DepartmentCategoryGridProps> = ({
             accessibilityRole="button"
             accessibilityLabel={
               isExpanded
-                ? (isBangla ? 'ক্যাটাগরি সংক্ষেপ করুন' : 'Collapse categories')
-                : (isBangla ? `সবগুলো (${validDepartments.length}) ক্যাটাগরি দেখুন` : `Explore all (${validDepartments.length}) categories`)
+                ? isBangla
+                  ? 'ক্যাটাগরি সংক্ষেপ করুন'
+                  : 'Collapse categories'
+                : isBangla
+                  ? `সবগুলো (${validDepartments.length}) ক্যাটাগরি দেখুন`
+                  : `Explore all (${validDepartments.length}) categories`
             }
           >
             <Ionicons
@@ -578,8 +755,12 @@ export const DepartmentCategoryGrid: React.FC<DepartmentCategoryGridProps> = ({
             />
             <Text style={[styles.expandToggleText, { color: colors.primary }]}>
               {isExpanded
-                ? (isBangla ? 'সংক্ষেপ করুন ▴' : 'Show Less ▴')
-                : (isBangla ? `সবগুলো (${validDepartments.length}) ক্যাটাগরি দেখুন ▾` : `Explore All (${validDepartments.length}) Categories ▾`)}
+                ? isBangla
+                  ? 'সংক্ষেপ করুন ▴'
+                  : 'Show Less ▴'
+                : isBangla
+                  ? `সবগুলো (${validDepartments.length}) ক্যাটাগরি দেখুন ▾`
+                  : `Explore All (${validDepartments.length}) Categories ▾`}
             </Text>
           </SpringPressable>
         </View>

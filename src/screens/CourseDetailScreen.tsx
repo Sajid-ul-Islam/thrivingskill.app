@@ -76,9 +76,12 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     refreshCourses,
   } = useLearning();
   const { user, isAuthenticated, isAdmin, canBypassCourseLocks } = useAuth();
+  const { videos, playVideo } = useYouTube();
   const isPrivileged = isAdmin || Boolean(canBypassCourseLocks);
 
-  const [activeTab, setActiveTab] = useState<'curriculum' | 'qna' | 'instructor' | 'reviews'>('curriculum');
+  const [activeTab, setActiveTab] = useState<'curriculum' | 'qna' | 'instructor' | 'reviews'>(
+    'curriculum'
+  );
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [certPreviewVisible, setCertPreviewVisible] = useState(false);
@@ -166,7 +169,6 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
   const progressPercent = getCourseProgressPercentage(course.id);
   const isCompleted = !!userProgress[course.id]?.isCompleted;
   const bookmarked = isBookmarked(course.id);
-  const { videos, playVideo } = useYouTube();
   const trailerVideo = findRelatedVideoForCourse(course, videos);
 
   const handleSubmitMandatoryReview = (rating: number, feedback: string) => {
@@ -239,7 +241,9 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     if (!reviewComment.trim()) {
       Alert.alert(
         isBangla ? 'রিভিউ আবশ্যক' : 'Review Required',
-        isBangla ? 'অনুগ্রহ করে এই কোর্স সম্পর্কে আপনার মতামত লিখুন।' : 'Please share your feedback or experience with this course.'
+        isBangla
+          ? 'অনুগ্রহ করে এই কোর্স সম্পর্কে আপনার মতামত লিখুন।'
+          : 'Please share your feedback or experience with this course.'
       );
       return;
     }
@@ -252,8 +256,8 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
       userRole: isPrivileged
         ? 'Developer / Admin Reviewer'
         : isEnrolled
-        ? 'Enrolled Student'
-        : 'Verified Learner',
+          ? 'Enrolled Student'
+          : 'Verified Learner',
       company: 'Corporate Professional',
     });
     setIsSubmittingReview(false);
@@ -295,7 +299,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
         showBack
         onBack={onBack}
         isScrolled={isScrolled}
-        title={showHeaderTitle ? course.title : (isBangla ? 'কোর্স বিবরণ' : 'Course Overview')}
+        title={showHeaderTitle ? course.title : isBangla ? 'কোর্স বিবরণ' : 'Course Overview'}
         subtitle={showHeaderTitle ? (isBangla ? 'কোর্স বিবরণ' : 'Course Overview') : undefined}
         rightAction={
           <TouchableOpacity
@@ -305,15 +309,27 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
               toggleBookmark(course.id);
               showToast({
                 message: wasBookmarked
-                  ? (isBangla ? 'সংরক্ষিত তালিকা থেকে সরানো হয়েছে' : 'Removed from Saved')
-                  : (isBangla ? 'কোর্সটি সংরক্ষণ করা হয়েছে' : 'Saved course to My Hub'),
+                  ? isBangla
+                    ? 'সংরক্ষিত তালিকা থেকে সরানো হয়েছে'
+                    : 'Removed from Saved'
+                  : isBangla
+                    ? 'কোর্সটি সংরক্ষণ করা হয়েছে'
+                    : 'Saved course to My Hub',
                 type: wasBookmarked ? 'info' : 'success',
                 actionLabel: wasBookmarked ? (isBangla ? 'পূর্বাবস্থায়' : 'Undo') : undefined,
                 onAction: wasBookmarked ? () => toggleBookmark(course.id) : undefined,
               });
             }}
             accessibilityRole="button"
-            accessibilityLabel={bookmarked ? (isBangla ? 'বুকমার্ক সরান' : 'Remove bookmark') : (isBangla ? 'কোর্স বুকমার্ক করুন' : 'Save course bookmark')}
+            accessibilityLabel={
+              bookmarked
+                ? isBangla
+                  ? 'বুকমার্ক সরান'
+                  : 'Remove bookmark'
+                : isBangla
+                  ? 'কোর্স বুকমার্ক করুন'
+                  : 'Save course bookmark'
+            }
           >
             <Ionicons
               name={bookmarked ? 'bookmark' : 'bookmark-outline'}
@@ -353,7 +369,12 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
 
         {/* Administrator / Developer Access Banner & Testing Actions */}
         {isPrivileged && (
-          <View style={[styles.devBypassBanner, { backgroundColor: '#102F53', borderColor: 'rgba(227, 66, 52, 0.4)' }]}>
+          <View
+            style={[
+              styles.devBypassBanner,
+              { backgroundColor: '#102F53', borderColor: 'rgba(227, 66, 52, 0.4)' },
+            ]}
+          >
             <View style={styles.devBypassHeader}>
               <View style={styles.devBypassBadge}>
                 <Ionicons name="shield-checkmark" size={14} color="#E34234" />
@@ -362,7 +383,9 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
                 </Text>
               </View>
               <Text style={styles.devBypassSubtitle}>
-                {isBangla ? 'কোর্সের সকল লেকচার ও ফিচার আনলক করা হয়েছে' : 'All course lectures unlocked for testing'}
+                {isBangla
+                  ? 'কোর্সের সকল লেকচার ও ফিচার আনলক করা হয়েছে'
+                  : 'All course lectures unlocked for testing'}
               </Text>
             </View>
 
@@ -471,9 +494,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
               </View>
             )}
 
-            {activeTab === 'qna' && (
-              <CourseQnATab courseId={course.id} />
-            )}
+            {activeTab === 'qna' && <CourseQnATab courseId={course.id} />}
 
             {activeTab === 'instructor' && (
               <CourseInstructorSection instructor={course.instructor} />
@@ -530,7 +551,10 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
         isUnlocked={isPrivileged || isCertificateUnlocked(course.id)}
         isCompleted={isPrivileged || isCompleted}
         hasReviewed={isPrivileged || hasReviewedCourse(course.id)}
-        certificateId={userProgress[course.id]?.certificateId || (isPrivileged ? `TS-2026-DEV${course.id.slice(-4).toUpperCase()}` : undefined)}
+        certificateId={
+          userProgress[course.id]?.certificateId ||
+          (isPrivileged ? `TS-2026-DEV${course.id.slice(-4).toUpperCase()}` : undefined)
+        }
         onClose={() => setCertPreviewVisible(false)}
         onOpenMandatoryReview={() => setMandatoryReviewVisible(true)}
       />

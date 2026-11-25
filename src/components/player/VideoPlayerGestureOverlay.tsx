@@ -61,7 +61,10 @@ export const VideoPlayerGestureOverlay: React.FC<VideoPlayerGestureOverlayProps>
   onToggleLock,
 }) => {
   const [controlsVisible, setControlsVisible] = useState<boolean>(true);
-  const [dimensions, setDimensions] = useState<{ width: number; height: number }>({ width: 360, height: 202 });
+  const [dimensions, setDimensions] = useState<{ width: number; height: number }>({
+    width: 360,
+    height: 202,
+  });
 
   // Ripple feedback states for double-tap seek
   const [leftRippleActive, setLeftRippleActive] = useState<boolean>(false);
@@ -79,7 +82,12 @@ export const VideoPlayerGestureOverlay: React.FC<VideoPlayerGestureOverlayProps>
   const hudTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const singleTapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTapRef = useRef<{ time: number; x: number }>({ time: 0, x: 0 });
-  const touchStartRef = useRef<{ x: number; y: number; edge: 'left' | 'right' | 'none'; initialVal: number }>({
+  const touchStartRef = useRef<{
+    x: number;
+    y: number;
+    edge: 'left' | 'right' | 'none';
+    initialVal: number;
+  }>({
     x: 0,
     y: 0,
     edge: 'none',
@@ -249,9 +257,10 @@ export const VideoPlayerGestureOverlay: React.FC<VideoPlayerGestureOverlayProps>
     }
   };
 
-  const percent = totalDurationSeconds > 0
-    ? Math.min(100, Math.max(0, (currentPositionSeconds / totalDurationSeconds) * 100))
-    : 0;
+  const percent =
+    totalDurationSeconds > 0
+      ? Math.min(100, Math.max(0, (currentPositionSeconds / totalDurationSeconds) * 100))
+      : 0;
 
   return (
     <View style={styles.overlayContainer} onLayout={onLayout} {...panResponder.panHandlers}>
@@ -316,10 +325,10 @@ export const VideoPlayerGestureOverlay: React.FC<VideoPlayerGestureOverlayProps>
                     ? 'sunny'
                     : 'sunny-outline'
                   : volumeLevel === 0
-                  ? 'volume-mute'
-                  : volumeLevel > 50
-                  ? 'volume-high'
-                  : 'volume-medium'
+                    ? 'volume-mute'
+                    : volumeLevel > 50
+                      ? 'volume-high'
+                      : 'volume-medium'
               }
               size={22}
               color="#FFFFFF"
@@ -407,14 +416,18 @@ export const VideoPlayerGestureOverlay: React.FC<VideoPlayerGestureOverlayProps>
                 <TouchableOpacity
                   style={[
                     styles.topIconBtn,
-                    isFullscreen && { backgroundColor: '#102F53', borderColor: '#E34234', borderWidth: 1 },
+                    isFullscreen && {
+                      backgroundColor: '#102F53',
+                      borderColor: '#E34234',
+                      borderWidth: 1,
+                    },
                   ]}
                   onPress={() => {
                     triggerHaptic('light');
                     onToggleFullscreen();
                   }}
                   accessibilityRole="button"
-                  accessibilityLabel={isFullscreen ? "Exit landscape mode" : "Enter landscape mode"}
+                  accessibilityLabel={isFullscreen ? 'Exit landscape mode' : 'Enter landscape mode'}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
                   <Ionicons
@@ -449,13 +462,9 @@ export const VideoPlayerGestureOverlay: React.FC<VideoPlayerGestureOverlayProps>
                   resetControlsTimer();
                 }}
                 accessibilityRole="button"
-                accessibilityLabel={isPlaying ? "Pause video" : "Play video"}
+                accessibilityLabel={isPlaying ? 'Pause video' : 'Play video'}
               >
-                <Ionicons
-                  name={isPlaying ? 'pause' : 'play'}
-                  size={30}
-                  color="#FFFFFF"
-                />
+                <Ionicons name={isPlaying ? 'pause' : 'play'} size={30} color="#FFFFFF" />
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -504,10 +513,7 @@ export const VideoPlayerGestureOverlay: React.FC<VideoPlayerGestureOverlayProps>
 
                   {/* ONE-TAP SPEED PILL: Cycles 1.0x -> 1.25x -> 1.5x -> 2.0x -> 0.75x */}
                   <TouchableOpacity
-                    style={[
-                      styles.speedPill,
-                      playbackSpeed !== '1.0x' && styles.speedPillActive,
-                    ]}
+                    style={[styles.speedPill, playbackSpeed !== '1.0x' && styles.speedPillActive]}
                     onPress={() => {
                       triggerHaptic('light');
                       onCycleSpeed();

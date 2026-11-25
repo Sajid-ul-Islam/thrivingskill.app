@@ -33,7 +33,12 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
 }) => {
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
-  const { isBookmarked: contextIsBookmarked, toggleBookmark, getCourseProgressPercentage, userProgress } = useLearning();
+  const {
+    isBookmarked: contextIsBookmarked,
+    toggleBookmark,
+    getCourseProgressPercentage,
+    userProgress,
+  } = useLearning();
   const { showToast } = useFeedback();
 
   const [thumbError, setThumbError] = React.useState(false);
@@ -44,23 +49,32 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
 
   const fallbackIcon = require('../../../assets/icon.png');
   const safeSource = getSafeImageSource(course.thumbnail, fallbackIcon);
-  const imageSource = thumbError || !course.thumbnail
-    ? fallbackIcon
-    : typeof safeSource === 'object' && safeSource !== null && 'uri' in safeSource
-    ? { ...safeSource, cache: 'force-cache' as const }
-    : safeSource;
+  const imageSource =
+    thumbError || !course.thumbnail
+      ? fallbackIcon
+      : typeof safeSource === 'object' && safeSource !== null && 'uri' in safeSource
+        ? { ...safeSource, cache: 'force-cache' as const }
+        : safeSource;
 
-  const bookmarked = propIsBookmarked !== undefined ? propIsBookmarked : contextIsBookmarked(course.id);
+  const bookmarked =
+    propIsBookmarked !== undefined ? propIsBookmarked : contextIsBookmarked(course.id);
   const isEnrolled = propIsEnrolled !== undefined ? propIsEnrolled : !!userProgress[course.id];
-  const progressPercent = propProgressPercent !== undefined ? propProgressPercent : getCourseProgressPercentage(course.id);
+  const progressPercent =
+    propProgressPercent !== undefined
+      ? propProgressPercent
+      : getCourseProgressPercentage(course.id);
 
   const handleToggleBookmark = () => {
     const wasBookmarked = bookmarked;
     toggleBookmark(course.id);
     showToast({
       message: wasBookmarked
-        ? (isBangla ? `"${course.title}" সংরক্ষিত তালিকা থেকে মুছে ফেলা হয়েছে` : `Removed "${course.title}" from Saved`)
-        : (isBangla ? `"${course.title}" আমার লার্নিং-এ সংরক্ষিত হয়েছে` : `Saved "${course.title}" to My Learning`),
+        ? isBangla
+          ? `"${course.title}" সংরক্ষিত তালিকা থেকে মুছে ফেলা হয়েছে`
+          : `Removed "${course.title}" from Saved`
+        : isBangla
+          ? `"${course.title}" আমার লার্নিং-এ সংরক্ষিত হয়েছে`
+          : `Saved "${course.title}" to My Learning`,
       type: wasBookmarked ? 'info' : 'success',
       actionLabel: wasBookmarked ? (isBangla ? 'বাতিল' : 'Undo') : undefined,
       onAction: wasBookmarked ? () => toggleBookmark(course.id) : undefined,
@@ -68,32 +82,38 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
   };
 
   const bdtPrice = course.priceBdt || (course.price > 0 ? Math.round(course.price * 120) : 0);
-  const origBdtPrice = course.originalPriceBdt || (course.originalPrice && course.originalPrice > course.price ? Math.round(course.originalPrice * 120) : 0);
-  const isFreeCourse = (!course.price || course.price === 0) && (!course.priceBdt || course.priceBdt === 0);
+  const origBdtPrice =
+    course.originalPriceBdt ||
+    (course.originalPrice && course.originalPrice > course.price
+      ? Math.round(course.originalPrice * 120)
+      : 0);
+  const isFreeCourse =
+    (!course.price || course.price === 0) && (!course.priceBdt || course.priceBdt === 0);
 
   // Prominent star rating (e.g. ★ 4.9)
-  const numericRating = typeof course.rating === 'number' && course.rating > 0
-    ? course.rating
-    : 4.8 + (((course.id || '').split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0) % 3) / 10);
+  const numericRating =
+    typeof course.rating === 'number' && course.rating > 0
+      ? course.rating
+      : 4.8 + ((course.id || '').split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0) % 3) / 10;
   const formattedRating = Number(numericRating).toFixed(1);
 
   // Prominent student enrollment count (e.g. 1.2k learners)
-  const rawEnrolled = typeof course.enrolledCount === 'number' && course.enrolledCount > 0
-    ? course.enrolledCount
-    : (course.reviewsCount && course.reviewsCount > 0
+  const rawEnrolled =
+    typeof course.enrolledCount === 'number' && course.enrolledCount > 0
+      ? course.enrolledCount
+      : course.reviewsCount && course.reviewsCount > 0
         ? course.reviewsCount * 4
-        : 350 + (((course.id || '').split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0) % 850)));
-  const formattedEnrolled = rawEnrolled >= 1000
-    ? `${(rawEnrolled / 1000).toFixed(1)}k`
-    : `${rawEnrolled}`;
+        : 350 + ((course.id || '').split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0) % 850);
+  const formattedEnrolled =
+    rawEnrolled >= 1000 ? `${(rawEnrolled / 1000).toFixed(1)}k` : `${rawEnrolled}`;
 
   // Red discount percentage (-33% OFF)
   const discountPercent =
     origBdtPrice > bdtPrice && origBdtPrice > 0
       ? Math.round(((origBdtPrice - bdtPrice) / origBdtPrice) * 100)
       : course.originalPrice > course.price && course.originalPrice > 0
-      ? Math.round(((course.originalPrice - course.price) / course.originalPrice) * 100)
-      : 0;
+        ? Math.round(((course.originalPrice - course.price) / course.originalPrice) * 100)
+        : 0;
 
   if (horizontal) {
     return (
@@ -111,20 +131,24 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
         <SpringPressable
           style={styles.horizontalCardBody}
           onPress={onPress}
-          onLongPress={onLongPress ? () => {
-            triggerHaptic('medium');
-            onLongPress();
-          } : undefined}
+          onLongPress={
+            onLongPress
+              ? () => {
+                  triggerHaptic('medium');
+                  onLongPress();
+                }
+              : undefined
+          }
           activeScale={0.97}
           accessibilityRole="button"
-          accessibilityLabel={`${course.title} by ${course.instructor?.name || "Thriving Skills"}`}
+          accessibilityLabel={`${course.title} by ${course.instructor?.name || 'Thriving Skills'}`}
         >
           <View style={[styles.horizontalThumbWrapper, { backgroundColor: colors.surfaceSubtle }]}>
             <Image
               source={imageSource}
               style={[
                 styles.horizontalThumb,
-                (thumbError || !course.thumbnail) && { resizeMode: 'contain' }
+                (thumbError || !course.thumbnail) && { resizeMode: 'contain' },
               ]}
               fadeDuration={150}
               onError={() => setThumbError(true)}
@@ -132,7 +156,9 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
             />
             <View style={styles.horizontalBadgeRow}>
               {course.badge && (
-                <View style={[styles.horizontalBadgeTag, { backgroundColor: colors.badgeBackground }]}>
+                <View
+                  style={[styles.horizontalBadgeTag, { backgroundColor: colors.badgeBackground }]}
+                >
                   <Text
                     style={[styles.horizontalBadgeText, { color: colors.badgeText }]}
                     numberOfLines={1}
@@ -151,7 +177,10 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
           </View>
           <View style={styles.horizontalContent}>
             <Text
-              style={[styles.horizontalCardTitle, { color: colors.text, lineHeight: isBangla ? 21 : 19 }]}
+              style={[
+                styles.horizontalCardTitle,
+                { color: colors.text, lineHeight: isBangla ? 21 : 19 },
+              ]}
               numberOfLines={2}
             >
               {course.title}
@@ -161,7 +190,14 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
             </Text>
 
             <View style={styles.statsRow}>
-              <View style={[styles.ratingBadge, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : 'rgba(255, 182, 6, 0.12)' }]}>
+              <View
+                style={[
+                  styles.ratingBadge,
+                  {
+                    backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : 'rgba(255, 182, 6, 0.12)',
+                  },
+                ]}
+              >
                 <Ionicons name="star" size={11.5} color="#FFB606" />
                 <Text style={[styles.ratingNumber, { color: isDark ? '#FFB606' : '#946200' }]}>
                   {formattedRating}
@@ -193,7 +229,11 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
             ) : (
               <View style={styles.priceRow}>
                 <Text style={[styles.currentPrice, { color: colors.primary }]}>
-                  {isFreeCourse ? (isBangla ? 'বিনামূল্যে' : 'Free') : `৳ ${bdtPrice.toLocaleString()}`}
+                  {isFreeCourse
+                    ? isBangla
+                      ? 'বিনামূল্যে'
+                      : 'Free'
+                    : `৳ ${bdtPrice.toLocaleString()}`}
                 </Text>
                 {origBdtPrice > bdtPrice && (
                   <Text style={[styles.originalPrice, { color: colors.textMuted }]}>
@@ -211,7 +251,7 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
           activeOpacity={0.7}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           accessibilityRole="button"
-          accessibilityLabel={bookmarked ? "Remove bookmark" : "Save course bookmark"}
+          accessibilityLabel={bookmarked ? 'Remove bookmark' : 'Save course bookmark'}
         >
           <Ionicons
             name={bookmarked ? 'bookmark' : 'bookmark-outline'}
@@ -238,20 +278,24 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
       <SpringPressable
         style={styles.cardPressable}
         onPress={onPress}
-        onLongPress={onLongPress ? () => {
-          triggerHaptic('medium');
-          onLongPress();
-        } : undefined}
+        onLongPress={
+          onLongPress
+            ? () => {
+                triggerHaptic('medium');
+                onLongPress();
+              }
+            : undefined
+        }
         activeScale={0.97}
         accessibilityRole="button"
-        accessibilityLabel={`${course.title} by ${course.instructor?.name || "Thriving Skills"}`}
+        accessibilityLabel={`${course.title} by ${course.instructor?.name || 'Thriving Skills'}`}
       >
         <View style={[styles.thumbWrapper, { backgroundColor: colors.surfaceSubtle }]}>
           <Image
             source={imageSource}
             style={[
               styles.thumbnail,
-              (thumbError || !course.thumbnail) && { resizeMode: 'contain' }
+              (thumbError || !course.thumbnail) && { resizeMode: 'contain' },
             ]}
             fadeDuration={150}
             onError={() => setThumbError(true)}
@@ -295,12 +339,20 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
             </View>
             <View style={styles.instructorContainer}>
               <Text style={[styles.instructorName, { color: colors.textMuted }]} numberOfLines={1}>
-                {course.instructor?.name || 'Thriving Skills Instructor'}{course.instructor?.company ? ` • ${course.instructor.company}` : ''}
+                {course.instructor?.name || 'Thriving Skills Instructor'}
+                {course.instructor?.company ? ` • ${course.instructor.company}` : ''}
               </Text>
             </View>
 
             <View style={styles.statsRow}>
-              <View style={[styles.ratingBadge, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : 'rgba(255, 182, 6, 0.12)' }]}>
+              <View
+                style={[
+                  styles.ratingBadge,
+                  {
+                    backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : 'rgba(255, 182, 6, 0.12)',
+                  },
+                ]}
+              >
                 <Ionicons name="star" size={12} color="#FFB606" />
                 <Text style={[styles.ratingNumber, { color: isDark ? '#FFB606' : '#946200' }]}>
                   {formattedRating}
@@ -342,7 +394,11 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
             <View style={styles.cardFooter}>
               <View style={styles.priceRow}>
                 <Text style={[styles.currentPrice, { color: colors.primary }]}>
-                  {isFreeCourse ? (isBangla ? 'বিনামূল্যে' : 'Free') : `৳ ${bdtPrice.toLocaleString()}`}
+                  {isFreeCourse
+                    ? isBangla
+                      ? 'বিনামূল্যে'
+                      : 'Free'
+                    : `৳ ${bdtPrice.toLocaleString()}`}
                 </Text>
                 {origBdtPrice > bdtPrice && (
                   <Text style={[styles.originalPrice, { color: colors.textMuted }]}>
@@ -367,7 +423,7 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
         activeOpacity={0.7}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         accessibilityRole="button"
-        accessibilityLabel={bookmarked ? "Remove bookmark" : "Save course bookmark"}
+        accessibilityLabel={bookmarked ? 'Remove bookmark' : 'Save course bookmark'}
       >
         <Ionicons
           name={bookmarked ? 'bookmark' : 'bookmark-outline'}

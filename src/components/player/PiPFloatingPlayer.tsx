@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { triggerHaptic } from '../../utils/haptics';
 import { shape } from '../../theme/shapes';
@@ -87,13 +82,9 @@ export const PiPFloatingPlayer: React.FC<PiPFloatingPlayerProps> = ({
               onTogglePlay();
             }}
             accessibilityRole="button"
-            accessibilityLabel={isPlaying ? "Pause video" : "Play video"}
+            accessibilityLabel={isPlaying ? 'Pause video' : 'Play video'}
           >
-            <Ionicons
-              name={isPlaying ? 'pause' : 'play'}
-              size={14}
-              color="#FFFFFF"
-            />
+            <Ionicons name={isPlaying ? 'pause' : 'play'} size={14} color="#FFFFFF" />
           </TouchableOpacity>
         </TouchableOpacity>
       </View>

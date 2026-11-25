@@ -93,7 +93,10 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
 if (Platform.OS === 'web' && typeof console !== 'undefined') {
   const origConsoleError = console.error;
   console.error = (...args: any[]) => {
-    if (typeof args[0] === 'string' && args[0].includes('Invalid DOM property `transform-origin`')) {
+    if (
+      typeof args[0] === 'string' &&
+      args[0].includes('Invalid DOM property `transform-origin`')
+    ) {
       return;
     }
     origConsoleError.apply(console, args);
@@ -132,7 +135,9 @@ const AnimatedTabIcon: React.FC<{
   }, [isActive, scaleAnim]);
 
   return (
-    <Animated.View style={{ transform: [{ scale: scaleAnim }], alignItems: 'center', justifyContent: 'center' }}>
+    <Animated.View
+      style={{ transform: [{ scale: scaleAnim }], alignItems: 'center', justifyContent: 'center' }}
+    >
       <Ionicons name={name as any} size={size} color={color} />
     </Animated.View>
   );
@@ -143,7 +148,14 @@ const MainAppContent: React.FC = () => {
   const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const { userProgress, hasActiveLiveWorkshop, toggleBookmark } = useLearning();
-  const { user, isAuthenticated, isGuest, isLoading: isAuthLoading, isAuthModalVisible, setAuthModalVisible } = useAuth();
+  const {
+    user,
+    isAuthenticated,
+    isGuest,
+    isLoading: isAuthLoading,
+    isAuthModalVisible,
+    setAuthModalVisible,
+  } = useAuth();
   const { celebration, clearCelebration } = useGamification();
   const { activeVideo, playerMode, closePlayer, minimizePlayer, playVideo } = useYouTube();
   const {
@@ -360,8 +372,11 @@ const MainAppContent: React.FC = () => {
   ];
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]} edges={['left', 'right']}>
-      <StatusBar style={isDark ? "light" : "dark"} />
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: colors.background }]}
+      edges={['left', 'right']}
+    >
+      <StatusBar style={isDark ? 'light' : 'dark'} />
 
       <View style={styles.screenContainer}>
         {activeScreen.name === 'CourseDetail' ? (
@@ -392,10 +407,7 @@ const MainAppContent: React.FC = () => {
             key="yt-videos"
             direction={navDirection === 'backward' ? 'backward' : 'forward'}
           >
-            <YouTubeVideosScreen
-              onBack={navigateBack}
-              onNavigateToCourse={navigateToCourse}
-            />
+            <YouTubeVideosScreen onBack={navigateBack} onNavigateToCourse={navigateToCourse} />
           </ScreenTransition>
         ) : (
           <>
@@ -543,7 +555,9 @@ const MainAppContent: React.FC = () => {
                       </View>
                     ) : tab.badgeCount && tab.badgeCount > 0 ? (
                       <View style={[styles.tabBadge, { backgroundColor: colors.accent }]}>
-                        <Text style={[styles.tabBadgeText, { color: colors.onAccent }]}>{tab.badgeCount}</Text>
+                        <Text style={[styles.tabBadgeText, { color: colors.onAccent }]}>
+                          {tab.badgeCount}
+                        </Text>
                       </View>
                     ) : null}
                   </View>
@@ -588,10 +602,7 @@ const MainAppContent: React.FC = () => {
       />
 
       {/* Global In-App Update Modal */}
-      <AppUpdateModal
-        visible={updateModalVisible}
-        onClose={() => setUpdateModalVisible(false)}
-      />
+      <AppUpdateModal visible={updateModalVisible} onClose={() => setUpdateModalVisible(false)} />
 
       {/* Global SaaS Modals */}
       <SubscriptionModal
@@ -695,17 +706,10 @@ const MainAppContent: React.FC = () => {
       />
 
       {/* Global In-App Sticky Announcement & System Banner */}
-      <ModernBanner
-        banner={currentBanner}
-        onDismiss={dismissBanner}
-        sticky
-      />
+      <ModernBanner banner={currentBanner} onDismiss={dismissBanner} sticky />
 
       {/* Global Modern Confirmation & Alert Popup Dialog */}
-      <ModernPopup
-        popup={currentPopup}
-        onDismiss={dismissPopup}
-      />
+      <ModernPopup popup={currentPopup} onDismiss={dismissPopup} />
 
       {/* Interactive iOS & Android Action Notification Panel */}
       <IosActionNotificationPanel
@@ -897,4 +901,3 @@ const styles = StyleSheet.create({
     includeFontPadding: true,
   },
 });
-

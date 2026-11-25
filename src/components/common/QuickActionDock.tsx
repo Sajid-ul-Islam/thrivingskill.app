@@ -40,10 +40,10 @@ export const QuickActionDock: React.FC<QuickActionDockProps> = ({
       sublabel: assessmentResult
         ? `${assessmentResult.overallScore}% ${isBangla ? 'স্কোর' : 'Score'}`
         : isBangla
-        ? '৩-মিনিট টেস্ট'
-        : '3-min Quiz',
+          ? '৩-মিনিট টেস্ট'
+          : '3-min Quiz',
       icon: 'analytics',
-      badgeText: assessmentResult ? (isBangla ? 'সম্পন্ন' : 'DONE') : (isBangla ? 'কুইজ' : 'QUIZ'),
+      badgeText: assessmentResult ? (isBangla ? 'সম্পন্ন' : 'DONE') : isBangla ? 'কুইজ' : 'QUIZ',
       badgeBgColor: '#059669',
       color: '#059669',
       bgColor: '#D1FAE5',
@@ -103,10 +103,7 @@ export const QuickActionDock: React.FC<QuickActionDockProps> = ({
             accessibilityLabel={`${act.label}, ${act.sublabel}`}
           >
             <View
-              style={[
-                styles.iconBox,
-                { backgroundColor: isDark ? `${act.color}22` : act.bgColor },
-              ]}
+              style={[styles.iconBox, { backgroundColor: isDark ? `${act.color}22` : act.bgColor }]}
             >
               <Ionicons name={act.icon as any} size={20} color={act.color} />
             </View>
@@ -129,12 +126,7 @@ export const QuickActionDock: React.FC<QuickActionDockProps> = ({
             </Text>
 
             {act.badgeText && (
-              <View
-                style={[
-                  styles.miniBadge,
-                  { backgroundColor: act.badgeBgColor || act.color },
-                ]}
-              >
+              <View style={[styles.miniBadge, { backgroundColor: act.badgeBgColor || act.color }]}>
                 <Text style={styles.miniBadgeText}>{act.badgeText}</Text>
               </View>
             )}

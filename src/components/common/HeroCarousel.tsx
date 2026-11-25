@@ -71,7 +71,8 @@ const SLIDES: CarouselSlide[] = [
     badge: 'CAREER TRACKS',
     badgeIcon: 'layers',
     title: 'Specialized Career Bundles',
-    subtitle: 'Curated multi-course career tracks for marketing, supply chain, financial modeling & HR.',
+    subtitle:
+      'Curated multi-course career tracks for marketing, supply chain, financial modeling & HR.',
     ctaText: 'View Bundles →',
     gradientColors: ['#102F53', '#0A1C33', '#102F53'],
     actionType: 'bundle',
@@ -93,12 +94,14 @@ const SLIDES: CarouselSlide[] = [
     badge: 'EXECUTIVE MASTERCLASS',
     badgeIcon: 'bulb',
     title: 'Generative AI & Prompt Engineering',
-    subtitle: 'Boost office productivity with practical AI, prompt engineering & automated workflow models.',
+    subtitle:
+      'Boost office productivity with practical AI, prompt engineering & automated workflow models.',
     ctaText: 'Watch Video Trailer →',
     gradientColors: ['#102F53', '#0A1C33', '#102F53'],
     actionType: 'trailer',
     targetId: 'course-ai-productivity',
-    imageUrl: 'https://thrivingskill.com/wp-content/uploads/2026/05/AI-Bundle-Promotional-Poster.jpg',
+    imageUrl:
+      'https://thrivingskill.com/wp-content/uploads/2026/05/AI-Bundle-Promotional-Poster.jpg',
   },
   {
     id: 'excel-modeling',
@@ -222,7 +225,11 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
     const hasImage = Boolean(item.imageUrl && !imageErrors[item.id]);
 
     return (
-      <SpringPressable onPress={() => onSelectSlide(item)} activeScale={0.98} style={[styles.slideCard, { width: cardWidth }]}>
+      <SpringPressable
+        onPress={() => onSelectSlide(item)}
+        activeScale={0.98}
+        style={[styles.slideCard, { width: cardWidth }]}
+      >
         {/* Remote Server Banner Image with onError fallback */}
         {hasImage && (
           <Image
@@ -236,9 +243,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
 
         <LinearGradient
           colors={
-            hasImage
-              ? ['rgba(16, 47, 83, 0.75)', 'rgba(15, 23, 42, 0.94)']
-              : item.gradientColors
+            hasImage ? ['rgba(16, 47, 83, 0.75)', 'rgba(15, 23, 42, 0.94)'] : item.gradientColors
           }
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -252,7 +257,11 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
           <View style={styles.badgeRow}>
             <View style={styles.badge}>
               <Ionicons name={item.badgeIcon as any} size={isTablet ? 13 : 11} color="#FBBF24" />
-              <Text style={[styles.badgeText, isTablet && { fontSize: 11 }]} numberOfLines={1} ellipsizeMode="tail">
+              <Text
+                style={[styles.badgeText, isTablet && { fontSize: 11 }]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
                 {item.badge}
               </Text>
             </View>
@@ -284,11 +293,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
                 accessibilityLabel={isManualPaused ? 'Play slide carousel' : 'Pause slide carousel'}
                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               >
-                <Ionicons
-                  name={isManualPaused ? 'play' : 'pause'}
-                  size={11}
-                  color="#FFFFFF"
-                />
+                <Ionicons name={isManualPaused ? 'play' : 'pause'} size={11} color="#FFFFFF" />
               </TouchableOpacity>
               <Text style={styles.slideCounter}>
                 {activeIndex + 1}/{slides.length}

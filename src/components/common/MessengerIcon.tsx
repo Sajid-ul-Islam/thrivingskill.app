@@ -55,12 +55,7 @@ export const MessengerIcon: React.FC<MessengerIconProps> = ({
   // Single compound path with evenodd fill rule for pure transparent cutout
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d={`${bubblePath} ${boltPath}`}
-        fill={color}
-      />
+      <Path fillRule="evenodd" clipRule="evenodd" d={`${bubblePath} ${boltPath}`} fill={color} />
     </Svg>
   );
 };

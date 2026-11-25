@@ -1,13 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  FlatList,
-  Image,
-  Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, FlatList, Image, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../context/ThemeContext';
@@ -52,7 +44,8 @@ export const THRIVE_GEN_COURSES: ThriveGenCourseItem[] = [
     rating: 4.9,
     studentsCount: 1420,
     badge: 'FOUNDATION',
-    imageUrl: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=600&auto=format&fit=crop&q=80',
+    imageUrl:
+      'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=600&auto=format&fit=crop&q=80',
     isFree: true,
   },
   {
@@ -68,7 +61,8 @@ export const THRIVE_GEN_COURSES: ThriveGenCourseItem[] = [
     rating: 4.8,
     studentsCount: 980,
     badge: 'MINDSET',
-    imageUrl: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop&q=80',
+    imageUrl:
+      'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop&q=80',
   },
   // HSC
   {
@@ -84,7 +78,8 @@ export const THRIVE_GEN_COURSES: ThriveGenCourseItem[] = [
     rating: 4.9,
     studentsCount: 2150,
     badge: 'HOT & NEW',
-    imageUrl: 'https://thrivingskill.com/wp-content/uploads/2026/05/AI-Bundle-Promotional-Poster.jpg',
+    imageUrl:
+      'https://thrivingskill.com/wp-content/uploads/2026/05/AI-Bundle-Promotional-Poster.jpg',
   },
   {
     id: 'tg-hsc-habits',
@@ -99,7 +94,8 @@ export const THRIVE_GEN_COURSES: ThriveGenCourseItem[] = [
     rating: 4.8,
     studentsCount: 890,
     badge: 'HABITS',
-    imageUrl: 'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=600&auto=format&fit=crop&q=80',
+    imageUrl:
+      'https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=600&auto=format&fit=crop&q=80',
   },
   // Honours
   {
@@ -115,7 +111,8 @@ export const THRIVE_GEN_COURSES: ThriveGenCourseItem[] = [
     rating: 5.0,
     studentsCount: 1670,
     badge: 'GOOGLE AI',
-    imageUrl: 'https://images.unsplash.com/photo-1517842645767-c639042777db?w=600&auto=format&fit=crop&q=80',
+    imageUrl:
+      'https://images.unsplash.com/photo-1517842645767-c639042777db?w=600&auto=format&fit=crop&q=80',
   },
   {
     id: 'tg-hon-linkedin',
@@ -130,7 +127,8 @@ export const THRIVE_GEN_COURSES: ThriveGenCourseItem[] = [
     rating: 4.9,
     studentsCount: 3100,
     badge: 'CAREER ACCELERATOR',
-    imageUrl: 'https://images.unsplash.com/photo-1611944212129-29977ae1398c?w=600&auto=format&fit=crop&q=80',
+    imageUrl:
+      'https://images.unsplash.com/photo-1611944212129-29977ae1398c?w=600&auto=format&fit=crop&q=80',
   },
   {
     id: 'tg-hon-presentation',
@@ -145,7 +143,8 @@ export const THRIVE_GEN_COURSES: ThriveGenCourseItem[] = [
     rating: 4.9,
     studentsCount: 1840,
     badge: 'PRESENTATION',
-    imageUrl: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=600&auto=format&fit=crop&q=80',
+    imageUrl:
+      'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?w=600&auto=format&fit=crop&q=80',
   },
   // Masters
   {
@@ -161,7 +160,8 @@ export const THRIVE_GEN_COURSES: ThriveGenCourseItem[] = [
     rating: 5.0,
     studentsCount: 2280,
     badge: 'RESEARCH',
-    imageUrl: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600&auto=format&fit=crop&q=80',
+    imageUrl:
+      'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600&auto=format&fit=crop&q=80',
   },
   {
     id: 'tg-mas-interview',
@@ -176,7 +176,8 @@ export const THRIVE_GEN_COURSES: ThriveGenCourseItem[] = [
     rating: 4.9,
     studentsCount: 2650,
     badge: 'JOB READY',
-    imageUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&auto=format&fit=crop&q=80',
+    imageUrl:
+      'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&auto=format&fit=crop&q=80',
   },
 ];
 
@@ -201,7 +202,12 @@ export const ThriveGenHub: React.FC<ThriveGenHubProps> = ({
     return THRIVE_GEN_COURSES.filter((c) => c.level === activeLevel);
   }, [activeLevel]);
 
-  const levelTabs: { id: AcademicLevel; label: string; labelBn: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+  const levelTabs: {
+    id: AcademicLevel;
+    label: string;
+    labelBn: string;
+    icon: keyof typeof Ionicons.glyphMap;
+  }[] = [
     { id: 'all', label: 'All Levels', labelBn: 'সকল লেভেল', icon: 'apps' },
     { id: 'ssc', label: 'SSC', labelBn: 'এসএসসি', icon: 'school' },
     { id: 'hsc', label: 'HSC', labelBn: 'এইচএসসি', icon: 'book' },
@@ -218,7 +224,12 @@ export const ThriveGenHub: React.FC<ThriveGenHubProps> = ({
             <Ionicons name="sparkles" size={11} color="#FFFFFF" />
             <Text style={styles.brandPillText}>THRIVE GEN</Text>
           </View>
-          <View style={[styles.studentsTag, { backgroundColor: isDark ? 'rgba(16, 47, 83, 0.4)' : '#E8EEF5' }]}>
+          <View
+            style={[
+              styles.studentsTag,
+              { backgroundColor: isDark ? 'rgba(16, 47, 83, 0.4)' : '#E8EEF5' },
+            ]}
+          >
             <Text style={[styles.studentsTagText, { color: colors.textMuted }]}>
               {isBangla ? '১০,০০০+ শিক্ষার্থীর ভরসা' : 'Trusted by 10,000+ Students'}
             </Text>
@@ -240,25 +251,57 @@ export const ThriveGenHub: React.FC<ThriveGenHubProps> = ({
 
       {/* 4 Pillars Mini-Capsules */}
       <View style={styles.pillarsGrid}>
-        <View style={[styles.pillarItem, { backgroundColor: isDark ? colors.surfaceCard : '#F8FAFC', borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.pillarItem,
+            {
+              backgroundColor: isDark ? colors.surfaceCard : '#F8FAFC',
+              borderColor: colors.border,
+            },
+          ]}
+        >
           <Text style={styles.pillarIcon}>👤</Text>
           <Text style={[styles.pillarText, { color: colors.text }]}>
             {isBangla ? 'শীর্ষ ফ্যাকাল্টি' : 'Industry Faculty'}
           </Text>
         </View>
-        <View style={[styles.pillarItem, { backgroundColor: isDark ? colors.surfaceCard : '#F8FAFC', borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.pillarItem,
+            {
+              backgroundColor: isDark ? colors.surfaceCard : '#F8FAFC',
+              borderColor: colors.border,
+            },
+          ]}
+        >
           <Text style={styles.pillarIcon}>📝</Text>
           <Text style={[styles.pillarText, { color: colors.text }]}>
             {isBangla ? 'রিয়েল প্রজেক্ট' : 'Hands-on Labs'}
           </Text>
         </View>
-        <View style={[styles.pillarItem, { backgroundColor: isDark ? colors.surfaceCard : '#F8FAFC', borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.pillarItem,
+            {
+              backgroundColor: isDark ? colors.surfaceCard : '#F8FAFC',
+              borderColor: colors.border,
+            },
+          ]}
+        >
           <Text style={styles.pillarIcon}>📜</Text>
           <Text style={[styles.pillarText, { color: colors.text }]}>
             {isBangla ? 'সার্টিফিকেট' : 'Certificates'}
           </Text>
         </View>
-        <View style={[styles.pillarItem, { backgroundColor: isDark ? colors.surfaceCard : '#F8FAFC', borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.pillarItem,
+            {
+              backgroundColor: isDark ? colors.surfaceCard : '#F8FAFC',
+              borderColor: colors.border,
+            },
+          ]}
+        >
           <Text style={styles.pillarIcon}>⏱️</Text>
           <Text style={[styles.pillarText, { color: colors.text }]}>
             {isBangla ? 'নিজের সুবিধামতো' : 'Self-Paced'}
@@ -283,8 +326,8 @@ export const ThriveGenHub: React.FC<ThriveGenHubProps> = ({
                   backgroundColor: isActive
                     ? colors.primary
                     : isDark
-                    ? colors.surfaceCard
-                    : '#FFFFFF',
+                      ? colors.surfaceCard
+                      : '#FFFFFF',
                   borderColor: isActive ? colors.primary : colors.border,
                 },
               ]}
@@ -297,17 +340,8 @@ export const ThriveGenHub: React.FC<ThriveGenHubProps> = ({
               accessibilityState={{ selected: isActive }}
               accessibilityLabel={isBangla ? tab.labelBn : tab.label}
             >
-              <Ionicons
-                name={tab.icon}
-                size={13}
-                color={isActive ? '#FFFFFF' : colors.textMuted}
-              />
-              <Text
-                style={[
-                  styles.levelTabText,
-                  { color: isActive ? '#FFFFFF' : colors.text },
-                ]}
-              >
+              <Ionicons name={tab.icon} size={13} color={isActive ? '#FFFFFF' : colors.textMuted} />
+              <Text style={[styles.levelTabText, { color: isActive ? '#FFFFFF' : colors.text }]}>
                 {isBangla ? tab.labelBn : tab.label}
               </Text>
             </SpringPressable>
@@ -368,9 +402,7 @@ export const ThriveGenHub: React.FC<ThriveGenHubProps> = ({
               {/* Card Body */}
               <View style={styles.cardBody}>
                 <View style={styles.levelRow}>
-                  <Text style={[styles.levelText, { color: colors.primary }]}>
-                    {levelLabel}
-                  </Text>
+                  <Text style={[styles.levelText, { color: colors.primary }]}>{levelLabel}</Text>
                   <View style={styles.ratingBadge}>
                     <Ionicons name="star" size={11} color="#FFB606" />
                     <Text style={styles.ratingText}>{item.rating.toFixed(1)}</Text>
@@ -425,7 +457,9 @@ export const ThriveGenHub: React.FC<ThriveGenHubProps> = ({
               onExploreAllThriveGen();
             }}
             accessibilityRole="button"
-            accessibilityLabel={isBangla ? 'সব থ্রাইভ জেন কোর্স দেখুন' : 'Explore all Thrive Gen courses'}
+            accessibilityLabel={
+              isBangla ? 'সব থ্রাইভ জেন কোর্স দেখুন' : 'Explore all Thrive Gen courses'
+            }
           >
             <View style={styles.exploreAllTextCol}>
               <Text style={[styles.exploreAllTitle, { color: colors.text }]}>

@@ -118,7 +118,8 @@ export const DEFAULT_CURATED_SLIDES: DynamicCarouselSlide[] = [
     badge: 'CAREER TRACKS',
     badgeIcon: 'layers',
     title: 'Specialized Career Bundles',
-    subtitle: 'Curated multi-course career tracks for marketing, supply chain, financial modeling & HR.',
+    subtitle:
+      'Curated multi-course career tracks for marketing, supply chain, financial modeling & HR.',
     ctaText: 'View Bundles →',
     gradientColors: ['#102F53', '#0A1C33', '#102F53'],
     actionType: 'bundle',
@@ -140,12 +141,14 @@ export const DEFAULT_CURATED_SLIDES: DynamicCarouselSlide[] = [
     badge: 'EXECUTIVE MASTERCLASS',
     badgeIcon: 'bulb',
     title: 'Generative AI & Prompt Engineering',
-    subtitle: 'Boost office productivity with practical AI, prompt engineering & automated workflow models.',
+    subtitle:
+      'Boost office productivity with practical AI, prompt engineering & automated workflow models.',
     ctaText: 'Watch Video Trailer →',
     gradientColors: ['#102F53', '#0A1C33', '#102F53'],
     actionType: 'trailer',
     targetId: 'course-ai-productivity',
-    imageUrl: 'https://thrivingskill.com/wp-content/uploads/2026/05/AI-Bundle-Promotional-Poster.jpg',
+    imageUrl:
+      'https://thrivingskill.com/wp-content/uploads/2026/05/AI-Bundle-Promotional-Poster.jpg',
   },
   {
     id: 'excel-modeling',
@@ -165,7 +168,8 @@ export const DEFAULT_PARTNER_LOGOS: PartnerLogoItem[] = [
     id: 'brac-bank',
     name: 'BRAC Bank',
     nameBn: 'ব্র্যাক ব্যাংক',
-    logoUrl: 'https://thrivingskill.com/wp-content/uploads/2022/09/brac-bank-logo-3C1A03E45D-seeklogo.com_.png',
+    logoUrl:
+      'https://thrivingskill.com/wp-content/uploads/2022/09/brac-bank-logo-3C1A03E45D-seeklogo.com_.png',
     websiteUrl: 'https://www.bracbank.com',
   },
   {
@@ -332,8 +336,10 @@ export const DEFAULT_STUDENT_TESTIMONIALS: StudentTestimonialItem[] = [
     role: 'Senior Executive, Supply Chain',
     roleBn: 'সিনিয়র এক্সিকিউটিভ, সাপ্লাই চেইন',
     company: 'Leading RMG Conglomerate',
-    quote: 'The supply chain and financial modeling courses helped me streamline our procurement operations significantly. The practical spreadsheets are priceless.',
-    quoteBn: 'সাপ্লাই চেইন এবং ফাইন্যান্সিয়াল মডেলিং কোর্সগুলো আমাদের প্রকিউরমেন্ট অপারেশনে দারুণ কাজে দিয়েছে। প্র্যাকটিক্যাল এক্সেল শিটগুলো সত্যিই অসাধারণ।',
+    quote:
+      'The supply chain and financial modeling courses helped me streamline our procurement operations significantly. The practical spreadsheets are priceless.',
+    quoteBn:
+      'সাপ্লাই চেইন এবং ফাইন্যান্সিয়াল মডেলিং কোর্সগুলো আমাদের প্রকিউরমেন্ট অপারেশনে দারুণ কাজে দিয়েছে। প্র্যাকটিক্যাল এক্সেল শিটগুলো সত্যিই অসাধারণ।',
     rating: 5.0,
   },
   {
@@ -342,8 +348,10 @@ export const DEFAULT_STUDENT_TESTIMONIALS: StudentTestimonialItem[] = [
     role: 'Head of HR & Admin',
     roleBn: 'হেড অব এইচআর অ্যান্ড অ্যাডমিন',
     company: 'Multinational Manufacturing',
-    quote: 'Thriving Skills HR Masterclass covers practical labor laws and KPI appraisal frameworks that every HR professional in Bangladesh needs.',
-    quoteBn: 'থ্রাইভিং স্কিলস এইচআর মাস্টারক্লাসে বাংলাদেশের বাস্তব শ্রম আইন এবং কেপিআই ফ্রেমওয়ার্ক চমৎকারভাবে শেখানো হয়েছে।',
+    quote:
+      'Thriving Skills HR Masterclass covers practical labor laws and KPI appraisal frameworks that every HR professional in Bangladesh needs.',
+    quoteBn:
+      'থ্রাইভিং স্কিলস এইচআর মাস্টারক্লাসে বাংলাদেশের বাস্তব শ্রম আইন এবং কেপিআই ফ্রেমওয়ার্ক চমৎকারভাবে শেখানো হয়েছে।',
     rating: 5.0,
   },
   {
@@ -352,8 +360,10 @@ export const DEFAULT_STUDENT_TESTIMONIALS: StudentTestimonialItem[] = [
     role: 'Financial Analyst',
     roleBn: 'ফাইন্যান্সিয়াল অ্যানালিস্ট',
     company: 'Capital Investments Ltd',
-    quote: 'The financial modeling and advanced Excel tracks gave me the confidence to build dynamic forecasting models for management reporting.',
-    quoteBn: 'ফাইন্যান্সিয়াল মডেলিং এবং অ্যাডভান্সড এক্সেল কোর্স আমাকে ম্যানেজমেন্ট রিপোর্টিংয়ের জন্য ডায়নামিক ফোরকাস্টিং মডেল তৈরির পূর্ণ আত্মবিশ্বাস দিয়েছে।',
+    quote:
+      'The financial modeling and advanced Excel tracks gave me the confidence to build dynamic forecasting models for management reporting.',
+    quoteBn:
+      'ফাইন্যান্সিয়াল মডেলিং এবং অ্যাডভান্সড এক্সেল কোর্স আমাকে ম্যানেজমেন্ট রিপোর্টিংয়ের জন্য ডায়নামিক ফোরকাস্টিং মডেল তৈরির পূর্ণ আত্মবিশ্বাস দিয়েছে।',
     rating: 5.0,
   },
   {
@@ -362,8 +372,10 @@ export const DEFAULT_STUDENT_TESTIMONIALS: StudentTestimonialItem[] = [
     role: 'Marketing Specialist',
     roleBn: 'মার্কেটিং স্পেশালিস্ট',
     company: 'Fintech Solutions',
-    quote: 'Outstanding digital marketing curricula. Real case studies from Bangladesh market made the concepts immediately applicable.',
-    quoteBn: 'অসাধারণ ডিজিটাল মার্কেটিং কারিকুলাম। বাংলাদেশের লোকাল মার্কেটের রিয়েল কেস স্টাডি কনসেপ্টগুলোকে সরাসরি প্রয়োগযোগ্য করে তুলেছে।',
+    quote:
+      'Outstanding digital marketing curricula. Real case studies from Bangladesh market made the concepts immediately applicable.',
+    quoteBn:
+      'অসাধারণ ডিজিটাল মার্কেটিং কারিকুলাম। বাংলাদেশের লোকাল মার্কেটের রিয়েল কেস স্টাডি কনসেপ্টগুলোকে সরাসরি প্রয়োগযোগ্য করে তুলেছে।',
     rating: 5.0,
   },
   {
@@ -372,8 +384,10 @@ export const DEFAULT_STUDENT_TESTIMONIALS: StudentTestimonialItem[] = [
     role: 'Assistant Manager, Accounts',
     roleBn: 'অ্যাসিস্ট্যান্ট ম্যানেজার, অ্যাকাউন্টস',
     company: 'National Trading Group',
-    quote: 'Very structured VAT, Tax & Accounting courses. Step-by-step guidance made complex NBR regulations easy to master.',
-    quoteBn: 'খুবই গোছানো ভ্যাট, ট্যাক্স ও অ্যাকাউন্টিং কোর্স। স্টেপ-বাই-স্টেপ গাইডলাইন এনবিআর-এর জটিল নিয়মকানুনগুলো সহজে বুঝতে সাহায্য করেছে।',
+    quote:
+      'Very structured VAT, Tax & Accounting courses. Step-by-step guidance made complex NBR regulations easy to master.',
+    quoteBn:
+      'খুবই গোছানো ভ্যাট, ট্যাক্স ও অ্যাকাউন্টিং কোর্স। স্টেপ-বাই-স্টেপ গাইডলাইন এনবিআর-এর জটিল নিয়মকানুনগুলো সহজে বুঝতে সাহায্য করেছে।',
     rating: 5.0,
   },
   {
@@ -382,8 +396,10 @@ export const DEFAULT_STUDENT_TESTIMONIALS: StudentTestimonialItem[] = [
     role: 'Business Development Executive',
     roleBn: 'বিজনেস ডেভেলপমেন্ট এক্সিকিউটিভ',
     company: 'Tech Enterprise Ltd',
-    quote: 'Interactive and concise lessons. Learned executive presentation and negotiation strategies that won us corporate clients.',
-    quoteBn: 'ইন্টারঅ্যাক্টিভ ও টু-দ্য-পয়েন্ট লেসন। এক্সিকিউটিভ প্রেজেন্টেশন ও নেগোসিয়েশন স্ট্র্যাটেজি আমাদের নতুন কর্পোরেট ক্লায়েন্ট জিততে সাহায্য করেছে।',
+    quote:
+      'Interactive and concise lessons. Learned executive presentation and negotiation strategies that won us corporate clients.',
+    quoteBn:
+      'ইন্টারঅ্যাক্টিভ ও টু-দ্য-পয়েন্ট লেসন। এক্সিকিউটিভ প্রেজেন্টেশন ও নেগোসিয়েশন স্ট্র্যাটেজি আমাদের নতুন কর্পোরেট ক্লায়েন্ট জিততে সাহায্য করেছে।',
     rating: 5.0,
   },
   {
@@ -392,8 +408,10 @@ export const DEFAULT_STUDENT_TESTIMONIALS: StudentTestimonialItem[] = [
     role: 'Corporate Trainer & Consultant',
     roleBn: 'কর্পোরেট ট্রেইনার ও কনসালট্যান্ট',
     company: 'Professional Training Services',
-    quote: 'Exceptional platform quality. The mobile experience allows learning during daily commute without any interruption.',
-    quoteBn: 'প্ল্যাটফর্মের মান সত্যিই বিশ্বমানের। মোবাইল অ্যাপ থাকায় জ্যামের মাঝেও প্রতিদিন কোনো বাধা ছাড়াই নতুন স্কিল শেখা সম্ভব হচ্ছে।',
+    quote:
+      'Exceptional platform quality. The mobile experience allows learning during daily commute without any interruption.',
+    quoteBn:
+      'প্ল্যাটফর্মের মান সত্যিই বিশ্বমানের। মোবাইল অ্যাপ থাকায় জ্যামের মাঝেও প্রতিদিন কোনো বাধা ছাড়াই নতুন স্কিল শেখা সম্ভব হচ্ছে।',
     rating: 5.0,
   },
 ];
@@ -403,23 +421,25 @@ export const DEFAULT_STUDENT_TESTIMONIALS: StudentTestimonialItem[] = [
  */
 export function sanitizeWpText(text?: string): string {
   if (!text) return '';
-  return text
-    .replace(/<[^>]+>/g, '')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#039;/g, "'")
-    .replace(/&#8211;/g, '–')
-    .replace(/&#8217;/g, "'")
-    .replace(/&#8216;/g, "'")
-    .replace(/&#8220;/g, '"')
-    .replace(/&#8221;/g, '"')
-    .replace(/&nbsp;/g, ' ')
-    // Strip external price promo phrases to maintain reader-app compliance
-    .replace(/Only\s+\d+.*BDT/gi, '')
-    .replace(/Use Coupon Code:[^\n.]*/gi, '')
-    .trim();
+  return (
+    text
+      .replace(/<[^>]+>/g, '')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#039;/g, "'")
+      .replace(/&#8211;/g, '–')
+      .replace(/&#8217;/g, "'")
+      .replace(/&#8216;/g, "'")
+      .replace(/&#8220;/g, '"')
+      .replace(/&#8221;/g, '"')
+      .replace(/&nbsp;/g, ' ')
+      // Strip external price promo phrases to maintain reader-app compliance
+      .replace(/Only\s+\d+.*BDT/gi, '')
+      .replace(/Use Coupon Code:[^\n.]*/gi, '')
+      .trim()
+  );
 }
 
 export class BrandingService {
@@ -520,7 +540,9 @@ export class BrandingService {
               badge: slide.tag || 'FEATURED',
               badgeIcon: 'star',
               title: sanitizeWpText(slide.title),
-              subtitle: sanitizeWpText(slide.subtitle) || 'Empower your career with certified industry tracks.',
+              subtitle:
+                sanitizeWpText(slide.subtitle) ||
+                'Empower your career with certified industry tracks.',
               ctaText: slide.button_text ? `${slide.button_text} →` : 'Enroll Now →',
               gradientColors: paletteList[idx % paletteList.length],
               actionType: 'course',
@@ -549,9 +571,10 @@ export class BrandingService {
           const featuredMedia = col._embedded?.['wp:featuredmedia']?.[0]?.source_url;
           const cleanTitle = sanitizeWpText(col.title?.rendered);
           const rawExcerpt = sanitizeWpText(col.excerpt?.rendered);
-          const cleanExcerpt = rawExcerpt && rawExcerpt.length > 5
-            ? rawExcerpt
-            : 'Explore specialized industry skill series designed for modern professionals.';
+          const cleanExcerpt =
+            rawExcerpt && rawExcerpt.length > 5
+              ? rawExcerpt
+              : 'Explore specialized industry skill series designed for modern professionals.';
 
           if (cleanTitle) {
             dynamicSlides.push({
@@ -588,9 +611,10 @@ export class BrandingService {
           const featuredMedia = post._embedded?.['wp:featuredmedia']?.[0]?.source_url;
           const cleanTitle = sanitizeWpText(post.title?.rendered);
           const rawExcerpt = sanitizeWpText(post.excerpt?.rendered);
-          const cleanExcerpt = rawExcerpt && rawExcerpt.length > 5
-            ? rawExcerpt
-            : 'Read the latest insights from industry leaders on thriving in the digital economy.';
+          const cleanExcerpt =
+            rawExcerpt && rawExcerpt.length > 5
+              ? rawExcerpt
+              : 'Read the latest insights from industry leaders on thriving in the digital economy.';
 
           // Only include if it has a featured image or compelling title
           if (cleanTitle && featuredMedia) {
@@ -616,23 +640,35 @@ export class BrandingService {
     }
 
     // 3. Always ensure our flagship Summit and Generative AI trailer are present
-    const flagshipSummit = DEFAULT_CURATED_SLIDES.find(s => s.id === 'summit-2026');
-    const aiTrailer = DEFAULT_CURATED_SLIDES.find(s => s.id === 'ai-masterclass');
-    const heroCover = DEFAULT_CURATED_SLIDES.find(s => s.id === 'skills-growth-2026');
+    const flagshipSummit = DEFAULT_CURATED_SLIDES.find((s) => s.id === 'summit-2026');
+    const aiTrailer = DEFAULT_CURATED_SLIDES.find((s) => s.id === 'ai-masterclass');
+    const heroCover = DEFAULT_CURATED_SLIDES.find((s) => s.id === 'skills-growth-2026');
 
     const finalSlides: DynamicCarouselSlide[] = [];
 
     // Prioritize dynamic slides explicitly managed from the TS Mobile Bridge Command Center
     for (const d of dynamicSlides) {
-      if (!finalSlides.some(s => s.title.toLowerCase() === d.title.toLowerCase())) {
+      if (!finalSlides.some((s) => s.title.toLowerCase() === d.title.toLowerCase())) {
         finalSlides.push(d);
       }
     }
 
     // Always ensure flagship items are present as fallbacks
-    if (heroCover && !finalSlides.some(s => s.title.toLowerCase() === heroCover.title.toLowerCase())) finalSlides.push(heroCover);
-    if (flagshipSummit && !finalSlides.some(s => s.title.toLowerCase() === flagshipSummit.title.toLowerCase())) finalSlides.push(flagshipSummit);
-    if (aiTrailer && !finalSlides.some(s => s.title.toLowerCase() === aiTrailer.title.toLowerCase())) finalSlides.push(aiTrailer);
+    if (
+      heroCover &&
+      !finalSlides.some((s) => s.title.toLowerCase() === heroCover.title.toLowerCase())
+    )
+      finalSlides.push(heroCover);
+    if (
+      flagshipSummit &&
+      !finalSlides.some((s) => s.title.toLowerCase() === flagshipSummit.title.toLowerCase())
+    )
+      finalSlides.push(flagshipSummit);
+    if (
+      aiTrailer &&
+      !finalSlides.some((s) => s.title.toLowerCase() === aiTrailer.title.toLowerCase())
+    )
+      finalSlides.push(aiTrailer);
 
     // Limit to top 6 slides for optimal carousel performance & memory
     const trimmed = finalSlides.slice(0, 6);
@@ -720,9 +756,14 @@ export class BrandingService {
   /**
    * Fetch special promotional bundle posters with live pricing and graphics.
    */
-  static async getSpecialBundles(forceRefresh: boolean = false): Promise<SpecialBundlePosterItem[]> {
+  static async getSpecialBundles(
+    forceRefresh: boolean = false
+  ): Promise<SpecialBundlePosterItem[]> {
     if (!forceRefresh) {
-      const cached = await CacheManager.get<SpecialBundlePosterItem[]>(SPECIAL_BUNDLES_CACHE_KEY, true);
+      const cached = await CacheManager.get<SpecialBundlePosterItem[]>(
+        SPECIAL_BUNDLES_CACHE_KEY,
+        true
+      );
       if (cached && Array.isArray(cached) && cached.length > 0) {
         return cached;
       }
@@ -776,7 +817,9 @@ export class BrandingService {
   /**
    * Fetch student testimonials ("Why people choose Thriving Skills").
    */
-  static async getStudentTestimonials(forceRefresh: boolean = false): Promise<StudentTestimonialItem[]> {
+  static async getStudentTestimonials(
+    forceRefresh: boolean = false
+  ): Promise<StudentTestimonialItem[]> {
     if (!forceRefresh) {
       const cached = await CacheManager.get<StudentTestimonialItem[]>(TESTIMONIALS_CACHE_KEY, true);
       if (cached && Array.isArray(cached) && cached.length > 0) {

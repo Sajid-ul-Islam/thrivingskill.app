@@ -111,7 +111,9 @@ function isValidSocialOrCover(social?: any, coverPhoto?: string): boolean {
 /**
  * Computes LinkedIn-style profile completion score, strength tier, and next action recommendation
  */
-export function calculateProfileCompletion(user: UserProfile | null | undefined): ProfileCompletionResult {
+export function calculateProfileCompletion(
+  user: UserProfile | null | undefined
+): ProfileCompletionResult {
   const hasName = isValidName(user?.name, user?.displayName, user?.first_name);
   const hasEmail = isValidEmail(user?.email);
   const hasPhone = isValidPhone(user?.phone);

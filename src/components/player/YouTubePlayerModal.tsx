@@ -76,8 +76,14 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
   const cleanVideoId = React.useMemo(() => {
     if (!currentVideo?.id) return '';
     const match =
-      currentVideo.id.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/) ||
-      (currentVideo.url ? currentVideo.url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/) : null);
+      currentVideo.id.match(
+        /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/
+      ) ||
+      (currentVideo.url
+        ? currentVideo.url.match(
+            /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/
+          )
+        : null);
     return match && match[1] ? match[1] : currentVideo.id.trim();
   }, [currentVideo?.id, currentVideo?.url]);
 
@@ -135,7 +141,12 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Header Bar (Visible in portrait mode) */}
         {!isLandscape && (
@@ -166,10 +177,7 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               {/* Landscape Toggle Button */}
               <TouchableOpacity
-                style={[
-                  styles.headerBtn,
-                  { backgroundColor: isDark ? '#333' : '#E5E7EB' },
-                ]}
+                style={[styles.headerBtn, { backgroundColor: isDark ? '#333' : '#E5E7EB' }]}
                 onPress={() => {
                   triggerHaptic('light');
                   setIsManualLandscape(!isManualLandscape);
@@ -214,85 +222,88 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
                   width={playerWidth}
                   play={isPlaying}
                   videoId={cleanVideoId}
-                playbackRate={playbackSpeed}
-                useLocalHTML={false}
-                baseUrlOverride="https://thrivingskill.com"
-                onReady={() => setPlayerLoading(false)}
-                onChangeState={(state: string) => {
-                  if (state === 'ended') setIsPlaying(false);
+                  playbackRate={playbackSpeed}
+                  useLocalHTML={false}
+                  baseUrlOverride="https://thrivingskill.com"
+                  onReady={() => setPlayerLoading(false)}
+                  onChangeState={(state: string) => {
+                    if (state === 'ended') setIsPlaying(false);
+                  }}
+                  onError={(error: string) => {
+                    setPlayerError(error);
+                    setPlayerLoading(false);
+                  }}
+                  onFullScreenChange={(status: boolean) => {
+                    setIsManualLandscape(status);
+                  }}
+                  initialPlayerParams={{
+                    controls: true,
+                    modestbranding: true,
+                    preventFullScreen: false,
+                    rel: false,
+                    origin: 'https://thrivingskill.com',
+                  }}
+                  webViewProps={{
+                    androidLayerType: 'hardware',
+                    allowsInlineMediaPlayback: true,
+                    originWhitelist: ['*'],
+                    headers: {
+                      Referer: 'https://thrivingskill.com',
+                    },
+                  }}
+                />
+                {playerLoading && !playerError && (
+                  <View style={styles.playerLoadingOverlay}>
+                    <ActivityIndicator size="small" color="#FF0000" />
+                    <Text style={styles.playerLoadingText}>Loading video...</Text>
+                  </View>
+                )}
+                {playerError && (
+                  <View style={styles.playerErrorOverlay}>
+                    <Ionicons name="play-circle-outline" size={36} color="#EF4444" />
+                    <Text style={styles.playerErrorText}>
+                      {playerError.includes('150') ||
+                      playerError.includes('152') ||
+                      playerError.includes('153')
+                        ? 'Protected YouTube Masterclass'
+                        : `Playback Alert (${playerError})`}
+                    </Text>
+                    <Text style={styles.playerErrorSubtext}>
+                      This YouTube video has restricted embed permissions. Tap below to watch
+                      directly in the YouTube app.
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.errorOpenBtn}
+                      onPress={handleOpenYouTube}
+                      activeOpacity={0.85}
+                      accessibilityRole="button"
+                      accessibilityLabel="Open and play video in YouTube app"
+                    >
+                      <Ionicons name="logo-youtube" size={16} color="#FFFFFF" />
+                      <Text style={styles.errorOpenBtnText}>Watch in YouTube App</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            )}
+            {/* Floating Exit Landscape button when in landscape mode */}
+            {isLandscape && (
+              <TouchableOpacity
+                style={styles.floatingLandscapeExitBtn}
+                onPress={() => {
+                  triggerHaptic('light');
+                  setIsManualLandscape(false);
                 }}
-                onError={(error: string) => {
-                  setPlayerError(error);
-                  setPlayerLoading(false);
-                }}
-                onFullScreenChange={(status: boolean) => {
-                  setIsManualLandscape(status);
-                }}
-                initialPlayerParams={{
-                  controls: true,
-                  modestbranding: true,
-                  preventFullScreen: false,
-                  rel: false,
-                  origin: 'https://thrivingskill.com',
-                }}
-                webViewProps={{
-                  androidLayerType: 'hardware',
-                  allowsInlineMediaPlayback: true,
-                  originWhitelist: ['*'],
-                  headers: {
-                    'Referer': 'https://thrivingskill.com',
-                  },
-                }}
-              />
-              {playerLoading && !playerError && (
-                <View style={styles.playerLoadingOverlay}>
-                  <ActivityIndicator size="small" color="#FF0000" />
-                  <Text style={styles.playerLoadingText}>Loading video...</Text>
-                </View>
-              )}
-              {playerError && (
-                <View style={styles.playerErrorOverlay}>
-                  <Ionicons name="play-circle-outline" size={36} color="#EF4444" />
-                  <Text style={styles.playerErrorText}>
-                    {playerError.includes('150') || playerError.includes('152') || playerError.includes('153')
-                      ? 'Protected YouTube Masterclass'
-                      : `Playback Alert (${playerError})`}
-                  </Text>
-                  <Text style={styles.playerErrorSubtext}>
-                    This YouTube video has restricted embed permissions. Tap below to watch directly in the YouTube app.
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.errorOpenBtn}
-                    onPress={handleOpenYouTube}
-                    activeOpacity={0.85}
-                    accessibilityRole="button"
-                    accessibilityLabel="Open and play video in YouTube app"
-                  >
-                    <Ionicons name="logo-youtube" size={16} color="#FFFFFF" />
-                    <Text style={styles.errorOpenBtnText}>Watch in YouTube App</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          )}
-          {/* Floating Exit Landscape button when in landscape mode */}
-          {isLandscape && (
-            <TouchableOpacity
-              style={styles.floatingLandscapeExitBtn}
-              onPress={() => {
-                triggerHaptic('light');
-                setIsManualLandscape(false);
-              }}
-              accessibilityLabel="Exit landscape mode"
-            >
-              <Ionicons name="contract-outline" size={16} color="#FFFFFF" />
-              <Text style={styles.floatingLandscapeExitText}>Exit Landscape</Text>
-            </TouchableOpacity>
-          )}
+                accessibilityLabel="Exit landscape mode"
+              >
+                <Ionicons name="contract-outline" size={16} color="#FFFFFF" />
+                <Text style={styles.floatingLandscapeExitText}>Exit Landscape</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
-      </View>
 
-      {!isLandscape && (
+        {!isLandscape && (
           <>
             {/* Fast YouTube App Fallback Bar */}
             <TouchableOpacity
@@ -316,241 +327,308 @@ export const YouTubePlayerModal: React.FC<YouTubePlayerModalProps> = ({
                 { paddingBottom: Math.max(insets.bottom + 20, 40) },
               ]}
             >
-          {/* Video Metadata Card */}
-          <View style={[styles.metaCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <Text style={[styles.videoTitle, { color: colors.text }]}>{currentVideo.title}</Text>
-
-            <View style={styles.statsRow}>
-              {currentVideo.duration ? (
-                <View style={styles.statBadge}>
-                  <Ionicons name="time-outline" size={13} color={colors.textMuted} />
-                  <Text style={[styles.statText, { color: colors.textMuted }]}>{currentVideo.duration}</Text>
-                </View>
-              ) : null}
-
-              {currentVideo.views ? (
-                <View style={styles.statBadge}>
-                  <Ionicons name="eye-outline" size={13} color={colors.textMuted} />
-                  <Text style={[styles.statText, { color: colors.textMuted }]}>{currentVideo.views}</Text>
-                </View>
-              ) : null}
-
-              {currentVideo.published ? (
-                <View style={styles.statBadge}>
-                  <Ionicons name="calendar-outline" size={13} color={colors.textMuted} />
-                  <Text style={[styles.statText, { color: colors.textMuted }]}>{currentVideo.published}</Text>
-                </View>
-              ) : null}
-            </View>
-
-            {/* Action Buttons Row */}
-            <View style={styles.actionRow}>
-              {/* Save to Watch Later Toggle */}
-              <TouchableOpacity
+              {/* Video Metadata Card */}
+              <View
                 style={[
-                  styles.saveBtn,
-                  saved
-                    ? { backgroundColor: '#102F53', borderColor: '#102F53' }
-                    : { backgroundColor: colors.background, borderColor: colors.border },
+                  styles.metaCard,
+                  { backgroundColor: colors.surface, borderColor: colors.border },
                 ]}
-                onPress={() => toggleSaveVideo(currentVideo.id)}
-                accessibilityRole="button"
-                accessibilityLabel={saved ? 'Remove from watch later' : 'Save to watch later'}
               >
-                <Ionicons
-                  name={saved ? 'bookmark' : 'bookmark-outline'}
-                  size={16}
-                  color={saved ? '#FFFFFF' : colors.text}
-                />
-                <Text
-                  style={[
-                    styles.saveBtnText,
-                    { color: saved ? '#FFFFFF' : colors.text, fontWeight: saved ? '700' : '600' },
-                  ]}
-                >
-                  {saved ? 'Saved' : 'Watch Later'}
+                <Text style={[styles.videoTitle, { color: colors.text }]}>
+                  {currentVideo.title}
                 </Text>
-              </TouchableOpacity>
 
-              {/* Share */}
-              <TouchableOpacity
-                style={[styles.shareBtn, { borderColor: colors.border, backgroundColor: colors.background }]}
-                onPress={handleShare}
-                accessibilityRole="button"
-                accessibilityLabel="Share video"
-              >
-                <Ionicons name="share-social-outline" size={16} color={colors.text} />
-                <Text style={[styles.shareBtnText, { color: colors.text }]}>Share</Text>
-              </TouchableOpacity>
+                <View style={styles.statsRow}>
+                  {currentVideo.duration ? (
+                    <View style={styles.statBadge}>
+                      <Ionicons name="time-outline" size={13} color={colors.textMuted} />
+                      <Text style={[styles.statText, { color: colors.textMuted }]}>
+                        {currentVideo.duration}
+                      </Text>
+                    </View>
+                  ) : null}
 
-              {/* Open in YouTube */}
-              <TouchableOpacity
-                style={styles.openYouTubeBtn}
-                onPress={handleOpenYouTube}
-                accessibilityRole="button"
-                accessibilityLabel="Open in YouTube"
-              >
-                <Ionicons name="logo-youtube" size={16} color="#FFFFFF" />
-                <Text style={styles.openYouTubeText}>YouTube</Text>
-              </TouchableOpacity>
-            </View>
+                  {currentVideo.views ? (
+                    <View style={styles.statBadge}>
+                      <Ionicons name="eye-outline" size={13} color={colors.textMuted} />
+                      <Text style={[styles.statText, { color: colors.textMuted }]}>
+                        {currentVideo.views}
+                      </Text>
+                    </View>
+                  ) : null}
 
-            {/* Playback Speed Controls */}
-            <View style={[styles.speedRow, { borderTopColor: colors.border }]}>
-              <View style={styles.speedLabelWrapper}>
-                <Ionicons name="speedometer-outline" size={14} color={colors.textMuted} />
-                <Text style={[styles.speedLabel, { color: colors.textMuted }]}>Speed</Text>
-              </View>
-              <View style={styles.speedPills}>
-                {[0.75, 1, 1.25, 1.5, 2].map((spd) => {
-                  const isActive = playbackSpeed === spd;
-                  return (
-                    <TouchableOpacity
-                      key={spd}
+                  {currentVideo.published ? (
+                    <View style={styles.statBadge}>
+                      <Ionicons name="calendar-outline" size={13} color={colors.textMuted} />
+                      <Text style={[styles.statText, { color: colors.textMuted }]}>
+                        {currentVideo.published}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+
+                {/* Action Buttons Row */}
+                <View style={styles.actionRow}>
+                  {/* Save to Watch Later Toggle */}
+                  <TouchableOpacity
+                    style={[
+                      styles.saveBtn,
+                      saved
+                        ? { backgroundColor: '#102F53', borderColor: '#102F53' }
+                        : { backgroundColor: colors.background, borderColor: colors.border },
+                    ]}
+                    onPress={() => toggleSaveVideo(currentVideo.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={saved ? 'Remove from watch later' : 'Save to watch later'}
+                  >
+                    <Ionicons
+                      name={saved ? 'bookmark' : 'bookmark-outline'}
+                      size={16}
+                      color={saved ? '#FFFFFF' : colors.text}
+                    />
+                    <Text
                       style={[
-                        styles.speedPill,
+                        styles.saveBtnText,
                         {
-                          backgroundColor: isActive ? colors.primary : isDark ? '#2C2C2E' : '#F3F4F6',
-                          borderColor: isActive ? colors.primary : colors.border,
+                          color: saved ? '#FFFFFF' : colors.text,
+                          fontWeight: saved ? '700' : '600',
                         },
                       ]}
-                      onPress={() => handleSetSpeed(spd)}
-                      accessibilityLabel={`Set playback speed to ${spd}x`}
                     >
-                      <Text
-                        style={[
-                          styles.speedPillText,
-                          {
-                            color: isActive ? colors.onPrimary : colors.text,
-                            fontWeight: isActive ? '800' : '600',
-                          },
-                        ]}
-                      >
-                        {spd === 1 ? '1.0x' : `${spd}x`}
+                      {saved ? 'Saved' : 'Watch Later'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {/* Share */}
+                  <TouchableOpacity
+                    style={[
+                      styles.shareBtn,
+                      { borderColor: colors.border, backgroundColor: colors.background },
+                    ]}
+                    onPress={handleShare}
+                    accessibilityRole="button"
+                    accessibilityLabel="Share video"
+                  >
+                    <Ionicons name="share-social-outline" size={16} color={colors.text} />
+                    <Text style={[styles.shareBtnText, { color: colors.text }]}>Share</Text>
+                  </TouchableOpacity>
+
+                  {/* Open in YouTube */}
+                  <TouchableOpacity
+                    style={styles.openYouTubeBtn}
+                    onPress={handleOpenYouTube}
+                    accessibilityRole="button"
+                    accessibilityLabel="Open in YouTube"
+                  >
+                    <Ionicons name="logo-youtube" size={16} color="#FFFFFF" />
+                    <Text style={styles.openYouTubeText}>YouTube</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Playback Speed Controls */}
+                <View style={[styles.speedRow, { borderTopColor: colors.border }]}>
+                  <View style={styles.speedLabelWrapper}>
+                    <Ionicons name="speedometer-outline" size={14} color={colors.textMuted} />
+                    <Text style={[styles.speedLabel, { color: colors.textMuted }]}>Speed</Text>
+                  </View>
+                  <View style={styles.speedPills}>
+                    {[0.75, 1, 1.25, 1.5, 2].map((spd) => {
+                      const isActive = playbackSpeed === spd;
+                      return (
+                        <TouchableOpacity
+                          key={spd}
+                          style={[
+                            styles.speedPill,
+                            {
+                              backgroundColor: isActive
+                                ? colors.primary
+                                : isDark
+                                  ? '#2C2C2E'
+                                  : '#F3F4F6',
+                              borderColor: isActive ? colors.primary : colors.border,
+                            },
+                          ]}
+                          onPress={() => handleSetSpeed(spd)}
+                          accessibilityLabel={`Set playback speed to ${spd}x`}
+                        >
+                          <Text
+                            style={[
+                              styles.speedPillText,
+                              {
+                                color: isActive ? colors.onPrimary : colors.text,
+                                fontWeight: isActive ? '800' : '600',
+                              },
+                            ]}
+                          >
+                            {spd === 1 ? '1.0x' : `${spd}x`}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              </View>
+
+              {/* Course Cross-Linking Card (Free-to-Paid Conversion) */}
+              {relatedCourse && onNavigateToCourse && (
+                <View
+                  style={[
+                    styles.coursePromoCard,
+                    {
+                      backgroundColor: isDark ? '#16283C' : '#EEF6FF',
+                      borderColor: colors.primary,
+                    },
+                  ]}
+                >
+                  <View style={styles.promoHeaderRow}>
+                    <View style={styles.badgePill}>
+                      <Ionicons name="school" size={13} color="#059669" />
+                      <Text style={styles.badgePillText}>FULL ACCREDITED COURSE</Text>
+                    </View>
+                    <Text style={styles.certificateTag}>Includes Certificate</Text>
+                  </View>
+
+                  <Text style={[styles.coursePromoTitle, { color: colors.text }]}>
+                    {relatedCourse.title}
+                  </Text>
+                  <Text
+                    style={[styles.coursePromoSub, { color: colors.textMuted }]}
+                    numberOfLines={2}
+                  >
+                    {relatedCourse.subtitle}
+                  </Text>
+
+                  <View style={styles.courseMetaRow}>
+                    <View style={styles.courseMetaItem}>
+                      <Ionicons name="star" size={13} color={colors.starColor} />
+                      <Text style={[styles.courseMetaText, { color: colors.text }]}>
+                        {relatedCourse.rating}
                       </Text>
+                    </View>
+                    <Text style={styles.courseMetaDot}>•</Text>
+                    <View style={styles.courseMetaItem}>
+                      <Ionicons name="time-outline" size={13} color={colors.textMuted} />
+                      <Text style={[styles.courseMetaText, { color: colors.textMuted }]}>
+                        {relatedCourse.durationHours} hrs
+                      </Text>
+                    </View>
+                    <Text style={styles.courseMetaDot}>•</Text>
+                    <View style={styles.courseMetaItem}>
+                      <Ionicons name="people-outline" size={13} color={colors.textMuted} />
+                      <Text style={[styles.courseMetaText, { color: colors.textMuted }]}>
+                        {relatedCourse.enrolledCount} enrolled
+                      </Text>
+                    </View>
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.viewCourseBtn}
+                    onPress={handleCoursePress}
+                    accessibilityRole="button"
+                    accessibilityLabel="Enroll in full course and syllabus"
+                  >
+                    <Text style={styles.viewCourseBtnText}>Enroll in Full Course & Syllabus</Text>
+                    <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* Channel Banner */}
+              <TouchableOpacity
+                style={[
+                  styles.channelCard,
+                  { backgroundColor: colors.surface, borderColor: colors.border },
+                ]}
+                onPress={handleOpenChannel}
+                accessibilityRole="button"
+                accessibilityLabel={`Visit ${YOUTUBE_CHANNEL.name} channel`}
+              >
+                <View style={styles.channelAvatar}>
+                  <Ionicons name="logo-youtube" size={24} color="#FF0000" />
+                </View>
+                <View style={styles.channelInfo}>
+                  <Text style={[styles.channelName, { color: colors.text }]}>
+                    {YOUTUBE_CHANNEL.name}
+                  </Text>
+                  <Text style={[styles.channelHandle, { color: colors.textMuted }]}>
+                    {YOUTUBE_CHANNEL.handle}
+                  </Text>
+                </View>
+                <View style={styles.subscribeBtn}>
+                  <Text style={styles.subscribeText}>Visit Channel</Text>
+                </View>
+              </TouchableOpacity>
+
+              {/* More Videos from Channel */}
+              <View style={styles.relatedSection}>
+                <View style={styles.sectionHeaderRow}>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                    More Masterclasses
+                  </Text>
+                  <Text style={[styles.sectionCount, { color: colors.textMuted }]}>
+                    {relatedVideos.length} videos
+                  </Text>
+                </View>
+
+                {relatedVideos.slice(0, 15).map((rel) => {
+                  return (
+                    <TouchableOpacity
+                      key={rel.id}
+                      style={[
+                        styles.relatedCard,
+                        { backgroundColor: colors.surface, borderColor: colors.border },
+                      ]}
+                      onPress={() => handleSelectRelated(rel)}
+                      activeOpacity={0.8}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Play masterclass: ${rel.title}`}
+                    >
+                      <View style={styles.relatedThumbContainer}>
+                        <Image
+                          source={getSafeImageSource(rel.thumbnail)}
+                          style={styles.relatedThumb}
+                          {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+                        />
+                        {rel.duration ? (
+                          <View style={styles.relatedDurationBadge}>
+                            <Text style={styles.durationBadgeText}>{rel.duration}</Text>
+                          </View>
+                        ) : null}
+                        <View style={styles.playOverlayMini}>
+                          <Ionicons name="play" size={14} color="#FFFFFF" />
+                        </View>
+                      </View>
+
+                      <View style={styles.relatedContent}>
+                        <Text
+                          style={[styles.relatedTitle, { color: colors.text }]}
+                          numberOfLines={2}
+                        >
+                          {rel.title}
+                        </Text>
+                        <View style={styles.relatedMeta}>
+                          {rel.views ? (
+                            <Text style={[styles.relatedMetaText, { color: colors.textMuted }]}>
+                              {rel.views}
+                            </Text>
+                          ) : null}
+                          {rel.views && rel.published ? (
+                            <Text style={[styles.relatedMetaDot, { color: colors.textMuted }]}>
+                              •
+                            </Text>
+                          ) : null}
+                          {rel.published ? (
+                            <Text style={[styles.relatedMetaText, { color: colors.textMuted }]}>
+                              {rel.published}
+                            </Text>
+                          ) : null}
+                        </View>
+                      </View>
                     </TouchableOpacity>
                   );
                 })}
               </View>
-            </View>
-          </View>
-
-          {/* Course Cross-Linking Card (Free-to-Paid Conversion) */}
-          {relatedCourse && onNavigateToCourse && (
-            <View style={[styles.coursePromoCard, { backgroundColor: isDark ? '#16283C' : '#EEF6FF', borderColor: colors.primary }]}>
-              <View style={styles.promoHeaderRow}>
-                <View style={styles.badgePill}>
-                  <Ionicons name="school" size={13} color="#059669" />
-                  <Text style={styles.badgePillText}>FULL ACCREDITED COURSE</Text>
-                </View>
-                <Text style={styles.certificateTag}>Includes Certificate</Text>
-              </View>
-
-              <Text style={[styles.coursePromoTitle, { color: colors.text }]}>
-                {relatedCourse.title}
-              </Text>
-              <Text style={[styles.coursePromoSub, { color: colors.textMuted }]} numberOfLines={2}>
-                {relatedCourse.subtitle}
-              </Text>
-
-              <View style={styles.courseMetaRow}>
-                <View style={styles.courseMetaItem}>
-                  <Ionicons name="star" size={13} color={colors.starColor} />
-                  <Text style={[styles.courseMetaText, { color: colors.text }]}>{relatedCourse.rating}</Text>
-                </View>
-                <Text style={styles.courseMetaDot}>•</Text>
-                <View style={styles.courseMetaItem}>
-                  <Ionicons name="time-outline" size={13} color={colors.textMuted} />
-                  <Text style={[styles.courseMetaText, { color: colors.textMuted }]}>{relatedCourse.durationHours} hrs</Text>
-                </View>
-                <Text style={styles.courseMetaDot}>•</Text>
-                <View style={styles.courseMetaItem}>
-                  <Ionicons name="people-outline" size={13} color={colors.textMuted} />
-                  <Text style={[styles.courseMetaText, { color: colors.textMuted }]}>{relatedCourse.enrolledCount} enrolled</Text>
-                </View>
-              </View>
-
-              <TouchableOpacity
-                style={styles.viewCourseBtn}
-                onPress={handleCoursePress}
-                accessibilityRole="button"
-                accessibilityLabel="Enroll in full course and syllabus"
-              >
-                <Text style={styles.viewCourseBtnText}>Enroll in Full Course & Syllabus</Text>
-                <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {/* Channel Banner */}
-          <TouchableOpacity
-            style={[styles.channelCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
-            onPress={handleOpenChannel}
-            accessibilityRole="button"
-            accessibilityLabel={`Visit ${YOUTUBE_CHANNEL.name} channel`}
-          >
-            <View style={styles.channelAvatar}>
-              <Ionicons name="logo-youtube" size={24} color="#FF0000" />
-            </View>
-            <View style={styles.channelInfo}>
-              <Text style={[styles.channelName, { color: colors.text }]}>{YOUTUBE_CHANNEL.name}</Text>
-              <Text style={[styles.channelHandle, { color: colors.textMuted }]}>{YOUTUBE_CHANNEL.handle}</Text>
-            </View>
-            <View style={styles.subscribeBtn}>
-              <Text style={styles.subscribeText}>Visit Channel</Text>
-            </View>
-          </TouchableOpacity>
-
-          {/* More Videos from Channel */}
-          <View style={styles.relatedSection}>
-            <View style={styles.sectionHeaderRow}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>More Masterclasses</Text>
-              <Text style={[styles.sectionCount, { color: colors.textMuted }]}>
-                {relatedVideos.length} videos
-              </Text>
-            </View>
-
-            {relatedVideos.slice(0, 15).map((rel) => {
-              return (
-                <TouchableOpacity
-                  key={rel.id}
-                  style={[styles.relatedCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
-                  onPress={() => handleSelectRelated(rel)}
-                  activeOpacity={0.8}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Play masterclass: ${rel.title}`}
-                >
-                  <View style={styles.relatedThumbContainer}>
-                    <Image
-                      source={getSafeImageSource(rel.thumbnail)}
-                      style={styles.relatedThumb}
-                      {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
-                    />
-                    {rel.duration ? (
-                      <View style={styles.relatedDurationBadge}>
-                        <Text style={styles.durationBadgeText}>{rel.duration}</Text>
-                      </View>
-                    ) : null}
-                    <View style={styles.playOverlayMini}>
-                      <Ionicons name="play" size={14} color="#FFFFFF" />
-                    </View>
-                  </View>
-
-                  <View style={styles.relatedContent}>
-                    <Text style={[styles.relatedTitle, { color: colors.text }]} numberOfLines={2}>
-                      {rel.title}
-                    </Text>
-                    <View style={styles.relatedMeta}>
-                      {rel.views ? <Text style={[styles.relatedMetaText, { color: colors.textMuted }]}>{rel.views}</Text> : null}
-                      {rel.views && rel.published ? <Text style={[styles.relatedMetaDot, { color: colors.textMuted }]}>•</Text> : null}
-                      {rel.published ? <Text style={[styles.relatedMetaText, { color: colors.textMuted }]}>{rel.published}</Text> : null}
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </ScrollView>
+            </ScrollView>
           </>
         )}
       </View>

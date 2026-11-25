@@ -54,7 +54,12 @@ export const EbookModal: React.FC<EbookModalProps> = ({ visible, onClose }) => {
   };
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
       <View style={[styles.container, { backgroundColor: colors.background }]}>
         {/* Header */}
         <View
@@ -68,7 +73,12 @@ export const EbookModal: React.FC<EbookModalProps> = ({ visible, onClose }) => {
           ]}
         >
           <View style={styles.headerLeft}>
-            <View style={[styles.iconWrap, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.15)' : '#FFFBEB' }]}>
+            <View
+              style={[
+                styles.iconWrap,
+                { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.15)' : '#FFFBEB' },
+              ]}
+            >
               <Ionicons name="book" size={20} color="#FFB606" />
             </View>
             <View>
@@ -93,9 +103,24 @@ export const EbookModal: React.FC<EbookModalProps> = ({ visible, onClose }) => {
         </View>
 
         {/* Search & Filter Bar */}
-        <View style={[styles.searchContainer, { backgroundColor: colors.surfaceCard, borderBottomColor: colors.border }]}>
-          <View style={[styles.searchInputWrapper, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
-            <Ionicons name="search-outline" size={18} color={colors.textMuted} style={{ marginRight: 8 }} />
+        <View
+          style={[
+            styles.searchContainer,
+            { backgroundColor: colors.surfaceCard, borderBottomColor: colors.border },
+          ]}
+        >
+          <View
+            style={[
+              styles.searchInputWrapper,
+              { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+            ]}
+          >
+            <Ionicons
+              name="search-outline"
+              size={18}
+              color={colors.textMuted}
+              style={{ marginRight: 8 }}
+            />
             <TextInput
               style={[styles.searchInput, { color: colors.text }]}
               placeholder={isBangla ? 'ই-বুক অনুসন্ধান করুন...' : 'Search handbooks & guides...'}
@@ -107,7 +132,11 @@ export const EbookModal: React.FC<EbookModalProps> = ({ visible, onClose }) => {
           </View>
 
           {/* Category Filter Pills */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryScroll}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoryScroll}
+          >
             {categories.map((cat) => {
               const isActive = selectedCategory === cat;
               return (
@@ -130,7 +159,10 @@ export const EbookModal: React.FC<EbookModalProps> = ({ visible, onClose }) => {
                   <Text
                     style={[
                       styles.categoryPillText,
-                      { color: isActive ? colors.onPrimary : colors.textMuted, fontWeight: isActive ? '700' : '500' },
+                      {
+                        color: isActive ? colors.onPrimary : colors.textMuted,
+                        fontWeight: isActive ? '700' : '500',
+                      },
                     ]}
                   >
                     {cat === 'all' ? (isBangla ? 'সকল বিষয়' : 'All Topics') : cat}
@@ -142,7 +174,12 @@ export const EbookModal: React.FC<EbookModalProps> = ({ visible, onClose }) => {
         </View>
 
         {/* eBook Items */}
-        <ScrollView contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 24) + 20 }]}>
+        <ScrollView
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: Math.max(insets.bottom, 24) + 20 },
+          ]}
+        >
           {filteredEbooks.map((book) => (
             <View
               key={book.id}
@@ -156,13 +193,29 @@ export const EbookModal: React.FC<EbookModalProps> = ({ visible, onClose }) => {
               ]}
             >
               <View style={styles.cardHeader}>
-                <View style={[styles.bookIconBadge, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : '#EFF6FF' }]}>
-                  <Ionicons name="document-text" size={24} color={isDark ? colors.primary : '#102F53'} />
+                <View
+                  style={[
+                    styles.bookIconBadge,
+                    { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : '#EFF6FF' },
+                  ]}
+                >
+                  <Ionicons
+                    name="document-text"
+                    size={24}
+                    color={isDark ? colors.primary : '#102F53'}
+                  />
                 </View>
                 <View style={{ flex: 1 }}>
                   <View style={styles.categoryBadgeRow}>
-                    <View style={[styles.catBadge, { backgroundColor: isDark ? '#1C2E46' : '#E8EEF5' }]}>
-                      <Text style={[styles.catBadgeText, { color: isDark ? colors.primary : '#102F53' }]}>
+                    <View
+                      style={[styles.catBadge, { backgroundColor: isDark ? '#1C2E46' : '#E8EEF5' }]}
+                    >
+                      <Text
+                        style={[
+                          styles.catBadgeText,
+                          { color: isDark ? colors.primary : '#102F53' },
+                        ]}
+                      >
                         {book.category}
                       </Text>
                     </View>
@@ -193,7 +246,12 @@ export const EbookModal: React.FC<EbookModalProps> = ({ visible, onClose }) => {
                   accessibilityRole="button"
                   accessibilityLabel={isBangla ? `${book.title} পড়ুন` : `Read ${book.title}`}
                 >
-                  <Ionicons name="open-outline" size={16} color={colors.onAccent} style={{ marginRight: 6 }} />
+                  <Ionicons
+                    name="open-outline"
+                    size={16}
+                    color={colors.onAccent}
+                    style={{ marginRight: 6 }}
+                  />
                   <Text style={[styles.readBtnText, { color: colors.onAccent }]}>
                     {isBangla ? 'ই-বুক পড়ুন / ডাউনলোড' : 'Read & Download Free'}
                   </Text>

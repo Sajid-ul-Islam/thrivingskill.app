@@ -38,11 +38,13 @@ export class AuthService {
         // Fallback if user profile endpoint is restricted
       }
 
-      const roles: string[] = Array.isArray(userProfile?.roles) && userProfile.roles.length > 0
-        ? userProfile.roles
-        : ['subscriber'];
+      const roles: string[] =
+        Array.isArray(userProfile?.roles) && userProfile.roles.length > 0
+          ? userProfile.roles
+          : ['subscriber'];
 
-      const siteHost = Env.SITE_URL.replace(/^https?:\/\//i, '').split('/')[0] || 'thrivingskill.com';
+      const siteHost =
+        Env.SITE_URL.replace(/^https?:\/\//i, '').split('/')[0] || 'thrivingskill.com';
 
       return {
         id: userProfile?.id || data.user_id || 'wp-user',
@@ -67,7 +69,8 @@ export class AuthService {
           err?.code === 'REQUEST_TIMEOUT')
       ) {
         const cleanUser = username.trim();
-        const siteHost = Env.SITE_URL.replace(/^https?:\/\//i, '').split('/')[0] || 'thrivingskill.com';
+        const siteHost =
+          Env.SITE_URL.replace(/^https?:\/\//i, '').split('/')[0] || 'thrivingskill.com';
         const fallbackToken = `tsl_web_dev_jwt_${Date.now()}`;
         HttpClient.setAuthToken(fallbackToken);
         return {
@@ -196,7 +199,11 @@ export class AuthService {
   /**
    * Complete password reset or new user password setup via WordPress action=resetpass
    */
-  static async confirmPasswordReset(login: string, key: string, newPassword: string): Promise<boolean> {
+  static async confirmPasswordReset(
+    login: string,
+    key: string,
+    newPassword: string
+  ): Promise<boolean> {
     const data = new URLSearchParams({
       action: 'resetpass',
       rp_key: key.trim(),
@@ -220,7 +227,9 @@ export class AuthService {
 
     const redirectUrl = response.url || '';
     if (redirectUrl.includes('error=invalidkey') || redirectUrl.includes('error=expiredkey')) {
-      throw new Error('This password reset link is invalid or has expired. Please request a new link.');
+      throw new Error(
+        'This password reset link is invalid or has expired. Please request a new link.'
+      );
     }
     if (redirectUrl.includes('error=')) {
       throw new Error('Could not reset password. Please check your reset link and try again.');
@@ -232,7 +241,9 @@ export class AuthService {
   /**
    * Optional helper: Send 6-digit SMS OTP to Bangladeshi mobile number
    */
-  static async sendPhoneOtp(phone: string): Promise<{ success: boolean; message: string; testOtp?: string }> {
+  static async sendPhoneOtp(
+    phone: string
+  ): Promise<{ success: boolean; message: string; testOtp?: string }> {
     const cleanPhone = phone.trim().replace(/[\s-]/g, '');
     try {
       const res = await HttpClient.post<{ success: boolean; message: string; testOtp?: string }>(
@@ -252,11 +263,7 @@ export class AuthService {
   /**
    * Verify SMS OTP and authenticate user (CR-04)
    */
-  static async verifyPhoneOtp(
-    phone: string,
-    otp: string,
-    fullName?: string
-  ): Promise<WpUser> {
+  static async verifyPhoneOtp(phone: string, otp: string, fullName?: string): Promise<WpUser> {
     const cleanPhone = phone.trim().replace(/[\s-]/g, '');
     const cleanOtp = otp.trim();
 
@@ -284,7 +291,9 @@ export class AuthService {
         roles: ['subscriber'],
       };
     } catch (err: any) {
-      throw new Error(err?.message || 'OTP verification failed. Please check the code and try again.');
+      throw new Error(
+        err?.message || 'OTP verification failed. Please check the code and try again.'
+      );
     }
   }
 }

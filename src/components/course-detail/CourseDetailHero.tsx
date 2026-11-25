@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -52,9 +45,10 @@ export const CourseDetailHero: React.FC<CourseDetailHeroProps> = ({
   }, [course.thumbnail]);
 
   const fallbackHeroIcon = require('../../../assets/icon.png');
-  const heroImageSource = heroThumbError || !course.thumbnail
-    ? fallbackHeroIcon
-    : getSafeImageSource(course.thumbnail, fallbackHeroIcon);
+  const heroImageSource =
+    heroThumbError || !course.thumbnail
+      ? fallbackHeroIcon
+      : getSafeImageSource(course.thumbnail, fallbackHeroIcon);
 
   const previewLesson =
     course.modules?.flatMap((m) => m.lessons || []).find((l) => l.isFreePreview) ||
@@ -101,8 +95,8 @@ export const CourseDetailHero: React.FC<CourseDetailHeroProps> = ({
             isEnrolled || isAdmin
               ? 'Resume course lecture'
               : trailerVideo
-              ? 'Watch Video Trailer'
-              : 'Watch Free Preview'
+                ? 'Watch Video Trailer'
+                : 'Watch Free Preview'
           }
         >
           <Ionicons name="play" size={28} color="#FFFFFF" />
@@ -112,12 +106,12 @@ export const CourseDetailHero: React.FC<CourseDetailHeroProps> = ({
                 ? 'কোর্স শুরু / চালিয়ে যান'
                 : 'Resume Course'
               : trailerVideo
-              ? isBangla
-                ? 'ট্রেইলার ভিডিও দেখুন'
-                : 'Watch Video Trailer'
-              : isBangla
-              ? 'ফ্রি প্রিভিউ দেখুন'
-              : 'Watch Free Preview'}
+                ? isBangla
+                  ? 'ট্রেইলার ভিডিও দেখুন'
+                  : 'Watch Video Trailer'
+                : isBangla
+                  ? 'ফ্রি প্রিভিউ দেখুন'
+                  : 'Watch Free Preview'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -135,7 +129,9 @@ export const CourseDetailHero: React.FC<CourseDetailHeroProps> = ({
           onPress={() => onPlayTrailer && onPlayTrailer(trailerVideo)}
           activeOpacity={0.88}
           accessibilityRole="button"
-          accessibilityLabel={isBangla ? 'ফ্রি কোর্স ট্রেইলার ভিডিও দেখুন' : 'Watch Free Course Trailer'}
+          accessibilityLabel={
+            isBangla ? 'ফ্রি কোর্স ট্রেইলার ভিডিও দেখুন' : 'Watch Free Course Trailer'
+          }
         >
           <View style={styles.trailerThumbWrapper}>
             <Image
@@ -175,12 +171,15 @@ export const CourseDetailHero: React.FC<CourseDetailHeroProps> = ({
       {/* Main Course Info Header */}
       <View style={styles.mainInfo}>
         <Text style={[styles.courseTitle, { color: colors.text }]}>{course.title}</Text>
-        <Text style={[styles.courseSubtitle, { color: colors.textMuted }]}>
-          {course.subtitle}
-        </Text>
+        <Text style={[styles.courseSubtitle, { color: colors.textMuted }]}>{course.subtitle}</Text>
 
         {/* Stats Bar */}
-        <View style={[styles.statsBar, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.statsBar,
+            { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+          ]}
+        >
           <View style={styles.statCell}>
             <Ionicons name="star" size={16} color={colors.starColor} />
             <Text style={[styles.statValue, { color: colors.text }]} numberOfLines={1}>
@@ -218,7 +217,12 @@ export const CourseDetailHero: React.FC<CourseDetailHeroProps> = ({
 
         {/* Highlights */}
         {course.highlights && course.highlights.length > 0 && (
-          <View style={[styles.highlightsCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+          <View
+            style={[
+              styles.highlightsCard,
+              { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+            ]}
+          >
             <Text style={[styles.highlightsHeading, { color: colors.text }]}>
               {isBangla ? 'যা যা শিখবেন' : "What You'll Master"}
             </Text>
@@ -234,45 +238,86 @@ export const CourseDetailHero: React.FC<CourseDetailHeroProps> = ({
         )}
 
         {/* Institutional Trust & Partners Strip */}
-        <View style={[styles.trustStripCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.trustStripCard,
+            { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+          ]}
+        >
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 }}>
             <Ionicons name="shield-checkmark" size={15} color={colors.primary} />
-            <Text style={[styles.trustStripTitle, { color: colors.primary, flex: 1 }]} numberOfLines={2}>
-              {isBangla ? 'শীর্ষ অ্যাকাডেমিক ও কর্পোরেট পার্টনারদের আস্থা' : 'TRUSTED BY TOP ACADEMIC & ENTERPRISE PARTNERS'}
+            <Text
+              style={[styles.trustStripTitle, { color: colors.primary, flex: 1 }]}
+              numberOfLines={2}
+            >
+              {isBangla
+                ? 'শীর্ষ অ্যাকাডেমিক ও কর্পোরেট পার্টনারদের আস্থা'
+                : 'TRUSTED BY TOP ACADEMIC & ENTERPRISE PARTNERS'}
             </Text>
           </View>
 
           <View style={styles.partnerLogosRow}>
-            <View style={[styles.partnerTag, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+            <View
+              style={[
+                styles.partnerTag,
+                { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+              ]}
+            >
               <Ionicons name="school-outline" size={13} color={colors.text} />
-              <Text style={[styles.partnerTagText, { color: colors.text }]}>Dhaka University (DU)</Text>
+              <Text style={[styles.partnerTagText, { color: colors.text }]}>
+                Dhaka University (DU)
+              </Text>
             </View>
-            <View style={[styles.partnerTag, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+            <View
+              style={[
+                styles.partnerTag,
+                { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+              ]}
+            >
               <Ionicons name="people-outline" size={13} color={colors.text} />
               <Text style={[styles.partnerTagText, { color: colors.text }]}>DUCSU</Text>
             </View>
-            <View style={[styles.partnerTag, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+            <View
+              style={[
+                styles.partnerTag,
+                { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+              ]}
+            >
               <Ionicons name="library-outline" size={13} color={colors.text} />
-              <Text style={[styles.partnerTagText, { color: colors.text }]}>North South Univ (NSU)</Text>
+              <Text style={[styles.partnerTagText, { color: colors.text }]}>
+                North South Univ (NSU)
+              </Text>
             </View>
           </View>
 
           <View style={styles.trustFeaturesRow}>
             <View style={styles.trustFeatureItem}>
               <Ionicons name="infinite-outline" size={13} color={colors.secondary} />
-              <Text style={[styles.trustFeatureText, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
+              <Text
+                style={[styles.trustFeatureText, { color: colors.textMuted }]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
                 {isBangla ? 'আজীবন অ্যাক্সেস' : 'Lifetime Access'}
               </Text>
             </View>
             <View style={styles.trustFeatureItem}>
               <Ionicons name="phone-portrait-outline" size={13} color={colors.primary} />
-              <Text style={[styles.trustFeatureText, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
+              <Text
+                style={[styles.trustFeatureText, { color: colors.textMuted }]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
                 {isBangla ? 'মোবাইল ও ওয়েব' : 'Mobile & Web'}
               </Text>
             </View>
             <View style={styles.trustFeatureItem}>
               <Ionicons name="ribbon-outline" size={13} color="#10B981" />
-              <Text style={[styles.trustFeatureText, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
+              <Text
+                style={[styles.trustFeatureText, { color: colors.textMuted }]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
                 {isBangla ? 'ভেরিফাইড সার্টিফিকেট' : 'Verified Credential'}
               </Text>
             </View>
@@ -280,9 +325,19 @@ export const CourseDetailHero: React.FC<CourseDetailHeroProps> = ({
         </View>
 
         {/* Official Certificate Card & Preview Trigger */}
-        <View style={[styles.certPromoCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.certPromoCard,
+            { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+          ]}
+        >
           <View style={styles.certPromoLeft}>
-            <View style={[styles.certIconBg, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2' }]}>
+            <View
+              style={[
+                styles.certIconBg,
+                { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.16)' : '#FEE2E2' },
+              ]}
+            >
               <Ionicons name="ribbon" size={20} color="#E34234" />
             </View>
             <View style={{ flex: 1, minWidth: 0 }}>
@@ -301,14 +356,8 @@ export const CourseDetailHero: React.FC<CourseDetailHeroProps> = ({
             style={[
               styles.certPreviewBtn,
               {
-                backgroundColor:
-                  isCompleted && !hasReviewed
-                    ? '#FEF2F2'
-                    : colors.surfaceSubtle,
-                borderColor:
-                  isCompleted && !hasReviewed
-                    ? '#EF4444'
-                    : colors.border,
+                backgroundColor: isCompleted && !hasReviewed ? '#FEF2F2' : colors.surfaceSubtle,
+                borderColor: isCompleted && !hasReviewed ? '#EF4444' : colors.border,
               },
             ]}
             onPress={() => {
@@ -320,7 +369,9 @@ export const CourseDetailHero: React.FC<CourseDetailHeroProps> = ({
             }}
             accessibilityRole="button"
             accessibilityLabel={
-              isBangla ? 'সার্টিফিকেট প্রিভিউ অথবা আনলক করতে রিভিউ' : 'Certificate preview or review to unlock'
+              isBangla
+                ? 'সার্টিফিকেট প্রিভিউ অথবা আনলক করতে রিভিউ'
+                : 'Certificate preview or review to unlock'
             }
           >
             <Ionicons
@@ -339,8 +390,8 @@ export const CourseDetailHero: React.FC<CourseDetailHeroProps> = ({
                   ? 'রিভিউ দিয়ে আনলক'
                   : 'Review to Unlock'
                 : isBangla
-                ? 'প্রিভিউ'
-                : 'Preview'}
+                  ? 'প্রিভিউ'
+                  : 'Preview'}
             </Text>
           </TouchableOpacity>
         </View>

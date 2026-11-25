@@ -1,11 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import {
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Animated,
-  View,
-} from 'react-native';
+import { Text, StyleSheet, TouchableOpacity, Animated, View } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';

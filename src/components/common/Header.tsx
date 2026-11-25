@@ -84,7 +84,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   const topInset = Math.max(
     insets.top,
-    Platform.OS === 'android' ? (RNStatusBar.currentHeight || 24) : 0
+    Platform.OS === 'android' ? RNStatusBar.currentHeight || 24 : 0
   );
 
   const backIconName = Platform.OS === 'ios' ? 'chevron-back' : 'arrow-back';
@@ -123,11 +123,17 @@ export const Header: React.FC<HeaderProps> = ({
               </SpringPressable>
 
               <View style={styles.titleContainer}>
-                <Text style={[typography.h4, styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
+                <Text
+                  style={[typography.h4, styles.headerTitle, { color: colors.text }]}
+                  numberOfLines={1}
+                >
                   {title || 'Thriving Skills'}
                 </Text>
                 {subtitle && (
-                  <Text style={[typography.caption, styles.headerSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
+                  <Text
+                    style={[typography.caption, styles.headerSubtitle, { color: colors.textMuted }]}
+                    numberOfLines={1}
+                  >
                     {subtitle}
                   </Text>
                 )}
@@ -200,7 +206,9 @@ export const Header: React.FC<HeaderProps> = ({
               <Ionicons name="notifications-outline" size={20} color={colors.text} />
               {unreadNotificationsCount > 0 && (
                 <View style={[styles.notifBadge, { backgroundColor: colors.accent }]}>
-                  <Text style={[styles.notifBadgeText, { color: colors.onAccent }]}>{unreadNotificationsCount}</Text>
+                  <Text style={[styles.notifBadgeText, { color: colors.onAccent }]}>
+                    {unreadNotificationsCount}
+                  </Text>
                 </View>
               )}
             </SpringPressable>
@@ -208,10 +216,7 @@ export const Header: React.FC<HeaderProps> = ({
         </View>
       </View>
 
-      <OfflineBanner
-        onRetry={refreshCourses}
-        onOpenOfflineContent={onOpenOfflineContent}
-      />
+      <OfflineBanner onRetry={refreshCourses} onOpenOfflineContent={onOpenOfflineContent} />
     </View>
   );
 };

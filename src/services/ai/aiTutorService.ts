@@ -66,7 +66,13 @@ export class AiTutorService {
     const geminiKey = Env.GEMINI_API_KEY;
     if (geminiKey) {
       try {
-        const response = await this.callGeminiApi(trimmed, context, conversationHistory, isBangla, geminiKey);
+        const response = await this.callGeminiApi(
+          trimmed,
+          context,
+          conversationHistory,
+          isBangla,
+          geminiKey
+        );
         if (response) return response;
       } catch (err) {
         // Fall back to contextual engine if network or quota issue arises
@@ -90,10 +96,7 @@ export class AiTutorService {
   /**
    * Generates on-device smart reply options for the current student.
    */
-  static async getSmartReplies(
-    lastMessage: string,
-    isBangla: boolean = false
-  ): Promise<string[]> {
+  static async getSmartReplies(lastMessage: string, isBangla: boolean = false): Promise<string[]> {
     return GeminiNanoService.generateSmartReplies(lastMessage, { isBangla });
   }
 
@@ -198,15 +201,19 @@ Guidelines:
       qLower.includes('point')
     ) {
       if (isBangla) {
-        return `📌 **"${context.lessonTitle}" লেকচারের ৩টি মূল পয়েন্ট:**\n\n` +
+        return (
+          `📌 **"${context.lessonTitle}" লেকচারের ৩টি মূল পয়েন্ট:**\n\n` +
           `1. **মূল দর্শন:** ${context.instructorName}-এর নির্দেশনায় এই পাঠে ${context.moduleTitle}-এর কেন্দ্রীয় কৌশল ও প্রায়োগিক ফ্রেমওয়ার্ক শেখানো হয়েছে।\n` +
           `2. **কর্মক্ষেত্রের দক্ষতা:** তত্ত্বীয় জ্ঞানের বাইরে সরাসরি প্রফেশনাল এক্সিকিউটিভ পরিবেশে সিদ্ধান্ত গ্রহণে এই পদ্ধতির সরাসরি ভূমিকা রয়েছে।\n` +
-          `3. **পরবর্তী পদক্ষেপ:** পরবর্তী লেকচারে যাওয়ার পূর্বে এই পাঠের টুলস ও এক্সারসাইজ নিজের ক্ষেত্রে প্রয়োগ করে যাচাই করে নিন।`;
+          `3. **পরবর্তী পদক্ষেপ:** পরবর্তী লেকচারে যাওয়ার পূর্বে এই পাঠের টুলস ও এক্সারসাইজ নিজের ক্ষেত্রে প্রয়োগ করে যাচাই করে নিন।`
+        );
       }
-      return `📌 **Core Summary for "${context.lessonTitle}":**\n\n` +
+      return (
+        `📌 **Core Summary for "${context.lessonTitle}":**\n\n` +
         `1. **Core Concept:** Led by mentor ${context.instructorName}, this lesson outlines key execution principles within "${context.moduleTitle}".\n` +
         `2. **Workplace Application:** Beyond theory, this lecture focuses on actionable frameworks you can implement directly in executive workflows.\n` +
-        `3. **Key Takeaway:** Solidify your understanding by bookmarking key timestamps and reviewing the active recall notes before advancing to the next module.`;
+        `3. **Key Takeaway:** Solidify your understanding by bookmarking key timestamps and reviewing the active recall notes before advancing to the next module.`
+      );
     }
 
     // 2. Real-world application intent
@@ -219,15 +226,19 @@ Guidelines:
       qLower.includes('workplace')
     ) {
       if (isBangla) {
-        return `💼 **বাস্তব কর্মক্ষেত্রে প্রয়োগের উপায়:**\n\n` +
+        return (
+          `💼 **বাস্তব কর্মক্ষেত্রে প্রয়োগের উপায়:**\n\n` +
           `• **দৈনন্দিন রুটিন:** "${context.lessonTitle}"-এ আলোচিত কৌশলটি আপনার দৈনন্দিন কাজের সময়সূচি বা টিম মিটিংয়ে ছোট পরিসরে টেস্ট করুন।\n` +
           `• **ফলাফল নিরীক্ষণ:** কাজ শেষে পূর্বের পদ্ধতির তুলনায় সময় বা দক্ষতার পার্থক্য পরিমাপ করুন।\n` +
-          `• **দলগত আলোচনা:** টিমের সাথে এই কনসেপ্ট শেয়ার করে ফিডব্যাক নিন এবং প্রয়োজন অনুযায়ী সমন্বয় করুন।`;
+          `• **দলগত আলোচনা:** টিমের সাথে এই কনসেপ্ট শেয়ার করে ফিডব্যাক নিন এবং প্রয়োজন অনুযায়ী সমন্বয় করুন।`
+        );
       }
-      return `💼 **Real-World Workplace Application:**\n\n` +
+      return (
+        `💼 **Real-World Workplace Application:**\n\n` +
         `• **Immediate Implementation:** Apply the technique from "${context.lessonTitle}" during your next project sync or personal workflow audit.\n` +
         `• **Measure Impact:** Compare turnaround velocity and output quality against previous benchmarks.\n` +
-        `• **Team Alignment:** Share key insights with your colleagues to establish shared operational standards across your team.`;
+        `• **Team Alignment:** Share key insights with your colleagues to establish shared operational standards across your team.`
+      );
     }
 
     // 3. Quiz / Self-assessment intent
@@ -239,27 +250,35 @@ Guidelines:
       qLower.includes('exam')
     ) {
       if (isBangla) {
-        return `❓ **অনুশীলনের জন্য গুরুত্বপূর্ণ প্রশ্ন:**\n\n` +
+        return (
+          `❓ **অনুশীলনের জন্য গুরুত্বপূর্ণ প্রশ্ন:**\n\n` +
           `**প্রশ্ন:** "${context.lessonTitle}" লেকচারের প্রধান উদ্দেশ্য কী এবং এটি কীভাবে ${context.courseTitle}-এর লক্ষ্য অর্জনে সহায়তা করে?\n\n` +
-          `💡 *টিপ:* নিজের ভাষায় ১-২ লাইনে উত্তরটি লেকচার নোটস ট্যাবে লিখে রাখুন। এটি আপনার সক্রিয় স্মরণশক্তি (Active Recall) বহুগুণ বৃদ্ধি করবে!`;
+          `💡 *টিপ:* নিজের ভাষায় ১-২ লাইনে উত্তরটি লেকচার নোটস ট্যাবে লিখে রাখুন। এটি আপনার সক্রিয় স্মরণশক্তি (Active Recall) বহুগুণ বৃদ্ধি করবে!`
+        );
       }
-      return `❓ **Quick Self-Assessment Question:**\n\n` +
+      return (
+        `❓ **Quick Self-Assessment Question:**\n\n` +
         `**Question:** What is the primary operational objective of "${context.lessonTitle}", and how does it advance your mastery in "${context.courseTitle}"?\n\n` +
-        `💡 *Pro Tip:* Jot down your 2-sentence response inside the "Notes" tab to reinforce active recall and retention!`;
+        `💡 *Pro Tip:* Jot down your 2-sentence response inside the "Notes" tab to reinforce active recall and retention!`
+      );
     }
 
     // 4. General concept explanation
     if (isBangla) {
-      return `🤖 **SkillBot এআই টিউটর:**\n\n` +
+      return (
+        `🤖 **SkillBot এআই টিউটর:**\n\n` +
         `"${context.lessonTitle}" পাঠের মূল লক্ষ্য হলো আপনাকে ${context.moduleTitle}-এর ব্যবহারিক বিষয়গুলোতে দক্ষ করে তোলা।\n\n` +
         `মেন্টর ${context.instructorName} এই পাঠে যেসব বিষয় ব্যাখ্যা করেছেন তা ভালোভাবে বুঝতে ভিডিওর মূল অংশগুলো প্রয়োজনে পুনরায় শুনুন এবং যেকোনো গুরুত্বপূর্ণ মুহূর্তে নিচের '+ Note' বাটনে ট্যাপ করে নোট সংরক্ষণ করুন।\n\n` +
-        `আপনার যদি এই পাঠের কোনো সুনির্দিষ্ট বিষয় নিয়ে প্রশ্ন থাকে, আমাকে নির্দ্বিধায় জানান!`;
+        `আপনার যদি এই পাঠের কোনো সুনির্দিষ্ট বিষয় নিয়ে প্রশ্ন থাকে, আমাকে নির্দ্বিধায় জানান!`
+      );
     }
 
-    return `🤖 **SkillBot AI Tutor:**\n\n` +
+    return (
+      `🤖 **SkillBot AI Tutor:**\n\n` +
       `The core focus of "${context.lessonTitle}" is to empower you with practical mastery over "${context.moduleTitle}".\n\n` +
       `Mentor ${context.instructorName} structured this lecture around key workplace competencies. If any step is unclear, scrub back to the timestamp or tap "+ Note" to capture your observations.\n\n` +
-      `Feel free to ask for a summary, real-world examples, or specific concept clarifications!`;
+      `Feel free to ask for a summary, real-world examples, or specific concept clarifications!`
+    );
   }
 
   /**

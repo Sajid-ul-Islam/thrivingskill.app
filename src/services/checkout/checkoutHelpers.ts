@@ -44,9 +44,7 @@ export interface ResolvedCheckoutPricing {
 }
 
 export type NavigationDecision =
-  | { action: 'allow' }
-  | { action: 'open_external'; url: string }
-  | { action: 'block' };
+  { action: 'allow' } | { action: 'open_external'; url: string } | { action: 'block' };
 
 /**
  * Normalizes a site URL and returns its hostname safely.
@@ -63,7 +61,10 @@ function parseUrlSafe(rawUrl?: string | null): URL | null {
 /**
  * Checks whether a hostname belongs to Thriving Skills or an approved payment gateway.
  */
-export function isTrustedCheckoutHost(hostname: string, activeSiteUrl: string = 'https://thrivingskill.com'): boolean {
+export function isTrustedCheckoutHost(
+  hostname: string,
+  activeSiteUrl: string = 'https://thrivingskill.com'
+): boolean {
   const cleanHost = hostname.toLowerCase();
   if (!cleanHost) return false;
 
@@ -101,7 +102,9 @@ export function isTrustedCheckoutOrigin(
 /**
  * Builds the strict WebView originWhitelist covering the active site and trusted gateway domains.
  */
-export function getCheckoutOriginWhitelist(activeSiteUrl: string = 'https://thrivingskill.com'): string[] {
+export function getCheckoutOriginWhitelist(
+  activeSiteUrl: string = 'https://thrivingskill.com'
+): string[] {
   const whitelist = new Set<string>([
     'https://thrivingskill.com',
     'https://*.thrivingskill.com',
@@ -230,8 +233,8 @@ export function resolveServerCheckoutPricingAndBundle(
     serverProduct?.priceBdt !== undefined
       ? serverProduct.priceBdt
       : typeof course.priceBdt === 'number'
-      ? course.priceBdt
-      : 0;
+        ? course.priceBdt
+        : 0;
 
   // Resolve bundled courses strictly by ID from server payload first, then course object, then ID-keyed map
   let subCourses: ServerBundleCourseItem[] = [];
@@ -279,10 +282,10 @@ export function resolveServerCheckoutPricingAndBundle(
     serverProduct?.originalPriceBdt && serverProduct.originalPriceBdt > priceBdt
       ? serverProduct.originalPriceBdt
       : isBundle && sumOfSubCourses > priceBdt
-      ? sumOfSubCourses
-      : typeof course.originalPriceBdt === 'number' && course.originalPriceBdt > priceBdt
-      ? course.originalPriceBdt
-      : priceBdt;
+        ? sumOfSubCourses
+        : typeof course.originalPriceBdt === 'number' && course.originalPriceBdt > priceBdt
+          ? course.originalPriceBdt
+          : priceBdt;
 
   const discountBdt = Math.max(0, subtotalBdt - priceBdt);
   if (!discountPercent && subtotalBdt > 0 && discountBdt > 0) {

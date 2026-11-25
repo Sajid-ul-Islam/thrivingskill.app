@@ -31,11 +31,7 @@ export function isUserAdmin(user: UserProfile | WpUser | null | undefined): bool
   if (!user) return false;
   const adminRoles = new Set(['administrator', 'admin', 'editor', 'instructor']);
   if (Array.isArray(user.roles)) {
-    if (
-      user.roles.some(
-        (r) => typeof r === 'string' && adminRoles.has(r.toLowerCase().trim())
-      )
-    ) {
+    if (user.roles.some((r) => typeof r === 'string' && adminRoles.has(r.toLowerCase().trim()))) {
       return true;
     }
   }
@@ -96,13 +92,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     (async () => {
       try {
-        const [savedUser, secureToken, savedBypass, savedAltBypass, devUnlockedStr] = await Promise.all([
-          AsyncStorage.getItem(AUTH_USER_STORAGE_KEY),
-          SecureStorageService.getAuthToken(),
-          AsyncStorage.getItem(AUTH_ADMIN_BYPASS_KEY),
-          AsyncStorage.getItem(ALT_ADMIN_BYPASS_KEY),
-          AsyncStorage.getItem(AUTH_DEV_MODE_KEY),
-        ]);
+        const [savedUser, secureToken, savedBypass, savedAltBypass, devUnlockedStr] =
+          await Promise.all([
+            AsyncStorage.getItem(AUTH_USER_STORAGE_KEY),
+            SecureStorageService.getAuthToken(),
+            AsyncStorage.getItem(AUTH_ADMIN_BYPASS_KEY),
+            AsyncStorage.getItem(ALT_ADMIN_BYPASS_KEY),
+            AsyncStorage.getItem(AUTH_DEV_MODE_KEY),
+          ]);
 
         const devUnlocked = devUnlockedStr === 'true' || isDevMode;
         setDevModeUnlockedState(devUnlocked);
@@ -131,7 +128,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   parsedUser.avatar.includes('mock'))
               ) {
                 parsedUser.avatar = '';
-                AsyncStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(parsedUser)).catch(() => {});
+                AsyncStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(parsedUser)).catch(
+                  () => {}
+                );
               }
 
               // Extract persistent session token from hardware SecureStore or durable session id
@@ -206,7 +205,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isAdmin = ((isDevEffective || isAdminBypass) && isAdminBypass) || isUserAdmin(user);
   const canBypassCourseLocks = isAdmin || isDevEffective;
 
-  const saveUserSession = async (loggedInUser: WpUser | UserProfile, dismissModal: boolean = true) => {
+  const saveUserSession = async (
+    loggedInUser: WpUser | UserProfile,
+    dismissModal: boolean = true
+  ) => {
     const userToken = loggedInUser.token || `ts_session_${loggedInUser.id || Date.now()}`;
     const userWithToken: UserProfile = {
       ...(loggedInUser as UserProfile),
@@ -289,7 +291,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...user,
       ...updates,
       displayName: updates.name || updates.displayName || user.displayName,
-      name: updates.name !== undefined ? updates.name : (user.name || user.displayName),
+      name: updates.name !== undefined ? updates.name : user.name || user.displayName,
     };
     setUser(updatedUser);
 
@@ -393,10 +395,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await login(username, password, false);
         autoLoggedIn = true;
         if (fullName || phone) {
-          await updateUserProfile({
-            name: fullName || undefined,
-            phone: phone || undefined,
-          }, false);
+          await updateUserProfile(
+            {
+              name: fullName || undefined,
+              phone: phone || undefined,
+            },
+            false
+          );
         }
       } catch (loginErr) {
         console.warn('Auto-login deferred after registration:', loginErr);

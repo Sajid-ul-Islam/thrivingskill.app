@@ -61,10 +61,7 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
   if (!visible) return null;
 
   const displayName =
-    user?.name ||
-    user?.displayName ||
-    user?.username ||
-    (isBangla ? 'শিক্ষার্থী' : 'Learner');
+    user?.name || user?.displayName || user?.username || (isBangla ? 'শিক্ষার্থী' : 'Learner');
 
   const username = user?.username ? `@${user.username}` : '';
   const email = user?.email || (isBangla ? 'যোগ করা হয়নি' : 'Not provided');
@@ -137,7 +134,10 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
             </View>
             <TouchableOpacity
               onPress={onClose}
-              style={[styles.closeBtn, { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' }]}
+              style={[
+                styles.closeBtn,
+                { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' },
+              ]}
               accessibilityRole="button"
               accessibilityLabel="Close"
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -191,9 +191,7 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
             {/* User Title & Role Block */}
             <View style={styles.identityBlock}>
               <View style={styles.nameBadgeRow}>
-                <Text style={[styles.profileName, { color: colors.text }]}>
-                  {displayName}
-                </Text>
+                <Text style={[styles.profileName, { color: colors.text }]}>{displayName}</Text>
                 <View
                   style={[
                     styles.roleBadge,
@@ -211,10 +209,7 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
                     color={isAdmin ? '#E34234' : colors.primary}
                   />
                   <Text
-                    style={[
-                      styles.roleBadgeText,
-                      { color: isAdmin ? '#E34234' : colors.primary },
-                    ]}
+                    style={[styles.roleBadgeText, { color: isAdmin ? '#E34234' : colors.primary }]}
                   >
                     {isAdmin ? 'ADMINISTRATOR' : isAuthenticated ? 'VERIFIED STUDENT' : 'GUEST'}
                   </Text>
@@ -222,15 +217,11 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
               </View>
 
               {username ? (
-                <Text style={[styles.usernameText, { color: colors.textMuted }]}>
-                  {username}
-                </Text>
+                <Text style={[styles.usernameText, { color: colors.textMuted }]}>{username}</Text>
               ) : null}
 
               {bio ? (
-                <Text style={[styles.bioText, { color: colors.textMuted }]}>
-                  {bio}
-                </Text>
+                <Text style={[styles.bioText, { color: colors.textMuted }]}>{bio}</Text>
               ) : null}
             </View>
 
@@ -248,10 +239,14 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
                     {isBangla ? 'কোর্স ও অর্জিত সনদপত্র' : 'Enrolled Courses & Certificates'}
                   </Text>
                 </View>
-                <View style={[styles.verifiedCredPill, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}>
+                <View
+                  style={[styles.verifiedCredPill, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}
+                >
                   <Text style={[styles.verifiedCredPillText, { color: '#E34234' }]}>
                     {certificates.length > 0
-                      ? (isBangla ? `${certificates.length}টি সনদপত্র` : `${certificates.length} EARNED`)
+                      ? isBangla
+                        ? `${certificates.length}টি সনদপত্র`
+                        : `${certificates.length} EARNED`
                       : 'ACCREDITED'}
                   </Text>
                 </View>
@@ -269,7 +264,12 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
                     },
                   ]}
                 >
-                  <View style={[styles.statIconCircle, { backgroundColor: isDark ? 'rgba(16, 47, 83, 0.35)' : '#E8EEF5' }]}>
+                  <View
+                    style={[
+                      styles.statIconCircle,
+                      { backgroundColor: isDark ? 'rgba(16, 47, 83, 0.35)' : '#E8EEF5' },
+                    ]}
+                  >
                     <Ionicons name="book" size={15} color={colors.primary} />
                   </View>
                   <Text style={[styles.statNumber, { color: colors.primary }]}>
@@ -294,7 +294,9 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
                     },
                   ]}
                 >
-                  <View style={[styles.statIconCircle, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}>
+                  <View
+                    style={[styles.statIconCircle, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}
+                  >
                     <Ionicons name="ribbon" size={15} color="#E34234" />
                   </View>
                   <Text style={[styles.statNumber, { color: '#E34234' }]}>
@@ -318,12 +320,12 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
                     },
                   ]}
                 >
-                  <View style={[styles.statIconCircle, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
+                  <View
+                    style={[styles.statIconCircle, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}
+                  >
                     <Ionicons name="checkmark-done-circle" size={15} color="#10B981" />
                   </View>
-                  <Text style={[styles.statNumber, { color: '#10B981' }]}>
-                    {completedCount}
-                  </Text>
+                  <Text style={[styles.statNumber, { color: '#10B981' }]}>{completedCount}</Text>
                   <Text style={[styles.statLabel, { color: colors.text }]}>
                     {isBangla ? 'সম্পন্ন কোর্স' : 'Completed'}
                   </Text>
@@ -342,12 +344,12 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
                     },
                   ]}
                 >
-                  <View style={[styles.statIconCircle, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}>
+                  <View
+                    style={[styles.statIconCircle, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}
+                  >
                     <Ionicons name="flame" size={15} color="#E34234" />
                   </View>
-                  <Text style={[styles.statNumber, { color: '#E34234' }]}>
-                    {streakDays}d
-                  </Text>
+                  <Text style={[styles.statNumber, { color: '#E34234' }]}>{streakDays}d</Text>
                   <Text style={[styles.statLabel, { color: colors.text }]}>
                     {isBangla ? 'লার্নিং স্ট্রিক' : 'Study Streak'}
                   </Text>
@@ -361,7 +363,9 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
               {certificates.length > 0 ? (
                 <View style={styles.certsListWrap}>
                   <Text style={[styles.certsSubHeading, { color: colors.text }]}>
-                    {isBangla ? 'অর্জিত অফিসিয়াল সার্টিফিকেটসমূহ:' : 'Official Accredited Certificates Already Got:'}
+                    {isBangla
+                      ? 'অর্জিত অফিসিয়াল সার্টিফিকেটসমূহ:'
+                      : 'Official Accredited Certificates Already Got:'}
                   </Text>
                   {certificates.map((cert) => (
                     <TouchableOpacity
@@ -377,15 +381,27 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
                       }}
                       activeOpacity={0.8}
                     >
-                      <View style={[styles.certRibbonBadge, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}>
+                      <View
+                        style={[
+                          styles.certRibbonBadge,
+                          { backgroundColor: 'rgba(227, 66, 52, 0.12)' },
+                        ]}
+                      >
                         <Ionicons name="ribbon" size={16} color="#E34234" />
                       </View>
                       <View style={{ flex: 1, minWidth: 0 }}>
-                        <Text style={[styles.certItemTitle, { color: colors.text }]} numberOfLines={1}>
+                        <Text
+                          style={[styles.certItemTitle, { color: colors.text }]}
+                          numberOfLines={1}
+                        >
                           {cert.courseTitle}
                         </Text>
-                        <Text style={[styles.certItemMeta, { color: colors.textMuted }]} numberOfLines={1}>
-                          {cert.credentialId ? `ID: ${cert.credentialId} • ` : ''}Issued: {cert.issueDate}
+                        <Text
+                          style={[styles.certItemMeta, { color: colors.textMuted }]}
+                          numberOfLines={1}
+                        >
+                          {cert.credentialId ? `ID: ${cert.credentialId} • ` : ''}Issued:{' '}
+                          {cert.issueDate}
                         </Text>
                       </View>
                       <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
@@ -393,7 +409,12 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
                   ))}
                 </View>
               ) : (
-                <View style={[styles.noCertCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+                <View
+                  style={[
+                    styles.noCertCard,
+                    { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                  ]}
+                >
                   <Ionicons name="ribbon-outline" size={20} color="#E34234" />
                   <Text style={[styles.noCertText, { color: colors.textMuted }]}>
                     {isBangla
@@ -478,23 +499,31 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
 
               {/* Email */}
               <View style={styles.attributeRow}>
-                <View style={[styles.attrIconBox, { backgroundColor: isDark ? 'rgba(16,47,83,0.35)' : '#E8EEF5' }]}>
+                <View
+                  style={[
+                    styles.attrIconBox,
+                    { backgroundColor: isDark ? 'rgba(16,47,83,0.35)' : '#E8EEF5' },
+                  ]}
+                >
                   <Ionicons name="mail-outline" size={16} color={colors.primary} />
                 </View>
                 <View style={styles.attrContent}>
                   <Text style={[styles.attrLabel, { color: colors.textMuted }]}>
                     {isBangla ? 'ইমেইল এড্রেস' : 'Email Address'}
                   </Text>
-                  <Text style={[styles.attrValue, { color: colors.text }]}>
-                    {email}
-                  </Text>
+                  <Text style={[styles.attrValue, { color: colors.text }]}>{email}</Text>
                 </View>
                 <Ionicons name="shield-checkmark" size={16} color="#10B981" />
               </View>
 
               {/* Phone */}
               <View style={styles.attributeRow}>
-                <View style={[styles.attrIconBox, { backgroundColor: isDark ? 'rgba(16,47,83,0.35)' : '#E8EEF5' }]}>
+                <View
+                  style={[
+                    styles.attrIconBox,
+                    { backgroundColor: isDark ? 'rgba(16,47,83,0.35)' : '#E8EEF5' },
+                  ]}
+                >
                   <Ionicons name="call-outline" size={16} color={colors.primary} />
                 </View>
                 <View style={styles.attrContent}>
@@ -502,7 +531,10 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
                     {isBangla ? 'মোবাইল নম্বর' : 'Phone Number'}
                   </Text>
                   <Text style={[styles.attrValue, { color: phone ? colors.text : '#E34234' }]}>
-                    {phone || (isBangla ? '+ ফোন নম্বর যোগ করুন (প্রয়োজনীয়)' : '+ Add Phone Number (Required)')}
+                    {phone ||
+                      (isBangla
+                        ? '+ ফোন নম্বর যোগ করুন (প্রয়োজনীয়)'
+                        : '+ Add Phone Number (Required)')}
                   </Text>
                 </View>
                 {phone ? (
@@ -518,7 +550,12 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
 
               {/* City / Location */}
               <View style={styles.attributeRow}>
-                <View style={[styles.attrIconBox, { backgroundColor: isDark ? 'rgba(16,47,83,0.35)' : '#E8EEF5' }]}>
+                <View
+                  style={[
+                    styles.attrIconBox,
+                    { backgroundColor: isDark ? 'rgba(16,47,83,0.35)' : '#E8EEF5' },
+                  ]}
+                >
                   <Ionicons name="location-outline" size={16} color={colors.primary} />
                 </View>
                 <View style={styles.attrContent}>
@@ -533,7 +570,12 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
 
               {/* Workspace / Platform */}
               <View style={styles.attributeRow}>
-                <View style={[styles.attrIconBox, { backgroundColor: isDark ? 'rgba(16,47,83,0.35)' : '#E8EEF5' }]}>
+                <View
+                  style={[
+                    styles.attrIconBox,
+                    { backgroundColor: isDark ? 'rgba(16,47,83,0.35)' : '#E8EEF5' },
+                  ]}
+                >
                   <Ionicons name="briefcase-outline" size={16} color={colors.primary} />
                 </View>
                 <View style={styles.attrContent}>
@@ -548,7 +590,12 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
 
               {/* Security & LMS Connection */}
               <View style={[styles.attributeRow, { borderBottomWidth: 0 }]}>
-                <View style={[styles.attrIconBox, { backgroundColor: isDark ? 'rgba(16,47,83,0.35)' : '#E8EEF5' }]}>
+                <View
+                  style={[
+                    styles.attrIconBox,
+                    { backgroundColor: isDark ? 'rgba(16,47,83,0.35)' : '#E8EEF5' },
+                  ]}
+                >
                   <Ionicons name="lock-closed-outline" size={16} color={colors.primary} />
                 </View>
                 <View style={styles.attrContent}>
@@ -563,7 +610,10 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
             </View>
 
             {/* Social Links (if configured) */}
-            {(user?.social?.facebook || user?.social?.linkedin || user?.social?.twitter || user?.social?.youtube) ? (
+            {user?.social?.facebook ||
+            user?.social?.linkedin ||
+            user?.social?.twitter ||
+            user?.social?.youtube ? (
               <View
                 style={[
                   styles.detailsCard,
@@ -577,7 +627,10 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
                   {user.social.facebook ? (
                     <TouchableOpacity
                       style={styles.socialBtn}
-                      onPress={() => user.social?.facebook && Linking.openURL(user.social.facebook).catch(() => {})}
+                      onPress={() =>
+                        user.social?.facebook &&
+                        Linking.openURL(user.social.facebook).catch(() => {})
+                      }
                     >
                       <Ionicons name="logo-facebook" size={18} color="#1877F2" />
                       <Text style={[styles.socialText, { color: colors.text }]}>Facebook</Text>
@@ -586,7 +639,10 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
                   {user.social.linkedin ? (
                     <TouchableOpacity
                       style={styles.socialBtn}
-                      onPress={() => user.social?.linkedin && Linking.openURL(user.social.linkedin).catch(() => {})}
+                      onPress={() =>
+                        user.social?.linkedin &&
+                        Linking.openURL(user.social.linkedin).catch(() => {})
+                      }
                     >
                       <Ionicons name="logo-linkedin" size={18} color="#0A66C2" />
                       <Text style={[styles.socialText, { color: colors.text }]}>LinkedIn</Text>
@@ -595,7 +651,9 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
                   {user.social.youtube ? (
                     <TouchableOpacity
                       style={styles.socialBtn}
-                      onPress={() => user.social?.youtube && Linking.openURL(user.social.youtube).catch(() => {})}
+                      onPress={() =>
+                        user.social?.youtube && Linking.openURL(user.social.youtube).catch(() => {})
+                      }
                     >
                       <Ionicons name="logo-youtube" size={18} color="#FF0000" />
                       <Text style={[styles.socialText, { color: colors.text }]}>YouTube</Text>
@@ -613,7 +671,12 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Edit Profile Details"
             >
-              <Ionicons name="create-outline" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
+              <Ionicons
+                name="create-outline"
+                size={18}
+                color="#FFFFFF"
+                style={{ marginRight: 8 }}
+              />
               <Text style={styles.editButtonCtaText}>
                 {isBangla ? 'প্রোফাইল তথ্য সম্পাদন করুন' : 'Edit Profile Details'}
               </Text>

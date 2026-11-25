@@ -105,7 +105,8 @@ export class StorageSanitizer {
                 item.id === 'qna-2' ||
                 item.authorName === 'Tanvir Hossain' ||
                 item.authorName === 'Nusrat Jahan' ||
-                (typeof item.authorAvatar === 'string' && item.authorAvatar.includes('unsplash.com'))
+                (typeof item.authorAvatar === 'string' &&
+                  item.authorAvatar.includes('unsplash.com'))
               ) {
                 return false;
               }

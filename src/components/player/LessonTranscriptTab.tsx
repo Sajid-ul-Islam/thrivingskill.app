@@ -1,12 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import { triggerHaptic } from '../../utils/haptics';
@@ -65,7 +58,8 @@ export const LessonTranscriptTab: React.FC<LessonTranscriptTabProps> = ({
         seconds: Math.min(step, total - 10),
         timestamp: formatSeconds(Math.min(step, total - 10)),
         speaker: instructorName || 'Lead Instructor',
-        text: lessonSummary ||
+        text:
+          lessonSummary ||
           'Let us first examine the strategic foundation and architectural context needed to apply these concepts in production environments.',
       },
       {
@@ -137,7 +131,12 @@ export const LessonTranscriptTab: React.FC<LessonTranscriptTabProps> = ({
   return (
     <View style={styles.container}>
       {/* Search Bar */}
-      <View style={[styles.searchBar, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+      <View
+        style={[
+          styles.searchBar,
+          { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+        ]}
+      >
         <Ionicons name="search" size={16} color={colors.textMuted} />
         <TextInput
           style={[styles.searchInput, { color: colors.text }]}

@@ -42,10 +42,7 @@ export class AiAssessmentService {
   /**
    * Generates a 1-tap executive cheat sheet from the lecture.
    */
-  static generateCheatSheet(
-    context: AiTutorContext,
-    isBangla: boolean = false
-  ): LectureCheatSheet {
+  static generateCheatSheet(context: AiTutorContext, isBangla: boolean = false): LectureCheatSheet {
     const title = context.lessonTitle;
     const course = context.courseTitle;
 
@@ -190,10 +187,7 @@ Respond ONLY with valid JSON in this exact structure:
   /**
    * Deterministic pedagogical quiz generator grounded in lesson metadata
    */
-  private static generateDeterministicQuiz(
-    context: AiTutorContext,
-    isBangla: boolean
-  ): QuizItem[] {
+  private static generateDeterministicQuiz(context: AiTutorContext, isBangla: boolean): QuizItem[] {
     const t = context.lessonTitle;
     const c = context.courseTitle;
 

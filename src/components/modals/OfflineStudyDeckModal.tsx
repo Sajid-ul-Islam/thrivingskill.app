@@ -116,7 +116,10 @@ export const OfflineStudyDeckModal: React.FC<OfflineStudyDeckModalProps> = ({
 
             <TouchableOpacity
               onPress={onClose}
-              style={[styles.closeButton, { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' }]}
+              style={[
+                styles.closeButton,
+                { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' },
+              ]}
               accessibilityRole="button"
               accessibilityLabel="Close Offline Study Deck"
             >
@@ -134,26 +137,54 @@ export const OfflineStudyDeckModal: React.FC<OfflineStudyDeckModalProps> = ({
             </View>
           ) : selectedLesson ? (
             /* Selected Lesson Detail Reader View */
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.readerContent}>
-              <View style={[styles.readerCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.readerContent}
+            >
+              <View
+                style={[
+                  styles.readerCard,
+                  { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                ]}
+              >
                 <View style={styles.badgeRow}>
-                  <View style={[styles.downloadBadge, { backgroundColor: isDark ? '#064E3B' : '#D1FAE5' }]}>
+                  <View
+                    style={[
+                      styles.downloadBadge,
+                      { backgroundColor: isDark ? '#064E3B' : '#D1FAE5' },
+                    ]}
+                  >
                     <Ionicons name="checkmark-circle" size={14} color="#10B981" />
-                    <Text style={[styles.downloadBadgeText, { color: '#047857' }]}>Saved on Device</Text>
+                    <Text style={[styles.downloadBadgeText, { color: '#047857' }]}>
+                      Saved on Device
+                    </Text>
                   </View>
-                  <Text style={[styles.durationText, { color: colors.textMuted }]}>{selectedLesson.duration}</Text>
+                  <Text style={[styles.durationText, { color: colors.textMuted }]}>
+                    {selectedLesson.duration}
+                  </Text>
                 </View>
 
-                <Text style={[styles.readerTitle, { color: colors.text }]}>{selectedLesson.title}</Text>
-                <Text style={[styles.readerSummary, { color: colors.textMuted }]}>{selectedLesson.summary}</Text>
+                <Text style={[styles.readerTitle, { color: colors.text }]}>
+                  {selectedLesson.title}
+                </Text>
+                <Text style={[styles.readerSummary, { color: colors.textMuted }]}>
+                  {selectedLesson.summary}
+                </Text>
 
                 {/* Key Takeaways */}
                 {selectedLesson.takeaways && selectedLesson.takeaways.length > 0 && (
                   <View style={[styles.takeawaySection, { backgroundColor: colors.surfaceSubtle }]}>
-                    <Text style={[styles.takeawayHeader, { color: colors.primary }]}>Key Concepts & Takeaways</Text>
+                    <Text style={[styles.takeawayHeader, { color: colors.primary }]}>
+                      Key Concepts & Takeaways
+                    </Text>
                     {selectedLesson.takeaways.map((point, idx) => (
                       <View key={idx} style={styles.takeawayRow}>
-                        <Ionicons name="checkmark-circle-outline" size={16} color={colors.primary} style={{ marginTop: 2 }} />
+                        <Ionicons
+                          name="checkmark-circle-outline"
+                          size={16}
+                          color={colors.primary}
+                          style={{ marginTop: 2 }}
+                        />
                         <Text style={[styles.takeawayText, { color: colors.text }]}>{point}</Text>
                       </View>
                     ))}
@@ -162,7 +193,9 @@ export const OfflineStudyDeckModal: React.FC<OfflineStudyDeckModalProps> = ({
 
                 {/* Main Content Body */}
                 <Text style={[styles.bodyHeader, { color: colors.text }]}>Study Guide</Text>
-                <Text style={[styles.bodyText, { color: colors.text }]}>{selectedLesson.content}</Text>
+                <Text style={[styles.bodyText, { color: colors.text }]}>
+                  {selectedLesson.content}
+                </Text>
               </View>
 
               {/* Action Buttons */}
@@ -178,12 +211,17 @@ export const OfflineStudyDeckModal: React.FC<OfflineStudyDeckModalProps> = ({
                     accessibilityLabel="Open in Lesson Player"
                   >
                     <Ionicons name="play" size={18} color={colors.onPrimary} />
-                    <Text style={[styles.btnText, { color: colors.onPrimary }]}>Open in Player</Text>
+                    <Text style={[styles.btnText, { color: colors.onPrimary }]}>
+                      Open in Player
+                    </Text>
                   </TouchableOpacity>
                 )}
 
                 <TouchableOpacity
-                  style={[styles.outlineBtn, { borderColor: colors.border, backgroundColor: colors.surfaceCard }]}
+                  style={[
+                    styles.outlineBtn,
+                    { borderColor: colors.border, backgroundColor: colors.surfaceCard },
+                  ]}
                   onPress={() => handleShareSummary(selectedLesson)}
                   accessibilityRole="button"
                   accessibilityLabel="Share Lesson Summary"
@@ -208,19 +246,28 @@ export const OfflineStudyDeckModal: React.FC<OfflineStudyDeckModalProps> = ({
               <View style={[styles.emptyIconCircle, { backgroundColor: colors.surfaceSubtle }]}>
                 <Ionicons name="cloud-download-outline" size={44} color={colors.primary} />
               </View>
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>No Offline Lessons Yet</Text>
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>
+                No Offline Lessons Yet
+              </Text>
               <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>
-                Tap the download button while watching any lecture in the course player to save study guides and read offline without internet.
+                Tap the download button while watching any lecture in the course player to save
+                study guides and read offline without internet.
               </Text>
             </View>
           ) : (
             /* Grouped Course Lessons List */
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContent}>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.listContent}
+            >
               {groupedCourses.map((group) => (
                 <View key={group.courseId} style={styles.courseGroup}>
                   <View style={styles.courseGroupHeader}>
                     <Ionicons name="book-outline" size={18} color={colors.primary} />
-                    <Text style={[styles.courseGroupTitle, { color: colors.text }]} numberOfLines={1}>
+                    <Text
+                      style={[styles.courseGroupTitle, { color: colors.text }]}
+                      numberOfLines={1}
+                    >
                       {group.courseTitle}
                     </Text>
                     <Text style={[styles.courseLessonCount, { color: colors.textMuted }]}>
@@ -228,13 +275,21 @@ export const OfflineStudyDeckModal: React.FC<OfflineStudyDeckModalProps> = ({
                     </Text>
                   </View>
 
-                  <View style={[styles.lessonListCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+                  <View
+                    style={[
+                      styles.lessonListCard,
+                      { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                    ]}
+                  >
                     {group.lessons.map((item, index) => (
                       <TouchableOpacity
                         key={item.lessonId}
                         style={[
                           styles.lessonRow,
-                          index < group.lessons.length - 1 && { borderBottomColor: colors.borderSubtle, borderBottomWidth: 1 },
+                          index < group.lessons.length - 1 && {
+                            borderBottomColor: colors.borderSubtle,
+                            borderBottomWidth: 1,
+                          },
                         ]}
                         onPress={() => {
                           triggerHaptic('light');
@@ -243,14 +298,26 @@ export const OfflineStudyDeckModal: React.FC<OfflineStudyDeckModalProps> = ({
                         accessibilityRole="button"
                         accessibilityLabel={`Read offline lesson ${item.title}`}
                       >
-                        <View style={[styles.lessonNumberCircle, { backgroundColor: colors.surfaceSubtle }]}>
-                          <Text style={[styles.lessonNumber, { color: colors.text }]}>{index + 1}</Text>
+                        <View
+                          style={[
+                            styles.lessonNumberCircle,
+                            { backgroundColor: colors.surfaceSubtle },
+                          ]}
+                        >
+                          <Text style={[styles.lessonNumber, { color: colors.text }]}>
+                            {index + 1}
+                          </Text>
                         </View>
                         <View style={{ flex: 1, marginHorizontal: 10 }}>
-                          <Text style={[styles.lessonRowTitle, { color: colors.text }]} numberOfLines={1}>
+                          <Text
+                            style={[styles.lessonRowTitle, { color: colors.text }]}
+                            numberOfLines={1}
+                          >
                             {item.title}
                           </Text>
-                          <Text style={[styles.lessonRowDuration, { color: colors.textMuted }]}>{item.duration}</Text>
+                          <Text style={[styles.lessonRowDuration, { color: colors.textMuted }]}>
+                            {item.duration}
+                          </Text>
                         </View>
                         <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
                       </TouchableOpacity>

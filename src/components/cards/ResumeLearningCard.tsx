@@ -29,9 +29,10 @@ export const ResumeLearningCard: React.FC<ResumeLearningCardProps> = ({
   }, [course.thumbnail]);
 
   const fallbackIcon = require('../../../assets/icon.png');
-  const imageSource = thumbError || !course.thumbnail
-    ? fallbackIcon
-    : getSafeImageSource(course.thumbnail, fallbackIcon);
+  const imageSource =
+    thumbError || !course.thumbnail
+      ? fallbackIcon
+      : getSafeImageSource(course.thumbnail, fallbackIcon);
 
   return (
     <View style={styles.container}>
@@ -72,7 +73,10 @@ export const ResumeLearningCard: React.FC<ResumeLearningCardProps> = ({
           <View style={styles.thumbWrapper}>
             <Image
               source={imageSource}
-              style={[styles.thumbnail, (thumbError || !course.thumbnail) && { resizeMode: 'contain' }]}
+              style={[
+                styles.thumbnail,
+                (thumbError || !course.thumbnail) && { resizeMode: 'contain' },
+              ]}
               onError={() => setThumbError(true)}
               {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
             />
@@ -86,7 +90,10 @@ export const ResumeLearningCard: React.FC<ResumeLearningCardProps> = ({
               {course.title}
             </Text>
             <Text style={[styles.lessonSub, { color: colors.textMuted }]} numberOfLines={1}>
-              {isBangla ? 'লেসন: ' : 'Lesson: '}{lastLessonTitle || course.modules[0]?.lessons[0]?.title || (isBangla ? 'পরবর্তী লেকচার' : 'Next Lecture')}
+              {isBangla ? 'লেসন: ' : 'Lesson: '}
+              {lastLessonTitle ||
+                course.modules[0]?.lessons[0]?.title ||
+                (isBangla ? 'পরবর্তী লেকচার' : 'Next Lecture')}
             </Text>
           </View>
         </View>
@@ -113,7 +120,12 @@ export const ResumeLearningCard: React.FC<ResumeLearningCardProps> = ({
           <Text style={[styles.resumeBtnText, { color: colors.onPrimary }]}>
             {isBangla ? 'লেসনে ফিরে যান' : 'Resume Lesson'}
           </Text>
-          <Ionicons name="arrow-forward" size={14} color={colors.onPrimary} style={{ marginLeft: 'auto' }} />
+          <Ionicons
+            name="arrow-forward"
+            size={14}
+            color={colors.onPrimary}
+            style={{ marginLeft: 'auto' }}
+          />
         </SpringPressable>
       </View>
     </View>

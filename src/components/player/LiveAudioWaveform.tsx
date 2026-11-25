@@ -34,7 +34,7 @@ export const LiveAudioWaveform: React.FC<LiveAudioWaveformProps> = ({
     const animations = animatedValues.map((val, i) => {
       const duration = 380 + ((i * 67) % 400);
       const delay = (i * 28) % 200;
-      const peakScale = 0.35 + ((i % 6) * 0.12);
+      const peakScale = 0.35 + (i % 6) * 0.12;
 
       return Animated.loop(
         Animated.sequence([

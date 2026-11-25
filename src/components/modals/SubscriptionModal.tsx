@@ -1,13 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Modal,
-  TouchableOpacity,
-  ScrollView,
-  Linking,
-} from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Linking } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
@@ -47,7 +39,12 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
           ]}
         >
           {/* Header */}
-          <View style={[styles.header, { borderBottomColor: colors.border, backgroundColor: colors.surfaceCard }]}>
+          <View
+            style={[
+              styles.header,
+              { borderBottomColor: colors.border, backgroundColor: colors.surfaceCard },
+            ]}
+          >
             <View style={styles.headerTitleCol}>
               <View style={styles.titleRow}>
                 <Ionicons name="ribbon-outline" size={20} color="#F59E0B" />
@@ -56,7 +53,9 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                 </Text>
               </View>
               <Text style={[styles.headerSub, { color: colors.textMuted }]}>
-                {isBangla ? 'আপনার অ্যাকাউন্টের সাথে সিঙ্ক করা সুবিধা' : 'Synced Thriving Skills Account Capabilities'}
+                {isBangla
+                  ? 'আপনার অ্যাকাউন্টের সাথে সিঙ্ক করা সুবিধা'
+                  : 'Synced Thriving Skills Account Capabilities'}
               </Text>
             </View>
             <TouchableOpacity
@@ -74,10 +73,18 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
 
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 20) + 40 }]}
+            contentContainerStyle={[
+              styles.scrollContent,
+              { paddingBottom: Math.max(insets.bottom, 20) + 40 },
+            ]}
           >
             {/* Current Account Sync Status Banner */}
-            <View style={[styles.statusBanner, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+            <View
+              style={[
+                styles.statusBanner,
+                { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+              ]}
+            >
               <View style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
                 <Text style={[styles.statusLabel, { color: colors.textMuted }]}>
                   {isBangla ? 'বর্তমান অ্যাকাউন্ট স্ট্যাটাস' : 'ACTIVE ACCOUNT STATUS'}
@@ -86,15 +93,15 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                   {subscriptionTier === 'enterprise'
                     ? 'Enterprise Team Workspace'
                     : subscriptionTier === 'pro'
-                    ? 'Pro Executive Member'
-                    : 'Starter Member'}
+                      ? 'Pro Executive Member'
+                      : 'Starter Member'}
                 </Text>
                 <Text style={[styles.statusMeta, { color: colors.textMuted }]}>
                   {isAuthenticated
                     ? `${user?.email || user?.username} • Synced`
                     : isBangla
-                    ? 'অ্যাকাউন্ট সুবিধা সিঙ্ক করতে সাইন ইন করুন'
-                    : 'Sign in with your Thriving Skills account to sync your library'}
+                      ? 'অ্যাকাউন্ট সুবিধা সিঙ্ক করতে সাইন ইন করুন'
+                      : 'Sign in with your Thriving Skills account to sync your library'}
                 </Text>
               </View>
               {!isAuthenticated && (
@@ -137,10 +144,21 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                 </View>
 
                 <View style={styles.featuresList}>
-                  <Text style={[styles.featuresHeading, { color: colors.textMuted }]}>অন্তর্ভুক্ত সুবিধাসমূহ:</Text>
-                  {['বিনামূল্যে কোর্স ও প্রিভিউ লেকচার', 'কমিউনিটি ডিসকাশন ও কুইজ প্র্যাকটিস', 'কোর্স সিলেবাস ও প্রোগ্রেস ট্র্যাকিং'].map((feat, idx) => (
+                  <Text style={[styles.featuresHeading, { color: colors.textMuted }]}>
+                    অন্তর্ভুক্ত সুবিধাসমূহ:
+                  </Text>
+                  {[
+                    'বিনামূল্যে কোর্স ও প্রিভিউ লেকচার',
+                    'কমিউনিটি ডিসকাশন ও কুইজ প্র্যাকটিস',
+                    'কোর্স সিলেবাস ও প্রোগ্রেস ট্র্যাকিং',
+                  ].map((feat, idx) => (
                     <View key={idx} style={styles.featureItem}>
-                      <Ionicons name="checkmark-circle" size={16} color={colors.primary} style={styles.featureIcon} />
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={16}
+                        color={colors.primary}
+                        style={styles.featureIcon}
+                      />
                       <Text style={[styles.featureText, { color: colors.text }]}>{feat}</Text>
                     </View>
                   ))}
@@ -171,7 +189,9 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                 </View>
 
                 <View style={styles.featuresList}>
-                  <Text style={[styles.featuresHeading, { color: '#A7F3D0' }]}>প্রো মেম্বারশিপ সুবিধাসমূহ:</Text>
+                  <Text style={[styles.featuresHeading, { color: '#A7F3D0' }]}>
+                    প্রো মেম্বারশিপ সুবিধাসমূহ:
+                  </Text>
                   {[
                     'সকল এনরোলকৃত মাস্টারক্লাস ও লেসন',
                     'এক্সিকিউটিভ AI কো-পাইলট',
@@ -179,7 +199,12 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                     'সাপ্তাহিক লাইভ ওয়ার্কশপ ও সামিট অ্যাক্সেস',
                   ].map((feat, idx) => (
                     <View key={idx} style={styles.featureItem}>
-                      <Ionicons name="checkmark-circle" size={16} color="#34D399" style={styles.featureIcon} />
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={16}
+                        color="#34D399"
+                        style={styles.featureIcon}
+                      />
                       <Text style={[styles.featureText, { color: '#FFFFFF' }]}>{feat}</Text>
                     </View>
                   ))}
@@ -192,13 +217,16 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                   styles.planCard,
                   {
                     backgroundColor: colors.surfaceCard,
-                    borderColor: subscriptionTier === 'enterprise' ? colors.secondary : colors.border,
+                    borderColor:
+                      subscriptionTier === 'enterprise' ? colors.secondary : colors.border,
                   },
                 ]}
               >
                 <View style={[styles.enterpriseBadge, { backgroundColor: colors.secondaryLight }]}>
                   <Ionicons name="business" size={12} color={colors.secondary} />
-                  <Text style={[styles.enterpriseBadgeText, { color: colors.secondary }]}>ENTERPRISE TEAMS</Text>
+                  <Text style={[styles.enterpriseBadgeText, { color: colors.secondary }]}>
+                    ENTERPRISE TEAMS
+                  </Text>
                 </View>
 
                 <View style={styles.planHeader}>
@@ -209,14 +237,21 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                 </View>
 
                 <View style={styles.featuresList}>
-                  <Text style={[styles.featuresHeading, { color: colors.textMuted }]}>এন্টারপ্রাইজ সুবিধা:</Text>
+                  <Text style={[styles.featuresHeading, { color: colors.textMuted }]}>
+                    এন্টারপ্রাইজ সুবিধা:
+                  </Text>
                   {[
                     'টিম সিট ম্যানেজমেন্ট ও প্রোগ্রেস ট্র্যাকিং',
                     'ডিপার্টমেন্টাল স্কিল গ্যাপ অ্যানালিটিক্স',
                     'ডেডিকেটেড এলএমএস সাপোর্ট ও রিপোর্টিং',
                   ].map((feat, idx) => (
                     <View key={idx} style={styles.featureItem}>
-                      <Ionicons name="checkmark-circle" size={16} color={colors.secondary} style={styles.featureIcon} />
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={16}
+                        color={colors.secondary}
+                        style={styles.featureIcon}
+                      />
                       <Text style={[styles.featureText, { color: colors.text }]}>{feat}</Text>
                     </View>
                   ))}
@@ -225,26 +260,69 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
             </View>
 
             {/* Feature Comparison Matrix Table */}
-            <View style={[styles.matrixCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
-              <Text style={[styles.matrixTitle, { color: colors.text }]}>মেম্বারশিপ ফিচার তুলনা (Feature Matrix)</Text>
+            <View
+              style={[
+                styles.matrixCard,
+                { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+              ]}
+            >
+              <Text style={[styles.matrixTitle, { color: colors.text }]}>
+                মেম্বারশিপ ফিচার তুলনা (Feature Matrix)
+              </Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <View style={{ minWidth: 470 }}>
-                  <View style={[styles.matrixHeaderRow, { borderBottomColor: colors.borderSubtle }]}>
-                    <Text style={[styles.matrixColHeading, { width: 170, color: colors.textMuted }]}>Feature</Text>
-                    <Text style={[styles.matrixColHeading, { width: 90, textAlign: 'center', color: colors.textMuted }]}>Starter</Text>
-                    <Text style={[styles.matrixColHeading, { width: 105, textAlign: 'center', color: colors.primary }]}>Pro</Text>
-                    <Text style={[styles.matrixColHeading, { width: 105, textAlign: 'center', color: colors.secondary }]}>Enterprise</Text>
+                  <View
+                    style={[styles.matrixHeaderRow, { borderBottomColor: colors.borderSubtle }]}
+                  >
+                    <Text
+                      style={[styles.matrixColHeading, { width: 170, color: colors.textMuted }]}
+                    >
+                      Feature
+                    </Text>
+                    <Text
+                      style={[
+                        styles.matrixColHeading,
+                        { width: 90, textAlign: 'center', color: colors.textMuted },
+                      ]}
+                    >
+                      Starter
+                    </Text>
+                    <Text
+                      style={[
+                        styles.matrixColHeading,
+                        { width: 105, textAlign: 'center', color: colors.primary },
+                      ]}
+                    >
+                      Pro
+                    </Text>
+                    <Text
+                      style={[
+                        styles.matrixColHeading,
+                        { width: 105, textAlign: 'center', color: colors.secondary },
+                      ]}
+                    >
+                      Enterprise
+                    </Text>
                   </View>
 
                   {SAAS_PLAN_FEATURES.map((item) => (
-                    <View key={item.id} style={[styles.matrixRow, { borderBottomColor: colors.borderSubtle }]}>
-                      <Text style={[styles.matrixItemTitle, { width: 170, color: colors.text }]} numberOfLines={2}>
+                    <View
+                      key={item.id}
+                      style={[styles.matrixRow, { borderBottomColor: colors.borderSubtle }]}
+                    >
+                      <Text
+                        style={[styles.matrixItemTitle, { width: 170, color: colors.text }]}
+                        numberOfLines={2}
+                      >
                         {item.title}
                       </Text>
 
                       <View style={{ width: 90, alignItems: 'center', justifyContent: 'center' }}>
                         {typeof item.starter === 'string' ? (
-                          <Text style={[styles.matrixValText, { color: colors.textMuted }]} numberOfLines={2}>
+                          <Text
+                            style={[styles.matrixValText, { color: colors.textMuted }]}
+                            numberOfLines={2}
+                          >
                             {item.starter}
                           </Text>
                         ) : item.starter ? (
@@ -256,7 +334,13 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
 
                       <View style={{ width: 105, alignItems: 'center', justifyContent: 'center' }}>
                         {typeof item.pro === 'string' ? (
-                          <Text style={[styles.matrixValText, { color: colors.primary, fontWeight: '700' }]} numberOfLines={2}>
+                          <Text
+                            style={[
+                              styles.matrixValText,
+                              { color: colors.primary, fontWeight: '700' },
+                            ]}
+                            numberOfLines={2}
+                          >
                             {item.pro}
                           </Text>
                         ) : item.pro ? (
@@ -268,7 +352,13 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
 
                       <View style={{ width: 105, alignItems: 'center', justifyContent: 'center' }}>
                         {typeof item.enterprise === 'string' ? (
-                          <Text style={[styles.matrixValText, { color: colors.secondary, fontWeight: '700' }]} numberOfLines={2}>
+                          <Text
+                            style={[
+                              styles.matrixValText,
+                              { color: colors.secondary, fontWeight: '700' },
+                            ]}
+                            numberOfLines={2}
+                          >
                             {item.enterprise}
                           </Text>
                         ) : item.enterprise ? (
@@ -299,7 +389,9 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                   <Text style={styles.consultancyBadgeText}>EXECUTIVE CONSULTANCY</Text>
                 </View>
                 <Text style={[styles.consultancyTitle, { color: colors.text }]}>
-                  {isBangla ? 'বিজনেস কনসালট্যান্সি সার্ভিস সাবস্ক্রিপশন' : 'Business Consultancy Service'}
+                  {isBangla
+                    ? 'বিজনেস কনসালট্যান্সি সার্ভিস সাবস্ক্রিপশন'
+                    : 'Business Consultancy Service'}
                 </Text>
                 <Text style={[styles.consultancyDesc, { color: colors.textMuted }]}>
                   {isBangla
@@ -309,15 +401,21 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
               </View>
 
               <View style={styles.consultancyTiersRow}>
-                <View style={[styles.tierChip, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]}>
+                <View
+                  style={[styles.tierChip, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]}
+                >
                   <Text style={[styles.tierChipName, { color: colors.text }]}>Priority</Text>
                   <Text style={styles.tierChipPrice}>৳1,000–9,000</Text>
                 </View>
-                <View style={[styles.tierChip, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]}>
+                <View
+                  style={[styles.tierChip, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]}
+                >
                   <Text style={[styles.tierChipName, { color: colors.text }]}>Premium</Text>
                   <Text style={styles.tierChipPrice}>৳1,500–14,000</Text>
                 </View>
-                <View style={[styles.tierChip, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]}>
+                <View
+                  style={[styles.tierChip, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]}
+                >
                   <Text style={[styles.tierChipName, { color: colors.text }]}>Platinum</Text>
                   <Text style={styles.tierChipPrice}>৳2,000–18,000</Text>
                 </View>
@@ -327,7 +425,9 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                 style={[styles.consultancyCtaBtn, { backgroundColor: '#E34234' }]}
                 onPress={() => {
                   triggerHaptic('medium');
-                  Linking.openURL('https://thrivingskill.com/subscription/business-consultancy-service/').catch(() => {});
+                  Linking.openURL(
+                    'https://thrivingskill.com/subscription/business-consultancy-service/'
+                  ).catch(() => {});
                 }}
                 activeOpacity={0.88}
                 accessibilityRole="link"
@@ -336,7 +436,12 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
                 <Text style={styles.consultancyCtaText}>
                   {isBangla ? 'কনসালট্যান্সি বিস্তারিত দেখুন' : 'Explore Business Consultancy'}
                 </Text>
-                <Ionicons name="arrow-forward" size={15} color="#FFFFFF" style={{ marginLeft: 6 }} />
+                <Ionicons
+                  name="arrow-forward"
+                  size={15}
+                  color="#FFFFFF"
+                  style={{ marginLeft: 6 }}
+                />
               </TouchableOpacity>
             </View>
           </ScrollView>

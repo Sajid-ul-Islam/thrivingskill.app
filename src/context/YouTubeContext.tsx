@@ -89,18 +89,15 @@ export const YouTubeProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setActiveVideo(null);
   }, []);
 
-  const toggleSaveVideo = useCallback(
-    (videoId: string) => {
-      setSavedVideoIds((prev) => {
-        const next = prev.includes(videoId)
-          ? prev.filter((id) => id !== videoId)
-          : [...prev, videoId];
-        saveVideoIds(next);
-        return next;
-      });
-    },
-    []
-  );
+  const toggleSaveVideo = useCallback((videoId: string) => {
+    setSavedVideoIds((prev) => {
+      const next = prev.includes(videoId)
+        ? prev.filter((id) => id !== videoId)
+        : [...prev, videoId];
+      saveVideoIds(next);
+      return next;
+    });
+  }, []);
 
   const isSaved = useCallback(
     (videoId: string) => {

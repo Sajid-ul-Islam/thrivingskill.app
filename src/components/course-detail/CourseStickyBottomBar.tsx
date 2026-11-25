@@ -29,18 +29,22 @@ export const CourseStickyBottomBar: React.FC<CourseStickyBottomBarProps> = ({
   const { colors } = useTheme();
   const { isBangla } = useLanguage();
 
-  const isPaidCourse = Boolean((course.priceBdt && course.priceBdt > 0) || (course.price && course.price > 0));
+  const isPaidCourse = Boolean(
+    (course.priceBdt && course.priceBdt > 0) || (course.price && course.price > 0)
+  );
   const bdtPrice = course.priceBdt || (course.price > 0 ? Math.round(course.price * 120) : 0);
   const origBdtPrice =
     course.originalPriceBdt ||
-    (course.originalPrice && course.originalPrice > course.price ? Math.round(course.originalPrice * 120) : 0);
+    (course.originalPrice && course.originalPrice > course.price
+      ? Math.round(course.originalPrice * 120)
+      : 0);
 
   const discountPercent =
     origBdtPrice > bdtPrice && origBdtPrice > 0
       ? Math.round(((origBdtPrice - bdtPrice) / origBdtPrice) * 100)
       : course.originalPrice > course.price && course.originalPrice > 0
-      ? Math.round(((course.originalPrice - course.price) / course.originalPrice) * 100)
-      : 0;
+        ? Math.round(((course.originalPrice - course.price) / course.originalPrice) * 100)
+        : 0;
 
   return (
     <View
@@ -74,8 +78,8 @@ export const CourseStickyBottomBar: React.FC<CourseStickyBottomBarProps> = ({
                 {isPaidCourse
                   ? `৳ ${bdtPrice.toLocaleString()}`
                   : isBangla
-                  ? 'বিনামূল্যে'
-                  : 'Free Course'}
+                    ? 'বিনামূল্যে'
+                    : 'Free Course'}
               </Text>
               {origBdtPrice > bdtPrice && (
                 <Text style={[styles.bottomOriginalPrice, { color: colors.textMuted }]}>
@@ -120,8 +124,8 @@ export const CourseStickyBottomBar: React.FC<CourseStickyBottomBarProps> = ({
                       ? 'সম্পন্ন 🎓'
                       : 'Completed 🎓'
                     : isBangla
-                    ? 'চলমান ⏳'
-                    : 'In Progress ⏳'}
+                      ? 'চলমান ⏳'
+                      : 'In Progress ⏳'}
                 </Text>
               </View>
             </View>
@@ -136,10 +140,10 @@ export const CourseStickyBottomBar: React.FC<CourseStickyBottomBarProps> = ({
               backgroundColor: isAdmin
                 ? '#102F53'
                 : isEnrolled
-                ? colors.primary
-                : isPaidCourse
-                ? '#E34234'
-                : colors.primary,
+                  ? colors.primary
+                  : isPaidCourse
+                    ? '#E34234'
+                    : colors.primary,
               shadowColor: !isEnrolled && isPaidCourse ? '#E34234' : colors.primary,
               shadowOffset: { width: 0, height: 3 },
               shadowOpacity: 0.35,
@@ -156,12 +160,13 @@ export const CourseStickyBottomBar: React.FC<CourseStickyBottomBarProps> = ({
                 ? 'লেসনে যান'
                 : 'Resume Course'
               : isPaidCourse
-              ? isBangla
-                ? 'এখনই ভর্তি হন'
-                : 'Enroll Now'
-              : isBangla
-              ? 'বিনামূল্যে ভর্তি হন'
-              : 'Enroll for Free'}
+                ? isBangla
+                  ? 'এখনই ভর্তি হন'
+                  : 'Enroll Now'
+                : isBangla
+                  ? 'বিনামূল্যে ভর্তি হন'
+                  : 'Enroll for Free'
+          }
         >
           <Ionicons
             name={isAdmin ? 'play-circle' : isEnrolled ? 'play' : 'flash'}
@@ -184,16 +189,16 @@ export const CourseStickyBottomBar: React.FC<CourseStickyBottomBarProps> = ({
                 ? 'কোর্স ভিডিও দেখুন'
                 : 'Play Course (Admin)'
               : isEnrolled
-              ? isBangla
-                ? 'লেসনে যান'
-                : 'Resume Course'
-              : isPaidCourse
-              ? isBangla
-                ? 'এখনই ভর্তি হন'
-                : 'Enroll Now'
-              : isBangla
-              ? 'বিনামূল্যে ভর্তি হন'
-              : 'Enroll for Free'}
+                ? isBangla
+                  ? 'লেসনে যান'
+                  : 'Resume Course'
+                : isPaidCourse
+                  ? isBangla
+                    ? 'এখনই ভর্তি হন'
+                    : 'Enroll Now'
+                  : isBangla
+                    ? 'বিনামূল্যে ভর্তি হন'
+                    : 'Enroll for Free'}
           </Text>
         </SpringPressable>
       </View>

@@ -189,7 +189,9 @@ export class SpacedRepetitionService {
           courseTitle: course.title,
           lessonId: lesson.id,
           question: `In "${mod.title}", what core concept is explored in the lecture: "${lesson.title}"?`,
-          answer: lesson.summary || `Hands-on understanding of ${lesson.title}, best practices, and enterprise workflows.`,
+          answer:
+            lesson.summary ||
+            `Hands-on understanding of ${lesson.title}, best practices, and enterprise workflows.`,
           category: course.category,
           repetitions: 0,
           interval: 1,

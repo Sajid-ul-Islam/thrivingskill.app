@@ -102,9 +102,7 @@ export const ProfileSupportHub: React.FC<ProfileSupportHubProps> = ({
               <MessengerIcon size={16} color="#FFFFFF" />
             </View>
             <Text style={[styles.tileLabel, { color: colors.text }]}>Messenger</Text>
-            <Text style={[styles.tileSub, { color: '#2563EB' }]}>
-              {isBangla ? 'চ্যাট' : 'Chat'}
-            </Text>
+            <Text style={[styles.tileSub, { color: '#2563EB' }]}>{isBangla ? 'চ্যাট' : 'Chat'}</Text>
           </TouchableOpacity>
 
           {/* Hotline Call Tile */}
@@ -173,7 +171,9 @@ export const ProfileSupportHub: React.FC<ProfileSupportHubProps> = ({
                 {isBangla ? 'সাহায্য ও প্রশ্নোত্তর (FAQ)' : 'Help & FAQ Center'}
               </Text>
               <Text style={[styles.resourceSub, { color: colors.textMuted }]}>
-                {isBangla ? 'সার্টিফিকেট, কোর্স সিঙ্ক ও সমাধান নির্দেশিকা' : 'Certificates, sync & course troubleshooting'}
+                {isBangla
+                  ? 'সার্টিফিকেট, কোর্স সিঙ্ক ও সমাধান নির্দেশিকা'
+                  : 'Certificates, sync & course troubleshooting'}
               </Text>
             </View>
           </View>
@@ -199,7 +199,9 @@ export const ProfileSupportHub: React.FC<ProfileSupportHubProps> = ({
                 {isBangla ? 'টিএসএল ব্লগ ও আর্টিকেল' : 'TSL Blog & Industry Articles'}
               </Text>
               <Text style={[styles.resourceSub, { color: colors.textMuted }]}>
-                {isBangla ? 'AI, কর্পোরেট লিডারশিপ ও ক্যারিয়ার ইনসাইট' : 'AI, leadership & executive insights'}
+                {isBangla
+                  ? 'AI, কর্পোরেট লিডারশিপ ও ক্যারিয়ার ইনসাইট'
+                  : 'AI, leadership & executive insights'}
               </Text>
             </View>
           </View>
@@ -226,11 +228,18 @@ export const ProfileSupportHub: React.FC<ProfileSupportHubProps> = ({
                   {isBangla ? 'ই-বুক লাইব্রেরি (Free eBook)' : 'Free eBook Library'}
                 </Text>
                 <Text style={[styles.resourceSub, { color: colors.textMuted }]}>
-                  {isBangla ? 'ফ্রি প্রফেশনাল ব্লুপ্রিন্ট ও হ্যান্ডবুক' : 'Executive blueprints & skill handbooks'}
+                  {isBangla
+                    ? 'ফ্রি প্রফেশনাল ব্লুপ্রিন্ট ও হ্যান্ডবুক'
+                    : 'Executive blueprints & skill handbooks'}
                 </Text>
               </View>
             </View>
-            <View style={[styles.freeTag, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.2)' : 'rgba(227, 66, 52, 0.12)' }]}>
+            <View
+              style={[
+                styles.freeTag,
+                { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.2)' : 'rgba(227, 66, 52, 0.12)' },
+              ]}
+            >
               <Text style={[styles.freeTagText, { color: '#E34234' }]}>FREE</Text>
             </View>
           </TouchableOpacity>
@@ -248,7 +257,9 @@ export const ProfileSupportHub: React.FC<ProfileSupportHubProps> = ({
             accessibilityLabel="Our Course Authors"
           >
             <View style={styles.resourceLeft}>
-              <View style={[styles.resourceIconBg, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
+              <View
+                style={[styles.resourceIconBg, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}
+              >
                 <Ionicons name="people" size={18} color="#10B981" />
               </View>
               <View style={styles.resourceTextCol}>
@@ -256,7 +267,9 @@ export const ProfileSupportHub: React.FC<ProfileSupportHubProps> = ({
                   {isBangla ? 'কোর্স ফ্যাকাল্টি ও ইন্সট্রাক্টরগণ' : 'Our Course Authors (Faculty)'}
                 </Text>
                 <Text style={[styles.resourceSub, { color: colors.textMuted }]}>
-                  {isBangla ? 'সার্টিফাইড ইন্ডাস্ট্রি বিশেষজ্ঞ ও মেন্টর' : 'Certified industry leaders & masterclass mentors'}
+                  {isBangla
+                    ? 'সার্টিফাইড ইন্ডাস্ট্রি বিশেষজ্ঞ ও মেন্টর'
+                    : 'Certified industry leaders & masterclass mentors'}
                 </Text>
               </View>
             </View>
@@ -282,16 +295,34 @@ export const ProfileSupportHub: React.FC<ProfileSupportHubProps> = ({
               <Text style={[styles.resourceLabel, { color: colors.text }]}>
                 {isBangla ? 'স্টোরেজ ও অফলাইন ডাটা সিঙ্ক' : 'Storage & Offline Sync'}
               </Text>
-              <Text style={[styles.resourceSub, { color: pendingSyncCount > 0 ? '#E34234' : colors.textMuted }]}>
+              <Text
+                style={[
+                  styles.resourceSub,
+                  { color: pendingSyncCount > 0 ? '#E34234' : colors.textMuted },
+                ]}
+              >
                 {pendingSyncCount > 0
-                  ? (isBangla ? `${pendingSyncCount}টি অ্যাকশন অফলাইনে অপেক্ষারত` : `${pendingSyncCount} offline actions pending sync`)
-                  : (isBangla ? 'ক্যাশ ম্যানেজমেন্ট ও অফলাইন কনটেন্ট' : 'Cache management & offline storage')}
+                  ? isBangla
+                    ? `${pendingSyncCount}টি অ্যাকশন অফলাইনে অপেক্ষারত`
+                    : `${pendingSyncCount} offline actions pending sync`
+                  : isBangla
+                    ? 'ক্যাশ ম্যানেজমেন্ট ও অফলাইন কনটেন্ট'
+                    : 'Cache management & offline storage'}
               </Text>
             </View>
           </View>
           {pendingSyncCount > 0 ? (
-            <View style={{ backgroundColor: '#E34234', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8 }}>
-              <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '800' }}>{pendingSyncCount}</Text>
+            <View
+              style={{
+                backgroundColor: '#E34234',
+                paddingHorizontal: 7,
+                paddingVertical: 2,
+                borderRadius: 8,
+              }}
+            >
+              <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '800' }}>
+                {pendingSyncCount}
+              </Text>
             </View>
           ) : (
             <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />

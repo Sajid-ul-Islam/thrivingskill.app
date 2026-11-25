@@ -1,11 +1,5 @@
 import React, { useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, FlatList, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -34,7 +28,12 @@ export const HomeTestimonialsCarousel: React.FC<HomeTestimonialsCarouselProps> =
       <View style={styles.headerRow}>
         <View style={styles.titleWrap}>
           <View style={styles.badgeRow}>
-            <View style={[styles.badgePill, { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : '#DCFCE7' }]}>
+            <View
+              style={[
+                styles.badgePill,
+                { backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : '#DCFCE7' },
+              ]}
+            >
               <Ionicons name="checkmark-circle" size={11} color="#10B981" />
               <Text style={[styles.badgeText, { color: '#059669' }]}>
                 {isBangla ? 'ভেরিফায়েড রিভিউ' : 'VERIFIED REVIEWS'}
@@ -123,7 +122,10 @@ export const HomeTestimonialsCarousel: React.FC<HomeTestimonialsCarouselProps> =
                     {role}
                   </Text>
                   {item.company && (
-                    <Text style={[styles.authorCompany, { color: colors.textMuted }]} numberOfLines={1}>
+                    <Text
+                      style={[styles.authorCompany, { color: colors.textMuted }]}
+                      numberOfLines={1}
+                    >
                       {item.company}
                     </Text>
                   )}

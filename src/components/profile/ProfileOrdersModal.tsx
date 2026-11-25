@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Modal,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '../../theme/responsive';
@@ -35,12 +28,7 @@ export const ProfileOrdersModal: React.FC<ProfileOrdersModalProps> = ({
   const effectiveBottom = Math.max(insets.bottom, insetsBottom || 0);
   const { isTablet } = useResponsive();
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View
         style={[
           styles.modalBackdrop,
@@ -100,10 +88,16 @@ export const ProfileOrdersModal: React.FC<ProfileOrdersModalProps> = ({
                 ]}
               >
                 <Ionicons name="library-outline" size={28} color={colors.textMuted} />
-                <Text style={[styles.invoiceItemTitle, { color: colors.text, textAlign: 'center' }]}>
-                  {isBangla ? 'কোনো সক্রিয় কোর্স এনরোলমেন্ট পাওয়া যায়নি' : 'No Active Course Records Yet'}
+                <Text
+                  style={[styles.invoiceItemTitle, { color: colors.text, textAlign: 'center' }]}
+                >
+                  {isBangla
+                    ? 'কোনো সক্রিয় কোর্স এনরোলমেন্ট পাওয়া যায়নি'
+                    : 'No Active Course Records Yet'}
                 </Text>
-                <Text style={[styles.invoiceGateway, { color: colors.textMuted, textAlign: 'center' }]}>
+                <Text
+                  style={[styles.invoiceGateway, { color: colors.textMuted, textAlign: 'center' }]}
+                >
                   {isBangla
                     ? 'আপনার থ্রাইভিং স্কিলস অ্যাকাউন্টে সাইন ইন করলে আপনার এনরোল করা কোর্সগুলো এখানে প্রদর্শিত হবে।'
                     : 'Sign in with your Thriving Skills account to view courses synced to your member library.'}
@@ -123,7 +117,10 @@ export const ProfileOrdersModal: React.FC<ProfileOrdersModalProps> = ({
                   >
                     <View style={styles.invoiceItemTop}>
                       <View style={{ flex: 1 }}>
-                        <Text style={[styles.invoiceItemTitle, { color: colors.text }]} numberOfLines={2}>
+                        <Text
+                          style={[styles.invoiceItemTitle, { color: colors.text }]}
+                          numberOfLines={2}
+                        >
                           {courseItem.title}
                         </Text>
                         <Text style={[styles.invoiceMeta, { color: colors.textMuted }]}>

@@ -58,7 +58,8 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
 
   if (!certificate) return null;
 
-  const isReviewed = canBypassCourseLocks || (certificate.courseId ? hasReviewedCourse(certificate.courseId) : true);
+  const isReviewed =
+    canBypassCourseLocks || (certificate.courseId ? hasReviewedCourse(certificate.courseId) : true);
 
   const requireReviewGate = (): boolean => {
     if (canBypassCourseLocks) return true;
@@ -107,7 +108,10 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
   const handleVerifyOnline = () => {
     if (!requireReviewGate()) return;
     Linking.openURL(certificate.verificationUrl).catch(() => {
-      Alert.alert('Verification', `Visit ${certificate.verificationUrl} to verify this credential online.`);
+      Alert.alert(
+        'Verification',
+        `Visit ${certificate.verificationUrl} to verify this credential online.`
+      );
     });
   };
 
@@ -115,7 +119,11 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
     if (!requireReviewGate()) return;
     triggerHaptic('selection');
     try {
-      if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      if (
+        Platform.OS === 'web' &&
+        typeof navigator !== 'undefined' &&
+        navigator.clipboard?.writeText
+      ) {
         await navigator.clipboard.writeText(certificate.verificationUrl);
       } else {
         await Share.share({
@@ -147,7 +155,10 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
     const linkedinUrl = `https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${certName}&organizationName=${orgName}&issueYear=${year}&issueMonth=${month}&certUrl=${certUrl}&certId=${certId}`;
 
     Linking.openURL(linkedinUrl).catch(() => {
-      Alert.alert('Unable to open LinkedIn', 'Please verify your network connection or copy your credential link.');
+      Alert.alert(
+        'Unable to open LinkedIn',
+        'Please verify your network connection or copy your credential link.'
+      );
     });
   };
 
@@ -174,15 +185,23 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
           style={[
             styles.modalContainer,
             { backgroundColor: colors.surfaceCard, borderColor: colors.border },
-          ]} accessibilityViewIsModal={true}
+          ]}
+          accessibilityViewIsModal={true}
         >
           {/* Top Bar */}
           <View style={[styles.topBar, { borderBottomColor: colors.border }]}>
             <View style={styles.topBarLeft}>
               <Ionicons name="ribbon" size={20} color={colors.accent} style={{ flexShrink: 0 }} />
-              <Text style={[styles.topBarTitle, { color: colors.text }]} numberOfLines={1}>Verified Certificate</Text>
+              <Text style={[styles.topBarTitle, { color: colors.text }]} numberOfLines={1}>
+                Verified Certificate
+              </Text>
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn} accessibilityRole="button" accessibilityLabel="Close certificate dialog">
+            <TouchableOpacity
+              onPress={onClose}
+              style={styles.closeBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Close certificate dialog"
+            >
               <Ionicons name="close" size={22} color={colors.textMuted} />
             </TouchableOpacity>
           </View>
@@ -208,8 +227,12 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
                   <View style={styles.lockedIconCircle}>
                     <Ionicons name="lock-closed" size={16} color="#E34234" />
                   </View>
-                  <Text style={[styles.lockedBannerTitle, { color: isDark ? '#FFFFFF' : '#991B1B' }]}>
-                    {isBangla ? 'সার্টিফিকেট ডাউনলোড করতে রিভিউ আবশ্যক' : 'Mandatory Review Required to Unlock'}
+                  <Text
+                    style={[styles.lockedBannerTitle, { color: isDark ? '#FFFFFF' : '#991B1B' }]}
+                  >
+                    {isBangla
+                      ? 'সার্টিফিকেট ডাউনলোড করতে রিভিউ আবশ্যক'
+                      : 'Mandatory Review Required to Unlock'}
                   </Text>
                 </View>
                 <Text style={[styles.lockedBannerBody, { color: isDark ? '#E5E7EB' : '#7F1D1D' }]}>
@@ -233,7 +256,9 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
             )}
 
             {/* The Certificate Frame */}
-            <View style={[styles.certFrame, { backgroundColor: '#FFFFFF', borderColor: '#E34234' }]}>
+            <View
+              style={[styles.certFrame, { backgroundColor: '#FFFFFF', borderColor: '#E34234' }]}
+            >
               {/* Inner Decorative Border */}
               <View style={[styles.certInnerBorder, { borderColor: '#102F53' }]}>
                 {/* Logo Header */}
@@ -263,7 +288,12 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
                     <Text style={styles.signTitle}>Course Director</Text>
                   </View>
 
-                  <View style={[styles.goldSeal, { borderColor: '#E34234', backgroundColor: 'rgba(227, 66, 52, 0.08)' }]}>
+                  <View
+                    style={[
+                      styles.goldSeal,
+                      { borderColor: '#E34234', backgroundColor: 'rgba(227, 66, 52, 0.08)' },
+                    ]}
+                  >
                     <Ionicons name="shield-checkmark" size={26} color="#E34234" />
                     <Text style={styles.sealText}>VERIFIED</Text>
                   </View>
@@ -278,7 +308,8 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
                 {/* Credential ID */}
                 <View style={styles.credentialRow}>
                   <Text style={styles.credentialText}>
-                    Credential ID: <Text style={{ fontWeight: '700' }}>{certificate.credentialId}</Text>
+                    Credential ID:{' '}
+                    <Text style={{ fontWeight: '700' }}>{certificate.credentialId}</Text>
                   </Text>
                 </View>
 
@@ -337,8 +368,12 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel={
                   isReviewed
-                    ? (isBangla ? 'পিডিএফ সার্টিফিকেট ডাউনলোড করুন' : 'Download PDF Certificate')
-                    : (isBangla ? 'রিভিউ দিয়ে সার্টিফিকেট ডাউনলোড করুন (লক)' : 'Review to Download PDF (Locked)')
+                    ? isBangla
+                      ? 'পিডিএফ সার্টিফিকেট ডাউনলোড করুন'
+                      : 'Download PDF Certificate'
+                    : isBangla
+                      ? 'রিভিউ দিয়ে সার্টিফিকেট ডাউনলোড করুন (লক)'
+                      : 'Review to Download PDF (Locked)'
                 }
               >
                 {isDownloadingPdf ? (
@@ -357,8 +392,12 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
                       ]}
                     >
                       {isReviewed
-                        ? (isBangla ? 'পিডিএফ সার্টিফিকেট ডাউনলোড করুন' : 'Download PDF Certificate')
-                        : (isBangla ? 'রিভিউ দিয়ে ডাউনলোড করুন (লক)' : 'Review to Download PDF (Locked)')}
+                        ? isBangla
+                          ? 'পিডিএফ সার্টিফিকেট ডাউনলোড করুন'
+                          : 'Download PDF Certificate'
+                        : isBangla
+                          ? 'রিভিউ দিয়ে ডাউনলোড করুন (লক)'
+                          : 'Review to Download PDF (Locked)'}
                     </Text>
                   </>
                 )}
@@ -366,22 +405,45 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
 
               {/* Add to LinkedIn Profile */}
               <TouchableOpacity
-                style={[styles.linkedinActionBtn, { backgroundColor: isReviewed ? '#0A66C2' : (isDark ? '#374151' : '#E5E7EB') }]}
+                style={[
+                  styles.linkedinActionBtn,
+                  { backgroundColor: isReviewed ? '#0A66C2' : isDark ? '#374151' : '#E5E7EB' },
+                ]}
                 onPress={handleAddToLinkedIn}
                 activeOpacity={0.88}
                 accessibilityRole="button"
-                accessibilityLabel={isReviewed ? "Add to LinkedIn Profile" : "Review required to add credential to LinkedIn"}
+                accessibilityLabel={
+                  isReviewed
+                    ? 'Add to LinkedIn Profile'
+                    : 'Review required to add credential to LinkedIn'
+                }
               >
-                <Ionicons name="logo-linkedin" size={18} color={isReviewed ? "#FFFFFF" : (isDark ? "#9CA3AF" : "#6B7280")} />
-                <Text style={[styles.linkedinActionText, !isReviewed && { color: isDark ? "#9CA3AF" : "#6B7280" }]}>
-                  {isReviewed ? 'Add to LinkedIn Profile' : (isBangla ? 'রিভিউ দিয়ে লিঙ্কডইনে যোগ করুন' : 'Review to Add on LinkedIn')}
+                <Ionicons
+                  name="logo-linkedin"
+                  size={18}
+                  color={isReviewed ? '#FFFFFF' : isDark ? '#9CA3AF' : '#6B7280'}
+                />
+                <Text
+                  style={[
+                    styles.linkedinActionText,
+                    !isReviewed && { color: isDark ? '#9CA3AF' : '#6B7280' },
+                  ]}
+                >
+                  {isReviewed
+                    ? 'Add to LinkedIn Profile'
+                    : isBangla
+                      ? 'রিভিউ দিয়ে লিঙ্কডইনে যোগ করুন'
+                      : 'Review to Add on LinkedIn'}
                 </Text>
               </TouchableOpacity>
 
               {/* Share Row: Native Share + Post on LinkedIn */}
               <View style={styles.actionRowHalf}>
                 <TouchableOpacity
-                  style={[styles.halfActionBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                  style={[
+                    styles.halfActionBtn,
+                    { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                  ]}
                   onPress={handleShare}
                   accessibilityRole="button"
                   accessibilityLabel="Share certificate"
@@ -391,7 +453,10 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.halfActionBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                  style={[
+                    styles.halfActionBtn,
+                    { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                  ]}
                   onPress={handleShareToLinkedInFeed}
                   accessibilityRole="button"
                   accessibilityLabel="Post certificate to LinkedIn feed"
@@ -404,29 +469,39 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
               {/* Copy URL + Verify on Web */}
               <View style={styles.actionRowHalf}>
                 <TouchableOpacity
-                  style={[styles.halfActionBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                  style={[
+                    styles.halfActionBtn,
+                    { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                  ]}
                   onPress={handleCopyLink}
                   accessibilityRole="button"
-                  accessibilityLabel={copied ? "Certificate link copied" : "Copy certificate link"}
+                  accessibilityLabel={copied ? 'Certificate link copied' : 'Copy certificate link'}
                 >
                   <Ionicons
                     name={copied ? 'checkmark-circle' : 'copy-outline'}
                     size={16}
                     color={copied ? '#10B981' : colors.textMuted}
                   />
-                  <Text style={[styles.halfActionText, { color: copied ? '#10B981' : colors.text }]}>
+                  <Text
+                    style={[styles.halfActionText, { color: copied ? '#10B981' : colors.text }]}
+                  >
                     {copied ? 'Copied!' : 'Copy Link'}
                   </Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.halfActionBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                  style={[
+                    styles.halfActionBtn,
+                    { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                  ]}
                   onPress={handleVerifyOnline}
                   accessibilityRole="button"
                   accessibilityLabel="Verify certificate online in browser"
                 >
                   <Ionicons name="open-outline" size={16} color={colors.primary} />
-                  <Text style={[styles.halfActionText, { color: colors.primary }]}>Verify on Web</Text>
+                  <Text style={[styles.halfActionText, { color: colors.primary }]}>
+                    Verify on Web
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>

@@ -15,7 +15,8 @@ export interface LiteRtRuntimeStatus {
 export class LiteRtService {
   private static isInitialized = false;
   private static isGpuActive = false;
-  private static runtimeSource = Platform.OS === 'android' ? 'Google Play Services (Pending Init)' : 'JS On-Device Engine';
+  private static runtimeSource =
+    Platform.OS === 'android' ? 'Google Play Services (Pending Init)' : 'JS On-Device Engine';
   private static isSemanticSearchEnabled = true;
 
   // Domain semantic vocabulary dimension map (64-dimensional dense projection)
@@ -24,21 +25,119 @@ export class LiteRtService {
   // Domain Semantic Concept Clusters for On-Device Skill Embedding
   private static readonly CONCEPT_CLUSTERS = [
     // 0: Coding & Software Development
-    ['code', 'develop', 'software', 'react', 'typescript', 'javascript', 'python', 'web', 'app', 'backend', 'frontend', 'program', 'api', 'bug', 'fullstack'],
+    [
+      'code',
+      'develop',
+      'software',
+      'react',
+      'typescript',
+      'javascript',
+      'python',
+      'web',
+      'app',
+      'backend',
+      'frontend',
+      'program',
+      'api',
+      'bug',
+      'fullstack',
+    ],
     // 1: Conflict, Negotiation & Leadership
-    ['conflict', 'dispute', 'argument', 'negotiat', 'resolv', 'mediat', 'peace', 'leader', 'team', 'consensus', 'communicat', 'discord', 'friction'],
+    [
+      'conflict',
+      'dispute',
+      'argument',
+      'negotiat',
+      'resolv',
+      'mediat',
+      'peace',
+      'leader',
+      'team',
+      'consensus',
+      'communicat',
+      'discord',
+      'friction',
+    ],
     // 2: Business, Finance & Management
-    ['business', 'money', 'finance', 'startup', 'management', 'accounting', 'invest', 'enterprise', 'revenue', 'strategy', 'profit'],
+    [
+      'business',
+      'money',
+      'finance',
+      'startup',
+      'management',
+      'accounting',
+      'invest',
+      'enterprise',
+      'revenue',
+      'strategy',
+      'profit',
+    ],
     // 3: Marketing & Growth
-    ['market', 'seo', 'sem', 'growth', 'viral', 'audience', 'acquisition', 'sales', 'ads', 'advertising', 'brand'],
+    [
+      'market',
+      'seo',
+      'sem',
+      'growth',
+      'viral',
+      'audience',
+      'acquisition',
+      'sales',
+      'ads',
+      'advertising',
+      'brand',
+    ],
     // 4: Design & UI/UX
-    ['design', 'ui', 'ux', 'visual', 'graphic', 'figma', 'art', 'typography', 'layout', 'wireframe', 'color'],
+    [
+      'design',
+      'ui',
+      'ux',
+      'visual',
+      'graphic',
+      'figma',
+      'art',
+      'typography',
+      'layout',
+      'wireframe',
+      'color',
+    ],
     // 5: Data Science & Machine Learning
-    ['ai', 'ml', 'data', 'machine', 'learning', 'neural', 'model', 'analytics', 'statistics', 'deep'],
+    [
+      'ai',
+      'ml',
+      'data',
+      'machine',
+      'learning',
+      'neural',
+      'model',
+      'analytics',
+      'statistics',
+      'deep',
+    ],
     // 6: Language & Communication
-    ['english', 'spoken', 'language', 'grammar', 'fluency', 'vocabulary', 'bangla', 'speech', 'writing'],
+    [
+      'english',
+      'spoken',
+      'language',
+      'grammar',
+      'fluency',
+      'vocabulary',
+      'bangla',
+      'speech',
+      'writing',
+    ],
     // 7: Productivity & Study
-    ['study', 'notes', 'productivity', 'flashcard', 'memory', 'habit', 'focus', 'learn', 'skill', 'exam'],
+    [
+      'study',
+      'notes',
+      'productivity',
+      'flashcard',
+      'memory',
+      'habit',
+      'focus',
+      'learn',
+      'skill',
+      'exam',
+    ],
   ];
 
   /**

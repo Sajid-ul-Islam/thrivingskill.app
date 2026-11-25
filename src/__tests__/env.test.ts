@@ -26,7 +26,10 @@ describe('Env configuration', () => {
     expect(Env.WP_ADMIN_URL).toBe('https://staging.thrivingskill.com/wp-admin/');
     expect(Env.ACCOUNT_DELETION_URL).toBe('https://staging.thrivingskill.com/delete-account/');
     expect(Env.FALLBACK_SITE_URL).toBe('https://thrivingskill.com');
-    expect(AsyncStorage.setItem).toHaveBeenCalledWith('@thrivingskill_active_environment', 'staging');
+    expect(AsyncStorage.setItem).toHaveBeenCalledWith(
+      '@thrivingskill_active_environment',
+      'staging'
+    );
   });
 
   it('toggles between environments and notifies active subscribers', async () => {

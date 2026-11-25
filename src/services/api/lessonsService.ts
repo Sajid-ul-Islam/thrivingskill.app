@@ -46,7 +46,7 @@ export class LessonsService {
       }
 
       const raw = await HttpClient.get<any>(Endpoints.LEARNPRESS.LESSON_DETAIL(lessonId));
-      
+
       const videoIntro = raw.video_intro || raw.meta_data?._lp_lesson_video_intro || '';
       let videoUrl = raw.video_url || raw.meta_data?.video_url || '';
 
@@ -62,7 +62,8 @@ export class LessonsService {
       let videoType: 'vimeo' | 'youtube' | 'mp4' | 'iframe' | 'none' = 'none';
       if (videoUrl) {
         if (videoUrl.includes('vimeo.com')) videoType = 'vimeo';
-        else if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) videoType = 'youtube';
+        else if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be'))
+          videoType = 'youtube';
         else if (videoUrl.match(/\.(mp4|m3u8|webm)($|\?)/i)) videoType = 'mp4';
         else videoType = 'iframe';
       } else if (videoIntro) {
@@ -122,7 +123,11 @@ export class LessonsService {
   /**
    * Check answer for a quiz question
    */
-  static async checkAnswer(quizId: string | number, questionId: string | number, answer: any): Promise<any> {
+  static async checkAnswer(
+    quizId: string | number,
+    questionId: string | number,
+    answer: any
+  ): Promise<any> {
     return HttpClient.post(Endpoints.LEARNPRESS.QUIZ_CHECK_ANSWER, {
       id: quizId,
       question_id: questionId,

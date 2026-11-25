@@ -74,12 +74,9 @@ export const useAutoScroll = (options: UseAutoScrollOptions = {}): UseAutoScroll
       })
       .catch(() => {});
 
-    const subscription = AccessibilityInfo.addEventListener?.(
-      'reduceMotionChanged',
-      (reduce) => {
-        if (mounted) setIsReduceMotion(Boolean(reduce));
-      }
-    );
+    const subscription = AccessibilityInfo.addEventListener?.('reduceMotionChanged', (reduce) => {
+      if (mounted) setIsReduceMotion(Boolean(reduce));
+    });
 
     return () => {
       mounted = false;

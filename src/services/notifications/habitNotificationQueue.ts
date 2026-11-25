@@ -1,5 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { PushNotificationService, InAppNotification, InAppNotificationType } from './pushNotificationService';
+import {
+  PushNotificationService,
+  InAppNotification,
+  InAppNotificationType,
+} from './pushNotificationService';
 
 export type NotificationPriority = 'urgent' | 'high' | 'normal' | 'low';
 
@@ -427,7 +431,8 @@ export class HabitNotificationQueue {
     } catch {}
 
     const now = Date.now();
-    const isStartupThrottled = (now - this.appLaunchTimestamp < STARTUP_GRACE_WINDOW_MS) && this.startupNotificationShown;
+    const isStartupThrottled =
+      now - this.appLaunchTimestamp < STARTUP_GRACE_WINDOW_MS && this.startupNotificationShown;
 
     return {
       queuedCount: queue.length,

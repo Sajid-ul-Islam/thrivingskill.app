@@ -95,7 +95,8 @@ export const CurriculumAccordion: React.FC<CurriculumAccordionProps> = ({
                 <View style={styles.moduleTitleCol}>
                   <Text style={[styles.moduleTitle, { color: colors.text }]}>{mod.title}</Text>
                   <Text style={[styles.moduleMeta, { color: colors.textMuted }]}>
-                    {mod.lessons.length} lessons • {moduleCompletedCount}/{mod.lessons.length} completed
+                    {mod.lessons.length} lessons • {moduleCompletedCount}/{mod.lessons.length}{' '}
+                    completed
                   </Text>
                 </View>
               </View>
@@ -143,17 +144,25 @@ export const CurriculumAccordion: React.FC<CurriculumAccordionProps> = ({
                               backgroundColor: isCompleted
                                 ? colors.primaryLight
                                 : isActive
-                                ? colors.primary
-                                : colors.surfaceSubtle,
+                                  ? colors.primary
+                                  : colors.surfaceSubtle,
                             },
                           ]}
                         >
                           {isCompleted ? (
                             <Ionicons name="checkmark-circle" size={16} color={colors.primary} />
                           ) : isActive ? (
-                            <Ionicons name={isQuizItem ? "help-circle" : "play"} size={isQuizItem ? 14 : 12} color={colors.onPrimary} />
+                            <Ionicons
+                              name={isQuizItem ? 'help-circle' : 'play'}
+                              size={isQuizItem ? 14 : 12}
+                              color={colors.onPrimary}
+                            />
                           ) : isAccessible ? (
-                            <Ionicons name={isQuizItem ? "help-circle-outline" : "play-outline"} size={14} color={isQuizItem ? colors.secondary : colors.textMuted} />
+                            <Ionicons
+                              name={isQuizItem ? 'help-circle-outline' : 'play-outline'}
+                              size={14}
+                              color={isQuizItem ? colors.secondary : colors.textMuted}
+                            />
                           ) : (
                             <Ionicons name="lock-closed" size={14} color={colors.textMuted} />
                           )}
@@ -167,8 +176,8 @@ export const CurriculumAccordion: React.FC<CurriculumAccordionProps> = ({
                                 color: isActive
                                   ? colors.primary
                                   : isAccessible
-                                  ? colors.text
-                                  : colors.textMuted,
+                                    ? colors.text
+                                    : colors.textMuted,
                                 fontWeight: isActive ? '700' : '500',
                               },
                             ]}
@@ -183,7 +192,11 @@ export const CurriculumAccordion: React.FC<CurriculumAccordionProps> = ({
                             </Text>
                             {isQuizItem && (
                               <View style={styles.quizTag}>
-                                <Ionicons name="help-circle-outline" size={12} color={colors.secondary} />
+                                <Ionicons
+                                  name="help-circle-outline"
+                                  size={12}
+                                  color={colors.secondary}
+                                />
                                 <Text style={[styles.quizTagText, { color: colors.secondary }]}>
                                   Quiz
                                 </Text>
@@ -194,15 +207,24 @@ export const CurriculumAccordion: React.FC<CurriculumAccordionProps> = ({
                       </View>
 
                       {lesson.isFreePreview && !isEnrolled && !isAdmin && (
-                        <View style={[styles.previewBadge, { backgroundColor: colors.secondaryLight }]}>
+                        <View
+                          style={[styles.previewBadge, { backgroundColor: colors.secondaryLight }]}
+                        >
                           <Text style={[styles.previewText, { color: colors.secondary }]}>
                             Preview
                           </Text>
                         </View>
                       )}
                       {isAdmin && !isEnrolled && (
-                        <View style={[styles.previewBadge, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}>
-                          <Text style={[styles.previewText, { color: '#E34234', fontWeight: '700' }]}>
+                        <View
+                          style={[
+                            styles.previewBadge,
+                            { backgroundColor: 'rgba(227, 66, 52, 0.12)' },
+                          ]}
+                        >
+                          <Text
+                            style={[styles.previewText, { color: '#E34234', fontWeight: '700' }]}
+                          >
                             Master Access
                           </Text>
                         </View>

@@ -65,11 +65,7 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
     if (visible) {
       AiTutorService.getExecutionStatus().then((status) => {
         setIsNanoOfflineReady(status.isSupported);
-        setNanoStatus(
-          status.isSupported
-            ? 'Gemini Nano (Offline ⚡)'
-            : 'AI Edge Hybrid'
-        );
+        setNanoStatus(status.isSupported ? 'Gemini Nano (Offline ⚡)' : 'AI Edge Hybrid');
       });
 
       AiTutorService.getSmartReplies('', isBangla).then(setSmartReplies);
@@ -159,8 +155,8 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
       setMessages(finalHistory);
       AiTutorService.saveHistory(context.lessonId, finalHistory);
       AiTutorService.getSmartReplies(res.summary, isBangla).then(setSmartReplies);
-    } catch {}
-    finally {
+    } catch {
+    } finally {
       setIsThinking(false);
       setTimeout(() => {
         scrollRef.current?.scrollToEnd({ animated: true });
@@ -250,29 +246,43 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
         { label: 'অনুশীলন প্রশ্ন', query: 'এই লেকচার থেকে গুরুত্বপূর্ণ কুইজ বা প্রশ্ন কী?' },
       ]
     : [
-        { label: 'Explain Simply', query: 'Explain the core concept of this lecture in simple terms.' },
+        {
+          label: 'Explain Simply',
+          query: 'Explain the core concept of this lecture in simple terms.',
+        },
         { label: '3-Point Summary', query: 'Summarize this lesson in 3 actionable bullet points.' },
-        { label: 'Workplace Application', query: 'How do I apply this concept in real executive workplace scenarios?' },
-        { label: 'Practice Quiz', query: 'Give me a key self-assessment question based on this lecture.' },
+        {
+          label: 'Workplace Application',
+          query: 'How do I apply this concept in real executive workplace scenarios?',
+        },
+        {
+          label: 'Practice Quiz',
+          query: 'Give me a key self-assessment question based on this lecture.',
+        },
       ];
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <KeyboardAvoidingView
         style={styles.modalOverlay}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-        <View style={[styles.modalCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.modalCard,
+            { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+          ]}
+        >
           {/* Header */}
           <View style={styles.modalHeader}>
             <View style={styles.headerLeft}>
-              <View style={[styles.botIconCircle, { backgroundColor: isDark ? '#1E293B' : 'rgba(227, 66, 52, 0.12)' }]}>
+              <View
+                style={[
+                  styles.botIconCircle,
+                  { backgroundColor: isDark ? '#1E293B' : 'rgba(227, 66, 52, 0.12)' },
+                ]}
+              >
                 <Ionicons name="sparkles" size={18} color="#E34234" />
               </View>
               <View style={styles.headerTitleWrap}>
@@ -350,7 +360,9 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
               onPress={handleSummarizeLecture}
               activeOpacity={0.75}
               accessibilityRole="button"
-              accessibilityLabel={isBangla ? 'অন-ডিভাইস লেকচার সামারি' : 'On-Device Lecture Summary'}
+              accessibilityLabel={
+                isBangla ? 'অন-ডিভাইস লেকচার সামারি' : 'On-Device Lecture Summary'
+              }
             >
               <Ionicons name="sparkles" size={12} color="#059669" />
               <Text style={[styles.quickPromptText, { color: '#059669', fontWeight: '700' }]}>
@@ -431,10 +443,7 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
               return (
                 <View
                   key={m.id}
-                  style={[
-                    styles.messageRow,
-                    isUser ? styles.messageRowUser : styles.messageRowBot,
-                  ]}
+                  style={[styles.messageRow, isUser ? styles.messageRowUser : styles.messageRowBot]}
                 >
                   {!isUser && (
                     <View style={styles.botAvatarCircle}>
@@ -528,7 +537,12 @@ export const LessonAiTutorModal: React.FC<LessonAiTutorModalProps> = ({
           )}
 
           {/* Input Bar */}
-          <View style={[styles.inputBar, { borderTopColor: colors.border, paddingBottom: Math.max(12, insets.bottom) }]}>
+          <View
+            style={[
+              styles.inputBar,
+              { borderTopColor: colors.border, paddingBottom: Math.max(12, insets.bottom) },
+            ]}
+          >
             <TextInput
               style={[
                 styles.textInput,

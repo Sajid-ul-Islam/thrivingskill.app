@@ -153,9 +153,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                   <Text style={[styles.settingLabel, { color: colors.text }]}>
                     {isBangla ? 'ওয়ার্ডপ্রেস অ্যাডমিন ড্যাশবোর্ড' : 'WordPress Admin Dashboard'}
                   </Text>
-                  <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                    {Env.WP_ADMIN_URL}
-                  </Text>
+                  <Text style={{ fontSize: 11, color: colors.textMuted }}>{Env.WP_ADMIN_URL}</Text>
                 </View>
               </View>
               <Ionicons name="open-outline" size={16} color={colors.textMuted} />
@@ -163,7 +161,11 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
 
             <TouchableOpacity
               style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => Linking.openURL(`${Env.SITE_URL}/wp-admin/edit.php?post_type=lp_course`).catch(() => {})}
+              onPress={() =>
+                Linking.openURL(`${Env.SITE_URL}/wp-admin/edit.php?post_type=lp_course`).catch(
+                  () => {}
+                )
+              }
               accessibilityRole="button"
               accessibilityLabel="Courses and Lessons Management"
             >
@@ -174,7 +176,9 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                     {isBangla ? 'কোর্স ও লেসন ম্যানেজমেন্ট' : 'Courses & Lessons Management'}
                   </Text>
                   <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                    {isBangla ? 'কোর্স, মডিউল ও ভিডিও কনটেন্ট পরিচালনা করুন' : 'Manage courses, modules & videos on WP'}
+                    {isBangla
+                      ? 'কোর্স, মডিউল ও ভিডিও কনটেন্ট পরিচালনা করুন'
+                      : 'Manage courses, modules & videos on WP'}
                   </Text>
                 </View>
               </View>
@@ -194,7 +198,9 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                     {isBangla ? 'শিক্ষার্থী ও ইউজার ম্যানেজমেন্ট' : 'Students & Users'}
                   </Text>
                   <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                    {isBangla ? 'স্টুডেন্ট তালিকা, অ্যাক্সেস ও প্রোগ্রেস মনিটরিং' : 'Student enrollment & progress tracking'}
+                    {isBangla
+                      ? 'স্টুডেন্ট তালিকা, অ্যাক্সেস ও প্রোগ্রেস মনিটরিং'
+                      : 'Student enrollment & progress tracking'}
                   </Text>
                 </View>
               </View>
@@ -203,7 +209,11 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
 
             <TouchableOpacity
               style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => Linking.openURL(`${Env.SITE_URL}/wp-admin/edit.php?post_type=lp_order`).catch(() => {})}
+              onPress={() =>
+                Linking.openURL(`${Env.SITE_URL}/wp-admin/edit.php?post_type=lp_order`).catch(
+                  () => {}
+                )
+              }
               accessibilityRole="button"
               accessibilityLabel="Orders and Enrollment Management"
             >
@@ -214,7 +224,9 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                     {isBangla ? 'এনরোলমেন্ট ও অর্ডার ম্যানেজমেন্ট' : 'Orders & Enrollment Management'}
                   </Text>
                   <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                    {isBangla ? 'অর্ডার স্ট্যাটাস ও এনরোলমেন্ট রিভিউ করুন' : 'Review LearnPress enrollment records'}
+                    {isBangla
+                      ? 'অর্ডার স্ট্যাটাস ও এনরোলমেন্ট রিভিউ করুন'
+                      : 'Review LearnPress enrollment records'}
                   </Text>
                 </View>
               </View>
@@ -223,7 +235,11 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
 
             <TouchableOpacity
               style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}
-              onPress={() => Linking.openURL(`${Env.SITE_URL}/wp-admin/admin.php?page=learnpress-statistics`).catch(() => {})}
+              onPress={() =>
+                Linking.openURL(
+                  `${Env.SITE_URL}/wp-admin/admin.php?page=learnpress-statistics`
+                ).catch(() => {})
+              }
               accessibilityRole="button"
               accessibilityLabel="Reports and Analytics"
             >
@@ -234,7 +250,9 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                     {isBangla ? 'রিপোর্ট ও অ্যানালিটিক্স' : 'Reports & Analytics'}
                   </Text>
                   <Text style={{ fontSize: 11, color: colors.textMuted }}>
-                    {isBangla ? 'লার্নিং অ্যানালিটিক্স ও কমপ্লিশন রিপোর্ট' : 'Learning stats & course performance'}
+                    {isBangla
+                      ? 'লার্নিং অ্যানালিটিক্স ও কমপ্লিশন রিপোর্ট'
+                      : 'Learning stats & course performance'}
                   </Text>
                 </View>
               </View>
@@ -262,8 +280,8 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                 {subscriptionTier === 'enterprise'
                   ? 'ENTERPRISE SCALE'
                   : subscriptionTier === 'pro'
-                  ? 'PRO EXECUTIVE'
-                  : 'STARTER MEMBER'}
+                    ? 'PRO EXECUTIVE'
+                    : 'STARTER MEMBER'}
               </Text>
             </View>
           </View>
@@ -272,8 +290,10 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
             {subscriptionTier === 'enterprise'
               ? 'Enterprise Team Workspace'
               : subscriptionTier === 'pro'
-              ? (isBangla ? '৩০০+ কোর্স ও ভেরিফায়েড সার্টিফিকেট আনলকড' : '300+ Courses & Verified Certificates Unlocked')
-              : 'Synced Account Access'}
+                ? isBangla
+                  ? '৩০০+ কোর্স ও ভেরিফায়েড সার্টিফিকেট আনলকড'
+                  : '300+ Courses & Verified Certificates Unlocked'
+                : 'Synced Account Access'}
           </Text>
           <Text style={[styles.planExpiry, { color: colors.textMuted }]}>
             {isBangla
@@ -295,7 +315,10 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.invoiceBtn, { borderColor: colors.border, backgroundColor: colors.surfaceSubtle }]}
+              style={[
+                styles.invoiceBtn,
+                { borderColor: colors.border, backgroundColor: colors.surfaceSubtle },
+              ]}
               onPress={onOpenOrders}
               accessibilityRole="button"
               accessibilityLabel={isBangla ? 'অর্ডার রেকর্ড' : 'Orders'}
@@ -328,7 +351,9 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
               onOpenFlashcards();
             }}
             accessibilityRole="button"
-            accessibilityLabel={isBangla ? 'অ্যাক্টিভ রিকল ফ্ল্যাশকার্ড খুলুন' : 'Open Active Recall Flashcards'}
+            accessibilityLabel={
+              isBangla ? 'অ্যাক্টিভ রিকল ফ্ল্যাশকার্ড খুলুন' : 'Open Active Recall Flashcards'
+            }
           >
             <View style={styles.settingLeft}>
               <Ionicons name="layers-outline" size={20} color={colors.primary} />
@@ -337,11 +362,18 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                   {isBangla ? 'অ্যাক্টিভ রিকল ফ্ল্যাশকার্ড (SM-2)' : 'Active Recall Flashcards'}
                 </Text>
                 <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
-                  {isBangla ? 'বৈজ্ঞানিক স্পেসড রিপিটেশন পদ্ধতি' : 'SuperMemo-2 spaced repetition memory engine'}
+                  {isBangla
+                    ? 'বৈজ্ঞানিক স্পেসড রিপিটেশন পদ্ধতি'
+                    : 'SuperMemo-2 spaced repetition memory engine'}
                 </Text>
               </View>
             </View>
-            <View style={[styles.langPill, { backgroundColor: isDark ? colors.surfaceSubtle : 'rgba(227, 66, 52, 0.10)' }]}>
+            <View
+              style={[
+                styles.langPill,
+                { backgroundColor: isDark ? colors.surfaceSubtle : 'rgba(227, 66, 52, 0.10)' },
+              ]}
+            >
               <Text style={[styles.langPillText, { color: '#E34234' }]}>
                 {isBangla ? 'স্মৃতি পরীক্ষা' : 'Review Deck'}
               </Text>
@@ -365,7 +397,9 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                   {isBangla ? 'অফলাইন স্টাডি ডেক' : 'Offline Study Deck'}
                 </Text>
                 <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
-                  {isBangla ? 'ইন্টারনেট ছাড়াই লেকচার ও নোটস পড়ুন' : 'Read saved lectures & takeaways without internet'}
+                  {isBangla
+                    ? 'ইন্টারনেট ছাড়াই লেকচার ও নোটস পড়ুন'
+                    : 'Read saved lectures & takeaways without internet'}
                 </Text>
               </View>
             </View>
@@ -389,7 +423,9 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                   {isBangla ? 'অন-ডিভাইস ফাস্ট সার্চ (FTS)' : 'On-Device Fast Search (FTS)'}
                 </Text>
                 <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
-                  {isBangla ? 'কোর্স, লেকচার ও নোটস নিমেষে সার্চ করুন' : 'Instant inverted index search across offline content'}
+                  {isBangla
+                    ? 'কোর্স, লেকচার ও নোটস নিমেষে সার্চ করুন'
+                    : 'Instant inverted index search across offline content'}
                 </Text>
               </View>
             </View>
@@ -416,7 +452,10 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
               triggerHaptic('selection');
               toggleLanguage();
               showToast({
-                message: language === 'en' ? 'ভাষা বাংলা (BN) নির্ধারণ করা হয়েছে' : 'Language switched to English (EN)',
+                message:
+                  language === 'en'
+                    ? 'ভাষা বাংলা (BN) নির্ধারণ করা হয়েছে'
+                    : 'Language switched to English (EN)',
                 type: 'info',
               });
             }}
@@ -472,7 +511,9 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
               cycleVideoQuality();
             }}
             accessibilityRole="button"
-            accessibilityLabel={isBangla ? 'ভিডিও স্ট্রিমিং কোয়ালিটি পরিবর্তন করুন' : 'Cycle video streaming quality'}
+            accessibilityLabel={
+              isBangla ? 'ভিডিও স্ট্রিমিং কোয়ালিটি পরিবর্তন করুন' : 'Cycle video streaming quality'
+            }
           >
             <View style={styles.settingLeft}>
               <Ionicons name="videocam-outline" size={20} color="#3B82F6" />
@@ -486,7 +527,12 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
               </View>
             </View>
             <View style={[styles.langPill, { backgroundColor: 'rgba(59, 130, 246, 0.12)' }]}>
-              <Text style={[styles.langPillText, { color: isDark ? colors.primary : '#1D4ED8', fontWeight: '800' }]}>
+              <Text
+                style={[
+                  styles.langPillText,
+                  { color: isDark ? colors.primary : '#1D4ED8', fontWeight: '800' },
+                ]}
+              >
                 {videoQuality}
               </Text>
             </View>
@@ -509,12 +555,19 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                   {isBangla ? 'ইন-অ্যাপ আপডেট (OTA)' : 'In-App Updates (OTA)'}
                 </Text>
                 <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
-                  {isBangla ? 'APK রি-বিল্ড ছাড়াই নতুন ফিচার পান' : 'Instant updates without rebuilding APK'}
+                  {isBangla
+                    ? 'APK রি-বিল্ড ছাড়াই নতুন ফিচার পান'
+                    : 'Instant updates without rebuilding APK'}
                 </Text>
               </View>
             </View>
             <View style={[styles.langPill, { backgroundColor: 'rgba(16, 185, 129, 0.14)' }]}>
-              <Text style={[styles.langPillText, { color: isDark ? '#34D399' : '#047857', fontWeight: '800' }]}>
+              <Text
+                style={[
+                  styles.langPillText,
+                  { color: isDark ? '#34D399' : '#047857', fontWeight: '800' },
+                ]}
+              >
                 OTA Engine
               </Text>
             </View>
@@ -543,14 +596,14 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
             </View>
             <Switch
               value={biometricEnabled}
-              accessibilityLabel={isBangla ? 'বায়োমেট্রিক নিরাপত্তা টগল' : 'Toggle Biometric Security'}
+              accessibilityLabel={
+                isBangla ? 'বায়োমেট্রিক নিরাপত্তা টগল' : 'Toggle Biometric Security'
+              }
               onValueChange={(val) => {
                 triggerHaptic('selection');
                 setBiometricEnabled(val);
                 showToast({
-                  message: val
-                    ? 'Biometric unlock enabled'
-                    : 'Biometric unlock disabled',
+                  message: val ? 'Biometric unlock enabled' : 'Biometric unlock disabled',
                   type: 'info',
                 });
               }}
@@ -623,7 +676,9 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
               onOpenOrders();
             }}
             accessibilityRole="button"
-            accessibilityLabel={isBangla ? 'অর্ডার ও কোর্স রেকর্ড দেখুন' : 'View Orders and Course Records'}
+            accessibilityLabel={
+              isBangla ? 'অর্ডার ও কোর্স রেকর্ড দেখুন' : 'View Orders and Course Records'
+            }
           >
             <View style={styles.settingLeft}>
               <Ionicons name="receipt-outline" size={20} color="#10B981" />
@@ -632,7 +687,9 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                   {isBangla ? 'অর্ডার ও কোর্স রেকর্ড' : 'Orders & Course Records'}
                 </Text>
                 <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
-                  {isBangla ? 'আপনার সিঙ্ক করা সকল LearnPress ও WooCommerce অর্ডার' : 'Your synced LearnPress & WooCommerce orders'}
+                  {isBangla
+                    ? 'আপনার সিঙ্ক করা সকল LearnPress ও WooCommerce অর্ডার'
+                    : 'Your synced LearnPress & WooCommerce orders'}
                 </Text>
               </View>
             </View>
@@ -656,7 +713,9 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                   {isBangla ? 'ক্যাশ মেমোরি ক্লিয়ার করুন' : 'Clear Storage & Cache'}
                 </Text>
                 <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
-                  {isBangla ? 'অব্যবহৃত টেম্পোরারি ফাইল মুছুন (~38 MB)' : 'Free up temporary local storage (~38 MB)'}
+                  {isBangla
+                    ? 'অব্যবহৃত টেম্পোরারি ফাইল মুছুন (~38 MB)'
+                    : 'Free up temporary local storage (~38 MB)'}
                 </Text>
               </View>
             </View>
@@ -666,13 +725,18 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
           {/* Server Environment Switcher (Live vs Staging) - Visible in DEV mode, for Admins, or via Easter Egg */}
           {Boolean(__DEV__ || isAdmin || isDevModeUnlocked) && (
             <TouchableOpacity
-              style={[styles.settingRow, isAdmin ? { borderBottomColor: colors.borderSubtle } : { borderBottomWidth: 0 }]}
+              style={[
+                styles.settingRow,
+                isAdmin ? { borderBottomColor: colors.borderSubtle } : { borderBottomWidth: 0 },
+              ]}
               onPress={() => {
                 triggerHaptic('light');
                 onSwitchServerEnvironment?.();
               }}
               accessibilityRole="button"
-              accessibilityLabel={isBangla ? 'সার্ভার পরিবেশ পরিবর্তন করুন' : 'Switch Server Environment'}
+              accessibilityLabel={
+                isBangla ? 'সার্ভার পরিবেশ পরিবর্তন করুন' : 'Switch Server Environment'
+              }
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="server-outline" size={20} color={colors.primary} />
@@ -682,8 +746,12 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                   </Text>
                   <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
                     {serverEnvironment === 'production'
-                      ? (isBangla ? 'লাইভ প্রোডাকশন • thrivingskill.com' : 'Live Production • thrivingskill.com')
-                      : (isBangla ? 'স্টেজিং সার্ভার • staging.thrivingskill.com' : 'Staging Server • staging.thrivingskill.com')}
+                      ? isBangla
+                        ? 'লাইভ প্রোডাকশন • thrivingskill.com'
+                        : 'Live Production • thrivingskill.com'
+                      : isBangla
+                        ? 'স্টেজিং সার্ভার • staging.thrivingskill.com'
+                        : 'Staging Server • staging.thrivingskill.com'}
                   </Text>
                 </View>
               </View>
@@ -695,8 +763,12 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                     borderRadius: 6,
                     backgroundColor:
                       serverEnvironment === 'production'
-                        ? (isDark ? 'rgba(16, 185, 129, 0.2)' : '#ECFDF5')
-                        : (isDark ? 'rgba(227, 66, 52, 0.2)' : 'rgba(227, 66, 52, 0.12)'),
+                        ? isDark
+                          ? 'rgba(16, 185, 129, 0.2)'
+                          : '#ECFDF5'
+                        : isDark
+                          ? 'rgba(227, 66, 52, 0.2)'
+                          : 'rgba(227, 66, 52, 0.12)',
                     borderWidth: 1,
                     borderColor: serverEnvironment === 'production' ? '#10B981' : '#E34234',
                   }}
@@ -710,8 +782,12 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                     }}
                   >
                     {serverEnvironment === 'production'
-                      ? (isBangla ? 'লাইভ' : 'LIVE')
-                      : (isBangla ? 'স্টেজিং' : 'STAGING')}
+                      ? isBangla
+                        ? 'লাইভ'
+                        : 'LIVE'
+                      : isBangla
+                        ? 'স্টেজিং'
+                        : 'STAGING'}
                   </Text>
                 </View>
                 <Ionicons name="swap-horizontal" size={16} color={colors.textMuted} />
@@ -732,7 +808,11 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                 onOpenDevOptions?.();
               }}
               accessibilityRole="button"
-              accessibilityLabel={isBangla ? 'ডেভেলপার কনসোল ও স্বাভাবিক মোড' : 'Developer Console & Return to Standard Mode'}
+              accessibilityLabel={
+                isBangla
+                  ? 'ডেভেলপার কনসোল ও স্বাভাবিক মোড'
+                  : 'Developer Console & Return to Standard Mode'
+              }
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="code-slash-outline" size={20} color="#E34234" />
@@ -741,12 +821,21 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                     <Text style={[styles.settingLabel, { color: colors.text }]}>
                       {isBangla ? 'ডেভেলপার অপশন সক্রিয়' : 'Developer Options Console'}
                     </Text>
-                    <View style={{ backgroundColor: '#E34234', paddingHorizontal: 6, paddingVertical: 1.5, borderRadius: 4 }}>
+                    <View
+                      style={{
+                        backgroundColor: '#E34234',
+                        paddingHorizontal: 6,
+                        paddingVertical: 1.5,
+                        borderRadius: 4,
+                      }}
+                    >
                       <Text style={{ color: '#FFFFFF', fontSize: 9, fontWeight: '800' }}>DEV</Text>
                     </View>
                   </View>
                   <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
-                    {isBangla ? 'কনসোল দেখুন বা স্বাভাবিক মোডে ফিরে যান →' : 'Diagnostics & return to Standard Mode →'}
+                    {isBangla
+                      ? 'কনসোল দেখুন বা স্বাভাবিক মোডে ফিরে যান →'
+                      : 'Diagnostics & return to Standard Mode →'}
                   </Text>
                 </View>
               </View>
@@ -760,13 +849,17 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
               style={[styles.settingRow, { borderBottomWidth: 0 }]}
               onPress={() => Linking.openURL(Env.WP_ADMIN_URL).catch(() => {})}
               accessibilityRole="button"
-              accessibilityLabel={isBangla ? 'ওয়ার্ডপ্রেস অ্যাডমিন পোর্টাল খুলুন' : 'Open WordPress Admin Portal'}
+              accessibilityLabel={
+                isBangla ? 'ওয়ার্ডপ্রেস অ্যাডমিন পোর্টাল খুলুন' : 'Open WordPress Admin Portal'
+              }
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="settings-outline" size={20} color="#EC4899" />
                 <View style={styles.settingTextCol}>
                   <Text style={[styles.settingLabel, { color: colors.text }]}>
-                    {isBangla ? 'ওয়ার্ডপ্রেস অ্যাডমিন পোর্টাল (WP-Admin)' : 'WordPress Admin Portal (WP-Admin)'}
+                    {isBangla
+                      ? 'ওয়ার্ডপ্রেস অ্যাডমিন পোর্টাল (WP-Admin)'
+                      : 'WordPress Admin Portal (WP-Admin)'}
                   </Text>
                   <Text style={[styles.settingSubtext, { color: colors.textMuted }]}>
                     {Env.WP_ADMIN_URL}
@@ -781,7 +874,9 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
 
       {/* Enterprise & Corporate Upskilling */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>ENTERPRISE & B2B SOLUTIONS</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>
+          ENTERPRISE & B2B SOLUTIONS
+        </Text>
         <TouchableOpacity
           style={[
             styles.corporateCard,
@@ -845,9 +940,13 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
           >
             <View style={styles.settingLeft}>
               <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
-              <Text style={[styles.settingLabel, { color: colors.text }]}>About Thriving Skills (TSL)</Text>
+              <Text style={[styles.settingLabel, { color: colors.text }]}>
+                About Thriving Skills (TSL)
+              </Text>
             </View>
-            <Text style={[styles.versionText, { color: colors.primary, fontWeight: '600' }]}>Vision & Values →</Text>
+            <Text style={[styles.versionText, { color: colors.primary, fontWeight: '600' }]}>
+              Vision & Values →
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -861,9 +960,13 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
           >
             <View style={styles.settingLeft}>
               <Ionicons name="people-outline" size={20} color="#E34234" />
-              <Text style={[styles.settingLabel, { color: colors.text }]}>Founders & Leadership</Text>
+              <Text style={[styles.settingLabel, { color: colors.text }]}>
+                Founders & Leadership
+              </Text>
             </View>
-            <Text style={[styles.versionText, { color: '#E34234', fontWeight: '600' }]}>Exec Board →</Text>
+            <Text style={[styles.versionText, { color: '#E34234', fontWeight: '600' }]}>
+              Exec Board →
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -876,10 +979,23 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
             accessibilityLabel="Trusted Partners and MoUs"
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="shield-checkmark-outline" size={20} color={isDark ? '#34D399' : '#047857'} />
-              <Text style={[styles.settingLabel, { color: colors.text }]}>Trusted Partners & MoUs</Text>
+              <Ionicons
+                name="shield-checkmark-outline"
+                size={20}
+                color={isDark ? '#34D399' : '#047857'}
+              />
+              <Text style={[styles.settingLabel, { color: colors.text }]}>
+                Trusted Partners & MoUs
+              </Text>
             </View>
-            <Text style={[styles.versionText, { color: isDark ? '#34D399' : '#047857', fontWeight: '600' }]}>Universities & a2i →</Text>
+            <Text
+              style={[
+                styles.versionText,
+                { color: isDark ? '#34D399' : '#047857', fontWeight: '600' },
+              ]}
+            >
+              Universities & a2i →
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -1018,7 +1134,10 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
               <View style={styles.settingLeft}>
                 <Ionicons name="log-out-outline" size={20} color="#E34234" />
                 <View style={styles.settingTextCol}>
-                  <Text style={[styles.settingLabel, { color: '#E34234', fontWeight: '800' }]} numberOfLines={1}>
+                  <Text
+                    style={[styles.settingLabel, { color: '#E34234', fontWeight: '800' }]}
+                    numberOfLines={1}
+                  >
                     {isBangla ? 'সাইন আউট' : 'Sign Out'}
                   </Text>
                 </View>
@@ -1033,13 +1152,22 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                 onOpenAuthModal();
               }}
               accessibilityRole="button"
-              accessibilityLabel={isBangla ? 'থ্রাইভিং স্কিলস অ্যাকাউন্টে সাইন ইন' : 'Sign In with Thriving Skills Account'}
+              accessibilityLabel={
+                isBangla
+                  ? 'থ্রাইভিং স্কিলস অ্যাকাউন্টে সাইন ইন'
+                  : 'Sign In with Thriving Skills Account'
+              }
             >
               <View style={styles.settingLeft}>
                 <Ionicons name="log-in-outline" size={20} color={colors.primary} />
                 <View style={styles.settingTextCol}>
-                  <Text style={[styles.settingLabel, { color: colors.primary, fontWeight: '700' }]} numberOfLines={1}>
-                    {isBangla ? 'থ্রাইভিং স্কিলস অ্যাকাউন্টে সাইন ইন' : 'Sign In with Thriving Skills Account'}
+                  <Text
+                    style={[styles.settingLabel, { color: colors.primary, fontWeight: '700' }]}
+                    numberOfLines={1}
+                  >
+                    {isBangla
+                      ? 'থ্রাইভিং স্কিলস অ্যাকাউন্টে সাইন ইন'
+                      : 'Sign In with Thriving Skills Account'}
                   </Text>
                 </View>
               </View>

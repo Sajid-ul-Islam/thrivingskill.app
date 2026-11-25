@@ -127,7 +127,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         if (user) {
           const parts = (user.displayName || user.username || '').trim().split(' ');
           setFirstName(cached?.firstName || user.first_name || parts[0] || '');
-          setLastName(cached?.lastName || user.last_name || parts.slice(1).join(' ') || (parts[0] ? '' : 'Learner'));
+          setLastName(
+            cached?.lastName ||
+              user.last_name ||
+              parts.slice(1).join(' ') ||
+              (parts[0] ? '' : 'Learner')
+          );
           setEmail(cached?.email || user.email || '');
           setPhone(cached?.phone || user.phone || '');
           setCity(cached?.city || user.city || '');
@@ -232,7 +237,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const coursePriceBdt = resolvedPricing.priceBdt;
   const bundleSubtotalBdt = resolvedPricing.subtotalBdt;
   const bundleDiscountBdt = resolvedPricing.discountBdt;
-  const formattedPrice = coursePriceBdt > 0 ? `৳ ${coursePriceBdt.toLocaleString()}` : isBangla ? 'ফ্রি' : 'Free';
+  const formattedPrice =
+    coursePriceBdt > 0 ? `৳ ${coursePriceBdt.toLocaleString()}` : isBangla ? 'ফ্রি' : 'Free';
   const formattedSubtotal = `৳ ${bundleSubtotalBdt.toLocaleString()}`;
   const formattedDiscount = `-৳ ${bundleDiscountBdt.toLocaleString()}`;
 
@@ -253,7 +259,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       errors.email = isBangla ? 'সঠিক ইমেল ঠিকানা আবশ্যক' : 'Valid email is required';
     }
     if (!agreedToTerms) {
-      errors.terms = isBangla ? 'শর্তাবলী মেনে নেওয়া আবশ্যক' : 'You must accept the terms and conditions';
+      errors.terms = isBangla
+        ? 'শর্তাবলী মেনে নেওয়া আবশ্যক'
+        : 'You must accept the terms and conditions';
     }
 
     setFormErrors(errors);
@@ -298,10 +306,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       };
       AsyncStorage.setItem(CHECKOUT_AUTOFILL_KEY, JSON.stringify(autofillData)).catch(() => {});
 
-      updateUserProfile({
-        phone: phone.trim(),
-        city: city.trim(),
-      }, true).catch(() => {});
+      updateUserProfile(
+        {
+          phone: phone.trim(),
+          city: city.trim(),
+        },
+        true
+      ).catch(() => {});
 
       // Build official WooCommerce Checkout Cart URL
       const fullCheckoutUrl = `${Env.SITE_URL}/checkout/?add-to-cart=${course.id}`;
@@ -336,22 +347,24 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         if (field === 'billing_last_name') setLastName(value);
         if (field === 'billing_address_1') setAddress(value);
 
-        AsyncStorage.getItem(CHECKOUT_AUTOFILL_KEY).then((res) => {
-          const current = res ? JSON.parse(res) : {};
-          const fieldMap: Record<string, string> = {
-            billing_first_name: 'firstName',
-            billing_last_name: 'lastName',
-            billing_phone: 'phone',
-            billing_email: 'email',
-            billing_city: 'city',
-            billing_address_1: 'address',
-          };
-          const mappedKey = fieldMap[field];
-          if (mappedKey) {
-            current[mappedKey] = value;
-            AsyncStorage.setItem(CHECKOUT_AUTOFILL_KEY, JSON.stringify(current)).catch(() => {});
-          }
-        }).catch(() => {});
+        AsyncStorage.getItem(CHECKOUT_AUTOFILL_KEY)
+          .then((res) => {
+            const current = res ? JSON.parse(res) : {};
+            const fieldMap: Record<string, string> = {
+              billing_first_name: 'firstName',
+              billing_last_name: 'lastName',
+              billing_phone: 'phone',
+              billing_email: 'email',
+              billing_city: 'city',
+              billing_address_1: 'address',
+            };
+            const mappedKey = fieldMap[field];
+            if (mappedKey) {
+              current[mappedKey] = value;
+              AsyncStorage.setItem(CHECKOUT_AUTOFILL_KEY, JSON.stringify(current)).catch(() => {});
+            }
+          })
+          .catch(() => {});
 
         if (isAuthenticated) {
           if (field === 'billing_phone') {
@@ -495,22 +508,18 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             enrollInCourse(sub.id);
           });
         }
-        Alert.alert(
-          t('syncSuccessTitle'),
-          t('syncSuccessMsg'),
-          [
-            {
-              text: isBangla ? 'শেখা শুরু করুন' : 'Start Learning',
-              onPress: () => {
-                if (!hasCompletedPurchaseRef.current) {
-                  hasCompletedPurchaseRef.current = true;
-                  onSuccess(course.id);
-                }
-                onClose();
-              },
+        Alert.alert(t('syncSuccessTitle'), t('syncSuccessMsg'), [
+          {
+            text: isBangla ? 'শেখা শুরু করুন' : 'Start Learning',
+            onPress: () => {
+              if (!hasCompletedPurchaseRef.current) {
+                hasCompletedPurchaseRef.current = true;
+                onSuccess(course.id);
+              }
+              onClose();
             },
-          ]
-        );
+          },
+        ]);
         return;
       }
 
@@ -710,11 +719,18 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           >
             {/* Tactile Drag Handle */}
             <View style={styles.drawerHandleRow}>
-              <View style={[styles.drawerHandle, { backgroundColor: isDark ? '#334155' : '#CBD5E1' }]} />
+              <View
+                style={[styles.drawerHandle, { backgroundColor: isDark ? '#334155' : '#CBD5E1' }]}
+              />
             </View>
 
             {/* Native Sheet Header - Clean, No Browser URL / Links */}
-            <View style={[styles.drawerHeader, { borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F1F5F9' }]}>
+            <View
+              style={[
+                styles.drawerHeader,
+                { borderBottomColor: isDark ? 'rgba(255, 255, 255, 0.08)' : '#F1F5F9' },
+              ]}
+            >
               <TouchableOpacity
                 style={[styles.drawerCloseBtn, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' }]}
                 onPress={handleBackOrExitCheckout}
@@ -773,7 +789,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               onMessage={handleWebViewMessage}
               startInLoadingState={true}
               renderLoading={() => (
-                <View style={[styles.drawerLoadingState, { backgroundColor: isDark ? '#0F172A' : '#FFFFFF' }]}>
+                <View
+                  style={[
+                    styles.drawerLoadingState,
+                    { backgroundColor: isDark ? '#0F172A' : '#FFFFFF' },
+                  ]}
+                >
                   <View style={styles.drawerLoadingIconWrap}>
                     <ActivityIndicator size="large" color="#E34234" />
                   </View>
@@ -797,7 +818,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             />
 
             {/* Bottom Safe Area Padding */}
-            <View style={{ height: Math.max(insets.bottom, 16), backgroundColor: isDark ? '#0F172A' : '#FFFFFF' }} />
+            <View
+              style={{
+                height: Math.max(insets.bottom, 16),
+                backgroundColor: isDark ? '#0F172A' : '#FFFFFF',
+              }}
+            />
           </View>
         </View>
       </Modal>
@@ -852,10 +878,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
-            contentContainerStyle={[
-              styles.scroll,
-              isKeyboardVisible && { paddingBottom: 160 },
-            ]}
+            contentContainerStyle={[styles.scroll, isKeyboardVisible && { paddingBottom: 160 }]}
           >
             {/* Header Badge */}
             <View style={styles.headerRow}>
@@ -867,7 +890,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   {isBangla ? 'কোর্স ভর্তি ও চেকআউট' : 'Checkout & Enrollment'}
                 </Text>
                 <Text style={[styles.subtitle, { color: colors.textMuted }]}>
-                  {isBangla ? 'বিকাশ, নগদ, কার্ড ও ব্যাংকিং এর মাধ্যমে নিরাপদ পেমেন্ট' : 'Secure payment via Mobile Banking, Cards & Net Banking'}
+                  {isBangla
+                    ? 'বিকাশ, নগদ, কার্ড ও ব্যাংকিং এর মাধ্যমে নিরাপদ পেমেন্ট'
+                    : 'Secure payment via Mobile Banking, Cards & Net Banking'}
                 </Text>
               </View>
             </View>
@@ -876,7 +901,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             <View style={[styles.stepperContainer, { backgroundColor: colors.surfaceSubtle }]}>
               <View style={styles.stepperInfoRow}>
                 <Text style={[styles.stepperLabel, { color: colors.textMuted }]}>
-                  {isBangla ? `ধাপ ${syncStep}/২: সদস্য অ্যাক্সেস যাচাই` : `Step ${syncStep} of 2: Member Access Sync`}
+                  {isBangla
+                    ? `ধাপ ${syncStep}/২: সদস্য অ্যাক্সেস যাচাই`
+                    : `Step ${syncStep} of 2: Member Access Sync`}
                 </Text>
                 <Text style={[styles.stepperPercent, { color: colors.primary }]}>
                   {syncStep === 2 ? '100%' : '50%'}
@@ -896,11 +923,19 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             </View>
 
             {/* Mode Toggle Tabs */}
-            <View style={[styles.tabSelector, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+            <View
+              style={[
+                styles.tabSelector,
+                { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+              ]}
+            >
               <TouchableOpacity
                 style={[
                   styles.tabBtn,
-                  activeTab === 'checkout' && [styles.activeTabBtn, { backgroundColor: colors.surface }],
+                  activeTab === 'checkout' && [
+                    styles.activeTabBtn,
+                    { backgroundColor: colors.surface },
+                  ],
                 ]}
                 onPress={() => {
                   triggerHaptic('selection');
@@ -929,7 +964,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <TouchableOpacity
                 style={[
                   styles.tabBtn,
-                  activeTab === 'sync' && [styles.activeTabBtn, { backgroundColor: colors.surface }],
+                  activeTab === 'sync' && [
+                    styles.activeTabBtn,
+                    { backgroundColor: colors.surface },
+                  ],
                 ]}
                 onPress={() => {
                   triggerHaptic('selection');
@@ -965,12 +1003,28 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
                   ]}
                 >
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                    <Text style={[styles.orderSummaryTitle, { color: colors.text, marginBottom: 0 }]}>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: 8,
+                    }}
+                  >
+                    <Text
+                      style={[styles.orderSummaryTitle, { color: colors.text, marginBottom: 0 }]}
+                    >
                       {isBangla ? 'আপনার অর্ডার' : 'Your order'}
                     </Text>
                     {isBundle && (
-                      <View style={{ backgroundColor: '#102F53', paddingHorizontal: 8, paddingVertical: 3, borderRadius: shape.full }}>
+                      <View
+                        style={{
+                          backgroundColor: '#102F53',
+                          paddingHorizontal: 8,
+                          paddingVertical: 3,
+                          borderRadius: shape.full,
+                        }}
+                      >
                         <Text style={{ color: '#E34234', fontSize: 10, fontWeight: '800' }}>
                           {isBangla
                             ? `স্পেশাল বান্ডেল (${resolvedPricing.subCourses.length}টি কোর্স)`
@@ -992,29 +1046,71 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
                   {/* Bundle Sub-Courses Breakdown */}
                   {isBundle && resolvedPricing.subCourses.length > 0 && (
-                    <View style={{ marginVertical: 8, padding: 10, backgroundColor: colors.surfaceSubtle, borderRadius: shape.medium }}>
-                      <Text style={{ fontSize: 11, fontWeight: '700', color: colors.text, marginBottom: 6 }}>
+                    <View
+                      style={{
+                        marginVertical: 8,
+                        padding: 10,
+                        backgroundColor: colors.surfaceSubtle,
+                        borderRadius: shape.medium,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 11,
+                          fontWeight: '700',
+                          color: colors.text,
+                          marginBottom: 6,
+                        }}
+                      >
                         {isBangla
                           ? `বান্ডেলে অন্তর্ভুক্ত ${resolvedPricing.subCourses.length}টি কোর্স:`
                           : `Included ${resolvedPricing.subCourses.length} courses in this bundle:`}
                       </Text>
                       {resolvedPricing.subCourses.map((sub, idx) => (
-                        <View key={sub.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginVertical: 2.5 }}>
+                        <View
+                          key={sub.id}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 6,
+                            marginVertical: 2.5,
+                          }}
+                        >
                           <Ionicons name="checkmark-circle" size={14} color="#10B981" />
-                          <Text style={{ fontSize: 11, color: colors.text, flex: 1 }} numberOfLines={1}>
+                          <Text
+                            style={{ fontSize: 11, color: colors.text, flex: 1 }}
+                            numberOfLines={1}
+                          >
                             {idx + 1}. {sub.title}
                           </Text>
                           {typeof sub.priceBdt === 'number' && sub.priceBdt > 0 && (
-                            <Text style={{ fontSize: 10, color: colors.textMuted, textDecorationLine: 'line-through' }}>
+                            <Text
+                              style={{
+                                fontSize: 10,
+                                color: colors.textMuted,
+                                textDecorationLine: 'line-through',
+                              }}
+                            >
                               ৳{sub.priceBdt}
                             </Text>
                           )}
                         </View>
                       ))}
                       {resolvedPricing.discountPercent > 0 && (
-                        <View style={{ marginTop: 6, paddingTop: 4, borderTopWidth: 1, borderTopColor: colors.border, flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <View
+                          style={{
+                            marginTop: 6,
+                            paddingTop: 4,
+                            borderTopWidth: 1,
+                            borderTopColor: colors.border,
+                            flexDirection: 'row',
+                            justifyContent: 'space-between',
+                          }}
+                        >
                           <Text style={{ fontSize: 11, fontWeight: '700', color: '#10B981' }}>
-                            {isBangla ? `বান্ডেল ছাড় (${resolvedPricing.discountPercent}% OFF)` : `Bundle Discount Applied (-${resolvedPricing.discountPercent}%)`}
+                            {isBangla
+                              ? `বান্ডেল ছাড় (${resolvedPricing.discountPercent}% OFF)`
+                              : `Bundle Discount Applied (-${resolvedPricing.discountPercent}%)`}
                           </Text>
                           <Text style={{ fontSize: 11, fontWeight: '800', color: '#10B981' }}>
                             {formattedDiscount}
@@ -1059,29 +1155,47 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     <Text style={[styles.totalLabel, { color: colors.text }]}>
                       {isBangla ? 'সর্বমোট' : 'Total'}
                     </Text>
-                    <Text style={[styles.totalValue, { color: isDark ? colors.brandGold : '#102F53' }]}>
+                    <Text
+                      style={[styles.totalValue, { color: isDark ? colors.brandGold : '#102F53' }]}
+                    >
                       {formattedPrice}
                     </Text>
                   </View>
                 </View>
 
                 {/* Section: Learner Details Card (Smooth Auto-Preload) */}
-                <View style={[styles.learnerSummaryCard, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+                <View
+                  style={[
+                    styles.learnerSummaryCard,
+                    { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                  ]}
+                >
                   <View style={styles.learnerHeaderRow}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
-                      <View style={[styles.learnerAvatarIcon, { backgroundColor: colors.primaryLight }]}>
+                      <View
+                        style={[styles.learnerAvatarIcon, { backgroundColor: colors.primaryLight }]}
+                      >
                         <Ionicons name="person" size={16} color={colors.primary} />
                       </View>
                       <View style={{ flex: 1 }}>
-                        <Text style={[styles.learnerTitle, { color: colors.text }]} numberOfLines={1}>
+                        <Text
+                          style={[styles.learnerTitle, { color: colors.text }]}
+                          numberOfLines={1}
+                        >
                           {isAuthenticated
-                            ? `${firstName} ${lastName}`.trim() || user?.displayName || user?.username
+                            ? `${firstName} ${lastName}`.trim() ||
+                              user?.displayName ||
+                              user?.username
                             : isBangla
-                            ? 'অতিথি শিক্ষার্থী'
-                            : 'Guest Learner'}
+                              ? 'অতিথি শিক্ষার্থী'
+                              : 'Guest Learner'}
                         </Text>
-                        <Text style={[styles.learnerSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
-                          {email || (isBangla ? 'ইমেল তথ্য প্রয়োজন' : 'Email required')} {phone ? `• ${phone}` : ''} {city ? `• ${city}` : ''}
+                        <Text
+                          style={[styles.learnerSubtitle, { color: colors.textMuted }]}
+                          numberOfLines={1}
+                        >
+                          {email || (isBangla ? 'ইমেল তথ্য প্রয়োজন' : 'Email required')}{' '}
+                          {phone ? `• ${phone}` : ''} {city ? `• ${city}` : ''}
                         </Text>
                       </View>
                     </View>
@@ -1103,8 +1217,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       />
                       <Text style={[styles.editDetailsBtnText, { color: colors.primary }]}>
                         {isEditingDetails
-                          ? isBangla ? 'ঠিক আছে' : 'Done'
-                          : isBangla ? 'পরিবর্তন' : 'Edit'}
+                          ? isBangla
+                            ? 'ঠিক আছে'
+                            : 'Done'
+                          : isBangla
+                            ? 'পরিবর্তন'
+                            : 'Edit'}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -1112,13 +1230,19 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   {/* Expandable Form Fields for Editing or Guest Registration */}
                   {isEditingDetails && (
                     <View style={styles.expandedFieldsContainer}>
-                      <View style={[styles.divider, { backgroundColor: colors.border, marginVertical: 10 }]} />
+                      <View
+                        style={[
+                          styles.divider,
+                          { backgroundColor: colors.border, marginVertical: 10 },
+                        ]}
+                      />
 
                       {/* First & Last Name */}
                       <View style={styles.nameRow}>
                         <View style={styles.nameCol}>
                           <Text style={[styles.inputLabel, { color: colors.text }]}>
-                            {isBangla ? 'নামের প্রথম অংশ' : 'First name'} <Text style={styles.requiredAsterisk}>*</Text>
+                            {isBangla ? 'নামের প্রথম অংশ' : 'First name'}{' '}
+                            <Text style={styles.requiredAsterisk}>*</Text>
                           </Text>
                           <TextInput
                             style={[
@@ -1132,7 +1256,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                             value={firstName}
                             onChangeText={(txt) => {
                               setFirstName(txt);
-                              if (formErrors.firstName) setFormErrors((p) => ({ ...p, firstName: '' }));
+                              if (formErrors.firstName)
+                                setFormErrors((p) => ({ ...p, firstName: '' }));
                             }}
                             placeholder="e.g. Tanvir"
                             placeholderTextColor={colors.textMuted}
@@ -1148,7 +1273,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
                         <View style={styles.nameCol}>
                           <Text style={[styles.inputLabel, { color: colors.text }]}>
-                            {isBangla ? 'নামের শেষ অংশ' : 'Last name'} <Text style={styles.requiredAsterisk}>*</Text>
+                            {isBangla ? 'নামের শেষ অংশ' : 'Last name'}{' '}
+                            <Text style={styles.requiredAsterisk}>*</Text>
                           </Text>
                           <TextInput
                             ref={lastNameRef}
@@ -1163,7 +1289,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                             value={lastName}
                             onChangeText={(txt) => {
                               setLastName(txt);
-                              if (formErrors.lastName) setFormErrors((p) => ({ ...p, lastName: '' }));
+                              if (formErrors.lastName)
+                                setFormErrors((p) => ({ ...p, lastName: '' }));
                             }}
                             placeholder="e.g. Ahmed"
                             placeholderTextColor={colors.textMuted}
@@ -1181,7 +1308,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       {/* Phone Number */}
                       <View style={styles.fieldGroup}>
                         <Text style={[styles.inputLabel, { color: colors.text }]}>
-                          {isBangla ? 'ফোন নম্বর (পেমেন্ট ও এসএমএস নোটিফিকেশন)' : 'Phone (Payment & SMS confirmation)'} <Text style={styles.requiredAsterisk}>*</Text>
+                          {isBangla
+                            ? 'ফোন নম্বর (পেমেন্ট ও এসএমএস নোটিফিকেশন)'
+                            : 'Phone (Payment & SMS confirmation)'}{' '}
+                          <Text style={styles.requiredAsterisk}>*</Text>
                         </Text>
                         <TextInput
                           ref={phoneRef}
@@ -1272,7 +1402,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                       {/* Email address */}
                       <View style={styles.fieldGroup}>
                         <Text style={[styles.inputLabel, { color: colors.text }]}>
-                          {isBangla ? 'ইমেল ঠিকানা' : 'Email address'} <Text style={styles.requiredAsterisk}>*</Text>
+                          {isBangla ? 'ইমেল ঠিকানা' : 'Email address'}{' '}
+                          <Text style={styles.requiredAsterisk}>*</Text>
                         </Text>
                         <TextInput
                           ref={emailRef}
@@ -1321,7 +1452,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                           ]}
                           value={orderNotes}
                           onChangeText={setOrderNotes}
-                          placeholder={isBangla ? 'কোর্স সংক্রান্ত কোনো বিশেষ নির্দেশনা থাকলে লিখুন...' : 'Notes about your order, e.g. special requests'}
+                          placeholder={
+                            isBangla
+                              ? 'কোর্স সংক্রান্ত কোনো বিশেষ নির্দেশনা থাকলে লিখুন...'
+                              : 'Notes about your order, e.g. special requests'
+                          }
                           placeholderTextColor={colors.textMuted}
                           multiline
                           numberOfLines={2}
@@ -1360,17 +1495,19 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
                   {/* Payment Brands Pills */}
                   <View style={styles.badgeChipsRow}>
-                    {['bKash', 'Nagad', 'Rocket', 'VISA', 'Mastercard', 'Internet Banking'].map((b) => (
-                      <View
-                        key={b}
-                        style={[
-                          styles.chip,
-                          { backgroundColor: colors.surface, borderColor: colors.border },
-                        ]}
-                      >
-                        <Text style={[styles.chipText, { color: colors.text }]}>{b}</Text>
-                      </View>
-                    ))}
+                    {['bKash', 'Nagad', 'Rocket', 'VISA', 'Mastercard', 'Internet Banking'].map(
+                      (b) => (
+                        <View
+                          key={b}
+                          style={[
+                            styles.chip,
+                            { backgroundColor: colors.surface, borderColor: colors.border },
+                          ]}
+                        >
+                          <Text style={[styles.chipText, { color: colors.text }]}>{b}</Text>
+                        </View>
+                      )
+                    )}
                   </View>
                 </View>
 
@@ -1385,13 +1522,19 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   }}
                   accessibilityRole="checkbox"
                   accessibilityState={{ checked: agreedToTerms }}
-                  accessibilityLabel={isBangla ? 'ওয়েবসাইট শর্তাবলী মেনে নিচ্ছি' : 'I agree to the terms and conditions'}
+                  accessibilityLabel={
+                    isBangla ? 'ওয়েবসাইট শর্তাবলী মেনে নিচ্ছি' : 'I agree to the terms and conditions'
+                  }
                 >
                   <View
                     style={[
                       styles.checkbox,
                       {
-                        borderColor: formErrors.terms ? '#DC2626' : agreedToTerms ? '#102F53' : colors.border,
+                        borderColor: formErrors.terms
+                          ? '#DC2626'
+                          : agreedToTerms
+                            ? '#102F53'
+                            : colors.border,
                         backgroundColor: agreedToTerms ? '#102F53' : colors.surface,
                       },
                     ]}
@@ -1418,7 +1561,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   disabled={isPlacingOrder}
                   activeOpacity={0.88}
                   accessibilityRole="button"
-                  accessibilityLabel={isBangla ? 'নিরাপদ চেকআউট শুরু করুন' : 'Proceed to Secure Checkout'}
+                  accessibilityLabel={
+                    isBangla ? 'নিরাপদ চেকআউট শুরু করুন' : 'Proceed to Secure Checkout'
+                  }
                 >
                   {isPlacingOrder ? (
                     <>
@@ -1429,7 +1574,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     </>
                   ) : (
                     <>
-                      <Ionicons name="shield-checkmark" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />
+                      <Ionicons
+                        name="shield-checkmark"
+                        size={18}
+                        color="#FFFFFF"
+                        style={{ marginRight: 8 }}
+                      />
                       <Text style={styles.placeOrderBtnText}>
                         {isBangla ? 'নিরাপদ চেকআউট শুরু করুন (PROCEED)' : 'PROCEED TO SECURE CHECKOUT'}
                       </Text>
@@ -1456,7 +1606,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                   <View style={styles.accessBadgeRow}>
                     <Ionicons name="shield-checkmark-outline" size={16} color={colors.primary} />
                     <Text style={[styles.accessStatusText, { color: colors.primary }]}>
-                      {isBangla ? 'সক্রিয় সদস্যদের জন্য সংরক্ষিত কোর্স' : 'Available to Enrolled Members'}
+                      {isBangla
+                        ? 'সক্রিয় সদস্যদের জন্য সংরক্ষিত কোর্স'
+                        : 'Available to Enrolled Members'}
                     </Text>
                   </View>
                 </View>
@@ -1482,8 +1634,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                         ? `আপনি বর্তমানে ${user?.email || user?.username} অ্যাকাউন্টে সাইন ইন আছেন। আপনার অ্যাকাউন্টে এই কোর্সের এনরোলমেন্ট থাকলে নিচের বাটনে ট্যাপ করে সিঙ্ক করুন।`
                         : `Signed in as ${user?.email || user?.username}. If your account is enrolled in this course, tap below to sync your latest LearnPress access.`
                       : isBangla
-                      ? 'আপনার এনরোল করা কোর্সগুলো আনলক করতে অনুগ্রহ করে আপনার থ্রাইভিং স্কিলস অ্যাকাউন্ট দিয়ে সাইন ইন করুন।'
-                      : 'Sign in with your Thriving Skills account to access courses in your enrolled member library.'}
+                        ? 'আপনার এনরোল করা কোর্সগুলো আনলক করতে অনুগ্রহ করে আপনার থ্রাইভিং স্কিলস অ্যাকাউন্ট দিয়ে সাইন ইন করুন।'
+                        : 'Sign in with your Thriving Skills account to access courses in your enrolled member library.'}
                   </Text>
                 </View>
 
@@ -1499,13 +1651,17 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                         ? 'অ্যাকাউন্ট এনরোলমেন্ট সিঙ্ক করুন'
                         : 'Sync Account Enrollments'
                       : isBangla
-                      ? 'থ্রাইভিং স্কিলস অ্যাকাউন্টে সাইন ইন'
-                      : 'Sign In to Sync Account'
+                        ? 'থ্রাইভিং স্কিলস অ্যাকাউন্টে সাইন ইন'
+                        : 'Sign In to Sync Account'
                   }
                 >
                   {isSyncing ? (
                     <>
-                      <ActivityIndicator color={colors.onPrimary} size="small" style={{ marginRight: 8 }} />
+                      <ActivityIndicator
+                        color={colors.onPrimary}
+                        size="small"
+                        style={{ marginRight: 8 }}
+                      />
                       <Text style={[styles.primaryBtnText, { color: colors.onPrimary }]}>
                         {t('syncingEnrollment')}
                       </Text>
@@ -1524,8 +1680,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                             ? 'অ্যাকাউন্ট এনরোলমেন্ট সিঙ্ক করুন'
                             : 'Sync Account Enrollments'
                           : isBangla
-                          ? 'থ্রাইভিং স্কিলস অ্যাকাউন্টে সাইন ইন'
-                          : 'Sign In to Sync Account'}
+                            ? 'থ্রাইভিং স্কিলস অ্যাকাউন্টে সাইন ইন'
+                            : 'Sign In to Sync Account'}
                       </Text>
                     </>
                   )}

@@ -57,14 +57,20 @@ export const LessonActionBar: React.FC<LessonActionBarProps> = ({
           accessibilityLabel={isBangla ? 'এআই টিউটরের সাথে কথা বলুন' : 'Ask SkillBot AI Tutor'}
         >
           <Ionicons name="sparkles" size={14} color="#E34234" />
-          <Text style={[styles.aiTutorBtnText, { color: isDark ? '#FF8A80' : '#E34234' }]} numberOfLines={1}>
+          <Text
+            style={[styles.aiTutorBtnText, { color: isDark ? '#FF8A80' : '#E34234' }]}
+            numberOfLines={1}
+          >
             {isBangla ? 'এআই' : 'Ask AI'}
           </Text>
         </TouchableOpacity>
 
         {/* Spaced repetition flashcards */}
         <TouchableOpacity
-          style={[styles.headerActionBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+          style={[
+            styles.headerActionBtn,
+            { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+          ]}
           onPress={() => {
             triggerHaptic('light');
             onOpenFlashcards();
@@ -86,7 +92,9 @@ export const LessonActionBar: React.FC<LessonActionBarProps> = ({
           onPress={onMarkComplete}
           activeScale={0.96}
           accessibilityRole="button"
-          accessibilityLabel={isLessonCompleted ? 'Lesson already completed' : 'Mark lesson as complete'}
+          accessibilityLabel={
+            isLessonCompleted ? 'Lesson already completed' : 'Mark lesson as complete'
+          }
         >
           <Ionicons
             name={isLessonCompleted ? 'checkmark-circle' : 'checkmark'}
@@ -105,8 +113,8 @@ export const LessonActionBar: React.FC<LessonActionBarProps> = ({
                 ? 'সম্পন্ন'
                 : 'Completed'
               : isBangla
-              ? 'সম্পন্ন'
-              : 'Complete'}
+                ? 'সম্পন্ন'
+                : 'Complete'}
           </Text>
         </SpringPressable>
       </View>

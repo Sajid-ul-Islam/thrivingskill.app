@@ -60,7 +60,8 @@ export const LIVE_SITE_REVIEWS: Record<string, Review[]> = {
       userName: 'Sadekuzzaman Yahia',
       date: 'August 19, 2022',
       rating: 5,
-      comment: 'Its a amazing content for who want to learn about real estate and development personal skills.',
+      comment:
+        'Its a amazing content for who want to learn about real estate and development personal skills.',
       userRole: 'Corporate Learner',
       company: 'Verified Learner',
       userAvatar:
@@ -91,7 +92,8 @@ export const LIVE_SITE_REVIEWS: Record<string, Review[]> = {
       userName: 'Tousif Abdullah',
       date: 'November 8, 2025',
       rating: 5,
-      comment: 'Great course for growing professional networks and career opportunities through LinkedIn.',
+      comment:
+        'Great course for growing professional networks and career opportunities through LinkedIn.',
       userRole: 'Digital Strategist',
       company: 'Verified Learner',
       userAvatar:
@@ -106,7 +108,8 @@ export const LIVE_SITE_REVIEWS: Record<string, Review[]> = {
       userName: 'Mohammad Afser Hasan',
       date: 'July 28, 2025',
       rating: 5,
-      comment: 'Essential guidance on International Accounting Standards and Income Tax compliance.',
+      comment:
+        'Essential guidance on International Accounting Standards and Income Tax compliance.',
       userRole: 'Accounts Professional',
       company: 'Verified Learner',
       userAvatar:
@@ -121,7 +124,8 @@ export const LIVE_SITE_REVIEWS: Record<string, Review[]> = {
       userName: 'Engr. Md. Abdul Mazid Sarker',
       date: 'May 24, 2025',
       rating: 5,
-      comment: 'Excellent Course. Very structured and practical insights for operational excellence.',
+      comment:
+        'Excellent Course. Very structured and practical insights for operational excellence.',
       userRole: 'Continuous Improvement Lead',
       company: 'Verified Learner',
       userAvatar:
@@ -136,7 +140,8 @@ export const LIVE_SITE_REVIEWS: Record<string, Review[]> = {
       userName: 'Md. Maruf Ibne Hasan',
       date: 'January 6, 2026',
       rating: 5,
-      comment: 'A great course indeed. Bridges the future of work with high-value professional training and intelligent enterprise skills.',
+      comment:
+        'A great course indeed. Bridges the future of work with high-value professional training and intelligent enterprise skills.',
       userRole: 'Summit Attendee',
       company: 'Verified Learner',
       userAvatar:

@@ -75,7 +75,9 @@ export const SpecialBundleCard: React.FC<SpecialBundleCardProps> = ({ bundle, on
           <View style={styles.statsCol}>
             <View style={styles.ratingRow}>
               <Ionicons name="star" size={13} color={colors.starColor} />
-              <Text style={[styles.ratingText, { color: colors.text }]}>{bundle.rating || 4.9}</Text>
+              <Text style={[styles.ratingText, { color: colors.text }]}>
+                {bundle.rating || 4.9}
+              </Text>
               <Text style={[styles.enrolledText, { color: colors.textMuted }]}>
                 ({(bundle.enrolledCount || 0).toLocaleString()} enrolled)
               </Text>
@@ -83,7 +85,9 @@ export const SpecialBundleCard: React.FC<SpecialBundleCardProps> = ({ bundle, on
           </View>
 
           <View style={styles.priceCol}>
-            {bundle.originalPriceBdt && bundle.priceBdt && bundle.originalPriceBdt > bundle.priceBdt ? (
+            {bundle.originalPriceBdt &&
+            bundle.priceBdt &&
+            bundle.originalPriceBdt > bundle.priceBdt ? (
               <Text style={[styles.origPrice, { color: colors.textMuted }]}>
                 ৳ {bundle.originalPriceBdt.toLocaleString()}
               </Text>

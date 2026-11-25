@@ -88,7 +88,11 @@ interface ProfileSettingsModalProps {
 
 const AVATAR_PRESETS = [
   { id: 'av1', label: 'Classic Silhouette', uri: 'https://secure.gravatar.com/avatar/?d=mp&s=256' },
-  { id: 'av2', label: 'Geometric Identicon', uri: 'https://secure.gravatar.com/avatar/?d=identicon&s=256' },
+  {
+    id: 'av2',
+    label: 'Geometric Identicon',
+    uri: 'https://secure.gravatar.com/avatar/?d=identicon&s=256',
+  },
   { id: 'av3', label: 'Retro Pixel', uri: 'https://secure.gravatar.com/avatar/?d=retro&s=256' },
   { id: 'av4', label: 'Robo Avatar', uri: 'https://secure.gravatar.com/avatar/?d=robohash&s=256' },
   { id: 'av5', label: 'Wavatar', uri: 'https://secure.gravatar.com/avatar/?d=wavatar&s=256' },
@@ -96,10 +100,26 @@ const AVATAR_PRESETS = [
 ];
 
 const COVER_PRESETS = [
-  { id: 'cov1', label: 'TSL Executive', uri: 'https://thrivingskill.com/wp-content/uploads/2026/05/cover2.jpg2_.jpeg' },
-  { id: 'cov2', label: 'AI Era Innovation', uri: 'https://thrivingskill.com/wp-content/uploads/2026/10/sty-ai-era.png' },
-  { id: 'cov3', label: 'Skills Bundle', uri: 'https://thrivingskill.com/wp-content/uploads/2026/05/bundle.jpeg' },
-  { id: 'cov4', label: 'AI Enterprise', uri: 'https://thrivingskill.com/wp-content/uploads/2026/05/AI-Bundle-Promotional-Poster.jpg' },
+  {
+    id: 'cov1',
+    label: 'TSL Executive',
+    uri: 'https://thrivingskill.com/wp-content/uploads/2026/05/cover2.jpg2_.jpeg',
+  },
+  {
+    id: 'cov2',
+    label: 'AI Era Innovation',
+    uri: 'https://thrivingskill.com/wp-content/uploads/2026/10/sty-ai-era.png',
+  },
+  {
+    id: 'cov3',
+    label: 'Skills Bundle',
+    uri: 'https://thrivingskill.com/wp-content/uploads/2026/05/bundle.jpeg',
+  },
+  {
+    id: 'cov4',
+    label: 'AI Enterprise',
+    uri: 'https://thrivingskill.com/wp-content/uploads/2026/05/AI-Bundle-Promotional-Poster.jpg',
+  },
 ];
 
 export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
@@ -204,7 +224,8 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                 {isBangla ? 'প্রোফাইল সেটিংস' : 'Profile Settings'}
               </Text>
               <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
-                thrivingskill.com • {isBangla ? 'অফিসিয়াল অ্যাকাউন্ট কন্ট্রোল' : 'Official Account Settings'}
+                thrivingskill.com •{' '}
+                {isBangla ? 'অফিসিয়াল অ্যাকাউন্ট কন্ট্রোল' : 'Official Account Settings'}
               </Text>
             </View>
             <TouchableOpacity
@@ -231,7 +252,10 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                     key={tab.id}
                     style={[
                       styles.settingsTabItem,
-                      isActive && [styles.settingsTabItemActive, { borderBottomColor: colors.primary }],
+                      isActive && [
+                        styles.settingsTabItemActive,
+                        { borderBottomColor: colors.primary },
+                      ],
                     ]}
                     onPress={() => {
                       triggerHaptic('selection');
@@ -271,7 +295,11 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                     <TextInput
                       style={[
                         styles.modalInput,
-                        { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border },
+                        {
+                          backgroundColor: colors.surfaceSubtle,
+                          color: colors.text,
+                          borderColor: colors.border,
+                        },
                       ]}
                       value={firstName}
                       onChangeText={setFirstName}
@@ -286,7 +314,11 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                     <TextInput
                       style={[
                         styles.modalInput,
-                        { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border },
+                        {
+                          backgroundColor: colors.surfaceSubtle,
+                          color: colors.text,
+                          borderColor: colors.border,
+                        },
                       ]}
                       value={lastName}
                       onChangeText={setLastName}
@@ -307,7 +339,11 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                     <TextInput
                       style={[
                         styles.modalInput,
-                        { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border },
+                        {
+                          backgroundColor: colors.surfaceSubtle,
+                          color: colors.text,
+                          borderColor: colors.border,
+                        },
                       ]}
                       value={displayName}
                       onChangeText={setDisplayName}
@@ -323,7 +359,11 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                     <TextInput
                       style={[
                         styles.modalInput,
-                        { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border },
+                        {
+                          backgroundColor: colors.surfaceSubtle,
+                          color: colors.text,
+                          borderColor: colors.border,
+                        },
                       ]}
                       value={userEmail}
                       editable={false}
@@ -357,7 +397,8 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                     accessibilityLabel="Biographical Info"
                   />
                   <Text style={[styles.helperText, { color: colors.textMuted }]}>
-                    Share a little biographical information to fill out your profile. This may be shown publicly.
+                    Share a little biographical information to fill out your profile. This may be
+                    shown publicly.
                   </Text>
                 </View>
 
@@ -368,7 +409,11 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                     <TextInput
                       style={[
                         styles.modalInput,
-                        { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border },
+                        {
+                          backgroundColor: colors.surfaceSubtle,
+                          color: colors.text,
+                          borderColor: colors.border,
+                        },
                       ]}
                       value={phoneNumber}
                       onChangeText={setPhoneNumber}
@@ -383,7 +428,11 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                     <TextInput
                       style={[
                         styles.modalInput,
-                        { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border },
+                        {
+                          backgroundColor: colors.surfaceSubtle,
+                          color: colors.text,
+                          borderColor: colors.border,
+                        },
                       ]}
                       value={city}
                       onChangeText={setCity}
@@ -398,11 +447,17 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                 {/* Social Links: Facebook & X Profile */}
                 <View style={[styles.twoColRow, { marginTop: 12 }]}>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.inputLabel, { color: colors.text }]}>Facebook Profile</Text>
+                    <Text style={[styles.inputLabel, { color: colors.text }]}>
+                      Facebook Profile
+                    </Text>
                     <TextInput
                       style={[
                         styles.modalInput,
-                        { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border },
+                        {
+                          backgroundColor: colors.surfaceSubtle,
+                          color: colors.text,
+                          borderColor: colors.border,
+                        },
                       ]}
                       value={socialFacebook}
                       onChangeText={setSocialFacebook}
@@ -417,7 +472,11 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                     <TextInput
                       style={[
                         styles.modalInput,
-                        { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border },
+                        {
+                          backgroundColor: colors.surfaceSubtle,
+                          color: colors.text,
+                          borderColor: colors.border,
+                        },
                       ]}
                       value={socialTwitter}
                       onChangeText={setSocialTwitter}
@@ -436,7 +495,11 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                     <TextInput
                       style={[
                         styles.modalInput,
-                        { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border },
+                        {
+                          backgroundColor: colors.surfaceSubtle,
+                          color: colors.text,
+                          borderColor: colors.border,
+                        },
                       ]}
                       value={socialYoutube}
                       onChangeText={setSocialYoutube}
@@ -447,11 +510,17 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                     />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.inputLabel, { color: colors.text }]}>Linkedin Profile</Text>
+                    <Text style={[styles.inputLabel, { color: colors.text }]}>
+                      Linkedin Profile
+                    </Text>
                     <TextInput
                       style={[
                         styles.modalInput,
-                        { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border },
+                        {
+                          backgroundColor: colors.surfaceSubtle,
+                          color: colors.text,
+                          borderColor: colors.border,
+                        },
                       ]}
                       value={socialLinkedin}
                       onChangeText={setSocialLinkedin}
@@ -465,7 +534,10 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
 
                 {/* Save Changes CTA */}
                 <TouchableOpacity
-                  style={[styles.saveChangesBtn, { backgroundColor: isDark ? colors.primary : '#102F53' }]}
+                  style={[
+                    styles.saveChangesBtn,
+                    { backgroundColor: isDark ? colors.primary : '#102F53' },
+                  ]}
                   onPress={handleSaveProfile}
                   disabled={isSavingProfile}
                   activeOpacity={0.88}
@@ -475,7 +547,9 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                   {isSavingProfile ? (
                     <ActivityIndicator size="small" color={isDark ? '#0F172A' : '#FFFFFF'} />
                   ) : (
-                    <Text style={[styles.saveChangesBtnText, { color: isDark ? '#0F172A' : '#FFFFFF' }]}>
+                    <Text
+                      style={[styles.saveChangesBtnText, { color: isDark ? '#0F172A' : '#FFFFFF' }]}
+                    >
                       SAVE CHANGES
                     </Text>
                   )}
@@ -500,7 +574,8 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                   {displayName || 'Student Profile'}
                 </Text>
                 <Text style={[styles.avatarSubBig, { color: colors.textMuted }]}>
-                  Select a professional avatar preset or paste your custom image URL. Changes sync directly to your official LMS profile.
+                  Select a professional avatar preset or paste your custom image URL. Changes sync
+                  directly to your official LMS profile.
                 </Text>
 
                 {/* Preset Avatars Grid */}
@@ -508,7 +583,11 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                   <Text style={[styles.inputLabel, { color: colors.text, marginBottom: 8 }]}>
                     Choose Avatar Preset
                   </Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ gap: 10, paddingVertical: 4 }}
+                  >
                     {AVATAR_PRESETS.map((p) => {
                       const isSelected = avatarUrl === p.uri;
                       return (
@@ -532,7 +611,9 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                             {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
                           />
                           {isSelected && (
-                            <View style={[styles.presetCheckmark, { backgroundColor: colors.primary }]}>
+                            <View
+                              style={[styles.presetCheckmark, { backgroundColor: colors.primary }]}
+                            >
                               <Ionicons name="checkmark" size={12} color={colors.onPrimary} />
                             </View>
                           )}
@@ -544,11 +625,17 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
 
                 {/* Custom Avatar URL Input */}
                 <View style={{ width: '100%', marginTop: 14 }}>
-                  <Text style={[styles.inputLabel, { color: colors.text }]}>Custom Avatar Image URL</Text>
+                  <Text style={[styles.inputLabel, { color: colors.text }]}>
+                    Custom Avatar Image URL
+                  </Text>
                   <TextInput
                     style={[
                       styles.modalInput,
-                      { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border },
+                      {
+                        backgroundColor: colors.surfaceSubtle,
+                        color: colors.text,
+                        borderColor: colors.border,
+                      },
                     ]}
                     value={avatarUrl}
                     onChangeText={setAvatarUrl}
@@ -561,7 +648,14 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
 
                 {/* Save Avatar Button */}
                 <TouchableOpacity
-                  style={[styles.saveChangesBtn, { backgroundColor: isDark ? colors.primary : '#102F53', width: '100%', marginTop: 16 }]}
+                  style={[
+                    styles.saveChangesBtn,
+                    {
+                      backgroundColor: isDark ? colors.primary : '#102F53',
+                      width: '100%',
+                      marginTop: 16,
+                    },
+                  ]}
                   onPress={handleSaveProfile}
                   disabled={isSavingProfile}
                   activeOpacity={0.88}
@@ -571,7 +665,9 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                   {isSavingProfile ? (
                     <ActivityIndicator size="small" color={isDark ? '#0F172A' : '#FFFFFF'} />
                   ) : (
-                    <Text style={[styles.saveChangesBtnText, { color: isDark ? '#0F172A' : '#FFFFFF' }]}>
+                    <Text
+                      style={[styles.saveChangesBtnText, { color: isDark ? '#0F172A' : '#FFFFFF' }]}
+                    >
                       APPLY & SYNC AVATAR
                     </Text>
                   )}
@@ -581,7 +677,11 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                 <TouchableOpacity
                   style={[
                     styles.secondaryActionBtn,
-                    { borderColor: colors.border, backgroundColor: colors.surfaceSubtle, marginTop: 12 },
+                    {
+                      borderColor: colors.border,
+                      backgroundColor: colors.surfaceSubtle,
+                      marginTop: 12,
+                    },
                   ]}
                   onPress={() => Linking.openURL('https://gravatar.com').catch(() => {})}
                   accessibilityRole="button"
@@ -597,7 +697,12 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
 
             {activeTab === 'cover' && (
               <View style={{ paddingVertical: 18, alignItems: 'center' }}>
-                <View style={[styles.coverPreviewCard, { backgroundColor: '#102F53', overflow: 'hidden' }]}>
+                <View
+                  style={[
+                    styles.coverPreviewCard,
+                    { backgroundColor: '#102F53', overflow: 'hidden' },
+                  ]}
+                >
                   {coverPhotoUrl || user?.cover_photo ? (
                     <Image
                       source={getSafeImageSource(coverPhotoUrl || user?.cover_photo)}
@@ -606,7 +711,9 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                       {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
                     />
                   ) : null}
-                  <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(16, 47, 83, 0.4)' }]} />
+                  <View
+                    style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(16, 47, 83, 0.4)' }]}
+                  />
                   <Ionicons name="school" size={36} color="#E34234" />
                   <Text style={styles.coverCardTitle}>
                     THRIVING <Text style={{ color: '#E34234' }}>SKILLS</Text>
@@ -614,7 +721,8 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                   <Text style={styles.coverCardSub}>Executive Learning & Career Advancement</Text>
                 </View>
                 <Text style={[styles.avatarSubBig, { color: colors.textMuted, marginTop: 14 }]}>
-                  Cover banners appear across your student profile header, verified certificates, and LMS portfolios.
+                  Cover banners appear across your student profile header, verified certificates,
+                  and LMS portfolios.
                 </Text>
 
                 {/* Cover Presets */}
@@ -622,7 +730,11 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                   <Text style={[styles.inputLabel, { color: colors.text, marginBottom: 8 }]}>
                     Choose Cover Preset Theme
                   </Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ gap: 10, paddingVertical: 4 }}
+                  >
                     {COVER_PRESETS.map((p) => {
                       const isSelected = coverPhotoUrl === p.uri;
                       return (
@@ -646,10 +758,14 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                             {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
                           />
                           <View style={styles.presetCoverOverlay}>
-                            <Text style={styles.presetCoverText} numberOfLines={1}>{p.label}</Text>
+                            <Text style={styles.presetCoverText} numberOfLines={1}>
+                              {p.label}
+                            </Text>
                           </View>
                           {isSelected && (
-                            <View style={[styles.presetCheckmark, { backgroundColor: colors.primary }]}>
+                            <View
+                              style={[styles.presetCheckmark, { backgroundColor: colors.primary }]}
+                            >
                               <Ionicons name="checkmark" size={12} color={colors.onPrimary} />
                             </View>
                           )}
@@ -661,11 +777,17 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
 
                 {/* Custom Cover Photo URL */}
                 <View style={{ width: '100%', marginTop: 14 }}>
-                  <Text style={[styles.inputLabel, { color: colors.text }]}>Custom Cover Image URL</Text>
+                  <Text style={[styles.inputLabel, { color: colors.text }]}>
+                    Custom Cover Image URL
+                  </Text>
                   <TextInput
                     style={[
                       styles.modalInput,
-                      { backgroundColor: colors.surfaceSubtle, color: colors.text, borderColor: colors.border },
+                      {
+                        backgroundColor: colors.surfaceSubtle,
+                        color: colors.text,
+                        borderColor: colors.border,
+                      },
                     ]}
                     value={coverPhotoUrl}
                     onChangeText={setCoverPhotoUrl}
@@ -678,7 +800,14 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
 
                 {/* Save Cover Button */}
                 <TouchableOpacity
-                  style={[styles.saveChangesBtn, { backgroundColor: isDark ? colors.primary : '#102F53', width: '100%', marginTop: 16 }]}
+                  style={[
+                    styles.saveChangesBtn,
+                    {
+                      backgroundColor: isDark ? colors.primary : '#102F53',
+                      width: '100%',
+                      marginTop: 16,
+                    },
+                  ]}
                   onPress={handleSaveProfile}
                   disabled={isSavingProfile}
                   activeOpacity={0.88}
@@ -688,7 +817,9 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                   {isSavingProfile ? (
                     <ActivityIndicator size="small" color={isDark ? '#0F172A' : '#FFFFFF'} />
                   ) : (
-                    <Text style={[styles.saveChangesBtnText, { color: isDark ? '#0F172A' : '#FFFFFF' }]}>
+                    <Text
+                      style={[styles.saveChangesBtnText, { color: isDark ? '#0F172A' : '#FFFFFF' }]}
+                    >
                       APPLY & SYNC COVER PHOTO
                     </Text>
                   )}
@@ -726,7 +857,9 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                       setShowCurrentPass(!showCurrentPass);
                     }}
                     accessibilityRole="button"
-                    accessibilityLabel={showCurrentPass ? 'Hide current password' : 'Show current password'}
+                    accessibilityLabel={
+                      showCurrentPass ? 'Hide current password' : 'Show current password'
+                    }
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     <Ionicons
@@ -745,7 +878,8 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                     styles.passwordInputRow,
                     {
                       backgroundColor: colors.surfaceSubtle,
-                      borderColor: newPass.length > 0 && newPass.length < 12 ? colors.danger : colors.border,
+                      borderColor:
+                        newPass.length > 0 && newPass.length < 12 ? colors.danger : colors.border,
                     },
                   ]}
                 >
@@ -784,11 +918,22 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                   </TouchableOpacity>
                 </View>
                 {/* Official Password Hint from thrivingskill.com / WordPress */}
-                <View style={[styles.siteHintBox, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
-                  <Ionicons name="information-circle" size={16} color={colors.primary} style={{ marginTop: 1 }} />
+                <View
+                  style={[
+                    styles.siteHintBox,
+                    { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                  ]}
+                >
+                  <Ionicons
+                    name="information-circle"
+                    size={16}
+                    color={colors.primary}
+                    style={{ marginTop: 1 }}
+                  />
                   <Text style={[styles.siteHintText, { color: colors.textMuted }]}>
                     <Text style={{ fontWeight: '700', color: colors.text }}>Hint: </Text>
-                    The password should be at least twelve characters long. To make it stronger, use upper and lower case letters, numbers, and symbols like ! " ? $ % ^ & ).
+                    The password should be at least twelve characters long. To make it stronger, use
+                    upper and lower case letters, numbers, and symbols like ! " ? $ % ^ & ).
                   </Text>
                 </View>
 
@@ -800,7 +945,10 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                     styles.passwordInputRow,
                     {
                       backgroundColor: colors.surfaceSubtle,
-                      borderColor: confirmPass.length > 0 && confirmPass !== newPass ? colors.danger : colors.border,
+                      borderColor:
+                        confirmPass.length > 0 && confirmPass !== newPass
+                          ? colors.danger
+                          : colors.border,
                     },
                   ]}
                 >
@@ -824,7 +972,9 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                       setShowConfirmPass(!showConfirmPass);
                     }}
                     accessibilityRole="button"
-                    accessibilityLabel={showConfirmPass ? 'Hide confirm password' : 'Show confirm password'}
+                    accessibilityLabel={
+                      showConfirmPass ? 'Hide confirm password' : 'Show confirm password'
+                    }
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     <Ionicons
@@ -852,7 +1002,9 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                   {isChangingPass ? (
                     <ActivityIndicator size="small" color={isDark ? '#0F172A' : '#FFFFFF'} />
                   ) : (
-                    <Text style={[styles.saveChangesBtnText, { color: isDark ? '#0F172A' : '#FFFFFF' }]}>
+                    <Text
+                      style={[styles.saveChangesBtnText, { color: isDark ? '#0F172A' : '#FFFFFF' }]}
+                    >
                       SAVE CHANGES
                     </Text>
                   )}
@@ -864,7 +1016,9 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
               <View style={{ paddingVertical: 12 }}>
                 <View style={[styles.privacyRow, { borderBottomColor: colors.borderSubtle }]}>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.privacyLabel, { color: colors.text }]}>Public Profile</Text>
+                    <Text style={[styles.privacyLabel, { color: colors.text }]}>
+                      Public Profile
+                    </Text>
                     <Text style={[styles.privacySub, { color: colors.textMuted }]}>
                       Allow fellow professionals and instructors to view your achievements.
                     </Text>
@@ -879,7 +1033,9 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
 
                 <View style={[styles.privacyRow, { borderBottomColor: colors.borderSubtle }]}>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.privacyLabel, { color: colors.text }]}>Show Enrolled Courses</Text>
+                    <Text style={[styles.privacyLabel, { color: colors.text }]}>
+                      Show Enrolled Courses
+                    </Text>
                     <Text style={[styles.privacySub, { color: colors.textMuted }]}>
                       Display course progress on your profile.
                     </Text>
@@ -894,7 +1050,9 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
 
                 <View style={styles.privacyRow}>
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.privacyLabel, { color: colors.text }]}>Show Certificates</Text>
+                    <Text style={[styles.privacyLabel, { color: colors.text }]}>
+                      Show Certificates
+                    </Text>
                     <Text style={[styles.privacySub, { color: colors.textMuted }]}>
                       Display verified digital certificates on your public portfolio.
                     </Text>

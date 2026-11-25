@@ -17,7 +17,12 @@ import { useLanguage } from '../../context/LanguageContext';
 import { triggerHaptic } from '../../utils/haptics';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
-import { openWhatsAppChat, openFacebookMessenger, openCallHelpline, CRM_CHANNELS } from '../../config/crm';
+import {
+  openWhatsAppChat,
+  openFacebookMessenger,
+  openCallHelpline,
+  CRM_CHANNELS,
+} from '../../config/crm';
 import { MessengerIcon } from '../common/MessengerIcon';
 
 export interface HelpFaqModalProps {
@@ -167,9 +172,17 @@ export const HelpFaqModal: React.FC<HelpFaqModalProps> = ({ visible, onClose }) 
     { id: 'all', label: isBangla ? 'সকল প্রশ্ন' : 'All Topics', icon: 'apps-outline' },
     { id: 'payment', label: isBangla ? 'পেমেন্ট ও রিফান্ড' : 'Payments', icon: 'card-outline' },
     { id: 'access', label: isBangla ? 'কোর্স অ্যাক্সেস' : 'Enrollment', icon: 'book-outline' },
-    { id: 'video', label: isBangla ? 'ভিডিও ও প্লেয়ার' : 'Video & Audio', icon: 'play-circle-outline' },
+    {
+      id: 'video',
+      label: isBangla ? 'ভিডিও ও প্লেয়ার' : 'Video & Audio',
+      icon: 'play-circle-outline',
+    },
     { id: 'certificate', label: isBangla ? 'সার্টিফিকেট' : 'Certificates', icon: 'ribbon-outline' },
-    { id: 'account', label: isBangla ? 'অ্যাকাউন্ট ও নিরাপত্তা' : 'Account & Safety', icon: 'shield-checkmark-outline' },
+    {
+      id: 'account',
+      label: isBangla ? 'অ্যাকাউন্ট ও নিরাপত্তা' : 'Account & Safety',
+      icon: 'shield-checkmark-outline',
+    },
     { id: 'tech', label: isBangla ? 'টেকনিক্যাল সাপোর্ট' : 'Support', icon: 'headset-outline' },
   ];
 
@@ -213,7 +226,11 @@ export const HelpFaqModal: React.FC<HelpFaqModalProps> = ({ visible, onClose }) 
               <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
                 {isBangla ? 'হেল্প ও এফএকিউ সেন্টার' : 'Help & FAQ Center'}
               </Text>
-              <Text style={[styles.headerSub, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
+              <Text
+                style={[styles.headerSub, { color: colors.textMuted }]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
                 {isBangla ? 'আপনার সকল প্রশ্নের দ্রুত সমাধান' : 'Frequently Asked Questions & Support'}
               </Text>
             </View>
@@ -240,7 +257,11 @@ export const HelpFaqModal: React.FC<HelpFaqModalProps> = ({ visible, onClose }) 
             <Ionicons name="search" size={18} color={colors.textMuted} />
             <TextInput
               style={[styles.searchInput, { color: colors.text }]}
-              placeholder={isBangla ? 'প্রশ্ন খুঁজুন (যেমন: এনরোলমেন্ট, সার্টিফিকেট)...' : 'Search FAQ (e.g. sync, certificate)...'}
+              placeholder={
+                isBangla
+                  ? 'প্রশ্ন খুঁজুন (যেমন: এনরোলমেন্ট, সার্টিফিকেট)...'
+                  : 'Search FAQ (e.g. sync, certificate)...'
+              }
               placeholderTextColor={colors.textMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -289,7 +310,10 @@ export const HelpFaqModal: React.FC<HelpFaqModalProps> = ({ visible, onClose }) 
                   <Text
                     style={[
                       styles.catPillText,
-                      { color: active ? colors.onPrimary : colors.text, fontWeight: active ? '700' : '500' },
+                      {
+                        color: active ? colors.onPrimary : colors.text,
+                        fontWeight: active ? '700' : '500',
+                      },
                     ]}
                   >
                     {cat.label}
@@ -313,7 +337,9 @@ export const HelpFaqModal: React.FC<HelpFaqModalProps> = ({ visible, onClose }) 
                 {isBangla ? 'কোনো ফলাফল পাওয়া যায়নি' : 'No matching questions found'}
               </Text>
               <Text style={[styles.emptySub, { color: colors.textMuted }]}>
-                {isBangla ? 'আমাদের সরাসরি হটলাইনে যোগাযোগ করুন।' : 'Contact our live support team directly.'}
+                {isBangla
+                  ? 'আমাদের সরাসরি হটলাইনে যোগাযোগ করুন।'
+                  : 'Contact our live support team directly.'}
               </Text>
             </View>
           ) : (
@@ -401,7 +427,9 @@ export const HelpFaqModal: React.FC<HelpFaqModalProps> = ({ visible, onClose }) 
                 accessibilityLabel={`Call helpline at ${CRM_CHANNELS.phoneDisplay}`}
               >
                 <Ionicons name="call" size={16} color={colors.onPrimary} />
-                <Text style={[styles.contactBtnText, { color: colors.onPrimary }]}>{CRM_CHANNELS.phoneDisplay}</Text>
+                <Text style={[styles.contactBtnText, { color: colors.onPrimary }]}>
+                  {CRM_CHANNELS.phoneDisplay}
+                </Text>
               </TouchableOpacity>
             </View>
           </View>

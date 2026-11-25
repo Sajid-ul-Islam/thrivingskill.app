@@ -321,10 +321,7 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
         style={[
           styles.draggableWrapper,
           {
-            transform: [
-              { translateX: pan.x },
-              { translateY: pan.y },
-            ],
+            transform: [{ translateX: pan.x }, { translateY: pan.y }],
           },
         ]}
       >
@@ -336,10 +333,7 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
             snappedSide === 'left' ? styles.menuAlignLeft : styles.menuAlignRight,
             {
               opacity: menuOpacity,
-              transform: [
-                { translateY: menuTranslateY },
-                { scale: menuScale },
-              ],
+              transform: [{ translateY: menuTranslateY }, { scale: menuScale }],
             },
           ]}
         >
@@ -376,9 +370,7 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
               <View style={styles.titleBadgeRow}>
                 <Text style={styles.menuTitle}>WhatsApp</Text>
                 <View style={styles.fastReplyPill}>
-                  <Text style={styles.fastReplyPillText}>
-                    {isBangla ? 'দ্রুত উত্তর' : 'Instant'}
-                  </Text>
+                  <Text style={styles.fastReplyPillText}>{isBangla ? 'দ্রুত উত্তর' : 'Instant'}</Text>
                 </View>
               </View>
               <Text style={styles.menuSubtitle}>{CRM_CHANNELS.phoneDisplay}</Text>
@@ -401,9 +393,7 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
               <View style={styles.titleBadgeRow}>
                 <Text style={styles.menuTitle}>Messenger</Text>
                 <View style={styles.fastReplyPill}>
-                  <Text style={styles.fastReplyPillText}>
-                    {isBangla ? 'মেসেজ করুন' : 'Inbox'}
-                  </Text>
+                  <Text style={styles.fastReplyPillText}>{isBangla ? 'মেসেজ করুন' : 'Inbox'}</Text>
                 </View>
               </View>
               <Text style={styles.menuSubtitle}>@thrivingskills</Text>
@@ -458,10 +448,7 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
 
         {/* Floating Circular FAB - Sticks to left edge by default, movable, 1-Tap ON / 1-Tap OFF */}
         <View
-          style={[
-            styles.fabRow,
-            snappedSide === 'left' ? styles.fabRowLeft : styles.fabRowRight,
-          ]}
+          style={[styles.fabRow, snappedSide === 'left' ? styles.fabRowLeft : styles.fabRowRight]}
           {...panResponder.panHandlers}
         >
           <Animated.View
@@ -475,8 +462,12 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
               accessibilityRole="button"
               accessibilityLabel={
                 expanded
-                  ? (isBangla ? 'সাপোর্ট অপশন বন্ধ করুন' : 'Close support options')
-                  : (isBangla ? 'সাপোর্ট চ্যাট খুলুন' : 'Open support chat')
+                  ? isBangla
+                    ? 'সাপোর্ট অপশন বন্ধ করুন'
+                    : 'Close support options'
+                  : isBangla
+                    ? 'সাপোর্ট চ্যাট খুলুন'
+                    : 'Open support chat'
               }
             >
               <Animated.View

@@ -155,7 +155,10 @@ export const ProfileDeleteAccountModal: React.FC<ProfileDeleteAccountModalProps>
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.saveBtn, { backgroundColor: colors.danger, opacity: isDeletingAccount ? 0.7 : 1 }]}
+              style={[
+                styles.saveBtn,
+                { backgroundColor: colors.danger, opacity: isDeletingAccount ? 0.7 : 1 },
+              ]}
               onPress={onConfirmDelete}
               disabled={isDeletingAccount}
               accessibilityRole="button"
@@ -172,8 +175,8 @@ export const ProfileDeleteAccountModal: React.FC<ProfileDeleteAccountModalProps>
                     ? 'মুছে ফেলা হচ্ছে...'
                     : 'Deleting...'
                   : isBangla
-                  ? 'স্থায়ীভাবে মুছুন'
-                  : 'Permanently Delete'}
+                    ? 'স্থায়ীভাবে মুছুন'
+                    : 'Permanently Delete'}
               </Text>
             </TouchableOpacity>
           </View>

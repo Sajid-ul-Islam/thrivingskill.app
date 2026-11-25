@@ -56,7 +56,8 @@ export const CourseQuickPeekModal: React.FC<CourseQuickPeekModalProps> = ({
     (course.originalPrice && course.originalPrice > course.price
       ? Math.round(course.originalPrice * 120)
       : 0);
-  const isFree = (!course.price || course.price === 0) && (!course.priceBdt || course.priceBdt === 0);
+  const isFree =
+    (!course.price || course.price === 0) && (!course.priceBdt || course.priceBdt === 0);
 
   const handleEnrollPress = () => {
     triggerHaptic('medium');
@@ -155,14 +156,15 @@ export const CourseQuickPeekModal: React.FC<CourseQuickPeekModalProps> = ({
                 </View>
               )}
 
-              <Text style={[styles.courseTitle, { color: colors.text }]}>
-                {course.title}
-              </Text>
+              <Text style={[styles.courseTitle, { color: colors.text }]}>{course.title}</Text>
 
               {/* Instructor Row */}
               <View style={styles.instructorRow}>
                 <Image
-                  source={getInstructorAvatarSource(course.instructor?.name, course.instructor?.avatar)}
+                  source={getInstructorAvatarSource(
+                    course.instructor?.name,
+                    course.instructor?.avatar
+                  )}
                   style={[styles.instructorAvatar, { borderWidth: 1, borderColor: colors.border }]}
                   {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
                 />
@@ -171,7 +173,12 @@ export const CourseQuickPeekModal: React.FC<CourseQuickPeekModalProps> = ({
                     <Text style={[styles.instructorName, { color: colors.text }]} numberOfLines={1}>
                       {course.instructor?.name || 'Thriving Skills Bangladesh'}
                     </Text>
-                    <Ionicons name="checkmark-circle" size={14} color="#059669" style={{ marginLeft: 4 }} />
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={14}
+                      color="#059669"
+                      style={{ marginLeft: 4 }}
+                    />
                   </View>
                   <Text style={[styles.instructorRole, { color: colors.textMuted }]}>
                     {isBangla ? 'প্রশিক্ষক ও বিশেষজ্ঞ' : 'Lead Instructor & Industry Mentor'}
@@ -180,7 +187,15 @@ export const CourseQuickPeekModal: React.FC<CourseQuickPeekModalProps> = ({
               </View>
 
               {/* Key Metrics Quick Deck */}
-              <View style={[styles.metricsGrid, { backgroundColor: isDark ? colors.surfaceSubtle : '#F8FAFC', borderColor: colors.border }]}>
+              <View
+                style={[
+                  styles.metricsGrid,
+                  {
+                    backgroundColor: isDark ? colors.surfaceSubtle : '#F8FAFC',
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
                 <View style={styles.metricItem}>
                   <Ionicons name="star" size={16} color="#FFB606" />
                   <Text style={[styles.metricVal, { color: colors.text }]}>
@@ -267,21 +282,43 @@ export const CourseQuickPeekModal: React.FC<CourseQuickPeekModalProps> = ({
                   {isBangla ? 'কোর্সের মূল বিষয়বস্তু:' : 'What You Will Master:'}
                 </Text>
                 <View style={styles.bulletRow}>
-                  <Ionicons name="checkmark-done-circle" size={18} color="#059669" style={{ marginTop: 1 }} />
+                  <Ionicons
+                    name="checkmark-done-circle"
+                    size={18}
+                    color="#059669"
+                    style={{ marginTop: 1 }}
+                  />
                   <Text style={[styles.bulletText, { color: colors.textMuted }]}>
-                    {course.subtitle || (isBangla ? 'প্র্যাকটিক্যাল কেস স্টাডি ও বাস্তব প্রজেক্টভিত্তিক অভিজ্ঞতা' : 'Hands-on practical workflows with real-world industry case studies')}
+                    {course.subtitle ||
+                      (isBangla
+                        ? 'প্র্যাকটিক্যাল কেস স্টাডি ও বাস্তব প্রজেক্টভিত্তিক অভিজ্ঞতা'
+                        : 'Hands-on practical workflows with real-world industry case studies')}
                   </Text>
                 </View>
                 <View style={styles.bulletRow}>
-                  <Ionicons name="checkmark-done-circle" size={18} color="#059669" style={{ marginTop: 1 }} />
+                  <Ionicons
+                    name="checkmark-done-circle"
+                    size={18}
+                    color="#059669"
+                    style={{ marginTop: 1 }}
+                  />
                   <Text style={[styles.bulletText, { color: colors.textMuted }]}>
-                    {isBangla ? 'আজীবন অ্যাক্সেস, মোবাইল ফ্রেন্ডলি প্লেয়ার ও অফলাইন রিভিশন' : 'Lifetime curriculum access with mobile background audio & HD streaming'}
+                    {isBangla
+                      ? 'আজীবন অ্যাক্সেস, মোবাইল ফ্রেন্ডলি প্লেয়ার ও অফলাইন রিভিশন'
+                      : 'Lifetime curriculum access with mobile background audio & HD streaming'}
                   </Text>
                 </View>
                 <View style={styles.bulletRow}>
-                  <Ionicons name="checkmark-done-circle" size={18} color="#059669" style={{ marginTop: 1 }} />
+                  <Ionicons
+                    name="checkmark-done-circle"
+                    size={18}
+                    color="#059669"
+                    style={{ marginTop: 1 }}
+                  />
                   <Text style={[styles.bulletText, { color: colors.textMuted }]}>
-                    {isBangla ? 'কোর্স শেষে ভেরিফায়েড শেয়ারযোগ্য ডিজিটাল সার্টিফিকেট' : 'Official Thriving Skills verified certificate upon lesson completion'}
+                    {isBangla
+                      ? 'কোর্স শেষে ভেরিফায়েড শেয়ারযোগ্য ডিজিটাল সার্টিফিকেট'
+                      : 'Official Thriving Skills verified certificate upon lesson completion'}
                   </Text>
                 </View>
               </View>
@@ -289,14 +326,26 @@ export const CourseQuickPeekModal: React.FC<CourseQuickPeekModalProps> = ({
           </ScrollView>
 
           {/* Action Bottom Dock */}
-          <View style={[styles.footerDock, { backgroundColor: isDark ? colors.surfaceCard : '#FFFFFF', borderTopColor: colors.border }]}>
+          <View
+            style={[
+              styles.footerDock,
+              {
+                backgroundColor: isDark ? colors.surfaceCard : '#FFFFFF',
+                borderTopColor: colors.border,
+              },
+            ]}
+          >
             {onToggleBookmark && (
               <SpringPressable
                 onPress={handleBookmarkPress}
                 style={[
                   styles.bookmarkActionBtn,
                   {
-                    backgroundColor: isBookmarked ? `${colors.primary}18` : (isDark ? colors.surfaceSubtle : '#F1F5F9'),
+                    backgroundColor: isBookmarked
+                      ? `${colors.primary}18`
+                      : isDark
+                        ? colors.surfaceSubtle
+                        : '#F1F5F9',
                     borderColor: isBookmarked ? colors.primary : colors.border,
                   },
                 ]}
@@ -321,7 +370,12 @@ export const CourseQuickPeekModal: React.FC<CourseQuickPeekModalProps> = ({
               <Text style={[styles.primaryActionText, { color: colors.onPrimary }]}>
                 {isBangla ? 'সম্পূর্ণ কোর্স দেখুন ও শুরু করুন' : 'View Course & Enroll'}
               </Text>
-              <Ionicons name="arrow-forward" size={18} color={colors.onPrimary} style={{ marginLeft: 8 }} />
+              <Ionicons
+                name="arrow-forward"
+                size={18}
+                color={colors.onPrimary}
+                style={{ marginLeft: 8 }}
+              />
             </SpringPressable>
           </View>
         </View>

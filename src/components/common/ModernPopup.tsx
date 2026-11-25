@@ -76,11 +76,7 @@ export const POPUP_THEME: Record<
   },
 };
 
-const getPopupTheme = (
-  type: PopupType,
-  colors: any,
-  isDark: boolean
-): PopupThemeConfig => {
+const getPopupTheme = (type: PopupType, colors: any, isDark: boolean): PopupThemeConfig => {
   switch (type) {
     case 'confirm':
       return {
@@ -210,15 +206,8 @@ export const ModernPopup: React.FC<ModernPopupProps> = ({ popup, onDismiss }) =>
   };
 
   return (
-    <Modal
-      visible={modalVisible}
-      transparent
-      animationType="none"
-      onRequestClose={handleCancel}
-    >
-      <Animated.View
-        style={[styles.backdrop, { opacity: opacityAnim }]}
-      >
+    <Modal visible={modalVisible} transparent animationType="none" onRequestClose={handleCancel}>
+      <Animated.View style={[styles.backdrop, { opacity: opacityAnim }]}>
         <TouchableOpacity
           style={StyleSheet.absoluteFill}
           activeOpacity={1}
@@ -254,15 +243,17 @@ export const ModernPopup: React.FC<ModernPopupProps> = ({ popup, onDismiss }) =>
 
           {/* Header Icon Badge */}
           <View style={[styles.iconWrap, { backgroundColor: theme.iconBg }]}>
-            <Ionicons
-              name={(popup?.icon || theme.icon) as any}
-              size={32}
-              color={theme.iconColor}
-            />
+            <Ionicons name={(popup?.icon || theme.icon) as any} size={32} color={theme.iconColor} />
           </View>
 
           {/* Title & Description */}
-          <Text style={[typography.h3, styles.title, { color: isDark ? colors.text : colors.brandNavy }]}>
+          <Text
+            style={[
+              typography.h3,
+              styles.title,
+              { color: isDark ? colors.text : colors.brandNavy },
+            ]}
+          >
             {popup?.title}
           </Text>
           <Text style={[typography.bodyMedium, styles.message, { color: colors.textMuted }]}>
@@ -284,7 +275,9 @@ export const ModernPopup: React.FC<ModernPopupProps> = ({ popup, onDismiss }) =>
                 accessibilityRole="button"
                 accessibilityLabel={popup.secondaryLabel}
               >
-                <Text style={[styles.cancelText, { color: isDark ? colors.text : colors.textMuted }]}>
+                <Text
+                  style={[styles.cancelText, { color: isDark ? colors.text : colors.textMuted }]}
+                >
                   {popup.secondaryLabel}
                 </Text>
               </SpringPressable>

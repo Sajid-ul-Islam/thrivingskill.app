@@ -1,5 +1,12 @@
 import React, { useRef, useCallback, useEffect } from 'react';
-import { ScrollView, Text, TouchableOpacity, StyleSheet, View, LayoutChangeEvent } from 'react-native';
+import {
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  View,
+  LayoutChangeEvent,
+} from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Category, CategoryId } from '../../types';
 import { useTheme } from '../../context/ThemeContext';
@@ -17,7 +24,15 @@ interface CategoryPillsProps {
 }
 
 const DEFAULT_CATEGORIES: Category[] = [
-  { id: 'all', name: 'All Courses', banglaName: 'সব কোর্স', icon: 'grid', count: 0, color: '#059669', slug: 'all' },
+  {
+    id: 'all',
+    name: 'All Courses',
+    banglaName: 'সব কোর্স',
+    icon: 'grid',
+    count: 0,
+    color: '#059669',
+    slug: 'all',
+  },
 ];
 
 export const CategoryPills: React.FC<CategoryPillsProps> = ({
@@ -91,8 +106,8 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({
                 backgroundColor: isSelected
                   ? colors.primary
                   : isDark
-                  ? colors.surfaceCard
-                  : '#FFFFFF',
+                    ? colors.surfaceCard
+                    : '#FFFFFF',
                 borderColor: isSelected ? colors.primary : colors.border,
               },
               isSelected && [styles.selectedPillShadow, { shadowColor: colors.primary }],

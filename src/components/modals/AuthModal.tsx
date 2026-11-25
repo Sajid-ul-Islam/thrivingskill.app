@@ -73,7 +73,13 @@ export function parseResetPasswordUrl(url: string): { key: string; login: string
   return null;
 }
 
-export type AuthMode = 'login' | 'register' | 'forgot_password' | 'set_password' | 'register_webview' | 'register_success';
+export type AuthMode =
+  | 'login'
+  | 'register'
+  | 'forgot_password'
+  | 'set_password'
+  | 'register_webview'
+  | 'register_success';
 
 export interface AuthModalProps {
   visible: boolean;
@@ -182,7 +188,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         setResetLogin(parsed.login);
         setMode('set_password');
         setErrorMessage(null);
-        setInfoMessage(`Verification link detected for @${parsed.login}. Please set your password below.`);
+        setInfoMessage(
+          `Verification link detected for @${parsed.login}. Please set your password below.`
+        );
         setAuthModalVisible(true);
         triggerHaptic('success');
       }
@@ -287,7 +295,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       const message = String(err?.message || '');
 
       if (code.includes('invalid_username')) {
-        setErrorMessage('Username or email is not registered. Please check spelling or create an account.');
+        setErrorMessage(
+          'Username or email is not registered. Please check spelling or create an account.'
+        );
       } else if (code.includes('incorrect_password')) {
         setErrorMessage("Incorrect password. Please try again or tap 'Forgot Password' below.");
       } else if (code.includes('empty_username')) {
@@ -299,7 +309,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   };
 
   const generateUsernameFromEmail = (emailStr: string): string => {
-    const raw = emailStr.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+    const raw = emailStr
+      .split('@')[0]
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '');
     const base = raw.length >= 3 ? raw : `student${raw}`;
     const rand = Math.floor(100 + Math.random() * 900);
     return `${base}${rand}`;
@@ -347,7 +360,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!trimmedEmail || !emailRegex.test(trimmedEmail)) {
-      setErrorMessage(isBangla ? 'সঠিক ইমেইল এড্রেস প্রদান করুন।' : 'Please enter a valid email address.');
+      setErrorMessage(
+        isBangla ? 'সঠিক ইমেইল এড্রেস প্রদান করুন।' : 'Please enter a valid email address.'
+      );
       triggerHaptic('warning');
       return;
     }
@@ -379,10 +394,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     const autoUsername = generateUsernameFromEmail(trimmedEmail);
 
     try {
-      const regRes = await register(autoUsername, trimmedEmail, trimmedPassword, trimmedPhone, trimmedName);
+      const regRes = await register(
+        autoUsername,
+        trimmedEmail,
+        trimmedPassword,
+        trimmedPhone,
+        trimmedName
+      );
       setRegisteredSuccessEmail(trimmedEmail);
       setRegisteredSuccessUsername(autoUsername);
-      setIsAutoLoggedInAfterReg(Boolean(regRes && typeof regRes === 'object' && 'autoLoggedIn' in regRes && regRes.autoLoggedIn));
+      setIsAutoLoggedInAfterReg(
+        Boolean(
+          regRes && typeof regRes === 'object' && 'autoLoggedIn' in regRes && regRes.autoLoggedIn
+        )
+      );
       setMode('register_success');
       triggerHaptic('success');
       showToast({
@@ -412,16 +437,34 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         setErrorMessage(
           isBangla ? 'অনুগ্রহ করে সঠিক ইমেইল এড্রেস লিখুন।' : 'Please provide a valid email address.'
         );
-      } else if (code.includes('username-exists') || msg.toLowerCase().includes('username already')) {
+      } else if (
+        code.includes('username-exists') ||
+        msg.toLowerCase().includes('username already')
+      ) {
         try {
           const retryUsername = `${autoUsername}${Math.floor(10 + Math.random() * 90)}`;
-          const retryRes = await register(retryUsername, trimmedEmail, trimmedPassword, trimmedPhone, trimmedName);
+          const retryRes = await register(
+            retryUsername,
+            trimmedEmail,
+            trimmedPassword,
+            trimmedPhone,
+            trimmedName
+          );
           setRegisteredSuccessEmail(trimmedEmail);
           setRegisteredSuccessUsername(retryUsername);
-          setIsAutoLoggedInAfterReg(Boolean(retryRes && typeof retryRes === 'object' && 'autoLoggedIn' in retryRes && retryRes.autoLoggedIn));
+          setIsAutoLoggedInAfterReg(
+            Boolean(
+              retryRes &&
+              typeof retryRes === 'object' &&
+              'autoLoggedIn' in retryRes &&
+              retryRes.autoLoggedIn
+            )
+          );
           setMode('register_success');
           showToast({
-            message: isBangla ? '🎉 রেজিস্ট্রেশন সম্পন্ন হয়েছে! ইমেইল চেক করুন।' : '🎉 Registration completed! Check your email.',
+            message: isBangla
+              ? '🎉 রেজিস্ট্রেশন সম্পন্ন হয়েছে! ইমেইল চেক করুন।'
+              : '🎉 Registration completed! Check your email.',
             type: 'success',
           });
           triggerHaptic('success');
@@ -432,10 +475,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           setTouched({});
           return;
         } catch (retryErr: any) {
-          setErrorMessage(retryErr?.message || (isBangla ? 'রেজিস্ট্রেশন সম্পন্ন করা যায়নি।' : 'Registration failed. Please try again.'));
+          setErrorMessage(
+            retryErr?.message ||
+              (isBangla ? 'রেজিস্ট্রেশন সম্পন্ন করা যায়নি।' : 'Registration failed. Please try again.')
+          );
         }
       } else {
-        setErrorMessage(msg || (isBangla ? 'রেজিস্ট্রেশন সম্পন্ন করা যায়নি। আবার চেষ্টা করুন।' : 'Registration could not be completed. Please try again.'));
+        setErrorMessage(
+          msg ||
+            (isBangla
+              ? 'রেজিস্ট্রেশন সম্পন্ন করা যায়নি। আবার চেষ্টা করুন।'
+              : 'Registration could not be completed. Please try again.')
+        );
       }
     } finally {
       setIsRegistering(false);
@@ -467,7 +518,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       const code = String(err?.code || err?.data?.code || '');
       const msg = String(err?.message || '');
 
-      if (code.includes('error_not_user') || msg.includes('error_not_user') || msg.includes('Invalid username or email')) {
+      if (
+        code.includes('error_not_user') ||
+        msg.includes('error_not_user') ||
+        msg.includes('Invalid username or email')
+      ) {
         const notFoundMsg = 'No account found with this username or email address.';
         setErrorMessage(notFoundMsg);
         Alert.alert('User Not Found', notFoundMsg);
@@ -491,7 +546,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       return;
     }
     if (newPassword.length < 12) {
-      setErrorMessage('The password should be at least twelve characters long as required by the website.');
+      setErrorMessage(
+        'The password should be at least twelve characters long as required by the website.'
+      );
       triggerHaptic('warning');
       return;
     }
@@ -567,14 +624,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           >
             <View style={styles.webViewHeader}>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.webViewTitle, { color: colors.text }]}>Official Registration</Text>
+                <Text style={[styles.webViewTitle, { color: colors.text }]}>
+                  Official Registration
+                </Text>
                 <Text style={[styles.webViewSubtitle, { color: colors.textMuted }]}>
                   thrivingskill.com • No phone required
                 </Text>
               </View>
               <TouchableOpacity
                 onPress={() => setMode('register')}
-                style={[styles.closeButtonCompact, { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' }]}
+                style={[
+                  styles.closeButtonCompact,
+                  { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' },
+                ]}
                 accessibilityRole="button"
                 accessibilityLabel="Close registration webview"
               >
@@ -694,7 +756,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
               {isDismissible && (
                 <TouchableOpacity
-                  style={[styles.closeButtonInline, { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' }]}
+                  style={[
+                    styles.closeButtonInline,
+                    { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' },
+                  ]}
                   onPress={onClose}
                   accessibilityRole="button"
                   accessibilityLabel="Close dialog"
@@ -745,26 +810,46 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 ]}
               >
                 {mode === 'login'
-                  ? (isBangla ? 'স্বাগতম, প্রফেশনাল' : 'Welcome Back, Professional')
+                  ? isBangla
+                    ? 'স্বাগতম, প্রফেশনাল'
+                    : 'Welcome Back, Professional'
                   : mode === 'register'
-                  ? (isBangla ? 'ফ্রি অ্যাকাউন্ট তৈরি করুন' : 'Create Your Free Account')
-                  : mode === 'register_success'
-                  ? (isBangla ? 'রেজিস্ট্রেশন সম্পন্ন হয়েছে!' : 'Registration Successful!')
-                  : mode === 'set_password'
-                  ? (isBangla ? 'পাসওয়ার্ড সেট করুন' : 'Set Your Account Password')
-                  : (isBangla ? 'পাসওয়ার্ড রিসেট' : 'Reset Your Password')}
+                    ? isBangla
+                      ? 'ফ্রি অ্যাকাউন্ট তৈরি করুন'
+                      : 'Create Your Free Account'
+                    : mode === 'register_success'
+                      ? isBangla
+                        ? 'রেজিস্ট্রেশন সম্পন্ন হয়েছে!'
+                        : 'Registration Successful!'
+                      : mode === 'set_password'
+                        ? isBangla
+                          ? 'পাসওয়ার্ড সেট করুন'
+                          : 'Set Your Account Password'
+                        : isBangla
+                          ? 'পাসওয়ার্ড রিসেট'
+                          : 'Reset Your Password'}
               </Text>
               {!isKeyboardVisible && (
                 <Text style={[styles.subtitle, { color: colors.textMuted }]}>
                   {mode === 'login'
-                    ? (isBangla ? 'আপনার কোর্স, সার্টিফিকেট এবং লার্নিং ট্র্যাক এক্সেস করতে সাইন ইন করুন।' : 'Sign in to access your masterclasses, certificates, and learning track.')
+                    ? isBangla
+                      ? 'আপনার কোর্স, সার্টিফিকেট এবং লার্নিং ট্র্যাক এক্সেস করতে সাইন ইন করুন।'
+                      : 'Sign in to access your masterclasses, certificates, and learning track.'
                     : mode === 'register'
-                    ? (isBangla ? 'নাম, ইমেইল, মোবাইল নম্বর ও পাসওয়ার্ড দিয়ে সহজে যুক্ত হোন।' : 'Fast 4-field registration. Join learners and professionals across Bangladesh.')
-                    : mode === 'register_success'
-                    ? (isBangla ? 'আপনার অ্যাকাউন্টের একটি নিশ্চিতকরণ ইমেইল পাঠানো হয়েছে।' : 'A confirmation & activation email has been sent to your registered address.')
-                    : mode === 'set_password'
-                    ? (isBangla ? 'ভেরিফিকেশন লিংক থেকে পাসওয়ার্ড সেট করুন।' : 'Enter your email link details to set your new password.')
-                    : (isBangla ? 'আপনার ইমেইল বা ইউজারনেম লিখুন।' : 'Enter your username or email address and we will email you a password setup link.')}
+                      ? isBangla
+                        ? 'নাম, ইমেইল, মোবাইল নম্বর ও পাসওয়ার্ড দিয়ে সহজে যুক্ত হোন।'
+                        : 'Fast 4-field registration. Join learners and professionals across Bangladesh.'
+                      : mode === 'register_success'
+                        ? isBangla
+                          ? 'আপনার অ্যাকাউন্টের একটি নিশ্চিতকরণ ইমেইল পাঠানো হয়েছে।'
+                          : 'A confirmation & activation email has been sent to your registered address.'
+                        : mode === 'set_password'
+                          ? isBangla
+                            ? 'ভেরিফিকেশন লিংক থেকে পাসওয়ার্ড সেট করুন।'
+                            : 'Enter your email link details to set your new password.'
+                          : isBangla
+                            ? 'আপনার ইমেইল বা ইউজারনেম লিখুন।'
+                            : 'Enter your username or email address and we will email you a password setup link.'}
                 </Text>
               )}
 
@@ -772,8 +857,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               {mode === 'set_password' && (
                 <View style={styles.regStepBar}>
                   <View style={styles.regStepMeta}>
-                    <Text style={[styles.regStepLabel, { color: colors.primary }]} numberOfLines={1} ellipsizeMode="tail">
-                      Step {regStep} of 2: {regStep === 1 ? 'Official Registration' : 'Set Password'}
+                    <Text
+                      style={[styles.regStepLabel, { color: colors.primary }]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      Step {regStep} of 2:{' '}
+                      {regStep === 1 ? 'Official Registration' : 'Set Password'}
                     </Text>
                     <Text style={[styles.regStepHint, { color: colors.textMuted }]}>
                       {regStep === 1 ? 'Step 1 of 2' : 'Final Step'}
@@ -806,7 +896,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     accessibilityState={{ selected: mode === 'login' }}
                     style={[
                       styles.tabSwitchItem,
-                      mode === 'login' && [styles.tabSwitchActive, { backgroundColor: colors.surfaceCard }],
+                      mode === 'login' && [
+                        styles.tabSwitchActive,
+                        { backgroundColor: colors.surfaceCard },
+                      ],
                     ]}
                     onPress={() => {
                       triggerHaptic('selection');
@@ -833,7 +926,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     accessibilityState={{ selected: mode === 'register' }}
                     style={[
                       styles.tabSwitchItem,
-                      mode === 'register' && [styles.tabSwitchActive, { backgroundColor: colors.surfaceCard }],
+                      mode === 'register' && [
+                        styles.tabSwitchActive,
+                        { backgroundColor: colors.surfaceCard },
+                      ],
                     ]}
                     onPress={() => {
                       triggerHaptic('selection');
@@ -862,7 +958,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 <View
                   accessibilityRole="alert"
                   accessibilityLiveRegion="polite"
-                  style={[styles.errorBox, { backgroundColor: colors.danger + '15', borderColor: colors.danger }]}
+                  style={[
+                    styles.errorBox,
+                    { backgroundColor: colors.danger + '15', borderColor: colors.danger },
+                  ]}
                 >
                   <Ionicons name="alert-circle" size={18} color={colors.danger} />
                   <Text style={[styles.errorText, { color: colors.danger }]}>{errorMessage}</Text>
@@ -882,7 +981,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     },
                   ]}
                 >
-                  <Ionicons name="checkmark-circle" size={18} color={isDark ? '#34D399' : '#047857'} />
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={18}
+                    color={isDark ? '#34D399' : '#047857'}
+                  />
                   <Text style={[styles.infoText, { color: isDark ? '#A7F3D0' : '#065F46' }]}>
                     {infoMessage}
                   </Text>
@@ -904,7 +1007,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
                         ]}
                       >
-                        <Ionicons name="mail-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                        <Ionicons
+                          name="mail-outline"
+                          size={18}
+                          color={colors.textMuted}
+                          style={styles.inputIcon}
+                        />
                         <TextInput
                           ref={forgotEmailInputRef}
                           style={[styles.input, { color: colors.text }]}
@@ -942,7 +1050,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           <Text style={[styles.submitButtonText, { color: '#FFFFFF' }]}>
                             Send Verification Link
                           </Text>
-                          <Ionicons name="mail-unread-outline" size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
+                          <Ionicons
+                            name="mail-unread-outline"
+                            size={18}
+                            color="#FFFFFF"
+                            style={{ marginLeft: 6 }}
+                          />
                         </>
                       )}
                     </TouchableOpacity>
@@ -968,7 +1081,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <View style={styles.noticeCard}>
                       <Ionicons name="key-outline" size={20} color={colors.primary} />
                       <Text style={[styles.noticeCardText, { color: colors.text }]}>
-                        Enter the username and verification key from your email to set your new password.
+                        Enter the username and verification key from your email to set your new
+                        password.
                       </Text>
                     </View>
 
@@ -983,7 +1097,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
                         ]}
                       >
-                        <Ionicons name="link-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                        <Ionicons
+                          name="link-outline"
+                          size={18}
+                          color={colors.textMuted}
+                          style={styles.inputIcon}
+                        />
                         <TextInput
                           style={[styles.input, { color: colors.text }]}
                           placeholder="Paste https://thrivingskill.com/login/?action=rp..."
@@ -998,14 +1117,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                     {/* Username Input */}
                     <View style={styles.inputGroup}>
-                      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Username *</Text>
+                      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
+                        Username *
+                      </Text>
                       <View
                         style={[
                           styles.inputWrapper,
                           { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
                         ]}
                       >
-                        <Ionicons name="person-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                        <Ionicons
+                          name="person-outline"
+                          size={18}
+                          color={colors.textMuted}
+                          style={styles.inputIcon}
+                        />
                         <TextInput
                           ref={resetLoginInputRef}
                           style={[styles.input, { color: colors.text }]}
@@ -1027,14 +1153,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                     {/* Security Key Input */}
                     <View style={styles.inputGroup}>
-                      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>One-Time Security Key *</Text>
+                      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
+                        One-Time Security Key *
+                      </Text>
                       <View
                         style={[
                           styles.inputWrapper,
                           { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
                         ]}
                       >
-                        <Ionicons name="shield-checkmark-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                        <Ionicons
+                          name="shield-checkmark-outline"
+                          size={18}
+                          color={colors.textMuted}
+                          style={styles.inputIcon}
+                        />
                         <TextInput
                           ref={resetKeyInputRef}
                           style={[styles.input, { color: colors.text }]}
@@ -1056,14 +1189,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                     {/* New Password Input */}
                     <View style={styles.inputGroup}>
-                      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>New Password * (Min 12 Characters)</Text>
+                      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
+                        New Password * (Min 12 Characters)
+                      </Text>
                       <View
                         style={[
                           styles.inputWrapper,
                           { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
                         ]}
                       >
-                        <Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                        <Ionicons
+                          name="lock-closed-outline"
+                          size={18}
+                          color={colors.textMuted}
+                          style={styles.inputIcon}
+                        />
                         <TextInput
                           ref={newPasswordInputRef}
                           style={[styles.input, { color: colors.text }]}
@@ -1104,15 +1244,25 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                             if (!passwordStrength) return null;
                             return (
                               <>
-                                <View style={[styles.strengthTrack, { backgroundColor: colors.surfaceSubtle }]}>
+                                <View
+                                  style={[
+                                    styles.strengthTrack,
+                                    { backgroundColor: colors.surfaceSubtle },
+                                  ]}
+                                >
                                   <View
                                     style={[
                                       styles.strengthFill,
-                                      { backgroundColor: passwordStrength.color, width: `${passwordStrength.pct}%` },
+                                      {
+                                        backgroundColor: passwordStrength.color,
+                                        width: `${passwordStrength.pct}%`,
+                                      },
                                     ]}
                                   />
                                 </View>
-                                <Text style={[styles.strengthLabel, { color: passwordStrength.color }]}>
+                                <Text
+                                  style={[styles.strengthLabel, { color: passwordStrength.color }]}
+                                >
                                   {passwordStrength.label}
                                 </Text>
                               </>
@@ -1127,25 +1277,44 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       )}
 
                       {/* Official Password Hint from thrivingskill.com / WordPress */}
-                      <View style={[styles.siteHintBox, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
-                        <Ionicons name="information-circle" size={16} color={colors.primary} style={{ marginTop: 1 }} />
+                      <View
+                        style={[
+                          styles.siteHintBox,
+                          { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                        ]}
+                      >
+                        <Ionicons
+                          name="information-circle"
+                          size={16}
+                          color={colors.primary}
+                          style={{ marginTop: 1 }}
+                        />
                         <Text style={[styles.siteHintText, { color: colors.textMuted }]}>
                           <Text style={{ fontWeight: '700', color: colors.text }}>Hint: </Text>
-                          The password should be at least twelve characters long. To make it stronger, use upper and lower case letters, numbers, and symbols like ! " ? $ % ^ & ).
+                          The password should be at least twelve characters long. To make it
+                          stronger, use upper and lower case letters, numbers, and symbols like ! "
+                          ? $ % ^ & ).
                         </Text>
                       </View>
                     </View>
 
                     {/* Confirm Password Input */}
                     <View style={styles.inputGroup}>
-                      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>Confirm New Password *</Text>
+                      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
+                        Confirm New Password *
+                      </Text>
                       <View
                         style={[
                           styles.inputWrapper,
                           { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
                         ]}
                       >
-                        <Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                        <Ionicons
+                          name="lock-closed-outline"
+                          size={18}
+                          color={colors.textMuted}
+                          style={styles.inputIcon}
+                        />
                         <TextInput
                           ref={confirmPasswordInputRef}
                           style={[styles.input, { color: colors.text }]}
@@ -1168,11 +1337,13 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           onSubmitEditing={handleSetNewPassword}
                         />
                       </View>
-                      {touched.confirmPassword && confirmPassword.length > 0 && newPassword !== confirmPassword && (
-                        <Text style={[styles.inlineFieldError, { color: colors.danger }]}>
-                          Passwords do not match.
-                        </Text>
-                      )}
+                      {touched.confirmPassword &&
+                        confirmPassword.length > 0 &&
+                        newPassword !== confirmPassword && (
+                          <Text style={[styles.inlineFieldError, { color: colors.danger }]}>
+                            Passwords do not match.
+                          </Text>
+                        )}
                     </View>
 
                     <TouchableOpacity
@@ -1189,7 +1360,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           <Text style={[styles.submitButtonText, { color: '#FFFFFF' }]}>
                             Save Password & Sign In
                           </Text>
-                          <Ionicons name="checkmark-circle-outline" size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
+                          <Ionicons
+                            name="checkmark-circle-outline"
+                            size={18}
+                            color="#FFFFFF"
+                            style={{ marginLeft: 6 }}
+                          />
                         </>
                       )}
                     </TouchableOpacity>
@@ -1222,11 +1398,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           styles.inputWrapper,
                           {
                             backgroundColor: colors.surfaceSubtle,
-                            borderColor: touched.regFullName && !regFullName.trim() ? colors.danger : colors.border,
+                            borderColor:
+                              touched.regFullName && !regFullName.trim()
+                                ? colors.danger
+                                : colors.border,
                           },
                         ]}
                       >
-                        <Ionicons name="person-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                        <Ionicons
+                          name="person-outline"
+                          size={18}
+                          color={colors.textMuted}
+                          style={styles.inputIcon}
+                        />
                         <TextInput
                           ref={regNameInputRef}
                           style={[styles.input, { color: colors.text }]}
@@ -1247,7 +1431,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       </View>
                       {touched.regFullName && !regFullName.trim() && (
                         <Text style={[styles.inlineFieldError, { color: colors.danger }]}>
-                          {isBangla ? 'অনুগ্রহ করে আপনার পুরো নাম লিখুন।' : 'Please enter your full name.'}
+                          {isBangla
+                            ? 'অনুগ্রহ করে আপনার পুরো নাম লিখুন।'
+                            : 'Please enter your full name.'}
                         </Text>
                       )}
                     </View>
@@ -1262,11 +1448,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           styles.inputWrapper,
                           {
                             backgroundColor: colors.surfaceSubtle,
-                            borderColor: touched.regEmail && !regEmail.trim() ? colors.danger : colors.border,
+                            borderColor:
+                              touched.regEmail && !regEmail.trim() ? colors.danger : colors.border,
                           },
                         ]}
                       >
-                        <Ionicons name="mail-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                        <Ionicons
+                          name="mail-outline"
+                          size={18}
+                          color={colors.textMuted}
+                          style={styles.inputIcon}
+                        />
                         <TextInput
                           ref={regEmailInputRef}
                           style={[styles.input, { color: colors.text }]}
@@ -1288,7 +1480,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       </View>
                       {touched.regEmail && !regEmail.trim() && (
                         <Text style={[styles.inlineFieldError, { color: colors.danger }]}>
-                          {isBangla ? 'সঠিক ইমেইল এড্রেস লিখুন।' : 'Please enter a valid email address.'}
+                          {isBangla
+                            ? 'সঠিক ইমেইল এড্রেস লিখুন।'
+                            : 'Please enter a valid email address.'}
                         </Text>
                       )}
                     </View>
@@ -1296,18 +1490,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     {/* Phone Number Input (Mandatory per client requirement for course enrollment) */}
                     <View style={styles.inputGroup}>
                       <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
-                        {isBangla ? 'মোবাইল নম্বর * (কোর্স ভর্তি ও ভেরিফিকেশনে আবশ্যক)' : 'Phone Number * (Required for enrollment & verification)'}
+                        {isBangla
+                          ? 'মোবাইল নম্বর * (কোর্স ভর্তি ও ভেরিফিকেশনে আবশ্যক)'
+                          : 'Phone Number * (Required for enrollment & verification)'}
                       </Text>
                       <View
                         style={[
                           styles.inputWrapper,
                           {
                             backgroundColor: colors.surfaceSubtle,
-                            borderColor: touched.regPhone && !regPhone.trim() ? colors.danger : colors.border,
+                            borderColor:
+                              touched.regPhone && !regPhone.trim() ? colors.danger : colors.border,
                           },
                         ]}
                       >
-                        <Ionicons name="call-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                        <Ionicons
+                          name="call-outline"
+                          size={18}
+                          color={colors.textMuted}
+                          style={styles.inputIcon}
+                        />
                         <TextInput
                           ref={regPhoneInputRef}
                           style={[styles.input, { color: colors.text }]}
@@ -1325,20 +1527,29 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           onSubmitEditing={() => regPasswordInputRef.current?.focus()}
                         />
                       </View>
-                      {touched.regPhone && (!regPhone.trim() || regPhone.replace(/\D/g, '').length < 10) && (
-                        <Text style={[styles.inlineFieldError, { color: colors.danger }]}>
-                          {isBangla
-                            ? 'কোর্স ভর্তি ও ভেরিফিকেশনে সঠিক মোবাইল নম্বর প্রদান আবশ্যক (যেমন: 017xxxxxxxx)।'
-                            : 'Please enter a valid mobile number (e.g. 017xxxxxxxx).'}
-                        </Text>
-                      )}
+                      {touched.regPhone &&
+                        (!regPhone.trim() || regPhone.replace(/\D/g, '').length < 10) && (
+                          <Text style={[styles.inlineFieldError, { color: colors.danger }]}>
+                            {isBangla
+                              ? 'কোর্স ভর্তি ও ভেরিফিকেশনে সঠিক মোবাইল নম্বর প্রদান আবশ্যক (যেমন: 017xxxxxxxx)।'
+                              : 'Please enter a valid mobile number (e.g. 017xxxxxxxx).'}
+                          </Text>
+                        )}
                     </View>
 
                     {/* Password Input - Min 12 Characters per official platform rules */}
                     <View style={styles.inputGroup}>
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
                         <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
-                          {isBangla ? 'পাসওয়ার্ড * (কমপক্ষে ১২ অক্ষর)' : 'Password * (Min 12 characters)'}
+                          {isBangla
+                            ? 'পাসওয়ার্ড * (কমপক্ষে ১২ অক্ষর)'
+                            : 'Password * (Min 12 characters)'}
                         </Text>
                         {regPassword.length > 0 && (
                           <Text
@@ -1356,15 +1567,27 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           styles.inputWrapper,
                           {
                             backgroundColor: colors.surfaceSubtle,
-                            borderColor: touched.regPassword && regPassword.length < 12 ? colors.danger : colors.border,
+                            borderColor:
+                              touched.regPassword && regPassword.length < 12
+                                ? colors.danger
+                                : colors.border,
                           },
                         ]}
                       >
-                        <Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                        <Ionicons
+                          name="lock-closed-outline"
+                          size={18}
+                          color={colors.textMuted}
+                          style={styles.inputIcon}
+                        />
                         <TextInput
                           ref={regPasswordInputRef}
                           style={[styles.input, { color: colors.text }]}
-                          placeholder={isBangla ? 'কমপক্ষে ১২ অক্ষরের পাসওয়ার্ড লিখুন' : 'Enter at least 12 character password'}
+                          placeholder={
+                            isBangla
+                              ? 'কমপক্ষে ১২ অক্ষরের পাসওয়ার্ড লিখুন'
+                              : 'Enter at least 12 character password'
+                          }
                           placeholderTextColor={colors.textLight}
                           value={regPassword}
                           onChangeText={(t) => {
@@ -1395,7 +1618,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                       {/* Character Count Progress Bar */}
                       {regPassword.length > 0 && (
-                        <View style={[styles.charCountTrack, { backgroundColor: colors.surfaceSubtle }]}>
+                        <View
+                          style={[styles.charCountTrack, { backgroundColor: colors.surfaceSubtle }]}
+                        >
                           <View
                             style={[
                               styles.charCountFill,
@@ -1417,8 +1642,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       )}
 
                       {/* Official Password Rule Card from thrivingskill.com */}
-                      <View style={[styles.siteHintBox, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border, marginTop: 8 }]}>
-                        <Ionicons name="shield-checkmark" size={15} color="#E34234" style={{ marginTop: 1 }} />
+                      <View
+                        style={[
+                          styles.siteHintBox,
+                          {
+                            backgroundColor: colors.surfaceSubtle,
+                            borderColor: colors.border,
+                            marginTop: 8,
+                          },
+                        ]}
+                      >
+                        <Ionicons
+                          name="shield-checkmark"
+                          size={15}
+                          color="#E34234"
+                          style={{ marginTop: 1 }}
+                        />
                         <Text style={[styles.siteHintText, { color: colors.textMuted }]}>
                           <Text style={{ fontWeight: '700', color: colors.text }}>
                             {isBangla ? 'পাসওয়ার্ড নিয়ম: ' : 'Password Rule: '}
@@ -1446,7 +1685,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           <Text style={[styles.submitButtonText, { color: '#FFFFFF' }]}>
                             {isBangla ? 'অ্যাকাউন্ট তৈরি করুন' : 'Create Account'}
                           </Text>
-                          <Ionicons name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 8 }} />
+                          <Ionicons
+                            name="arrow-forward"
+                            size={18}
+                            color="#FFFFFF"
+                            style={{ marginLeft: 8 }}
+                          />
                         </>
                       )}
                     </TouchableOpacity>
@@ -1479,8 +1723,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         }}
                         accessibilityRole="button"
                       >
-                        <Text style={{ fontSize: 12, color: colors.textMuted, textDecorationLine: 'underline' }}>
-                          {isBangla ? 'ইমেইল ভেরিফিকেশন বা পাসওয়ার্ড রিসেট লিংক রয়েছে?' : 'Have a verification or reset link? Enter here'}
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            color: colors.textMuted,
+                            textDecorationLine: 'underline',
+                          }}
+                        >
+                          {isBangla
+                            ? 'ইমেইল ভেরিফিকেশন বা পাসওয়ার্ড রিসেট লিংক রয়েছে?'
+                            : 'Have a verification or reset link? Enter here'}
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -1490,7 +1742,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <View style={styles.registerSuccessContainer}>
                     {/* Visual Success & Mail Badge */}
                     <View style={styles.successIconOuterRing}>
-                      <View style={[styles.successIconCircle, { backgroundColor: isDark ? 'rgba(16, 47, 83, 0.4)' : '#F0FDF4' }]}>
+                      <View
+                        style={[
+                          styles.successIconCircle,
+                          { backgroundColor: isDark ? 'rgba(16, 47, 83, 0.4)' : '#F0FDF4' },
+                        ]}
+                      >
                         <Ionicons name="mail-open" size={42} color="#102F53" />
                         <View style={styles.successMiniBadge}>
                           <Ionicons name="checkmark-circle" size={20} color="#10B981" />
@@ -1510,14 +1767,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </Text>
 
                     {/* Email Card Highlight */}
-                    <View style={[styles.emailNoticeBox, { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.08)' : '#FFF1F2', borderColor: 'rgba(227, 66, 52, 0.3)' }]}>
+                    <View
+                      style={[
+                        styles.emailNoticeBox,
+                        {
+                          backgroundColor: isDark ? 'rgba(227, 66, 52, 0.08)' : '#FFF1F2',
+                          borderColor: 'rgba(227, 66, 52, 0.3)',
+                        },
+                      ]}
+                    >
                       <View style={styles.emailNoticeRow}>
                         <Ionicons name="mail" size={16} color="#E34234" />
                         <Text style={[styles.emailNoticeLabel, { color: colors.textMuted }]}>
                           {isBangla ? 'নিবন্ধিত ইমেইল ঠিকানা:' : 'Registered Email Address:'}
                         </Text>
                       </View>
-                      <Text style={[styles.registeredEmailHighlight, { color: colors.text }]} numberOfLines={1} selectable>
+                      <Text
+                        style={[styles.registeredEmailHighlight, { color: colors.text }]}
+                        numberOfLines={1}
+                        selectable
+                      >
                         {registeredSuccessEmail || regEmail || 'your email'}
                       </Text>
                       {registeredSuccessUsername ? (
@@ -1533,14 +1802,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     </View>
 
                     {/* Step-by-Step Guidance Box */}
-                    <View style={[styles.guidanceCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
+                    <View
+                      style={[
+                        styles.guidanceCard,
+                        { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                      ]}
+                    >
                       <Text style={[styles.guidanceHeading, { color: colors.text }]}>
                         {isBangla ? 'পরবর্তী করণীয় ৩টি সহজ ধাপ:' : 'What to do next:'}
                       </Text>
 
                       {/* Step 1: Check Inbox */}
                       <View style={styles.guidanceStepRow}>
-                        <View style={[styles.guidanceStepBadge, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}>
+                        <View
+                          style={[
+                            styles.guidanceStepBadge,
+                            { backgroundColor: 'rgba(227, 66, 52, 0.12)' },
+                          ]}
+                        >
                           <Ionicons name="mail-unread" size={14} color="#E34234" />
                         </View>
                         <View style={styles.guidanceStepContent}>
@@ -1557,12 +1836,19 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                       {/* Step 2: Spam / Junk Warning */}
                       <View style={styles.guidanceStepRow}>
-                        <View style={[styles.guidanceStepBadge, { backgroundColor: 'rgba(16, 47, 83, 0.12)' }]}>
+                        <View
+                          style={[
+                            styles.guidanceStepBadge,
+                            { backgroundColor: 'rgba(16, 47, 83, 0.12)' },
+                          ]}
+                        >
                           <Ionicons name="file-tray-full-outline" size={14} color="#102F53" />
                         </View>
                         <View style={styles.guidanceStepContent}>
                           <Text style={[styles.guidanceStepTitle, { color: colors.text }]}>
-                            {isBangla ? '২. স্প্যাম / প্রোমোশনস ফোল্ডার দেখুন' : '2. Check Spam / Promotions Folder'}
+                            {isBangla
+                              ? '২. স্প্যাম / প্রোমোশনস ফোল্ডার দেখুন'
+                              : '2. Check Spam / Promotions Folder'}
                           </Text>
                           <Text style={[styles.guidanceStepBody, { color: colors.textMuted }]}>
                             {isBangla
@@ -1574,7 +1860,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                       {/* Step 3: Link activation */}
                       <View style={styles.guidanceStepRow}>
-                        <View style={[styles.guidanceStepBadge, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}>
+                        <View
+                          style={[
+                            styles.guidanceStepBadge,
+                            { backgroundColor: 'rgba(16, 185, 129, 0.12)' },
+                          ]}
+                        >
                           <Ionicons name="key-outline" size={14} color="#10B981" />
                         </View>
                         <View style={styles.guidanceStepContent}>
@@ -1608,7 +1899,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                       {/* Proceed to Sign In */}
                       <TouchableOpacity
-                        style={[styles.secondaryActionButton, { borderColor: colors.border, backgroundColor: colors.surfaceCard }]}
+                        style={[
+                          styles.secondaryActionButton,
+                          { borderColor: colors.border, backgroundColor: colors.surfaceCard },
+                        ]}
                         onPress={() => {
                           triggerHaptic('selection');
                           setUsername(registeredSuccessEmail || regEmail);
@@ -1622,7 +1916,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         }}
                         activeOpacity={0.85}
                         accessibilityRole="button"
-                        accessibilityLabel={isBangla ? 'পাসওয়ার্ড দিয়ে সাইন ইন করুন' : 'Proceed to Sign In'}
+                        accessibilityLabel={
+                          isBangla ? 'পাসওয়ার্ড দিয়ে সাইন ইন করুন' : 'Proceed to Sign In'
+                        }
                       >
                         <Ionicons name="log-in-outline" size={18} color={colors.primary} />
                         <Text style={[styles.secondaryActionText, { color: colors.primary }]}>
@@ -1641,7 +1937,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         accessibilityRole="button"
                       >
                         <Text style={[styles.keyEntryLinkText, { color: colors.textMuted }]}>
-                          {isBangla ? 'ইমেইল লিংক কপি করেছেন? এখানে পেস্ট করুন' : 'Have a link from email? Enter key here'}
+                          {isBangla
+                            ? 'ইমেইল লিংক কপি করেছেন? এখানে পেস্ট করুন'
+                            : 'Have a link from email? Enter key here'}
                         </Text>
                       </TouchableOpacity>
 
@@ -1653,7 +1951,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                         accessibilityLabel={isBangla ? 'বন্ধ করুন' : 'Close and Browse'}
                       >
                         <Text style={[styles.textDismissText, { color: colors.textMuted }]}>
-                          {isBangla ? 'পরে ভেরিফাই করব, বন্ধ করুন' : 'Verify Later, Continue Browsing'}
+                          {isBangla
+                            ? 'পরে ভেরিফাই করব, বন্ধ করুন'
+                            : 'Verify Later, Continue Browsing'}
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -1670,11 +1970,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           styles.inputWrapper,
                           {
                             backgroundColor: colors.surfaceSubtle,
-                            borderColor: touched.username && !username.trim() ? colors.danger : colors.border,
+                            borderColor:
+                              touched.username && !username.trim() ? colors.danger : colors.border,
                           },
                         ]}
                       >
-                        <Ionicons name="mail-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+                        <Ionicons
+                          name="mail-outline"
+                          size={18}
+                          color={colors.textMuted}
+                          style={styles.inputIcon}
+                        />
                         <TextInput
                           ref={usernameInputRef}
                           style={[styles.input, { color: colors.text }]}
@@ -1705,7 +2011,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           styles.inputWrapper,
                           {
                             backgroundColor: colors.surfaceSubtle,
-                            borderColor: touched.password && !password ? colors.danger : colors.border,
+                            borderColor:
+                              touched.password && !password ? colors.danger : colors.border,
                           },
                         ]}
                       >
@@ -1796,7 +2103,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           <Text style={[styles.submitButtonText, { color: '#FFFFFF' }]}>
                             Sign In with Credentials
                           </Text>
-                          <Ionicons name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 6 }} />
+                          <Ionicons
+                            name="arrow-forward"
+                            size={18}
+                            color="#FFFFFF"
+                            style={{ marginLeft: 6 }}
+                          />
                         </>
                       )}
                     </TouchableOpacity>
@@ -1805,7 +2117,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </View>
 
               <Text style={[styles.disclaimerText, { color: colors.textMuted }]}>
-                Protected by TLS encryption. Connected to {Env.SITE_URL.replace(/^https?:\/\//, '')} official LMS.
+                Protected by TLS encryption. Connected to {Env.SITE_URL.replace(/^https?:\/\//, '')}{' '}
+                official LMS.
               </Text>
             </ScrollView>
           </View>

@@ -8,11 +8,7 @@ import { Env } from '../../config/env';
 import { INITIAL_COURSES_SEED } from '../../data/coursesCatalogSeed';
 
 // Eagerly pre-seed in-memory cache with the verified catalog for 0ms startup
-CacheManager.set(
-  'courses_full_catalog',
-  INITIAL_COURSES_SEED,
-  1800000
-).catch(() => {});
+CacheManager.set('courses_full_catalog', INITIAL_COURSES_SEED, 1800000).catch(() => {});
 
 export interface CourseQueryParams {
   page?: number;
@@ -92,7 +88,9 @@ export class CoursesService {
         const leanCourses = await CompanionService.fetchLeanFeed(100);
         if (Array.isArray(leanCourses) && leanCourses.length > 0) {
           if (Env.DEBUG_API) {
-            console.log(`[CoursesService] Loaded ${leanCourses.length} courses via TS Mobile Bridge feed.`);
+            console.log(
+              `[CoursesService] Loaded ${leanCourses.length} courses via TS Mobile Bridge feed.`
+            );
           }
           const transformed = leanCourses.map(transformCompanionCourse);
           await CacheManager.set(CoursesService.ALL_COURSES_CACHE_KEY, transformed, 1800000);
@@ -101,7 +99,10 @@ export class CoursesService {
         }
       } catch (companionErr) {
         if (Env.DEBUG_API) {
-          console.warn('[CoursesService] Companion feed unavailable, proceeding with standard LearnPress sync:', companionErr);
+          console.warn(
+            '[CoursesService] Companion feed unavailable, proceeding with standard LearnPress sync:',
+            companionErr
+          );
         }
       }
 
@@ -200,7 +201,9 @@ export class CoursesService {
       fetchAllFromNetwork,
       (updatedCourses) => {
         if (Env.DEBUG_API) {
-          console.log(`[CoursesService] Background sync updated ${updatedCourses.length} courses in catalog`);
+          console.log(
+            `[CoursesService] Background sync updated ${updatedCourses.length} courses in catalog`
+          );
         }
         this.notifyCatalogUpdated();
       },
@@ -215,7 +218,10 @@ export class CoursesService {
    * If fetchAll is specified or default catalog is queried without filters, delegates to getAllCourses.
    */
   static async getCourses(params: CourseQueryParams = {}): Promise<Course[]> {
-    if (params.fetchAll || (!params.page && !params.perPage && !params.search && !params.category)) {
+    if (
+      params.fetchAll ||
+      (!params.page && !params.perPage && !params.search && !params.category)
+    ) {
       return this.getAllCourses(params.forceRefresh);
     }
 
@@ -239,16 +245,12 @@ export class CoursesService {
       if (params.order) queryParams.order = params.order;
       if (params.orderby) queryParams.orderby = params.orderby;
 
-      const rawCourses = await HttpClient.get<any[]>(
-        Endpoints.LEARNPRESS.COURSES,
-        queryParams,
-        {
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            Pragma: 'no-cache',
-          },
-        }
-      );
+      const rawCourses = await HttpClient.get<any[]>(Endpoints.LEARNPRESS.COURSES, queryParams, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          Pragma: 'no-cache',
+        },
+      });
 
       if (!Array.isArray(rawCourses)) {
         throw new Error('Expected array of courses from backend');
@@ -270,7 +272,9 @@ export class CoursesService {
       fetchFromNetwork,
       (updatedCourses) => {
         if (Env.DEBUG_API) {
-          console.log(`[CoursesService] Live sync detected ${updatedCourses.length} updated courses`);
+          console.log(
+            `[CoursesService] Live sync detected ${updatedCourses.length} updated courses`
+          );
         }
         this.notifyCatalogUpdated();
       }
@@ -283,7 +287,10 @@ export class CoursesService {
    * Fetch full course details by ID including curriculum sections and lessons.
    * Throws on failure when neither fresh nor stale cache is found.
    */
-  static async getCourseDetail(courseId: string | number, forceRefresh: boolean = false): Promise<Course> {
+  static async getCourseDetail(
+    courseId: string | number,
+    forceRefresh: boolean = false
+  ): Promise<Course> {
     const cacheKey = `course_detail_${courseId}`;
 
     const fetchDetailFromNetwork = async (): Promise<Course> => {
@@ -350,7 +357,8 @@ export class CoursesService {
           }
         );
       } catch (err) {
-        if (Env.DEBUG_API) console.warn('[CoursesService] WP course_category fetch failed, falling back:', err);
+        if (Env.DEBUG_API)
+          console.warn('[CoursesService] WP course_category fetch failed, falling back:', err);
       }
 
       // Fallback: LearnPress v1 endpoint
@@ -370,7 +378,8 @@ export class CoursesService {
             }
           );
         } catch (err) {
-          if (Env.DEBUG_API) console.warn('[CoursesService] LearnPress course_category fetch failed:', err);
+          if (Env.DEBUG_API)
+            console.warn('[CoursesService] LearnPress course_category fetch failed:', err);
         }
       }
 
@@ -386,14 +395,19 @@ export class CoursesService {
       const getCategoryBanglaName = (slug: string, name: string): string => {
         const s = (slug || '').toLowerCase();
         const n = (name || '').toLowerCase();
-        if (s.includes('generative-ai') || s.includes('4ir') || n.includes('ai')) return 'জেনারেটিভ এআই';
+        if (s.includes('generative-ai') || s.includes('4ir') || n.includes('ai'))
+          return 'জেনারেটিভ এআই';
         if (s.includes('excel') || n.includes('excel')) return 'মাইক্রোসফট এক্সেল';
-        if (s.includes('finance') || s.includes('accounting') || n.includes('finance')) return 'ফাইন্যান্স ও অ্যাকাউন্টিং';
-        if (s.includes('marketing') || s.includes('sales') || n.includes('marketing')) return 'সেলস ও মার্কেটিং';
-        if (s.includes('human-resource') || s.includes('hr') || n.includes('human')) return 'হিউম্যান রিসোর্স (HR)';
+        if (s.includes('finance') || s.includes('accounting') || n.includes('finance'))
+          return 'ফাইন্যান্স ও অ্যাকাউন্টিং';
+        if (s.includes('marketing') || s.includes('sales') || n.includes('marketing'))
+          return 'সেলস ও মার্কেটিং';
+        if (s.includes('human-resource') || s.includes('hr') || n.includes('human'))
+          return 'হিউম্যান রিসোর্স (HR)';
         if (s.includes('supply-chain') || n.includes('supply')) return 'সাপ্লাই চেইন ম্যানেজমেন্ট';
         if (s.includes('leadership') || n.includes('leadership')) return 'লিডারশিপ ও ম্যানেজমেন্ট';
-        if (s.includes('personal-development') || n.includes('personal')) return 'পার্সোনাল ডেভেলপমেন্ট';
+        if (s.includes('personal-development') || n.includes('personal'))
+          return 'পার্সোনাল ডেভেলপমেন্ট';
         if (s.includes('data') || n.includes('data')) return 'ডেটা সায়েন্স ও অ্যানালিটিক্স';
         if (s.includes('job-seeker') || n.includes('job')) return 'চাকরিপ্রার্থীদের দক্ষতা';
         if (s.includes('research') || n.includes('research')) return 'রিসার্চ ও অ্যাকাডেমিয়া';
@@ -447,17 +461,19 @@ export class CoursesService {
       900000
     );
 
-    return cats || [
-      {
-        id: 'all',
-        name: 'All Courses',
-        banglaName: 'সব কোর্স',
-        icon: 'grid',
-        count: 0,
-        color: '#059669',
-        slug: 'all',
-      },
-    ];
+    return (
+      cats || [
+        {
+          id: 'all',
+          name: 'All Courses',
+          banglaName: 'সব কোর্স',
+          icon: 'grid',
+          count: 0,
+          color: '#059669',
+          slug: 'all',
+        },
+      ]
+    );
   }
 
   /**
@@ -490,7 +506,10 @@ export class CoursesService {
         return {
           id: String(course.id),
           title: course.title,
-          description: course.subtitle || course.description || 'Interactive live masterclass hosted by Thriving Skills.',
+          description:
+            course.subtitle ||
+            course.description ||
+            'Interactive live masterclass hosted by Thriving Skills.',
           speaker: course.instructor,
           date: 'Upcoming Live Session',
           time: '7:30 PM - 9:30 PM (GMT+6)',
@@ -529,9 +548,7 @@ export class CoursesService {
   /**
    * Fetch live WooCommerce product pricing and bundle sub-course IDs strictly by ID
    */
-  static async getWooCommerceProductPricing(
-    productId: string | number
-  ): Promise<{
+  static async getWooCommerceProductPricing(productId: string | number): Promise<{
     id: string;
     priceBdt?: number;
     originalPriceBdt?: number;
@@ -560,8 +577,8 @@ export class CoursesService {
       const rawBundled = Array.isArray(product.bundled_items)
         ? product.bundled_items
         : Array.isArray(product.extensions?.bundles?.bundled_items)
-        ? product.extensions.bundles.bundled_items
-        : [];
+          ? product.extensions.bundles.bundled_items
+          : [];
 
       const bundledCourses: { id: string; title: string; priceBdt?: number }[] = [];
       const bundledCourseIds: string[] = [];
@@ -602,7 +619,9 @@ export class CoursesService {
   /**
    * Enroll the authenticated user into a course
    */
-  static async enrollCourse(courseId: string | number): Promise<{ success: boolean; message?: string }> {
+  static async enrollCourse(
+    courseId: string | number
+  ): Promise<{ success: boolean; message?: string }> {
     return HttpClient.post(Endpoints.LEARNPRESS.COURSE_ENROLL, { id: courseId });
   }
 

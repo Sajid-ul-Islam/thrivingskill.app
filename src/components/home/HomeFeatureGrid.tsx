@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ImageBackground,
-  Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, ImageBackground, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
@@ -22,10 +16,7 @@ interface HomeFeatureGridProps {
   onSelectFeature: (feature: HomeFeatureCardItem) => void;
 }
 
-export const HomeFeatureGrid: React.FC<HomeFeatureGridProps> = ({
-  features,
-  onSelectFeature,
-}) => {
+export const HomeFeatureGrid: React.FC<HomeFeatureGridProps> = ({ features, onSelectFeature }) => {
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
 
@@ -79,11 +70,7 @@ export const HomeFeatureGrid: React.FC<HomeFeatureGridProps> = ({
                 {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
               >
                 <LinearGradient
-                  colors={[
-                    'rgba(16, 47, 83, 0.35)',
-                    'rgba(10, 28, 51, 0.85)',
-                    '#0A1C33',
-                  ]}
+                  colors={['rgba(16, 47, 83, 0.35)', 'rgba(10, 28, 51, 0.85)', '#0A1C33']}
                   style={styles.gradientOverlay}
                 >
                   <View style={styles.cardHeader}>

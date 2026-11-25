@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
@@ -145,13 +139,13 @@ export const HomeQuickNavPills: React.FC<HomeQuickNavPillsProps> = ({
             </Text>
 
             {item.badge && (
-              <View
-                style={[
-                  styles.badge,
-                  { backgroundColor: item.badgeColor || colors.primary },
-                ]}
-              >
-                <Text style={[styles.badgeText, { color: item.badgeColor ? '#FFFFFF' : colors.onPrimary }]}>
+              <View style={[styles.badge, { backgroundColor: item.badgeColor || colors.primary }]}>
+                <Text
+                  style={[
+                    styles.badgeText,
+                    { color: item.badgeColor ? '#FFFFFF' : colors.onPrimary },
+                  ]}
+                >
                   {item.badge}
                 </Text>
               </View>

@@ -1,12 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  Image,
-  Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, Platform } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { PartnerLogoItem } from '../../services/api/brandingService';
@@ -70,7 +63,12 @@ export const PartnerLogoMarquee: React.FC<PartnerLogoMarqueeProps> = ({ logos })
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
-        <View style={[styles.badgePill, { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#EFF6FF' }]}>
+        <View
+          style={[
+            styles.badgePill,
+            { backgroundColor: isDark ? 'rgba(255, 255, 255, 0.12)' : '#EFF6FF' },
+          ]}
+        >
           <Text style={[styles.badgeText, { color: isDark ? '#FFFFFF' : '#102F53' }]}>
             {isBangla ? 'কর্পোরেট পার্টনারশিপ' : 'ENTERPRISE TRUST'}
           </Text>

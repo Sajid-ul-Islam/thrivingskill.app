@@ -13,10 +13,7 @@ interface OfflineBannerProps {
   onOpenOfflineContent?: () => void;
 }
 
-export const OfflineBanner: React.FC<OfflineBannerProps> = ({
-  onRetry,
-  onOpenOfflineContent,
-}) => {
+export const OfflineBanner: React.FC<OfflineBannerProps> = ({ onRetry, onOpenOfflineContent }) => {
   const { isDark } = useTheme();
   const { isBangla } = useLanguage();
   const { isOffline, isChecking, retryConnection, dismissOfflineBanner } = useNetwork();
@@ -104,7 +101,9 @@ export const OfflineBanner: React.FC<OfflineBannerProps> = ({
           ) : (
             <>
               <Ionicons name="refresh" size={14} color={actionTextColor} />
-              <Text style={[typography.h6, { color: actionTextColor, fontSize: 13, fontWeight: '700' }]}>
+              <Text
+                style={[typography.h6, { color: actionTextColor, fontSize: 13, fontWeight: '700' }]}
+              >
                 {isBangla ? 'রিট্রাই' : 'Retry'}
               </Text>
             </>

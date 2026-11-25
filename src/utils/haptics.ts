@@ -1,6 +1,7 @@
 import { Platform, Vibration } from 'react-native';
 
-export type HapticKind = 'selection' | 'light' | 'medium' | 'success' | 'warning' | 'error' | 'none';
+export type HapticKind =
+  'selection' | 'light' | 'medium' | 'success' | 'warning' | 'error' | 'none';
 
 /**
  * Triggers lightweight, non-intrusive tactile feedback across iOS & Android.

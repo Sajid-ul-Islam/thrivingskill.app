@@ -44,13 +44,16 @@ export class OfflineManager {
       courseTitle: courseTitle || 'Thriving Skills Professional Course',
       title: lesson.title,
       duration: lesson.duration || '10 min',
-      summary: lesson.summary || 'Downloaded offline lesson content for flexible learning without internet.',
+      summary:
+        lesson.summary ||
+        'Downloaded offline lesson content for flexible learning without internet.',
       savedAt: new Date().toISOString(),
-      content: content || lesson.summary || 'Complete study guide and key insights for this lecture.',
+      content:
+        content || lesson.summary || 'Complete study guide and key insights for this lecture.',
       takeaways: takeaways || [
         'Core architectural concepts and practical application.',
         'Production readiness and industry best practices.',
-        'Step-by-step implementation notes.'
+        'Step-by-step implementation notes.',
       ],
       resources: resources || [],
       quality: quality || '720p HD',
@@ -129,9 +132,14 @@ export class OfflineManager {
   /**
    * Get downloaded lessons grouped by course
    */
-  static async getDownloadedCoursesGrouped(): Promise<{ courseId: string; courseTitle: string; lessons: OfflineLessonData[] }[]> {
+  static async getDownloadedCoursesGrouped(): Promise<
+    { courseId: string; courseTitle: string; lessons: OfflineLessonData[] }[]
+  > {
     const lessons = await this.getAllDownloadedLessons();
-    const map = new Map<string, { courseId: string; courseTitle: string; lessons: OfflineLessonData[] }>();
+    const map = new Map<
+      string,
+      { courseId: string; courseTitle: string; lessons: OfflineLessonData[] }
+    >();
 
     for (const l of lessons) {
       const existing = map.get(l.courseId);

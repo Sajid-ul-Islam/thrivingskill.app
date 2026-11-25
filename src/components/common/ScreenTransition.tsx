@@ -8,12 +8,7 @@ import {
   AccessibilityInfo,
 } from 'react-native';
 
-export type ScreenTransitionDirection =
-  | 'forward'
-  | 'backward'
-  | 'horizontal'
-  | 'vertical'
-  | 'fade';
+export type ScreenTransitionDirection = 'forward' | 'backward' | 'horizontal' | 'vertical' | 'fade';
 
 export interface ScreenTransitionProps {
   children: React.ReactNode;
@@ -55,7 +50,8 @@ export const ScreenTransition: React.FC<ScreenTransitionProps> = ({
     };
   }, []);
 
-  const isHorizontal = direction === 'horizontal' || direction === 'forward' || direction === 'backward';
+  const isHorizontal =
+    direction === 'horizontal' || direction === 'forward' || direction === 'backward';
   const isBackward = direction === 'backward';
   const isVertical = direction === 'vertical';
   const isFade = direction === 'fade';
@@ -68,20 +64,14 @@ export const ScreenTransition: React.FC<ScreenTransitionProps> = ({
   const initialOffset = reduceMotion
     ? 0
     : isBackward
-    ? -24
-    : isHorizontal
-    ? 30
-    : isVertical
-    ? 22
-    : 0;
+      ? -24
+      : isHorizontal
+        ? 30
+        : isVertical
+          ? 22
+          : 0;
 
-  const initialScale = reduceMotion
-    ? 1
-    : isFade
-    ? 0.992
-    : isBackward
-    ? 0.99
-    : 0.985;
+  const initialScale = reduceMotion ? 1 : isFade ? 0.992 : isBackward ? 0.99 : 0.985;
 
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const translateAnim = useRef(new Animated.Value(initialOffset)).current;
@@ -130,15 +120,25 @@ export const ScreenTransition: React.FC<ScreenTransitionProps> = ({
     }
 
     Animated.parallel(animations).start();
-  }, [direction, duration, initialOffset, initialScale, isFade, opacityAnim, scaleAnim, translateAnim, reduceMotion]);
+  }, [
+    direction,
+    duration,
+    initialOffset,
+    initialScale,
+    isFade,
+    opacityAnim,
+    scaleAnim,
+    translateAnim,
+    reduceMotion,
+  ]);
 
   const transform = reduceMotion
     ? []
     : isFade
-    ? [{ scale: scaleAnim }]
-    : isVertical
-    ? [{ translateY: translateAnim }, { scale: scaleAnim }]
-    : [{ translateX: translateAnim }, { scale: scaleAnim }];
+      ? [{ scale: scaleAnim }]
+      : isVertical
+        ? [{ translateY: translateAnim }, { scale: scaleAnim }]
+        : [{ translateX: translateAnim }, { scale: scaleAnim }];
 
   return (
     <Animated.View

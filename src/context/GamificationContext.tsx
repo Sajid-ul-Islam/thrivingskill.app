@@ -259,7 +259,8 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         newStreak = 1;
       }
 
-      const currentDayMins = (prevState.lastActiveDate === today ? prevState.dailyMinutesSpent : 0) + minutes;
+      const currentDayMins =
+        (prevState.lastActiveDate === today ? prevState.dailyMinutesSpent : 0) + minutes;
       const newHistory = {
         ...(prevState.dailyHistory || {}),
         [today]: currentDayMins,
@@ -331,9 +332,7 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
 
       const updatedBadges = prevState.badges.map((b) =>
-        b.id === badgeId
-          ? { ...b, isUnlocked: true, unlockedAt: today }
-          : b
+        b.id === badgeId ? { ...b, isUnlocked: true, unlockedAt: today } : b
       );
 
       const updated: GamificationState = {

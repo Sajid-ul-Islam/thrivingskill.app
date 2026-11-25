@@ -1,12 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
@@ -88,7 +81,7 @@ export const SpacedRepetitionModal: React.FC<SpacedRepetitionModalProps> = ({
     triggerHaptic('selection');
     try {
       await SpacedRepetitionService.reviewCard(currentCard.id, rating);
-    } catch { }
+    } catch {}
 
     const nextCount = reviewedCount + 1;
     setReviewedCount(nextCount);
@@ -128,16 +121,30 @@ export const SpacedRepetitionModal: React.FC<SpacedRepetitionModalProps> = ({
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
             <View style={{ flex: 1, minWidth: 0, marginRight: 8 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Ionicons name="layers-outline" size={18} color={colors.primary} style={{ marginRight: 6 }} />
-                <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>Spaced Repetition Recall</Text>
+                <Ionicons
+                  name="layers-outline"
+                  size={18}
+                  color={colors.primary}
+                  style={{ marginRight: 6 }}
+                />
+                <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
+                  Spaced Repetition Recall
+                </Text>
               </View>
-              <Text style={[styles.headerSubtitle, { color: colors.textMuted }]} numberOfLines={1} ellipsizeMode="tail">
+              <Text
+                style={[styles.headerSubtitle, { color: colors.textMuted }]}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
                 {course ? course.title : 'Active Recall & Memory Retention'}
               </Text>
             </View>
             <TouchableOpacity
               onPress={onClose}
-              style={[styles.closeButton, { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' }]}
+              style={[
+                styles.closeButton,
+                { backgroundColor: isDark ? colors.surfaceSubtle : '#F1F5F9' },
+              ]}
               accessibilityRole="button"
               accessibilityLabel="Close Flashcards"
             >
@@ -155,12 +162,20 @@ export const SpacedRepetitionModal: React.FC<SpacedRepetitionModalProps> = ({
             </View>
           ) : isSessionComplete ? (
             <View style={styles.centerContainer}>
-              <View style={[styles.trophyCircle, { backgroundColor: isDark ? colors.surfaceSubtle : '#FEF3C7' }]}>
+              <View
+                style={[
+                  styles.trophyCircle,
+                  { backgroundColor: isDark ? colors.surfaceSubtle : '#FEF3C7' },
+                ]}
+              >
                 <Ionicons name="trophy" size={48} color={colors.brandGold} />
               </View>
-              <Text style={[styles.completeTitle, { color: colors.text }]}>Session Complete! 🎉</Text>
+              <Text style={[styles.completeTitle, { color: colors.text }]}>
+                Session Complete! 🎉
+              </Text>
               <Text style={[styles.completeDesc, { color: colors.textMuted }]}>
-                You reviewed {reviewedCount} flashcards. SM-2 has dynamically scheduled their next review intervals for optimal memory retention.
+                You reviewed {reviewedCount} flashcards. SM-2 has dynamically scheduled their next
+                review intervals for optimal memory retention.
               </Text>
               <TouchableOpacity
                 style={[styles.finishBtn, { backgroundColor: colors.primary }]}
@@ -168,13 +183,17 @@ export const SpacedRepetitionModal: React.FC<SpacedRepetitionModalProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Finish Flashcard Session"
               >
-                <Text style={[styles.finishBtnText, { color: colors.onPrimary }]}>Done & Save Progress</Text>
+                <Text style={[styles.finishBtnText, { color: colors.onPrimary }]}>
+                  Done & Save Progress
+                </Text>
               </TouchableOpacity>
             </View>
           ) : cards.length === 0 ? (
             <View style={styles.centerContainer}>
               <Ionicons name="file-tray-outline" size={48} color={colors.textMuted} />
-              <Text style={[styles.completeTitle, { color: colors.text, marginTop: 12 }]}>No Cards Due Right Now</Text>
+              <Text style={[styles.completeTitle, { color: colors.text, marginTop: 12 }]}>
+                No Cards Due Right Now
+              </Text>
               <Text style={[styles.completeDesc, { color: colors.textMuted }]}>
                 Great job! You are caught up with all your spaced repetition reviews.
               </Text>
@@ -191,7 +210,12 @@ export const SpacedRepetitionModal: React.FC<SpacedRepetitionModalProps> = ({
                 </Text>
               </View>
               <View style={[styles.progressBarTrack, { backgroundColor: colors.surfaceSubtle }]}>
-                <View style={[styles.progressBarFill, { width: `${progressPct}%`, backgroundColor: colors.primary }]} />
+                <View
+                  style={[
+                    styles.progressBarFill,
+                    { width: `${progressPct}%`, backgroundColor: colors.primary },
+                  ]}
+                />
               </View>
 
               {/* Flashcard Box */}
@@ -209,7 +233,12 @@ export const SpacedRepetitionModal: React.FC<SpacedRepetitionModalProps> = ({
                 accessibilityLabel="Flip flashcard"
               >
                 <View style={styles.cardHeaderRow}>
-                  <View style={[styles.sideBadge, { backgroundColor: isFlipped ? colors.primary : colors.surfaceSubtle }]}>
+                  <View
+                    style={[
+                      styles.sideBadge,
+                      { backgroundColor: isFlipped ? colors.primary : colors.surfaceSubtle },
+                    ]}
+                  >
                     <Text
                       style={[
                         styles.sideBadgeText,
@@ -241,7 +270,10 @@ export const SpacedRepetitionModal: React.FC<SpacedRepetitionModalProps> = ({
                   </Text>
                   <View style={styles.ratingRow}>
                     <TouchableOpacity
-                      style={[styles.rateBtn, { backgroundColor: '#FEE2E2', borderColor: '#EF4444' }]}
+                      style={[
+                        styles.rateBtn,
+                        { backgroundColor: '#FEE2E2', borderColor: '#EF4444' },
+                      ]}
                       onPress={() => handleRate('again')}
                       accessibilityRole="button"
                       accessibilityLabel="Rate Again, review in 1 day"
@@ -251,7 +283,10 @@ export const SpacedRepetitionModal: React.FC<SpacedRepetitionModalProps> = ({
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                      style={[styles.rateBtn, { backgroundColor: '#FEF3C7', borderColor: '#F59E0B' }]}
+                      style={[
+                        styles.rateBtn,
+                        { backgroundColor: '#FEF3C7', borderColor: '#F59E0B' },
+                      ]}
                       onPress={() => handleRate('hard')}
                       accessibilityRole="button"
                       accessibilityLabel="Rate Hard, review in 3 days"
@@ -261,7 +296,10 @@ export const SpacedRepetitionModal: React.FC<SpacedRepetitionModalProps> = ({
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                      style={[styles.rateBtn, { backgroundColor: '#D1FAE5', borderColor: '#10B981' }]}
+                      style={[
+                        styles.rateBtn,
+                        { backgroundColor: '#D1FAE5', borderColor: '#10B981' },
+                      ]}
                       onPress={() => handleRate('good')}
                       accessibilityRole="button"
                       accessibilityLabel="Rate Good, normal interval"
@@ -271,7 +309,10 @@ export const SpacedRepetitionModal: React.FC<SpacedRepetitionModalProps> = ({
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                      style={[styles.rateBtn, { backgroundColor: '#DBEAFE', borderColor: '#3B82F6' }]}
+                      style={[
+                        styles.rateBtn,
+                        { backgroundColor: '#DBEAFE', borderColor: '#3B82F6' },
+                      ]}
                       onPress={() => handleRate('easy')}
                       accessibilityRole="button"
                       accessibilityLabel="Rate Easy, longer interval"
@@ -288,7 +329,9 @@ export const SpacedRepetitionModal: React.FC<SpacedRepetitionModalProps> = ({
                   accessibilityRole="button"
                   accessibilityLabel="Reveal answer"
                 >
-                  <Text style={[styles.revealBtnText, { color: colors.onPrimary }]}>Show Answer</Text>
+                  <Text style={[styles.revealBtnText, { color: colors.onPrimary }]}>
+                    Show Answer
+                  </Text>
                 </TouchableOpacity>
               )}
             </View>

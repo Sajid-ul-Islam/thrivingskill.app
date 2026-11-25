@@ -13,7 +13,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
-import { PushNotificationService, InAppNotification } from '../../services/notifications/pushNotificationService';
+import {
+  PushNotificationService,
+  InAppNotification,
+} from '../../services/notifications/pushNotificationService';
 import { triggerHaptic } from '../../utils/haptics';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
 import { getSafeImageSource } from '../../utils/imageUtils';
@@ -128,15 +131,35 @@ export const IosActionNotificationPanel: React.FC<IosActionNotificationPanelProp
   const getTypeBadge = () => {
     switch (type) {
       case 'offer':
-        return { label: '🔥 SPECIAL OFFER', bg: '#FEF2F2', text: '#DC2626', icon: 'flame' as const };
+        return {
+          label: '🔥 SPECIAL OFFER',
+          bg: '#FEF2F2',
+          text: '#DC2626',
+          icon: 'flame' as const,
+        };
       case 'course':
         return { label: '🎓 NEW COURSE', bg: '#EEF2FF', text: '#4F46E5', icon: 'school' as const };
       case 'recommendation':
-        return { label: '✨ RECOMMENDED', bg: '#FFFBEB', text: '#D97706', icon: 'sparkles' as const };
+        return {
+          label: '✨ RECOMMENDED',
+          bg: '#FFFBEB',
+          text: '#D97706',
+          icon: 'sparkles' as const,
+        };
       case 'update':
-        return { label: '📢 PLATFORM UPDATE', bg: '#F0FDF4', text: '#16A34A', icon: 'megaphone' as const };
+        return {
+          label: '📢 PLATFORM UPDATE',
+          bg: '#F0FDF4',
+          text: '#16A34A',
+          icon: 'megaphone' as const,
+        };
       default:
-        return { label: '🔔 NOTIFICATION', bg: '#F1F5F9', text: '#475569', icon: 'notifications' as const };
+        return {
+          label: '🔔 NOTIFICATION',
+          bg: '#F1F5F9',
+          text: '#475569',
+          icon: 'notifications' as const,
+        };
     }
   };
 
@@ -264,10 +287,10 @@ export const IosActionNotificationPanel: React.FC<IosActionNotificationPanelProp
               {type === 'offer'
                 ? 'অফারটি দেখুন'
                 : type === 'recommendation'
-                ? 'কোর্স শুরু করুন'
-                : type === 'update'
-                ? 'ইনসাইট পড়ুন'
-                : 'বিস্তারিত দেখুন'}
+                  ? 'কোর্স শুরু করুন'
+                  : type === 'update'
+                    ? 'ইনসাইট পড়ুন'
+                    : 'বিস্তারিত দেখুন'}
             </Text>
           </TouchableOpacity>
 
@@ -278,7 +301,12 @@ export const IosActionNotificationPanel: React.FC<IosActionNotificationPanelProp
               accessibilityRole="button"
               accessibilityLabel="Bookmark course"
             >
-              <Ionicons name="bookmark-outline" size={15} color={colors.text} style={{ marginRight: 4 }} />
+              <Ionicons
+                name="bookmark-outline"
+                size={15}
+                color={colors.text}
+                style={{ marginRight: 4 }}
+              />
               <Text style={[styles.secondaryActionText, { color: colors.text }]}>সেভ করুন</Text>
             </TouchableOpacity>
           ) : null}

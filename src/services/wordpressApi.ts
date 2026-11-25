@@ -49,7 +49,10 @@ export async function fetchWpCourses(params?: {
 /**
  * Fetch course detail by ID using CoursesService
  */
-export async function fetchWpCourseDetail(courseId: string | number, forceRefresh: boolean = false): Promise<Course> {
+export async function fetchWpCourseDetail(
+  courseId: string | number,
+  forceRefresh: boolean = false
+): Promise<Course> {
   return CoursesService.getCourseDetail(courseId, forceRefresh);
 }
 
@@ -63,14 +66,19 @@ export async function fetchWpCategories(params?: { forceRefresh?: boolean }): Pr
 /**
  * Fetch authentic live workshops and masterclasses using CoursesService
  */
-export async function fetchWpLiveWorkshops(params?: { forceRefresh?: boolean }): Promise<Workshop[]> {
+export async function fetchWpLiveWorkshops(params?: {
+  forceRefresh?: boolean;
+}): Promise<Workshop[]> {
   return CoursesService.getLiveWorkshops(params?.forceRefresh);
 }
 
 /**
  * Fetch blog posts using PostsService
  */
-export async function fetchWpPosts(params?: { page?: number; perPage?: number }): Promise<WpPost[]> {
+export async function fetchWpPosts(params?: {
+  page?: number;
+  perPage?: number;
+}): Promise<WpPost[]> {
   return PostsService.getPosts(params);
 }
 
@@ -107,20 +115,30 @@ export async function validateWpToken(token: string): Promise<boolean> {
 /**
  * Optional helper: Send SMS OTP to phone number
  */
-export async function sendWpPhoneOtp(phone: string): Promise<{ success: boolean; message: string; testOtp?: string }> {
+export async function sendWpPhoneOtp(
+  phone: string
+): Promise<{ success: boolean; message: string; testOtp?: string }> {
   return AuthService.sendPhoneOtp(phone);
 }
 
 /**
  * Optional helper: Verify SMS OTP and login/register user
  */
-export async function verifyWpPhoneOtp(phone: string, otp: string, fullName?: string): Promise<WpUser> {
+export async function verifyWpPhoneOtp(
+  phone: string,
+  otp: string,
+  fullName?: string
+): Promise<WpUser> {
   return AuthService.verifyPhoneOtp(phone, otp, fullName);
 }
 
 /**
  * Confirm password reset via WordPress action=resetpass
  */
-export async function confirmWpPasswordReset(login: string, key: string, newPassword: string): Promise<boolean> {
+export async function confirmWpPasswordReset(
+  login: string,
+  key: string,
+  newPassword: string
+): Promise<boolean> {
   return AuthService.confirmPasswordReset(login, key, newPassword);
 }

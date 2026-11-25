@@ -98,9 +98,7 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
         if (stored && isMounted) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed)) {
-            const valid = parsed
-              .map(sanitizeQnAItem)
-              .filter((q): q is QnAItem => q !== null);
+            const valid = parsed.map(sanitizeQnAItem).filter((q): q is QnAItem => q !== null);
             setQuestions(valid);
             // Re-persist sanitized list if mock items were stripped
             if (valid.length !== parsed.length) {
@@ -145,7 +143,9 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
     if (!newQuestionText.trim()) {
       triggerHaptic('warning');
       showToast({
-        message: isBangla ? 'অনুগ্রহ করে প্রশ্ন লিখুন।' : 'Please write your question before submitting.',
+        message: isBangla
+          ? 'অনুগ্রহ করে প্রশ্ন লিখুন।'
+          : 'Please write your question before submitting.',
         type: 'error',
       });
       return;
@@ -184,7 +184,9 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
       {/* Top Action Header */}
       <View style={styles.headerRow}>
         <View style={styles.headerTitleCol}>
-          <Text style={[styles.heading, { color: colors.text }]} numberOfLines={1}>Discussion & Q&A</Text>
+          <Text style={[styles.heading, { color: colors.text }]} numberOfLines={1}>
+            Discussion & Q&A
+          </Text>
           <Text style={[styles.subheading, { color: colors.textMuted }]} numberOfLines={1}>
             {questions.length} questions answered by instructors
           </Text>
@@ -197,7 +199,12 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
           accessibilityRole="button"
           accessibilityLabel="Ask a question"
         >
-          <Ionicons name="chatbubble-ellipses" size={16} color={colors.onAccent} style={{ marginRight: 6 }} />
+          <Ionicons
+            name="chatbubble-ellipses"
+            size={16}
+            color={colors.onAccent}
+            style={{ marginRight: 6 }}
+          />
           <Text style={[styles.askBtnText, { color: colors.onAccent }]}>Ask Question</Text>
         </TouchableOpacity>
       </View>
@@ -231,7 +238,12 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
             accessibilityRole="button"
             accessibilityLabel={isBangla ? 'প্রশ্ন করুন' : 'Ask Question'}
           >
-            <Ionicons name="create-outline" size={16} color={colors.onAccent} style={{ marginRight: 6 }} />
+            <Ionicons
+              name="create-outline"
+              size={16}
+              color={colors.onAccent}
+              style={{ marginRight: 6 }}
+            />
             <Text style={[styles.askBtnText, { color: colors.onAccent }]}>
               {isBangla ? 'প্রথম প্রশ্নটি করুন' : 'Ask the First Question'}
             </Text>
@@ -263,104 +275,108 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
                     style={styles.authorAvatar}
                     {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
                   />
-              <View style={styles.authorMeta}>
-                <Text style={[styles.authorName, { color: colors.text }]}>{item.authorName}</Text>
-                <Text style={[styles.questionDate, { color: colors.textMuted }]}>
-                  {item.date} {item.lessonReference ? `• ${item.lessonReference}` : ''}
-                </Text>
-              </View>
-              {/* Upvote Button */}
-              <TouchableOpacity
-                style={[
-                  styles.upvoteBtn,
-                  {
-                    backgroundColor: item.hasUpvoted
-                      ? isDark
-                        ? 'rgba(59, 130, 246, 0.20)'
-                        : '#EFF6FF'
-                      : colors.surfaceSubtle,
-                    borderColor: item.hasUpvoted ? colors.primary : 'transparent',
-                  },
-                ]}
-                onPress={() => handleToggleUpvote(item.id)}
-                accessibilityRole="button"
-                accessibilityLabel={`Upvote question, current count: ${item.upvotes}`}
-              >
-                <Ionicons
-                  name={item.hasUpvoted ? 'arrow-up-circle' : 'arrow-up-circle-outline'}
-                  size={16}
-                  color={item.hasUpvoted ? '#3B82F6' : colors.textMuted}
-                />
-                <Text
-                  style={[
-                    styles.upvoteText,
-                    { color: item.hasUpvoted ? '#3B82F6' : colors.textMuted },
-                  ]}
-                >
-                  {item.upvotes}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Question Text */}
-            <Text style={[styles.questionBody, { color: colors.text }]}>{item.question}</Text>
-
-            {/* Instructor Answer */}
-            {item.answer ? (
-              <View
-                style={[
-                  styles.answerContainer,
-                  {
-                    backgroundColor: colors.surfaceSubtle,
-                    borderColor: colors.border,
-                  },
-                ]}
-              >
-                <View style={styles.instructorHeaderRow}>
-                  <Image
-                    source={getSafeImageSource(
-                      item.answer.instructorAvatar &&
-                        !item.answer.instructorAvatar.includes('unsplash.com')
-                        ? item.answer.instructorAvatar
-                        : 'https://secure.gravatar.com/avatar/?d=mp&s=300'
-                    )}
-                    style={styles.instructorAvatar}
-                    {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
-                  />
-                  <View style={{ flex: 1 }}>
-                    <View style={styles.verifiedRow}>
-                      <Text style={[styles.instructorName, { color: colors.text }]}>
-                        {item.answer.instructorName}
-                      </Text>
-                      <View style={styles.verifiedBadge}>
-                        <Ionicons name="checkmark-circle" size={13} color="#10B981" />
-                        <Text style={styles.verifiedBadgeText}>Instructor</Text>
-                      </View>
-                    </View>
-                    <Text style={[styles.answerDate, { color: colors.textMuted }]}>
-                      {item.answer.date}
+                  <View style={styles.authorMeta}>
+                    <Text style={[styles.authorName, { color: colors.text }]}>
+                      {item.authorName}
+                    </Text>
+                    <Text style={[styles.questionDate, { color: colors.textMuted }]}>
+                      {item.date} {item.lessonReference ? `• ${item.lessonReference}` : ''}
                     </Text>
                   </View>
+                  {/* Upvote Button */}
+                  <TouchableOpacity
+                    style={[
+                      styles.upvoteBtn,
+                      {
+                        backgroundColor: item.hasUpvoted
+                          ? isDark
+                            ? 'rgba(59, 130, 246, 0.20)'
+                            : '#EFF6FF'
+                          : colors.surfaceSubtle,
+                        borderColor: item.hasUpvoted ? colors.primary : 'transparent',
+                      },
+                    ]}
+                    onPress={() => handleToggleUpvote(item.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Upvote question, current count: ${item.upvotes}`}
+                  >
+                    <Ionicons
+                      name={item.hasUpvoted ? 'arrow-up-circle' : 'arrow-up-circle-outline'}
+                      size={16}
+                      color={item.hasUpvoted ? '#3B82F6' : colors.textMuted}
+                    />
+                    <Text
+                      style={[
+                        styles.upvoteText,
+                        { color: item.hasUpvoted ? '#3B82F6' : colors.textMuted },
+                      ]}
+                    >
+                      {item.upvotes}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
-                <Text style={[styles.answerText, { color: colors.text }]}>
-                  {item.answer.answerText}
-                </Text>
+
+                {/* Question Text */}
+                <Text style={[styles.questionBody, { color: colors.text }]}>{item.question}</Text>
+
+                {/* Instructor Answer */}
+                {item.answer ? (
+                  <View
+                    style={[
+                      styles.answerContainer,
+                      {
+                        backgroundColor: colors.surfaceSubtle,
+                        borderColor: colors.border,
+                      },
+                    ]}
+                  >
+                    <View style={styles.instructorHeaderRow}>
+                      <Image
+                        source={getSafeImageSource(
+                          item.answer.instructorAvatar &&
+                            !item.answer.instructorAvatar.includes('unsplash.com')
+                            ? item.answer.instructorAvatar
+                            : 'https://secure.gravatar.com/avatar/?d=mp&s=300'
+                        )}
+                        style={styles.instructorAvatar}
+                        {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
+                      />
+                      <View style={{ flex: 1 }}>
+                        <View style={styles.verifiedRow}>
+                          <Text style={[styles.instructorName, { color: colors.text }]}>
+                            {item.answer.instructorName}
+                          </Text>
+                          <View style={styles.verifiedBadge}>
+                            <Ionicons name="checkmark-circle" size={13} color="#10B981" />
+                            <Text style={styles.verifiedBadgeText}>Instructor</Text>
+                          </View>
+                        </View>
+                        <Text style={[styles.answerDate, { color: colors.textMuted }]}>
+                          {item.answer.date}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={[styles.answerText, { color: colors.text }]}>
+                      {item.answer.answerText}
+                    </Text>
+                  </View>
+                ) : (
+                  <View
+                    style={[styles.pendingAnswerBox, { backgroundColor: colors.surfaceSubtle }]}
+                  >
+                    <Ionicons name="time-outline" size={14} color={colors.textMuted} />
+                    <Text style={[styles.pendingText, { color: colors.textMuted }]}>
+                      {isBangla
+                        ? 'মেন্টরের উত্তর অপেক্ষমাণ। উত্তর দেওয়া হলে আপনি নোটিফিকেশন পাবেন।'
+                        : 'Instructor review pending. You will receive a notification when answered.'}
+                    </Text>
+                  </View>
+                )}
               </View>
-            ) : (
-              <View style={[styles.pendingAnswerBox, { backgroundColor: colors.surfaceSubtle }]}>
-                <Ionicons name="time-outline" size={14} color={colors.textMuted} />
-                <Text style={[styles.pendingText, { color: colors.textMuted }]}>
-                  {isBangla
-                    ? 'মেন্টরের উত্তর অপেক্ষমাণ। উত্তর দেওয়া হলে আপনি নোটিফিকেশন পাবেন।'
-                    : 'Instructor review pending. You will receive a notification when answered.'}
-                </Text>
-              </View>
-            )}
-          </View>
-        );
-      })}
-    </View>
-  )}
+            );
+          })}
+        </View>
+      )}
 
       {/* Ask Question Modal */}
       <Modal
@@ -391,7 +407,9 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
               contentContainerStyle={{ paddingBottom: 16 }}
             >
               <View style={styles.modalHeader}>
-                <Text style={[styles.modalTitle, { color: colors.text }]} numberOfLines={1}>Ask Course Instructor</Text>
+                <Text style={[styles.modalTitle, { color: colors.text }]} numberOfLines={1}>
+                  Ask Course Instructor
+                </Text>
                 <TouchableOpacity
                   onPress={() => setAskModalVisible(false)}
                   style={[styles.closeBtn, { backgroundColor: colors.surfaceSubtle }]}
@@ -403,7 +421,8 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
               </View>
 
               <Text style={[styles.modalHint, { color: colors.textMuted }]}>
-                Be specific about what you are trying to solve. You can reference specific formulas, slides, or timestamps.
+                Be specific about what you are trying to solve. You can reference specific formulas,
+                slides, or timestamps.
               </Text>
 
               <TextInput
@@ -439,7 +458,9 @@ export const CourseQnATab: React.FC<CourseQnATabProps> = ({ courseId, currentLes
                   accessibilityRole="button"
                   accessibilityLabel="Submit question"
                 >
-                  <Text style={[styles.submitQuestionText, { color: colors.onAccent }]}>Submit Question</Text>
+                  <Text style={[styles.submitQuestionText, { color: colors.onAccent }]}>
+                    Submit Question
+                  </Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>

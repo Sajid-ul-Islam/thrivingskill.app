@@ -44,7 +44,10 @@ export const LessonPlaylistTab: React.FC<LessonPlaylistTabProps> = ({
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={[styles.tabContentScroll, { paddingBottom: Math.max(insetsBottom, 16) + 80 }]}
+      contentContainerStyle={[
+        styles.tabContentScroll,
+        { paddingBottom: Math.max(insetsBottom, 16) + 80 },
+      ]}
       nestedScrollEnabled
     >
       {/* Course Completion Banner */}
@@ -63,7 +66,10 @@ export const LessonPlaylistTab: React.FC<LessonPlaylistTabProps> = ({
           </View>
           <View style={styles.completionContent}>
             <View style={styles.completionHeaderRow}>
-              <Text style={[styles.completionTitle, { color: isDark ? '#A7F3D0' : '#065F46' }]} numberOfLines={1}>
+              <Text
+                style={[styles.completionTitle, { color: isDark ? '#A7F3D0' : '#065F46' }]}
+                numberOfLines={1}
+              >
                 Course Completed! 🎓
               </Text>
               <View style={styles.completionXpBadge}>
@@ -128,7 +134,13 @@ export const LessonPlaylistTab: React.FC<LessonPlaylistTabProps> = ({
               activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel={`${item.lesson.title}, ${item.lesson.duration || ''}, ${
-                isCompleted ? 'completed' : isSelected ? 'playing' : itemAccessible ? 'ready' : 'locked'
+                isCompleted
+                  ? 'completed'
+                  : isSelected
+                    ? 'playing'
+                    : itemAccessible
+                      ? 'ready'
+                      : 'locked'
               }`}
               accessibilityState={{ selected: isSelected, disabled: !itemAccessible }}
             >
@@ -139,8 +151,8 @@ export const LessonPlaylistTab: React.FC<LessonPlaylistTabProps> = ({
                     backgroundColor: isCompleted
                       ? colors.primaryLight
                       : isSelected
-                      ? '#102F53'
-                      : colors.surfaceSubtle,
+                        ? '#102F53'
+                        : colors.surfaceSubtle,
                   },
                 ]}
               >
@@ -171,8 +183,8 @@ export const LessonPlaylistTab: React.FC<LessonPlaylistTabProps> = ({
                             ? '#FFFFFF'
                             : '#102F53'
                           : itemAccessible
-                          ? colors.text
-                          : colors.textMuted,
+                            ? colors.text
+                            : colors.textMuted,
                         fontWeight: isSelected ? '700' : '500',
                       },
                     ]}
@@ -199,7 +211,9 @@ export const LessonPlaylistTab: React.FC<LessonPlaylistTabProps> = ({
 
               {isAdmin && !isEnrolled && (
                 <View style={[styles.previewBadge, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}>
-                  <Text style={[styles.previewText, { color: '#E34234', fontWeight: '700' }]}>Master</Text>
+                  <Text style={[styles.previewText, { color: '#E34234', fontWeight: '700' }]}>
+                    Master
+                  </Text>
                 </View>
               )}
 

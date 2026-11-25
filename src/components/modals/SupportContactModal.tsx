@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Modal,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
@@ -118,15 +111,26 @@ export const SupportContactModal: React.FC<SupportContactModalProps> = ({
           ]}
         >
           <View style={styles.headerRow}>
-            <View style={[styles.headerIconBg, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.15)' : colors.primaryLight }]}>
-              <Ionicons name="headset" size={22} color={isDark ? colors.brandGold : colors.primary} />
+            <View
+              style={[
+                styles.headerIconBg,
+                { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.15)' : colors.primaryLight },
+              ]}
+            >
+              <Ionicons
+                name="headset"
+                size={22}
+                color={isDark ? colors.brandGold : colors.primary}
+              />
             </View>
             <View style={styles.headerTitleCol}>
               <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
                 {isBangla ? 'অফিসিয়াল সিআরএম ও হেল্পডেস্ক' : 'Official CRM & Helpdesk'}
               </Text>
               <Text style={[styles.headerSubtitle, { color: colors.textMuted }]} numberOfLines={1}>
-                {isBangla ? 'হোয়াটসঅ্যাপ ও ফেসবুক মেসেঞ্জারে সরাসরি কথা বলুন' : 'Instant live support via WhatsApp & Messenger'}
+                {isBangla
+                  ? 'হোয়াটসঅ্যাপ ও ফেসবুক মেসেঞ্জারে সরাসরি কথা বলুন'
+                  : 'Instant live support via WhatsApp & Messenger'}
               </Text>
             </View>
             <TouchableOpacity
@@ -270,7 +274,9 @@ export const SupportContactModal: React.FC<SupportContactModalProps> = ({
               <MessengerIcon size={28} color="#FFFFFF" />
             </View>
             <View style={styles.channelTextCol}>
-              <View style={[styles.channelBadgeRow, { backgroundColor: 'rgba(255, 255, 255, 0.25)' }]}>
+              <View
+                style={[styles.channelBadgeRow, { backgroundColor: 'rgba(255, 255, 255, 0.25)' }]}
+              >
                 <Text style={styles.channelBadgeText}>OFFICIAL COMMUNITY CRM</Text>
               </View>
               <Text style={styles.channelTitle}>Messenger</Text>
@@ -318,7 +324,9 @@ export const SupportContactModal: React.FC<SupportContactModalProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Visit official Facebook page"
             >
-              <View style={[styles.secondaryIconBg, { backgroundColor: 'rgba(24, 119, 242, 0.12)' }]}>
+              <View
+                style={[styles.secondaryIconBg, { backgroundColor: 'rgba(24, 119, 242, 0.12)' }]}
+              >
                 <Ionicons name="open-outline" size={18} color="#1877F2" />
               </View>
               <View style={{ flex: 1, minWidth: 0 }}>

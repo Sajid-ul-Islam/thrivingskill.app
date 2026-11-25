@@ -38,9 +38,10 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
   }, [video.thumbnail]);
 
   const fallbackThumb = require('../../../assets/icon.png');
-  const imageSource = thumbError || !video.thumbnail
-    ? fallbackThumb
-    : getSafeImageSource(video.thumbnail, fallbackThumb);
+  const imageSource =
+    thumbError || !video.thumbnail
+      ? fallbackThumb
+      : getSafeImageSource(video.thumbnail, fallbackThumb);
 
   const handleToggleSave = (e?: any) => {
     e?.stopPropagation?.();
@@ -72,7 +73,10 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
           <View style={styles.horizontalThumbWrapper}>
             <Image
               source={imageSource}
-              style={[styles.horizontalThumb, (thumbError || !video.thumbnail) && { resizeMode: 'contain' }]}
+              style={[
+                styles.horizontalThumb,
+                (thumbError || !video.thumbnail) && { resizeMode: 'contain' },
+              ]}
               onError={() => setThumbError(true)}
               {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
             />
@@ -102,9 +106,17 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
 
             <View style={styles.horizontalFooter}>
               <View style={styles.metaRow}>
-                {video.views ? <Text style={[styles.metaText, { color: colors.textMuted }]}>{video.views}</Text> : null}
-                {video.views && video.published ? <Text style={[styles.metaDot, { color: colors.textMuted }]}>•</Text> : null}
-                {video.published ? <Text style={[styles.metaText, { color: colors.textMuted }]}>{video.published}</Text> : null}
+                {video.views ? (
+                  <Text style={[styles.metaText, { color: colors.textMuted }]}>{video.views}</Text>
+                ) : null}
+                {video.views && video.published ? (
+                  <Text style={[styles.metaDot, { color: colors.textMuted }]}>•</Text>
+                ) : null}
+                {video.published ? (
+                  <Text style={[styles.metaText, { color: colors.textMuted }]}>
+                    {video.published}
+                  </Text>
+                ) : null}
               </View>
             </View>
           </View>
@@ -145,7 +157,10 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
         <View style={styles.thumbWrapper}>
           <Image
             source={imageSource}
-            style={[styles.thumbImage, (thumbError || !video.thumbnail) && { resizeMode: 'contain' }]}
+            style={[
+              styles.thumbImage,
+              (thumbError || !video.thumbnail) && { resizeMode: 'contain' },
+            ]}
             onError={() => setThumbError(true)}
             {...(Platform.OS === 'web' ? { referrerPolicy: 'no-referrer' } : {})}
           />
@@ -169,38 +184,49 @@ export const YouTubeCard: React.FC<YouTubeCardProps> = ({
         </View>
 
         <View style={styles.cardContent}>
-        {/* Course Cross-link indicator */}
-        {relatedCourse && (
-          <View style={styles.courseTagRow}>
-            <Ionicons name="school" size={11} color="#059669" />
-            <Text style={styles.courseTagText} numberOfLines={1}>
-              Full Course: {relatedCourse.title}
-            </Text>
-          </View>
-        )}
+          {/* Course Cross-link indicator */}
+          {relatedCourse && (
+            <View style={styles.courseTagRow}>
+              <Ionicons name="school" size={11} color="#059669" />
+              <Text style={styles.courseTagText} numberOfLines={1}>
+                Full Course: {relatedCourse.title}
+              </Text>
+            </View>
+          )}
 
-        <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
-          {video.title}
-        </Text>
+          <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={2}>
+            {video.title}
+          </Text>
 
-        <View style={styles.footerRow}>
-          <View style={styles.metaRow}>
-            {video.views ? <Text style={[styles.metaText, { color: colors.textMuted }]}>{video.views}</Text> : null}
-            {video.views && video.published ? <Text style={[styles.metaDot, { color: colors.textMuted }]}>•</Text> : null}
-            {video.published ? <Text style={[styles.metaText, { color: colors.textMuted }]}>{video.published}</Text> : null}
-          </View>
+          <View style={styles.footerRow}>
+            <View style={styles.metaRow}>
+              {video.views ? (
+                <Text style={[styles.metaText, { color: colors.textMuted }]}>{video.views}</Text>
+              ) : null}
+              {video.views && video.published ? (
+                <Text style={[styles.metaDot, { color: colors.textMuted }]}>•</Text>
+              ) : null}
+              {video.published ? (
+                <Text style={[styles.metaText, { color: colors.textMuted }]}>
+                  {video.published}
+                </Text>
+              ) : null}
+            </View>
 
-          <View style={styles.watchNowBadge}>
-            <Text style={styles.watchNowText}>Watch</Text>
-            <Ionicons name="arrow-forward" size={11} color="#FF0000" />
+            <View style={styles.watchNowBadge}>
+              <Text style={styles.watchNowText}>Watch</Text>
+              <Ionicons name="arrow-forward" size={11} color="#FF0000" />
+            </View>
           </View>
         </View>
-      </View>
       </SpringPressable>
 
       {/* Bookmark button on thumbnail as sibling */}
       <SpringPressable
-        style={[styles.bookmarkThumbBtn, { backgroundColor: saved ? (isDark ? '#FFFFFF' : '#102F53') : 'rgba(0,0,0,0.68)' }]}
+        style={[
+          styles.bookmarkThumbBtn,
+          { backgroundColor: saved ? (isDark ? '#FFFFFF' : '#102F53') : 'rgba(0,0,0,0.68)' },
+        ]}
         onPress={handleToggleSave}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         accessibilityRole="button"

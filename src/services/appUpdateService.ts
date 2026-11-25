@@ -43,7 +43,9 @@ export class AppUpdateService {
       channel: Updates.channel || 'production',
       runtimeVersion: Updates.runtimeVersion || '1.4.0',
       isEmbeddedLaunch: Updates.isEmbeddedLaunch,
-      createdAt: Updates.createdAt ? new Date(Updates.createdAt).toLocaleDateString() : 'Initial Build',
+      createdAt: Updates.createdAt
+        ? new Date(Updates.createdAt).toLocaleDateString()
+        : 'Initial Build',
       currentVersion: this.CURRENT_VERSION,
     };
   }
@@ -89,7 +91,7 @@ export class AppUpdateService {
       const updateEndpoint = `${Env.SITE_URL}/wp-json/thrivingskill/v1/app-update`;
       const res = await fetch(updateEndpoint, {
         signal: controller.signal,
-        headers: { 'Accept': 'application/json' },
+        headers: { Accept: 'application/json' },
       }).catch(() => null);
 
       clearTimeout(timeoutId);
@@ -102,7 +104,9 @@ export class AppUpdateService {
             isDownloaded: false,
             isApkUpdateAvailable: true,
             apkDownloadUrl: data.apkUrl || `${Env.SITE_URL}/downloads/thrivingskill-latest.apk`,
-            changelog: data.changelog || 'A new native APK update is available with enhanced performance and features.',
+            changelog:
+              data.changelog ||
+              'A new native APK update is available with enhanced performance and features.',
             latestVersion: data.version || data.latestVersion || '1.4.1',
             message: `Version ${data.version || data.latestVersion || '1.4.1'} is available for download!`,
           };

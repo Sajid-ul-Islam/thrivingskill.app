@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Modal,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
@@ -36,7 +30,11 @@ export const DownloadQualityModal: React.FC<DownloadQualityModalProps> = ({
   const insets = useSafeAreaInsets();
 
   const streamOptions = [
-    { id: 'Auto', label: 'Auto (Media3 Adaptive)', sublabel: 'Dynamically adapts to network speed' },
+    {
+      id: 'Auto',
+      label: 'Auto (Media3 Adaptive)',
+      sublabel: 'Dynamically adapts to network speed',
+    },
     { id: '1080p', label: '1080p Full HD', sublabel: 'Requires fast Wi-Fi connection' },
     { id: '720p', label: '720p HD', sublabel: 'Recommended balanced bitrate' },
     { id: '480p', label: '480p SD', sublabel: 'Consistent playback on slower networks' },
@@ -66,7 +64,12 @@ export const DownloadQualityModal: React.FC<DownloadQualityModalProps> = ({
           {/* Header */}
           <View style={[styles.headerRow, { borderBottomColor: colors.border }]}>
             <View style={styles.headerLeft}>
-              <View style={[styles.headerIconBg, { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : 'rgba(16, 47, 83, 0.1)' }]}>
+              <View
+                style={[
+                  styles.headerIconBg,
+                  { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : 'rgba(16, 47, 83, 0.1)' },
+                ]}
+              >
                 <Ionicons
                   name={mode === 'download' ? 'cloud-download' : 'options'}
                   size={20}
@@ -97,13 +100,42 @@ export const DownloadQualityModal: React.FC<DownloadQualityModalProps> = ({
           {/* Options List */}
           <View style={styles.optionsList}>
             {mode === 'download' ? (
-              <View style={{ padding: 16, alignItems: 'center', backgroundColor: colors.surfaceSubtle, borderRadius: shape.medium }}>
-                <Ionicons name="shield-checkmark" size={36} color="#102F53" style={{ marginBottom: 8 }} />
-                <Text style={{ fontSize: 15, fontWeight: '800', color: colors.text, textAlign: 'center', marginBottom: 4 }}>
+              <View
+                style={{
+                  padding: 16,
+                  alignItems: 'center',
+                  backgroundColor: colors.surfaceSubtle,
+                  borderRadius: shape.medium,
+                }}
+              >
+                <Ionicons
+                  name="shield-checkmark"
+                  size={36}
+                  color="#102F53"
+                  style={{ marginBottom: 8 }}
+                />
+                <Text
+                  style={{
+                    fontSize: 15,
+                    fontWeight: '800',
+                    color: colors.text,
+                    textAlign: 'center',
+                    marginBottom: 4,
+                  }}
+                >
                   Online Streaming Only
                 </Text>
-                <Text style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center', lineHeight: 18, marginBottom: 14 }}>
-                  Offline video downloads have been removed to protect intellectual property. All lessons stream directly in HD online.
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: colors.textMuted,
+                    textAlign: 'center',
+                    lineHeight: 18,
+                    marginBottom: 14,
+                  }}
+                >
+                  Offline video downloads have been removed to protect intellectual property. All
+                  lessons stream directly in HD online.
                 </Text>
                 <TouchableOpacity
                   style={{
@@ -171,9 +203,7 @@ export const DownloadQualityModal: React.FC<DownloadQualityModalProps> = ({
                       </View>
                     </View>
 
-                    {isSelected && (
-                      <Ionicons name="checkmark" size={20} color="#10B981" />
-                    )}
+                    {isSelected && <Ionicons name="checkmark" size={20} color="#10B981" />}
                   </TouchableOpacity>
                 );
               })

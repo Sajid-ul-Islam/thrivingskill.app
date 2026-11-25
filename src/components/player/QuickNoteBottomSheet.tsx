@@ -146,7 +146,10 @@ export const QuickNoteBottomSheet: React.FC<QuickNoteBottomSheetProps> = ({
           {quickTags.map((tag, idx) => (
             <TouchableOpacity
               key={idx}
-              style={[styles.tagChip, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+              style={[
+                styles.tagChip,
+                { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+              ]}
               onPress={() => addTag(tag)}
               accessibilityRole="button"
               accessibilityLabel={`Add tag: ${tag}`}

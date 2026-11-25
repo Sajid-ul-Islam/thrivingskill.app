@@ -124,14 +124,27 @@ npm run web
 
 ### 3. Automated Code Verification & Health Audit
 ```bash
+# ESLint & Prettier verification
+npm run lint
+npm run format:check
+
 # Strict TypeScript compiler verification (0 errors required)
 npm run typecheck
 
-# Full codebase static analysis (166 files: imports, styles, timers, JSON parsing)
-node scripts/audit_app.js
+# Full codebase static analysis (imports, styles, timers, JSON parsing)
+npm run audit
 
-# Comprehensive CI Quality Gate test suites
-npm test
+# Offline Jest test suite with coverage + structural checks
+npm run test:ci
+```
+
+### 4. EAS Cloud Builds & App Store Submissions
+- **Preview Builds**: Triggered automatically on pull requests via [`.github/workflows/eas-build.yml`](.github/workflows/eas-build.yml) (requires `EXPO_TOKEN` repository secret), or manually with `npm run build:preview`.
+- **Production Releases**: Triggered automatically on semantic version tags (`v*.*.*`), or manually with `npm run build:prod`.
+- **Store Submissions**: Configure Google Play service account (`GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` / `serviceAccountKeyPath`) and Apple App Store Connect (`ascAppId`, `appleTeamId` in `eas.json` or via `EXPO_APPLE_APP_SPECIFIC_PASSWORD`), then run:
+```bash
+npx eas-cli submit --platform android --profile production
+npx eas-cli submit --platform ios --profile production
 ```
 
 ---

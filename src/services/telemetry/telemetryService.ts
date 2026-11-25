@@ -60,7 +60,9 @@ export class TelemetryService {
   /**
    * Records a user/action breadcrumb for crash forensics
    */
-  static addBreadcrumb(breadcrumb: Omit<TelemetryBreadcrumb, 'timestamp'> & { timestamp?: number }): void {
+  static addBreadcrumb(
+    breadcrumb: Omit<TelemetryBreadcrumb, 'timestamp'> & { timestamp?: number }
+  ): void {
     const entry: TelemetryBreadcrumb = {
       ...breadcrumb,
       timestamp: breadcrumb.timestamp || Date.now(),
@@ -191,7 +193,9 @@ export class TelemetryService {
               {
                 type: 'Error',
                 value: event.message,
-                stacktrace: event.stack ? { frames: [{ filename: 'app.bundle', function: event.stack }] } : undefined,
+                stacktrace: event.stack
+                  ? { frames: [{ filename: 'app.bundle', function: event.stack }] }
+                  : undefined,
               },
             ],
           },

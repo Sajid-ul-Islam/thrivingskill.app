@@ -110,10 +110,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     isSyncingProfile,
     refreshUserProfile,
   } = useAuth();
-  const {
-    subscriptionTier,
-    activeWorkspace,
-  } = useSaaS();
+  const { subscriptionTier, activeWorkspace } = useSaaS();
 
   const [biometricEnabled, setBiometricEnabled] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -158,7 +155,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   // General Settings Form (Matching thrivingskill.com live schema)
   const [firstName, setFirstName] = useState(user?.first_name || '');
   const [lastName, setLastName] = useState(user?.last_name || '');
-  const [displayName, setDisplayName] = useState(user?.displayName || user?.name || user?.username || '');
+  const [displayName, setDisplayName] = useState(
+    user?.displayName || user?.name || user?.username || ''
+  );
   const [userEmail, setUserEmail] = useState(user?.email || '');
   const [bioInfo, setBioInfo] = useState(user?.description || '');
   const [phoneNumber, setPhoneNumber] = useState(user?.phone || '');
@@ -174,7 +173,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const [privacyCertificates, setPrivacyCertificates] = useState(true);
 
   // Backward compatibility state
-  const [customName, setCustomName] = useState(user?.name || user?.displayName || user?.username || '');
+  const [customName, setCustomName] = useState(
+    user?.name || user?.displayName || user?.username || ''
+  );
   const [customBio, setCustomBio] = useState(user?.description || '');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [serverEnv, setServerEnv] = useState<ApiEnvironment>(Env.currentEnvironment);
@@ -216,8 +217,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       }
       showToast({
         message: nextState
-          ? (isBangla ? 'ডেভেলপার অপশন সক্রিয় হয়েছে! 🎉' : 'Developer Options Unlocked! 🎉')
-          : (isBangla ? 'স্বাভাবিক মোড সক্রিয় হয়েছে।' : 'Standard Mode Restored.'),
+          ? isBangla
+            ? 'ডেভেলপার অপশন সক্রিয় হয়েছে! 🎉'
+            : 'Developer Options Unlocked! 🎉'
+          : isBangla
+            ? 'স্বাভাবিক মোড সক্রিয় হয়েছে।'
+            : 'Standard Mode Restored.',
         type: nextState ? 'success' : 'info',
       });
     } else if (tapCountRef.current >= 2) {
@@ -317,8 +322,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   const handleSwitchServerEnvironment = () => {
     const isProd = serverEnv === 'production';
     const targetEnv: ApiEnvironment = isProd ? 'staging' : 'production';
-    const targetLabel = targetEnv === 'production' ? 'Live Production (thrivingskill.com)' : 'Staging Server (staging.thrivingskill.com)';
-    const targetLabelBn = targetEnv === 'production' ? 'লাইভ প্রোডাকশন (thrivingskill.com)' : 'স্টেজিং সার্ভার (staging.thrivingskill.com)';
+    const targetLabel =
+      targetEnv === 'production'
+        ? 'Live Production (thrivingskill.com)'
+        : 'Staging Server (staging.thrivingskill.com)';
+    const targetLabelBn =
+      targetEnv === 'production'
+        ? 'লাইভ প্রোডাকশন (thrivingskill.com)'
+        : 'স্টেজিং সার্ভার (staging.thrivingskill.com)';
 
     showPopup({
       title: isBangla ? 'সার্ভার পরিবর্তন করবেন?' : 'Switch Server Environment?',
@@ -391,24 +402,27 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         },
       });
 
-      await updateUserProfile({
-        ...updatedUser,
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        name: displayName.trim(),
-        displayName: displayName.trim(),
-        description: bioInfo.trim(),
-        phone: phoneNumber.trim(),
-        city: city.trim(),
-        avatar: avatarUrl.trim() || updatedUser.avatar,
-        cover_photo: coverPhotoUrl.trim() || updatedUser.cover_photo,
-        social: {
-          facebook: socialFacebook.trim(),
-          twitter: socialTwitter.trim(),
-          youtube: socialYoutube.trim(),
-          linkedin: socialLinkedin.trim(),
+      await updateUserProfile(
+        {
+          ...updatedUser,
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          name: displayName.trim(),
+          displayName: displayName.trim(),
+          description: bioInfo.trim(),
+          phone: phoneNumber.trim(),
+          city: city.trim(),
+          avatar: avatarUrl.trim() || updatedUser.avatar,
+          cover_photo: coverPhotoUrl.trim() || updatedUser.cover_photo,
+          social: {
+            facebook: socialFacebook.trim(),
+            twitter: socialTwitter.trim(),
+            youtube: socialYoutube.trim(),
+            linkedin: socialLinkedin.trim(),
+          },
         },
-      }, false);
+        false
+      );
 
       setEditProfileModalVisible(false);
       showToast({
@@ -445,7 +459,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       } catch {
         Alert.alert(
           isBangla ? 'ত্রুটি' : 'Error',
-          err?.message || (isBangla ? 'প্রোফাইল সংরক্ষণ ব্যর্থ হয়েছে।' : 'Failed to save profile. Please try again.')
+          err?.message ||
+            (isBangla ? 'প্রোফাইল সংরক্ষণ ব্যর্থ হয়েছে।' : 'Failed to save profile. Please try again.')
         );
       }
     } finally {
@@ -464,7 +479,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     if (newPass !== confirmPass) {
       Alert.alert(
         isBangla ? 'পাসওয়ার্ড মেলেনি' : 'Mismatch',
-        isBangla ? 'নতুন পাসওয়ার্ড ও নিশ্চিতকরণ পাসওয়ার্ড মেলেনি।' : 'New password and confirm password do not match.'
+        isBangla
+          ? 'নতুন পাসওয়ার্ড ও নিশ্চিতকরণ পাসওয়ার্ড মেলেনি।'
+          : 'New password and confirm password do not match.'
       );
       return;
     }
@@ -498,7 +515,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       setChangePasswordModalVisible(false);
       Alert.alert(
         isBangla ? 'পাসওয়ার্ড পরিবর্তিত হয়েছে! 🔒' : 'Password Changed! 🔒',
-        res.message || (isBangla ? 'আপনার অ্যাকাউন্টের পাসওয়ার্ড সফলভাবে আপডেট করা হয়েছে।' : 'Your account credentials have been updated successfully.')
+        res.message ||
+          (isBangla
+            ? 'আপনার অ্যাকাউন্টের পাসওয়ার্ড সফলভাবে আপডেট করা হয়েছে।'
+            : 'Your account credentials have been updated successfully.')
       );
     } catch (err: any) {
       const msg = err?.message || '';
@@ -516,7 +536,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       } else {
         Alert.alert(
           isBangla ? 'ত্রুটি' : 'Error',
-          msg || (isBangla ? 'পাসওয়ার্ড পরিবর্তন ব্যর্থ হয়েছে।' : 'Failed to change password. Please try again.')
+          msg ||
+            (isBangla
+              ? 'পাসওয়ার্ড পরিবর্তন ব্যর্থ হয়েছে।'
+              : 'Failed to change password. Please try again.')
         );
       }
     } finally {
@@ -524,41 +547,70 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     }
   };
 
-  const getCourseStatus = useCallback((courseId: string): 'in-progress' | 'finished' | 'passed' | 'failed' => {
-    const prog = userProgress[courseId];
-    if (!prog) return 'in-progress';
-    if (prog.status === 'failed' || prog.grade === 'failed') return 'failed';
-    if (prog.status === 'passed' || prog.grade === 'passed' || prog.isCompleted) return 'passed';
-    if (prog.status === 'finished') return 'finished';
-    return 'in-progress';
-  }, [userProgress]);
+  const getCourseStatus = useCallback(
+    (courseId: string): 'in-progress' | 'finished' | 'passed' | 'failed' => {
+      const prog = userProgress[courseId];
+      if (!prog) return 'in-progress';
+      if (prog.status === 'failed' || prog.grade === 'failed') return 'failed';
+      if (prog.status === 'passed' || prog.grade === 'passed' || prog.isCompleted) return 'passed';
+      if (prog.status === 'finished') return 'finished';
+      return 'in-progress';
+    },
+    [userProgress]
+  );
 
-  const enrolledOrderCourses = useMemo(() => Object.keys(userProgress)
-    .map((id) => courses.find((c) => c.id === id))
-    .filter((c): c is Course => Boolean(c)), [userProgress, courses]);
+  const enrolledOrderCourses = useMemo(
+    () =>
+      Object.keys(userProgress)
+        .map((id) => courses.find((c) => c.id === id))
+        .filter((c): c is Course => Boolean(c)),
+    [userProgress, courses]
+  );
 
-  const inProgressCourses = useMemo(() => enrolledOrderCourses.filter((c) => getCourseStatus(c.id) === 'in-progress'), [enrolledOrderCourses, getCourseStatus]);
-  const finishedCourses = useMemo(() => enrolledOrderCourses.filter((c) => {
-    const st = getCourseStatus(c.id);
-    return st === 'finished' || st === 'passed' || st === 'failed';
-  }), [enrolledOrderCourses, getCourseStatus]);
-  const passedCourses = useMemo(() => enrolledOrderCourses.filter((c) => getCourseStatus(c.id) === 'passed'), [enrolledOrderCourses, getCourseStatus]);
-  const failedCourses = useMemo(() => enrolledOrderCourses.filter((c) => getCourseStatus(c.id) === 'failed'), [enrolledOrderCourses, getCourseStatus]);
+  const inProgressCourses = useMemo(
+    () => enrolledOrderCourses.filter((c) => getCourseStatus(c.id) === 'in-progress'),
+    [enrolledOrderCourses, getCourseStatus]
+  );
+  const finishedCourses = useMemo(
+    () =>
+      enrolledOrderCourses.filter((c) => {
+        const st = getCourseStatus(c.id);
+        return st === 'finished' || st === 'passed' || st === 'failed';
+      }),
+    [enrolledOrderCourses, getCourseStatus]
+  );
+  const passedCourses = useMemo(
+    () => enrolledOrderCourses.filter((c) => getCourseStatus(c.id) === 'passed'),
+    [enrolledOrderCourses, getCourseStatus]
+  );
+  const failedCourses = useMemo(
+    () => enrolledOrderCourses.filter((c) => getCourseStatus(c.id) === 'failed'),
+    [enrolledOrderCourses, getCourseStatus]
+  );
 
-  const lpStats = useMemo(() => ({
-    enrolledCount: enrolledOrderCourses.length,
-    inProgressCount: inProgressCourses.length,
-    finishedCount: finishedCourses.length,
-    passedCount: passedCourses.length,
-    failedCount: failedCourses.length,
-  }), [enrolledOrderCourses.length, inProgressCourses.length, finishedCourses.length, passedCourses.length, failedCourses.length]);
+  const lpStats = useMemo(
+    () => ({
+      enrolledCount: enrolledOrderCourses.length,
+      inProgressCount: inProgressCourses.length,
+      finishedCount: finishedCourses.length,
+      passedCount: passedCourses.length,
+      failedCount: failedCourses.length,
+    }),
+    [
+      enrolledOrderCourses.length,
+      inProgressCourses.length,
+      finishedCourses.length,
+      passedCourses.length,
+      failedCourses.length,
+    ]
+  );
 
   const enrolledCount = enrolledOrderCourses.length;
   const completedCount = finishedCourses.length;
-  const totalCompletedLessons = useMemo(() => Object.values(userProgress).reduce(
-    (acc, p) => acc + p.completedLessonIds.length,
-    0
-  ), [userProgress]);
+  const totalCompletedLessons = useMemo(
+    () => Object.values(userProgress).reduce((acc, p) => acc + p.completedLessonIds.length, 0),
+    [userProgress]
+  );
 
   const totalWatchedSeconds = useMemo(() => {
     return Object.values(userProgress).reduce((total, prog) => {
@@ -575,7 +627,10 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     const maxHours = Math.max(fromWatchedSec, fromGamificationMins, fromCompletedLessons);
     return maxHours.toFixed(1);
   }, [totalWatchedSeconds, totalStudyMinutes, totalCompletedLessons]);
-  const completionRate = useMemo(() => enrolledCount > 0 ? Math.round((completedCount / enrolledCount) * 100) : 0, [enrolledCount, completedCount]);
+  const completionRate = useMemo(
+    () => (enrolledCount > 0 ? Math.round((completedCount / enrolledCount) * 100) : 0),
+    [enrolledCount, completedCount]
+  );
 
   const displayedCourses = useMemo(() => {
     if (portfolioTab === 'in-progress') return inProgressCourses;
@@ -583,12 +638,21 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
     if (portfolioTab === 'passed') return passedCourses;
     if (portfolioTab === 'failed') return failedCourses;
     return enrolledOrderCourses;
-  }, [portfolioTab, inProgressCourses, finishedCourses, passedCourses, failedCourses, enrolledOrderCourses]);
+  }, [
+    portfolioTab,
+    inProgressCourses,
+    finishedCourses,
+    passedCourses,
+    failedCourses,
+    enrolledOrderCourses,
+  ]);
 
   const handleConfirmDeleteAccount = async () => {
     if (!deletePass.trim()) {
       setDeleteError(
-        isBangla ? 'স্থায়ীভাবে অ্যাকাউন্ট মুছে ফেলতে আপনার পাসওয়ার্ড দিন।' : 'Please enter your current password to confirm deletion.'
+        isBangla
+          ? 'স্থায়ীভাবে অ্যাকাউন্ট মুছে ফেলতে আপনার পাসওয়ার্ড দিন।'
+          : 'Please enter your current password to confirm deletion.'
       );
       return;
     }
@@ -761,11 +825,23 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         />
 
         {/* All Rights Reserved Enterprise Footer */}
-        <View style={{ alignItems: 'center', marginTop: 24, marginBottom: 12, paddingHorizontal: 20 }}>
-          <Text style={{ fontSize: 11, fontWeight: '700', color: colors.textMuted, textAlign: 'center' }}>
-            © 2026 Thriving <Text style={{ color: '#E34234' }}>Skills</Text> Limited (TSL). All Rights Reserved.
+        <View
+          style={{ alignItems: 'center', marginTop: 24, marginBottom: 12, paddingHorizontal: 20 }}
+        >
+          <Text
+            style={{
+              fontSize: 11,
+              fontWeight: '700',
+              color: colors.textMuted,
+              textAlign: 'center',
+            }}
+          >
+            © 2026 Thriving <Text style={{ color: '#E34234' }}>Skills</Text> Limited (TSL). All
+            Rights Reserved.
           </Text>
-          <Text style={{ fontSize: 10, color: colors.textMuted, textAlign: 'center', marginTop: 3 }}>
+          <Text
+            style={{ fontSize: 10, color: colors.textMuted, textAlign: 'center', marginTop: 3 }}
+          >
             Gulshan-2, Dhaka • RJSC Registered • SDG-4 Quality Education
           </Text>
           <TouchableOpacity
@@ -775,8 +851,11 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             accessibilityRole="button"
             accessibilityLabel="App Version"
           >
-            <Text style={{ fontSize: 10, color: colors.textMuted, textAlign: 'center', opacity: 0.7 }}>
-              v1.4.0 • Thriving <Text style={{ color: '#E34234' }}>Skills</Text> App {devModeUnlocked ? '• [DEV MODE]' : ''}
+            <Text
+              style={{ fontSize: 10, color: colors.textMuted, textAlign: 'center', opacity: 0.7 }}
+            >
+              v1.4.0 • Thriving <Text style={{ color: '#E34234' }}>Skills</Text> App{' '}
+              {devModeUnlocked ? '• [DEV MODE]' : ''}
             </Text>
           </TouchableOpacity>
         </View>
@@ -798,28 +877,16 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
       />
 
       {/* In-App OTA Update Modal */}
-      <AppUpdateModal
-        visible={updateModalVisible}
-        onClose={() => setUpdateModalVisible(false)}
-      />
+      <AppUpdateModal visible={updateModalVisible} onClose={() => setUpdateModalVisible(false)} />
 
       {/* Help & FAQ Center Modal */}
-      <HelpFaqModal
-        visible={helpFaqModalVisible}
-        onClose={() => setHelpFaqModalVisible(false)}
-      />
+      <HelpFaqModal visible={helpFaqModalVisible} onClose={() => setHelpFaqModalVisible(false)} />
 
       {/* Blog & Articles Reader Modal */}
-      <BlogModal
-        visible={blogModalVisible}
-        onClose={() => setBlogModalVisible(false)}
-      />
+      <BlogModal visible={blogModalVisible} onClose={() => setBlogModalVisible(false)} />
 
       {/* eBook Library Modal */}
-      <EbookModal
-        visible={ebookModalVisible}
-        onClose={() => setEbookModalVisible(false)}
-      />
+      <EbookModal visible={ebookModalVisible} onClose={() => setEbookModalVisible(false)} />
 
       {/* Services & Corporate Advisory Modal */}
       <ServicesModal

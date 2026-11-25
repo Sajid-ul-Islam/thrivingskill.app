@@ -252,8 +252,10 @@ export const CANONICAL_SERVICES: PortalServiceItem[] = [
     banglaTitle: 'বিজনেস কনসালট্যান্সি সার্ভিস',
     icon: 'trending-up-outline',
     category: 'Strategic Advisory & Scaling',
-    description: 'Executive advisory, corporate financial modeling, scale-up blueprints, and 1-on-1 monthly strategic calls.',
-    banglaDescription: 'ব্যবসার প্রবৃদ্ধি, কৌশলগত আর্থিক পরিকল্পনা এবং ১-অন-১ এক্সিকিউটিভ বিজনেস কনসালট্যান্সি।',
+    description:
+      'Executive advisory, corporate financial modeling, scale-up blueprints, and 1-on-1 monthly strategic calls.',
+    banglaDescription:
+      'ব্যবসার প্রবৃদ্ধি, কৌশলগত আর্থিক পরিকল্পনা এবং ১-অন-১ এক্সিকিউটিভ বিজনেস কনসালট্যান্সি।',
     bullets: [
       'Priority Consultancy (৳1,000–9,000): Unlimited email consulting, monthly 30-min call, live session, 2 custom Excel formats',
       'Premium Consultancy (৳1,500–14,000): Unlimited email consulting, two 30-min calls, live session, 5 custom Excel trackers',
@@ -272,7 +274,8 @@ export const CANONICAL_SERVICES: PortalServiceItem[] = [
     banglaTitle: 'ডিজিটাল রূপান্তর কনসালটিং',
     icon: 'hardware-chip-outline',
     category: 'Enterprise Strategy',
-    description: 'Modernize business workflows, migrate to cloud architectures, and implement AI pipelines.',
+    description:
+      'Modernize business workflows, migrate to cloud architectures, and implement AI pipelines.',
     banglaDescription: 'ব্যবসায়িক কার্যক্রম ডিজিটালাইজেশন, ক্লাউড মাইগ্রেশন এবং এআই অটোমেশন রূপান্তর।',
     bullets: [
       'Operational workflow audits and automation',
@@ -292,7 +295,8 @@ export const CANONICAL_SERVICES: PortalServiceItem[] = [
     banglaTitle: 'প্রিমিয়াম কনটেন্ট ব্যুরো ও কোর্স নির্মাণ',
     icon: 'videocam-outline',
     category: 'Content Production',
-    description: 'Full-cycle production of high-impact training materials, SCORM packages, and video curricula.',
+    description:
+      'Full-cycle production of high-impact training materials, SCORM packages, and video curricula.',
     banglaDescription: 'উচ্চমানের ট্রেনিং ভিডিও, স্ক্রিপ্ট, অ্যানিমেশন এবং এসসিওআরএম কনটেন্ট উৎপাদন।',
     bullets: [
       'Studio-grade 4K instructional video production',
@@ -312,7 +316,8 @@ export const CANONICAL_SERVICES: PortalServiceItem[] = [
     banglaTitle: 'কোম্পানি গঠন ও লিগ্যাল অ্যাডভাইজরি',
     icon: 'ribbon-outline',
     category: 'Legal & Compliance',
-    description: 'Regulatory compliance, RJSC incorporation, trade licensing, and tax structuring in Bangladesh.',
+    description:
+      'Regulatory compliance, RJSC incorporation, trade licensing, and tax structuring in Bangladesh.',
     banglaDescription: 'আরজেএসসি নিবন্ধন, ট্রেড লাইসেন্স, ভ্যাট/ট্যাক্স এবং করপোরেট লিগ্যাল পরামর্শ।',
     bullets: [
       'RJSC private limited company incorporation',
@@ -332,7 +337,8 @@ export const CANONICAL_SERVICES: PortalServiceItem[] = [
     banglaTitle: 'আইসিটি ও পলিসি কনসালটিং',
     icon: 'shield-checkmark-outline',
     category: 'Public Sector & Governance',
-    description: 'Advisory on national digital frameworks, public-private skill partnerships, and institutional capacity building.',
+    description:
+      'Advisory on national digital frameworks, public-private skill partnerships, and institutional capacity building.',
     banglaDescription: 'জাতীয় ডিজিটাল ফ্রেমওয়ার্ক, আইসিটি পলিসি এবং প্রতিষ্ঠানগত দক্ষতা নীতি প্রণয়ন।',
     bullets: [
       'Government and university MoU execution',
@@ -352,7 +358,8 @@ export const CANONICAL_SERVICES: PortalServiceItem[] = [
     banglaTitle: 'স্কিলস-অ্যাজ-এ-সার্ভিস (কর্পোরেট ট্রেনিং)',
     icon: 'people-outline',
     category: 'Talent Enablement',
-    description: 'On-demand training programs for banking, FMCG, telecom, and export-oriented sectors.',
+    description:
+      'On-demand training programs for banking, FMCG, telecom, and export-oriented sectors.',
     banglaDescription: 'ব্যাংক, টেলিকম ও বহুজাতিক প্রতিষ্ঠানের কর্মীদের জন্য অন-ডিমান্ড ট্রেনিং প্রোগ্রাম।',
     bullets: [
       'Customized corporate training tracks',
@@ -372,7 +379,8 @@ export const CANONICAL_SERVICES: PortalServiceItem[] = [
     banglaTitle: 'হোয়াইট-লেবেল এলএমএস লাইসেন্সিং',
     icon: 'laptop-outline',
     category: 'EdTech Platform',
-    description: 'Turnkey learning management platform with your corporate branding, secure video CDN, and automated exams.',
+    description:
+      'Turnkey learning management platform with your corporate branding, secure video CDN, and automated exams.',
     banglaDescription: 'আপনার প্রতিষ্ঠানের নিজস্ব ব্র্যান্ডিংয়ে সুরক্ষিত এলএমএস সফটওয়্যার ও ভিডিও সিডিএন।',
     bullets: [
       'Custom domain, logo, and color theming',
@@ -397,8 +405,10 @@ export const CANONICAL_EBOOKS: EbookItem[] = [
     author: 'Thriving Skills Editorial Team',
     category: 'Career & Leadership',
     pages: 64,
-    description: 'Master interpersonal communication, persuasive email drafting, executive presentation, and conflict resolution.',
-    banglaDescription: 'অফিসিয়াল যোগাযোগ, ক্লায়েন্ট ডিলিং, প্রেজেন্টেশন এবং কনফ্লিক্ট ম্যানেজমেন্টের কার্যকরী নির্দেশিকা।',
+    description:
+      'Master interpersonal communication, persuasive email drafting, executive presentation, and conflict resolution.',
+    banglaDescription:
+      'অফিসিয়াল যোগাযোগ, ক্লায়েন্ট ডিলিং, প্রেজেন্টেশন এবং কনফ্লিক্ট ম্যানেজমেন্টের কার্যকরী নির্দেশিকা।',
     readUrl: `${Env.SITE_URL}/ebook/`,
   },
   {
@@ -408,8 +418,10 @@ export const CANONICAL_EBOOKS: EbookItem[] = [
     author: 'Leading Industry Experts',
     category: 'Operations & SCM',
     pages: 112,
-    description: 'Comprehensive guide covering procurement, logistics, ERP operations, inventory control, and supply chain analytics.',
-    banglaDescription: 'প্রকিউরমেন্ট, লজিস্টিকস, ইনভেন্টরি অপ্টিমাইজেশন ও আন্তর্জাতিক সাপ্লাই চেইনের পূর্ণাঙ্গ গাইড।',
+    description:
+      'Comprehensive guide covering procurement, logistics, ERP operations, inventory control, and supply chain analytics.',
+    banglaDescription:
+      'প্রকিউরমেন্ট, লজিস্টিকস, ইনভেন্টরি অপ্টিমাইজেশন ও আন্তর্জাতিক সাপ্লাই চেইনের পূর্ণাঙ্গ গাইড।',
     readUrl: `${Env.SITE_URL}/ebook/`,
   },
   {
@@ -419,8 +431,10 @@ export const CANONICAL_EBOOKS: EbookItem[] = [
     author: 'Growth & Performance Specialists',
     category: 'Marketing & Sales',
     pages: 88,
-    description: 'Actionable blueprints for performance ads, SEO optimization, social commerce, and brand positioning in Bangladesh.',
-    banglaDescription: 'মেটা ও গুগল অ্যাডস, এসইও, কনটেন্ট মার্কেটিং ও ব্র্যান্ড গ্রোথের স্টেপ-বাই-স্টেপ রোডম্যাপ।',
+    description:
+      'Actionable blueprints for performance ads, SEO optimization, social commerce, and brand positioning in Bangladesh.',
+    banglaDescription:
+      'মেটা ও গুগল অ্যাডস, এসইও, কনটেন্ট মার্কেটিং ও ব্র্যান্ড গ্রোথের স্টেপ-বাই-স্টেপ রোডম্যাপ।',
     readUrl: `${Env.SITE_URL}/ebook/`,
   },
   {
@@ -430,8 +444,10 @@ export const CANONICAL_EBOOKS: EbookItem[] = [
     author: 'Certified Data Analysts',
     category: 'Data & Productivity',
     pages: 96,
-    description: 'Formula shortcuts, XLOOKUP, dynamic PivotTables, financial modeling templates, and Power Query essentials.',
-    banglaDescription: 'প্রয়োজনীয় ফর্মুলা, পিভট টেবিল, ড্যাশবোর্ড তৈরি এবং ব্যবসায়িক ডাটা বিশ্লেষণের সহজ উপায়।',
+    description:
+      'Formula shortcuts, XLOOKUP, dynamic PivotTables, financial modeling templates, and Power Query essentials.',
+    banglaDescription:
+      'প্রয়োজনীয় ফর্মুলা, পিভট টেবিল, ড্যাশবোর্ড তৈরি এবং ব্যবসায়িক ডাটা বিশ্লেষণের সহজ উপায়।',
     readUrl: `${Env.SITE_URL}/ebook/`,
   },
   {
@@ -441,7 +457,8 @@ export const CANONICAL_EBOOKS: EbookItem[] = [
     author: 'Senior HR Practitioners',
     category: 'Human Resources',
     pages: 120,
-    description: 'Talent acquisition, KPI frameworks, employee engagement, and practical compliance with Bangladesh Labor Act.',
+    description:
+      'Talent acquisition, KPI frameworks, employee engagement, and practical compliance with Bangladesh Labor Act.',
     banglaDescription: 'ট্যালেন্ট ম্যানেজমেন্ট, পারফরম্যান্স অ্যাপ্রাইজাল ও বাংলাদেশ শ্রম আইনের প্রয়োগবিধি।',
     readUrl: `${Env.SITE_URL}/ebook/`,
   },
@@ -452,7 +469,8 @@ export const CANONICAL_EBOOKS: EbookItem[] = [
     author: 'AI Innovation Lab, Thriving Skills',
     category: 'Artificial Intelligence',
     pages: 80,
-    description: 'Practical workflows with ChatGPT, Claude, Midjourney, and Gemini to multiply workplace productivity 10x.',
+    description:
+      'Practical workflows with ChatGPT, Claude, Midjourney, and Gemini to multiply workplace productivity 10x.',
     banglaDescription: 'দৈনন্দিন কাজে এআই টুলের কার্যকর ব্যবহার, প্রম্পট ফ্রেমওয়ার্ক এবং অটোমেশন গাইড।',
     readUrl: `${Env.SITE_URL}/ebook/`,
   },
@@ -469,7 +487,8 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     organization: 'Thriving Skills Limited',
     localAvatar: require('../../../assets/team/abdullah_al_mahmud.jpeg'),
     bio: 'Visionary founder & CEO spearheading 21st-century human potential development, 4IR skills readiness, and bridging industry-academia gaps across Bangladesh.',
-    banglaBio: 'থ্রাইভিং স্কিলসের মূল প্রতিষ্ঠাতা ও স্বপ্নদ্রষ্টা। বাংলাদেশের কর্মক্ষম তরুণদের চতুর্থ শিল্প বিপ্লব (4IR) ও এআই যুগের জন্য দক্ষ করতে নিবেদিতপ্রাণ এডটেক উদ্যোক্তা।',
+    banglaBio:
+      'থ্রাইভিং স্কিলসের মূল প্রতিষ্ঠাতা ও স্বপ্নদ্রষ্টা। বাংলাদেশের কর্মক্ষম তরুণদের চতুর্থ শিল্প বিপ্লব (4IR) ও এআই যুগের জন্য দক্ষ করতে নিবেদিতপ্রাণ এডটেক উদ্যোক্তা।',
     coursesCount: 12,
     studentsCount: 45000,
     profileUrl: `${Env.SITE_URL}/our_team/abdullah_al_mahmud/`,
@@ -478,7 +497,12 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     badge: 'Founder & CEO',
     banglaBadge: 'প্রতিষ্ঠাতা ও সিইও',
     expertise: ['Strategic Leadership', '4IR Skills', 'Corporate Governance', 'EdTech Innovation'],
-    banglaExpertise: ['স্ট্র্যাটেজিক লিডারশিপ', '৪র্থ শিল্প বিপ্লব দক্ষতা', 'কর্পোরেট গভর্নেন্স', 'এডটেক ইনোভেশন'],
+    banglaExpertise: [
+      'স্ট্র্যাটেজিক লিডারশিপ',
+      '৪র্থ শিল্প বিপ্লব দক্ষতা',
+      'কর্পোরেট গভর্নেন্স',
+      'এডটেক ইনোভেশন',
+    ],
   },
   {
     id: 'leader-nuruddin',
@@ -489,7 +513,8 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     organization: 'Thriving Skills Limited',
     localAvatar: require('../../../assets/team/syed_nuruddin_ahmed.jpeg'),
     bio: 'Senior corporate governance leader, institutional strategist, and founder advocating for sustainable lifelong learning ecosystems and workforce empowerment.',
-    banglaBio: 'কর্পোরেট সুশাসন, প্রাতিষ্ঠানিক কৌশল ও জাতীয় মানবসম্পদ উন্নয়নে নিবেদিতপ্রাণ দূরদর্শী উদ্যোক্তা ও প্রতিষ্ঠাতা চেয়ারম্যান।',
+    banglaBio:
+      'কর্পোরেট সুশাসন, প্রাতিষ্ঠানিক কৌশল ও জাতীয় মানবসম্পদ উন্নয়নে নিবেদিতপ্রাণ দূরদর্শী উদ্যোক্তা ও প্রতিষ্ঠাতা চেয়ারম্যান।',
     coursesCount: 8,
     studentsCount: 32000,
     profileUrl: `${Env.SITE_URL}/our_team/syed_nuruddin_ahmed/`,
@@ -509,7 +534,8 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     organization: 'Don Sumdany Facilitation & Thriving Skills',
     localAvatar: require('../../../assets/team/don_sumdany.png'),
     bio: 'Leading motivational speaker, master corporate trainer, and youth leadership coach having trained over 150,000+ professionals and university graduates.',
-    banglaBio: 'বাংলাদেশের শীর্ষস্থানীয় মোটিভেশনাল স্পিকার ও করপোরেট ট্রেইনার। দেড় লক্ষাধিক তরুণ ও প্রফেশনালকে সফল ক্যারিয়ার ও লিডারশিপে অনুপ্রাণিত করেছেন।',
+    banglaBio:
+      'বাংলাদেশের শীর্ষস্থানীয় মোটিভেশনাল স্পিকার ও করপোরেট ট্রেইনার। দেড় লক্ষাধিক তরুণ ও প্রফেশনালকে সফল ক্যারিয়ার ও লিডারশিপে অনুপ্রাণিত করেছেন।',
     coursesCount: 6,
     studentsCount: 38500,
     profileUrl: `${Env.SITE_URL}/instructors/`,
@@ -529,7 +555,8 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     organization: 'Ex-CEO Partex Star Group & Leading Conglomerates',
     localAvatar: require('../../../assets/team/km_ali.png'),
     bio: 'Over 35 years of senior C-suite executive leadership experience heading top conglomerates, strategic operations, and high-performance management.',
-    banglaBio: 'পারটেক্স স্টার গ্রুপ সহ শীর্ষস্থানীয় করপোরেট কনগ্লোমারেটের সাবেক সিইও। ৩৫+ বছরের সিনিয়র এক্সিকিউটিভ ও স্ট্র্যাটেজিক লিডারশিপের অভিজ্ঞতা।',
+    banglaBio:
+      'পারটেক্স স্টার গ্রুপ সহ শীর্ষস্থানীয় করপোরেট কনগ্লোমারেটের সাবেক সিইও। ৩৫+ বছরের সিনিয়র এক্সিকিউটিভ ও স্ট্র্যাটেজিক লিডারশিপের অভিজ্ঞতা।',
     coursesCount: 5,
     studentsCount: 24600,
     profileUrl: `${Env.SITE_URL}/instructors/`,
@@ -537,8 +564,18 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     category: 'faculty',
     badge: 'Executive Advisor',
     banglaBadge: 'এক্সিকিউটিভ অ্যাডভাইজর',
-    expertise: ['C-Suite Leadership', 'Business Turnaround', 'Strategic Planning', 'People Management'],
-    banglaExpertise: ['সি-সুইট লিডারশিপ', 'বিজনেস টার্নঅ্যারাউন্ড', 'কৌশলগত পরিকল্পনা', 'পিপল ম্যানেজমেন্ট'],
+    expertise: [
+      'C-Suite Leadership',
+      'Business Turnaround',
+      'Strategic Planning',
+      'People Management',
+    ],
+    banglaExpertise: [
+      'সি-সুইট লিডারশিপ',
+      'বিজনেস টার্নঅ্যারাউন্ড',
+      'কৌশলগত পরিকল্পনা',
+      'পিপল ম্যানেজমেন্ট',
+    ],
   },
   {
     id: 'faculty-arif-khan',
@@ -549,7 +586,8 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     organization: 'Shanta Asset Management & Ex-Commissioner BSEC',
     localAvatar: require('../../../assets/team/arif_khan.png'),
     bio: 'Eminent capital market strategist, former Commissioner of BSEC, former Managing Director & CEO of IDLC Finance Limited.',
-    banglaBio: 'বিশিষ্ট ক্যাপিটাল মার্কেট বিশেষজ্ঞ, সাবেক কমিশনার বিএসইসি এবং আইডিএলসি ফিন্যান্স লিমিটেডের সাবেক ব্যবস্থাপনা পরিচালক ও সিইও।',
+    banglaBio:
+      'বিশিষ্ট ক্যাপিটাল মার্কেট বিশেষজ্ঞ, সাবেক কমিশনার বিএসইসি এবং আইডিএলসি ফিন্যান্স লিমিটেডের সাবেক ব্যবস্থাপনা পরিচালক ও সিইও।',
     coursesCount: 4,
     studentsCount: 19800,
     profileUrl: `${Env.SITE_URL}/instructors/`,
@@ -557,8 +595,18 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     category: 'faculty',
     badge: 'Finance Strategist',
     banglaBadge: 'ফিন্যান্স স্ট্র্যাটেজিস্ট',
-    expertise: ['Financial Modeling', 'Capital Markets', 'Investment Strategy', 'Corporate Finance'],
-    banglaExpertise: ['ফিন্যান্সিয়াল মডেলিং', 'ক্যাপিটাল মার্কেটস', 'ইনভেস্টমেন্ট স্ট্র্যাটেজি', 'কর্পোরেট ফিন্যান্স'],
+    expertise: [
+      'Financial Modeling',
+      'Capital Markets',
+      'Investment Strategy',
+      'Corporate Finance',
+    ],
+    banglaExpertise: [
+      'ফিন্যান্সিয়াল মডেলিং',
+      'ক্যাপিটাল মার্কেটস',
+      'ইনভেস্টমেন্ট স্ট্র্যাটেজি',
+      'কর্পোরেট ফিন্যান্স',
+    ],
   },
   {
     id: 'faculty-moinuddin',
@@ -569,7 +617,8 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     organization: 'Society for Leadership Skills Development (SLSD)',
     localAvatar: require('../../../assets/team/moinuddin_chowdhury.png'),
     bio: 'Prominent leadership strategist, executive sales coach, NLP practitioner, and President of Society for Leadership Skills Development.',
-    banglaBio: 'প্রখ্যাত লিডারশিপ স্ট্র্যাটেজিস্ট, এক্সিকিউটিভ সেলস ট্রেইনার এবং সোসাইটি ফর লিডারশিপ স্কিলস ডেভেলপমেন্ট (SLSD)-এর প্রেসিডেন্ট।',
+    banglaBio:
+      'প্রখ্যাত লিডারশিপ স্ট্র্যাটেজিস্ট, এক্সিকিউটিভ সেলস ট্রেইনার এবং সোসাইটি ফর লিডারশিপ স্কিলস ডেভেলপমেন্ট (SLSD)-এর প্রেসিডেন্ট।',
     coursesCount: 5,
     studentsCount: 16500,
     profileUrl: `${Env.SITE_URL}/instructors/`,
@@ -589,7 +638,8 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     organization: 'Independent University, Bangladesh (IUB)',
     localAvatar: require('../../../assets/team/mamun_habib.jpeg'),
     bio: 'Internationally recognized academician, author, and researcher with extensive publications in supply chain management and operations research.',
-    banglaBio: 'আন্তর্জাতিক খ্যাতিসম্পন্ন অধ্যাপক, গবেষক ও সাপ্লাই চেইন ম্যানেজমেন্ট বিশেষজ্ঞ। বিশ্বজুড়ে বহুল প্রশংসিত রিসার্চ ও টেক্সটবুকের লেখক।',
+    banglaBio:
+      'আন্তর্জাতিক খ্যাতিসম্পন্ন অধ্যাপক, গবেষক ও সাপ্লাই চেইন ম্যানেজমেন্ট বিশেষজ্ঞ। বিশ্বজুড়ে বহুল প্রশংসিত রিসার্চ ও টেক্সটবুকের লেখক।',
     coursesCount: 4,
     studentsCount: 14200,
     profileUrl: `${Env.SITE_URL}/instructors/`,
@@ -597,8 +647,18 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     category: 'faculty',
     badge: 'SCM Academician',
     banglaBadge: 'সাপ্লাই চেইন বিশেষজ্ঞ',
-    expertise: ['Supply Chain Management', 'Operations Research', 'Global Logistics', 'Procurement Strategy'],
-    banglaExpertise: ['সাপ্লাই চেইন ম্যানেজমেন্ট', 'অপারেশন্স রিসার্চ', 'গ্লোবাল লজিস্টিকস', 'প্রকিউরমেন্ট কৌশল'],
+    expertise: [
+      'Supply Chain Management',
+      'Operations Research',
+      'Global Logistics',
+      'Procurement Strategy',
+    ],
+    banglaExpertise: [
+      'সাপ্লাই চেইন ম্যানেজমেন্ট',
+      'অপারেশন্স রিসার্চ',
+      'গ্লোবাল লজিস্টিকস',
+      'প্রকিউরমেন্ট কৌশল',
+    ],
   },
   {
     id: 'faculty-jishu',
@@ -609,7 +669,8 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     organization: 'Corporate Academy & Thriving Skills',
     localAvatar: require('../../../assets/team/jishu_tarafder.png'),
     bio: 'Author of "Creating Winning Mindset", celebrated executive development coach, and consultant for multinational corporations across Asia.',
-    banglaBio: 'জনপ্রিয় বই "ক্রিয়েটিং উইনিং মাইন্ডসেট"-এর লেখক, স্বনামধন্য কর্পোরেট ট্রেইনার ও এশিয়া অঞ্চলের শীর্ষ করপোরেট কনসালট্যান্ট।',
+    banglaBio:
+      'জনপ্রিয় বই "ক্রিয়েটিং উইনিং মাইন্ডসেট"-এর লেখক, স্বনামধন্য কর্পোরেট ট্রেইনার ও এশিয়া অঞ্চলের শীর্ষ করপোরেট কনসালট্যান্ট।',
     coursesCount: 5,
     studentsCount: 21000,
     profileUrl: `${Env.SITE_URL}/instructors/`,
@@ -617,8 +678,18 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     category: 'faculty',
     badge: 'Winning Mindset Author',
     banglaBadge: 'লেখক ও মেন্টর',
-    expertise: ['Winning Mindset', 'Executive Communication', 'Emotional Intelligence', 'Team Dynamics'],
-    banglaExpertise: ['উইনিং মাইন্ডসেট', 'এক্সিকিউটিভ কমিউনিকেশন', 'ইমোশনাল ইন্টেলিজেন্স', 'টিম ডাইনামিক্স'],
+    expertise: [
+      'Winning Mindset',
+      'Executive Communication',
+      'Emotional Intelligence',
+      'Team Dynamics',
+    ],
+    banglaExpertise: [
+      'উইনিং মাইন্ডসেট',
+      'এক্সিকিউটিভ কমিউনিকেশন',
+      'ইমোশনাল ইন্টেলিজেন্স',
+      'টিম ডাইনামিক্স',
+    ],
   },
   {
     id: 'faculty-humaira',
@@ -629,7 +700,8 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     organization: 'Thriving Skills & Bangladesh Excel Summit',
     localAvatar: require('../../../assets/team/humaira_sharmeen.png'),
     bio: 'Senior analytics instructor, Microsoft Excel master trainer, and official mentor for the national Bangladesh Excel Summit championships.',
-    banglaBio: 'সিনিয়র অ্যানালিটিক্স ইন্সট্রাক্টর, মাইক্রোসফট এক্সেল মাস্টার ট্রেইনার এবং বাংলাদেশ এক্সেল সামিটের অফিসিয়াল মেন্টর।',
+    banglaBio:
+      'সিনিয়র অ্যানালিটিক্স ইন্সট্রাক্টর, মাইক্রোসফট এক্সেল মাস্টার ট্রেইনার এবং বাংলাদেশ এক্সেল সামিটের অফিসিয়াল মেন্টর।',
     coursesCount: 7,
     studentsCount: 31200,
     profileUrl: `${Env.SITE_URL}/instructors/`,
@@ -649,7 +721,8 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     organization: 'Thriving Skills Limited',
     localAvatar: require('../../../assets/team/yusuf_iqbal.jpeg'),
     bio: 'Leading institutional fiscal planning, university alliances, chambers of commerce partnerships, and operational financial compliance.',
-    banglaBio: 'প্রাতিষ্ঠানিক আর্থিক পরিকল্পনা, প্রাতিষ্ঠানিক অডিট, বাণিজ্য সংগঠন ও জাতীয় বিশ্ববিদ্যালয় পার্টনারশিপ সমন্বয়কারী।',
+    banglaBio:
+      'প্রাতিষ্ঠানিক আর্থিক পরিকল্পনা, প্রাতিষ্ঠানিক অডিট, বাণিজ্য সংগঠন ও জাতীয় বিশ্ববিদ্যালয় পার্টনারশিপ সমন্বয়কারী।',
     coursesCount: 3,
     studentsCount: 9500,
     profileUrl: `${Env.SITE_URL}/our_team/yusuf-iqbal/`,
@@ -667,9 +740,11 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     designation: 'Senior Admin & Accounts Officer',
     banglaDesignation: 'সিনিয়র অ্যাডমিন ও অ্যাকাউন্টস অফিসার',
     organization: 'Thriving Skills Limited',
-    avatarUrl: 'https://thrivingskill.com/wp-content/themes/eduma/images/demo_images/demo_image.jpg',
+    avatarUrl:
+      'https://thrivingskill.com/wp-content/themes/eduma/images/demo_images/demo_image.jpg',
     bio: 'Heading administrative operations, corporate compliance, office administration, logistics, and accounts management at Thriving Skills Limited.',
-    banglaBio: 'থ্রাইভিং স্কিলস লিমিটেডের প্রশাসনিক কার্যক্রম, করপোরেট কমপ্লায়েন্স, লজিস্টিকস ও অ্যাকাউন্টস অপারেশনস ব্যবস্থাপনা।',
+    banglaBio:
+      'থ্রাইভিং স্কিলস লিমিটেডের প্রশাসনিক কার্যক্রম, করপোরেট কমপ্লায়েন্স, লজিস্টিকস ও অ্যাকাউন্টস অপারেশনস ব্যবস্থাপনা।',
     coursesCount: 2,
     studentsCount: 6400,
     profileUrl: `${Env.SITE_URL}/our_team/sayed-sirajul-islam/`,
@@ -677,8 +752,18 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     category: 'leadership',
     badge: 'Admin & Accounts',
     banglaBadge: 'অ্যাডমিন ও অ্যাকাউন্টস',
-    expertise: ['Administrative Operations', 'Corporate Logistics', 'Compliance Management', 'Office Administration'],
-    banglaExpertise: ['প্রশাসনিক কার্যক্রম', 'করপোরেট লজিস্টিকস', 'কমপ্লায়েন্স ম্যানেজমেন্ট', 'অফিস প্রশাসন'],
+    expertise: [
+      'Administrative Operations',
+      'Corporate Logistics',
+      'Compliance Management',
+      'Office Administration',
+    ],
+    banglaExpertise: [
+      'প্রশাসনিক কার্যক্রম',
+      'করপোরেট লজিস্টিকস',
+      'কমপ্লায়েন্স ম্যানেজমেন্ট',
+      'অফিস প্রশাসন',
+    ],
   },
   {
     id: 'team-tareq',
@@ -689,7 +774,8 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     organization: 'Thriving Skills Limited',
     localAvatar: require('../../../assets/team/tareq_siddiqui.jpeg'),
     bio: 'Driving multimedia instructional production, national skills summits communications, and enterprise video learning experiences.',
-    banglaBio: 'ডিজিটাল লার্নিং কন্টেন্ট প্রোডাকশন, স্টুডিও ফ্যাসিলিটেশন এবং ন্যাশনাল স্কিলস সামিটের স্ট্র্যাটেজিক যোগাযোগ সমন্বয়ক।',
+    banglaBio:
+      'ডিজিটাল লার্নিং কন্টেন্ট প্রোডাকশন, স্টুডিও ফ্যাসিলিটেশন এবং ন্যাশনাল স্কিলস সামিটের স্ট্র্যাটেজিক যোগাযোগ সমন্বয়ক।',
     coursesCount: 3,
     studentsCount: 8200,
     profileUrl: `${Env.SITE_URL}/our_team/md-tareq-siddiqui-2/`,
@@ -709,7 +795,8 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     organization: 'Thriving Skills Limited',
     localAvatar: require('../../../assets/team/abdulla_al_noman.jpeg'),
     bio: 'Architecting core LMS infrastructure, enterprise learner portals, web performance optimization, and cybersecurity.',
-    banglaBio: 'থ্রাইভিং স্কিলসের মূল এলএমএস আর্কিটেকচার, ওয়েব পোর্টাল সিকিউরিটি এবং এন্টারপ্রাইজ ডিজিটাল লার্নিং ক্লাউড পরিচালনা।',
+    banglaBio:
+      'থ্রাইভিং স্কিলসের মূল এলএমএস আর্কিটেকচার, ওয়েব পোর্টাল সিকিউরিটি এবং এন্টারপ্রাইজ ডিজিটাল লার্নিং ক্লাউড পরিচালনা।',
     coursesCount: 3,
     studentsCount: 7800,
     profileUrl: `${Env.SITE_URL}/our_team/md-abdulla-al-noman/`,
@@ -727,9 +814,11 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     designation: 'Head of HR & Corporate Human Resource Professional',
     banglaDesignation: 'হেড অব এইচআর ও করপোরেট মানবসম্পদ বিশেষজ্ঞ',
     organization: 'Head of HR & Admin, Padma Group',
-    avatarUrl: 'https://secure.gravatar.com/avatar/86a5b489636e293e9d9597410b352cf893cc837531ba5ee633cd65c9dd1dd3b0?s=200&d=mm&r=g',
+    avatarUrl:
+      'https://secure.gravatar.com/avatar/86a5b489636e293e9d9597410b352cf893cc837531ba5ee633cd65c9dd1dd3b0?s=200&d=mm&r=g',
     bio: 'Seasoned HR leader with 16+ years of experience in talent development, organizational culture, performance appraisal, and strategic HR management.',
-    banglaBio: 'পদ্মা গ্রুপের হেড অব এইচআর অ্যান্ড অ্যাডমিন। ১৬+ বছরের মানবসম্পদ ব্যবস্থাপনা, ট্যালেন্ট ম্যানেজমেন্ট ও কর্পোরেট ট্রেনিংয়ের অভিজ্ঞতাসম্পন্ন।',
+    banglaBio:
+      'পদ্মা গ্রুপের হেড অব এইচআর অ্যান্ড অ্যাডমিন। ১৬+ বছরের মানবসম্পদ ব্যবস্থাপনা, ট্যালেন্ট ম্যানেজমেন্ট ও কর্পোরেট ট্রেনিংয়ের অভিজ্ঞতাসম্পন্ন।',
     coursesCount: 4,
     studentsCount: 12800,
     profileUrl: `${Env.SITE_URL}/instructors/`,
@@ -737,8 +826,18 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     category: 'faculty',
     badge: 'HR Practitioner',
     banglaBadge: 'এইচআর প্র্যাকটিশনার',
-    expertise: ['Strategic HRM', 'Performance Appraisal', 'Talent Acquisition', 'Labor Law & Compliance'],
-    banglaExpertise: ['স্ট্র্যাটেজিক এইচআরএম', 'পারফরম্যান্স মূল্যায়ন', 'ট্যালেন্ট অ্যাকুইজিশন', 'শ্রম আইন ও কমপ্লায়েন্স'],
+    expertise: [
+      'Strategic HRM',
+      'Performance Appraisal',
+      'Talent Acquisition',
+      'Labor Law & Compliance',
+    ],
+    banglaExpertise: [
+      'স্ট্র্যাটেজিক এইচআরএম',
+      'পারফরম্যান্স মূল্যায়ন',
+      'ট্যালেন্ট অ্যাকুইজিশন',
+      'শ্রম আইন ও কমপ্লায়েন্স',
+    ],
   },
   {
     id: 'faculty-nazrul',
@@ -747,9 +846,11 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     designation: 'Professor of Management & Dean, School of Business',
     banglaDesignation: 'অধ্যাপক ও ডিন, স্কুল অব বিজনেস',
     organization: 'Leading Business Faculty & Academic Researcher',
-    avatarUrl: 'https://secure.gravatar.com/avatar/d3c7abba8088eebb4ca22342944c4c0eb33bb369f48e15770a20088a3e9299ac?s=200&d=mm&r=g',
+    avatarUrl:
+      'https://secure.gravatar.com/avatar/d3c7abba8088eebb4ca22342944c4c0eb33bb369f48e15770a20088a3e9299ac?s=200&d=mm&r=g',
     bio: 'Eminent professor of Management, HRM and International Business. Extensive publications in international academic journals and executive consulting.',
-    banglaBio: 'ব্যবস্থাপনা, এইচআরএম ও আন্তর্জাতিক বাণিজ্যের বিশিষ্ট অধ্যাপক ও গবেষক। স্কুল অব বিজনেসের ডিন হিসেবে দায়িত্ব পালনরত।',
+    banglaBio:
+      'ব্যবস্থাপনা, এইচআরএম ও আন্তর্জাতিক বাণিজ্যের বিশিষ্ট অধ্যাপক ও গবেষক। স্কুল অব বিজনেসের ডিন হিসেবে দায়িত্ব পালনরত।',
     coursesCount: 3,
     studentsCount: 11400,
     profileUrl: `${Env.SITE_URL}/instructors/`,
@@ -757,7 +858,12 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     category: 'faculty',
     badge: 'Business Faculty Dean',
     banglaBadge: 'বিজনেস ডিন ও গবেষক',
-    expertise: ['International Business', 'Strategic Management', 'Organizational Behavior', 'Academic Research'],
+    expertise: [
+      'International Business',
+      'Strategic Management',
+      'Organizational Behavior',
+      'Academic Research',
+    ],
     banglaExpertise: ['আন্তর্জাতিক বাণিজ্য', 'কৌশলগত ব্যবস্থাপনা', 'সাংগঠনিক আচরণ', 'একাডেমিক গবেষণা'],
   },
   {
@@ -767,9 +873,11 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     designation: 'Corporate Affairs & International Business Specialist',
     banglaDesignation: 'করপোরেট অ্যাফেয়ার্স ও বিজনেস ডেভেলপমেন্ট বিশেষজ্ঞ',
     organization: 'Senior Corporate Affairs Consultant (19+ Years Experience)',
-    avatarUrl: 'https://secure.gravatar.com/avatar/8d70454233aee21271f7892a631e26cec1fc23366c0ab9d9f74eed83c29d4d7e?s=200&d=mm&r=g',
+    avatarUrl:
+      'https://secure.gravatar.com/avatar/8d70454233aee21271f7892a631e26cec1fc23366c0ab9d9f74eed83c29d4d7e?s=200&d=mm&r=g',
     bio: 'Over 19+ years of senior executive experience across corporate affairs, regulatory compliance, strategic communications, and international trade.',
-    banglaBio: '১৯+ বছরের সিনিয়র এক্সিকিউটিভ অভিজ্ঞতা। করপোরেট অ্যাফেয়ার্স, রেগুলেটরি কমপ্লায়েন্স, স্ট্র্যাটেজিক কমিউনিকেশন ও বিজনেস ডেভেলপমেন্টে পারদর্শী।',
+    banglaBio:
+      '১৯+ বছরের সিনিয়র এক্সিকিউটিভ অভিজ্ঞতা। করপোরেট অ্যাফেয়ার্স, রেগুলেটরি কমপ্লায়েন্স, স্ট্র্যাটেজিক কমিউনিকেশন ও বিজনেস ডেভেলপমেন্টে পারদর্শী।',
     coursesCount: 3,
     studentsCount: 9800,
     profileUrl: `${Env.SITE_URL}/instructors/`,
@@ -777,8 +885,18 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     category: 'faculty',
     badge: 'Corporate Strategist',
     banglaBadge: 'করপোরেট স্ট্র্যাটেজিস্ট',
-    expertise: ['Corporate Affairs', 'Regulatory Compliance', 'Strategic Alliances', 'Business Negotiations'],
-    banglaExpertise: ['করপোরেট অ্যাফেয়ার্স', 'রেগুলেটরি কমপ্লায়েন্স', 'কৌশলগত অংশীদারিত্ব', 'বিজনেস নেগোসিয়েশন'],
+    expertise: [
+      'Corporate Affairs',
+      'Regulatory Compliance',
+      'Strategic Alliances',
+      'Business Negotiations',
+    ],
+    banglaExpertise: [
+      'করপোরেট অ্যাফেয়ার্স',
+      'রেগুলেটরি কমপ্লায়েন্স',
+      'কৌশলগত অংশীদারিত্ব',
+      'বিজনেস নেগোসিয়েশন',
+    ],
   },
   {
     id: 'faculty-jahid',
@@ -787,9 +905,11 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     designation: 'International Business & Pharmaceutical Operations Director',
     banglaDesignation: 'আন্তর্জাতিক বাণিজ্য ও ফার্মাসিউটিক্যালস পরিচালক',
     organization: 'Global Export Specialist & Healthcare Consultant',
-    avatarUrl: 'https://secure.gravatar.com/avatar/4d2eea19903908075937510088b9b4ac06158dc018d0670543898ff476909c26?s=200&d=mm&r=g',
+    avatarUrl:
+      'https://secure.gravatar.com/avatar/4d2eea19903908075937510088b9b4ac06158dc018d0670543898ff476909c26?s=200&d=mm&r=g',
     bio: 'Senior international business development director specializing in global pharmaceutical supply chain, emerging markets export, and regulatory approvals.',
-    banglaBio: 'আন্তর্জাতিক বাণিজ্য উন্নয়ন বিশেষজ্ঞ। গ্লোবাল ফার্মাসিউটিক্যাল এক্সপোর্ট, উদীয়মান বাজার সম্প্রসারণ ও রেগুলেটরি প্রক্রিয়াকরণে অভিজ্ঞ।',
+    banglaBio:
+      'আন্তর্জাতিক বাণিজ্য উন্নয়ন বিশেষজ্ঞ। গ্লোবাল ফার্মাসিউটিক্যাল এক্সপোর্ট, উদীয়মান বাজার সম্প্রসারণ ও রেগুলেটরি প্রক্রিয়াকরণে অভিজ্ঞ।',
     coursesCount: 3,
     studentsCount: 8600,
     profileUrl: `${Env.SITE_URL}/instructors/`,
@@ -797,7 +917,12 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     category: 'faculty',
     badge: 'Global Trade Director',
     banglaBadge: 'গ্লোবাল ট্রেড ডিরেক্টর',
-    expertise: ['International Trade', 'Pharmaceutical Exports', 'Emerging Markets', 'Global Supply Chain'],
+    expertise: [
+      'International Trade',
+      'Pharmaceutical Exports',
+      'Emerging Markets',
+      'Global Supply Chain',
+    ],
     banglaExpertise: ['আন্তর্জাতিক বাণিজ্য', 'ফার্মা এক্সপোর্ট', 'নতুন বাজার উন্নয়ন', 'গ্লোবাল সাপ্লাই চেইন'],
   },
   {
@@ -807,9 +932,11 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     designation: 'Assistant Professor & Corporate Training Consultant',
     banglaDesignation: 'সহকারী অধ্যাপক ও করপোরেট ট্রেনিং কনসালট্যান্ট',
     organization: 'Leading University Faculty & Management Researcher',
-    avatarUrl: 'https://secure.gravatar.com/avatar/c72db0f02b1bc26588f21869c85eba014184e465db5acb0fd6cfa1f01f22819f?s=200&d=mm&r=g',
+    avatarUrl:
+      'https://secure.gravatar.com/avatar/c72db0f02b1bc26588f21869c85eba014184e465db5acb0fd6cfa1f01f22819f?s=200&d=mm&r=g',
     bio: 'Academician, corporate soft skills trainer, and management researcher. Studied in top UK and Bangladeshi universities.',
-    banglaBio: 'সহকারী অধ্যাপক, প্রফেশনাল কর্পোরেট ট্রেইনার ও গবেষক। যুক্তরাজ্য ও বাংলাদেশের স্বনামধন্য বিশ্ববিদ্যালয়ে উচ্চশিক্ষা সম্পন্ন করেছেন।',
+    banglaBio:
+      'সহকারী অধ্যাপক, প্রফেশনাল কর্পোরেট ট্রেইনার ও গবেষক। যুক্তরাজ্য ও বাংলাদেশের স্বনামধন্য বিশ্ববিদ্যালয়ে উচ্চশিক্ষা সম্পন্ন করেছেন।',
     coursesCount: 2,
     studentsCount: 7200,
     profileUrl: `${Env.SITE_URL}/instructors/`,
@@ -817,7 +944,12 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     category: 'faculty',
     badge: 'Academic Researcher',
     banglaBadge: 'গবেষক ও ট্রেইনার',
-    expertise: ['Soft Skills Mastery', 'Corporate Communication', 'Leadership Training', 'Business Research'],
+    expertise: [
+      'Soft Skills Mastery',
+      'Corporate Communication',
+      'Leadership Training',
+      'Business Research',
+    ],
     banglaExpertise: ['সফট স্কিলস', 'করপোরেট কমিউনিকেশন', 'লিডারশিপ ট্রেনিং', 'বিজনেস রিসার্চ'],
   },
   {
@@ -827,9 +959,11 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     designation: 'Lead MS Office & Spreadsheet Associate',
     banglaDesignation: 'মাইক্রোসফট অফিস ও স্প্রেডশিট ট্রেইনার',
     organization: 'Thriving Skills & Bangladesh Excel Summit Facilitation',
-    avatarUrl: 'https://secure.gravatar.com/avatar/456dd4b3b92cc10f2fc22e19c66c61ea775738f9be80fcee7e915501c1781e89?s=200&d=mm&r=g',
+    avatarUrl:
+      'https://secure.gravatar.com/avatar/456dd4b3b92cc10f2fc22e19c66c61ea775738f9be80fcee7e915501c1781e89?s=200&d=mm&r=g',
     bio: 'Dedicated instructor for Microsoft Office productivity applications (Excel, PowerPoint, Word) with over 5+ years of practical training.',
-    banglaBio: 'মাইক্রোসফট অফিস অ্যাপ্লিকেশনের (এক্সেল, পাওয়ারপয়েন্ট, ওয়ার্ড) পেশাদার প্রশিক্ষক। শত শত শিক্ষার্থী ও করপোরেট প্রফেশনালদের মেন্টর।',
+    banglaBio:
+      'মাইক্রোসফট অফিস অ্যাপ্লিকেশনের (এক্সেল, পাওয়ারপয়েন্ট, ওয়ার্ড) পেশাদার প্রশিক্ষক। শত শত শিক্ষার্থী ও করপোরেট প্রফেশনালদের মেন্টর।',
     coursesCount: 3,
     studentsCount: 10200,
     profileUrl: `${Env.SITE_URL}/instructors/`,
@@ -837,8 +971,18 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     category: 'faculty',
     badge: 'Office Specialist',
     banglaBadge: 'অফিস স্পেশালিস্ট',
-    expertise: ['Microsoft Office 365', 'Data Entry & Formulas', 'Visual Presentations', 'Document Formatting'],
-    banglaExpertise: ['মাইক্রোসফট অফিস ৩৬৫', 'ডাটা এন্ট্রি ও ফর্মুলা', 'ভিজ্যুয়াল প্রেজেন্টেশন', 'ডকুমেন্ট ফরম্যাটিং'],
+    expertise: [
+      'Microsoft Office 365',
+      'Data Entry & Formulas',
+      'Visual Presentations',
+      'Document Formatting',
+    ],
+    banglaExpertise: [
+      'মাইক্রোসফট অফিস ৩৬৫',
+      'ডাটা এন্ট্রি ও ফর্মুলা',
+      'ভিজ্যুয়াল প্রেজেন্টেশন',
+      'ডকুমেন্ট ফরম্যাটিং',
+    ],
   },
   {
     id: 'faculty-yousuf-sultan',
@@ -847,9 +991,11 @@ export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
     designation: 'Certified Shariah Advisor & Islamic Banking Expert',
     banglaDesignation: 'সার্টিফাইড শরীয়াহ অ্যাডভাইজর ও ইসলামিক ব্যাংকিং বিশেষজ্ঞ',
     organization: 'Islamic Finance Advisory & Shariah Board Member',
-    avatarUrl: 'https://secure.gravatar.com/avatar/3ccd3a9f31b11a25ab558fdccedcfd3690e2657b82172f1905cd27bec3a36670?s=200&d=mm&r=g',
+    avatarUrl:
+      'https://secure.gravatar.com/avatar/3ccd3a9f31b11a25ab558fdccedcfd3690e2657b82172f1905cd27bec3a36670?s=200&d=mm&r=g',
     bio: 'Certified Islamic finance professional, AAOIFI-certified Shariah advisor and auditor, consulting financial institutions and Islamic fintech.',
-    banglaBio: 'সার্টিফাইড ইসলামিক ফিন্যান্স প্রফেশনাল, আওফি (AAOIFI) সার্টিফাইড শরীয়াহ উপদেষ্টা ও অডিটর। ইসলামিক ব্যাংকিং কোর্সের প্রধান শিক্ষক।',
+    banglaBio:
+      'সার্টিফাইড ইসলামিক ফিন্যান্স প্রফেশনাল, আওফি (AAOIFI) সার্টিফাইড শরীয়াহ উপদেষ্টা ও অডিটর। ইসলামিক ব্যাংকিং কোর্সের প্রধান শিক্ষক।',
     coursesCount: 2,
     studentsCount: 6800,
     profileUrl: `${Env.SITE_URL}/instructors/`,
@@ -973,11 +1119,14 @@ export class SiteNavigationService {
         });
 
         const merged: CourseAuthorItem[] = canonical.map((author) => {
-          const liveUser = userMap.get(author.name.toLowerCase().trim()) || userMap.get(author.id.replace(/^(team|faculty|leader)-/, '').toLowerCase());
+          const liveUser =
+            userMap.get(author.name.toLowerCase().trim()) ||
+            userMap.get(author.id.replace(/^(team|faculty|leader)-/, '').toLowerCase());
           if (liveUser) {
             return {
               ...author,
-              avatarUrl: liveUser.avatar_urls?.['96'] || liveUser.avatar_urls?.['48'] || author.avatarUrl,
+              avatarUrl:
+                liveUser.avatar_urls?.['96'] || liveUser.avatar_urls?.['48'] || author.avatarUrl,
               bio: liveUser.description ? liveUser.description.trim() : author.bio,
               profileUrl: liveUser.link || author.profileUrl,
             };

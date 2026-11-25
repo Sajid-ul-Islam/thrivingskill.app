@@ -68,7 +68,10 @@ export function getSafeImageUri(rawUri?: string | null): string {
   if (!trimmed) return '';
 
   // Ensure https for both live and staging thrivingskill.com media
-  trimmed = trimmed.replace(/^http:\/\/(staging\.)?thrivingskill\.com/i, 'https://$1thrivingskill.com');
+  trimmed = trimmed.replace(
+    /^http:\/\/(staging\.)?thrivingskill\.com/i,
+    'https://$1thrivingskill.com'
+  );
 
   try {
     // Decode first to avoid double-encoding already encoded parts, then encodeURI
@@ -107,4 +110,3 @@ export function getSafeImageSource(
     },
   };
 }
-

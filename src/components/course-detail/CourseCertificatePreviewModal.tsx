@@ -64,12 +64,7 @@ export const CourseCertificatePreviewModal: React.FC<CourseCertificatePreviewMod
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View
         style={[
           styles.certModalOverlay,
@@ -83,7 +78,12 @@ export const CourseCertificatePreviewModal: React.FC<CourseCertificatePreviewMod
           {/* Modal Header */}
           <View style={styles.certModalHeader}>
             <View style={styles.titleRow}>
-              <Ionicons name="shield-checkmark" size={18} color="#E34234" style={{ flexShrink: 0 }} />
+              <Ionicons
+                name="shield-checkmark"
+                size={18}
+                color="#E34234"
+                style={{ flexShrink: 0 }}
+              />
               <Text style={[styles.certModalTitle, { color: colors.text }]} numberOfLines={1}>
                 {isBangla ? 'অফিসিয়াল সার্টিফিকেট প্রিভিউ' : 'Official Certificate Preview'}
               </Text>
@@ -101,7 +101,12 @@ export const CourseCertificatePreviewModal: React.FC<CourseCertificatePreviewMod
 
           <ScrollView showsVerticalScrollIndicator={false}>
             {/* The Certificate Canvas */}
-            <View style={[styles.certCanvas, { borderColor: '#D4AF37', backgroundColor: isDark ? '#121316' : '#FFFFFF' }]}>
+            <View
+              style={[
+                styles.certCanvas,
+                { borderColor: '#D4AF37', backgroundColor: isDark ? '#121316' : '#FFFFFF' },
+              ]}
+            >
               {/* Gold Inner Border */}
               <View style={[styles.certInnerBorder, { borderColor: '#D4AF37' }]}>
                 {/* Top Seal & Organization Header */}
@@ -146,7 +151,9 @@ export const CourseCertificatePreviewModal: React.FC<CourseCertificatePreviewMod
                 <View style={styles.certMetaRow}>
                   <View style={styles.certQrBox}>
                     <Ionicons name="qr-code-outline" size={34} color={colors.text} />
-                    <Text style={[styles.certVerifyText, { color: colors.textMuted }]}>Scan to Verify</Text>
+                    <Text style={[styles.certVerifyText, { color: colors.textMuted }]}>
+                      Scan to Verify
+                    </Text>
                   </View>
 
                   <View style={styles.certGoldSeal}>
@@ -156,7 +163,9 @@ export const CourseCertificatePreviewModal: React.FC<CourseCertificatePreviewMod
                   </View>
 
                   <View style={styles.certSigCol}>
-                    <Text style={[styles.sigCursive, { color: colors.text }]}>Abdullah Al Mahmud</Text>
+                    <Text style={[styles.sigCursive, { color: colors.text }]}>
+                      Abdullah Al Mahmud
+                    </Text>
                     <View style={[styles.sigLine, { backgroundColor: colors.border }]} />
                     <Text style={[styles.sigTitle, { color: colors.textMuted }]}>
                       Md. Abdullah Al Mahmud
@@ -195,7 +204,11 @@ export const CourseCertificatePreviewModal: React.FC<CourseCertificatePreviewMod
                     onOpenMandatoryReview();
                   }}
                   accessibilityRole="button"
-                  accessibilityLabel={isBangla ? 'রিভিউ দিয়ে সার্টিফিকেট আনলক করুন' : 'Rate & Review to Unlock Certificate'}
+                  accessibilityLabel={
+                    isBangla
+                      ? 'রিভিউ দিয়ে সার্টিফিকেট আনলক করুন'
+                      : 'Rate & Review to Unlock Certificate'
+                  }
                 >
                   <Ionicons name="star" size={16} color="#FFFFFF" />
                   <Text style={styles.certShareBtnText}>
@@ -203,16 +216,23 @@ export const CourseCertificatePreviewModal: React.FC<CourseCertificatePreviewMod
                   </Text>
                 </TouchableOpacity>
               ) : (
-                <View style={[styles.certShareBtn, { backgroundColor: isDark ? '#374151' : '#E5E7EB' }]}>
+                <View
+                  style={[styles.certShareBtn, { backgroundColor: isDark ? '#374151' : '#E5E7EB' }]}
+                >
                   <Ionicons name="lock-closed" size={16} color={isDark ? '#9CA3AF' : '#6B7280'} />
-                  <Text style={[styles.certShareBtnText, { color: isDark ? '#9CA3AF' : '#6B7280' }]}>
+                  <Text
+                    style={[styles.certShareBtnText, { color: isDark ? '#9CA3AF' : '#6B7280' }]}
+                  >
                     {isBangla ? 'কোর্স সম্পন্ন ও রিভিউ দিলে আনলক হবে' : 'Complete & Review to Unlock'}
                   </Text>
                 </View>
               )}
 
               <TouchableOpacity
-                style={[styles.certCloseBtn, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}
+                style={[
+                  styles.certCloseBtn,
+                  { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
+                ]}
                 onPress={onClose}
                 accessibilityRole="button"
                 accessibilityLabel="Close certificate preview"

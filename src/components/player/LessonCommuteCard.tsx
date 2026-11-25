@@ -123,11 +123,16 @@ export const LessonCommuteCard: React.FC<LessonCommuteCardProps> = ({
       return isBangla ? toBanglaNum(formatted) : formatted;
     }
     switch (sleepTimerOption) {
-      case '15m': return isBangla ? '১৫ মি.' : '15m';
-      case '30m': return isBangla ? '৩০ মি.' : '30m';
-      case '45m': return isBangla ? '৪৫ মি.' : '45m';
-      case 'end': return isBangla ? 'পাঠ শেষে' : 'End';
-      default: return isBangla ? 'স্লিপ' : 'Sleep';
+      case '15m':
+        return isBangla ? '১৫ মি.' : '15m';
+      case '30m':
+        return isBangla ? '৩০ মি.' : '30m';
+      case '45m':
+        return isBangla ? '৪৫ মি.' : '45m';
+      case 'end':
+        return isBangla ? 'পাঠ শেষে' : 'End';
+      default:
+        return isBangla ? 'স্লিপ' : 'Sleep';
     }
   };
 
@@ -152,10 +157,7 @@ export const LessonCommuteCard: React.FC<LessonCommuteCardProps> = ({
         </View>
 
         <TouchableOpacity
-          style={[
-            styles.sleepTimerPill,
-            sleepTimerOption !== 'off' && styles.sleepTimerPillActive,
-          ]}
+          style={[styles.sleepTimerPill, sleepTimerOption !== 'off' && styles.sleepTimerPillActive]}
           onPress={cycleSleepTimer}
           accessibilityRole="button"
           accessibilityLabel={
@@ -181,7 +183,11 @@ export const LessonCommuteCard: React.FC<LessonCommuteCardProps> = ({
         </TouchableOpacity>
       </View>
 
-      <LiveAudioWaveform isPlaying={isPlaying} primaryColor={isDark ? colors.primary : '#102F53'} accentColor="#E34234" />
+      <LiveAudioWaveform
+        isPlaying={isPlaying}
+        primaryColor={isDark ? colors.primary : '#102F53'}
+        accentColor="#E34234"
+      />
 
       <Text style={styles.commuteLessonTitle} numberOfLines={1}>
         {currentLesson.title}

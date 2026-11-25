@@ -55,7 +55,9 @@ describe('AuthService (with mocked fetch)', () => {
     const user = await AuthService.login('sadia@staging.thrivingskill.com', 'SecurePassword123!');
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(fetchMock.mock.calls[0][0]).toBe('https://staging.thrivingskill.com/wp-json/learnpress/v1/token');
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      'https://staging.thrivingskill.com/wp-json/learnpress/v1/token'
+    );
     expect(user.token).toBe('jwt_real_token_123');
     expect(user.displayName).toBe('Sadia Rahman');
     expect(user.roles).toEqual(['subscriber']);
@@ -65,7 +67,12 @@ describe('AuthService (with mocked fetch)', () => {
   it('registers via Companion endpoint first and falls back to LearnPress register endpoint on 404', async () => {
     const fetchMock = globalThis.fetch as jest.Mock;
     fetchMock
-      .mockResolvedValueOnce(mockJsonResponse({ code: 'rest_no_route', message: 'Not found', data: { status: 404 } }, 404))
+      .mockResolvedValueOnce(
+        mockJsonResponse(
+          { code: 'rest_no_route', message: 'Not found', data: { status: 404 } },
+          404
+        )
+      )
       .mockResolvedValueOnce(mockJsonResponse({ user_id: 88, status: 200 }, 200));
 
     const res = await AuthService.register({
@@ -90,11 +97,16 @@ describe('AuthService (with mocked fetch)', () => {
   it('validates existing token and returns false for invalid or missing tokens', async () => {
     expect(await AuthService.validateToken()).toBe(false);
 
-    (globalThis.fetch as jest.Mock).mockResolvedValueOnce(mockJsonResponse({ data: { status: 200 } }, 200));
+    (globalThis.fetch as jest.Mock).mockResolvedValueOnce(
+      mockJsonResponse({ data: { status: 200 } }, 200)
+    );
     expect(await AuthService.validateToken('valid_tok')).toBe(true);
 
     (globalThis.fetch as jest.Mock).mockResolvedValueOnce(
-      mockJsonResponse({ code: 'lp_jwt_auth_invalid_token', message: 'Invalid', data: { status: 403 } }, 403)
+      mockJsonResponse(
+        { code: 'lp_jwt_auth_invalid_token', message: 'Invalid', data: { status: 403 } },
+        403
+      )
     );
     expect(await AuthService.validateToken('bad_tok')).toBe(false);
   });
@@ -110,7 +122,10 @@ describe('AuthService (with mocked fetch)', () => {
     expect(safeParseBody(fetchMock.mock.calls[0][1].body)).toEqual({ phone: '01712345678' });
 
     fetchMock.mockResolvedValueOnce(
-      mockJsonResponse({ code: 'invalid_otp', message: 'OTP expired or incorrect', data: { status: 403 } }, 403)
+      mockJsonResponse(
+        { code: 'invalid_otp', message: 'OTP expired or incorrect', data: { status: 403 } },
+        403
+      )
     );
 
     await expect(AuthService.verifyPhoneOtp('01712345678', '123456')).rejects.toThrow(
@@ -125,8 +140,8 @@ describe('AuthService (with mocked fetch)', () => {
       url: 'https://staging.thrivingskill.com/login/?error=invalidkey',
     });
 
-    await expect(AuthService.confirmPasswordReset('tanvir', 'badkey', 'NewPass123456!')).rejects.toThrow(
-      'invalid or has expired'
-    );
+    await expect(
+      AuthService.confirmPasswordReset('tanvir', 'badkey', 'NewPass123456!')
+    ).rejects.toThrow('invalid or has expired');
   });
 });

@@ -201,11 +201,7 @@ export const ModernBanner: React.FC<ModernBannerProps> = ({
       >
         {/* Left Status Icon */}
         <View style={[styles.iconBadge, { backgroundColor: theme.iconBg }]}>
-          <Ionicons
-            name={(banner.icon || theme.icon) as any}
-            size={20}
-            color={theme.iconColor}
-          />
+          <Ionicons name={(banner.icon || theme.icon) as any} size={20} color={theme.iconColor} />
         </View>
 
         {/* Text Section */}
