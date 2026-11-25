@@ -163,19 +163,20 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
 
       {/* Main Responsive Mobile Frame */}
       <View style={styles.mobileFrame}>
-        {/* Full-bleed Edge-to-Edge Poster Image with NO fading gradient */}
-        <Animated.Image
-          source={SPLASH_POSTER_IMAGE}
-          style={[
-            styles.posterImage,
-            {
-              opacity: heroFadeAnim,
-              transform: [{ scale: heroScaleAnim }],
-            },
-            Platform.OS === 'web' && ({ objectPosition: 'top center' } as unknown as object),
-          ]}
-          resizeMode="cover"
-        />
+        {/* Poster Image Container - Padded below system status bar / notch so brand logo is 100% visible */}
+        <View style={[styles.imageContainer, { paddingTop: insets.top }]}>
+          <Animated.Image
+            source={SPLASH_POSTER_IMAGE}
+            style={[
+              styles.posterImage,
+              {
+                opacity: heroFadeAnim,
+                transform: [{ scale: heroScaleAnim }],
+              },
+            ]}
+            resizeMode="contain"
+          />
+        </View>
 
         {/* Foreground Content Overlay */}
         <View
@@ -272,7 +273,7 @@ export const BrandSplashScreen: React.FC<BrandSplashScreenProps> = ({
 const styles = StyleSheet.create({
   outerContainer: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: '#0F192C',
+    backgroundColor: '#012B55',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 9999,
@@ -284,10 +285,16 @@ const styles = StyleSheet.create({
     height: '100%',
     position: 'relative',
     overflow: 'hidden',
-    backgroundColor: '#0F192C',
+    backgroundColor: '#012B55',
+  },
+  imageContainer: {
+    ...StyleSheet.absoluteFill,
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   posterImage: {
-    ...StyleSheet.absoluteFill,
     width: '100%',
     height: '100%',
   },
