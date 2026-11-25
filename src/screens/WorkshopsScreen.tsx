@@ -269,7 +269,9 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
           {[
             {
               id: 'all' as TabType,
-              label: isBangla ? `সকল (${workshops.length})` : `All Masterclasses (${workshops.length})`,
+              label: isBangla
+                ? `সকল (${workshops.length})`
+                : `All Masterclasses (${workshops.length})`,
               icon: 'calendar-outline' as const,
             },
             {

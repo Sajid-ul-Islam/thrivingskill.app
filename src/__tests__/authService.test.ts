@@ -1,7 +1,19 @@
 import { Platform } from 'react-native';
-import { AuthService } from '../services/api/authService';
+
+declare const Buffer: any;
+import {
+  AuthService,
+  isJwtTokenExpired,
+  isValidSessionTokenFormat,
+} from '../services/api/authService';
 import { ApiError, HttpClient } from '../services/api/httpClient';
 import { Env } from '../config/env';
+
+function makeSignedMockJwt(payload: Record<string, any>): string {
+  const encode = (obj: Record<string, any>) =>
+    btoa(JSON.stringify(obj)).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+  return `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode(payload)}.sig123`;
+}
 
 function safeParseBody(raw: string): Record<string, any> {
   try {
@@ -233,5 +245,68 @@ describe('AuthService (with mocked fetch)', () => {
     await expect(
       AuthService.confirmPasswordReset('tanvir', 'badkey', 'NewPass123456!')
     ).rejects.toThrow('invalid or has expired');
+  });
+
+  it('rejects fabricated ts_session_ tokens and detects locally expired 7-day tsmb JWTs', async () => {
+    expect(isValidSessionTokenFormat('ts_session_123')).toBe(false);
+    expect(isValidSessionTokenFormat('')).toBe(false);
+    expect(isValidSessionTokenFormat('real_jwt_token')).toBe(true);
+
+    const nowSec = Math.floor(Date.now() / 1000);
+    const expiredTsmb = makeSignedMockJwt({
+      iss: 'tsmb',
+      sub: 42,
+      iat: nowSec - 700000,
+      exp: nowSec - 60,
+    });
+    const activeTsmb = makeSignedMockJwt({
+      iss: 'tsmb',
+      sub: 42,
+      iat: nowSec,
+      exp: nowSec + 604800,
+    });
+
+    expect(isJwtTokenExpired(expiredTsmb)).toBe(true);
+    expect(isJwtTokenExpired(activeTsmb)).toBe(false);
+
+    const fetchMock = globalThis.fetch as jest.Mock;
+    expect(await AuthService.verifySession('ts_session_42')).toBe('invalid');
+    expect(await AuthService.verifySession(expiredTsmb)).toBe('invalid');
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    // Valid tsmb token verifies against /wp/v2/users/me rather than /learnpress/v1/token/validate
+    fetchMock.mockResolvedValueOnce(mockJsonResponse({ id: 42, name: 'Sadia' }, 200));
+    expect(await AuthService.verifySession(activeTsmb)).toBe('valid');
+    expect(fetchMock.mock.calls[0][0]).toContain('/wp/v2/users/me');
+
+    // Offline network error preserves offline status rather than invalidating a non-expired session
+    fetchMock.mockRejectedValueOnce(new TypeError('Network request failed'));
+    expect(await AuthService.verifySession(activeTsmb)).toBe('offline');
+
+    // Server 401 returns invalid immediately
+    fetchMock.mockResolvedValueOnce(
+      mockJsonResponse(
+        { code: 'rest_not_logged_in', message: 'Expired', data: { status: 401 } },
+        401
+      )
+    );
+    expect(await AuthService.verifySession(activeTsmb)).toBe('invalid');
+  });
+
+  it('rejects login and OTP responses that omit a valid token', async () => {
+    const fetchMock = globalThis.fetch as jest.Mock;
+    fetchMock.mockResolvedValueOnce(mockJsonResponse({ user_id: 10 }, 200));
+
+    await expect(AuthService.login('user@example.com', 'Password1234!')).rejects.toMatchObject({
+      status: 401,
+      code: 'INVALID_TOKEN_RESPONSE',
+    });
+
+    fetchMock.mockResolvedValueOnce(
+      mockJsonResponse({ success: true, token: 'ts_session_10' }, 200)
+    );
+    await expect(AuthService.verifyPhoneOtp('01712345678', '123456')).rejects.toThrow(
+      'valid session token'
+    );
   });
 });

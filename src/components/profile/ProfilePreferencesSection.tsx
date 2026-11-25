@@ -562,12 +562,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
               </View>
             </View>
             <View style={[styles.langPill, { backgroundColor: colors.primaryLight }]}>
-              <Text
-                style={[
-                  styles.langPillText,
-                  { color: colors.primary, fontWeight: '800' },
-                ]}
-              >
+              <Text style={[styles.langPillText, { color: colors.primary, fontWeight: '800' }]}>
                 OTA Engine
               </Text>
             </View>
@@ -977,21 +972,12 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
             accessibilityLabel="Trusted Partners and MoUs"
           >
             <View style={styles.settingLeft}>
-              <Ionicons
-                name="shield-checkmark-outline"
-                size={20}
-                color={colors.primary}
-              />
+              <Ionicons name="shield-checkmark-outline" size={20} color={colors.primary} />
               <Text style={[styles.settingLabel, { color: colors.text }]}>
                 Trusted Partners & MoUs
               </Text>
             </View>
-            <Text
-              style={[
-                styles.versionText,
-                { color: colors.primary, fontWeight: '600' },
-              ]}
-            >
+            <Text style={[styles.versionText, { color: colors.primary, fontWeight: '600' }]}>
               Universities & a2i →
             </Text>
           </TouchableOpacity>

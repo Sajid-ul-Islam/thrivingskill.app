@@ -29,7 +29,7 @@ const defaultModalContext: ModalContextValue = {
   closeModal: () => {},
   isSplashVisible: false,
   setIsSplashVisible: () => {},
-  authInitialMode: 'register',
+  authInitialMode: 'login',
   setAuthInitialMode: () => {},
 };
 
@@ -38,7 +38,7 @@ const ModalContext = createContext<ModalContextValue>(defaultModalContext);
 export const ModalProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [activeModal, setActiveModal] = useState<AppModalType | null>(null);
   const [isSplashVisible, setIsSplashVisible] = useState<boolean>(true);
-  const [authInitialMode, setAuthInitialMode] = useState<AuthMode>('register');
+  const [authInitialMode, setAuthInitialMode] = useState<AuthMode>('login');
 
   const openModal = useCallback((modal: AppModalType) => {
     setActiveModal(modal);

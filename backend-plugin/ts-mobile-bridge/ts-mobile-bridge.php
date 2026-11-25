@@ -178,20 +178,70 @@ class TSMB_Security
 {
     private const JWT_ISSUER = 'tsmb';
     private const TOKEN_TTL_SECONDS = 604800; // 7 days
+    private static $last_mail_error = null;
 
     public static function init(): void
     {
         add_filter('determine_current_user', [__CLASS__, 'determine_current_user'], 20);
+        add_action('wp_mail_failed', [__CLASS__, 'log_mail_failure']);
+    }
+
+    public static function log_mail_failure($wp_error): void
+    {
+        if (is_wp_error($wp_error)) {
+            self::$last_mail_error = $wp_error->get_error_message();
+            error_log(sprintf('[TSMB Mail Failure] %s', self::$last_mail_error));
+        }
+    }
+
+    public static function get_last_mail_error(): ?string
+    {
+        return self::$last_mail_error;
+    }
+
+    public static function should_trust_proxy_headers(): bool
+    {
+        if (defined('TSMB_TRUST_PROXY_HEADERS') && TSMB_TRUST_PROXY_HEADERS) {
+            return true;
+        }
+        return get_option('tsmb_trust_proxy_headers', '0') === '1';
     }
 
     public static function get_client_ip(): string
     {
-        $raw = isset($_SERVER['REMOTE_ADDR']) ? wp_unslash((string) $_SERVER['REMOTE_ADDR']) : '';
-        $clean = sanitize_text_field($raw);
-        if (filter_var($clean, FILTER_VALIDATE_IP)) {
-            return $clean;
+        $ip = '0.0.0.0';
+
+        if (self::should_trust_proxy_headers()) {
+            $header_candidates = [
+                'HTTP_CF_CONNECTING_IP',
+                'HTTP_X_REAL_IP',
+                'HTTP_X_FORWARDED_FOR',
+            ];
+
+            foreach ($header_candidates as $header) {
+                if (!empty($_SERVER[$header])) {
+                    $raw_value = wp_unslash((string) $_SERVER[$header]);
+                    $ips = explode(',', $raw_value);
+                    foreach ($ips as $candidate) {
+                        $candidate = trim(sanitize_text_field($candidate));
+                        if (filter_var($candidate, FILTER_VALIDATE_IP)) {
+                            $ip = $candidate;
+                            break 2;
+                        }
+                    }
+                }
+            }
         }
-        return '0.0.0.0';
+
+        if ($ip === '0.0.0.0' && !empty($_SERVER['REMOTE_ADDR'])) {
+            $raw = wp_unslash((string) $_SERVER['REMOTE_ADDR']);
+            $clean = sanitize_text_field($raw);
+            if (filter_var($clean, FILTER_VALIDATE_IP)) {
+                $ip = $clean;
+            }
+        }
+
+        return apply_filters('tsmb_client_ip', $ip);
     }
 
     public static function consume_rate_limit(
@@ -230,6 +280,75 @@ class TSMB_Security
         $remaining_ttl = max(1, intval($state['reset_at']) - $now);
         set_transient($key, $state, $remaining_ttl);
         return true;
+    }
+
+    /**
+     * Resolves a safe, clean username for registration.
+     * If the user provided a username and it is available, keeps it verbatim.
+     * If taken or empty, generates a clean suggestion with a random suffix.
+     *
+     * @param string $requested_user User-provided username (optional).
+     * @param string $email User email (used as fallback seed).
+     * @return array{username: string, is_suggested: bool, original_requested: string}
+     */
+    public static function resolve_registration_username(string $requested_user, string $email): array
+    {
+        $requested_clean = sanitize_user(trim($requested_user), true);
+
+        // If user typed a valid username of at least 3 characters
+        if (!empty($requested_clean) && strlen($requested_clean) >= 3) {
+            if (!username_exists($requested_clean)) {
+                return [
+                    'username'           => $requested_clean,
+                    'is_suggested'       => false,
+                    'original_requested' => $requested_user,
+                ];
+            }
+            // If requested username is taken, generate a clean suggested alternative
+            $clean_seed = strtolower((string) preg_replace('/[^a-zA-Z0-9_]/', '', $requested_clean));
+            $clean_seed = substr($clean_seed, 0, 20);
+            $suffix     = bin2hex(random_bytes(2)); // e.g. sajid_4f2a
+            $candidate  = sanitize_user($clean_seed . '_' . $suffix, true);
+            $attempts   = 0;
+            while (username_exists($candidate) && $attempts < 10) {
+                $attempts++;
+                $candidate = sanitize_user($clean_seed . '_' . bin2hex(random_bytes(3)), true);
+            }
+            return [
+                'username'           => $candidate,
+                'is_suggested'       => true,
+                'original_requested' => $requested_user,
+            ];
+        }
+
+        // No username provided: seed from email prefix
+        $email_prefix = explode('@', $email)[0] ?? 'student';
+        $clean_seed   = strtolower((string) preg_replace('/[^a-zA-Z0-9_]/', '', $email_prefix));
+        if (strlen($clean_seed) < 3) {
+            $clean_seed = 'student';
+        }
+        $clean_seed = substr($clean_seed, 0, 20);
+
+        if (!username_exists($clean_seed)) {
+            return [
+                'username'           => $clean_seed,
+                'is_suggested'       => false,
+                'original_requested' => '',
+            ];
+        }
+
+        $candidate = sanitize_user($clean_seed . '_' . bin2hex(random_bytes(2)), true);
+        $attempts  = 0;
+        while (username_exists($candidate) && $attempts < 10) {
+            $attempts++;
+            $candidate = sanitize_user($clean_seed . '_' . bin2hex(random_bytes(3)), true);
+        }
+
+        return [
+            'username'           => $candidate,
+            'is_suggested'       => true,
+            'original_requested' => '',
+        ];
     }
 
     public static function generate_secure_username(string $seed = ''): string
@@ -457,6 +576,12 @@ class TSMB_Rest_API
         register_rest_route(self::NAMESPACE, '/verify-registration', [
             'methods'             => 'POST',
             'callback'            => [__CLASS__, 'verify_registration'],
+            'permission_callback' => '__return_true',
+        ]);
+
+        register_rest_route(self::NAMESPACE, '/resend-registration', [
+            'methods'             => 'POST',
+            'callback'            => [__CLASS__, 'resend_registration'],
             'permission_callback' => '__return_true',
         ]);
     }
@@ -1097,10 +1222,12 @@ class TSMB_Rest_API
 
         $email_already_registered = (bool) email_exists($email);
 
-        if (!$email_already_registered) {
-            $seed = !empty($req_user) ? $req_user : (explode('@', $email)[0] ?? 'student');
-            $username = TSMB_Security::generate_secure_username($seed);
+        $username_data = TSMB_Security::resolve_registration_username($req_user, $email);
+        $username      = $username_data['username'];
+        $is_suggested  = $username_data['is_suggested'];
+        $mail_sent     = false;
 
+        if (!$email_already_registered) {
             $name_parts = preg_split('/\s+/', trim($name));
             $first_name = sanitize_text_field($params['first_name'] ?? ($name_parts[0] ?? ''));
             $last_name  = sanitize_text_field(
@@ -1111,15 +1238,17 @@ class TSMB_Rest_API
             set_transient(
                 $pending_key,
                 [
-                    'email'         => $email,
-                    'username'      => $username,
-                    'password_hash' => $password_hash,
-                    'name'          => $name,
-                    'first_name'    => $first_name,
-                    'last_name'     => $last_name,
-                    'phone'         => $phone,
-                    'otp_hash'      => $otp_hash,
-                    'attempts'      => 0,
+                    'email'              => $email,
+                    'username'           => $username,
+                    'username_suggested' => $is_suggested,
+                    'password_hash'      => $password_hash,
+                    'name'               => $name,
+                    'first_name'         => $first_name,
+                    'last_name'          => $last_name,
+                    'phone'              => $phone,
+                    'otp_hash'           => $otp_hash,
+                    'attempts'           => 0,
+                    'created_at'         => time(),
                 ],
                 15 * MINUTE_IN_SECONDS
             );
@@ -1129,7 +1258,12 @@ class TSMB_Rest_API
                 __("Your 6-digit Thriving Skills verification code is: %s\n\nThis code expires in 15 minutes. If you did not request this registration, you can safely ignore this email.", 'ts-mobile-bridge'),
                 $otp
             );
-            wp_mail($email, $subject, $body);
+
+            $mail_sent = wp_mail($email, $subject, $body);
+            if (!$mail_sent) {
+                $err_msg = TSMB_Security::get_last_mail_error() ?: 'wp_mail returned false (SMTP/PHPMailer delivery failure)';
+                error_log(sprintf('[TSMB Registration] Failed to send OTP email to %s: %s', $email, $err_msg));
+            }
         }
 
         // Identical response for existing and non-existing emails to prevent email enumeration.
@@ -1139,10 +1273,16 @@ class TSMB_Rest_API
             'code'                  => 200,
             'message'               => __('If this email address is eligible, a 6-digit verification code has been sent. Please enter the code to activate your account.', 'ts-mobile-bridge'),
             'expires_in'            => 900,
+            'username'              => $username,
+            'username_suggested'    => $is_suggested,
         ];
 
         if (TSMB_Security::is_dev_environment() && !$email_already_registered) {
             $response['dev_verification_otp'] = $otp;
+            $response['mail_sent']             = $mail_sent;
+            if (!$mail_sent) {
+                $response['mail_error'] = TSMB_Security::get_last_mail_error() ?: 'wp_mail failed. Please configure SMTP credentials.';
+            }
         }
 
         return rest_ensure_response($response);
@@ -1220,7 +1360,16 @@ class TSMB_Rest_API
 
         delete_transient($pending_key);
 
-        $username = TSMB_Security::generate_secure_username((string) ($record['username'] ?? 'student'));
+        // Retain the exact validated username resolved during registration; do not double-suffix.
+        $saved_username = sanitize_user((string) ($record['username'] ?? ''), true);
+        if (empty($saved_username) || username_exists($saved_username)) {
+            // Fallback only if the chosen username was registered in the interim
+            $clean_seed = !empty($saved_username) ? $saved_username : 'student';
+            $username   = TSMB_Security::generate_secure_username($clean_seed);
+        } else {
+            $username = $saved_username;
+        }
+
         $display  = !empty($record['name']) ? (string) $record['name'] : $username;
 
         $user_id = wp_insert_user([
@@ -1276,6 +1425,82 @@ class TSMB_Rest_API
             'user_display_name' => $display,
             'token'             => $token,
         ]);
+    }
+
+    public static function resend_registration($request)
+    {
+        $client_ip = TSMB_Security::get_client_ip();
+        $ip_limit  = TSMB_Security::consume_rate_limit('resend_reg_ip', $client_ip, 5, 15 * MINUTE_IN_SECONDS);
+        if (is_wp_error($ip_limit)) {
+            return $ip_limit;
+        }
+
+        $params = $request->get_json_params();
+        if (!is_array($params)) {
+            $params = [];
+        }
+
+        $email = strtolower(sanitize_email($params['email'] ?? ''));
+        if (empty($email) || !is_email($email)) {
+            return new WP_Error(
+                'invalid_email',
+                __('Please provide a valid email address.', 'ts-mobile-bridge'),
+                ['status' => 400]
+            );
+        }
+
+        $email_limit = TSMB_Security::consume_rate_limit('resend_reg_email', $email, 3, 15 * MINUTE_IN_SECONDS);
+        if (is_wp_error($email_limit)) {
+            return $email_limit;
+        }
+
+        $pending_key = 'tsmb_reg_otp_' . hash('sha256', $email);
+        $record      = get_transient($pending_key);
+
+        if (!is_array($record) || empty($record['email']) || email_exists($email)) {
+            return new WP_Error(
+                'no_pending_registration',
+                __('No pending registration found for this email address or the code has expired. Please register again.', 'ts-mobile-bridge'),
+                ['status' => 400]
+            );
+        }
+
+        // Generate fresh OTP
+        $otp      = TSMB_Security::generate_numeric_otp(6);
+        $otp_hash = wp_hash_password($otp);
+
+        $record['otp_hash'] = $otp_hash;
+        $record['attempts'] = 0; // Reset attempts for new code
+        set_transient($pending_key, $record, 15 * MINUTE_IN_SECONDS);
+
+        $subject = __('Verify your Thriving Skills account (Resend)', 'ts-mobile-bridge');
+        $body    = sprintf(
+            __("Your new 6-digit Thriving Skills verification code is: %s\n\nThis code expires in 15 minutes. If you did not request this, you can safely ignore this email.", 'ts-mobile-bridge'),
+            $otp
+        );
+
+        $mail_sent = wp_mail($email, $subject, $body);
+        if (!$mail_sent) {
+            $err_msg = TSMB_Security::get_last_mail_error() ?: 'wp_mail returned false (SMTP/PHPMailer delivery failure)';
+            error_log(sprintf('[TSMB Registration Resend] Failed to deliver OTP email to %s: %s', $email, $err_msg));
+        }
+
+        $response = [
+            'status'     => 'success',
+            'code'       => 200,
+            'message'    => __('A new verification code has been sent to your email.', 'ts-mobile-bridge'),
+            'expires_in' => 900,
+        ];
+
+        if (TSMB_Security::is_dev_environment()) {
+            $response['dev_verification_otp'] = $otp;
+            $response['mail_sent']             = $mail_sent;
+            if (!$mail_sent) {
+                $response['mail_error'] = TSMB_Security::get_last_mail_error() ?: 'wp_mail failed. Please configure SMTP credentials.';
+            }
+        }
+
+        return rest_ensure_response($response);
     }
 
     public static function clear_feed_cache(): void

@@ -46,7 +46,7 @@ jobs:
         run: |
           GITLEAKS_VERSION=8.24.2
           curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" | tar -xz -C /tmp gitleaks
-          /tmp/gitleaks detect --source . --verbose --redact
+          /tmp/gitleaks detect --source . --config .gitleaks.toml --verbose --redact
 
       - name: Dependency Vulnerability Audit
         run: npm audit --omit=dev --audit-level=high
@@ -148,6 +148,9 @@ jobs:
         with:
           name: jest-coverage
           path: coverage/
+
+      - name: Expo Prebuild (Generate Native Android Manifest & Config)
+        run: npx expo prebuild --platform android --no-install
 
       - name: Run Offline Structural & Security Checks
         env:

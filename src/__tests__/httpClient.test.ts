@@ -228,4 +228,62 @@ describe('HttpClient', () => {
     expect(fallbackMeta.totalPages).toBe(3);
     expect(fallbackMeta.data).toEqual([{ id: 99 }]);
   });
+
+  it('invokes central 401 listener and clears token for authenticated requests, but skips unauthenticated or suppressed calls', async () => {
+    const fetchMock = globalThis.fetch as jest.Mock;
+    const unauthorizedListener = jest.fn();
+    HttpClient.setUnauthorizedListener(unauthorizedListener);
+
+    // 1. Authenticated request returning HTTP 401 clears token and notifies central handler
+    HttpClient.setAuthToken('expired-jwt-token');
+    fetchMock.mockResolvedValueOnce(
+      makeJsonResponse(
+        { code: 'rest_not_logged_in', message: 'Expired', data: { status: 401 } },
+        401
+      )
+    );
+
+    await expect(
+      HttpClient.get('/thrivingskill/v1/lessons/101', undefined, { retries: 0 })
+    ).rejects.toMatchObject({ status: 401, code: 'rest_not_logged_in' });
+
+    expect(unauthorizedListener).toHaveBeenCalledTimes(1);
+    expect(unauthorizedListener).toHaveBeenCalledWith({
+      endpoint: '/thrivingskill/v1/lessons/101',
+      status: 401,
+      code: 'rest_not_logged_in',
+    });
+    expect(await HttpClient.getAuthToken()).toBeNull();
+
+    // 2. skipAuth: true (e.g., login failure) returning 401 must NOT trigger session-expired listener
+    fetchMock.mockResolvedValueOnce(
+      makeJsonResponse({ code: 'invalid_credentials', message: 'Wrong login' }, 401)
+    );
+    await expect(
+      HttpClient.post('/learnpress/v1/token', { username: 'a', password: 'b' }, { skipAuth: true })
+    ).rejects.toMatchObject({ status: 401 });
+    expect(unauthorizedListener).toHaveBeenCalledTimes(1);
+
+    // 3. Guest call with no token returning 401 must NOT trigger listener
+    fetchMock.mockResolvedValueOnce(
+      makeJsonResponse({ code: 'rest_not_logged_in', message: 'Auth required' }, 401)
+    );
+    await expect(
+      HttpClient.get('/thrivingskill/v1/lessons/102', undefined, { retries: 0 })
+    ).rejects.toMatchObject({ status: 401 });
+    expect(unauthorizedListener).toHaveBeenCalledTimes(1);
+
+    // 4. suppressUnauthorizedHandler: true suppresses listener even with active token
+    HttpClient.setAuthToken('probe-token');
+    fetchMock.mockResolvedValueOnce(makeJsonResponse({ code: 'rest_not_logged_in' }, 401));
+    await expect(
+      HttpClient.get('/wp/v2/users/me', undefined, {
+        retries: 0,
+        suppressUnauthorizedHandler: true,
+      })
+    ).rejects.toMatchObject({ status: 401 });
+    expect(unauthorizedListener).toHaveBeenCalledTimes(1);
+
+    HttpClient.setUnauthorizedListener(null);
+  });
 });

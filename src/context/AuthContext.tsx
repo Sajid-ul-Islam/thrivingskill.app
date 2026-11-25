@@ -1,13 +1,18 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WpUser } from '../types';
 import { UserProfile, UserService } from '../services/api/userService';
 import { HttpClient } from '../services/api/httpClient';
+import {
+  AuthService,
+  isValidSessionTokenFormat,
+  isJwtTokenExpired,
+} from '../services/api/authService';
 import { Endpoints } from '../services/api/endpoints';
 import { SyncQueueManager } from '../services/offline/syncQueue';
-import { CacheManager } from '../services/cache/cacheManager';
 import { SecureStorageService } from '../services/storage/secureStorage';
+import { useFeedback } from './FeedbackContext';
 import {
   loginWpUser,
   registerWpUser,
@@ -60,6 +65,8 @@ interface AuthContextType {
   isGuest: boolean;
   isAuthModalVisible: boolean;
   setAuthModalVisible: (visible: boolean) => void;
+  sessionExpiredNotice: boolean;
+  clearSessionExpiredNotice: () => void;
   login: (username: string, password: string, dismissModal?: boolean) => Promise<void>;
   loginWithPhone: (phone: string, otp: string, fullName?: string) => Promise<void>;
   sendPhoneOtp: (phone: string) => Promise<{ success: boolean; message: string; testOtp?: string }>;
@@ -90,13 +97,82 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const feedback = useFeedback();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isGuest, setIsGuest] = useState<boolean>(false);
   const [isAuthModalVisible, setAuthModalVisible] = useState<boolean>(false);
+  const [sessionExpiredNotice, setSessionExpiredNotice] = useState<boolean>(false);
   const [isAdminBypass, setIsAdminBypass] = useState<boolean>(false);
   const [devModeUnlocked, setDevModeUnlockedState] = useState<boolean>(false);
+  const activeSessionRef = useRef<boolean>(false);
+  const isHandlingUnauthorizedRef = useRef<boolean>(false);
+  const isMountedRef = useRef<boolean>(true);
+
+  const clearSessionExpiredNotice = useCallback(() => {
+    setSessionExpiredNotice(false);
+  }, []);
+
+  const clearPersistedSession = useCallback(async () => {
+    try {
+      await Promise.all([
+        AsyncStorage.removeItem(AUTH_USER_STORAGE_KEY),
+        AsyncStorage.removeItem(AUTH_TOKEN_STORAGE_KEY),
+        SecureStorageService.removeAuthToken(),
+        AsyncStorage.removeItem(AUTH_ADMIN_BYPASS_KEY),
+        AsyncStorage.removeItem(ALT_ADMIN_BYPASS_KEY),
+      ]);
+    } catch {}
+  }, []);
+
+  const clearSessionAndPromptLogin = useCallback(
+    async (showExpiredFeedback: boolean = true) => {
+      activeSessionRef.current = false;
+      HttpClient.setAuthToken(null);
+      if (isMountedRef.current) {
+        setUser(null);
+        setToken(null);
+        setIsGuest(false);
+        setIsAdminBypass(false);
+        if (showExpiredFeedback) {
+          setSessionExpiredNotice(true);
+        }
+        setAuthModalVisible(true);
+      }
+      await clearPersistedSession();
+      if (showExpiredFeedback) {
+        feedback?.showToast?.({
+          message: 'Your session expired. Please sign in again.',
+          type: 'warning',
+        });
+      }
+    },
+    [clearPersistedSession, feedback]
+  );
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    HttpClient.setUnauthorizedListener(() => {
+      if (isHandlingUnauthorizedRef.current || !activeSessionRef.current) {
+        return;
+      }
+      isHandlingUnauthorizedRef.current = true;
+      clearSessionAndPromptLogin(true).finally(() => {
+        isHandlingUnauthorizedRef.current = false;
+      });
+    });
+
+    return () => {
+      HttpClient.setUnauthorizedListener(null);
+    };
+  }, [clearSessionAndPromptLogin]);
 
   useEffect(() => {
     (async () => {
@@ -111,12 +187,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           ]);
 
         const devUnlocked = devUnlockedStr === 'true' || isDevMode;
-        setDevModeUnlockedState(devUnlocked);
+        if (isMountedRef.current) {
+          setDevModeUnlockedState(devUnlocked);
+        }
         const isDevEffective = isDevMode || devUnlocked;
         const hasBypass = savedBypass === 'true' || savedAltBypass === 'true';
 
         if (isDevEffective && hasBypass) {
-          setIsAdminBypass(true);
+          if (isMountedRef.current) {
+            setIsAdminBypass(true);
+          }
         } else if (!isDevEffective && (savedBypass || savedAltBypass)) {
           await Promise.all([
             AsyncStorage.removeItem(AUTH_ADMIN_BYPASS_KEY),
@@ -125,61 +205,91 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         if (savedUser) {
+          let parsedUser: UserProfile | null = null;
           try {
-            const parsedUser: UserProfile = JSON.parse(savedUser);
-            if (parsedUser && (parsedUser.id || parsedUser.email || parsedUser.username)) {
-              // Sanitize legacy mock avatar from local storage
-              if (
-                parsedUser.avatar &&
-                (parsedUser.avatar.includes('unsplash.com') ||
-                  parsedUser.avatar.includes('randomuser.me') ||
-                  parsedUser.avatar.includes('i.pravatar.cc') ||
-                  parsedUser.avatar.includes('mock'))
-              ) {
-                parsedUser.avatar = '';
-                AsyncStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(parsedUser)).catch(
-                  () => {}
-                );
-              }
-
-              // Extract persistent session token from hardware SecureStore or durable session id
-              const activeToken = secureToken || parsedUser.token || `ts_session_${parsedUser.id}`;
-              const userWithToken: UserProfile = {
-                ...parsedUser,
-                token: activeToken,
-              };
-              setUser(userWithToken);
-              setToken(activeToken);
-              HttpClient.setAuthToken(activeToken);
-              setIsGuest(false);
-
-              // Ensure hardware-backed SecureStore is populated
-              if (!secureToken && activeToken) {
-                await SecureStorageService.setAuthToken(activeToken);
-              }
-
-              // Silent background refresh from live site (https://thrivingskill.com)
-              setTimeout(() => {
-                refreshUserProfile().catch(() => {});
-              }, 1200);
-            } else {
-              setIsGuest(false);
-            }
+            parsedUser = JSON.parse(savedUser);
           } catch (parseErr) {
             console.warn('Failed to parse saved auth user:', parseErr);
+            await clearPersistedSession();
+          }
+
+          if (parsedUser && (parsedUser.id || parsedUser.email || parsedUser.username)) {
+            // Sanitize legacy mock avatar from local storage
+            if (
+              parsedUser.avatar &&
+              (parsedUser.avatar.includes('unsplash.com') ||
+                parsedUser.avatar.includes('randomuser.me') ||
+                parsedUser.avatar.includes('i.pravatar.cc') ||
+                parsedUser.avatar.includes('mock'))
+            ) {
+              parsedUser.avatar = '';
+            }
+
+            const candidateToken = isValidSessionTokenFormat(secureToken)
+              ? secureToken
+              : isValidSessionTokenFormat(parsedUser.token)
+                ? parsedUser.token
+                : null;
+
+            if (!candidateToken) {
+              // No real token (e.g. missing SecureStore or legacy `ts_session_` placeholder): force re-login.
+              await clearSessionAndPromptLogin(true);
+              return;
+            }
+
+            const validationStatus = await AuthService.verifySession(candidateToken);
+            if (!isMountedRef.current) return;
+
+            if (validationStatus === 'invalid') {
+              await clearSessionAndPromptLogin(true);
+              return;
+            }
+
+            const { token: _omitToken, ...userWithoutToken } = parsedUser;
+            const restoredUser: UserProfile = {
+              ...userWithoutToken,
+              token: candidateToken,
+            };
+
+            activeSessionRef.current = true;
+            HttpClient.setAuthToken(candidateToken);
+            setUser(restoredUser);
+            setToken(candidateToken);
+            setSessionExpiredNotice(false);
             setIsGuest(false);
+
+            // Ensure hardware-backed SecureStore holds the validated token and purge plaintext copy
+            if (!secureToken) {
+              await SecureStorageService.setAuthToken(candidateToken);
+            }
+            if (parsedUser.token) {
+              AsyncStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(userWithoutToken)).catch(
+                () => {}
+              );
+            }
+
+            if (validationStatus === 'valid') {
+              refreshUserProfile().catch(() => {});
+            }
+          } else if (parsedUser) {
+            await clearPersistedSession();
           }
         } else {
+          if (secureToken) {
+            await SecureStorageService.removeAuthToken();
+          }
           // Mandatory login required per client change request (no unauthenticated guest bypass)
           setIsGuest(false);
         }
       } catch (e) {
         console.warn('Failed to restore auth state:', e);
       } finally {
-        setIsLoading(false);
+        if (isMountedRef.current) {
+          setIsLoading(false);
+        }
       }
     })();
-  }, []);
+  }, [clearPersistedSession, clearSessionAndPromptLogin]);
 
   const setDevModeUnlocked = async (unlocked: boolean) => {
     setDevModeUnlockedState(unlocked);
@@ -218,11 +328,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loggedInUser: WpUser | UserProfile,
     dismissModal: boolean = true
   ) => {
-    const userToken = loggedInUser.token || `ts_session_${loggedInUser.id || Date.now()}`;
+    const userToken = loggedInUser.token;
+    if (!isValidSessionTokenFormat(userToken)) {
+      throw new Error('Authentication did not return a valid session token.');
+    }
+    const { token: _omitToken, ...userWithoutToken } = loggedInUser as UserProfile;
     const userWithToken: UserProfile = {
-      ...(loggedInUser as UserProfile),
+      ...userWithoutToken,
       token: userToken,
     };
+    activeSessionRef.current = true;
+    isHandlingUnauthorizedRef.current = false;
+    setSessionExpiredNotice(false);
     setUser(userWithToken);
     setToken(userToken);
     HttpClient.setAuthToken(userToken);
@@ -233,7 +350,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       await Promise.all([
-        AsyncStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(userWithToken)),
+        AsyncStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(userWithoutToken)),
         SecureStorageService.setAuthToken(userToken),
       ]);
     } catch (e) {
@@ -249,7 +366,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
    */
   const refreshUserProfile = async (): Promise<UserProfile | null> => {
     const currentToken = token || (await SecureStorageService.getAuthToken());
-    if (!currentToken) return null;
+    if (!isValidSessionTokenFormat(currentToken)) return null;
+    if (isJwtTokenExpired(currentToken)) {
+      await clearSessionAndPromptLogin(true);
+      return null;
+    }
 
     setIsSyncingProfile(true);
     try {
@@ -266,14 +387,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           social: serverUser.social || user?.social,
           token: currentToken,
         };
+        const { token: _omitToken, ...mergedUserWithoutToken } = mergedUser;
         setUser(mergedUser);
-        await AsyncStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(mergedUser));
+        await AsyncStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(mergedUserWithoutToken));
         return mergedUser;
       }
     } catch {
       // Graceful offline catch
     } finally {
-      setIsSyncingProfile(false);
+      if (isMountedRef.current) {
+        setIsSyncingProfile(false);
+      }
     }
     return null;
   };
@@ -302,10 +426,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       displayName: updates.name || updates.displayName || user.displayName,
       name: updates.name !== undefined ? updates.name : user.name || user.displayName,
     };
+    const { token: _omitUpdatedToken, ...updatedToPersist } = updatedUser;
     setUser(updatedUser);
 
     try {
-      await AsyncStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(updatedUser));
+      await AsyncStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(updatedToPersist));
     } catch (e) {
       console.warn('Failed to persist user profile update:', e);
     }
@@ -328,8 +453,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             ...serverUser,
             token,
           };
+          const { token: _omitSyncedToken, ...syncedToPersist } = syncedUser;
           setUser(syncedUser);
-          await AsyncStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(syncedUser));
+          await AsyncStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(syncedToPersist));
         }
       } catch (err) {
         // Enqueue offline sync if network is down
@@ -478,19 +604,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    activeSessionRef.current = false;
+    isHandlingUnauthorizedRef.current = false;
+    setSessionExpiredNotice(false);
     setUser(null);
     setToken(null);
     setIsGuest(true);
     setIsAdminBypass(false);
     HttpClient.setAuthToken(null);
-    try {
-      await Promise.all([
-        AsyncStorage.removeItem(AUTH_USER_STORAGE_KEY),
-        AsyncStorage.removeItem(AUTH_TOKEN_STORAGE_KEY),
-        SecureStorageService.removeAuthToken(),
-        AsyncStorage.removeItem(AUTH_ADMIN_BYPASS_KEY),
-      ]);
-    } catch {}
+    await clearPersistedSession();
   };
 
   const deleteAccount = async (password: string): Promise<void> => {
@@ -533,6 +655,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isGuest,
         isAuthModalVisible,
         setAuthModalVisible,
+        sessionExpiredNotice,
+        clearSessionExpiredNotice,
         login,
         loginWithPhone,
         sendPhoneOtp,

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { BackHandler } from 'react-native';
 import { useModal } from '../../context/ModalContext';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { useYouTube } from '../../context/YouTubeContext';
 import { BrandDrawer } from './BrandDrawer';
 import { SupportContactModal } from '../modals/SupportContactModal';
@@ -31,6 +32,7 @@ export const AppModalHost: React.FC<AppModalHostProps> = ({
   onNavigateToCourse,
   onOpenYouTube,
 }) => {
+  const { isBangla } = useLanguage();
   const {
     activeModal,
     isModalOpen,
@@ -46,8 +48,17 @@ export const AppModalHost: React.FC<AppModalHostProps> = ({
     isLoading: isAuthLoading,
     isAuthModalVisible,
     setAuthModalVisible,
+    sessionExpiredNotice,
+    clearSessionExpiredNotice,
   } = useAuth();
   const { activeVideo, playerMode, closePlayer, minimizePlayer, playVideo } = useYouTube();
+
+  useEffect(() => {
+    if (sessionExpiredNotice) {
+      setAuthInitialMode('login');
+      setIsSplashVisible(false);
+    }
+  }, [sessionExpiredNotice, setAuthInitialMode, setIsSplashVisible]);
 
   useEffect(() => {
     const onHardwareBack = () => {
@@ -114,9 +125,19 @@ export const AppModalHost: React.FC<AppModalHostProps> = ({
 
       <AuthModal
         visible={isAuthModalVisible || (!isAuthenticated && !isAuthLoading && !isSplashVisible)}
-        initialMode={authInitialMode}
+        initialMode={sessionExpiredNotice ? 'login' : authInitialMode}
+        initialInfoMessage={
+          sessionExpiredNotice
+            ? isBangla
+              ? 'আপনার সেশনের মেয়াদ শেষ হয়েছে। অনুগ্রহ করে আবার সাইন ইন করুন।'
+              : 'Your session has expired. Please sign in again.'
+            : null
+        }
         dismissible={isAuthenticated}
-        onClose={() => setAuthModalVisible(false)}
+        onClose={() => {
+          clearSessionExpiredNotice();
+          setAuthModalVisible(false);
+        }}
       />
 
       <YouTubePlayerModal

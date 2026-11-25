@@ -9,6 +9,13 @@ export interface RequestOptions extends RequestInit {
   retries?: number;
   allowFallback?: boolean;
   baseUrl?: string;
+  suppressUnauthorizedHandler?: boolean;
+}
+
+export interface UnauthorizedEvent {
+  endpoint: string;
+  status: number;
+  code?: string;
 }
 
 export interface ApiResponseMeta<T> {
@@ -54,6 +61,7 @@ export class HttpClient {
   private static activeToken: string | null = null;
   private static connectivityListener: ((isOnline: boolean, errorMsg?: string) => void) | null =
     null;
+  private static unauthorizedListener: ((event: UnauthorizedEvent) => void) | null = null;
   private static inFlightRequests = new Map<string, Promise<any>>();
 
   /**
@@ -63,6 +71,13 @@ export class HttpClient {
     listener: ((isOnline: boolean, errorMsg?: string) => void) | null
   ): void {
     this.connectivityListener = listener;
+  }
+
+  /**
+   * Register a single global listener invoked when an authenticated request fails with HTTP 401
+   */
+  static setUnauthorizedListener(listener: ((event: UnauthorizedEvent) => void) | null): void {
+    this.unauthorizedListener = listener;
   }
 
   /**
@@ -163,6 +178,7 @@ export class HttpClient {
       headers: customHeaders,
       allowFallback = true,
       baseUrl,
+      suppressUnauthorizedHandler = false,
       ...fetchOptions
     } = options;
 
@@ -178,6 +194,11 @@ export class HttpClient {
 
     const fullUrl = this.buildUrl(endpoint, params, baseUrl);
     const token = skipAuth ? null : this.activeToken || (await this.getAuthToken());
+    const hasExplicitAuthHeader = Boolean(
+      (customHeaders as Record<string, string> | undefined)?.Authorization ||
+      (customHeaders as Record<string, string> | undefined)?.authorization
+    );
+    const sentAuthToken = !skipAuth && (Boolean(token) || hasExplicitAuthHeader);
     const headers = this.createHeaders(isGet, token, customHeaders);
 
     if (Env.DEBUG_API) {
@@ -217,11 +238,18 @@ export class HttpClient {
             responseData.message &&
             responseData.data?.status)
         ) {
+          const effectiveStatus = !response.ok
+            ? response.status
+            : Number(responseData?.data?.status) || response.status;
           const rawMessage =
-            responseData?.message || `Request failed with HTTP status ${response.status}`;
+            responseData?.message || `Request failed with HTTP status ${effectiveStatus}`;
           const cleanMessage = sanitizeWpMessage(rawMessage);
-          const errorCode = responseData?.code || `HTTP_${response.status}`;
-          throw new ApiError(cleanMessage, response.status, errorCode, responseData);
+          const errorCode = responseData?.code || `HTTP_${effectiveStatus}`;
+          if (effectiveStatus === 401 && sentAuthToken && !suppressUnauthorizedHandler) {
+            this.activeToken = null;
+            this.unauthorizedListener?.({ endpoint, status: 401, code: errorCode });
+          }
+          throw new ApiError(cleanMessage, effectiveStatus, errorCode, responseData);
         }
 
         this.connectivityListener?.(true);

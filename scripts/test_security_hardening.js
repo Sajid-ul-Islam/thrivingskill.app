@@ -20,10 +20,16 @@ function test(name, fn) {
 }
 
 // 1. Android Manifest & app.json allowBackup checks
-test('SEC-01: android:allowBackup="false" in AndroidManifest.xml', () => {
-  const manifest = fs.readFileSync(path.join(__dirname, '../android/app/src/main/AndroidManifest.xml'), 'utf8');
-  assert(manifest.includes('android:allowBackup="false"'), 'Expected android:allowBackup="false" in AndroidManifest.xml');
-  assert(!manifest.includes('android:allowBackup="true"'), 'android:allowBackup="true" should not exist');
+test('SEC-01: android:allowBackup="false" in AndroidManifest.xml (or app.json fallback)', () => {
+  const manifestPath = path.join(__dirname, '../android/app/src/main/AndroidManifest.xml');
+  if (fs.existsSync(manifestPath)) {
+    const manifest = fs.readFileSync(manifestPath, 'utf8');
+    assert(manifest.includes('android:allowBackup="false"'), 'Expected android:allowBackup="false" in AndroidManifest.xml');
+    assert(!manifest.includes('android:allowBackup="true"'), 'android:allowBackup="true" should not exist');
+  } else {
+    const appJson = JSON.parse(fs.readFileSync(path.join(__dirname, '../app.json'), 'utf8'));
+    assert.strictEqual(appJson.expo.android.allowBackup, false, 'Expected expo.android.allowBackup to be false in app.json');
+  }
 });
 
 test('SEC-01: allowBackup: false in app.json', () => {

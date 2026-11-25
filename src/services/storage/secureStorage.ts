@@ -18,6 +18,12 @@ const SECURE_AUTH_TOKEN_KEY = 'thriving_skill_jwt_token';
 const LEGACY_ASYNC_TOKEN_KEY = '@thrivingskill_auth_token';
 const LEGACY_USER_STORAGE_KEY = '@thrivingskill_auth_user';
 
+function isValidStoredToken(token: unknown): token is string {
+  return (
+    typeof token === 'string' && token.trim().length > 0 && !token.trim().startsWith('ts_session_')
+  );
+}
+
 export class SecureStorageService {
   private static isSecureStoreAvailable: boolean | null = null;
 
@@ -48,6 +54,10 @@ export class SecureStorageService {
    * Persist JWT authentication token securely in hardware-backed storage
    */
   public static async setAuthToken(token: string): Promise<void> {
+    if (!isValidStoredToken(token)) {
+      await this.removeAuthToken();
+      return;
+    }
     const isSecAvail = await this.isAvailable();
 
     if (isSecAvail) {
@@ -72,7 +82,8 @@ export class SecureStorageService {
 
   /**
    * Retrieve JWT authentication token.
-   * Seamlessly migrates legacy plain-text tokens from AsyncStorage into SecureStore.
+   * Seamlessly migrates legacy plain-text tokens from AsyncStorage into SecureStore
+   * and rejects fabricated `ts_session_*` fallback strings.
    */
   public static async getAuthToken(): Promise<string | null> {
     const isSecAvail = await this.isAvailable();
@@ -81,13 +92,16 @@ export class SecureStorageService {
       try {
         // 1. Check hardware-backed SecureStore
         const secureToken = await SecureStore.getItemAsync(SECURE_AUTH_TOKEN_KEY);
-        if (secureToken) {
+        if (isValidStoredToken(secureToken)) {
           return secureToken;
+        }
+        if (secureToken) {
+          await SecureStore.deleteItemAsync(SECURE_AUTH_TOKEN_KEY).catch(() => {});
         }
 
         // 2. Migration: Check legacy AsyncStorage for existing logged-in sessions
         const legacyToken = await AsyncStorage.getItem(LEGACY_ASYNC_TOKEN_KEY);
-        if (legacyToken) {
+        if (isValidStoredToken(legacyToken)) {
           // Migrate to hardware SecureStore
           await SecureStore.setItemAsync(SECURE_AUTH_TOKEN_KEY, legacyToken, {
             keychainAccessible: SecureStore.WHEN_UNLOCKED,
@@ -97,13 +111,16 @@ export class SecureStorageService {
           console.log('[SecureStorage] Migrated legacy auth token to hardware-backed SecureStore.');
           return legacyToken;
         }
+        if (legacyToken) {
+          await AsyncStorage.removeItem(LEGACY_ASYNC_TOKEN_KEY).catch(() => {});
+        }
 
         // 3. Fallback: Check if token exists in cached user profile object
         const legacyUserRaw = await AsyncStorage.getItem(LEGACY_USER_STORAGE_KEY);
         if (legacyUserRaw) {
           try {
             const parsed = JSON.parse(legacyUserRaw);
-            if (parsed && typeof parsed.token === 'string' && parsed.token.length > 10) {
+            if (parsed && isValidStoredToken(parsed.token) && parsed.token.length > 10) {
               const userToken = parsed.token;
               await SecureStore.setItemAsync(SECURE_AUTH_TOKEN_KEY, userToken, {
                 keychainAccessible: SecureStore.WHEN_UNLOCKED,
@@ -124,7 +141,14 @@ export class SecureStorageService {
     }
 
     // Web or fallback
-    return AsyncStorage.getItem(LEGACY_ASYNC_TOKEN_KEY);
+    const fallbackToken = await AsyncStorage.getItem(LEGACY_ASYNC_TOKEN_KEY);
+    if (!isValidStoredToken(fallbackToken)) {
+      if (fallbackToken) {
+        await AsyncStorage.removeItem(LEGACY_ASYNC_TOKEN_KEY).catch(() => {});
+      }
+      return null;
+    }
+    return fallbackToken;
   }
 
   /**

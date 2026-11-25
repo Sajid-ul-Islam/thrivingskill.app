@@ -220,28 +220,26 @@ export const ProfileSupportHub: React.FC<ProfileSupportHubProps> = ({
             accessibilityLabel="eBook Library"
           >
             <View style={styles.resourceLeft}>
-              <View style={[styles.resourceIconBg, { backgroundColor: 'rgba(227, 66, 52, 0.12)' }]}>
-                <Ionicons name="book" size={18} color="#E34234" />
+              <View
+                style={[
+                  styles.resourceIconBg,
+                  { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.15)' : '#FFFBEB' },
+                ]}
+              >
+                <Ionicons name="book" size={18} color="#FFB606" />
               </View>
               <View style={styles.resourceTextCol}>
                 <Text style={[styles.resourceLabel, { color: colors.text }]}>
-                  {isBangla ? 'ই-বুক লাইব্রেরি (Free eBook)' : 'Free eBook Library'}
+                  {isBangla ? 'ই-বুক লাইব্রেরি' : 'eBook Library'}
                 </Text>
                 <Text style={[styles.resourceSub, { color: colors.textMuted }]}>
                   {isBangla
-                    ? 'ফ্রি প্রফেশনাল ব্লুপ্রিন্ট ও হ্যান্ডবুক'
+                    ? 'প্রফেশনাল ব্লুপ্রিন্ট ও হ্যান্ডবুক'
                     : 'Executive blueprints & skill handbooks'}
                 </Text>
               </View>
             </View>
-            <View
-              style={[
-                styles.freeTag,
-                { backgroundColor: isDark ? 'rgba(227, 66, 52, 0.2)' : 'rgba(227, 66, 52, 0.12)' },
-              ]}
-            >
-              <Text style={[styles.freeTagText, { color: '#E34234' }]}>FREE</Text>
-            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
           </TouchableOpacity>
         )}
 
@@ -257,10 +255,8 @@ export const ProfileSupportHub: React.FC<ProfileSupportHubProps> = ({
             accessibilityLabel="Our Course Authors"
           >
             <View style={styles.resourceLeft}>
-              <View
-                style={[styles.resourceIconBg, { backgroundColor: 'rgba(16, 185, 129, 0.12)' }]}
-              >
-                <Ionicons name="people" size={18} color="#10B981" />
+              <View style={[styles.resourceIconBg, { backgroundColor: colors.primaryLight }]}>
+                <Ionicons name="people" size={18} color={colors.primary} />
               </View>
               <View style={styles.resourceTextCol}>
                 <Text style={[styles.resourceLabel, { color: colors.text }]}>

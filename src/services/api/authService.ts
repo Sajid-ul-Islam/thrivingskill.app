@@ -11,6 +11,67 @@ export interface TokenResponse {
   user_id?: string | number;
 }
 
+export type SessionValidationStatus = 'valid' | 'invalid' | 'offline';
+
+export function isValidSessionTokenFormat(token?: string | null): token is string {
+  return (
+    typeof token === 'string' && token.trim().length > 0 && !token.trim().startsWith('ts_session_')
+  );
+}
+
+const BASE64_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+function decodeBase64String(input: string): string {
+  if (typeof atob === 'function') {
+    return atob(input);
+  }
+  let output = '';
+  const clean = input.replace(/=+$/, '');
+  for (let i = 0; i < clean.length; i += 4) {
+    const c1 = BASE64_ALPHABET.indexOf(clean[i]);
+    const c2 = BASE64_ALPHABET.indexOf(clean[i + 1]);
+    const c3 = i + 2 < clean.length ? BASE64_ALPHABET.indexOf(clean[i + 2]) : -1;
+    const c4 = i + 3 < clean.length ? BASE64_ALPHABET.indexOf(clean[i + 3]) : -1;
+    if (c1 < 0 || c2 < 0) break;
+    output += String.fromCharCode((c1 << 2) | (c2 >> 4));
+    if (c3 >= 0) {
+      output += String.fromCharCode(((c2 & 15) << 4) | (c3 >> 2));
+    }
+    if (c4 >= 0) {
+      output += String.fromCharCode(((c3 & 3) << 6) | c4);
+    }
+  }
+  return output;
+}
+
+export function decodeJwtPayload(token: string): Record<string, any> | null {
+  try {
+    const parts = token.trim().split('.');
+    if (parts.length !== 3 || !parts[1]) return null;
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+    const binary = decodeBase64String(padded);
+    const jsonStr = decodeURIComponent(
+      binary
+        .split('')
+        .map((ch) => `%${ch.charCodeAt(0).toString(16).padStart(2, '0')}`)
+        .join('')
+    );
+    const parsed = JSON.parse(jsonStr);
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+export function isJwtTokenExpired(token: string, nowMs: number = Date.now()): boolean {
+  const payload = decodeJwtPayload(token);
+  if (!payload || typeof payload.exp !== 'number' || !Number.isFinite(payload.exp)) {
+    return false;
+  }
+  return payload.exp * 1000 <= nowMs;
+}
+
 function isNetworkFailureError(err: any): boolean {
   const msg = String(err?.message || '');
   return (
@@ -42,7 +103,15 @@ export class AuthService {
         { skipAuth: true }
       );
 
-      const token = data.token;
+      const token = data?.token;
+      if (!isValidSessionTokenFormat(token)) {
+        throw new ApiError(
+          'Authentication did not return a valid session token.',
+          401,
+          'INVALID_TOKEN_RESPONSE',
+          data
+        );
+      }
       HttpClient.setAuthToken(token);
 
       // Fetch authentic WordPress profile to obtain real roles (e.g. administrator)
@@ -92,25 +161,61 @@ export class AuthService {
   }
 
   /**
+   * Verify an active session token against the server (`tsmb` 7-day JWTs via `/wp/v2/users/me`
+   * and LearnPress JWTs via `/learnpress/v1/token/validate`), distinguishing server rejection
+   * (`invalid`) from transient network unavailability (`offline`).
+   */
+  static async verifySession(token?: string): Promise<SessionValidationStatus> {
+    const activeToken = token || (await HttpClient.getAuthToken());
+    if (!isValidSessionTokenFormat(activeToken) || isJwtTokenExpired(activeToken)) {
+      return 'invalid';
+    }
+
+    const payload = decodeJwtPayload(activeToken);
+    const requestOptions = {
+      headers: { Authorization: `Bearer ${activeToken}` },
+      skipAuth: false,
+      retries: 0,
+      suppressUnauthorizedHandler: true,
+    };
+
+    try {
+      if (payload?.iss === 'tsmb') {
+        const me = await HttpClient.get<any>(
+          Endpoints.WORDPRESS.CURRENT_USER,
+          { context: 'edit' },
+          requestOptions
+        );
+        return me && me.id ? 'valid' : 'invalid';
+      }
+
+      try {
+        await HttpClient.post(Endpoints.LEARNPRESS.TOKEN_VALIDATE, {}, requestOptions);
+        return 'valid';
+      } catch (lpErr: any) {
+        if (lpErr?.status === 404 || lpErr?.code === 'rest_no_route') {
+          const me = await HttpClient.get<any>(
+            Endpoints.WORDPRESS.CURRENT_USER,
+            { context: 'edit' },
+            requestOptions
+          );
+          return me && me.id ? 'valid' : 'invalid';
+        }
+        throw lpErr;
+      }
+    } catch (err: any) {
+      if (err?.status === 401 || err?.status === 403) {
+        return 'invalid';
+      }
+      return 'offline';
+    }
+  }
+
+  /**
    * Validate existing JWT token
    */
   static async validateToken(token?: string): Promise<boolean> {
-    try {
-      const activeToken = token || (await HttpClient.getAuthToken());
-      if (!activeToken) return false;
-
-      await HttpClient.post(
-        Endpoints.LEARNPRESS.TOKEN_VALIDATE,
-        {},
-        {
-          headers: { Authorization: `Bearer ${activeToken}` },
-          skipAuth: false,
-        }
-      );
-      return true;
-    } catch {
-      return false;
-    }
+    return (await this.verifySession(token)) === 'valid';
   }
 
   /**
@@ -240,6 +345,45 @@ export class AuthService {
   }
 
   /**
+   * Resend email OTP verification code for pending registration
+   */
+  static async resendRegistrationOtp(email: string): Promise<{
+    status?: string;
+    code?: number;
+    message?: string;
+    expires_in?: number;
+    dev_verification_otp?: string;
+  }> {
+    try {
+      return await HttpClient.post<any>(
+        Endpoints.COMPANION.RESEND_REGISTRATION,
+        {
+          email: email.trim().toLowerCase(),
+        },
+        { skipAuth: true }
+      );
+    } catch (err: any) {
+      if (isTimeoutError(err)) {
+        throw new ApiError(
+          'Connection timed out. Please check your internet connection and try again.',
+          408,
+          'REQUEST_TIMEOUT',
+          err
+        );
+      }
+      if (isNetworkFailureError(err)) {
+        throw new ApiError(
+          'No internet connection. Please check your connection and try again.',
+          0,
+          'NETWORK_ERROR',
+          err
+        );
+      }
+      throw err;
+    }
+  }
+
+  /**
    * Request password reset
    */
   static async resetPassword(email: string): Promise<any> {
@@ -336,7 +480,15 @@ export class AuthService {
         { skipAuth: true }
       );
 
-      const token = data.token;
+      const token = data?.token;
+      if (!isValidSessionTokenFormat(token)) {
+        throw new ApiError(
+          'Authentication did not return a valid session token.',
+          401,
+          'INVALID_TOKEN_RESPONSE',
+          data
+        );
+      }
       HttpClient.setAuthToken(token);
 
       return {

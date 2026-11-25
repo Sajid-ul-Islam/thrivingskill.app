@@ -308,6 +308,67 @@ export class SiteSyncNotificationService {
   }
 
   /**
+   * Pure course recommendation selection logic based on user progress and active site courses.
+   */
+  static selectRecommendedCourse(
+    rawCourses: any[],
+    userProgress: Record<string, UserProgress>,
+    isBangla: boolean = false
+  ): { recommended: any; reason: string } | null {
+    const enrolledIds = Object.keys(userProgress);
+    const completedIds = Object.entries(userProgress)
+      .filter(([_, p]) => p.isCompleted)
+      .map(([id]) => id);
+
+    // Select candidates not already completed
+    const candidates = rawCourses.filter((c: any) => !completedIds.includes(String(c.id)));
+    if (candidates.length === 0) return null;
+
+    // Smart recommendation prioritization:
+    // If user has enrolled in Excel or Data courses, recommend Generative AI or Productivity.
+    // If user is new (0 enrolled), recommend high-impact executive courses.
+    let recommended = candidates[0];
+    let reason = isBangla
+      ? 'জনপ্রিয় এবং বর্তমান চাকরির বাজারে সবচেয়ে চাহিদাসম্পন্ন'
+      : 'Trending executive skill for career acceleration';
+
+    if (enrolledIds.length === 0) {
+      // Recommend popular flagship courses
+      const flagship = candidates.find((c: any) => {
+        const name = (c.name || '').toLowerCase();
+        return (
+          name.includes('excel') ||
+          name.includes('generative ai') ||
+          name.includes('communication')
+        );
+      });
+      if (flagship) {
+        recommended = flagship;
+        reason = isBangla
+          ? 'নতুন শিক্ষার্থীদের জন্য বিশেষজ্ঞদের বিশেষ রেকমেন্ডেশন'
+          : 'Top recommended foundation course for new executives';
+      }
+    } else {
+      // Find next complementary course
+      const hasAi = enrolledIds.some((id) => id.includes('ai') || id.includes('prompt'));
+      const nextTarget = candidates.find((c: any) => {
+        const name = (c.name || '').toLowerCase();
+        if (hasAi)
+          return name.includes('research') || name.includes('lead') || name.includes('excel');
+        return name.includes('ai') || name.includes('mindset') || name.includes('intelligence');
+      });
+      if (nextTarget) {
+        recommended = nextTarget;
+        reason = isBangla
+          ? 'আপনার পূর্ববর্তী অগ্রগতির ওপর ভিত্তি করে নির্বাচিত'
+          : 'Personalized based on your current executive learning track';
+      }
+    }
+
+    return { recommended, reason };
+  }
+
+  /**
    * Computes personalized course recommendations based on user progress and active site courses.
    */
   static async evaluateAndSendRecommendation(
@@ -325,56 +386,9 @@ export class SiteSyncNotificationService {
         return false;
       }
 
-      // Identify user completed and enrolled course IDs
-      const enrolledIds = Object.keys(userProgress);
-      const completedIds = Object.entries(userProgress)
-        .filter(([_, p]) => p.isCompleted)
-        .map(([id]) => id);
-
-      // Select candidates not already completed
-      const candidates = rawCourses.filter((c: any) => !completedIds.includes(String(c.id)));
-      if (candidates.length === 0) return false;
-
-      // Smart recommendation prioritization:
-      // If user has enrolled in Excel or Data courses, recommend Generative AI or Productivity.
-      // If user is new (0 enrolled), recommend high-impact executive courses.
-      let recommended = candidates[0];
-      let reason = isBangla
-        ? 'জনপ্রিয় এবং বর্তমান চাকরির বাজারে সবচেয়ে চাহিদাসম্পন্ন'
-        : 'Trending executive skill for career acceleration';
-
-      if (enrolledIds.length === 0) {
-        // Recommend popular flagship courses
-        const flagship = candidates.find((c: any) => {
-          const name = (c.name || '').toLowerCase();
-          return (
-            name.includes('excel') ||
-            name.includes('generative ai') ||
-            name.includes('communication')
-          );
-        });
-        if (flagship) {
-          recommended = flagship;
-          reason = isBangla
-            ? 'নতুন শিক্ষার্থীদের জন্য বিশেষজ্ঞদের বিশেষ রেকমেন্ডেশন'
-            : 'Top recommended foundation course for new executives';
-        }
-      } else {
-        // Find next complementary course
-        const hasAi = enrolledIds.some((id) => id.includes('ai') || id.includes('prompt'));
-        const nextTarget = candidates.find((c: any) => {
-          const name = (c.name || '').toLowerCase();
-          if (hasAi)
-            return name.includes('research') || name.includes('lead') || name.includes('excel');
-          return name.includes('ai') || name.includes('mindset') || name.includes('intelligence');
-        });
-        if (nextTarget) {
-          recommended = nextTarget;
-          reason = isBangla
-            ? 'আপনার পূর্ববর্তী অগ্রগতির ওপর ভিত্তি করে নির্বাচিত'
-            : 'Personalized based on your current executive learning track';
-        }
-      }
+      const selection = this.selectRecommendedCourse(rawCourses, userProgress, isBangla);
+      if (!selection) return false;
+      const { recommended, reason } = selection;
 
       const id = String(recommended.id);
       const title = cleanHtml(recommended.name || recommended.title || 'Executive Course');

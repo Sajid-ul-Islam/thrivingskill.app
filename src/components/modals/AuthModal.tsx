@@ -87,6 +87,7 @@ export interface AuthModalProps {
   initialMode?: AuthMode;
   initialResetKey?: string;
   initialResetLogin?: string;
+  initialInfoMessage?: string | null;
   dismissible?: boolean;
 }
 
@@ -96,6 +97,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   initialMode,
   initialResetKey,
   initialResetLogin,
+  initialInfoMessage,
   dismissible,
 }) => {
   const { colors, isDark } = useTheme();
@@ -172,7 +174,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     if (initialMode) setMode(initialMode);
     if (initialResetKey) setResetKey(initialResetKey);
     if (initialResetLogin) setResetLogin(initialResetLogin);
-  }, [initialMode, initialResetKey, initialResetLogin, visible]);
+    if (visible && initialInfoMessage) {
+      setErrorMessage(null);
+      setInfoMessage(initialInfoMessage);
+    }
+  }, [initialMode, initialResetKey, initialResetLogin, initialInfoMessage, visible]);
 
   useEffect(() => {
     if (mode === 'set_password') {
@@ -290,6 +296,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     try {
       await login(username.trim(), password);
       showToast({ message: 'Signed in successfully!', type: 'success' });
+      setInfoMessage(null);
       setUsername('');
       setPassword('');
       setTouched({});

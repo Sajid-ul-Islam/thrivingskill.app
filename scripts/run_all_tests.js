@@ -19,6 +19,8 @@ const SUITES = [
   { name: '9. Department Category Grid & Icon Suite', script: 'scripts/test_department_grid.js' },
   { name: '10. Modern Accessibility Feedback Suite', script: 'scripts/test_feedback_suite.js' },
   { name: '11. Dual-Environment (Offline Config) Suite', script: 'scripts/verify_dual_environment.js' },
+  { name: '12. Paid eBooks & Checkout Flow Suite', script: 'scripts/test_paid_ebooks.js' },
+  { name: '13. Registration, Proxy IP & Resend Suite (Items D, E, F)', script: 'scripts/test_auth_registration_fixes.js' },
 ];
 
 console.log('====================================================');

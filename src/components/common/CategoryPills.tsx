@@ -171,7 +171,9 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({
                 </Text>
               </View>
             ) : (
-              cat.id !== 'all' && typeof cat.count === 'number' && cat.count > 0 && (
+              cat.id !== 'all' &&
+              typeof cat.count === 'number' &&
+              cat.count > 0 && (
                 <View
                   style={[
                     styles.countBadge,

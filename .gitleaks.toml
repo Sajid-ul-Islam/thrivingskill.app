@@ -1,0 +1,19 @@
+# .gitleaks.toml
+# Gitleaks configuration for Thriving Skills codebase
+# Excludes test fixtures, mock sample keys, and markdown reports
+
+[allowlist]
+description = "Allowlist mock fixtures, dummy tokens, and documentation"
+paths = [
+  '''^\.github/''',
+  '''^src/__tests__/''',
+  '''^scripts/''',
+  '''^TECH_STACK_ANALYSIS\.md''',
+  '''^README\.md''',
+]
+
+regexes = [
+  '''wc_order_[a-zA-Z0-9_]+''',
+  '''orderKey:\s*['"][a-zA-Z0-9_]+['"]''',
+  '''\?key=[a-zA-Z0-9_]+''',
+]
