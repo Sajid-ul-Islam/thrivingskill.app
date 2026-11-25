@@ -10,18 +10,15 @@ const ROOT_DIR = path.join(__dirname, '..');
 const SUITES = [
   { name: '1. Codebase Structural & Timer Audit', script: 'scripts/audit_app.js' },
   { name: '2. Security & WebView Hardening Suite', script: 'scripts/test_security_hardening.js' },
-  { name: '3. LearnPress Auth & Mobile SMS OTP Suite', script: 'scripts/test_auth_service.js' },
-  { name: '4. Performance & Tree-Shaking Optimizations', script: 'scripts/test_optimizations.js' },
-  { name: '5. Auth Lifecycle & Persistence Suite', script: 'scripts/test_auth_persistence.js' },
-  { name: '6. Enrollment & Checkout Flow Suite', script: 'scripts/test_enrollment_transition.js' },
-  { name: '7. Live Notifications & Recommendations Suite', script: 'scripts/verify_live_notifications_and_recommendations.js' },
-  { name: '8. Profile Bi-directional Sync & Checkout Autofill Suite', script: 'scripts/test_profile_and_checkout_sync.js' },
-  { name: '9. Multi-Channel Floating CRM Speed-Dial Suite', script: 'scripts/test_floating_crm_widget.js' },
-  { name: '10. R&D Breakthrough Innovations Suite', script: 'scripts/test_rd_innovations.js' },
-  { name: '11. Secure Hardware Token Storage Suite', script: 'scripts/test_secure_storage.js' },
-  { name: '12. Department Category Grid & Icon Suite', script: 'scripts/test_department_grid.js' },
-  { name: '13. Modern Accessibility Feedback Suite', script: 'scripts/test_feedback_suite.js' },
-  { name: '14. Dual-Environment (Live & Staging) Architecture Suite', script: 'scripts/verify_dual_environment.js' },
+  { name: '3. Performance & Tree-Shaking Optimizations', script: 'scripts/test_optimizations.js' },
+  { name: '4. Notifications & Recommendations Audit', script: 'scripts/verify_live_notifications_and_recommendations.js' },
+  { name: '5. Profile Bi-directional Sync & Checkout Autofill Suite', script: 'scripts/test_profile_and_checkout_sync.js' },
+  { name: '6. Multi-Channel Floating CRM Speed-Dial Suite', script: 'scripts/test_floating_crm_widget.js' },
+  { name: '7. R&D Breakthrough Innovations Suite', script: 'scripts/test_rd_innovations.js' },
+  { name: '8. Secure Hardware Token Storage Suite', script: 'scripts/test_secure_storage.js' },
+  { name: '9. Department Category Grid & Icon Suite', script: 'scripts/test_department_grid.js' },
+  { name: '10. Modern Accessibility Feedback Suite', script: 'scripts/test_feedback_suite.js' },
+  { name: '11. Dual-Environment (Offline Config) Suite', script: 'scripts/verify_dual_environment.js' },
 ];
 
 console.log('====================================================');

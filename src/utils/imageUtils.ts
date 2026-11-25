@@ -101,6 +101,7 @@ export function getSafeImageSource(
   const activeReferer = Env.SITE_URL ? `${Env.SITE_URL}/` : 'https://thrivingskill.com/';
   return {
     uri: safeUri,
+    cache: 'force-cache',
     headers: {
       Referer: activeReferer,
     },

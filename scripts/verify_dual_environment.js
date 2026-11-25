@@ -145,32 +145,19 @@ async function runVerification() {
   const appTs = fs.readFileSync(path.join(rootDir, 'App.tsx'), 'utf8');
   assert('App.tsx calls Env.init() during startup hydration', appTs.includes('Env.init().catch(() => {});'));
 
-  // 7. Live connectivity probe to both production and staging
-  console.log('\n[STEP 7] Probing Live Production & Staging Endpoints...');
-  const prodCourses = await probeHttps('https://thrivingskill.com/wp-json/learnpress/v1/courses?per_page=1');
-  console.log(`  -> Live Production LearnPress (/learnpress/v1/courses): status=${prodCourses.status}, ok=${prodCourses.ok}`);
-  assert('Live Production LearnPress API responds with HTTP 200', prodCourses.ok && prodCourses.status === 200);
+  // 7. Optional Staging Integration Probe (strictly disabled in CI; never calls production)
+  if (process.env.RUN_STAGING_INTEGRATION === 'true' && process.env.CI !== 'true') {
+    console.log('\n[STEP 7] Probing Dedicated Staging Environment (RUN_STAGING_INTEGRATION=true)...');
+    const stagingCourses = await probeHttps('https://staging.thrivingskill.com/wp-json/learnpress/v1/courses?per_page=1');
+    console.log(`  -> Staging LearnPress (/learnpress/v1/courses): status=${stagingCourses.status}, ok=${stagingCourses.ok}`);
+    assert('Staging LearnPress API responds with HTTP 200', stagingCourses.ok && stagingCourses.status === 200);
 
-  const stagingCourses = await probeHttps('https://staging.thrivingskill.com/wp-json/learnpress/v1/courses?per_page=1');
-  console.log(`  -> Staging LearnPress (/learnpress/v1/courses): status=${stagingCourses.status}, ok=${stagingCourses.ok}`);
-  assert('Staging LearnPress API responds with HTTP 200', stagingCourses.ok && stagingCourses.status === 200);
-
-  const prodCategories = await probeHttps('https://thrivingskill.com/wp-json/learnpress/v1/course_category?per_page=1');
-  console.log(`  -> Live Production Categories (/learnpress/v1/course_category): status=${prodCategories.status}, ok=${prodCategories.ok}`);
-  assert('Live Production Categories API responds with HTTP 200', prodCategories.ok && prodCategories.status === 200);
-
-  const stagingCategories = await probeHttps('https://staging.thrivingskill.com/wp-json/learnpress/v1/course_category?per_page=1');
-  console.log(`  -> Staging Categories (/learnpress/v1/course_category): status=${stagingCategories.status}, ok=${stagingCategories.ok}`);
-  assert('Staging Categories API responds with HTTP 200', stagingCategories.ok && stagingCategories.status === 200);
-
-  const prodAuthToken = await probeHttps('https://thrivingskill.com/wp-json/learnpress/v1/token', 'POST', '{}');
-  console.log(`  -> Live Production Token Auth (/learnpress/v1/token): status=${prodAuthToken.status}`);
-  assert('Live Production LearnPress Token endpoint is active (HTTP 403 on empty POST)', prodAuthToken.status === 403 || prodAuthToken.status === 400 || prodAuthToken.status === 408);
-
-  const stagingAuthToken = await probeHttps('https://staging.thrivingskill.com/wp-json/learnpress/v1/token', 'POST', '{}');
-  console.log(`  -> Staging Token Auth (/learnpress/v1/token): status=${stagingAuthToken.status}`);
-  // Staging may reject with 403/400 or timeout/hang-up (408/504) triggering automatic fallback to live
-  assert('Staging LearnPress Token endpoint probed (status recorded; fallback operational)', stagingAuthToken.status === 403 || stagingAuthToken.status === 400 || stagingAuthToken.status === 408 || stagingAuthToken.status === 504 || stagingAuthToken.status === 0);
+    const stagingCategories = await probeHttps('https://staging.thrivingskill.com/wp-json/learnpress/v1/course_category?per_page=1');
+    console.log(`  -> Staging Categories (/learnpress/v1/course_category): status=${stagingCategories.status}, ok=${stagingCategories.ok}`);
+    assert('Staging Categories API responds with HTTP 200', stagingCategories.ok && stagingCategories.status === 200);
+  } else {
+    console.log('\n[STEP 7] Live network probes skipped (CI runs strictly offline with zero production calls).');
+  }
 
   console.log('\n====================================================');
   console.log(`VERIFICATION SUMMARY: ${passed}/${total} TESTS PASSED`);

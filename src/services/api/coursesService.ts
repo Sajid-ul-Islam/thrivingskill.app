@@ -527,6 +527,79 @@ export class CoursesService {
   }
 
   /**
+   * Fetch live WooCommerce product pricing and bundle sub-course IDs strictly by ID
+   */
+  static async getWooCommerceProductPricing(
+    productId: string | number
+  ): Promise<{
+    id: string;
+    priceBdt?: number;
+    originalPriceBdt?: number;
+    bundledCourseIds?: string[];
+    bundledCourses?: { id: string; title: string; priceBdt?: number }[];
+  } | null> {
+    const idStr = String(productId);
+    try {
+      const product = await HttpClient.get<any>(
+        Endpoints.WOOCOMMERCE.PRODUCT_DETAIL(idStr),
+        undefined,
+        { skipAuth: true, retries: 1 }
+      );
+      if (!product || String(product.id) !== idStr) return null;
+
+      const minorUnit = Number(product.prices?.currency_minor_unit ?? 0);
+      const divisor = Math.pow(10, isNaN(minorUnit) ? 0 : minorUnit);
+      const rawPrice = Number(product.prices?.price ?? product.price);
+      const rawRegular = Number(product.prices?.regular_price ?? product.regular_price ?? rawPrice);
+
+      const priceBdt = !isNaN(rawPrice) ? Math.round(rawPrice / divisor) : undefined;
+      const originalPriceBdt = !isNaN(rawRegular) ? Math.round(rawRegular / divisor) : priceBdt;
+
+      // Support WooCommerce grouped_products or product bundles matched by ID
+      const rawGrouped = Array.isArray(product.grouped_products) ? product.grouped_products : [];
+      const rawBundled = Array.isArray(product.bundled_items)
+        ? product.bundled_items
+        : Array.isArray(product.extensions?.bundles?.bundled_items)
+        ? product.extensions.bundles.bundled_items
+        : [];
+
+      const bundledCourses: { id: string; title: string; priceBdt?: number }[] = [];
+      const bundledCourseIds: string[] = [];
+
+      rawBundled.forEach((b: any) => {
+        if (b && typeof b === 'object' && (b.product_id || b.id)) {
+          const bId = String(b.product_id || b.id);
+          bundledCourseIds.push(bId);
+          bundledCourses.push({
+            id: bId,
+            title: cleanHtml(b.title || b.name || `Course #${bId}`),
+            priceBdt: typeof b.price === 'number' ? b.price : undefined,
+          });
+        } else if (b !== null && b !== undefined) {
+          bundledCourseIds.push(String(b));
+        }
+      });
+
+      rawGrouped.forEach((gId: any) => {
+        const sId = String(gId);
+        if (!bundledCourseIds.includes(sId)) {
+          bundledCourseIds.push(sId);
+        }
+      });
+
+      return {
+        id: idStr,
+        priceBdt,
+        originalPriceBdt,
+        bundledCourseIds: bundledCourseIds.length > 0 ? bundledCourseIds : undefined,
+        bundledCourses: bundledCourses.length > 0 ? bundledCourses : undefined,
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  /**
    * Enroll the authenticated user into a course
    */
   static async enrollCourse(courseId: string | number): Promise<{ success: boolean; message?: string }> {

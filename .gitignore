@@ -47,3 +47,6 @@ yarn-error.*
 *.ipa
 *.tar.gz
 
+# test coverage reports
+coverage/
+

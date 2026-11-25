@@ -1,0 +1,70 @@
+# Maestro E2E Smoke Flow (Launch -> Sign In -> Open Course -> Open Lesson)
+# Run against a local preview/dev build using staging/test credentials:
+#   maestro test -e MAESTRO_TEST_EMAIL=<user> -e MAESTRO_TEST_PASSWORD=<pass> .maestro/smoke-flow.yaml
+appId: com.thrivingskill.app
+---
+- launchApp:
+    clearState: true
+
+# Dismiss onboarding if shown on first launch
+- runFlow:
+    when:
+      visible: "Skip"
+    commands:
+      - tapOn: "Skip"
+
+# 1. Navigate to Profile / Sign In and authenticate
+- runFlow:
+    when:
+      visible: "Sign In"
+    commands:
+      - tapOn: "Sign In"
+- runFlow:
+    when:
+      notVisible: "e.g. user@thrivingskill.com or username"
+    commands:
+      - tapOn: "Profile"
+      - runFlow:
+          when:
+            visible: "Sign In"
+          commands:
+            - tapOn: "Sign In"
+
+- assertVisible: "e.g. user@thrivingskill.com or username"
+- tapOn: "e.g. user@thrivingskill.com or username"
+- inputText: "${MAESTRO_TEST_EMAIL}"
+- tapOn: "Enter your password"
+- inputText: "${MAESTRO_TEST_PASSWORD}"
+- hideKeyboard
+- tapOn:
+    text: "Sign In"
+    index: 1
+
+# 2. Navigate to Courses catalog and open a course
+- tapOn: "Courses"
+- assertVisible: "Search"
+- tapOn:
+    text: ".*"
+    index: 3
+    optional: true
+- scrollUntilVisible:
+    element: "Curriculum.*"
+    direction: DOWN
+    timeout: 10000
+    optional: true
+
+# 3. Open Curriculum / first lesson in LessonPlayer
+- tapOn: "Curriculum.*"
+- runFlow:
+    when:
+      visible: "Start Learning"
+    commands:
+      - tapOn: "Start Learning"
+- runFlow:
+    when:
+      visible: "Preview"
+    commands:
+      - tapOn: "Preview"
+- assertVisible:
+    text: ".*Lesson.*|.*Module.*|.*Mark.*Complete.*"
+    optional: true

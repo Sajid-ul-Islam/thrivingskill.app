@@ -8,8 +8,10 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test": "node scripts/run_all_tests.js",
-    "test:ci": "npm run typecheck && npm run audit && npm test",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "test:structural": "node scripts/run_all_tests.js",
+    "test:ci": "npm run typecheck && npm run audit && npm run test:coverage && npm run test:structural",
     "audit": "node scripts/audit_app.js",
     "build:dry-run": "npx expo export --dump-sourcemap=false",
     "build:apk": "cd android && .\\gradlew.bat assembleRelease",
@@ -50,7 +52,13 @@
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@react-native-community/cli": "^21.0.0",
+    "@react-native/jest-preset": "^0.88.1",
+    "@testing-library/react-native": "^14.1.0",
+    "@types/jest": "30.0.0",
     "@types/react": "~19.3.0",
+    "jest": "~30.5.2",
+    "jest-expo": "~58.0.15",
+    "react-test-renderer": "^19.3.0",
     "typescript": "~6.0.3"
   },
   "private": true

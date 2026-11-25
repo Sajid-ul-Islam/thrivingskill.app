@@ -867,7 +867,7 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
                               {course.priceBdt && course.priceBdt > 0
                                 ? `৳ ${course.priceBdt.toLocaleString()}`
                                 : course.price > 0
-                                ? `৳ ${Math.round(course.price * 120).toLocaleString()}`
+                                ? `$${course.price.toLocaleString()}`
                                 : (isBangla ? 'বিনামূল্যে' : 'Free')}
                             </Text>
                           </View>

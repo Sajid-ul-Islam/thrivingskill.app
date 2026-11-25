@@ -25,10 +25,19 @@ import { useAuth } from '../../context/AuthContext';
 import { useLearning } from '../../context/LearningContext';
 import { Course } from '../../types';
 import { CoursesService } from '../../services/api/coursesService';
+import { Env } from '../../config/env';
+import {
+  ServerProductData,
+  evaluateCheckoutNavigationRequest,
+  getCheckoutOriginWhitelist,
+  isCartRedirectUrl,
+  isOrderCompletionUrl,
+  isTrustedCheckoutOrigin,
+  resolveServerCheckoutPricingAndBundle,
+} from '../../services/checkout/checkoutHelpers';
 import { triggerHaptic } from '../../utils/haptics';
 import { shape } from '../../theme/shapes';
 import { useResponsive } from '../../theme/responsive';
-import { getBundleConfig } from '../../data/bundleCoursesMap';
 
 export const MAX_SYNC_ATTEMPTS = 4;
 export const RETRY_DELAYS_MS = [0, 1500, 2500, 4000];
@@ -57,7 +66,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const { isTablet } = useResponsive();
   const { t, isBangla } = useLanguage();
   const { user, isAuthenticated, setAuthModalVisible, updateUserProfile } = useAuth();
-  const { userProgress, enrollInCourse, refreshCourses, loadCourseDetail } = useLearning();
+  const { courses, userProgress, enrollInCourse, refreshCourses, loadCourseDetail } = useLearning();
 
   const [activeTab, setActiveTab] = useState<'checkout' | 'sync'>('checkout');
 
@@ -68,13 +77,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [email, setEmail] = useState('');
   const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [orderNotes, setOrderNotes] = useState('');
-  const [agreedToTerms, setAgreedToTerms] = useState(true);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [isEditingDetails, setIsEditingDetails] = useState(false);
+  const [serverProductData, setServerProductData] = useState<ServerProductData | null>(null);
 
   // Checkout Execution State
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
@@ -83,8 +91,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [currentUrl, setCurrentUrl] = useState<string>('');
   const [loadProgress, setLoadProgress] = useState<number>(0);
 
-  // WebView Ref
+  // WebView & Guard Refs
   const webViewRef = useRef<any>(null);
+  const hasCompletedPurchaseRef = useRef<boolean>(false);
 
   // Focus Chaining Refs for Seamless Form UX
   const lastNameRef = useRef<React.ElementRef<typeof TextInput>>(null);
@@ -92,7 +101,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const cityRef = useRef<React.ElementRef<typeof TextInput>>(null);
   const addressRef = useRef<React.ElementRef<typeof TextInput>>(null);
   const emailRef = useRef<React.ElementRef<typeof TextInput>>(null);
-  const passwordRef = useRef<React.ElementRef<typeof TextInput>>(null);
   const orderNotesRef = useRef<React.ElementRef<typeof TextInput>>(null);
 
   // Sync State & Hygiene
@@ -183,25 +191,48 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   }, []);
 
   useEffect(() => {
-    if (visible) {
-      setIsSyncing(false);
-      setIsPlacingOrder(false);
-      setCheckoutWebUrl(null);
-      setCanGoBack(false);
-      setCurrentUrl('');
-      setLoadProgress(0);
-      setFormErrors({});
-    }
+    if (!visible) return;
+    setIsSyncing(false);
+    setIsPlacingOrder(false);
+    setCheckoutWebUrl(null);
+    setCanGoBack(false);
+    setCurrentUrl('');
+    setLoadProgress(0);
+    setFormErrors({});
+    setAgreedToTerms(false);
+    setServerProductData(null);
+    hasCompletedPurchaseRef.current = false;
+
+    if (!course?.id) return;
+    let active = true;
+    CoursesService.getWooCommerceProductPricing(course.id)
+      .then((product) => {
+        if (active && product) {
+          setServerProductData(product);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      active = false;
+    };
   }, [visible, course?.id]);
 
-  const bundleConfig = course ? getBundleConfig(course.id, course.title) : null;
-  const isBundle = !!bundleConfig;
-  const coursePriceBdt = course?.priceBdt || (course?.price ? Math.round(course.price * 120) : 0);
-  const bundleSubtotalBdt = bundleConfig
-    ? bundleConfig.subCourses.reduce((acc, c) => acc + c.priceBdt, 0)
-    : (course?.originalPriceBdt || coursePriceBdt);
-  const bundleDiscountBdt = isBundle ? Math.max(0, bundleSubtotalBdt - coursePriceBdt) : 0;
-  const formattedPrice = `৳ ${coursePriceBdt.toLocaleString()}`;
+  const resolvedPricing = course
+    ? resolveServerCheckoutPricingAndBundle(course, serverProductData, courses)
+    : {
+        isBundle: false,
+        priceBdt: 0,
+        subtotalBdt: 0,
+        discountBdt: 0,
+        discountPercent: 0,
+        subCourses: [],
+      };
+  const isBundle = resolvedPricing.isBundle;
+  const coursePriceBdt = resolvedPricing.priceBdt;
+  const bundleSubtotalBdt = resolvedPricing.subtotalBdt;
+  const bundleDiscountBdt = resolvedPricing.discountBdt;
+  const formattedPrice = coursePriceBdt > 0 ? `৳ ${coursePriceBdt.toLocaleString()}` : isBangla ? 'ফ্রি' : 'Free';
   const formattedSubtotal = `৳ ${bundleSubtotalBdt.toLocaleString()}`;
   const formattedDiscount = `-৳ ${bundleDiscountBdt.toLocaleString()}`;
 
@@ -221,9 +252,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     if (!email.trim() || !email.includes('@')) {
       errors.email = isBangla ? 'সঠিক ইমেল ঠিকানা আবশ্যক' : 'Valid email is required';
     }
-    if (!isAuthenticated && !password.trim()) {
-      errors.password = isBangla ? 'অ্যাকাউন্টের পাসওয়ার্ড আবশ্যক' : 'Password is required to create your account';
-    }
     if (!agreedToTerms) {
       errors.terms = isBangla ? 'শর্তাবলী মেনে নেওয়া আবশ্যক' : 'You must accept the terms and conditions';
     }
@@ -232,9 +260,15 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     return Object.keys(errors).length === 0;
   };
 
-  // Place Order Action: Launches Official SSLCommerz Checkout Flow
+  // Place Order Action: Launches Official Checkout Flow
   const handleProceedToCheckout = () => {
     if (!course) return;
+
+    if (!isAuthenticated) {
+      onClose();
+      setAuthModalVisible(true);
+      return;
+    }
 
     if (!validateBillingDetails()) {
       setIsEditingDetails(true);
@@ -250,6 +284,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
     triggerHaptic('medium');
     setIsPlacingOrder(true);
+    hasCompletedPurchaseRef.current = false;
 
     try {
       // Persist details locally so learner never has to retype across checkouts
@@ -263,15 +298,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       };
       AsyncStorage.setItem(CHECKOUT_AUTOFILL_KEY, JSON.stringify(autofillData)).catch(() => {});
 
-      if (isAuthenticated) {
-        updateUserProfile({
-          phone: phone.trim(),
-          city: city.trim(),
-        }, true).catch(() => {});
-      }
+      updateUserProfile({
+        phone: phone.trim(),
+        city: city.trim(),
+      }, true).catch(() => {});
 
       // Build official WooCommerce Checkout Cart URL
-      const fullCheckoutUrl = `https://thrivingskill.com/checkout/?add-to-cart=${course.id}`;
+      const fullCheckoutUrl = `${Env.SITE_URL}/checkout/?add-to-cart=${course.id}`;
       setCurrentUrl(fullCheckoutUrl);
       setCheckoutWebUrl(fullCheckoutUrl);
     } catch (err: any) {
@@ -284,13 +317,18 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     }
   };
 
-  // Handle message from WebView (Bi-directional field auto-detection & synchronization)
+  // Handle message from WebView (Strictly gated by checkout origin)
   const handleWebViewMessage = (event: any) => {
+    const messageOriginUrl = event?.nativeEvent?.url;
+    if (!isTrustedCheckoutOrigin(messageOriginUrl, Env.SITE_URL)) {
+      return;
+    }
+
     try {
       const data = JSON.parse(event.nativeEvent.data);
       if (data && data.type === 'CHECKOUT_FIELD_AUTO_DETECT') {
         const { field, value } = data;
-        if (!value) return;
+        if (!value || typeof value !== 'string') return;
 
         if (field === 'billing_phone') setPhone(value);
         if (field === 'billing_city') setCity(value);
@@ -313,7 +351,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             current[mappedKey] = value;
             AsyncStorage.setItem(CHECKOUT_AUTOFILL_KEY, JSON.stringify(current)).catch(() => {});
           }
-        });
+        }).catch(() => {});
 
         if (isAuthenticated) {
           if (field === 'billing_phone') {
@@ -329,7 +367,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   // Open checkout directly in system web browser (Chrome / Safari)
   const handleOpenInExternalBrowser = () => {
     if (!course) return;
-    const url = currentUrl || `https://thrivingskill.com/checkout/?add-to-cart=${course.id}`;
+    const url = currentUrl || `${Env.SITE_URL}/checkout/?add-to-cart=${course.id}`;
     Linking.openURL(url).catch(() => {
       Alert.alert(
         isBangla ? 'ত্রুটি' : 'Error',
@@ -367,6 +405,38 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     );
   };
 
+  const completePurchaseOnce = useCallback(() => {
+    if (!course || hasCompletedPurchaseRef.current) return;
+    hasCompletedPurchaseRef.current = true;
+
+    triggerHaptic('success');
+    setCheckoutWebUrl(null);
+    enrollInCourse(course.id);
+    if (resolvedPricing.isBundle) {
+      resolvedPricing.subCourses.forEach((sub) => {
+        enrollInCourse(sub.id);
+      });
+    }
+    // Background verify with backend
+    CoursesService.enrollCourse(course.id).catch(() => {});
+    refreshCourses().catch(() => {});
+
+    onClose();
+    onSuccess(course.id);
+
+    Alert.alert(
+      isBangla ? 'ভর্তি সফল হয়েছে! 🎉' : 'Enrollment Successful! 🎉',
+      isBangla
+        ? `অভিনন্দন! "${course.title}" কোর্সটিতে আপনার অ্যাক্সেস চালু হয়েছে। এখনই প্রথম লেসন শুরু করুন।`
+        : `Congratulations! Your access to "${course.title}" is now active. Let's begin learning!`,
+      [
+        {
+          text: isBangla ? 'ঠিক আছে' : 'Got it',
+        },
+      ]
+    );
+  }, [course, enrollInCourse, isBangla, onClose, onSuccess, refreshCourses, resolvedPricing]);
+
   // Verify real enrollment against WordPress / LearnPress backend
   const performEnrollmentSync = useCallback(async () => {
     if (!course) return;
@@ -378,7 +448,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     }
 
     if (userProgress[course.id]) {
-      onSuccess(course.id);
+      if (!hasCompletedPurchaseRef.current) {
+        hasCompletedPurchaseRef.current = true;
+        onSuccess(course.id);
+      }
       onClose();
       return;
     }
@@ -417,8 +490,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
       if (backendVerified || userProgress[course.id]) {
         enrollInCourse(course.id);
-        if (bundleConfig) {
-          bundleConfig.subCourses.forEach((sub) => {
+        if (resolvedPricing.isBundle) {
+          resolvedPricing.subCourses.forEach((sub) => {
             enrollInCourse(sub.id);
           });
         }
@@ -429,7 +502,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             {
               text: isBangla ? 'শেখা শুরু করুন' : 'Start Learning',
               onPress: () => {
-                onSuccess(course.id);
+                if (!hasCompletedPurchaseRef.current) {
+                  hasCompletedPurchaseRef.current = true;
+                  onSuccess(course.id);
+                }
                 onClose();
               },
             },
@@ -462,6 +538,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     refreshCourses,
     loadCourseDetail,
     enrollInCourse,
+    resolvedPricing,
     onSuccess,
     onClose,
     setAuthModalVisible,
@@ -475,87 +552,39 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     setCanGoBack(navState.canGoBack);
     setCurrentUrl(url);
 
-    // Detect Order Completion Redirects
-    if (
-      url.includes('order-received') ||
-      url.includes('thank-you') ||
-      url.includes('checkout/success') ||
-      (url.includes('key=wc_order_') && !url.includes('order-pay'))
-    ) {
-      triggerHaptic('success');
-      setCheckoutWebUrl(null);
-      if (course) {
-        enrollInCourse(course.id);
-        if (bundleConfig) {
-          bundleConfig.subCourses.forEach((sub) => {
-            enrollInCourse(sub.id);
-          });
-        }
-        // Background verify with backend
-        CoursesService.enrollCourse(course.id).catch(() => {});
-        refreshCourses().catch(() => {});
-
-        onClose();
-        onSuccess(course.id);
-
-        Alert.alert(
-          isBangla ? 'ভর্তি সফল হয়েছে! 🎉' : 'Enrollment Successful! 🎉',
-          isBangla
-            ? `অভিনন্দন! "${course.title}" কোর্সটিতে আপনার অ্যাক্সেস চালু হয়েছে। এখনই প্রথম লেসন শুরু করুন।`
-            : `Congratulations! Your access to "${course.title}" is now active. Let's begin learning!`,
-          [
-            {
-              text: isBangla ? 'লেসন শুরু করুন' : 'Start First Lesson',
-              onPress: () => onSuccess(course.id),
-            },
-          ]
-        );
-      }
+    if (isOrderCompletionUrl(url, Env.SITE_URL)) {
+      completePurchaseOnce();
     }
   };
 
-  // Safe Request Interceptor: handles deep links (bKash/Nagad app) and skips /cart/
+  // Safe Request Interceptor: allowlists approved payment app schemes & blocks unknown schemes
   const handleShouldStartLoadWithRequest = (request: any) => {
     const url = request.url || '';
+    const decision = evaluateCheckoutNavigationRequest(url, Env.SITE_URL);
 
-    // 1. Intercept custom app schemes (bKash app, Nagad app, etc.)
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      Linking.canOpenURL(url).then((supported) => {
-        if (supported) {
-          Linking.openURL(url).catch(() => {});
-        } else if (url.startsWith('intent://')) {
-          const fallbackMatch = url.match(/browser_fallback_url=([^;&]+)/);
-          if (fallbackMatch && fallbackMatch[1]) {
-            const decodedFallback = decodeURIComponent(fallbackMatch[1]);
-            // SEC-06: Validate that decodedFallback is an HTTPS URL from trusted payment/site origins
-            try {
-              const parsedFallback = new URL(decodedFallback);
-              const isTrustedHost = [
-                'thrivingskill.com',
-                'sslcommerz.com',
-                'bkash.com',
-                'nagad.com.bd',
-                'shurjopay.com.bd',
-                'aamarpay.com'
-              ].some((host) => parsedFallback.hostname === host || parsedFallback.hostname.endsWith(`.${host}`));
-
-              if (parsedFallback.protocol === 'https:' && isTrustedHost) {
-                Linking.openURL(decodedFallback).catch(() => {});
-              }
-            } catch {}
-          }
-        }
-      }).catch(() => {});
+    if (decision.action === 'block') {
       return false;
     }
 
-    // 2. Fast-forward from /cart/ redirect directly to /checkout/
-    if (url.includes('thrivingskill.com/cart') && !url.includes('checkout')) {
+    if (decision.action === 'open_external') {
+      Linking.canOpenURL(decision.url)
+        .then((supported) => {
+          if (supported) {
+            Linking.openURL(decision.url).catch(() => {});
+          }
+        })
+        .catch(() => {});
+      return false;
+    }
+
+    // Fast-forward from /cart/ redirect directly to /checkout/
+    if (isCartRedirectUrl(url, Env.SITE_URL)) {
       if (cartForwardTimeoutRef.current) clearTimeout(cartForwardTimeoutRef.current);
+      const targetCheckout = `${Env.SITE_URL}/checkout/`;
       cartForwardTimeoutRef.current = setTimeout(() => {
         if (webViewRef.current) {
           webViewRef.current.injectJavaScript(`
-            window.location.replace('https://thrivingskill.com/checkout/');
+            window.location.replace(${JSON.stringify(targetCheckout)});
             true;
           `);
         }
@@ -565,18 +594,16 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     return true;
   };
 
-  // Smart Autofill and Mobile Styling Injected into WebView
+  // Clean Billing Autofill Injected into WebView (never auto-ticks consent or hides site/gateway UI)
   const injectedCheckoutJs = `
     (function() {
       function runAutofill() {
         try {
-          // Auto-skip intermediate cart page
           if (window.location.pathname.includes('/cart')) {
-            window.location.replace('https://thrivingskill.com/checkout/');
+            window.location.replace(${JSON.stringify(`${Env.SITE_URL}/checkout/`)});
             return;
           }
 
-          // Pre-populate billing fields on checkout
           if (window.location.pathname.includes('/checkout')) {
             function setField(id, val) {
               if (!val) return;
@@ -598,15 +625,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
             if (${JSON.stringify(address.trim())}) {
               setField('billing_address_1', ${JSON.stringify(address.trim())});
             }
-
             if (${JSON.stringify(orderNotes.trim())}) {
               setField('order_comments', ${JSON.stringify(orderNotes.trim())});
-            }
-
-            var terms = document.getElementById('terms');
-            if (terms && !terms.checked) {
-              terms.checked = true;
-              terms.dispatchEvent(new Event('change', { bubbles: true }));
             }
 
             // Monitor field changes in web checkout to auto-save back to native app
@@ -631,51 +651,11 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               }
             });
 
-            // Hook WooCommerce AJAX update event
             if (window.jQuery && !window.tsJqueryHooked) {
               window.tsJqueryHooked = true;
               window.jQuery(document.body).on('updated_checkout', function() {
                 setTimeout(runAutofill, 80);
               });
-            }
-
-            // Remove distracting desktop header/footer and any breadcrumb/links for clean native drawer UX
-            var hideSelectors = [
-              '#masthead', '.site-header', 'header', '.header-wrap', '.main-header',
-              '#top-bar', '.top-bar', '#top-header', '.top-header',
-              '.breadcrumb', '.woocommerce-breadcrumb', '.entry-header', '.page-header',
-              'footer', '.site-footer', '#colophon'
-            ];
-            hideSelectors.forEach(function(sel) {
-              var els = document.querySelectorAll(sel);
-              els.forEach(function(el) { el.style.display = 'none'; });
-            });
-
-            // Hide any SSLCommerz promotional links, logos, or external gateway banners
-            var sslElements = document.querySelectorAll('a[href*="sslcommerz"], a[href*="sslcommerz.com"], .sslcommerz-logo, #sslcommerz_logo, .payment_method_sslcommerz a, img[src*="sslcommerz"]');
-            sslElements.forEach(function(el) {
-              el.style.display = 'none';
-              if (el.tagName === 'A') {
-                el.removeAttribute('href');
-              }
-            });
-
-            // Inject responsive CSS
-            var style = document.getElementById('ts-app-custom-style');
-            if (!style) {
-              style = document.createElement('style');
-              style.id = 'ts-app-custom-style';
-              style.innerHTML = \`
-                #masthead, .site-header, header, .header-wrap, .main-header, #top-bar, .top-bar, #top-header, .top-header, .breadcrumb, .woocommerce-breadcrumb, .entry-header, .page-header, footer, .site-footer, #colophon { display: none !important; }
-                body { padding-top: 6px !important; margin: 0 !important; }
-                .woocommerce-NoticeGroup, .woocommerce-error { margin: 10px !important; border-radius: 8px !important; }
-                #customer_details { margin-bottom: 20px !important; }
-                .woocommerce-checkout-review-order { background: #F8FAFC !important; border-radius: 14px !important; padding: 16px !important; border: 1px solid #E2E8F0 !important; }
-                #place_order { background-color: #102F53 !important; color: #FFFFFF !important; font-size: 16px !important; padding: 14px 20px !important; border-radius: 10px !important; width: 100% !important; font-weight: 800 !important; cursor: pointer !important; margin-top: 14px !important; }
-                #place_order:hover { background-color: #0b223d !important; }
-                a[href*="sslcommerz"], a[href*="sslcommerz.com"], .sslcommerz-logo, #sslcommerz_logo, .payment_method_sslcommerz a, img[src*="sslcommerz"] { display: none !important; pointer-events: none !important; }
-              \`;
-              document.head.appendChild(style);
             }
           }
         } catch (err) {
@@ -690,18 +670,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       }
       setTimeout(runAutofill, 400);
       setTimeout(runAutofill, 1200);
-      setTimeout(runAutofill, 2500);
-
-      // MutationObserver for dynamic WooCommerce checkout re-renders
-      try {
-        var observer = new MutationObserver(function() {
-          var phoneInput = document.getElementById('billing_phone');
-          if (phoneInput && !phoneInput.value) {
-            runAutofill();
-          }
-        });
-        observer.observe(document.body, { childList: true, subtree: true });
-      } catch(e) {}
     })();
     true;
   `;
@@ -825,7 +793,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               sharedCookiesEnabled={true}
               thirdPartyCookiesEnabled={true}
               allowsBackForwardNavigationGestures={true}
-              originWhitelist={['https://*']}
+              originWhitelist={getCheckoutOriginWhitelist(Env.SITE_URL)}
             />
 
             {/* Bottom Safe Area Padding */}
@@ -1004,7 +972,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     {isBundle && (
                       <View style={{ backgroundColor: '#102F53', paddingHorizontal: 8, paddingVertical: 3, borderRadius: shape.full }}>
                         <Text style={{ color: '#E34234', fontSize: 10, fontWeight: '800' }}>
-                          {isBangla ? 'স্পেশাল বান্ডেল (৫টি কোর্স)' : 'SPECIAL BUNDLE (5 COURSES)'}
+                          {isBangla
+                            ? `স্পেশাল বান্ডেল (${resolvedPricing.subCourses.length}টি কোর্স)`
+                            : `SPECIAL BUNDLE (${resolvedPricing.subCourses.length} COURSES)`}
                         </Text>
                       </View>
                     )}
@@ -1020,31 +990,37 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                     </Text>
                   </View>
 
-                  {/* Bundle Sub-Courses Breakdown (CR-5) */}
-                  {isBundle && bundleConfig && (
+                  {/* Bundle Sub-Courses Breakdown */}
+                  {isBundle && resolvedPricing.subCourses.length > 0 && (
                     <View style={{ marginVertical: 8, padding: 10, backgroundColor: colors.surfaceSubtle, borderRadius: shape.medium }}>
                       <Text style={{ fontSize: 11, fontWeight: '700', color: colors.text, marginBottom: 6 }}>
-                        {isBangla ? 'বান্ডেলে অন্তর্ভুক্ত ৫টি কোর্স (সবগুলো আনলক হবে):' : 'Included 5 courses in this bundle (all unlock):'}
+                        {isBangla
+                          ? `বান্ডেলে অন্তর্ভুক্ত ${resolvedPricing.subCourses.length}টি কোর্স:`
+                          : `Included ${resolvedPricing.subCourses.length} courses in this bundle:`}
                       </Text>
-                      {bundleConfig.subCourses.map((sub, idx) => (
+                      {resolvedPricing.subCourses.map((sub, idx) => (
                         <View key={sub.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginVertical: 2.5 }}>
                           <Ionicons name="checkmark-circle" size={14} color="#10B981" />
                           <Text style={{ fontSize: 11, color: colors.text, flex: 1 }} numberOfLines={1}>
                             {idx + 1}. {sub.title}
                           </Text>
-                          <Text style={{ fontSize: 10, color: colors.textMuted, textDecorationLine: 'line-through' }}>
-                            ৳{sub.priceBdt}
-                          </Text>
+                          {typeof sub.priceBdt === 'number' && sub.priceBdt > 0 && (
+                            <Text style={{ fontSize: 10, color: colors.textMuted, textDecorationLine: 'line-through' }}>
+                              ৳{sub.priceBdt}
+                            </Text>
+                          )}
                         </View>
                       ))}
-                      <View style={{ marginTop: 6, paddingTop: 4, borderTopWidth: 1, borderTopColor: colors.border, flexDirection: 'row', justifyContent: 'space-between' }}>
-                        <Text style={{ fontSize: 11, fontWeight: '700', color: '#10B981' }}>
-                          {isBangla ? `বান্ডেল ছাড় (${bundleConfig.discountPercent}% OFF)` : `Bundle Discount Applied (-${bundleConfig.discountPercent}%)`}
-                        </Text>
-                        <Text style={{ fontSize: 11, fontWeight: '800', color: '#10B981' }}>
-                          {formattedDiscount}
-                        </Text>
-                      </View>
+                      {resolvedPricing.discountPercent > 0 && (
+                        <View style={{ marginTop: 6, paddingTop: 4, borderTopWidth: 1, borderTopColor: colors.border, flexDirection: 'row', justifyContent: 'space-between' }}>
+                          <Text style={{ fontSize: 11, fontWeight: '700', color: '#10B981' }}>
+                            {isBangla ? `বান্ডেল ছাড় (${resolvedPricing.discountPercent}% OFF)` : `Bundle Discount Applied (-${resolvedPricing.discountPercent}%)`}
+                          </Text>
+                          <Text style={{ fontSize: 11, fontWeight: '800', color: '#10B981' }}>
+                            {formattedDiscount}
+                          </Text>
+                        </View>
+                      )}
                     </View>
                   )}
 
@@ -1320,73 +1296,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                           autoCorrect={false}
                           autoComplete="email"
                           textContentType="emailAddress"
-                          returnKeyType={!isAuthenticated ? 'next' : 'done'}
-                          onSubmitEditing={() => {
-                            if (!isAuthenticated) {
-                              passwordRef.current?.focus();
-                            } else {
-                              orderNotesRef.current?.focus();
-                            }
-                          }}
+                          returnKeyType="next"
+                          onSubmitEditing={() => orderNotesRef.current?.focus()}
                           blurOnSubmit={false}
                           accessibilityLabel={isBangla ? 'ইমেল ঠিকানা' : 'Email address'}
                         />
                       </View>
-
-                      {/* Password (for new student account registration) */}
-                      {!isAuthenticated && (
-                        <View style={styles.fieldGroup}>
-                          <Text style={[styles.inputLabel, { color: colors.text }]}>
-                            {isBangla ? 'পাসওয়ার্ড তৈরি করুন' : 'Account Password'} <Text style={styles.requiredAsterisk}>*</Text>
-                          </Text>
-                          <View style={styles.passwordWrapper}>
-                            <TextInput
-                              ref={passwordRef}
-                              style={[
-                                styles.input,
-                                styles.passwordInput,
-                                {
-                                  backgroundColor: colors.surface,
-                                  borderColor: formErrors.password ? '#DC2626' : colors.border,
-                                  color: colors.text,
-                                },
-                              ]}
-                              value={password}
-                              onChangeText={(txt) => {
-                                setPassword(txt);
-                                if (formErrors.password) setFormErrors((p) => ({ ...p, password: '' }));
-                              }}
-                              placeholder="Create account password"
-                              placeholderTextColor={colors.textMuted}
-                              secureTextEntry={!showPassword}
-                              autoCapitalize="none"
-                              autoCorrect={false}
-                              autoComplete="new-password"
-                              textContentType="newPassword"
-                              returnKeyType="next"
-                              onSubmitEditing={() => orderNotesRef.current?.focus()}
-                              blurOnSubmit={false}
-                              accessibilityLabel={isBangla ? 'পাসওয়ার্ড' : 'Password'}
-                            />
-                            <TouchableOpacity
-                              style={styles.eyeToggle}
-                              onPress={() => {
-                                triggerHaptic('light');
-                                setShowPassword(!showPassword);
-                              }}
-                              accessibilityRole="button"
-                              accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
-                              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                            >
-                              <Ionicons
-                                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
-                                size={20}
-                                color={colors.textMuted}
-                              />
-                            </TouchableOpacity>
-                          </View>
-                        </View>
-                      )}
 
                       {/* Order Notes (optional) */}
                       <View style={styles.fieldGroup}>
@@ -1617,15 +1532,6 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 </TouchableOpacity>
               </>
             )}
-
-            <View style={styles.guaranteeContainer}>
-              <Ionicons name="lock-closed" size={14} color="#059669" style={{ marginRight: 6 }} />
-              <Text style={[styles.guaranteeText, { color: colors.textMuted }]}>
-                {isBangla
-                  ? '২৫৬-বিট ব্যাংক গ্রেড নিরাপদ পেমেন্ট এনক্রিপশন'
-                  : '256-Bit Bank Grade Secure Payment Encryption'}
-              </Text>
-            </View>
           </ScrollView>
         </View>
       </KeyboardAvoidingView>
@@ -1992,20 +1898,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     fontSize: 13.5,
   },
-  passwordWrapper: {
-    position: 'relative',
-    justifyContent: 'center',
-  },
-  passwordInput: {
-    paddingRight: 44,
-  },
-  eyeToggle: {
-    position: 'absolute',
-    right: 12,
-    height: 46,
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
   textArea: {
     height: 64,
     textAlignVertical: 'top',
@@ -2231,16 +2123,6 @@ const styles = StyleSheet.create({
   primaryBtnText: {
     fontSize: 14,
     fontWeight: '800',
-  },
-  guaranteeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 10,
-  },
-  guaranteeText: {
-    fontSize: 11,
-    fontWeight: '600',
   },
   stepperContainer: {
     padding: 12,

@@ -601,17 +601,9 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
     } else if (sort === 'rating') {
       matched.sort((a, b) => b.rating - a.rating);
     } else if (sort === 'price-low') {
-      matched.sort((a, b) => {
-        const priceA = a.priceBdt ?? (typeof a.price === 'number' ? a.price * 120 : 0);
-        const priceB = b.priceBdt ?? (typeof b.price === 'number' ? b.price * 120 : 0);
-        return priceA - priceB;
-      });
+      matched.sort((a, b) => (a.priceBdt ?? 0) - (b.priceBdt ?? 0));
     } else if (sort === 'price-high') {
-      matched.sort((a, b) => {
-        const priceA = a.priceBdt ?? (typeof a.price === 'number' ? a.price * 120 : 0);
-        const priceB = b.priceBdt ?? (typeof b.price === 'number' ? b.price * 120 : 0);
-        return priceB - priceA;
-      });
+      matched.sort((a, b) => (b.priceBdt ?? 0) - (a.priceBdt ?? 0));
     } else {
       matched.sort((a, b) => b.enrolledCount - a.enrolledCount);
     }

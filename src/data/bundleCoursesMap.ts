@@ -93,26 +93,15 @@ export const BUNDLE_COURSES_MAP: Record<string, BundleConfig> = {
 };
 
 /**
- * Helper to check if a course is a bundle and retrieve its sub-courses
+ * Retrieves bundle configuration strictly by exact course ID (no title-based guessing).
  */
-export function getBundleConfig(courseId: string, title?: string): BundleConfig | null {
-  if (BUNDLE_COURSES_MAP[courseId]) {
-    return BUNDLE_COURSES_MAP[courseId];
-  }
-  if (title && (title.includes('Bundle') || title.includes('bundle'))) {
-    // Generate standard 5-course package for generic bundle
-    return {
-      bundleId: courseId,
-      title: title,
-      discountPercent: 35,
-      subCourses: [
-        { id: `${courseId}-1`, title: 'Core Foundations & Professional Strategy', priceBdt: 1000 },
-        { id: `${courseId}-2`, title: 'Applied Tools, Templates & Execution', priceBdt: 1200 },
-        { id: `${courseId}-3`, title: 'Industry Case Studies & Real Scenarios', priceBdt: 1200 },
-        { id: `${courseId}-4`, title: 'Advanced Optimization & Workflow Mastery', priceBdt: 1400 },
-        { id: `${courseId}-5`, title: 'Executive Project & Portfolio Assessment', priceBdt: 1200 },
-      ],
-    };
-  }
-  return null;
+export function getBundleConfigById(courseId: string): BundleConfig | null {
+  return BUNDLE_COURSES_MAP[String(courseId)] || null;
+}
+
+/**
+ * Backward-compatible alias that matches strictly by ID.
+ */
+export function getBundleConfig(courseId: string): BundleConfig | null {
+  return getBundleConfigById(courseId);
 }

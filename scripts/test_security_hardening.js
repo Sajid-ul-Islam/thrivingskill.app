@@ -51,16 +51,20 @@ test('SEC-04: LessonPlayerScreen sanitizes video iframe URLs against javascript:
   assert(content.includes('activeVideoUrl.startsWith(\'https://\')'), 'Expected https check on generic iframe fallback');
 });
 
-// 3. PaymentModal WebView & intent:// scheme validation
-test('SEC-03: PaymentModal WebView enforces https originWhitelist', () => {
+// 3. PaymentModal WebView, origin allowlist & custom scheme validation
+test('SEC-03: PaymentModal WebView enforces strict domain originWhitelist', () => {
   const content = fs.readFileSync(path.join(__dirname, '../src/components/modals/PaymentModal.tsx'), 'utf8');
-  assert(content.includes("originWhitelist={['https://*']}"), 'Expected PaymentModal originWhitelist https only');
+  assert(content.includes('originWhitelist={getCheckoutOriginWhitelist(Env.SITE_URL)}'), 'Expected tightened PaymentModal originWhitelist');
+  assert(!content.includes("originWhitelist={['https://*']}"), 'Wildcard https://* originWhitelist must not be used in PaymentModal');
 });
 
-test('SEC-06: PaymentModal validates intent:// fallback URLs against trusted domains', () => {
-  const content = fs.readFileSync(path.join(__dirname, '../src/components/modals/PaymentModal.tsx'), 'utf8');
-  assert(content.includes('isTrustedHost'), 'Expected isTrustedHost validation');
-  assert(content.includes('sslcommerz.com') && content.includes('thrivingskill.com'), 'Expected trusted host list');
+test('SEC-06: PaymentModal allowlists custom schemes and validates intent:// fallback URLs against trusted domains', () => {
+  const modalContent = fs.readFileSync(path.join(__dirname, '../src/components/modals/PaymentModal.tsx'), 'utf8');
+  const helperContent = fs.readFileSync(path.join(__dirname, '../src/services/checkout/checkoutHelpers.ts'), 'utf8');
+  assert(modalContent.includes('evaluateCheckoutNavigationRequest'), 'Expected evaluateCheckoutNavigationRequest usage');
+  assert(helperContent.includes('ALLOWED_CHECKOUT_SCHEMES'), 'Expected ALLOWED_CHECKOUT_SCHEMES allowlist');
+  assert(helperContent.includes('isTrustedCheckoutHost'), 'Expected isTrustedCheckoutHost validation');
+  assert(helperContent.includes('sslcommerz.com') && helperContent.includes('thrivingskill.com'), 'Expected trusted host list');
 });
 
 // 4. AuthModal registration WebView domain restriction

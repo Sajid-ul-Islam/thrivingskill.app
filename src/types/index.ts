@@ -142,6 +142,8 @@ export interface Course {
   isProExclusive?: boolean;
   skillTrack?: string;
   isCareerBundle?: boolean;
+  bundleCourses?: { id: string; title: string; priceBdt?: number }[];
+  bundleDiscountPercent?: number;
   _searchIndex?: string;
 }
 
