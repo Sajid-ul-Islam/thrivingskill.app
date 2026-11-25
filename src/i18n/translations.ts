@@ -9,8 +9,8 @@ export const translations = {
     tabCopilot: 'AI Assistant',
     tabMyHub: 'My Learning',
     tabMyCourses: 'My Learning',
-    tabLive: 'Live Class',
-    tabLiveClass: 'Live Class',
+    tabLive: 'Masterclass',
+    tabLiveClass: 'Masterclass',
     tabProfile: 'Profile',
     tabTeamHub: 'Team Hub',
 
@@ -149,8 +149,8 @@ export const translations = {
     tabCopilot: 'এআই',
     tabMyHub: 'লার্নিং',
     tabMyCourses: 'লার্নিং',
-    tabLive: 'লাইভ',
-    tabLiveClass: 'লাইভ',
+    tabLive: 'মাস্টারক্লাস',
+    tabLiveClass: 'মাস্টারক্লাস',
     tabProfile: 'প্রোফাইল',
     tabTeamHub: 'টিম হাব',
 

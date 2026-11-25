@@ -30,7 +30,7 @@ const DEFAULT_CATEGORIES: Category[] = [
     banglaName: 'সব কোর্স',
     icon: 'grid',
     count: 0,
-    color: '#059669',
+    color: '#102F53',
     slug: 'all',
   },
 ];
@@ -142,28 +142,58 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({
             >
               {displayName}
             </Text>
-            {cat.id !== 'all' && typeof cat.count === 'number' && cat.count > 0 && (
+            {cat.id === 'career-track' ? (
               <View
                 style={[
                   styles.countBadge,
                   {
                     backgroundColor: isSelected
                       ? isDark
-                        ? 'rgba(15, 23, 42, 0.16)'
-                        : 'rgba(255, 255, 255, 0.22)'
-                      : colors.surfaceSubtle,
+                        ? 'rgba(15, 23, 42, 0.2)'
+                        : 'rgba(255, 255, 255, 0.28)'
+                      : colors.accent,
+                    paddingHorizontal: 6,
                   },
                 ]}
               >
                 <Text
                   style={[
                     styles.countText,
-                    { color: isSelected ? colors.onPrimary : colors.textMuted },
+                    {
+                      color: isSelected ? colors.onPrimary : '#FFFFFF',
+                      fontWeight: '800',
+                      fontSize: 9,
+                      letterSpacing: 0.5,
+                    },
                   ]}
                 >
-                  {cat.count}
+                  TRACK
                 </Text>
               </View>
+            ) : (
+              cat.id !== 'all' && typeof cat.count === 'number' && cat.count > 0 && (
+                <View
+                  style={[
+                    styles.countBadge,
+                    {
+                      backgroundColor: isSelected
+                        ? isDark
+                          ? 'rgba(15, 23, 42, 0.16)'
+                          : 'rgba(255, 255, 255, 0.22)'
+                        : colors.surfaceSubtle,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.countText,
+                      { color: isSelected ? colors.onPrimary : colors.textMuted },
+                    ]}
+                  >
+                    {cat.count}
+                  </Text>
+                </View>
+              )
             )}
           </TouchableOpacity>
         );

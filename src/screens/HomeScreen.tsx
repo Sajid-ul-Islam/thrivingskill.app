@@ -419,6 +419,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         />
 
         <HomeQuickNavPills
+          onOpenCareerTrack={() => {
+            setSearchQuery('career-track');
+            onNavigateTab('Courses');
+          }}
           onOpenThriveGen={() => {
             setSearchQuery('thrive-gen');
             onNavigateTab('Courses');

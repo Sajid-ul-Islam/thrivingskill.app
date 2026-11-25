@@ -192,7 +192,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
               accessibilityLabel="Students and Users Management"
             >
               <View style={styles.settingLeft}>
-                <Ionicons name="people-outline" size={20} color="#10B981" />
+                <Ionicons name="people-outline" size={20} color={colors.primary} />
                 <View style={styles.settingTextCol}>
                   <Text style={[styles.settingLabel, { color: colors.text }]}>
                     {isBangla ? 'শিক্ষার্থী ও ইউজার ম্যানেজমেন্ট' : 'Students & Users'}
@@ -391,7 +391,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
             accessibilityLabel={isBangla ? 'অফলাইন স্টাডি ডেক খুলুন' : 'Open Offline Study Deck'}
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="cloud-offline" size={20} color="#10B981" />
+              <Ionicons name="cloud-offline" size={20} color={colors.primary} />
               <View style={styles.settingTextCol}>
                 <Text style={[styles.settingLabel, { color: colors.text }]}>
                   {isBangla ? 'অফলাইন স্টাডি ডেক' : 'Offline Study Deck'}
@@ -498,7 +498,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                   type: 'info',
                 });
               }}
-              trackColor={{ false: '#CBD5E1', true: colors.primary }}
+              trackColor={{ false: isDark ? '#334155' : '#CBD5E1', true: '#102F53' }}
               thumbColor="#FFFFFF"
             />
           </View>
@@ -549,7 +549,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
             accessibilityLabel={isBangla ? 'ইন-অ্যাপ আপডেট দেখুন' : 'Check in-app OTA updates'}
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="cloud-download-outline" size={20} color="#10B981" />
+              <Ionicons name="cloud-download-outline" size={20} color={colors.primary} />
               <View style={styles.settingTextCol}>
                 <Text style={[styles.settingLabel, { color: colors.text }]}>
                   {isBangla ? 'ইন-অ্যাপ আপডেট (OTA)' : 'In-App Updates (OTA)'}
@@ -561,11 +561,11 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                 </Text>
               </View>
             </View>
-            <View style={[styles.langPill, { backgroundColor: 'rgba(16, 185, 129, 0.14)' }]}>
+            <View style={[styles.langPill, { backgroundColor: colors.primaryLight }]}>
               <Text
                 style={[
                   styles.langPillText,
-                  { color: isDark ? '#34D399' : '#047857', fontWeight: '800' },
+                  { color: colors.primary, fontWeight: '800' },
                 ]}
               >
                 OTA Engine
@@ -607,7 +607,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                   type: 'info',
                 });
               }}
-              trackColor={{ false: '#CBD5E1', true: '#E34234' }}
+              trackColor={{ false: isDark ? '#334155' : '#CBD5E1', true: '#102F53' }}
               thumbColor="#FFFFFF"
             />
           </View>
@@ -681,7 +681,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
             }
           >
             <View style={styles.settingLeft}>
-              <Ionicons name="receipt-outline" size={20} color="#10B981" />
+              <Ionicons name="receipt-outline" size={20} color={colors.primary} />
               <View style={styles.settingTextCol}>
                 <Text style={[styles.settingLabel, { color: colors.text }]}>
                   {isBangla ? 'অর্ডার ও কোর্স রেকর্ড' : 'Orders & Course Records'}
@@ -763,21 +763,19 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
                     borderRadius: 6,
                     backgroundColor:
                       serverEnvironment === 'production'
-                        ? isDark
-                          ? 'rgba(16, 185, 129, 0.2)'
-                          : '#ECFDF5'
+                        ? colors.primaryLight
                         : isDark
                           ? 'rgba(227, 66, 52, 0.2)'
                           : 'rgba(227, 66, 52, 0.12)',
                     borderWidth: 1,
-                    borderColor: serverEnvironment === 'production' ? '#10B981' : '#E34234',
+                    borderColor: serverEnvironment === 'production' ? colors.primary : '#E34234',
                   }}
                 >
                   <Text
                     style={{
                       fontSize: 11,
                       fontWeight: '700',
-                      color: serverEnvironment === 'production' ? '#10B981' : '#E34234',
+                      color: serverEnvironment === 'production' ? colors.primary : '#E34234',
                       letterSpacing: 0.5,
                     }}
                   >
@@ -982,7 +980,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
               <Ionicons
                 name="shield-checkmark-outline"
                 size={20}
-                color={isDark ? '#34D399' : '#047857'}
+                color={colors.primary}
               />
               <Text style={[styles.settingLabel, { color: colors.text }]}>
                 Trusted Partners & MoUs
@@ -991,7 +989,7 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
             <Text
               style={[
                 styles.versionText,
-                { color: isDark ? '#34D399' : '#047857', fontWeight: '600' },
+                { color: colors.primary, fontWeight: '600' },
               ]}
             >
               Universities & a2i →

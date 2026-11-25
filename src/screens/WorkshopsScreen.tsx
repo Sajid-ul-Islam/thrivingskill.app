@@ -119,11 +119,11 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Header
-        title={isBangla ? 'লাইভ ক্লাস ও সামিট' : 'Live Class & Summits'}
+        title={isBangla ? 'মাস্টারক্লাস ও সামিট' : 'Masterclass & Summits'}
         subtitle={
           isBangla
-            ? 'সরাসরি লাইভ ক্লাস ও ন্যাশনাল স্কিল সামিট'
-            : 'Upcoming live sessions & skill summits'
+            ? 'সরাসরি লাইভ মাস্টারক্লাস ও স্কিল সামিট'
+            : 'Upcoming live masterclasses & skill summits'
         }
         isScrolled={isScrolled}
         onOpenSubscription={onOpenSubscription}
@@ -269,19 +269,19 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
           {[
             {
               id: 'all' as TabType,
-              label: isBangla ? `সকল (${workshops.length})` : `All Events (${workshops.length})`,
+              label: isBangla ? `সকল (${workshops.length})` : `All Masterclasses (${workshops.length})`,
               icon: 'calendar-outline' as const,
             },
             {
               id: 'live-classes' as TabType,
               label: isBangla
                 ? `লাইভ (${liveClasses.length})`
-                : `Live Class (${liveClasses.length})`,
+                : `Live Masterclass (${liveClasses.length})`,
               icon: 'videocam-outline' as const,
             },
             {
               id: 'summits' as TabType,
-              label: isBangla ? `সামিট (${summits.length})` : `Summit (${summits.length})`,
+              label: isBangla ? `সামিট (${summits.length})` : `Skill Summits (${summits.length})`,
               icon: 'ribbon-outline' as const,
             },
           ].map((tab) => {

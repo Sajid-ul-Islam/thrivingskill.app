@@ -89,7 +89,7 @@ export function parseAppDeepLink(rawUrl: string | null | undefined): ParsedDeepL
     if (head === 'my-learning' || head === 'mylearning') {
       return { type: 'tab', tab: 'MyLearning' };
     }
-    if (head === 'workshops' || head === 'live') {
+    if (head === 'workshops' || head === 'live' || head === 'masterclass' || head === 'masterclasses') {
       return { type: 'tab', tab: 'Workshops' };
     }
     if (head === 'profile') {

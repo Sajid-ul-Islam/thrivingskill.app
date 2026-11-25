@@ -19,6 +19,7 @@ export interface QuickNavItem {
 }
 
 interface HomeQuickNavPillsProps {
+  onOpenCareerTrack?: () => void;
   onOpenThriveGen: () => void;
   onOpenBundles: () => void;
   onOpenBlog: () => void;
@@ -29,6 +30,7 @@ interface HomeQuickNavPillsProps {
 }
 
 export const HomeQuickNavPills: React.FC<HomeQuickNavPillsProps> = ({
+  onOpenCareerTrack,
   onOpenThriveGen,
   onOpenBundles,
   onOpenBlog,
@@ -41,6 +43,15 @@ export const HomeQuickNavPills: React.FC<HomeQuickNavPillsProps> = ({
   const { isBangla } = useLanguage();
 
   const navItems: QuickNavItem[] = [
+    {
+      id: 'career-track',
+      icon: 'school',
+      label: 'Career Track',
+      labelBn: 'ক্যারিয়ার ট্র্যাক',
+      badge: 'PRO',
+      badgeColor: '#E34234',
+      onPress: onOpenCareerTrack || onOpenBundles,
+    },
     {
       id: 'thrive-gen',
       icon: 'school',
@@ -76,8 +87,8 @@ export const HomeQuickNavPills: React.FC<HomeQuickNavPillsProps> = ({
     {
       id: 'workshops',
       icon: 'videocam',
-      label: 'Live Workshops',
-      labelBn: 'লাইভ ক্লাস',
+      label: 'Masterclass',
+      labelBn: 'মাস্টারক্লাস',
       onPress: onOpenWorkshops,
     },
     {

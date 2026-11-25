@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { triggerHaptic } from '../../utils/haptics';
 import { CANONICAL_DEPARTMENTS_MAP, getCanonicalDepartmentId } from '../../components';
+import { getCanonicalCareerTrackCourses } from '../../services/site/siteNavigationService';
 import { useLearning } from '../../context/LearningContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { Course, Category } from '../../types';
@@ -123,12 +124,26 @@ export function useCoursesCatalogState(onOpenSearch?: () => void) {
   }, [dynamicDepartments, courses]);
 
   const departmentSections = useMemo(() => {
+    const careerTracks = getCanonicalCareerTrackCourses();
     const list = dynamicDepartments
       .map((dept) => ({
         ...dept,
-        courses: courses.filter((c) => matchesCourseDepartment(c, dept.id)),
+        courses:
+          dept.id === 'career-track'
+            ? careerTracks
+            : courses.filter((c) => matchesCourseDepartment(c, dept.id)),
       }))
       .filter((d) => d.courses.length > 0);
+
+    if (!list.some((d) => d.id === 'career-track')) {
+      list.unshift({
+        id: 'career-track',
+        title: isBangla ? '🚀 ক্যারিয়ার ট্র্যাক প্রোগ্রাম' : '🚀 Flagship Career Tracks',
+        slug: 'career-track',
+        count: careerTracks.length,
+        courses: careerTracks,
+      });
+    }
 
     if (courses.length > 0) {
       const bestsellers = [...courses]
@@ -159,11 +174,21 @@ export function useCoursesCatalogState(onOpenSearch?: () => void) {
         banglaName: 'সব কোর্স',
         icon: 'grid',
         count: totalCount,
-        color: '#059669',
+        color: '#102F53',
         slug: 'all',
+      },
+      {
+        id: 'career-track',
+        name: 'Career Track',
+        banglaName: 'ক্যারিয়ার ট্র্যাক',
+        icon: 'ribbon-outline',
+        count: 4,
+        color: '#102F53',
+        slug: 'career-track',
       },
     ];
     dynamicDepartments.forEach((dept) => {
+      if (dept.id === 'career-track') return;
       const conf = CANONICAL_DEPARTMENTS_MAP[dept.id];
       list.push({
         id: dept.id,
@@ -171,7 +196,7 @@ export function useCoursesCatalogState(onOpenSearch?: () => void) {
         banglaName: conf ? conf.banglaName : dept.title,
         count: departmentCountsMap[dept.id] ?? dept.count,
         icon: 'book',
-        color: '#4F46E5',
+        color: '#102F53',
         slug: dept.slug,
       });
     });
@@ -274,7 +299,8 @@ export function useCoursesCatalogState(onOpenSearch?: () => void) {
         list.push(c);
       });
     }
-    map.set('career-track', bundles);
+    const careerTracks = getCanonicalCareerTrackCourses();
+    map.set('career-track', [...careerTracks, ...bundles]);
     return map;
   }, [courses]);
 
@@ -286,6 +312,8 @@ export function useCoursesCatalogState(onOpenSearch?: () => void) {
     let candidateList: Course[];
     if (cat === 'all') {
       candidateList = courses;
+    } else if (cat === 'career-track') {
+      candidateList = categoryIndex.get('career-track') || getCanonicalCareerTrackCourses();
     } else if (isDeptFilter) {
       candidateList = courses.filter((c) => matchesCourseDepartment(c, cat));
     } else if (cat === 'bundle' || cat === 'bundle-courses') {

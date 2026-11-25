@@ -103,8 +103,8 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop }) 
                   ? 'সরাসরি লাইভ'
                   : '🔴 LIVE BROADCASTING'
                 : isBangla
-                  ? 'আসন্ন ওয়ার্কশপ'
-                  : 'UPCOMING WORKSHOP'}
+                  ? 'আসন্ন মাস্টারক্লাস'
+                  : 'UPCOMING MASTERCLASS'}
             </Text>
           </View>
 

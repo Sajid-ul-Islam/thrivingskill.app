@@ -309,6 +309,7 @@ export interface CanonicalDepartmentConfig {
 }
 
 export const CANONICAL_DEPARTMENTS_MAP: Record<string, CanonicalDepartmentConfig> = {
+  'career-track': { name: 'Career Track', banglaName: 'ক্যারিয়ার ট্র্যাক' },
   'generative-ai': { name: 'Generative AI', banglaName: 'জেনারেটিভ এআই' },
   business: { name: 'Business', banglaName: 'ব্যবসা ও বাণিজ্য' },
   'microsoft-excel-courses': { name: 'Microsoft Excel', banglaName: 'মাইক্রোসফট এক্সেল' },
@@ -361,6 +362,11 @@ export const getCanonicalDepartmentId = (slug: string = '', name: string = ''): 
 
   if (excluded.includes(s) || excluded.some((ex) => s === ex || s.startsWith(`${ex}-`))) {
     return null;
+  }
+
+  // Career Track
+  if (s.includes('career-track') || s.includes('careertrack') || n.includes('career track')) {
+    return 'career-track';
   }
 
   // Supply Chain & Logistics

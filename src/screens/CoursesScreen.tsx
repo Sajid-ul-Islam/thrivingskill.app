@@ -230,6 +230,17 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
   const quickFilterOptions = useMemo(
     () => [
       {
+        key: 'career-track',
+        label: isBangla ? 'ক্যারিয়ার ট্র্যাক' : 'Career Track',
+        icon: 'ribbon-outline',
+        iconColor: colors.accent,
+        selected: state.selectedCategory === 'career-track',
+        onPress: () =>
+          state.handleCategorySelect(
+            state.selectedCategory === 'career-track' ? 'all' : 'career-track'
+          ),
+      },
+      {
         key: 'beginner',
         label: isBangla ? 'বিগিনার' : 'Beginner',
         icon: 'school-outline',
@@ -273,7 +284,7 @@ export const CoursesScreen: React.FC<CoursesScreenProps> = ({
         key: 'free',
         label: isBangla ? 'ফ্রি' : 'Free',
         icon: 'gift-outline',
-        iconColor: '#16A34A',
+        iconColor: colors.primary,
         selected: state.selectedPriceFilter === 'free',
         onPress: () =>
           state.handlePriceFilterSelect(state.selectedPriceFilter === 'free' ? 'all' : 'free'),

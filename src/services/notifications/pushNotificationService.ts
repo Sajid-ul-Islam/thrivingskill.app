@@ -110,6 +110,8 @@ export function normalizeNotificationPayload(
   if (
     screenKey === 'workshops' ||
     screenKey === 'workshop' ||
+    screenKey === 'masterclass' ||
+    screenKey === 'masterclasses' ||
     screenKey === 'live' ||
     screenKey === 'liveclass' ||
     screenKey === 'live_class'

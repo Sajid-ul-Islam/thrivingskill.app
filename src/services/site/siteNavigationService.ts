@@ -1,6 +1,7 @@
 import { Env } from '../../config/env';
 import { HttpClient } from '../api/httpClient';
 import { CacheManager } from '../cache/cacheManager';
+import { Course } from '../../types';
 
 export interface SiteFeatureItem {
   id: string;
@@ -72,6 +73,19 @@ export interface CourseAuthorItem {
 
 // Canonical offline fallback definitions for all 14 features from https://thrivingskill.com
 export const CANONICAL_SITE_FEATURES: SiteFeatureItem[] = [
+  {
+    id: 'career-track',
+    title: 'Career Track',
+    banglaTitle: 'ক্যারিয়ার ট্র্যাক',
+    slug: 'career-track',
+    webUrl: `${Env.SITE_URL}/product-category/career-track/`,
+    pageId: 851,
+    icon: 'school-outline',
+    section: 'learning',
+    badge: 'FLAGSHIP',
+    description: 'Executive & job-ready specialized career tracks with mentorship.',
+    banglaDescription: 'কর্পোরেট লিডারশিপ, ডাটা অ্যানালিটিক্স ও জব সিকিংয়ের বিশেষায়িত ক্যারিয়ার ট্র্যাক।',
+  },
   {
     id: 'ebook',
     title: 'eBook',
@@ -513,6 +527,154 @@ export const CANONICAL_EBOOKS: EbookItem[] = [
     readUrl: `${Env.SITE_URL}/ebook/`,
   },
 ];
+
+export interface CareerTrackItem {
+  id: string;
+  name: string;
+  banglaName: string;
+  price: number;
+  regularPrice?: number;
+  currencyPrefix: string;
+  permalink: string;
+  badge: string;
+  banglaBadge: string;
+  duration: string;
+  banglaDuration: string;
+  description: string;
+  banglaDescription: string;
+  highlights: string[];
+  banglaHighlights: string[];
+  thumbnail: string;
+}
+
+// Authentic Career Track Programs from https://thrivingskill.com/product-category/career-track/
+export const CANONICAL_CAREER_TRACKS: CareerTrackItem[] = [
+  {
+    id: 'career-track-exec-leadership',
+    name: 'Executive Leadership and Strategic Thinking',
+    banglaName: 'এক্সিকিউটিভ লিডারশিপ ও স্ট্র্যাটেজিক থিংকিং',
+    price: 10250,
+    regularPrice: 15000,
+    currencyPrefix: '৳',
+    permalink: `${Env.SITE_URL}/product/executive-leadership-and-strategic-thinking/`,
+    badge: 'EXECUTIVE TRACK',
+    banglaBadge: 'এক্সিকিউটিভ ট্র্যাক',
+    duration: '12 Weeks',
+    banglaDuration: '১২ সপ্তাহ',
+    description:
+      'Advanced strategic decision making, corporate governance, organizational scaling, and leadership psychology.',
+    banglaDescription:
+      'উচ্চপর্যায়ের ব্যবসায়িক সিদ্ধান্ত, করপোরেট সুশাসন, টিম লিডারশিপ ও স্ট্র্যাটেজিক ম্যানেজমেন্টের মাস্টারক্লাস ট্র্যাক।',
+    highlights: ['1-on-1 Executive Mentoring', 'Boardroom Case Studies', 'Verifiable Certificate'],
+    banglaHighlights: ['১-অন-১ এক্সিকিউটিভ মেন্টরিং', 'রিয়েল কেস স্টাডিজ', 'ভেরিফায়েড সার্টিফিকেট'],
+    thumbnail: 'https://thrivingskill.com/wp-content/uploads/2026/04/leadership.jpeg',
+  },
+  {
+    id: 'career-track-data-decision',
+    name: 'Data Driven Decision Making',
+    banglaName: 'ডাটা ড্রিভেন ডিসিশন মেকিং',
+    price: 8450,
+    regularPrice: 12000,
+    currencyPrefix: '৳',
+    permalink: `${Env.SITE_URL}/product/data-driven-decision-making/`,
+    badge: 'ANALYTICS TRACK',
+    banglaBadge: 'অ্যানালিটিক্স ট্র্যাক',
+    duration: '10 Weeks',
+    banglaDuration: '১০ সপ্তাহ',
+    description:
+      'Transform organizational data into actionable strategic insights using dynamic BI dashboards and predictive modeling.',
+    banglaDescription:
+      'ব্যবসায়িক ডাটা থেকে কার্যকর সিদ্ধান্ত গ্রহণ, বিজনেস ইন্টেলিজেন্স ও অ্যাডভান্সড ড্যাশবোর্ড মডেলিং।',
+    highlights: ['PowerBI & Advanced Excel', 'Predictive Analytics', 'Real Business Projects'],
+    banglaHighlights: ['পাওয়ার বিআই ও এক্সেল', 'প্রেডিক্টিভ অ্যানালিটিক্স', 'বাস্তব প্রজেক্ট কাজ'],
+    thumbnail: 'https://thrivingskill.com/wp-content/uploads/2026/03/5.-Excel-Bundle.jpg',
+  },
+  {
+    id: 'career-track-growth-pathway',
+    name: 'Professional Growth Pathway',
+    banglaName: 'প্রফেশনাল গ্রোথ পাথওয়ে',
+    price: 5790,
+    regularPrice: 8500,
+    currencyPrefix: '৳',
+    permalink: `${Env.SITE_URL}/product/professional-growth-pathway/`,
+    badge: 'CAREER TRACK',
+    banglaBadge: 'ক্যারিয়ার ট্র্যাক',
+    duration: '8 Weeks',
+    banglaDuration: '৮ সপ্তাহ',
+    description:
+      'Master negotiation, high-stakes communication, emotional intelligence, and interpersonal workplace excellence.',
+    banglaDescription:
+      'কর্মক্ষেত্রে দ্রুত পদোন্নতি, কার্যকর যোগাযোগ, মধ্যস্থতা এবং মোটিভেশনাল লিডারশিপ ডেভেলপমেন্ট।',
+    highlights: ['Soft Skills Mastery', 'Crisis Management', 'Personal Branding'],
+    banglaHighlights: ['সফট স্কিলস দক্ষতা', 'ক্রাইসিস ম্যানেজমেন্ট', 'পার্সোনাল ব্র্যান্ডিং'],
+    thumbnail: 'https://thrivingskill.com/wp-content/uploads/2025/11/Ms-Excel-Advanced-Level.jpg',
+  },
+  {
+    id: 'career-track-job-seekers',
+    name: 'Essential Skills for Job Seekers',
+    banglaName: 'জব সিকারদের জন্য প্রয়োজনীয় দক্ষতা',
+    price: 9250,
+    regularPrice: 14000,
+    currencyPrefix: '৳',
+    permalink: `${Env.SITE_URL}/product/essential-skills-for-job-seekers/`,
+    badge: 'ACCELERATOR TRACK',
+    banglaBadge: 'জব রেডি ট্র্যাক',
+    duration: '10 Weeks',
+    banglaDuration: '১০ সপ্তাহ',
+    description:
+      'End-to-end recruitment readiness: ATS-optimized resume, mock technical interviews, aptitude tests, and corporate culture fit.',
+    banglaDescription:
+      'চাকরি প্রত্যাশীদের জন্য সিভি রাইটিং, এইচআর ইন্টারভিউ প্রস্তুতি, অ্যাপটিটিউড টেস্ট ও কর্পোরেট ফিটনেস গাইড।',
+    highlights: ['ATS Resume Review', 'Mock HR Interviews', '100% Job Ready Prep'],
+    banglaHighlights: ['এটিএস সিভি অডিট', 'মক ইন্টারভিউ প্র্যাকটিস', '১০০% জব-রেডি প্রস্তুতি'],
+    thumbnail: 'https://thrivingskill.com/wp-content/uploads/2026/04/leadership.jpeg',
+  },
+];
+
+export function getCanonicalCareerTrackCourses(): Course[] {
+  return CANONICAL_CAREER_TRACKS.map((t) => ({
+    id: t.id,
+    title: t.name,
+    slug: t.id,
+    subtitle: t.description,
+    category: 'career-track',
+    categorySlugs: ['career-track', 'career', 'pro-track'],
+    level: 'Advanced',
+    rating: 4.9,
+    reviewsCount: 148,
+    enrolledCount: 820,
+    price: Math.round(t.price / 120),
+    priceBdt: t.price,
+    originalPrice: t.regularPrice ? Math.round(t.regularPrice / 120) : Math.round(t.price / 120),
+    originalPriceBdt: t.regularPrice || t.price,
+    thumbnail: t.thumbnail,
+    badge: 'Special Bundle',
+    durationHours: 36,
+    lecturesCount: 42,
+    certificateIncluded: true,
+    language: 'Bangla / English',
+    lastUpdated: '2026-04',
+    instructor: {
+      id: 'inst-tsl-faculty',
+      name: 'Thriving Skills Executive Faculty',
+      title: 'Industry Practitioners & Executive Mentors',
+      company: 'Thriving Skills Limited',
+      avatar: 'https://thrivingskill.com/wp-content/uploads/2023/02/logo-1.png',
+      bio: 'Premier executive learning cohort mentored by senior corporate leaders.',
+      rating: 4.9,
+      studentsCount: 45000,
+      coursesCount: 12,
+    },
+    highlights: t.highlights,
+    description: t.description,
+    prerequisites: ['Basic professional experience or graduate degree'],
+    modules: [],
+    reviews: [],
+    isProExclusive: true,
+    isCareerBundle: true,
+    skillTrack: t.badge,
+  }));
+}
 
 // Authentic Founder, Leadership & Faculty Team Assets from official thrivingskill.com portal
 export const CANONICAL_INSTRUCTORS: CourseAuthorItem[] = [
