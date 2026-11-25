@@ -58,7 +58,7 @@ export const LiveWorkshopCard: React.FC<LiveWorkshopCardProps> = ({ workshop }) 
   };
 
   const handleJoinLive = async () => {
-    const targetUrl = workshop.joinUrl || 'https://thrivingskill.com/live-room';
+    const targetUrl = workshop.joinUrl || 'https://thrivingskill.com/masterclass/';
     try {
       showToast({
         message: isBangla ? 'লাইভ সেশনে যুক্ত করা হচ্ছে...' : 'Entering live classroom...',
@@ -299,6 +299,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#FFFFFF',
     letterSpacing: 0.5,
+    flexShrink: 1,
   },
   seatsBadge: {
     backgroundColor: 'rgba(0,0,0,0.65)',
@@ -340,8 +341,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    minWidth: 0,
   },
   detailText: {
+    flex: 1,
+    flexShrink: 1,
     fontSize: 12,
     fontWeight: '600',
   },

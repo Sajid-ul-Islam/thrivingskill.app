@@ -216,6 +216,7 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 12,
+    flexShrink: 1,
   },
   rsvpBtn: {
     flexDirection: 'row',

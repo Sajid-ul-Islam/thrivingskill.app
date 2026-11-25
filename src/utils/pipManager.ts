@@ -52,7 +52,7 @@ export function formatNowPlayingMetadata(
     title: lessonTitle.trim() || 'Masterclass Lecture',
     artist: 'Thriving Skills',
     album: courseTitle?.trim() || 'Executive Professional Course',
-    artworkUrl: artworkUrl || 'https://thrivingskill.com/wp-content/uploads/2023/10/logo.png',
+    artworkUrl: artworkUrl || 'https://thrivingskill.com/wp-content/uploads/2023/02/logo-1.png',
   };
 }
 

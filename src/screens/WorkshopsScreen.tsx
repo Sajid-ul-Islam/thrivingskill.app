@@ -202,7 +202,7 @@ export const WorkshopsScreen: React.FC<WorkshopsScreenProps> = ({
               onPress={async () => {
                 triggerHaptic('medium');
                 const rawUrl = (
-                  liveWorkshopNow.joinUrl || 'https://thrivingskill.com/live-room'
+                  liveWorkshopNow.joinUrl || 'https://thrivingskill.com/masterclass/'
                 ).trim();
                 const isSafe = /^https?:\/\//i.test(rawUrl) || /^zoom(?:us|mtg):\/\//i.test(rawUrl);
                 if (!isSafe) {
@@ -417,6 +417,7 @@ const styles = StyleSheet.create({
   },
   liveHeroHeader: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 10,
@@ -470,18 +471,21 @@ const styles = StyleSheet.create({
   },
   liveHeroMetaRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
-    gap: 16,
+    gap: 12,
     marginBottom: 14,
   },
   liveMetaItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+    minWidth: 0,
   },
   liveMetaText: {
     fontSize: 12,
     fontWeight: '600',
+    flexShrink: 1,
   },
   liveHeroEnterBtn: {
     minHeight: MIN_TOUCH_TARGET,
@@ -504,6 +508,8 @@ const styles = StyleSheet.create({
     fontSize: 13.5,
     fontWeight: '800',
     letterSpacing: 0.3,
+    flexShrink: 1,
+    textAlign: 'center',
   },
   banner: {
     flexDirection: 'row',
@@ -567,6 +573,7 @@ const styles = StyleSheet.create({
   segmentedTabText: {
     fontSize: 12.5,
     fontVariant: ['tabular-nums'],
+    flexShrink: 1,
   },
   listContainer: {
     marginTop: 8,
