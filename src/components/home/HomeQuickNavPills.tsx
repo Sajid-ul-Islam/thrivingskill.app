@@ -151,7 +151,9 @@ export const HomeQuickNavPills: React.FC<HomeQuickNavPillsProps> = ({
                   { backgroundColor: item.badgeColor || colors.primary },
                 ]}
               >
-                <Text style={styles.badgeText}>{item.badge}</Text>
+                <Text style={[styles.badgeText, { color: item.badgeColor ? '#FFFFFF' : colors.onPrimary }]}>
+                  {item.badge}
+                </Text>
               </View>
             )}
           </SpringPressable>

@@ -422,7 +422,9 @@ export const QuizPlayerModal: React.FC<QuizPlayerModalProps> = ({
                                 },
                               ]}
                             >
-                              {isSelected && <View style={styles.radioDot} />}
+                              {isSelected && (
+                                <View style={[styles.radioDot, { backgroundColor: colors.onPrimary }]} />
+                              )}
                             </View>
                             <Text
                               style={[
@@ -733,7 +735,6 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#FFFFFF',
   },
   optionText: {
     flex: 1,

@@ -176,8 +176,8 @@ export const ServicesModal: React.FC<ServicesModalProps> = ({
                         accessibilityRole="button"
                         accessibilityLabel={isBangla ? 'পরামর্শ ও সেবা নিন' : 'Inquire / Book Consultation'}
                       >
-                        <Ionicons name="mail-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
-                        <Text style={styles.inquireBtnText}>
+                        <Ionicons name="mail-outline" size={16} color={colors.onAccent} style={{ marginRight: 6 }} />
+                        <Text style={[styles.inquireBtnText, { color: colors.onAccent }]}>
                           {isBangla ? 'পরামর্শ ও সেবা নিন' : 'Inquire / Book Consultation'}
                         </Text>
                       </SpringPressable>

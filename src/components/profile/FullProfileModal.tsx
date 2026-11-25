@@ -179,7 +179,7 @@ export const FullProfileModal: React.FC<FullProfileModalProps> = ({
                       { backgroundColor: colors.primary, borderColor: colors.surfaceCard },
                     ]}
                   >
-                    <Text style={styles.avatarInitial}>
+                    <Text style={[styles.avatarInitial, { color: colors.onPrimary }]}>
                       {displayName.charAt(0).toUpperCase()}
                     </Text>
                   </View>
@@ -724,7 +724,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarInitial: {
-    color: '#FFFFFF',
     fontSize: 28,
     fontWeight: '900',
   },

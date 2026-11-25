@@ -228,10 +228,10 @@ export const HomeBlogInsightsFeed: React.FC<HomeBlogInsightsFeedProps> = ({
                   </View>
 
                   <View style={[styles.readPill, { backgroundColor: colors.primary }]}>
-                    <Text style={styles.readPillText}>
+                    <Text style={[styles.readPillText, { color: colors.onPrimary }]}>
                       {isBangla ? 'পড়ুন' : 'Read'}
                     </Text>
-                    <Ionicons name="arrow-forward" size={10} color="#FFFFFF" />
+                    <Ionicons name="arrow-forward" size={10} color={colors.onPrimary} />
                   </View>
                 </View>
               </View>
@@ -406,6 +406,5 @@ const styles = StyleSheet.create({
   readPillText: {
     fontSize: 10.5,
     fontWeight: '700',
-    color: '#FFFFFF',
   },
 });

@@ -318,10 +318,10 @@ export const CourseQuickPeekModal: React.FC<CourseQuickPeekModalProps> = ({
               accessibilityRole="button"
               accessibilityLabel={isBangla ? 'কোর্সটি দেখুন' : 'View full course'}
             >
-              <Text style={styles.primaryActionText}>
+              <Text style={[styles.primaryActionText, { color: colors.onPrimary }]}>
                 {isBangla ? 'সম্পূর্ণ কোর্স দেখুন ও শুরু করুন' : 'View Course & Enroll'}
               </Text>
-              <Ionicons name="arrow-forward" size={18} color="#FFFFFF" style={{ marginLeft: 8 }} />
+              <Ionicons name="arrow-forward" size={18} color={colors.onPrimary} style={{ marginLeft: 8 }} />
             </SpringPressable>
           </View>
         </View>
@@ -597,7 +597,6 @@ const styles = StyleSheet.create({
     minHeight: MIN_TOUCH_TARGET,
   },
   primaryActionText: {
-    color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '800',
   },

@@ -533,7 +533,7 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                           />
                           {isSelected && (
                             <View style={[styles.presetCheckmark, { backgroundColor: colors.primary }]}>
-                              <Ionicons name="checkmark" size={12} color="#FFFFFF" />
+                              <Ionicons name="checkmark" size={12} color={colors.onPrimary} />
                             </View>
                           )}
                         </TouchableOpacity>
@@ -650,7 +650,7 @@ export const ProfileSettingsModal: React.FC<ProfileSettingsModalProps> = ({
                           </View>
                           {isSelected && (
                             <View style={[styles.presetCheckmark, { backgroundColor: colors.primary }]}>
-                              <Ionicons name="checkmark" size={12} color="#FFFFFF" />
+                              <Ionicons name="checkmark" size={12} color={colors.onPrimary} />
                             </View>
                           )}
                         </TouchableOpacity>

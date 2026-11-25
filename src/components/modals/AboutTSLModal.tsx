@@ -298,7 +298,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
 
               {/* Pillar 3 */}
               <View style={[styles.pillarCard, { backgroundColor: colors.surfaceCard, borderColor: colors.border }]}>
-                <View style={[styles.pillarIconBg, { backgroundColor: '#FAF5FF' }]}>
+                <View style={[styles.pillarIconBg, { backgroundColor: isDark ? 'rgba(147, 51, 234, 0.16)' : '#FAF5FF' }]}>
                   <Ionicons name="briefcase-outline" size={22} color="#9333EA" />
                 </View>
                 <View style={{ flex: 1 }}>
@@ -809,7 +809,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                   accessibilityRole="button"
                   accessibilityLabel="Send email to info@thrivingskill.com"
                 >
-                  <View style={[styles.contactIconBg, { backgroundColor: '#FAF5FF' }]}>
+                  <View style={[styles.contactIconBg, { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.16)' : '#FAF5FF' }]}>
                     <Ionicons name="mail" size={18} color="#8B5CF6" />
                   </View>
                   <View style={{ flex: 1 }}>
@@ -828,7 +828,7 @@ export const AboutTSLModal: React.FC<AboutTSLModalProps> = ({
                   accessibilityRole="button"
                   accessibilityLabel="Open official portal on web"
                 >
-                  <View style={[styles.contactIconBg, { backgroundColor: '#FEF2F2' }]}>
+                  <View style={[styles.contactIconBg, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.16)' : '#FEF2F2' }]}>
                     <Ionicons name="globe-outline" size={18} color="#EF4444" />
                   </View>
                   <View style={{ flex: 1 }}>

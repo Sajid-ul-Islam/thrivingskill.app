@@ -162,10 +162,10 @@ export const SpecialBundlesCarousel: React.FC<SpecialBundlesCarouselProps> = ({
                       { backgroundColor: colors.primary },
                     ]}
                   >
-                    <Text style={styles.ctaPillText}>
+                    <Text style={[styles.ctaPillText, { color: colors.onPrimary }]}>
                       {isBangla ? 'কোর্সসমূহ দেখুন' : 'Explore'}
                     </Text>
-                    <Ionicons name="chevron-forward" size={12} color="#FFFFFF" />
+                    <Ionicons name="chevron-forward" size={12} color={colors.onPrimary} />
                   </View>
                 </View>
               </View>
@@ -338,6 +338,5 @@ const styles = StyleSheet.create({
   ctaPillText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#FFFFFF',
   },
 });

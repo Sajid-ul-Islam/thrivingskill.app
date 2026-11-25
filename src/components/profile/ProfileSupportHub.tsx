@@ -119,7 +119,7 @@ export const ProfileSupportHub: React.FC<ProfileSupportHubProps> = ({
             activeOpacity={0.8}
           >
             <View style={[styles.iconCircle, { backgroundColor: colors.primary }]}>
-              <Ionicons name="call" size={15} color="#FFFFFF" />
+              <Ionicons name="call" size={15} color={colors.onPrimary} />
             </View>
             <Text style={[styles.tileLabel, { color: colors.text }]}>Hotline</Text>
             <Text style={[styles.tileSub, { color: colors.primary }]}>01312100288</Text>

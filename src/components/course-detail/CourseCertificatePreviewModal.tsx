@@ -156,7 +156,7 @@ export const CourseCertificatePreviewModal: React.FC<CourseCertificatePreviewMod
                   </View>
 
                   <View style={styles.certSigCol}>
-                    <Text style={styles.sigCursive}>Abdullah Al Mahmud</Text>
+                    <Text style={[styles.sigCursive, { color: colors.text }]}>Abdullah Al Mahmud</Text>
                     <View style={[styles.sigLine, { backgroundColor: colors.border }]} />
                     <Text style={[styles.sigTitle, { color: colors.textMuted }]}>
                       Md. Abdullah Al Mahmud

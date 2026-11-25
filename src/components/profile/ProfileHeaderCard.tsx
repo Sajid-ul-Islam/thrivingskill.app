@@ -111,7 +111,7 @@ export const ProfileHeaderCard: React.FC<ProfileHeaderCardProps> = ({
                 { backgroundColor: colors.primary },
               ]}
             >
-              <Text style={styles.avatarInitialsTextBig}>
+              <Text style={[styles.avatarInitialsTextBig, { color: colors.onPrimary }]}>
                 {displayName.charAt(0).toUpperCase()}
               </Text>
             </View>
@@ -277,7 +277,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarInitialsTextBig: {
-    color: '#FFFFFF',
     fontSize: 22,
     fontWeight: '800',
   },

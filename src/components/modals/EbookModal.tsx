@@ -130,7 +130,7 @@ export const EbookModal: React.FC<EbookModalProps> = ({ visible, onClose }) => {
                   <Text
                     style={[
                       styles.categoryPillText,
-                      { color: isActive ? '#FFFFFF' : colors.textMuted, fontWeight: isActive ? '700' : '500' },
+                      { color: isActive ? colors.onPrimary : colors.textMuted, fontWeight: isActive ? '700' : '500' },
                     ]}
                   >
                     {cat === 'all' ? (isBangla ? 'সকল বিষয়' : 'All Topics') : cat}
@@ -193,8 +193,8 @@ export const EbookModal: React.FC<EbookModalProps> = ({ visible, onClose }) => {
                   accessibilityRole="button"
                   accessibilityLabel={isBangla ? `${book.title} পড়ুন` : `Read ${book.title}`}
                 >
-                  <Ionicons name="open-outline" size={16} color="#FFFFFF" style={{ marginRight: 6 }} />
-                  <Text style={styles.readBtnText}>
+                  <Ionicons name="open-outline" size={16} color={colors.onAccent} style={{ marginRight: 6 }} />
+                  <Text style={[styles.readBtnText, { color: colors.onAccent }]}>
                     {isBangla ? 'ই-বুক পড়ুন / ডাউনলোড' : 'Read & Download Free'}
                   </Text>
                 </SpringPressable>

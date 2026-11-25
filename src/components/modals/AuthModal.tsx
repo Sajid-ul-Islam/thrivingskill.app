@@ -584,7 +584,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
             <WebView
               source={{ uri: `${Env.SITE_URL}/register/` }}
-              style={styles.webView}
+              style={[styles.webView, { backgroundColor: colors.background }]}
               originWhitelist={['https://*']}
               allowFileAccess={false}
               allowUniversalAccessFromFileURLs={false}
@@ -632,7 +632,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               }}
               startInLoadingState={true}
               renderLoading={() => (
-                <View style={styles.webViewLoading}>
+                <View style={[styles.webViewLoading, { backgroundColor: colors.background }]}>
                   <ActivityIndicator size="large" color={colors.primary} />
                   <Text style={[styles.webViewLoadingText, { color: colors.textMuted }]}>
                     Connecting to Thriving Skills registration...

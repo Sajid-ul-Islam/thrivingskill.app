@@ -397,10 +397,10 @@ export const ThriveGenHub: React.FC<ThriveGenHubProps> = ({
                   </Text>
 
                   <View style={[styles.exploreBtn, { backgroundColor: colors.primary }]}>
-                    <Text style={styles.exploreBtnText}>
+                    <Text style={[styles.exploreBtnText, { color: colors.onPrimary }]}>
                       {isBangla ? 'শুরু করুন' : 'Explore'}
                     </Text>
-                    <Ionicons name="arrow-forward" size={11} color="#FFFFFF" />
+                    <Ionicons name="arrow-forward" size={11} color={colors.onPrimary} />
                   </View>
                 </View>
               </View>
@@ -440,7 +440,7 @@ export const ThriveGenHub: React.FC<ThriveGenHubProps> = ({
               </Text>
             </View>
             <View style={[styles.exploreAllIconWrap, { backgroundColor: colors.primary }]}>
-              <Ionicons name="chevron-forward" size={16} color="#FFFFFF" />
+              <Ionicons name="chevron-forward" size={16} color={colors.onPrimary} />
             </View>
           </SpringPressable>
         </View>
@@ -652,7 +652,6 @@ const styles = StyleSheet.create({
   exploreBtnText: {
     fontSize: 10.5,
     fontWeight: '700',
-    color: '#FFFFFF',
   },
   footerWrap: {
     paddingHorizontal: 16,

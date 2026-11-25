@@ -46,7 +46,7 @@ export const CourseInstructorSection: React.FC<CourseInstructorSectionProps> = (
               { backgroundColor: colors.primary },
             ]}
           >
-            <Text style={styles.avatarInitialsText}>
+            <Text style={[styles.avatarInitialsText, { color: colors.onPrimary }]}>
               {(instructor.name || 'I').charAt(0).toUpperCase()}
             </Text>
           </View>
@@ -124,7 +124,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarInitialsText: {
-    color: '#FFFFFF',
     fontSize: 20,
     fontWeight: '800',
   },
