@@ -112,6 +112,7 @@ files.forEach(f => {
       !f.includes('FloatingCrmWidget') &&
       !f.includes('mockData') &&
       !f.includes('AboutTSLModal') &&
+      !f.includes('aboutTSL.data') &&
       !f.includes('SupportContactModal') &&
       !f.includes('HelpFaqModal') &&
       !f.includes('BrandDrawer') &&
