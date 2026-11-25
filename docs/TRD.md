@@ -2,8 +2,9 @@
 ## Thriving Skills Mobile Learning Application
 
 **Project Name**: Thriving Skills Executive Mobile Learning Application  
-**Runtime**: React Native 0.76.7 / Expo SDK 52 / React 18.3.1  
-**Language**: TypeScript 5.3.3 (Strict Mode)  
+**Runtime**: React Native 0.88.1 / Expo SDK 58 / React 19.3.0  
+**Language**: TypeScript ~6.0.3 (Strict Mode)  
+**Navigation**: React Navigation 7 (`@react-navigation/native` 7.5.x, Native Stack, Bottom Tabs)  
 **Backend**: WordPress Core REST API v2 + LearnPress LMS REST API v1  
 **Document Version**: 1.4.0  
 **Status**: Implemented & Verified (0 TypeScript Errors)  
@@ -50,15 +51,18 @@ The Thriving Skills mobile app follows a clean, modular, layered architecture de
 
 | Dependency | Version | Purpose |
 | :--- | :--- | :--- |
-| `react-native` | `0.76.7` | Cross-platform native runtime |
-| `expo` | `~52.0.37` | Mobile tooling framework & native modules |
-| `typescript` | `^5.3.3` | Static typing & interface definitions |
-| `@react-navigation/native` | `^7.0.14` | Core navigation container |
-| `@react-navigation/bottom-tabs` | `^7.2.0` | Primary app navigation bar |
-| `expo-av` | `~15.0.2` | Native high-performance video streaming & playback |
-| `react-native-svg` | `15.8.0` | Vector rendering for analytics charts & badges |
-| `@react-native-async-storage/async-storage` | `1.23.1` | Local persistent storage |
-| `lucide-react-native` | `^0.475.0` | Clean vector iconography |
+| `react` | `19.3.0` | React UI runtime |
+| `react-native` | `0.88.1` | Cross-platform native runtime |
+| `expo` | `^58.0.0` | Mobile tooling framework & native modules |
+| `typescript` | `~6.0.3` | Static typing & interface definitions |
+| `@react-navigation/native` | `^7.5.2` | Core navigation container & deep linking |
+| `@react-navigation/native-stack` | `^7.21.1` | Native stack screen transitions |
+| `@react-navigation/bottom-tabs` | `^7.22.0` | Primary 5-tab navigation bar |
+| `expo-video` | `~58.0.14` | Native video streaming & Media3 integration |
+| `react-native-webview` | `14.0.1` | Hardened checkout & embedded video webviews |
+| `react-native-svg` | `15.16.0` | Vector rendering for analytics charts & badges |
+| `@react-native-async-storage/async-storage` | `2.2.0` | Local persistent storage & offline snapshots |
+| `@expo/vector-icons` | `^15.0.2` | Ionicons vector iconography |
 
 ---
 
@@ -163,7 +167,7 @@ The mobile application conforms to modern Google Android (API 34/35) and Play St
 * **Android 12+ Adaptive Splash API**: Dedicated `splash` node configured with `#102F53` Deep Navy background and contained branding asset (`splash-icon.png`), preventing transition jumps on Android 12–15.
 * **Window Soft Input & Keyboard Handling**: Explicit `softwareKeyboardLayoutMode: "resize"` ensuring authentication and payment checkout forms remain fully visible above the virtual keyboard.
 * **Adaptive App Icons**: Density-independent vector layers configured for foreground, background, and monochrome icons for modern Android Material You theming.
-* **Deep Linking**: Custom URI scheme `thrivingskill://` enabled for app linking and payment redirection.
+* **Deep Linking & Push Routing**: Custom URI scheme `thrivingskill://`, iOS `associatedDomains` (`applinks:thrivingskill.com`), Android `autoVerify="true"` App Links (`/login`, `/courses`), hosted `/.well-known/assetlinks.json`, and unified cold/warm notification payload routing (`course_id`/`courseId`, `lesson_id`/`lessonId`, `screen`, `postUrl`).
 
 ### 2. EAS Build & Release Pipeline (`eas.json`)
 * **Development Profile**: Internal distribution with `developmentClient: true` for on-device debugging.

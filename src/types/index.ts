@@ -106,7 +106,7 @@ export interface Review {
   rating: number;
   date: string;
   comment: string;
-  userRole: string;
+  userRole?: string;
   company?: string;
 }
 

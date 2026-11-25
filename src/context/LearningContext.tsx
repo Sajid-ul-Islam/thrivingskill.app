@@ -13,7 +13,6 @@ import {
   WpPost,
   Review,
 } from '../types';
-import { WORKSHOPS } from '../data/mockData';
 import { useAuth } from './AuthContext';
 import { useNetwork } from './NetworkContext';
 import { CoursesService } from '../services/api/coursesService';
@@ -296,7 +295,9 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (initial && initial.length > 0) return initial;
     return INITIAL_CANONICAL_CATEGORIES;
   });
-  const [workshops, setWorkshops] = useState<Workshop[]>(WORKSHOPS);
+  const [workshops, setWorkshops] = useState<Workshop[]>(() =>
+    CoursesService.getCachedWorkshopsSync()
+  );
   const [blogPosts, setBlogPosts] = useState<WpPost[]>([]);
   // Only show blocking loader if no cached courses exist at all
   const [isLoadingCourses, setIsLoadingCourses] = useState<boolean>(() => {
@@ -439,8 +440,6 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           setWorkshops((prev) =>
             areDataEqual(prev, wpWorkshops.value) ? prev : wpWorkshops.value
           );
-        } else if (!silent) {
-          setWorkshops(WORKSHOPS);
         }
 
         if (wpPosts.status === 'fulfilled' && wpPosts.value.length > 0) {
@@ -579,10 +578,31 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
   }, [user?.id, userScope]);
 
-  // 1. Initial live catalog fetch on mount
+  // 1. Hydrate persisted snapshots (offline-ready) & trigger live catalog fetch on mount
   useEffect(() => {
+    let active = true;
+    CoursesService.hydrateCatalogCache()
+      .then((snapshot) => {
+        if (!active) return;
+        if (snapshot.courses.length > 0) {
+          setCourses((prev) => (prev.length > 0 ? prev : snapshot.courses));
+          setTotalCourseCount((prev) => (prev > 0 ? prev : snapshot.courses.length));
+          setIsLoadingCourses(false);
+        }
+        if (snapshot.categories.length > 0) {
+          setCategories((prev) => (prev.length > 1 ? prev : snapshot.categories));
+        }
+        if (snapshot.workshops.length > 0) {
+          setWorkshops((prev) => (prev.length > 0 ? prev : snapshot.workshops));
+        }
+      })
+      .catch(() => {});
+
     loadWordPressData(false, false);
     refreshBranding(false);
+    return () => {
+      active = false;
+    };
   }, [loadWordPressData, refreshBranding]);
 
   // 2. Real-time background sync when app comes into the foreground (AppState: active)
@@ -656,18 +676,38 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const loadCourseDetail = async (courseId: string): Promise<Course> => {
     try {
-      const detail = await fetchWpCourseDetail(courseId);
+      const [detail, reviewsSnapshot] = await Promise.all([
+        fetchWpCourseDetail(courseId),
+        CoursesService.getCourseReviews(courseId),
+      ]);
+      const existing = courses.find((c) => c.id === courseId);
+      const localReviews = (existing?.reviews || []).filter(
+        (r) => !reviewsSnapshot.reviews.some((sr) => sr.id === r.id)
+      );
+      const mergedReviews =
+        reviewsSnapshot.reviews.length > 0 || localReviews.length > 0
+          ? [...reviewsSnapshot.reviews, ...localReviews]
+          : detail.reviews;
+      const enrichedDetail: Course = {
+        ...detail,
+        reviews: mergedReviews,
+        rating: reviewsSnapshot.rating ?? detail.rating,
+        reviewsCount:
+          reviewsSnapshot.reviewsCount ??
+          (mergedReviews.length > 0 ? mergedReviews.length : detail.reviewsCount),
+      };
+
       // Update in our courses list if it has richer sections
       setCourses((prev) => {
         const idx = prev.findIndex((c) => c.id === courseId);
         if (idx >= 0) {
           const next = [...prev];
-          next[idx] = detail;
+          next[idx] = enrichedDetail;
           return next;
         }
-        return [detail, ...prev];
+        return [enrichedDetail, ...prev];
       });
-      return detail;
+      return enrichedDetail;
     } catch {
       const existing = courses.find((c) => c.id === courseId);
       if (existing) return existing;

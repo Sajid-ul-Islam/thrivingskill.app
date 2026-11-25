@@ -1,54 +1,24 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-  Dimensions,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
-  AppState,
-  AppStateStatus,
-} from 'react-native';
+import React from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../context/ThemeContext';
 import { useLearning } from '../context/LearningContext';
-import {
-  Header,
-  QuizModal,
-  QuizPlayerModal,
-  NotesModal,
-  CertificateModal,
-  MandatoryReviewModal,
-  PaymentModal,
-  CourseQnATab,
-  LessonTranscriptTab,
-  DownloadQualityModal,
-  QuickNoteBottomSheet,
-  PiPFloatingPlayer,
-  NativeMedia3PlayerRef,
-  StateView,
-  LessonActionBar,
-  LessonPlaylistTab,
-  LessonNotesTab,
-  LessonVideoContainer,
-  LessonAiTutorModal,
-} from '../components';
-import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
-import { useGamification } from '../context/GamificationContext';
 import { useFeedback } from '../context/FeedbackContext';
+import { Header, StateView, LessonVideoContainer, buildLessonVideoHtml } from '../components';
 import { triggerHaptic } from '../utils/haptics';
-import { resolveLessonVideoData } from '../data/lessonVideosRegistry';
 import { OfflineManager } from '../services/offline/offlineManager';
-import { SpacedRepetitionModal } from '../components/modals/SpacedRepetitionModal';
-import { shape } from '../theme/shapes';
-import { LessonsService, LessonDetail } from '../services/api/lessonsService';
-import { Lesson, Certificate } from '../types';
+import { LessonsService } from '../services/api/lessonsService';
+import { Lesson } from '../types';
+import { lessonPlayerStyles as styles } from './lesson-player/lessonPlayerStyles';
+import { formatSeconds } from './lesson-player/lessonHelpers';
+import { useLessonPlayerState } from './lesson-player/useLessonPlayerState';
+import { LessonAccessBanners } from './lesson-player/LessonAccessBanners';
+import { LessonFocusPanel } from './lesson-player/LessonFocusPanel';
+import { LessonPlayerTabsSection } from './lesson-player/LessonPlayerTabsSection';
+import { LessonPlayerModals } from './lesson-player/LessonPlayerModals';
 
 interface LessonPlayerScreenProps {
   courseId: string;
@@ -56,8 +26,6 @@ interface LessonPlayerScreenProps {
   onBack: () => void;
   onSelectLesson: (courseId: string, lessonId: string) => void;
 }
-
-type PlayerTab = 'curriculum' | 'notes' | 'transcript' | 'qna';
 
 export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   courseId,
@@ -68,618 +36,11 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const { colors, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const { isBangla } = useLanguage();
-  const { user, isAdmin, canBypassCourseLocks } = useAuth();
   const { showToast } = useFeedback();
-  const { recordStudyTime, addXP, unlockBadge, triggerCelebration } = useGamification();
-  const {
-    getCourseById,
-    userProgress,
-    enrollInCourse,
-    markLessonCompleted,
-    getNotesForLesson,
-    addNote,
-    deleteNote,
-    restoreNote,
-    certificates,
-    recordWatchPosition,
-    getWatchPosition,
-    hasReviewedCourse,
-    isCertificateUnlocked,
-    unlockCertificateForDev,
-    submitMandatoryCourseReview,
-    recordCategoryInteraction,
-  } = useLearning();
+  const { addNote, deleteNote, restoreNote, unlockCertificateForDev } = useLearning();
 
-  const [windowDimensions, setWindowDimensions] = useState(Dimensions.get('window'));
-  const [isPlaying, setIsPlaying] = useState<boolean>(true);
-  const [playbackSpeed, setPlaybackSpeed] = useState<string>('1.0x');
-  const [activeTab, setActiveTab] = useState<PlayerTab>('curriculum');
-  const [isCommuteMode, setIsCommuteMode] = useState<boolean>(false);
-  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  const [isScreenLocked, setIsScreenLocked] = useState<boolean>(false);
-  const [isPiPActive, setIsPiPActive] = useState<boolean>(false);
-  const [isSystemPiPActive, setIsSystemPiPActive] = useState<boolean>(false);
-  const [isQuickNoteOpen, setIsQuickNoteOpen] = useState<boolean>(false);
-  const [isFocusMode, setIsFocusMode] = useState<boolean>(false);
-  const [aiTutorVisible, setAiTutorVisible] = useState<boolean>(false);
-  const nativePlayerRef = useRef<NativeMedia3PlayerRef | null>(null);
-
-  // Quality & Download states
-  const [streamQuality, setStreamQuality] = useState<string>('720p HD');
-  const [selectedDownloadQuality, setSelectedDownloadQuality] = useState<string>('720p HD');
-  const [qualityModalVisible, setQualityModalVisible] = useState<boolean>(false);
-  const [qualityModalMode, setQualityModalMode] = useState<'download' | 'streamQuality'>(
-    'download'
-  );
-  const [isDownloaded, setIsDownloaded] = useState<boolean>(false);
-
-  // Modals
-  const [quizModalVisible, setQuizModalVisible] = useState<boolean>(false);
-  const [quizPlayerVisible, setQuizPlayerVisible] = useState<boolean>(false);
-  const [selectedQuizLesson, setSelectedQuizLesson] = useState<Lesson | null>(null);
-  const [notesModalVisible, setNotesModalVisible] = useState<boolean>(false);
-  const [certModalVisible, setCertModalVisible] = useState<boolean>(false);
-  const [mandatoryReviewVisible, setMandatoryReviewVisible] = useState<boolean>(false);
-  const [paymentModalVisible, setPaymentModalVisible] = useState<boolean>(false);
-  const [autoplayCountdown, setAutoplayCountdown] = useState<number | null>(null);
-  const [unlockedCert, setUnlockedCert] = useState<Certificate | null>(null);
-  const [currentPositionSeconds, setCurrentPositionSeconds] = useState<number>(0);
-  const [lessonDetail, setLessonDetail] = useState<LessonDetail | null>(null);
-  const [isLoadingVideo, setIsLoadingVideo] = useState<boolean>(true);
-  const [isFlashcardsVisible, setIsFlashcardsVisible] = useState<boolean>(false);
-
-  const currentPosRef = useRef<number>(currentPositionSeconds);
-  currentPosRef.current = currentPositionSeconds;
-
-  const tabScrollViewRef = useRef<React.ElementRef<typeof ScrollView> | null>(null);
-
-  // Timer refs conforming to AGENTS.md Rule 3
-  const autoplayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  // Active study time second buffer for accurate 60s incremental heartbeats
-  const activeSecondsBufferRef = useRef<number>(0);
-  const checkpointTriggeredRef = useRef<Record<string, boolean>>({});
-  const prefetchedNextLessonRef = useRef<string | null>(null);
-
-  const flushStudyTimeBuffer = () => {
-    if (activeSecondsBufferRef.current >= 25) {
-      recordStudyTime(1);
-    }
-    activeSecondsBufferRef.current = 0;
-  };
-
-  const course = getCourseById(courseId);
-
-  // Flatten lessons list for next/prev navigation
-  const allLessons: { moduleTitle: string; lesson: Lesson }[] = [];
-  course?.modules?.forEach((mod) => {
-    mod.lessons?.forEach((l) => {
-      allLessons.push({ moduleTitle: mod.title, lesson: l });
-    });
-  });
-
-  const currentLessonIndex = allLessons.findIndex((item) => item.lesson.id === lessonId);
-  const currentItem = allLessons[currentLessonIndex] || allLessons[0];
-  const currentLesson = currentItem?.lesson;
-
-  // Access Control: Administrator or Developer has master power to play all videos without purchase
-  const isEnrolled = !!userProgress[course?.id || ''];
-  const isFreePreview = Boolean(currentLesson?.isFreePreview);
-  const isPrivileged = isAdmin || Boolean(canBypassCourseLocks);
-  const canPlayVideo = isPrivileged || isEnrolled || isFreePreview;
-
-  const progress = course ? userProgress[course.id] : undefined;
-  const isLessonCompleted = progress?.completedLessonIds.includes(currentLesson?.id || '') || false;
-  const lessonNotes = currentLesson ? getNotesForLesson(courseId, currentLesson.id) : [];
-
-  const isManualLandscapeRef = useRef<boolean>(false);
-  const isDeviceLandscape = windowDimensions.width > windowDimensions.height;
-
-  // Listen for screen orientation / dimension changes
-  useEffect(() => {
-    const subscription = Dimensions.addEventListener(
-      'change',
-      ({ window }: { window: { width: number; height: number } }) => {
-        setWindowDimensions(window as any);
-        if (window.width > window.height) {
-          setIsFullscreen(true);
-        } else if (window.width <= window.height && !isManualLandscapeRef.current) {
-          setIsFullscreen(false);
-        }
-      }
-    );
-    return () => subscription?.remove();
-  }, []);
-
-  // Fetch actual lesson details and video metadata from backend only when authorized
-  useEffect(() => {
-    let isMounted = true;
-    setLessonDetail(null);
-    if (!currentLesson?.id || !canPlayVideo) {
-      setIsLoadingVideo(false);
-      return;
-    }
-
-    setIsLoadingVideo(true);
-    LessonsService.getLessonDetail(currentLesson.id)
-      .then((detail) => {
-        if (isMounted) {
-          setLessonDetail(detail);
-          setIsLoadingVideo(false);
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          setLessonDetail(null);
-          setIsLoadingVideo(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [currentLesson?.id, canPlayVideo]);
-
-  // Cleanup all timers on unmount conforming to AGENTS.md Rule 3
-  useEffect(() => {
-    return () => {
-      flushStudyTimeBuffer();
-      if (autoplayTimerRef.current) {
-        clearTimeout(autoplayTimerRef.current);
-        autoplayTimerRef.current = null;
-      }
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-        progressIntervalRef.current = null;
-      }
-    };
-  }, []);
-
-  const parseDurationToSeconds = (dur?: string): number => {
-    if (!dur) return 0;
-    const trimmed = dur.trim().toLowerCase();
-    if (!trimmed) return 0;
-    if (trimmed.includes(':')) {
-      const parts = trimmed.split(':').map((p) => parseInt(p, 10));
-      if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1]))
-        return parts[0] * 60 + parts[1];
-      if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2]))
-        return parts[0] * 3600 + parts[1] * 60 + parts[2];
-    }
-    let totalSeconds = 0;
-    let matched = false;
-    const hrMatch = trimmed.match(/(\d+(?:\.\d+)?)\s*(?:hours?|hrs?|h)\b/i);
-    if (hrMatch) {
-      totalSeconds += parseFloat(hrMatch[1]) * 3600;
-      matched = true;
-    }
-    const minMatch = trimmed.match(/(\d+(?:\.\d+)?)\s*(?:minutes?|mins?|m)\b/i);
-    if (minMatch) {
-      totalSeconds += parseFloat(minMatch[1]) * 60;
-      matched = true;
-    }
-    const secMatch = trimmed.match(/(\d+(?:\.\d+)?)\s*(?:seconds?|secs?|s)\b/i);
-    if (secMatch) {
-      totalSeconds += parseFloat(secMatch[1]);
-      matched = true;
-    }
-    if (matched) return Math.round(totalSeconds);
-    const mins = parseInt(trimmed, 10);
-    return !isNaN(mins) ? mins * 60 : 0;
-  };
-
-  const activeLessonDetail =
-    lessonDetail && currentLesson && String(lessonDetail.id) === String(currentLesson.id)
-      ? lessonDetail
-      : null;
-
-  const totalLessonSeconds = parseDurationToSeconds(
-    activeLessonDetail?.duration || currentLesson?.duration
-  );
-
-  const mergedLessonForVideo = currentLesson
-    ? {
-        id: currentLesson.id,
-        title: activeLessonDetail?.name || currentLesson.title,
-        duration: activeLessonDetail?.duration || currentLesson.duration,
-        summary:
-          activeLessonDetail?.summary || activeLessonDetail?.content || currentLesson.summary,
-        videoUrl: activeLessonDetail?.videoUrl || currentLesson.videoUrl,
-        videoIntro: activeLessonDetail?.videoIntro || currentLesson.videoIntro,
-      }
-    : undefined;
-
-  const resolvedLessonVideo = resolveLessonVideoData(
-    course || { id: courseId, title: 'Course' },
-    mergedLessonForVideo
-  );
-  const hasPlayableVideo = resolvedLessonVideo.hasVideo && Boolean(resolvedLessonVideo.videoUrl);
-
-  useEffect(() => {
-    if (currentLesson?.id) {
-      OfflineManager.isLessonDownloaded(currentLesson.id).then(setIsDownloaded);
-      const savedSec = getWatchPosition(courseId, currentLesson.id);
-      setCurrentPositionSeconds(savedSec || 0);
-      setAutoplayCountdown(null);
-    }
-  }, [currentLesson?.id, courseId]);
-
-  useEffect(() => {
-    if (course?.category) {
-      recordCategoryInteraction(course.category);
-    }
-  }, [course?.category]);
-
-  // Continuous Auto-play countdown effect
-  useEffect(() => {
-    if (autoplayCountdown === null) return;
-    if (autoplayCountdown <= 0) {
-      setAutoplayCountdown(null);
-      if (currentLessonIndex < allLessons.length - 1) {
-        const nextL = allLessons[currentLessonIndex + 1]?.lesson;
-        if (nextL) {
-          setCurrentPositionSeconds(0);
-          onSelectLesson(courseId, nextL.id);
-        }
-      }
-      return;
-    }
-
-    if (autoplayTimerRef.current) clearTimeout(autoplayTimerRef.current);
-    autoplayTimerRef.current = setTimeout(() => {
-      autoplayTimerRef.current = null;
-      setAutoplayCountdown((prev) => (prev !== null ? prev - 1 : null));
-    }, 1000);
-
-    return () => {
-      if (autoplayTimerRef.current) {
-        clearTimeout(autoplayTimerRef.current);
-        autoplayTimerRef.current = null;
-      }
-    };
-  }, [autoplayCountdown, currentLessonIndex, allLessons, courseId]);
-
-  // Video watch time tracking interval & continuous video auto-play
-  useEffect(() => {
-    if (
-      !isPlaying ||
-      !currentLesson ||
-      !course ||
-      autoplayCountdown !== null ||
-      !canPlayVideo ||
-      isLoadingVideo ||
-      !hasPlayableVideo
-    )
-      return;
-
-    if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
-    progressIntervalRef.current = setInterval(() => {
-      const next = currentPosRef.current + 1;
-      currentPosRef.current = next;
-      setCurrentPositionSeconds(next);
-
-      if (next % 5 === 0) {
-        recordWatchPosition(course.id, currentLesson.id, next);
-      }
-
-      // Active screen-time heartbeat: accumulate real seconds and record every 60s
-      activeSecondsBufferRef.current += 1;
-      if (activeSecondsBufferRef.current >= 60) {
-        activeSecondsBufferRef.current -= 60;
-        recordStudyTime(1);
-      }
-
-      // Auto-complete & transition when video duration finishes
-      if (next >= totalLessonSeconds && totalLessonSeconds > 0) {
-        if (progressIntervalRef.current) {
-          clearInterval(progressIntervalRef.current);
-          progressIntervalRef.current = null;
-        }
-        markLessonCompleted(course.id, currentLesson.id);
-        flushStudyTimeBuffer();
-        addXP(50);
-        unlockBadge('streak_champ');
-
-        const isLastLesson = currentLessonIndex >= allLessons.length - 1;
-        if (isLastLesson) {
-          setIsPlaying(false);
-          if (!hasReviewedCourse(course.id)) {
-            setMandatoryReviewVisible(true);
-          } else {
-            setCertModalVisible(true);
-          }
-        } else {
-          setAutoplayCountdown(5);
-        }
-      }
-    }, 1000);
-
-    return () => {
-      flushStudyTimeBuffer();
-      if (course && currentLesson) {
-        recordWatchPosition(course.id, currentLesson.id, currentPosRef.current);
-      }
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-        progressIntervalRef.current = null;
-      }
-    };
-  }, [
-    isPlaying,
-    currentLesson?.id,
-    course?.id,
-    autoplayCountdown,
-    totalLessonSeconds,
-    currentLessonIndex,
-    allLessons.length,
-    canPlayVideo,
-    isLoadingVideo,
-    hasPlayableVideo,
-  ]);
-
-  // System lifecycle management for Background Audio & PiP
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
-      if (nextAppState === 'background') {
-        flushStudyTimeBuffer();
-        if (!isCommuteMode && !isPiPActive && !isSystemPiPActive) {
-          if (course && currentLesson) {
-            recordWatchPosition(course.id, currentLesson.id, currentPosRef.current);
-          }
-        }
-      }
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, [course, currentLesson, isCommuteMode, isPiPActive, isSystemPiPActive, recordWatchPosition]);
-
-  const handleTogglePlay = () => {
-    triggerHaptic('light');
-    const nextPlaying = !isPlaying;
-    setIsPlaying(nextPlaying);
-    if (!nextPlaying) {
-      flushStudyTimeBuffer();
-    }
-    if (nativePlayerRef.current) {
-      if (nextPlaying) {
-        nativePlayerRef.current.play();
-      } else {
-        nativePlayerRef.current.pause();
-      }
-    }
-  };
-
-  const handleRewind = (sec: number = 10) => {
-    const next = Math.max(0, currentPosRef.current - sec);
-    currentPosRef.current = next;
-    setCurrentPositionSeconds(next);
-    if (nativePlayerRef.current) {
-      nativePlayerRef.current.seekTo(next);
-    }
-    if (course && currentLesson) recordWatchPosition(course.id, currentLesson.id, next);
-  };
-
-  const handleForward = (sec: number = 10) => {
-    const next = currentPosRef.current + sec;
-    currentPosRef.current = next;
-    setCurrentPositionSeconds(next);
-    if (nativePlayerRef.current) {
-      nativePlayerRef.current.seekTo(next);
-    }
-    if (course && currentLesson) recordWatchPosition(course.id, currentLesson.id, next);
-  };
-
-  const handleSeekTo = (sec: number) => {
-    const next =
-      totalLessonSeconds > 0 ? Math.max(0, Math.min(sec, totalLessonSeconds)) : Math.max(0, sec);
-    currentPosRef.current = next;
-    setCurrentPositionSeconds(next);
-    if (nativePlayerRef.current) {
-      nativePlayerRef.current.seekTo(next);
-    }
-    if (course && currentLesson) recordWatchPosition(course.id, currentLesson.id, next);
-  };
-
-  const handleTriggerPiP = async () => {
-    triggerHaptic('medium');
-    if (isDirectStream && nativePlayerRef.current) {
-      try {
-        await nativePlayerRef.current.startPictureInPicture();
-        setIsSystemPiPActive(true);
-        showToast({
-          message: isBangla
-            ? 'পিকচার-ইন-পিকচার (ভাসমান উইন্ডো) সক্রিয়'
-            : 'Picture-in-Picture window activated',
-          type: 'success',
-        });
-        return;
-      } catch (err) {
-        console.warn('Native PiP could not start', err);
-      }
-    }
-
-    // Fallback: in-app floating player
-    setIsPiPActive(true);
-    showToast({
-      message: isBangla ? 'ইন-অ্যাপ ভাসমান প্লেয়ার চালু হয়েছে' : 'In-App Floating Player activated',
-      type: 'info',
-    });
-  };
-
-  const handleToggleFullscreen = () => {
-    triggerHaptic('medium');
-    const nextFullscreen = !isFullscreen;
-    isManualLandscapeRef.current = nextFullscreen;
-    setIsFullscreen(nextFullscreen);
-
-    if (isDirectStream && nativePlayerRef.current) {
-      if (nextFullscreen) {
-        nativePlayerRef.current.enterFullscreen().catch(() => {});
-      } else {
-        nativePlayerRef.current.exitFullscreen().catch(() => {});
-      }
-    }
-  };
-
-  const formatSeconds = (sec: number): string => {
-    const mins = Math.floor(sec / 60);
-    const remainder = sec % 60;
-    return `${mins < 10 ? '0' : ''}${mins}:${remainder < 10 ? '0' : ''}${remainder}`;
-  };
-
-  const handleOpenStreamQualityModal = () => {
-    triggerHaptic('light');
-    setQualityModalMode('streamQuality');
-    setQualityModalVisible(true);
-  };
-
-  const handleStartDownloadWithQuality = async (quality: '360p' | '720p' | '1080p') => {
-    if (!currentLesson || !course) return;
-    setSelectedDownloadQuality(`${quality} HD`);
-    await OfflineManager.saveLessonOffline(
-      course.id,
-      currentLesson,
-      undefined,
-      course.title,
-      undefined,
-      undefined,
-      `${quality} HD`
-    );
-    setIsDownloaded(true);
-    showToast({
-      message: `Lesson downloaded in ${quality} HD`,
-      type: 'success',
-      actionLabel: 'Undo',
-      onAction: async () => {
-        await OfflineManager.removeDownloadedLesson(currentLesson.id);
-        setIsDownloaded(false);
-        showToast({ message: 'Download removed', type: 'info' });
-      },
-    });
-  };
-
-  const handleNextLesson = () => {
-    flushStudyTimeBuffer();
-    setAutoplayCountdown(null);
-    if (currentLessonIndex < allLessons.length - 1) {
-      const nextL = allLessons[currentLessonIndex + 1]?.lesson;
-      if (nextL) {
-        setCurrentPositionSeconds(0);
-        onSelectLesson(courseId, nextL.id);
-      }
-    }
-  };
-
-  const handlePrevLesson = () => {
-    flushStudyTimeBuffer();
-    setAutoplayCountdown(null);
-    if (currentLessonIndex > 0) {
-      const prevL = allLessons[currentLessonIndex - 1]?.lesson;
-      if (prevL) {
-        setCurrentPositionSeconds(0);
-        onSelectLesson(courseId, prevL.id);
-      }
-    }
-  };
-
-  const handleMarkComplete = () => {
-    if (!currentLesson || !course) return;
-    const isAlreadyMarked = progress?.completedLessonIds.includes(currentLesson.id);
-
-    markLessonCompleted(course.id, currentLesson.id);
-    flushStudyTimeBuffer();
-
-    if (!isAlreadyMarked) {
-      addXP(50);
-      unlockBadge('streak_champ');
-
-      triggerCelebration({
-        title: isBangla ? 'পাঠ সম্পন্ন হয়েছে! 🎉' : 'Lesson Mastered! 🎉',
-        subtitle: `${currentLesson.title} • +50 XP`,
-        xpAwarded: 50,
-        icon: 'checkmark-circle',
-      });
-    } else {
-      showToast({
-        message: isBangla ? 'পাঠ ইতিমধ্যে সম্পন্ন করা হয়েছে' : 'Lesson already completed',
-        type: 'info',
-      });
-    }
-
-    const totalLessons = allLessons.length;
-    const currentCompleted = progress?.completedLessonIds.length || 0;
-    const completedCount = isAlreadyMarked ? currentCompleted : currentCompleted + 1;
-
-    if (completedCount >= totalLessons) {
-      if (!hasReviewedCourse(course.id)) {
-        setMandatoryReviewVisible(true);
-      } else {
-        setCertModalVisible(true);
-      }
-    } else {
-      setAutoplayCountdown(5);
-    }
-  };
-
-  const handleSubmitReview = (rating: number, feedback: string) => {
-    if (!course) return;
-    const newCert = submitMandatoryCourseReview(
-      course.id,
-      rating,
-      feedback,
-      user?.displayName || user?.username || 'Executive Graduate',
-      'Course Graduate'
-    );
-    setMandatoryReviewVisible(false);
-    if (newCert) {
-      setUnlockedCert(newCert);
-    }
-    setCertModalVisible(true);
-  };
-
-  const cycleSpeed = () => {
-    const speeds = ['1.0x', '1.25x', '1.5x', '2.0x', '0.75x'];
-    const nextIdx = (speeds.indexOf(playbackSpeed) + 1) % speeds.length;
-    setPlaybackSpeed(speeds[nextIdx]);
-    showToast({ message: `Playback speed: ${speeds[nextIdx]}`, type: 'info' });
-  };
-
-  const handleOpenNotesFAB = () => {
-    triggerHaptic('medium');
-    setIsPlaying(false);
-    setIsQuickNoteOpen(true);
-  };
-
-  const TABS: { id: PlayerTab; label: string; icon: any }[] = [
-    { id: 'curriculum', label: isBangla ? 'লেকচার' : 'Lectures', icon: 'list' },
-    {
-      id: 'notes',
-      label: `${isBangla ? 'নোটস' : 'Notes'} (${lessonNotes.length})`,
-      icon: 'document-text',
-    },
-    { id: 'transcript', label: isBangla ? 'ট্রান্সক্রিপ্ট' : 'Transcript', icon: 'chatbox-ellipses' },
-    { id: 'qna', label: isBangla ? 'প্রশ্ন-উত্তর' : 'Q&A', icon: 'chatbubbles' },
-  ];
-
-  const screenWidth = windowDimensions.width;
-
-  const handleTabPress = (tabId: PlayerTab, index: number) => {
-    triggerHaptic('light');
-    setActiveTab(tabId);
-    tabScrollViewRef.current?.scrollTo({ x: index * screenWidth, animated: true });
-  };
-
-  const handleTabScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const offsetX = e.nativeEvent.contentOffset.x;
-    const index = Math.round(offsetX / screenWidth);
-    const selected = TABS[index];
-    if (selected && selected.id !== activeTab) {
-      triggerHaptic('light');
-      setActiveTab(selected.id);
-    }
-  };
+  const p = useLessonPlayerState({ courseId, lessonId, onSelectLesson });
+  const { course, currentLesson } = p;
 
   if (!course || !currentLesson) {
     return (
@@ -698,185 +59,60 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
     );
   }
 
-  const isCertUnlocked = isCertificateUnlocked(course.id);
-  const certFromList =
-    certificates.find((c) => c.courseId === course.id) ||
-    (progress?.certificateId
-      ? certificates.find((c) => c.credentialId === progress.certificateId)
-      : null);
-
-  const userCert =
-    unlockedCert ||
-    (isCertUnlocked
-      ? certFromList || {
-          id: `cert-${course.id}`,
-          courseId: course.id,
-          courseTitle: course.title,
-          studentName: user?.displayName || user?.username || 'Executive Graduate',
-          issueDate: new Date().toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          }),
-          credentialId: progress?.certificateId || `TS-2026-${course.id.slice(-4).toUpperCase()}`,
-          verificationUrl: `https://thrivingskill.com/verify/${
-            progress?.certificateId || `TS-2026-${course.id.slice(-4).toUpperCase()}`
-          }`,
-          instructorName: course.instructor.name,
-        }
-      : null);
-
   const isCourseCompleted =
-    progress?.isCompleted ||
-    (allLessons.length > 0 &&
-      allLessons.every((item) => progress?.completedLessonIds.includes(item.lesson.id)));
+    p.progress?.isCompleted ||
+    (p.allLessons.length > 0 &&
+      p.allLessons.every((item) => p.progress?.completedLessonIds.includes(item.lesson.id)));
 
   const displayLesson: Lesson = {
     ...currentLesson,
-    title: resolvedLessonVideo.title || currentLesson.title,
-    duration: resolvedLessonVideo.duration || currentLesson.duration,
-    summary: resolvedLessonVideo.summary || currentLesson.summary,
-    videoUrl: resolvedLessonVideo.videoUrl,
-    videoIntro: resolvedLessonVideo.videoIntro,
-    videoId: resolvedLessonVideo.videoId,
-    videoType: resolvedLessonVideo.videoType,
-  };
-
-  const activeVideoIntro = resolvedLessonVideo.videoIntro;
-  const activeVideoUrl = resolvedLessonVideo.videoUrl;
-  const resolvedVideoUrl = activeVideoUrl;
-
-  const rawContent = activeLessonDetail?.content || currentLesson?.summary || '';
-  const zoomMatch =
-    (activeLessonDetail?.videoIntro &&
-      activeLessonDetail.videoIntro.match(/https?:\/\/[^\s"'<>]*zoom\.us\/[^\s"'<>]*/i)) ||
-    (currentLesson?.videoIntro &&
-      currentLesson.videoIntro.match(/https?:\/\/[^\s"'<>]*zoom\.us\/[^\s"'<>]*/i)) ||
-    (activeVideoUrl && activeVideoUrl.match(/https?:\/\/[^\s"'<>]*zoom\.us\/[^\s"'<>]*/i)) ||
-    (rawContent && rawContent.match(/https?:\/\/[^\s"'<>]*zoom\.us\/[^\s"'<>]*/i));
-  const zoomMeetingUrl = zoomMatch ? zoomMatch[0].replace(/&amp;/g, '&') : null;
-
-  const isDirectStream = !!(
-    activeVideoUrl && activeVideoUrl.match(/\.(mp4|m3u8|mpd|webm|aac|mp3|m4a)($|\?)/i)
-  );
-
-  const buildVideoHtml = () => {
-    let embedMarkup = '';
-    if (activeVideoIntro && activeVideoIntro.includes('<iframe')) {
-      const iframeSrcMatch = activeVideoIntro.match(/src=["']([^"']+)["']/i);
-      const isSafeIframe =
-        !iframeSrcMatch ||
-        (/^(https:)?\/\//i.test(iframeSrcMatch[1]) && !/javascript:/i.test(iframeSrcMatch[1]));
-      if (isSafeIframe) {
-        embedMarkup = activeVideoIntro
-          .replace(/src=["']\/\//gi, 'src="https://')
-          .replace(/width="[^"]*"/gi, 'width="100%"')
-          .replace(/height="[^"]*"/gi, 'height="100%"');
-        if (!embedMarkup.includes('allow=')) {
-          embedMarkup = embedMarkup.replace(
-            '<iframe',
-            '<iframe allow="autoplay; fullscreen; picture-in-picture" allowfullscreen'
-          );
-        }
-      }
-    } else if (activeVideoUrl) {
-      if (activeVideoUrl.includes('vimeo.com')) {
-        let vSrc = activeVideoUrl;
-        if (!activeVideoUrl.includes('player.vimeo.com/video/')) {
-          const vMatch = activeVideoUrl.match(/vimeo\.com\/(\d+)/);
-          const vId = vMatch ? vMatch[1] : '';
-          vSrc = vId ? `https://player.vimeo.com/video/${vId}` : '';
-        }
-        if (vSrc) {
-          const joinChar = vSrc.includes('?') ? '&' : '?';
-          const vUrlWithParams = `${vSrc}${joinChar}autoplay=1&controls=0&title=0&byline=0&portrait=0&dnt=1`;
-          embedMarkup = `<iframe src="${vUrlWithParams}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
-        }
-      } else if (activeVideoUrl.includes('youtube.com') || activeVideoUrl.includes('youtu.be')) {
-        let ytId = '';
-        const yMatch = activeVideoUrl.match(
-          /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/
-        );
-        if (yMatch && yMatch[1]) ytId = yMatch[1];
-        const ytSrc = ytId
-          ? `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&controls=0&playsinline=1&modestbranding=1&rel=0&enablejsapi=1`
-          : activeVideoUrl;
-        embedMarkup = `<iframe src="${ytSrc}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
-      } else if (activeVideoUrl.match(/\.(mp4|m3u8|mpd|webm)($|\?)/i)) {
-        embedMarkup = `<video id="media3Player" src="${activeVideoUrl}" playsinline webkit-playsinline autoplay style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;"></video>`;
-      } else {
-        const isSafeHttps = activeVideoUrl.startsWith('https://');
-        if (isSafeHttps) {
-          const escapedUrl = activeVideoUrl.replace(/"/g, '&quot;');
-          embedMarkup = `<iframe src="${escapedUrl}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
-        } else {
-          embedMarkup = `<div style="color:#FFF;font-family:system-ui,sans-serif;text-align:center;padding:40px 20px;"><div style="font-size:32px;margin-bottom:8px;">🔒</div><div>Secure stream required (HTTPS only).</div></div>`;
-        }
-      }
-    } else {
-      embedMarkup = `<div style="color:#FFF;font-family:system-ui,sans-serif;text-align:center;padding:40px 20px;"><div style="font-size:28px;margin-bottom:8px;">🎬</div><div>Video coming soon</div></div>`;
-    }
-
-    return `<!DOCTYPE html>
-<html>
-<head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <style>
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      background-color: #000000;
-      overflow: hidden;
-    }
-    .video-wrapper {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #000000;
-    }
-    iframe, video {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100% !important;
-      height: 100% !important;
-      max-width: 100% !important;
-      max-height: 100% !important;
-      border: 0;
-    }
-  </style>
-</head>
-<body>
-  <div class="video-wrapper">
-    ${embedMarkup}
-  </div>
-</body>
-</html>`;
+    title: p.resolvedLessonVideo.title || currentLesson.title,
+    duration: p.resolvedLessonVideo.duration || currentLesson.duration,
+    summary: p.resolvedLessonVideo.summary || currentLesson.summary,
+    videoUrl: p.resolvedLessonVideo.videoUrl,
+    videoIntro: p.resolvedLessonVideo.videoIntro,
+    videoId: p.resolvedLessonVideo.videoId,
+    videoType: p.resolvedLessonVideo.videoType,
   };
 
   const previewLesson =
-    course?.modules?.flatMap((m) => m.lessons || []).find((l) => l.isFreePreview) ||
-    course?.modules?.[0]?.lessons?.[0];
+    course.modules?.flatMap((m) => m.lessons || []).find((l) => l.isFreePreview) ||
+    course.modules?.[0]?.lessons?.[0];
+
+  const handleStartDownloadWithQuality = async (quality: '360p' | '720p' | '1080p') => {
+    p.setSelectedDownloadQuality(`${quality} HD`);
+    await OfflineManager.saveLessonOffline(
+      course.id,
+      currentLesson,
+      undefined,
+      course.title,
+      undefined,
+      undefined,
+      `${quality} HD`
+    );
+    p.setIsDownloaded(true);
+    showToast({
+      message: `Lesson downloaded in ${quality} HD`,
+      type: 'success',
+      actionLabel: 'Undo',
+      onAction: async () => {
+        await OfflineManager.removeDownloadedLesson(currentLesson.id);
+        p.setIsDownloaded(false);
+        showToast({ message: 'Download removed', type: 'info' });
+      },
+    });
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar hidden={isFullscreen} style={isDark ? 'light' : 'dark'} />
+      <StatusBar hidden={p.isFullscreen} style={isDark ? 'light' : 'dark'} />
 
-      {/* Top Header (Visible in portrait mode) */}
-      {!isFullscreen && (
+      {!p.isFullscreen && (
         <Header
           showBack
           onBack={onBack}
-          title={course?.title || 'Course Player'}
-          subtitle={currentItem?.moduleTitle}
+          title={course.title || 'Course Player'}
+          subtitle={p.currentItem?.moduleTitle}
           rightAction={
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <TouchableOpacity
@@ -891,15 +127,15 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                     borderWidth: 1,
                     minHeight: 32,
                   },
-                  isFocusMode
+                  p.isFocusMode
                     ? { backgroundColor: 'rgba(227, 66, 52, 0.12)', borderColor: '#E34234' }
                     : { backgroundColor: colors.surfaceSubtle, borderColor: colors.border },
                 ]}
                 onPress={() => {
                   triggerHaptic('light');
-                  setIsFocusMode(!isFocusMode);
+                  p.setIsFocusMode(!p.isFocusMode);
                   showToast({
-                    message: !isFocusMode
+                    message: !p.isFocusMode
                       ? isBangla
                         ? 'ফোকাস মোড সক্রিয়: ডিস্ট্রাকশন-মুক্ত ভিউ'
                         : 'Focus Mode active: distraction-free viewing'
@@ -913,15 +149,15 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                 accessibilityLabel="Toggle focus mode"
               >
                 <Ionicons
-                  name={isFocusMode ? 'scan' : 'scan-outline'}
+                  name={p.isFocusMode ? 'scan' : 'scan-outline'}
                   size={14}
-                  color={isFocusMode ? '#E34234' : colors.text}
+                  color={p.isFocusMode ? '#E34234' : colors.text}
                 />
                 <Text
                   style={{
                     fontSize: 11,
                     fontWeight: '700',
-                    color: isFocusMode ? '#E34234' : colors.text,
+                    color: p.isFocusMode ? '#E34234' : colors.text,
                   }}
                 >
                   Focus
@@ -932,14 +168,14 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                 style={[
                   styles.commuteToggleBtn,
                   {
-                    backgroundColor: isCommuteMode ? '#102F53' : colors.surfaceSubtle,
-                    borderColor: isCommuteMode ? '#102F53' : colors.border,
+                    backgroundColor: p.isCommuteMode ? '#102F53' : colors.surfaceSubtle,
+                    borderColor: p.isCommuteMode ? '#102F53' : colors.border,
                   },
                 ]}
                 onPress={() => {
                   triggerHaptic('light');
-                  const nextMode = !isCommuteMode;
-                  setIsCommuteMode(nextMode);
+                  const nextMode = !p.isCommuteMode;
+                  p.setIsCommuteMode(nextMode);
                   showToast({
                     message: nextMode
                       ? isBangla
@@ -955,9 +191,9 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                 accessibilityLabel="Toggle commute background audio mode"
               >
                 <Ionicons
-                  name={isCommuteMode ? 'headset' : 'headset-outline'}
+                  name={p.isCommuteMode ? 'headset' : 'headset-outline'}
                   size={16}
-                  color={isCommuteMode ? '#FFFFFF' : colors.text}
+                  color={p.isCommuteMode ? '#FFFFFF' : colors.text}
                 />
               </TouchableOpacity>
             </View>
@@ -965,102 +201,24 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         />
       )}
 
-      {/* Administrator / Developer Access Banner */}
-      {isPrivileged && !isFullscreen && (
-        <View
-          style={[
-            styles.adminBanner,
-            { backgroundColor: '#102F53', borderColor: 'rgba(227, 66, 52, 0.4)' },
-          ]}
-        >
-          <View style={styles.adminBannerLeft}>
-            <Ionicons name="shield-checkmark" size={14} color="#E34234" />
-            <Text style={styles.adminBannerTitle}>
-              {isAdmin ? 'ADMINISTRATOR ACCESS ACTIVE' : 'DEVELOPER ACCESS ACTIVE'}
-            </Text>
-          </View>
-          <Text style={styles.adminBannerSub}>
-            {isBangla
-              ? 'মাস্টার বাইপাস সক্রিয়: কোর্সের সকল ভিডিও আনলক করা হয়েছে'
-              : 'Master bypass: Unrestricted playback of all course videos'}
-          </Text>
-          <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-            <TouchableOpacity
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 5,
-                backgroundColor: '#E34234',
-                paddingHorizontal: 10,
-                paddingVertical: 5,
-                borderRadius: 6,
-              }}
-              onPress={() => {
-                triggerHaptic('success');
-                if (course) {
-                  const cert = unlockCertificateForDev(course.id);
-                  if (cert) {
-                    setCertModalVisible(true);
-                  }
-                }
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Test Certificate Generation"
-            >
-              <Ionicons name="ribbon" size={12} color="#FFFFFF" />
-              <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '800' }}>
-                {isBangla ? 'সার্টিফিকেট টেস্ট' : 'Test Certificate'}
-              </Text>
-            </TouchableOpacity>
+      <LessonAccessBanners
+        isPrivileged={p.isPrivileged}
+        isAdmin={p.isAdmin}
+        isEnrolled={p.isEnrolled}
+        isFreePreview={p.isFreePreview}
+        isFullscreen={p.isFullscreen}
+        isDark={isDark}
+        isBangla={isBangla}
+        onUnlockTestCert={() => {
+          const cert = unlockCertificateForDev(course.id);
+          if (cert) p.setCertModalVisible(true);
+        }}
+        onOpenTestReview={() => p.setMandatoryReviewVisible(true)}
+      />
 
-            <TouchableOpacity
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 5,
-                backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                paddingHorizontal: 10,
-                paddingVertical: 5,
-                borderRadius: 6,
-              }}
-              onPress={() => {
-                triggerHaptic('light');
-                setMandatoryReviewVisible(true);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Test Mandatory Review Modal"
-            >
-              <Ionicons name="star" size={12} color="#FFFFFF" />
-              <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700' }}>
-                {isBangla ? 'রিভিউ মডাল টেস্ট' : 'Test Review'}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-
-      {/* Free Preview Banner */}
-      {!isPrivileged && !isEnrolled && isFreePreview && !isFullscreen && (
-        <View
-          style={[
-            styles.previewBanner,
-            {
-              backgroundColor: isDark ? 'rgba(59, 130, 246, 0.16)' : '#EFF6FF',
-              borderColor: '#3B82F6',
-            },
-          ]}
-        >
-          <Ionicons name="play-circle-outline" size={14} color={isDark ? '#93C5FD' : '#2563EB'} />
-          <Text style={[styles.previewBannerText, { color: isDark ? '#93C5FD' : '#1D4ED8' }]}>
-            {isBangla ? 'ফ্রি প্রিভিউ লেকচার চলছে' : 'Free Preview Lesson • Enroll for Full Access'}
-          </Text>
-        </View>
-      )}
-
-      {/* Decomposed Video Container (Sticky top 16:9 / Fullscreen landscape / Media3 / WebView) */}
       <View
         style={
-          !isFullscreen
+          !p.isFullscreen
             ? [styles.videoPlayerWrapper, { backgroundColor: colors.background }]
             : styles.fullscreenWrapper
         }
@@ -1068,82 +226,83 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         <LessonVideoContainer
           course={course}
           currentLesson={displayLesson}
-          moduleTitle={currentItem?.moduleTitle}
-          canPlayVideo={canPlayVideo}
-          hasVideo={hasPlayableVideo}
-          videoComingSoonMessage={resolvedLessonVideo.comingSoonMessage}
-          isLessonCompleted={isLessonCompleted}
-          isCommuteMode={isCommuteMode}
-          isPlaying={isPlaying}
-          playbackSpeed={playbackSpeed}
-          streamQuality={streamQuality}
-          isFullscreen={isFullscreen}
-          isDeviceLandscape={isDeviceLandscape}
-          isScreenLocked={isScreenLocked}
-          isLoadingVideo={isLoadingVideo}
-          isDirectStream={isDirectStream}
-          activeVideoUrl={activeVideoUrl}
-          resolvedVideoUrl={resolvedVideoUrl}
-          zoomMeetingUrl={zoomMeetingUrl}
-          videoHtml={hasPlayableVideo ? buildVideoHtml() : ''}
-          windowDimensions={windowDimensions}
-          currentPositionSeconds={currentPositionSeconds}
-          totalLessonSeconds={totalLessonSeconds}
-          autoplayCountdown={autoplayCountdown}
-          nextLessonTitle={allLessons[currentLessonIndex + 1]?.lesson.title}
-          hasPrevLesson={currentLessonIndex > 0}
-          hasNextLesson={currentLessonIndex < allLessons.length - 1}
-          nativePlayerRef={nativePlayerRef}
+          moduleTitle={p.currentItem?.moduleTitle}
+          canPlayVideo={p.canPlayVideo}
+          hasVideo={p.hasPlayableVideo}
+          videoComingSoonMessage={p.resolvedLessonVideo.comingSoonMessage}
+          isLessonCompleted={p.isLessonCompleted}
+          isCommuteMode={p.isCommuteMode}
+          isPlaying={p.isPlaying}
+          playbackSpeed={p.playbackSpeed}
+          streamQuality={p.streamQuality}
+          isFullscreen={p.isFullscreen}
+          isDeviceLandscape={p.isDeviceLandscape}
+          isScreenLocked={p.isScreenLocked}
+          isLoadingVideo={p.isLoadingVideo}
+          isDirectStream={p.isDirectStream}
+          activeVideoUrl={p.activeVideoUrl}
+          resolvedVideoUrl={p.activeVideoUrl}
+          zoomMeetingUrl={p.zoomMeetingUrl}
+          videoHtml={
+            p.hasPlayableVideo ? buildLessonVideoHtml(p.activeVideoIntro, p.activeVideoUrl) : ''
+          }
+          windowDimensions={p.windowDimensions}
+          currentPositionSeconds={p.currentPositionSeconds}
+          totalLessonSeconds={p.totalLessonSeconds}
+          autoplayCountdown={p.autoplayCountdown}
+          nextLessonTitle={p.allLessons[p.currentLessonIndex + 1]?.lesson.title}
+          hasPrevLesson={p.currentLessonIndex > 0}
+          hasNextLesson={p.currentLessonIndex < p.allLessons.length - 1}
+          nativePlayerRef={p.nativePlayerRef}
           previewLesson={previewLesson}
           onSelectLesson={onSelectLesson}
-          onOpenPaymentModal={() => setPaymentModalVisible(true)}
+          onOpenPaymentModal={() => p.setPaymentModalVisible(true)}
           onOpenQuizPlayer={(l) => {
-            setSelectedQuizLesson(l);
-            setQuizPlayerVisible(true);
+            p.setSelectedQuizLesson(l);
+            p.setQuizPlayerVisible(true);
           }}
-          onTogglePlay={handleTogglePlay}
-          onSeekTo={handleSeekTo}
-          onRewind={handleRewind}
-          onForward={handleForward}
-          onPrevLesson={handlePrevLesson}
-          onNextLesson={handleNextLesson}
-          onCycleSpeed={cycleSpeed}
-          onToggleFullscreen={handleToggleFullscreen}
+          onTogglePlay={p.handleTogglePlay}
+          onSeekTo={p.handleSeekTo}
+          onRewind={p.handleRewind}
+          onForward={p.handleForward}
+          onPrevLesson={p.handlePrevLesson}
+          onNextLesson={p.handleNextLesson}
+          onCycleSpeed={p.cycleSpeed}
+          onToggleFullscreen={p.handleToggleFullscreen}
           onToggleScreenLock={() => {
             triggerHaptic('light');
-            setIsScreenLocked(!isScreenLocked);
+            p.setIsScreenLocked(!p.isScreenLocked);
             showToast({
-              message: !isScreenLocked ? 'Screen Touches Locked' : 'Screen Unlocked',
+              message: !p.isScreenLocked ? 'Screen Touches Locked' : 'Screen Unlocked',
               type: 'info',
             });
           }}
-          onOpenStreamQualityModal={handleOpenStreamQualityModal}
-          onTriggerPiP={handleTriggerPiP}
+          onOpenStreamQualityModal={p.handleOpenStreamQualityModal}
+          onTriggerPiP={p.handleTriggerPiP}
           onCancelAutoplay={() => {
             triggerHaptic('light');
-            setAutoplayCountdown(null);
+            p.setAutoplayCountdown(null);
           }}
-          onMarkComplete={handleMarkComplete}
-          onPictureInPictureStart={() => setIsSystemPiPActive(true)}
-          onPictureInPictureStop={() => setIsSystemPiPActive(false)}
+          onMarkComplete={p.handleMarkComplete}
+          onPictureInPictureStart={() => p.setIsSystemPiPActive(true)}
+          onPictureInPictureStop={() => p.setIsSystemPiPActive(false)}
           onProgressUpdate={(curr) => {
             const sec = Math.floor(curr);
-            currentPosRef.current = sec;
-            setCurrentPositionSeconds(sec);
+            p.currentPosRef.current = sec;
+            p.setCurrentPositionSeconds(sec);
 
-            // In-Video Interactive Checkpoint
             if (
               currentLesson.quiz &&
               currentLesson.quiz.length > 0 &&
-              !checkpointTriggeredRef.current[currentLesson.id]
+              !p.checkpointTriggeredRef.current[currentLesson.id]
             ) {
-              const midpoint = Math.floor((totalLessonSeconds || 300) / 2);
+              const midpoint = Math.floor((p.totalLessonSeconds || 300) / 2);
               if (sec >= midpoint && midpoint >= 30) {
-                checkpointTriggeredRef.current[currentLesson.id] = true;
-                setIsPlaying(false);
+                p.checkpointTriggeredRef.current[currentLesson.id] = true;
+                p.setIsPlaying(false);
                 triggerHaptic('medium');
-                setSelectedQuizLesson(currentLesson);
-                setQuizPlayerVisible(true);
+                p.setSelectedQuizLesson(currentLesson);
+                p.setQuizPlayerVisible(true);
                 showToast({
                   message: isBangla
                     ? '🎯 ইন-ভিডিও চেকপয়েন্ট কুইজ! সঠিক উত্তর দিয়ে এগিয়ে যান।'
@@ -1153,665 +312,147 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               }
             }
 
-            // Next-Lesson Background Pre-buffering (>85% watched) only when user has access
             if (
-              course &&
-              totalLessonSeconds > 60 &&
-              sec / totalLessonSeconds >= 0.85 &&
-              currentLessonIndex < allLessons.length - 1
+              p.totalLessonSeconds > 60 &&
+              sec / p.totalLessonSeconds >= 0.85 &&
+              p.currentLessonIndex < p.allLessons.length - 1
             ) {
-              const nextLessonObj = allLessons[currentLessonIndex + 1]?.lesson;
+              const nextLessonObj = p.allLessons[p.currentLessonIndex + 1]?.lesson;
               const canPrefetchNext =
-                isPrivileged || isEnrolled || Boolean(nextLessonObj?.isFreePreview);
+                p.isPrivileged || p.isEnrolled || Boolean(nextLessonObj?.isFreePreview);
               if (
                 canPrefetchNext &&
                 nextLessonObj &&
-                prefetchedNextLessonRef.current !== nextLessonObj.id
+                p.prefetchedNextLessonRef.current !== nextLessonObj.id
               ) {
-                prefetchedNextLessonRef.current = nextLessonObj.id;
+                p.prefetchedNextLessonRef.current = nextLessonObj.id;
                 LessonsService.getLessonDetail(nextLessonObj.id).catch(() => {});
               }
             }
           }}
-          onPlayStateChange={setIsPlaying}
+          onPlayStateChange={p.setIsPlaying}
           formatSeconds={formatSeconds}
         />
       </View>
 
-      {/* LOWER TABBED LEARNING AREA (PORTRAIT) */}
-      {!isFullscreen && (
+      {!p.isFullscreen && (
         <View style={styles.lowerLearningArea}>
-          {isFocusMode ? (
-            <ScrollView
-              contentContainerStyle={{ padding: 16 }}
-              showsVerticalScrollIndicator={false}
-            >
-              <View
-                style={{
-                  backgroundColor: colors.surfaceCard,
-                  borderColor: 'rgba(227, 66, 52, 0.25)',
-                  borderWidth: 1,
-                  borderRadius: shape.large,
-                  padding: 16,
-                }}
-              >
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: 14,
-                  }}
-                >
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 6,
-                      backgroundColor: 'rgba(227, 66, 52, 0.12)',
-                      paddingHorizontal: 10,
-                      paddingVertical: 4,
-                      borderRadius: 8,
-                    }}
-                  >
-                    <Ionicons name="sparkles" size={13} color="#E34234" />
-                    <Text
-                      style={{
-                        fontSize: 11,
-                        fontWeight: '800',
-                        color: '#E34234',
-                        letterSpacing: 0.5,
-                      }}
-                    >
-                      {isBangla ? 'ফোকাস মোড সক্রিয়' : 'FOCUS MODE • DISTRACTION-FREE'}
-                    </Text>
-                  </View>
-                  <TouchableOpacity
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 4,
-                      paddingHorizontal: 10,
-                      paddingVertical: 5,
-                      borderRadius: 12,
-                      borderWidth: 1,
-                      borderColor: colors.border,
-                      backgroundColor: colors.surfaceSubtle,
-                    }}
-                    onPress={() => {
-                      triggerHaptic('light');
-                      setIsFocusMode(false);
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel="Exit focus mode"
-                  >
-                    <Ionicons name="close" size={14} color={colors.text} />
-                    <Text style={{ fontSize: 11, fontWeight: '600', color: colors.text }}>
-                      {isBangla ? 'প্রস্থান' : 'Exit Focus'}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-
-                {/* Progress bar */}
-                <View style={{ marginBottom: 16 }}>
-                  <View
-                    style={{
-                      height: 6,
-                      borderRadius: 3,
-                      backgroundColor: colors.surfaceSubtle,
-                      overflow: 'hidden',
-                      marginBottom: 6,
-                    }}
-                  >
-                    <View
-                      style={{
-                        height: '100%',
-                        borderRadius: 3,
-                        width: `${totalLessonSeconds > 0 ? Math.min(100, Math.round((currentPositionSeconds / totalLessonSeconds) * 100)) : 0}%`,
-                        backgroundColor: '#E34234',
-                      }}
-                    />
-                  </View>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Text style={{ fontSize: 11, fontWeight: '500', color: colors.textMuted }}>
-                      {formatSeconds(currentPositionSeconds)} / {formatSeconds(totalLessonSeconds)}
-                    </Text>
-                    <Text style={{ fontSize: 12, fontWeight: '700', color: '#E34234' }}>
-                      {totalLessonSeconds > 0
-                        ? Math.min(
-                            100,
-                            Math.round((currentPositionSeconds / totalLessonSeconds) * 100)
-                          )
-                        : 0}
-                      % Complete
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Ergonomic Lesson Navigation */}
-                <View style={{ flexDirection: 'row', gap: 10 }}>
-                  <TouchableOpacity
-                    style={[
-                      {
-                        flex: 1,
-                        minHeight: 44,
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 6,
-                        borderRadius: shape.medium,
-                        borderWidth: 1,
-                        paddingHorizontal: 12,
-                      },
-                      currentLessonIndex === 0
-                        ? { borderColor: colors.border, opacity: 0.4 }
-                        : { borderColor: colors.border, backgroundColor: colors.surfaceSubtle },
-                    ]}
-                    disabled={currentLessonIndex === 0}
-                    onPress={handlePrevLesson}
-                    accessibilityRole="button"
-                    accessibilityLabel="Previous lesson"
-                  >
-                    <Ionicons name="arrow-back" size={14} color={colors.text} />
-                    <Text style={{ fontSize: 12, fontWeight: '700', color: colors.text }}>
-                      {isBangla ? 'পূর্ববর্তী' : 'Previous'}
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[
-                      {
-                        flex: 1,
-                        minHeight: 44,
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 6,
-                        borderRadius: shape.medium,
-                        borderWidth: 1,
-                        paddingHorizontal: 12,
-                      },
-                      currentLessonIndex === allLessons.length - 1
-                        ? { borderColor: colors.border, opacity: 0.4 }
-                        : { backgroundColor: colors.primary, borderColor: colors.primary },
-                    ]}
-                    disabled={currentLessonIndex === allLessons.length - 1}
-                    onPress={handleNextLesson}
-                    accessibilityRole="button"
-                    accessibilityLabel="Next lesson"
-                  >
-                    <Text style={{ fontSize: 12, fontWeight: '700', color: colors.onPrimary }}>
-                      {isBangla ? 'পরবর্তী পাঠ' : 'Next Lesson'}
-                    </Text>
-                    <Ionicons name="arrow-forward" size={14} color={colors.onPrimary} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </ScrollView>
+          {p.isFocusMode ? (
+            <LessonFocusPanel
+              colors={colors}
+              isBangla={isBangla}
+              currentPositionSeconds={p.currentPositionSeconds}
+              totalLessonSeconds={p.totalLessonSeconds}
+              currentLessonIndex={p.currentLessonIndex}
+              totalLessonsCount={p.allLessons.length}
+              onExitFocus={() => p.setIsFocusMode(false)}
+              onPrevLesson={p.handlePrevLesson}
+              onNextLesson={p.handleNextLesson}
+            />
           ) : (
-            <>
-              {/* Decomposed Lesson Action Bar with SkillBot AI Tutor trigger */}
-              <LessonActionBar
-                currentLesson={displayLesson}
-                course={course}
-                isLessonCompleted={isLessonCompleted}
-                onOpenFlashcards={() => {
-                  triggerHaptic('light');
-                  setIsFlashcardsVisible(true);
-                }}
-                onOpenAiTutor={() => {
-                  triggerHaptic('light');
-                  setAiTutorVisible(true);
-                }}
-                onMarkComplete={handleMarkComplete}
-              />
-
-              {/* SWIPEABLE BOTTOM TABS STRIP */}
-              <View style={[styles.tabsStrip, { borderBottomColor: colors.border }]}>
-                {TABS.map((tab, idx) => {
-                  const isActive = activeTab === tab.id;
-                  return (
-                    <TouchableOpacity
-                      key={tab.id}
-                      style={[
-                        styles.tabButton,
-                        { borderBottomColor: isActive ? colors.primary : 'transparent' },
-                      ]}
-                      onPress={() => handleTabPress(tab.id, idx)}
-                      accessibilityRole="tab"
-                      accessibilityLabel={tab.label}
-                    >
-                      <Ionicons
-                        name={tab.icon}
-                        size={15}
-                        color={isActive ? colors.primary : colors.textMuted}
-                      />
-                      <Text
-                        style={[
-                          styles.tabButtonText,
-                          {
-                            color: isActive ? colors.primary : colors.textMuted,
-                            fontWeight: isActive ? '700' : '500',
-                          },
-                        ]}
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                      >
-                        {tab.label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-
-              {/* HORIZONTAL SWIPEABLE PAGING SCROLLVIEW */}
-              <ScrollView
-                ref={tabScrollViewRef}
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                onMomentumScrollEnd={handleTabScrollEnd}
-                style={styles.horizontalPagingScroll}
-              >
-                {/* TAB 1: LECTURES (Curriculum Playlist) */}
-                <View style={{ width: screenWidth }}>
-                  <LessonPlaylistTab
-                    course={course}
-                    currentLessonId={currentLesson.id}
-                    allLessons={allLessons}
-                    completedLessonIds={progress?.completedLessonIds || []}
-                    isCourseCompleted={isCourseCompleted}
-                    isEnrolled={isEnrolled}
-                    isAdmin={isPrivileged}
-                    insetsBottom={insets.bottom}
-                    onSelectLesson={(lessonId) => onSelectLesson(courseId, lessonId)}
-                    onOpenQuiz={(l) => {
-                      setSelectedQuizLesson(l);
-                      setQuizPlayerVisible(true);
-                    }}
-                    onOpenCertModal={() => setCertModalVisible(true)}
-                  />
-                </View>
-
-                {/* TAB 2: NOTES */}
-                <View style={{ width: screenWidth }}>
-                  <LessonNotesTab
-                    lessonNotes={lessonNotes}
-                    insetsBottom={insets.bottom}
-                    onOpenNewNote={handleOpenNotesFAB}
-                    onSeekTo={handleSeekTo}
-                    onDeleteNote={(n) => {
-                      deleteNote(n.id);
-                      showToast({
-                        message: 'Note deleted',
-                        type: 'info',
-                        actionLabel: 'Undo',
-                        onAction: () => {
-                          restoreNote(n);
-                          showToast({ message: 'Note restored', type: 'success' });
-                        },
-                      });
-                    }}
-                    showToast={showToast}
-                  />
-                </View>
-
-                {/* TAB 3: TRANSCRIPT */}
-                <View
-                  style={{ width: screenWidth, flex: 1, paddingHorizontal: 16, paddingTop: 10 }}
-                >
-                  <LessonTranscriptTab
-                    currentPositionSeconds={currentPositionSeconds}
-                    lessonTitle={displayLesson.title}
-                    instructorName={course.instructor.name}
-                    lessonSummary={displayLesson.summary}
-                    durationSeconds={totalLessonSeconds}
-                    onSeekTo={handleSeekTo}
-                  />
-                </View>
-
-                {/* TAB 4: Q&A */}
-                <View style={{ width: screenWidth }}>
-                  <ScrollView
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={[
-                      styles.tabContentScroll,
-                      { paddingBottom: Math.max(insets.bottom, 16) + 80 },
-                    ]}
-                    nestedScrollEnabled
-                  >
-                    <CourseQnATab courseId={course.id} currentLessonTitle={currentLesson.title} />
-                  </ScrollView>
-                </View>
-              </ScrollView>
-
-              {/* FLOATING ACTION BUTTON (FAB) FOR NOTES */}
-              <TouchableOpacity
-                style={styles.notesFAB}
-                onPress={handleOpenNotesFAB}
-                activeOpacity={0.88}
-                accessibilityRole="button"
-                accessibilityLabel="Add Note at current video timestamp"
-              >
-                <Ionicons name="create" size={18} color="#FFFFFF" />
-                <Text style={styles.notesFABText}>+ Note</Text>
-              </TouchableOpacity>
-            </>
+            <LessonPlayerTabsSection
+              course={course}
+              courseId={courseId}
+              currentLesson={currentLesson}
+              displayLesson={displayLesson}
+              allLessons={p.allLessons}
+              completedLessonIds={p.progress?.completedLessonIds || []}
+              isCourseCompleted={isCourseCompleted}
+              isEnrolled={p.isEnrolled}
+              isPrivileged={p.isPrivileged}
+              isLessonCompleted={p.isLessonCompleted}
+              lessonNotes={p.lessonNotes}
+              currentPositionSeconds={p.currentPositionSeconds}
+              totalLessonSeconds={p.totalLessonSeconds}
+              screenWidth={p.windowDimensions.width}
+              insetsBottom={insets.bottom}
+              colors={colors}
+              activeTab={p.activeTab}
+              tabs={p.TABS}
+              tabScrollViewRef={p.tabScrollViewRef}
+              onTabPress={p.handleTabPress}
+              onTabScrollEnd={p.handleTabScrollEnd}
+              onOpenFlashcards={() => {
+                triggerHaptic('light');
+                p.setIsFlashcardsVisible(true);
+              }}
+              onOpenAiTutor={() => {
+                triggerHaptic('light');
+                p.setAiTutorVisible(true);
+              }}
+              onMarkComplete={p.handleMarkComplete}
+              onSelectLesson={onSelectLesson}
+              onOpenQuiz={(l) => {
+                p.setSelectedQuizLesson(l);
+                p.setQuizPlayerVisible(true);
+              }}
+              onOpenCertModal={() => p.setCertModalVisible(true)}
+              onOpenNotesFAB={p.handleOpenNotesFAB}
+              onSeekTo={p.handleSeekTo}
+              onDeleteNote={(n) => {
+                deleteNote(n.id);
+                showToast({
+                  message: 'Note deleted',
+                  type: 'info',
+                  actionLabel: 'Undo',
+                  onAction: () => {
+                    restoreNote(n);
+                    showToast({ message: 'Note restored', type: 'success' });
+                  },
+                });
+              }}
+              showToast={showToast}
+            />
           )}
-
-          {/* Quick Note Bottom Sheet */}
-          <QuickNoteBottomSheet
-            visible={isQuickNoteOpen}
-            timestamp={formatSeconds(currentPositionSeconds)}
-            lessonTitle={currentLesson.title}
-            onSaveNote={(text, ts) => {
-              addNote(course.id, currentLesson.id, text, ts);
-              showToast({ message: `Note saved at ${ts}`, type: 'success' });
-            }}
-            onClose={() => setIsQuickNoteOpen(false)}
-          />
-
-          {/* Bottom Safe Area Padding in Portrait */}
           <View style={{ height: Math.max(insets.bottom, 10) }} />
         </View>
       )}
 
-      {/* Option B: SkillBot Contextual In-Lecture AI Copilot Modal */}
-      <LessonAiTutorModal
-        visible={aiTutorVisible}
-        context={{
-          courseId: course.id,
-          courseTitle: course.title,
-          courseCategory: course.category,
-          moduleTitle: currentItem?.moduleTitle || '',
-          lessonId: displayLesson.id,
-          lessonTitle: displayLesson.title,
-          lessonSummary: displayLesson.summary,
-          instructorName: course.instructor.name,
-          currentTimestamp: formatSeconds(currentPositionSeconds),
-        }}
-        onClose={() => setAiTutorVisible(false)}
-      />
-
-      {/* Picture-in-Picture Mini Player */}
-      <PiPFloatingPlayer
-        visible={isPiPActive}
-        isPlaying={isPlaying}
-        onTogglePlay={handleTogglePlay}
-        onMaximize={() => setIsPiPActive(false)}
-        onClose={() => setIsPiPActive(false)}
-        title={currentLesson.title}
-        currentTimeFormatted={formatSeconds(currentPositionSeconds)}
-      />
-
-      {/* Streaming & Offline Quality Modal */}
-      <DownloadQualityModal
-        visible={qualityModalVisible}
-        mode={qualityModalMode}
-        currentQuality={qualityModalMode === 'download' ? selectedDownloadQuality : streamQuality}
-        lessonTitle={currentLesson.title}
-        onClose={() => setQualityModalVisible(false)}
-        onSelectStreamQuality={(q) => {
-          setStreamQuality(q);
-          showToast({ message: `Streaming quality set to ${q}`, type: 'info' });
-        }}
-        onStartDownload={(q) => {
-          handleStartDownloadWithQuality(q);
-        }}
-      />
-
-      {/* Quiz Modal */}
-      {currentLesson.quiz && (
-        <QuizModal
-          visible={quizModalVisible}
-          questions={currentLesson.quiz}
-          onClose={() => setQuizModalVisible(false)}
-          onPass={() => {
-            markLessonCompleted(course.id, currentLesson.id);
-            Alert.alert('Quiz Passed! 🏆', 'Lesson marked as completed.');
-          }}
-        />
-      )}
-
-      {/* Assessment Quiz Player Modal */}
-      <QuizPlayerModal
-        visible={quizPlayerVisible}
-        courseTitle={course.title}
-        courseCategory={course.category}
-        quizId={
-          selectedQuizLesson?.quizId ||
-          selectedQuizLesson?.id ||
-          currentLesson.quizId ||
-          currentLesson.id
-        }
-        questions={
-          selectedQuizLesson?.quiz
-            ? selectedQuizLesson.quiz.map((q) => ({
-                id: q.id,
-                question: q.question,
-                options: q.options,
-                correctIndex: q.correctAnswerIndex,
-                explanation: q.explanation,
-              }))
-            : currentLesson.quiz
-              ? currentLesson.quiz.map((q) => ({
-                  id: q.id,
-                  question: q.question,
-                  options: q.options,
-                  correctIndex: q.correctAnswerIndex,
-                  explanation: q.explanation,
-                }))
-              : undefined
-        }
-        onClose={() => {
-          setQuizPlayerVisible(false);
-          setSelectedQuizLesson(null);
-        }}
-        onPassed={() => {
-          const targetLessonId = selectedQuizLesson?.id || currentLesson.id;
-          markLessonCompleted(course.id, targetLessonId);
-          Alert.alert(
-            isBangla ? 'কুইজ সম্পন্ন! 🏆' : 'Quiz Passed! 🏆',
-            isBangla
-              ? 'অধ্যায় সফলভাবে সম্পন্ন হয়েছে এবং অগ্রগতি সংরক্ষিত হয়েছে।'
-              : 'Chapter completed and progress saved.'
-          );
-        }}
-      />
-
-      {/* Notes Modal */}
-      <NotesModal
-        visible={notesModalVisible}
-        courseId={course.id}
-        lessonId={currentLesson.id}
-        currentPositionSeconds={currentPositionSeconds}
-        onSeekTo={(sec) => {
-          handleSeekTo(sec);
-          setNotesModalVisible(false);
-        }}
-        onClose={() => setNotesModalVisible(false)}
-      />
-
-      {/* Mandatory Course Review Modal */}
-      <MandatoryReviewModal
-        visible={mandatoryReviewVisible}
-        courseTitle={course.title}
-        instructorName={course.instructor.name}
-        onSubmit={handleSubmitReview}
-        onDismissLater={() => setMandatoryReviewVisible(false)}
-      />
-
-      {/* Certificate Modal */}
-      <CertificateModal
-        visible={certModalVisible}
-        certificate={userCert || null}
-        onClose={() => setCertModalVisible(false)}
-      />
-
-      {/* Payment Modal */}
-      <PaymentModal
-        visible={paymentModalVisible}
+      <LessonPlayerModals
         course={course}
-        onClose={() => setPaymentModalVisible(false)}
-        onSuccess={() => {
-          setPaymentModalVisible(false);
-          Alert.alert(
-            isBangla ? 'ভর্তি সফল হয়েছে! 🎓' : 'Enrollment Successful! 🎓',
-            isBangla
-              ? 'কোর্সের সকল ভিডিও এখন আনলক করা হয়েছে।'
-              : 'All course videos are now unlocked.'
-          );
-        }}
-      />
-
-      {/* Spaced Repetition Modal */}
-      <SpacedRepetitionModal
-        visible={isFlashcardsVisible}
-        onClose={() => setIsFlashcardsVisible(false)}
-        course={course}
+        currentLesson={currentLesson}
+        displayLesson={displayLesson}
+        moduleTitle={p.currentItem?.moduleTitle}
+        isBangla={isBangla}
+        isPlaying={p.isPlaying}
+        isQuickNoteOpen={p.isQuickNoteOpen}
+        aiTutorVisible={p.aiTutorVisible}
+        isPiPActive={p.isPiPActive}
+        qualityModalVisible={p.qualityModalVisible}
+        qualityModalMode={p.qualityModalMode}
+        selectedDownloadQuality={p.selectedDownloadQuality}
+        streamQuality={p.streamQuality}
+        quizModalVisible={p.quizModalVisible}
+        quizPlayerVisible={p.quizPlayerVisible}
+        selectedQuizLesson={p.selectedQuizLesson}
+        notesModalVisible={p.notesModalVisible}
+        mandatoryReviewVisible={p.mandatoryReviewVisible}
+        certModalVisible={p.certModalVisible}
+        paymentModalVisible={p.paymentModalVisible}
+        isFlashcardsVisible={p.isFlashcardsVisible}
+        userCert={p.userCert}
+        currentPositionSeconds={p.currentPositionSeconds}
+        setIsQuickNoteOpen={p.setIsQuickNoteOpen}
+        setAiTutorVisible={p.setAiTutorVisible}
+        setIsPiPActive={p.setIsPiPActive}
+        setQualityModalVisible={p.setQualityModalVisible}
+        setStreamQuality={p.setStreamQuality}
+        setQuizModalVisible={p.setQuizModalVisible}
+        setQuizPlayerVisible={p.setQuizPlayerVisible}
+        setSelectedQuizLesson={p.setSelectedQuizLesson}
+        setNotesModalVisible={p.setNotesModalVisible}
+        setMandatoryReviewVisible={p.setMandatoryReviewVisible}
+        setCertModalVisible={p.setCertModalVisible}
+        setPaymentModalVisible={p.setPaymentModalVisible}
+        setIsFlashcardsVisible={p.setIsFlashcardsVisible}
+        onAddNote={addNote}
+        onMarkLessonCompleted={p.markLessonCompleted}
+        onSeekTo={p.handleSeekTo}
+        onTogglePlay={p.handleTogglePlay}
+        onStartDownloadWithQuality={handleStartDownloadWithQuality}
+        onSubmitReview={p.handleSubmitReview}
+        showToast={showToast}
       />
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  videoPlayerWrapper: {
-    paddingHorizontal: 12,
-    paddingTop: 8,
-    paddingBottom: 8,
-  },
-  fullscreenWrapper: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 9999,
-  },
-  centerContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  commuteToggleBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  adminBanner: {
-    marginHorizontal: 12,
-    marginTop: 6,
-    marginBottom: 2,
-    borderRadius: shape.medium,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  adminBannerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 2,
-  },
-  adminBannerTitle: {
-    color: '#E34234',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  adminBannerSub: {
-    color: '#F8FAFC',
-    fontSize: 10.5,
-  },
-  previewBanner: {
-    marginHorizontal: 12,
-    marginTop: 6,
-    marginBottom: 2,
-    borderRadius: shape.medium,
-    borderWidth: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  previewBannerText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  lowerLearningArea: {
-    flex: 1,
-  },
-  tabsStrip: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    paddingHorizontal: 6,
-  },
-  tabButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    paddingVertical: 12,
-    paddingHorizontal: 4,
-    minWidth: 0,
-    minHeight: 44,
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  tabButtonText: {
-    fontSize: 12,
-  },
-  horizontalPagingScroll: {
-    flex: 1,
-  },
-  tabContentScroll: {
-    padding: 16,
-  },
-  notesFAB: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#E34234',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 24,
-    elevation: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
-  },
-  notesFABText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  // Retain compact toolbar metrics for test verification compliance
-  playbackToolbar: {
-    paddingHorizontal: 8,
-  },
-  playbackLeftControls: {
-    gap: 8,
-    flexShrink: 0,
-  },
-  playbackRightControls: {
-    gap: 6,
-  },
-});

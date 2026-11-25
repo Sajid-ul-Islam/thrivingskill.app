@@ -148,13 +148,15 @@ export const CourseReviewsSection: React.FC<CourseReviewsSectionProps> = ({
                 >
                   {rev.userName}
                 </Text>
-                <Text
-                  style={[styles.reviewRole, { color: colors.textMuted }]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {rev.userRole}
-                </Text>
+                {rev.userRole ? (
+                  <Text
+                    style={[styles.reviewRole, { color: colors.textMuted }]}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {rev.userRole}
+                  </Text>
+                ) : null}
               </View>
               <View style={styles.ratingStars}>
                 <Ionicons name="star" size={14} color={colors.starColor} />

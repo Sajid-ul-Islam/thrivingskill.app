@@ -1,7 +1,24 @@
-import { Course, CourseModule, CategoryId } from '../../types';
+import { Course, CourseModule, CategoryId, Review } from '../../types';
 import { resolveLessonVideoData } from '../../data/lessonVideosRegistry';
-import { getLiveReviewsForCourse } from '../../data/liveReviews';
 import { getSafeImageUri } from '../../utils/imageUtils';
+
+function parseEmbeddedReviews(rawReviews: any, courseId: string): Review[] {
+  const list = Array.isArray(rawReviews?.reviews)
+    ? rawReviews.reviews
+    : Array.isArray(rawReviews)
+      ? rawReviews
+      : [];
+  return list
+    .filter((item: any) => item && (item.content || item.comment || item.title))
+    .map((item: any, idx: number) => ({
+      id: String(item.comment_id || item.id || `rev-${courseId}-${idx}`),
+      userName: String(item.display_name || item.user_display_name || item.userName || 'Learner'),
+      userAvatar: typeof item.user_avatar === 'string' ? item.user_avatar : item.userAvatar || '',
+      rating: Math.max(1, Math.min(5, Number(item.rate ?? item.rating ?? 5) || 5)),
+      date: String(item.comment_date_gmt || item.date || '').split(' ')[0] || '',
+      comment: String(item.content || item.comment || item.title || ''),
+    }));
+}
 
 // Parse a real duration string such as "1 hours 9 minutes", "02 mins", or "12:30" into total minutes.
 export function parseDurationMinutes(duration?: string): number {
@@ -309,6 +326,8 @@ export function transformWpCourse(raw: any): Course {
         ? metaLessonCount
         : 0;
 
+  const embeddedReviews = parseEmbeddedReviews(raw.reviews, id);
+
   return {
     id,
     title,
@@ -324,8 +343,8 @@ export function transformWpCourse(raw: any): Course {
     reviewsCount:
       typeof raw.rating_count === 'number' && raw.rating_count > 0
         ? raw.rating_count
-        : getLiveReviewsForCourse(id).length > 0
-          ? getLiveReviewsForCourse(id).length
+        : embeddedReviews.length > 0
+          ? embeddedReviews.length
           : null,
     enrolledCount:
       typeof raw.count_students === 'number' && raw.count_students > 0 ? raw.count_students : null,
@@ -353,7 +372,7 @@ export function transformWpCourse(raw: any): Course {
       'Eagerness to upskill and advance career',
     ],
     modules,
-    reviews: getLiveReviewsForCourse(id),
+    reviews: embeddedReviews,
     skillTrack: title.includes('AI') ? 'Generative AI Career Track' : 'Professional Skills Track',
     _searchIndex:
       `${title} ${excerpt} ${instructor.name} ${catId} ${categorySlugs.join(' ')}`.toLowerCase(),
@@ -396,12 +415,12 @@ export function transformCompanionCourse(raw: any): Course {
 
   const realRating =
     typeof raw.rating === 'number' && raw.rating > 0 ? Number(raw.rating.toFixed(1)) : null;
-  const liveReviews = getLiveReviewsForCourse(id);
+  const embeddedReviews = parseEmbeddedReviews(raw.reviews, id);
   const realReviewsCount =
     typeof raw.reviews_count === 'number' && raw.reviews_count > 0
       ? raw.reviews_count
-      : liveReviews.length > 0
-        ? liveReviews.length
+      : embeddedReviews.length > 0
+        ? embeddedReviews.length
         : null;
   const realEnrolledCount =
     typeof raw.students_count === 'number' && raw.students_count > 0 ? raw.students_count : null;
@@ -470,7 +489,7 @@ export function transformCompanionCourse(raw: any): Course {
       'Basic familiarity with relevant computer/web tools',
       'Eagerness to upskill and advance career',
     ],
-    reviews: liveReviews,
+    reviews: embeddedReviews,
     skillTrack: title.includes('AI') ? 'Generative AI Career Track' : 'Professional Skills Track',
     _searchIndex: `${title} ${excerpt} ${instructorName} ${categorySlug}`.toLowerCase(),
   };

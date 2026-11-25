@@ -1,7 +1,7 @@
 # Tech Stack & Architecture Analysis: Implementing Latest Client Requirements
 
 **Document**: Technical Stack, Architecture, and Integration Specification  
-**Project**: Thriving Skills Mobile Application (React Native / Expo SDK 51 + WordPress/LearnPress)  
+**Project**: Thriving Skills Mobile Application (React Native 0.88.1 / Expo SDK 58 / React 19.3 + WordPress/LearnPress)  
 **Date**: 18 September 2026  
 **Target Requirements**: CR-01 (Behavioral Recommendations), CR-02 (Mandatory Reviews), CR-03 (Video Auto-Play), CR-04 (SMS OTP Authentication)  
 
@@ -132,7 +132,7 @@
     - **"Cancel Auto-Play"** button (dismisses timer and pauses player).
 
 #### B. Frontend Stack
-- **Video Engine**: Expo Video / `expo-av` with `useRef` playback controller.
+- **Video Engine**: `expo-video` (`NativeMedia3Player`) and hardened WebView embeds (`LessonVideoContainer.tsx`) with `useRef` playback timers.
 - **Timer Hook**: `useAutoPlayTimer(onTrigger: () => void, durationSeconds = 5)`.
 - **Navigation Action**: Calls `onSelectLesson(courseId, nextLesson.id)` and auto-triggers `setIsPlaying(true)` on mount.
 

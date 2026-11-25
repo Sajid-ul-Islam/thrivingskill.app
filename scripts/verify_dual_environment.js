@@ -91,11 +91,12 @@ async function runVerification() {
     httpTs.includes('allowFallback?: boolean;') && httpTs.includes('baseUrl?: string;')
   );
   assert('httpClient.ts builds URL with customBase support', httpTs.includes('customBase || Env.API_URL'));
-  assert('httpClient.ts implements automatic failover to FALLBACK_API_URL in executeRequest', 
+  assert('httpClient.ts implements unified executeCore failover to FALLBACK_API_URL',
     httpTs.includes('baseUrl: Env.FALLBACK_API_URL') && httpTs.includes('[API Failover]')
   );
-  assert('httpClient.ts implements automatic failover in requestWithMeta',
-    httpTs.includes('[API Failover withMeta]')
+  assert('httpClient.ts routes both request and requestWithMeta through unified executeCore',
+    httpTs.includes("this.executeCore<T>(endpoint, options, 'Request')") &&
+    httpTs.includes("this.executeCore<T>(endpoint, options, 'RequestWithMeta')")
   );
 
   // 3. Audit src/utils/imageUtils.ts
@@ -124,7 +125,11 @@ async function runVerification() {
   // 5. Audit ProfilePreferencesSection.tsx & ProfileScreen.tsx
   console.log('\n[STEP 5] Auditing Server Switcher UI in Profile Section...');
   const prefTs = fs.readFileSync(path.join(rootDir, 'src', 'components', 'profile', 'ProfilePreferencesSection.tsx'), 'utf8');
-  const profileTs = fs.readFileSync(path.join(rootDir, 'src', 'screens', 'ProfileScreen.tsx'), 'utf8');
+  const profileHookPath = path.join(rootDir, 'src', 'screens', 'profile', 'useProfileScreenState.ts');
+  const profileTs = [
+    fs.readFileSync(path.join(rootDir, 'src', 'screens', 'ProfileScreen.tsx'), 'utf8'),
+    fs.existsSync(profileHookPath) ? fs.readFileSync(profileHookPath, 'utf8') : '',
+  ].join('\n');
 
   assert('ProfilePreferencesSection accepts serverEnvironment and onSwitchServerEnvironment props',
     prefTs.includes('serverEnvironment?: \'production\' | \'staging\';') &&

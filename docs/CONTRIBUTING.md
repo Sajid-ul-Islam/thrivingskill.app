@@ -41,7 +41,7 @@ Welcome to the **Thriving Skills Limited** mobile engineering team! This handboo
    ```bash
    cp .env.example .env
    ```
-   Open `.env` and fill in any required API keys (e.g., `EXPO_PUBLIC_GEMINI_API_KEY`).
+   Open `.env` and adjust any optional build-time `EXPO_PUBLIC_*` overrides (`EXPO_PUBLIC_DEFAULT_ENVIRONMENT`, timeouts, retry counts, cache TTL). Do not commit `.env` or add server-side secrets to client variables.
 
 4. **Start the local development server:**
    ```bash

@@ -105,15 +105,15 @@ if (!usesIconInHeader) {
 }
 console.log('   ✓ CoursesScreen renders CategoryIllustrationIcon in department row headers');
 
-// 4. Verify NO mock categories anywhere in the data pipeline
+// 4. Verify NO mock categories or bundled mockData.ts in pipeline
 console.log('\n[TEST 4] Verifying zero mock category data in pipeline:');
 
-const mockData = fs.readFileSync(path.join(__dirname, '../src/data/mockData.ts'), 'utf8');
-if (mockData.includes('export const CATEGORIES')) {
-  console.error('❌ mockData.ts still exports hardcoded CATEGORIES — must be removed!');
+const mockDataPath = path.join(__dirname, '../src/data/mockData.ts');
+if (fs.existsSync(mockDataPath)) {
+  console.error('❌ src/data/mockData.ts still exists — must stay removed from production bundle!');
   process.exit(1);
 }
-console.log('   ✓ mockData.ts has no exported CATEGORIES array');
+console.log('   ✓ src/data/mockData.ts is removed from production bundle');
 
 const coursesService = fs.readFileSync(path.join(__dirname, '../src/services/api/coursesService.ts'), 'utf8');
 if (coursesService.includes("from '../../data/mockData'")) {

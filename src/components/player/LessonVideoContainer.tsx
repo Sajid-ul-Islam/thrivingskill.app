@@ -15,6 +15,111 @@ import { VideoPlayerGestureOverlay } from './VideoPlayerGestureOverlay';
 import { LessonCommuteCard } from './LessonCommuteCard';
 import { Lesson, Course } from '../../types';
 
+/**
+ * Builds sanitized embed HTML for lesson videos (iframe validation + HTTPS stream guard).
+ */
+export function buildLessonVideoHtml(activeVideoIntro?: string, activeVideoUrl?: string): string {
+  let embedMarkup = '';
+  if (activeVideoIntro && activeVideoIntro.includes('<iframe')) {
+    const iframeSrcMatch = activeVideoIntro.match(/src=["']([^"']+)["']/i);
+    const isSafeIframe =
+      !iframeSrcMatch ||
+      (/^(https:)?\/\//i.test(iframeSrcMatch[1]) && !/javascript:/i.test(iframeSrcMatch[1]));
+    if (isSafeIframe) {
+      embedMarkup = activeVideoIntro
+        .replace(/src=["']\/\//gi, 'src="https://')
+        .replace(/width="[^"]*"/gi, 'width="100%"')
+        .replace(/height="[^"]*"/gi, 'height="100%"');
+      if (!embedMarkup.includes('allow=')) {
+        embedMarkup = embedMarkup.replace(
+          '<iframe',
+          '<iframe allow="autoplay; fullscreen; picture-in-picture" allowfullscreen'
+        );
+      }
+    }
+  } else if (activeVideoUrl) {
+    if (activeVideoUrl.includes('vimeo.com')) {
+      let vSrc = activeVideoUrl;
+      if (!activeVideoUrl.includes('player.vimeo.com/video/')) {
+        const vMatch = activeVideoUrl.match(/vimeo\.com\/(\d+)/);
+        const vId = vMatch ? vMatch[1] : '';
+        vSrc = vId ? `https://player.vimeo.com/video/${vId}` : '';
+      }
+      if (vSrc) {
+        const joinChar = vSrc.includes('?') ? '&' : '?';
+        const vUrlWithParams = `${vSrc}${joinChar}autoplay=1&controls=0&title=0&byline=0&portrait=0&dnt=1`;
+        embedMarkup = `<iframe src="${vUrlWithParams}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
+      }
+    } else if (activeVideoUrl.includes('youtube.com') || activeVideoUrl.includes('youtu.be')) {
+      let ytId = '';
+      const yMatch = activeVideoUrl.match(
+        /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/
+      );
+      if (yMatch && yMatch[1]) ytId = yMatch[1];
+      const ytSrc = ytId
+        ? `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&controls=0&playsinline=1&modestbranding=1&rel=0&enablejsapi=1`
+        : activeVideoUrl;
+      embedMarkup = `<iframe src="${ytSrc}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
+    } else if (activeVideoUrl.match(/\.(mp4|m3u8|mpd|webm)($|\?)/i)) {
+      embedMarkup = `<video id="media3Player" src="${activeVideoUrl}" playsinline webkit-playsinline autoplay style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;"></video>`;
+    } else {
+      const isSafeHttps = activeVideoUrl.startsWith('https://');
+      if (isSafeHttps) {
+        const escapedUrl = activeVideoUrl.replace(/"/g, '&quot;');
+        embedMarkup = `<iframe src="${escapedUrl}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
+      } else {
+        embedMarkup = `<div style="color:#FFF;font-family:system-ui,sans-serif;text-align:center;padding:40px 20px;"><div style="font-size:32px;margin-bottom:8px;">🔒</div><div>Secure stream required (HTTPS only).</div></div>`;
+      }
+    }
+  } else {
+    embedMarkup = `<div style="color:#FFF;font-family:system-ui,sans-serif;text-align:center;padding:40px 20px;"><div style="font-size:28px;margin-bottom:8px;">🎬</div><div>Video coming soon</div></div>`;
+  }
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #000000;
+      overflow: hidden;
+    }
+    .video-wrapper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000000;
+    }
+    iframe, video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 100% !important;
+      max-height: 100% !important;
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="video-wrapper">
+    ${embedMarkup}
+  </div>
+</body>
+</html>`;
+}
+
 interface LessonVideoContainerProps {
   course: Course;
   currentLesson: Lesson;

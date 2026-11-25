@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
   Alert,
@@ -19,9 +18,7 @@ import { useAuth } from '../context/AuthContext';
 import {
   Header,
   CurriculumAccordion,
-  PaymentModal,
   CourseQnATab,
-  MandatoryReviewModal,
   AnimatedTabContent,
   StateView,
   ScrollToTopPill,
@@ -29,16 +26,14 @@ import {
   CourseInstructorSection,
   CourseReviewsSection,
   CourseStickyBottomBar,
-  CourseCertificatePreviewModal,
-  CourseWriteReviewModal,
 } from '../components';
+import { courseDetailStyles as styles } from './course-detail/courseDetailStyles';
+import { CourseDetailModals } from './course-detail/CourseDetailModals';
 import { useLanguage } from '../context/LanguageContext';
 import { useYouTube } from '../context/YouTubeContext';
 import { useFeedback } from '../context/FeedbackContext';
 import { findRelatedVideoForCourse } from '../services/youtubeService';
 import { CoursesService } from '../services/api/coursesService';
-import { MIN_TOUCH_TARGET } from '../theme/typography';
-import { shape } from '../theme/shapes';
 import { triggerHaptic } from '../utils/haptics';
 import { useResponsive } from '../theme/responsive';
 import { Lesson } from '../types';
@@ -528,53 +523,37 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
         onEnrollOrResume={handleEnrollOrResume}
       />
 
-      {/* CR-02: Mandatory Course Review Modal before Certificate Unlock */}
-      <MandatoryReviewModal
-        visible={mandatoryReviewVisible}
-        courseTitle={course.title}
-        instructorName={course.instructor.name}
-        onSubmit={handleSubmitMandatoryReview}
-        onDismissLater={() => setMandatoryReviewVisible(false)}
-      />
-
-      {/* Local Payment Gateway Modal */}
-      <PaymentModal
-        visible={paymentModalVisible}
-        course={course}
-        onClose={() => setPaymentModalVisible(false)}
-        onSuccess={() => {
-          const firstLessonId = course.modules?.[0]?.lessons?.[0]?.id;
-          if (firstLessonId) onNavigateToLesson(course.id, firstLessonId);
-        }}
-      />
-
-      {/* Interactive Official Certificate Preview Modal */}
-      <CourseCertificatePreviewModal
-        visible={certPreviewVisible}
+      <CourseDetailModals
         course={course}
         userName={user?.displayName || user?.username || 'Executive Graduate'}
+        isPrivileged={isPrivileged}
+        isCompleted={isCompleted}
         isUnlocked={isPrivileged || isCertificateUnlocked(course.id)}
-        isCompleted={isPrivileged || isCompleted}
         hasReviewed={isPrivileged || hasReviewedCourse(course.id)}
         certificateId={
           userProgress[course.id]?.certificateId ||
           (isPrivileged ? `TS-2026-DEV${course.id.slice(-4).toUpperCase()}` : undefined)
         }
-        onClose={() => setCertPreviewVisible(false)}
+        mandatoryReviewVisible={mandatoryReviewVisible}
+        paymentModalVisible={paymentModalVisible}
+        certPreviewVisible={certPreviewVisible}
+        writeReviewModalVisible={writeReviewModalVisible}
+        reviewRating={reviewRating}
+        reviewComment={reviewComment}
+        isSubmittingReview={isSubmittingReview}
+        onCloseMandatoryReview={() => setMandatoryReviewVisible(false)}
         onOpenMandatoryReview={() => setMandatoryReviewVisible(true)}
-      />
-
-      {/* Interactive Write a Review Modal */}
-      <CourseWriteReviewModal
-        visible={writeReviewModalVisible}
-        courseTitle={course.title}
-        rating={reviewRating}
-        comment={reviewComment}
-        isSubmitting={isSubmittingReview}
+        onSubmitMandatoryReview={handleSubmitMandatoryReview}
+        onClosePayment={() => setPaymentModalVisible(false)}
+        onPaymentSuccess={() => {
+          const firstLessonId = course.modules?.[0]?.lessons?.[0]?.id;
+          if (firstLessonId) onNavigateToLesson(course.id, firstLessonId);
+        }}
+        onCloseCertPreview={() => setCertPreviewVisible(false)}
         onChangeRating={setReviewRating}
         onChangeComment={setReviewComment}
-        onSubmit={handleSubmitReview}
-        onClose={() => setWriteReviewModalVisible(false)}
+        onSubmitReview={handleSubmitReview}
+        onCloseWriteReview={() => setWriteReviewModalVisible(false)}
       />
 
       {/* Dynamic Scroll to Top Quick Pill */}
@@ -586,99 +565,3 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 100,
-  },
-  notFoundCenter: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerBookmark: {
-    width: MIN_TOUCH_TARGET,
-    height: MIN_TOUCH_TARGET,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tabsContainer: {
-    paddingHorizontal: 16,
-  },
-  tabsBar: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    marginBottom: 16,
-    minWidth: '100%',
-  },
-  tabItem: {
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    minWidth: 80,
-  },
-  tabLabel: {
-    fontSize: 12.5,
-  },
-  curriculumTab: {
-    paddingBottom: 8,
-  },
-  devBypassBanner: {
-    marginHorizontal: 16,
-    marginBottom: 12,
-    borderRadius: shape.medium,
-    padding: 12,
-    borderWidth: 1,
-    gap: 8,
-  },
-  devBypassHeader: {
-    gap: 2,
-  },
-  devBypassBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  devBypassTitle: {
-    color: '#E34234',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  devBypassSubtitle: {
-    color: 'rgba(255, 255, 255, 0.75)',
-    fontSize: 11,
-  },
-  devActionBtnRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 2,
-  },
-  devActionBtnPrimary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: '#E34234',
-    paddingHorizontal: 10,
-    paddingVertical: 5.5,
-    borderRadius: 6,
-  },
-  devActionBtnSecondary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    paddingHorizontal: 10,
-    paddingVertical: 5.5,
-    borderRadius: 6,
-  },
-  devActionBtnText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '700',
-  },
-});

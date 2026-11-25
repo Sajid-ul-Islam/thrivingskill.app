@@ -19,7 +19,7 @@ For specialized views into the product, engineering, task roadmap, bug resolutio
 | **[CONTEXT.md](CONTEXT.md)** | **Project Context & Domain Reference**: Business domain, entity relations, storage keys, and authentication models. |
 | **[FEATURES.md](FEATURES.md)** | **Master Features Inventory**: Comprehensive breakdown of all 18+ app features and interactive modules. |
 | **[SKILLS.md](SKILLS.md)** | **Developer Tooling & Skills Manual**: Automation scripts (`audit_app.js`), CLI commands, and test runbooks. |
-| **[TECH_STACK_ANALYSIS.md](TECH_STACK_ANALYSIS.md)** | **Tech Stack Deep Dive**: Evaluation of React Native, Expo SDK 52, TypeScript strict mode, and native bridge. |
+| **[TECH_STACK_ANALYSIS.md](TECH_STACK_ANALYSIS.md)** | **Tech Stack Deep Dive**: Evaluation of React Native 0.88.1, Expo SDK 58, TypeScript 6 strict mode, and native bridge. |
 | **[TEST_INFRA.md](TEST_INFRA.md)** | **Testing Infrastructure**: Comprehensive verification suites, mock harness, and CI/CD quality gate. |
 
 ---
@@ -101,8 +101,8 @@ graph TD
 ### Architectural Principles:
 1. **Separation of Concerns**: UI components do not call `fetch` directly; they consume Context hooks (`useLearning`, `useAuth`), which invoke typed domain services (`Api.courses`, `Api.auth`).
 2. **Offline-First Resilience**: Stale-while-revalidate caching ensures immediate screen rendering upon launch, while background sync updates data seamlessly.
-3. **Fail-Safe Fallbacks**: If the backend is temporarily unreachable, catalog seed data protects the user experience from blank screens.
-4. **Environment Isolation**: API endpoints, timeouts, and cache rules are governed by configuration variables (`EXPO_PUBLIC_*`) rather than hardcoded URLs.
+3. **Fail-Safe Snapshots**: Persisted AsyncStorage catalog and review snapshots (`CacheManager`) preserve offline access without shipping bundled seed or mock data in the app bundle.
+4. **Environment Isolation**: API endpoints, timeouts, and cache rules are governed by build-time configuration variables (`EXPO_PUBLIC_*`) rather than hardcoded URLs.
 
 ---
 
@@ -110,10 +110,11 @@ graph TD
 
 | Layer | Technology | Details |
 | :--- | :--- | :--- |
-| **Framework** | [React Native](https://reactnative.dev/) | Version 0.74.5 |
-| **Runtime & Tooling** | [Expo SDK 51](https://expo.dev/) | Managed workflow (`~51.0.38`) |
-| **Language** | [TypeScript](https://www.typescriptlang.org/) | Strict mode (`~5.3.3`) |
-| **Local Storage** | [`@react-native-async-storage/async-storage`](https://github.com/react-native-async-storage/async-storage) | Persistent cache & auth tokens |
+| **Framework** | [React Native](https://reactnative.dev/) | Version `0.88.1` (`react` `19.3.0`) |
+| **Runtime & Tooling** | [Expo SDK 58](https://expo.dev/) | Managed workflow (`^58.0.0`) |
+| **Navigation** | [React Navigation 7](https://reactnavigation.org/) | Native Stack (`^7.21.1`) & Bottom Tabs (`^7.22.0`) |
+| **Language** | [TypeScript](https://www.typescriptlang.org/) | Strict mode (`~6.0.3`) |
+| **Local Storage** | [`@react-native-async-storage/async-storage`](https://github.com/react-native-async-storage/async-storage) | `2.2.0` — Persistent snapshots & state |
 | **Icons & Visuals** | [`@expo/vector-icons`](https://docs.expo.dev/guides/icons/) | Ionicons, Linear Gradients, SVG |
 | **Safe Areas** | [`react-native-safe-area-context`](https://github.com/th3rdwave/react-native-safe-area-context) | Notch & bottom bar insets |
 | **Styling** | Vanilla React Native `StyleSheet` | Dynamic design tokens for Light & Dark mode |
@@ -123,11 +124,11 @@ graph TD
 
 ## 3. Environment Configuration (.env)
 
-The app utilizes Expo's native environment variable mechanism (`EXPO_PUBLIC_*` prefix).
+The app utilizes Expo's static build-time environment variable inlining (`process.env.EXPO_PUBLIC_*`).
 
 ### Configuration Files
 - **Template**: [`.env.example`](./.env.example)
-- **Active Env**: `.env` or `.env.local` (ignored by git for security)
+- **Active Env**: `.env.development` / `.env.production` / `.env.local` (ignored by git for security)
 - **Accessor Module**: [`src/config/env.ts`](./src/config/env.ts)
 - **Type Definitions**: [`src/types/env.d.ts`](./src/types/env.d.ts)
 
@@ -135,15 +136,17 @@ The app utilizes Expo's native environment variable mechanism (`EXPO_PUBLIC_*` p
 
 | Variable | Type | Default Value | Description |
 | :--- | :--- | :--- | :--- |
-| `EXPO_PUBLIC_API_URL` | `string` | `https://thrivingskill.com/wp-json` | Base URL for WordPress REST API |
-| `EXPO_PUBLIC_SITE_URL` | `string` | `https://thrivingskill.com` | Base website URL |
+| `EXPO_PUBLIC_API_URL` | `string` | `https://thrivingskill.com/wp-json` (prod) | Base URL for WordPress REST API |
+| `EXPO_PUBLIC_SITE_URL` | `string` | `https://thrivingskill.com` (prod) | Base website & checkout URL |
+| `EXPO_PUBLIC_WP_ADMIN_URL` | `string` | `${EXPO_PUBLIC_SITE_URL}/wp-admin/` | WordPress Admin URL (dev diagnostics) |
+| `EXPO_PUBLIC_DEFAULT_ENVIRONMENT` | `string` | Inferred / `production` | Initial environment (`production` or `staging`) |
+| `EXPO_PUBLIC_FALLBACK_API_URL` | `string` | `undefined` | Optional non-staging production API mirror |
+| `EXPO_PUBLIC_FALLBACK_SITE_URL` | `string` | `undefined` | Optional non-staging production site mirror |
 | `EXPO_PUBLIC_REQUEST_TIMEOUT_MS` | `number` | `15000` (15s) | Request timeout before cancellation |
 | `EXPO_PUBLIC_MAX_RETRIES` | `number` | `2` | Max automatic retries for failed requests |
 | `EXPO_PUBLIC_CACHE_TTL_MS` | `number` | `300000` (5 mins) | Time-to-Live for cached catalog items |
-| `EXPO_PUBLIC_ENABLE_FALLBACK` | `boolean` | `true` | Enable local seed fallback on network failure |
+| `EXPO_PUBLIC_ENABLE_FALLBACK` | `boolean` | `true` | Enable mirror fallback on GET failure (staging/mirror only) |
 | `EXPO_PUBLIC_DEBUG_API` | `boolean` | `false` (or `__DEV__`) | Output request/response logs in console |
-| `EXPO_PUBLIC_WC_CONSUMER_KEY` | `string` | `undefined` | Optional WooCommerce consumer key |
-| `EXPO_PUBLIC_WC_CONSUMER_SECRET` | `string` | `undefined` | Optional WooCommerce consumer secret |
 
 ---
 
@@ -290,20 +293,19 @@ App.tsx
 ## 7. Offline Strategy & Data Resilience
 
 1. **Initial Startup**:
-   - The app immediately attempts to load cached data from `AsyncStorage`.
-   - If no cache is present, verified seed data is loaded instantly, guaranteeing a fast First Contentful Paint (FCP).
+   - The app awaits `Env.init()` before mounting network providers, then hydrates cached catalog/workshop/review snapshots asynchronously from `AsyncStorage`.
 2. **Background Sync**:
-   - The app fetches the latest course catalog and categories from the WordPress backend asynchronously.
-   - Upon successful fetch, cache is refreshed transparently without flashing the UI.
+   - The app fetches the latest course catalog, reviews (`/learnpress/v1/review/course/{id}`), and categories from the WordPress backend asynchronously.
+   - Upon successful fetch, persistent snapshots refresh transparently without UI flicker.
 3. **Offline Actions**:
-   - Lesson progress, notes, bookmarks, and certifications are stored locally in `AsyncStorage` and can be synced once connectivity resumes.
+   - Lesson progress, notes, bookmarks, and certifications are stored locally in `AsyncStorage` and synced via `SyncQueueManager` once connectivity resumes.
 
 ---
 
 ## 8. Setup, Execution & Build Instructions
 
 ### Prerequisites
-- Node.js 18.x or 20.x+
+- Node.js 22 LTS
 - npm or yarn
 - Expo Go app on your physical device (iOS or Android), or an emulator.
 
@@ -404,9 +406,9 @@ The recommendation engine in `LearningContext` computes dynamic relevance scores
 ### GitHub Actions CI Quality Gate
 Every push to `master` and pull request triggers `.github/workflows/ci.yml`:
 1. Checks out repository.
-2. Sets up Node.js 20 LTS with caching.
+2. Sets up Node.js 22 LTS with caching.
 3. Installs clean dependencies via `npm ci`.
-4. Runs strict TypeScript compilation (`npx tsc --noEmit`). If any type errors exist, merges are blocked.
+4. Runs ESLint, Prettier check, strict TypeScript (`npm run typecheck`), static audit (`npm run audit`), offline Jest suite with coverage (`npm run test:ci`), secret scanning, and PHP lint on `ts-mobile-bridge`.
 
 ### EAS Update Hotfix Deployment
 For non-native JavaScript and UI fixes, patches can be deployed immediately without App Store / Play Store review:

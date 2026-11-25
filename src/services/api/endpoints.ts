@@ -16,6 +16,8 @@ export const Endpoints = {
     // Courses
     COURSES: '/learnpress/v1/courses',
     COURSE_DETAIL: (id: string | number) => `/learnpress/v1/courses/${id}`,
+    COURSE_REVIEWS: (id: string | number) => `/learnpress/v1/review/course/${id}`,
+    COURSE_REVIEW_SUBMIT: '/learnpress/v1/review/submit',
     COURSE_ENROLL: '/learnpress/v1/courses/enroll',
     COURSE_FINISH: '/learnpress/v1/courses/finish',
     COURSE_RETAKE: '/learnpress/v1/courses/retake',

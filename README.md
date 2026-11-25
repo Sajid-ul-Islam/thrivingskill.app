@@ -1,7 +1,7 @@
 # 🚀 Thriving Skills (TSL) — AI-Powered Executive EdTech Mobile Platform
 
-[![React Native](https://img.shields.io/badge/React_Native-Expo_SDK_52-20232A?style=for-the-badge&logo=react)](https://reactnative.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3_Strict-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![React Native](https://img.shields.io/badge/React_Native-Expo_SDK_58-20232A?style=for-the-badge&logo=react)](https://reactnative.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6.0.3_Strict-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![CI Quality Gate](https://img.shields.io/badge/CI-Passing_Strict-success?style=for-the-badge&logo=githubactions)](https://github.com/Sajid-ul-Islam/thrivingskill.app/actions)
 [![Bilingual](https://img.shields.io/badge/Language-English_%7C_বাংলা-10B981?style=for-the-badge)](https://thrivingskill.com)
 [![Version](https://img.shields.io/badge/Release-v1.4.0-blue?style=for-the-badge)](./docs/CHANGELOG.md)
@@ -30,7 +30,7 @@ All detailed specifications, technical architectures, client proposals, and rele
 | **Client Requirements Audit** | [client_requirements.md](./docs/client_requirements.md) | Full audit of CR-01 to CR-05 against CyberCraft proposal |
 | **Changelog & History** | [CHANGELOG.md](./docs/CHANGELOG.md) | Detailed version history from v1.0.0 through v1.4.0 |
 | **Developer Contributing** | [CONTRIBUTING.md](./docs/CONTRIBUTING.md) | Git workflow, commit conventions, PR standards |
-| **Tech Stack Deep Dive** | [TECH_STACK_ANALYSIS.md](./docs/TECH_STACK_ANALYSIS.md) | In-depth evaluation of Expo SDK 52, WordPress REST APIs, and native modules |
+| **Tech Stack Deep Dive** | [TECH_STACK_ANALYSIS.md](./docs/TECH_STACK_ANALYSIS.md) | Evaluation of Expo SDK 58, React 19.3, React Navigation 7, and WordPress REST APIs |
 | **Testing Infrastructure** | [TEST_INFRA.md](./docs/TEST_INFRA.md) | 13 automated test suites, CI quality gate, and mock assertions |
 | **Client Proposals & Reviews** | [docs/proposals/](./docs/proposals/) | Original proposal documents (.docx) and client review audits (.pdf) |
 | **Release Archive** | [docs/releases/](./docs/releases/) | Per-version changelogs and build notes (`v1.4.0`, `v4.0.3`–`v4.0.6`) |
@@ -57,11 +57,33 @@ All detailed specifications, technical architectures, client proposals, and rele
    - Visual learning analytics: SVG Circular Mastery Donut Chart & 7-day Weekly Velocity Bar Chart.
 
 ### Recent Enhancements (v1.4.0)
-* **Streamlined 4-Field Registration & Auto-Login**: Eliminates complex registration friction. Full Name, Email, Phone, and Password are all that's required; username is auto-generated from email, and registration immediately logs in without blocking on verification links.
-* **In-App Profile Editing & Live Web Sync**: Edit Name, Bio, Phone, City, Social, and Avatars inside the app with persistence to `/wp/v2/users/me` and `/learnpress/v1/users/{id}`. Edits made on `https://thrivingskill.com` automatically sync down to the app via `AppState` foreground detection and pull-to-refresh.
-* **Habit-Based Smart Notification Queue**: Background scheduler batches and delivers contextual study reminders during learner habit hours, paired with a simple 1-tap clear/dismiss action.
-* **Uniform Course Cards (Pixel-Perfect Consistency)**: Standardized card heights (332dp), uniform 16:9 thumbnail ratios, two-line clamped titles (40dp), and aligned action footers across all screens and carousels.
-* **WordPress Companion Plugin**: Single-plugin WordPress companion ([`backend-plugin/ts-mobile-bridge`](./backend-plugin/ts-mobile-bridge)) built as an installable ZIP in CI, providing `/wp-json/thrivingskill/v1/*` and `/wp-json/tsl/v1/auth/*` endpoints with LearnPress fallback.
+* **React Navigation v7, Centralized Modals & Feature Modules**: Declarative native stack + bottom tab navigation (`src/navigation/AppNavigator.tsx`), deep-link routing (`thrivingskill://` & verified HTTPS App Links via `/.well-known/assetlinks.json`), centralized `ModalProvider` / `AppModalHost`, and cold/warm push payload alignment (`course_id`/`courseId`, `lesson_id`/`lessonId`, `screen`).
+* **Live API Catalog & Review Snapshots**: All courses, live workshops, and LearnPress reviews (`/learnpress/v1/review/course/{id}`) stream directly from WordPress with two-tier `CacheManager` AsyncStorage snapshot hydration (zero bundled seed/mock catalog or fake review files).
+* **Streamlined 4-Field Registration & Auto-Login**: Full Name, Email, Phone, and Password with server-validated registration and instant JWT session hydration.
+* **In-App Profile Editing & Live Web Sync**: Edit Name, Bio, Phone, City, Social, and Avatars inside the app with persistence to `/wp/v2/users/me` and `/learnpress/v1/users/{id}`. Edits made on `https://thrivingskill.com` sync down via `AppState` foreground detection and pull-to-refresh.
+* **WordPress Companion Plugin**: Single-plugin WordPress companion ([`backend-plugin/ts-mobile-bridge`](./backend-plugin/ts-mobile-bridge)) built as an installable ZIP in CI, providing `/wp-json/thrivingskill/v1/*`, `/wp-json/tsl/v1/auth/*`, and `/.well-known/assetlinks.json`.
+
+---
+
+## ⚙️ Supported Environment Variables (`EXPO_PUBLIC_*`)
+
+All client environment variables live in [`src/config/env.ts`](./src/config/env.ts) (template in [`.env.example`](./.env.example)):
+
+| Variable | Description | Default / Source |
+| :--- | :--- | :--- |
+| `EXPO_PUBLIC_API_URL` | WordPress REST API base URL | Required in EAS / `.env.*` (`https://thrivingskill.com/wp-json` in production) |
+| `EXPO_PUBLIC_SITE_URL` | Base WordPress website & checkout origin | Required in EAS / `.env.*` (`https://thrivingskill.com` in production) |
+| `EXPO_PUBLIC_WP_ADMIN_URL` | WordPress Admin URL (dev diagnostics) | Derived from `EXPO_PUBLIC_SITE_URL` if unset |
+| `EXPO_PUBLIC_DEFAULT_ENVIRONMENT` | Initial environment (`production` or `staging`) | Inferred from URLs or `production` |
+| `EXPO_PUBLIC_FALLBACK_API_URL` | Optional non-staging production API mirror | Unset by default (production never fails over to staging) |
+| `EXPO_PUBLIC_FALLBACK_SITE_URL` | Optional non-staging production site mirror | Unset by default |
+| `EXPO_PUBLIC_REQUEST_TIMEOUT_MS` | HTTP request timeout in milliseconds | `15000` |
+| `EXPO_PUBLIC_MAX_RETRIES` | GET automatic retry count | `2` |
+| `EXPO_PUBLIC_CACHE_TTL_MS` | Default cache TTL in milliseconds | `300000` |
+| `EXPO_PUBLIC_ENABLE_FALLBACK` | Enable secondary host fallback on GET failures | `true` |
+| `EXPO_PUBLIC_DEBUG_API` | Verbose HTTP logging | `false` (`__DEV__`) |
+
+> AI skill assessments & lesson AI tutor run deterministically on-device (`aiAssessmentService.ts`, `geminiNanoService.ts`, `liteRtService.ts`); no client LLM or WooCommerce secrets are stored in `EXPO_PUBLIC_*`.
 
 ---
 

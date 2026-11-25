@@ -1,0 +1,13 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["APPLE_TEAM_ID.com.thrivingskill.app"],
+        "components": [
+          { "/": "/login*" },
+          { "/": "/courses/*" }
+        ]
+      }
+    ]
+  }
+}

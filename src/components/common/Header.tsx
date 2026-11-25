@@ -14,6 +14,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
 import { useSaaS } from '../../context/SaaSContext';
 import { useLearning } from '../../context/LearningContext';
+import { useModal } from '../../context/ModalContext';
 import { OfflineBanner } from './OfflineBanner';
 import { SpringPressable } from './SpringPressable';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
@@ -53,6 +54,8 @@ export const Header: React.FC<HeaderProps> = ({
   const { colors, isDark } = useTheme();
   const { unreadNotificationsCount } = useSaaS();
   const { refreshCourses } = useLearning();
+  const { openModal } = useModal();
+  const resolvedOpenNotifications = onOpenNotifications ?? (() => openModal('notifications'));
   const insets = useSafeAreaInsets();
 
   const isSearchVisible = Boolean(onOpenSearch && showSearch !== false);
@@ -193,26 +196,24 @@ export const Header: React.FC<HeaderProps> = ({
             </Animated.View>
           )}
 
-          {onOpenNotifications && (
-            <SpringPressable
-              style={[styles.iconButton, { backgroundColor: colors.surfaceSubtle }]}
-              onPress={onOpenNotifications}
-              hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
-              accessibilityRole="button"
-              accessibilityLabel="Notifications"
-              haptic="light"
-              activeScale={0.91}
-            >
-              <Ionicons name="notifications-outline" size={20} color={colors.text} />
-              {unreadNotificationsCount > 0 && (
-                <View style={[styles.notifBadge, { backgroundColor: colors.accent }]}>
-                  <Text style={[styles.notifBadgeText, { color: colors.onAccent }]}>
-                    {unreadNotificationsCount}
-                  </Text>
-                </View>
-              )}
-            </SpringPressable>
-          )}
+          <SpringPressable
+            style={[styles.iconButton, { backgroundColor: colors.surfaceSubtle }]}
+            onPress={resolvedOpenNotifications}
+            hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+            accessibilityRole="button"
+            accessibilityLabel="Notifications"
+            haptic="light"
+            activeScale={0.91}
+          >
+            <Ionicons name="notifications-outline" size={20} color={colors.text} />
+            {unreadNotificationsCount > 0 && (
+              <View style={[styles.notifBadge, { backgroundColor: colors.accent }]}>
+                <Text style={[styles.notifBadgeText, { color: colors.onAccent }]}>
+                  {unreadNotificationsCount}
+                </Text>
+              </View>
+            )}
+          </SpringPressable>
         </View>
       </View>
 

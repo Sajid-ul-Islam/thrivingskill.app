@@ -1,14 +1,10 @@
 import { HttpClient } from './httpClient';
 import { Endpoints } from './endpoints';
 import { CacheManager } from '../cache/cacheManager';
-import { Course, Category, Workshop } from '../../types';
+import { Course, Category, Workshop, Review } from '../../types';
 import { transformWpCourse, transformCompanionCourse, cleanHtml } from './transformers';
 import { CompanionService } from './companionService';
 import { Env } from '../../config/env';
-import { INITIAL_COURSES_SEED } from '../../data/coursesCatalogSeed';
-
-// Eagerly pre-seed in-memory cache with the verified catalog for 0ms startup
-CacheManager.set('courses_full_catalog', INITIAL_COURSES_SEED, 1800000).catch(() => {});
 
 export interface CourseQueryParams {
   page?: number;
@@ -49,31 +45,51 @@ export class CoursesService {
 
   /**
    * Synchronously retrieve cached courses from memory (0ms latency).
-   * Falls back to verified seed catalog if memory cache has not yet been populated.
    */
   static getCachedCoursesSync(): Course[] {
-    const memory = CacheManager.getSync<Course[]>(this.ALL_COURSES_CACHE_KEY);
-    if (memory && memory.length > 0) return memory;
-    return INITIAL_COURSES_SEED;
+    return CacheManager.getSync<Course[]>(this.ALL_COURSES_CACHE_KEY) || [];
   }
 
   /**
    * Synchronously retrieve cached categories from memory (0ms latency).
-   * Falls back to verified categories with calculated counts if memory cache is unpopulated.
    */
   static getCachedCategoriesSync(): Category[] {
-    const memory = CacheManager.getSync<Category[]>(this.CATEGORIES_CACHE_KEY);
-    if (memory && memory.length > 0) return memory;
-    return [];
+    return CacheManager.getSync<Category[]>(this.CATEGORIES_CACHE_KEY) || [];
+  }
+
+  /**
+   * Synchronously retrieve cached live workshops from memory (0ms latency).
+   */
+  static getCachedWorkshopsSync(): Workshop[] {
+    return CacheManager.getSync<Workshop[]>(this.LIVE_WORKSHOPS_CACHE_KEY) || [];
+  }
+
+  /**
+   * Warm memory cache from persistent AsyncStorage snapshots (courses, categories, workshops)
+   * so offline or cold starts render the latest synced snapshot immediately without bundled seed data.
+   */
+  static async hydrateCatalogCache(): Promise<{
+    courses: Course[];
+    categories: Category[];
+    workshops: Workshop[];
+  }> {
+    const [courses, categories, workshops] = await Promise.all([
+      CacheManager.get<Course[]>(this.ALL_COURSES_CACHE_KEY, true),
+      CacheManager.get<Category[]>(this.CATEGORIES_CACHE_KEY, true),
+      CacheManager.get<Workshop[]>(this.LIVE_WORKSHOPS_CACHE_KEY, true),
+    ]);
+    return {
+      courses: courses || [],
+      categories: categories || [],
+      workshops: workshops || [],
+    };
   }
 
   /**
    * Asynchronously retrieve cached courses from memory or persistent storage.
    */
   static async getCachedCourses(): Promise<Course[]> {
-    const cached = await CacheManager.get<Course[]>(this.ALL_COURSES_CACHE_KEY, true);
-    if (cached && cached.length > 0) return cached;
-    return INITIAL_COURSES_SEED;
+    return (await CacheManager.get<Course[]>(this.ALL_COURSES_CACHE_KEY, true)) || [];
   }
 
   /**
@@ -327,6 +343,89 @@ export class CoursesService {
 
     if (course) return course;
     throw new Error(`Failed to load course ${courseId}`);
+  }
+
+  /**
+   * Fetch live course reviews from LearnPress with cached snapshot fallback.
+   * Strips private email fields and never attaches unverified role labels.
+   */
+  static async getCourseReviews(
+    courseId: string | number,
+    forceRefresh: boolean = false
+  ): Promise<{ reviews: Review[]; rating: number | null; reviewsCount: number | null }> {
+    const cacheKey = `course_reviews_${courseId}`;
+
+    const fetchReviewsFromNetwork = async (): Promise<{
+      reviews: Review[];
+      rating: number | null;
+      reviewsCount: number | null;
+    }> => {
+      const payload = await HttpClient.get<any>(
+        Endpoints.LEARNPRESS.COURSE_REVIEWS(courseId),
+        undefined,
+        { skipAuth: true, retries: 1 }
+      );
+      const data = payload?.data ?? payload;
+      const listContainer = data?.reviews;
+      const rawList = Array.isArray(listContainer?.reviews)
+        ? listContainer.reviews
+        : Array.isArray(listContainer)
+          ? listContainer
+          : [];
+
+      const reviews: Review[] = rawList
+        .filter((item: any) => item && (item.content || item.comment || item.title))
+        .map((item: any, idx: number) => ({
+          id: String(item.comment_id || item.id || `rev-${courseId}-${idx}`),
+          userName:
+            cleanHtml(String(item.display_name || item.user_display_name || 'Learner')) ||
+            'Learner',
+          userAvatar: typeof item.user_avatar === 'string' ? item.user_avatar : '',
+          rating: Math.max(1, Math.min(5, Number(item.rate ?? item.rating ?? 5) || 5)),
+          date: String(item.comment_date_gmt || item.date || '').split(' ')[0] || '',
+          comment: cleanHtml(String(item.content || item.comment || item.title || '')),
+        }));
+
+      const rawRated = Number(data?.rated);
+      const rawTotal = Number(data?.total ?? listContainer?.total);
+      const rating = Number.isFinite(rawRated) && rawRated > 0 ? Number(rawRated.toFixed(1)) : null;
+      const reviewsCount =
+        Number.isFinite(rawTotal) && rawTotal > 0
+          ? rawTotal
+          : reviews.length > 0
+            ? reviews.length
+            : null;
+
+      return { reviews, rating, reviewsCount };
+    };
+
+    try {
+      if (forceRefresh) {
+        const fresh = await fetchReviewsFromNetwork();
+        await CacheManager.set(cacheKey, fresh, 600000);
+        return fresh;
+      }
+
+      const cached = await CacheManager.getOrRevalidate<{
+        reviews: Review[];
+        rating: number | null;
+        reviewsCount: number | null;
+      }>(cacheKey, fetchReviewsFromNetwork, undefined, 600000);
+
+      if (cached) return cached;
+    } catch (err) {
+      if (Env.DEBUG_API) {
+        console.warn(`[CoursesService] Reviews unavailable for course ${courseId}:`, err);
+      }
+      const stale = await CacheManager.get<{
+        reviews: Review[];
+        rating: number | null;
+        reviewsCount: number | null;
+      }>(cacheKey, true);
+      if (stale) return stale;
+    }
+
+    return { reviews: [], rating: null, reviewsCount: null };
   }
 
   /**

@@ -1688,6 +1688,58 @@ class TSMB_OTP_Auth
    5. PUSH NOTIFICATIONS CONTROLLER (CUSTOM TABLE + EXPO RECEIPT PRUNING)
    ========================================================================== */
 
+class TSMB_DeepLinks
+{
+    public static function init(): void
+    {
+        add_action('template_redirect', [__CLASS__, 'maybe_serve_assetlinks'], 1);
+    }
+
+    public static function get_fingerprints(): array
+    {
+        $raw = (string) get_option('tsmb_android_sha256_fingerprints', '');
+        if ($raw === '') {
+            return [];
+        }
+        $lines = preg_split('/[\r\n,]+/', $raw) ?: [];
+        $valid = [];
+        foreach ($lines as $line) {
+            $fp = strtoupper(trim($line));
+            if (preg_match('/^([0-9A-F]{2}:){31}[0-9A-F]{2}$/', $fp)) {
+                $valid[] = $fp;
+            }
+        }
+        return array_values(array_unique($valid));
+    }
+
+    public static function maybe_serve_assetlinks(): void
+    {
+        $request_uri = isset($_SERVER['REQUEST_URI']) ? (string) wp_unslash($_SERVER['REQUEST_URI']) : '';
+        $path = (string) parse_url($request_uri, PHP_URL_PATH);
+        if ($path !== '/.well-known/assetlinks.json') {
+            return;
+        }
+
+        status_header(200);
+        header('Content-Type: application/json; charset=utf-8');
+        header('Cache-Control: public, max-age=3600');
+
+        $fingerprints = self::get_fingerprints();
+        $payload = [
+            [
+                'relation' => ['delegate_permission/common.handle_all_urls'],
+                'target'   => [
+                    'namespace'                => 'android_app',
+                    'package_name'             => 'com.thrivingskill.app',
+                    'sha256_cert_fingerprints' => $fingerprints,
+                ],
+            ],
+        ];
+        echo wp_json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+        exit;
+    }
+}
+
 class TSMB_Notifications
 {
     private const EXPO_SEND_URL = 'https://exp.host/--/api/v2/push/send';
@@ -1695,6 +1747,7 @@ class TSMB_Notifications
 
     public static function init(): void
     {
+        TSMB_DeepLinks::init();
         add_action('rest_api_init', [__CLASS__, 'register_routes']);
         add_action('transition_post_status', [__CLASS__, 'handle_post_transition'], 10, 3);
         add_action(TSMB_Lifecycle::CRON_RECEIPTS_HOOK, [__CLASS__, 'process_expo_receipts'], 10, 1);
@@ -1826,6 +1879,7 @@ class TSMB_Notifications
                 'body'  => $message,
                 'data'  => [
                     'course_id' => $post->ID,
+                    'courseId'  => (string) $post->ID,
                     'screen'    => 'CourseDetail',
                 ],
             ]);
@@ -2046,6 +2100,7 @@ class TSMB_Admin
             $data = ['screen' => $screen];
             if ($target !== '') {
                 $data['course_id'] = $target;
+                $data['courseId']  = $target;
                 $data['url']       = $target;
             }
 
@@ -2082,6 +2137,7 @@ class TSMB_Admin
                     update_option('tsmb_sms_api_key', $new_api_key);
                 }
                 update_option('tsmb_sms_sender_id', sanitize_text_field(wp_unslash($_POST['sms_sender_id'] ?? 'ThrivingSkills')));
+                update_option('tsmb_android_sha256_fingerprints', sanitize_textarea_field(wp_unslash($_POST['android_sha256_fingerprints'] ?? '')));
             } elseif ($submitted_tab === 'banners') {
                 update_option('tsmb_banner_active', isset($_POST['banner_active']) ? 1 : 0);
                 update_option('tsmb_banner_text', sanitize_text_field(wp_unslash($_POST['banner_text'] ?? '')));
@@ -2358,6 +2414,13 @@ class TSMB_Admin
                                 <tr>
                                     <th scope="row">Sender ID</th>
                                     <td><input name="sms_sender_id" type="text" value="<?php echo esc_attr($sms_sender); ?>" class="regular-text" /></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Android App Links SHA-256 Fingerprints</th>
+                                    <td>
+                                        <textarea name="android_sha256_fingerprints" rows="3" class="large-text code" placeholder="AA:BB:CC:... (one SHA-256 per line)"><?php echo esc_textarea((string) get_option('tsmb_android_sha256_fingerprints', '')); ?></textarea>
+                                        <p class="description">Served live at <code>/.well-known/assetlinks.json</code> for Android <code>autoVerify</code> App Links.</p>
+                                    </td>
                                 </tr>
                             </table>
 

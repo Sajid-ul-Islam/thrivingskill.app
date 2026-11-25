@@ -15,7 +15,7 @@ Welcome to the centralized documentation repository for the **Thriving Skills** 
 
 ### 2. Architecture & Technical Deep Dives
 - 📄 [DOCUMENTATION.md](DOCUMENTATION.md) — Full technical architecture guide, service layers, security, offline caching, and native player integration.
-- 📄 [TECH_STACK_ANALYSIS.md](TECH_STACK_ANALYSIS.md) — Exhaustive analysis of React Native Expo SDK 52, TypeScript, WordPress/LearnPress REST API, and native bridge.
+- 📄 [TECH_STACK_ANALYSIS.md](TECH_STACK_ANALYSIS.md) — Exhaustive analysis of React Native / Expo SDK 58, TypeScript, WordPress/LearnPress REST API, and native bridge.
 - 📄 [CONTEXT.md](CONTEXT.md) — Business domain model, WordPress/LearnPress entities, secure storage keys, and authentication flows.
 - 📄 [AGENTS.md](AGENTS.md) — Autonomous AI agent pairing guidelines, operating principles, guardrails, and verification checklists.
 

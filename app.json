@@ -10,6 +10,10 @@
     "ios": {
       "bundleIdentifier": "com.thrivingskill.app",
       "supportsTablet": true,
+      "associatedDomains": [
+        "applinks:thrivingskill.com",
+        "applinks:www.thrivingskill.com"
+      ],
       "infoPlist": {
         "UIBackgroundModes": [
           "audio"
@@ -41,6 +45,7 @@
       "intentFilters": [
         {
           "action": "VIEW",
+          "autoVerify": true,
           "data": [
             {
               "scheme": "https",
@@ -51,6 +56,16 @@
               "scheme": "https",
               "host": "www.thrivingskill.com",
               "pathPrefix": "/login"
+            },
+            {
+              "scheme": "https",
+              "host": "thrivingskill.com",
+              "pathPrefix": "/courses"
+            },
+            {
+              "scheme": "https",
+              "host": "www.thrivingskill.com",
+              "pathPrefix": "/courses"
             }
           ],
           "category": [

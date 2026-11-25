@@ -2,6 +2,157 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { CompanionService } from '../api/companionService';
+import { parseAppDeepLink } from '../../navigation/deepLinking';
+import { RootTab } from '../../types';
+
+export interface NormalizedNotificationTarget {
+  screen:
+    | 'CourseDetail'
+    | 'LessonPlayer'
+    | 'YouTubeVideos'
+    | 'Home'
+    | 'Courses'
+    | 'MyLearning'
+    | 'Workshops'
+    | 'Profile';
+  courseId?: string;
+  lessonId?: string;
+  tab?: RootTab;
+  externalUrl?: string;
+  rawScreen?: string;
+}
+
+function normalizeStringId(value: unknown): string | undefined {
+  if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
+    return String(value);
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (trimmed.length > 0 && trimmed !== 'undefined' && trimmed !== 'null') {
+      return trimmed;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Unifies notification tap payloads across TS Mobile Bridge (`course_id`, `screen`, `url`),
+ * local Expo scheduler (`courseId`, `lessonId`, `actionRoute`), and deep-link URLs (`postUrl`).
+ */
+export function normalizeNotificationPayload(
+  rawData: Record<string, any> | null | undefined
+): NormalizedNotificationTarget | null {
+  if (!rawData || typeof rawData !== 'object') return null;
+
+  let courseId = normalizeStringId(
+    rawData.courseId ?? rawData.course_id ?? rawData.actionRoute?.courseId
+  );
+  let lessonId = normalizeStringId(rawData.lessonId ?? rawData.lesson_id);
+
+  const rawUrl = normalizeStringId(rawData.postUrl ?? rawData.post_url ?? rawData.url);
+  if (rawUrl) {
+    const parsedLink = parseAppDeepLink(rawUrl);
+    if (parsedLink?.type === 'lesson') {
+      courseId = courseId || parsedLink.courseId;
+      lessonId = lessonId || parsedLink.lessonId;
+    } else if (parsedLink?.type === 'course') {
+      courseId = courseId || parsedLink.courseId;
+    } else if (parsedLink?.type === 'youtube') {
+      return { screen: 'YouTubeVideos', rawScreen: String(rawData.screen || '') };
+    } else if (parsedLink?.type === 'tab') {
+      return {
+        screen: parsedLink.tab,
+        tab: parsedLink.tab,
+        courseId,
+        rawScreen: String(rawData.screen || ''),
+      };
+    } else if (/^\d+$/.test(rawUrl) && !courseId) {
+      // Admin Push Broadcast Target Course/Post ID field populates both `course_id` and `url`.
+      courseId = rawUrl;
+    }
+  }
+
+  const rawScreen = String(
+    rawData.screen ?? rawData.route ?? rawData.tab ?? rawData.actionRoute?.tab ?? ''
+  ).trim();
+  const screenKey = rawScreen.toLowerCase();
+
+  if (courseId && lessonId) {
+    return { screen: 'LessonPlayer', courseId, lessonId, rawScreen };
+  }
+
+  if (screenKey === 'lesson' || screenKey === 'lessonplayer' || screenKey === 'lesson_player') {
+    if (courseId && lessonId) {
+      return { screen: 'LessonPlayer', courseId, lessonId, rawScreen };
+    }
+    if (courseId) {
+      return { screen: 'CourseDetail', courseId, rawScreen };
+    }
+  }
+
+  if (screenKey === 'youtube' || screenKey === 'youtubevideos' || screenKey === 'videos') {
+    return { screen: 'YouTubeVideos', rawScreen };
+  }
+
+  if (
+    screenKey === 'mylearning' ||
+    screenKey === 'my-learning' ||
+    screenKey === 'my_learning' ||
+    screenKey === 'mycourses' ||
+    screenKey === 'my_courses' ||
+    screenKey === 'certificates'
+  ) {
+    return courseId
+      ? { screen: 'CourseDetail', courseId, tab: 'MyLearning', rawScreen }
+      : { screen: 'MyLearning', tab: 'MyLearning', rawScreen };
+  }
+
+  if (
+    screenKey === 'workshops' ||
+    screenKey === 'workshop' ||
+    screenKey === 'live' ||
+    screenKey === 'liveclass' ||
+    screenKey === 'live_class'
+  ) {
+    return { screen: 'Workshops', tab: 'Workshops', rawScreen };
+  }
+
+  if (screenKey === 'profile' || screenKey === 'account') {
+    return { screen: 'Profile', tab: 'Profile', rawScreen };
+  }
+
+  if (screenKey === 'course' || screenKey === 'coursedetail' || screenKey === 'course_detail') {
+    if (courseId) {
+      return { screen: 'CourseDetail', courseId, rawScreen };
+    }
+    return { screen: 'Courses', tab: 'Courses', rawScreen };
+  }
+
+  if (
+    screenKey === 'courses' ||
+    screenKey === 'catalog' ||
+    screenKey === 'explore' ||
+    screenKey === 'offers'
+  ) {
+    return courseId
+      ? { screen: 'CourseDetail', courseId, tab: 'Courses', rawScreen }
+      : { screen: 'Courses', tab: 'Courses', rawScreen };
+  }
+
+  if (courseId) {
+    return { screen: 'CourseDetail', courseId, rawScreen };
+  }
+
+  if (rawUrl && /^https?:\/\//i.test(rawUrl)) {
+    return { screen: 'Home', externalUrl: rawUrl, rawScreen };
+  }
+
+  if (screenKey === 'home') {
+    return { screen: 'Home', tab: 'Home', rawScreen };
+  }
+
+  return null;
+}
 
 export interface NotificationSettings {
   streakReminders: boolean;
@@ -360,26 +511,66 @@ export class PushNotificationService {
     return notification;
   }
 
+  private static handledResponseKeys = new Set<string>();
+
   /**
-   * Subscribes to user taps on the phone's native status bar drop-down notification
+   * Subscribes to user taps on native notifications for BOTH:
+   * - cold start (`Notifications.getLastNotificationResponseAsync`)
+   * - warm/background start (`Notifications.addNotificationResponseReceivedListener`)
    */
   static addNativeNotificationResponseListener(
     listener: (data: Record<string, any>) => void
   ): () => void {
+    let active = true;
+
+    const dispatchResponse = (response: Notifications.NotificationResponse | null | undefined) => {
+      if (!active || !response) return;
+      const rawData = response.notification?.request?.content?.data;
+      if (!rawData || typeof rawData !== 'object') return;
+
+      const dedupeKey =
+        response.notification?.request?.identifier ||
+        `${response.actionIdentifier || 'tap'}:${JSON.stringify(rawData)}`;
+      if (this.handledResponseKeys.has(dedupeKey)) return;
+      this.handledResponseKeys.add(dedupeKey);
+
+      const normalized = normalizeNotificationPayload(rawData);
+      const enrichedData: Record<string, any> = {
+        ...rawData,
+        ...(normalized?.courseId
+          ? { courseId: normalized.courseId, course_id: normalized.courseId }
+          : {}),
+        ...(normalized?.lessonId
+          ? { lessonId: normalized.lessonId, lesson_id: normalized.lessonId }
+          : {}),
+        ...(normalized?.tab ? { tab: normalized.tab } : {}),
+        ...(normalized?.screen ? { normalizedScreen: normalized.screen } : {}),
+        ...(normalized?.externalUrl ? { postUrl: normalized.externalUrl } : {}),
+      };
+      listener(enrichedData);
+    };
+
     try {
-      const subscription = Notifications.addNotificationResponseReceivedListener(
-        (response: Notifications.NotificationResponse) => {
-          const data = response?.notification?.request?.content?.data;
-          if (data) {
-            listener(data);
-          }
-        }
-      );
+      const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+        dispatchResponse(response);
+      });
+
+      if (typeof Notifications.getLastNotificationResponseAsync === 'function') {
+        Notifications.getLastNotificationResponseAsync()
+          .then((response) => {
+            dispatchResponse(response);
+          })
+          .catch(() => {});
+      }
+
       return () => {
+        active = false;
         subscription.remove();
       };
     } catch {
-      return () => {};
+      return () => {
+        active = false;
+      };
     }
   }
 

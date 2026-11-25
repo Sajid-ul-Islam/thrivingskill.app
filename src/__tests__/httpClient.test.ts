@@ -168,4 +168,64 @@ describe('HttpClient', () => {
     const calledHeaders = (globalThis.fetch as jest.Mock).mock.calls[0][1].headers;
     expect(calledHeaders.Authorization).toBe('Bearer jwt-abc-123');
   });
+
+  it('extracts WordPress pagination metadata and lowercased headers in getWithMeta', async () => {
+    const fetchMock = globalThis.fetch as jest.Mock;
+    fetchMock.mockResolvedValueOnce(
+      makeJsonResponse([{ id: 10 }, { id: 11 }], 200, {
+        'X-WP-Total': '42',
+        'X-WP-TotalPages': '5',
+      })
+    );
+
+    const result = await HttpClient.getWithMeta<{ id: number }[]>(
+      '/learnpress/v1/courses',
+      { page: 1, per_page: 10 },
+      { skipAuth: true }
+    );
+
+    expect(result.status).toBe(200);
+    expect(result.totalCount).toBe(42);
+    expect(result.totalPages).toBe(5);
+    expect(result.headers['x-wp-total']).toBe('42');
+    expect(result.data).toEqual([{ id: 10 }, { id: 11 }]);
+  });
+
+  it('deduplicates concurrent identical GET getWithMeta requests and fails over cleanly', async () => {
+    let resolvePrimary!: (res: any) => void;
+    const primaryPromise = new Promise((resolve) => {
+      resolvePrimary = resolve;
+    });
+    const fetchMock = globalThis.fetch as jest.Mock;
+    fetchMock.mockReturnValueOnce(primaryPromise);
+
+    const reqA = HttpClient.getWithMeta('/learnpress/v1/courses', { page: 2 }, { skipAuth: true });
+    const reqB = HttpClient.getWithMeta('/learnpress/v1/courses', { page: 2 }, { skipAuth: true });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    resolvePrimary(
+      makeJsonResponse([{ id: 22 }], 200, { 'X-WP-Total': '1', 'X-WP-TotalPages': '1' })
+    );
+    const [resA, resB] = await Promise.all([reqA, reqB]);
+    expect(resA).toEqual(resB);
+
+    fetchMock
+      .mockResolvedValueOnce(makeJsonResponse({ message: 'Bad Gateway' }, 502))
+      .mockResolvedValueOnce(
+        makeJsonResponse([{ id: 99 }], 200, { 'X-WP-Total': '9', 'X-WP-TotalPages': '3' })
+      );
+
+    const fallbackMeta = await HttpClient.getWithMeta(
+      '/learnpress/v1/courses',
+      { page: 3 },
+      {
+        skipAuth: true,
+        retries: 0,
+        allowFallback: true,
+      }
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fallbackMeta.totalPages).toBe(3);
+    expect(fallbackMeta.data).toEqual([{ id: 99 }]);
+  });
 });

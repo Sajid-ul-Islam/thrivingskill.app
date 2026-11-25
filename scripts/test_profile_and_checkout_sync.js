@@ -68,12 +68,24 @@ function runTests() {
 
   // Test 6: PaymentModal Persistent Autofill & Bi-directional WebView Sync
   console.log('Test 6: Verifying Checkout Autofill & WebView Detection...');
-  const paymentModalContent = fs.readFileSync(path.join(__dirname, '..', 'src', 'components', 'modals', 'PaymentModal.tsx'), 'utf8');
+  const paymentDir = path.join(__dirname, '..', 'src', 'components', 'modals', 'payment');
+  const paymentFiles = fs.existsSync(paymentDir)
+    ? fs.readdirSync(paymentDir).map((f) => fs.readFileSync(path.join(paymentDir, f), 'utf8'))
+    : [];
+  const paymentModalContent = [
+    fs.readFileSync(path.join(__dirname, '..', 'src', 'components', 'modals', 'PaymentModal.tsx'), 'utf8'),
+    ...paymentFiles,
+  ].join('\n');
   assert.strictEqual(paymentModalContent.includes('CHECKOUT_AUTOFILL_KEY'), true, 'PaymentModal must define CHECKOUT_AUTOFILL_KEY');
   assert.strictEqual(paymentModalContent.includes('billing_city'), true, 'PaymentModal must autofill billing_city in WebView');
   assert.strictEqual(paymentModalContent.includes('billing_phone'), true, 'PaymentModal must autofill billing_phone in WebView');
   assert.strictEqual(paymentModalContent.includes('CHECKOUT_FIELD_AUTO_DETECT'), true, 'PaymentModal must auto-detect web checkout inputs');
-  assert.strictEqual(paymentModalContent.includes('onMessage={handleWebViewMessage}'), true, 'PaymentModal must handle WebView messages');
+  assert.strictEqual(
+    paymentModalContent.includes('onMessage={handleWebViewMessage}') ||
+      paymentModalContent.includes('onMessage={p.handleWebViewMessage}'),
+    true,
+    'PaymentModal must handle WebView messages'
+  );
   assert.strictEqual(paymentModalContent.includes('updated_checkout'), true, 'PaymentModal must re-fill fields on WooCommerce AJAX update');
   console.log('  ✅ [PASS] PaymentModal provides persistent native autofill and bi-directional WooCommerce sync\n');
 

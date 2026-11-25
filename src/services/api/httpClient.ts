@@ -48,6 +48,8 @@ export function sanitizeWpMessage(message?: string): string {
     .trim();
 }
 
+const SERVER_OUTAGE_STATUSES = new Set([502, 503, 504, 521, 522]);
+
 export class HttpClient {
   private static activeToken: string | null = null;
   private static connectivityListener: ((isOnline: boolean, errorMsg?: string) => void) | null =
@@ -116,33 +118,43 @@ export class HttpClient {
   }
 
   /**
-   * Core execution method with in-flight GET deduplication, timeout, and retry logic
+   * Constructs sanitized request headers synchronously when auth is skipped or cached in memory.
    */
-  static request<T = any>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-    const isGet = !options.method || options.method.toUpperCase() === 'GET';
-    const requestKey = `${options.method || 'GET'}:${this.buildUrl(endpoint, options.params)}`;
+  private static createHeaders(
+    isGet: boolean,
+    token: string | null,
+    customHeaders?: HeadersInit
+  ): Record<string, string> {
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+      ...(isGet ? {} : { 'Content-Type': 'application/json' }),
+      ...(customHeaders as Record<string, string>),
+    };
 
-    if (isGet && this.inFlightRequests.has(requestKey)) {
-      return this.inFlightRequests.get(requestKey) as Promise<T>;
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
     }
 
-    const task = this.executeRequest<T>(endpoint, options).finally(() => {
-      if (isGet) {
-        this.inFlightRequests.delete(requestKey);
-      }
-    });
-
-    if (isGet) {
-      this.inFlightRequests.set(requestKey, task);
+    // In web browsers, headers not in WordPress Access-Control-Allow-Headers trigger preflight failures.
+    if (Platform.OS === 'web') {
+      delete headers['Cache-Control'];
+      delete headers['cache-control'];
+      delete headers['Pragma'];
+      delete headers['pragma'];
     }
 
-    return task;
+    return headers;
   }
 
-  private static async executeRequest<T = any>(
+  /**
+   * Single unified HTTP execution pipeline handling headers, timeout, exponential-backoff
+   * retries, WordPress error parsing, dual-host failover, and response header metadata.
+   */
+  private static async executeCore<T = any>(
     endpoint: string,
-    options: RequestOptions = {}
-  ): Promise<T> {
+    options: RequestOptions = {},
+    logLabel: 'Request' | 'RequestWithMeta' = 'Request'
+  ): Promise<ApiResponseMeta<T>> {
     const {
       params,
       timeoutMs = Env.REQUEST_TIMEOUT_MS,
@@ -165,38 +177,11 @@ export class HttpClient {
       fallbackBaseUrl !== Env.API_URL;
 
     const fullUrl = this.buildUrl(endpoint, params, baseUrl);
-    const headers: Record<string, string> = {
-      Accept: 'application/json',
-      ...(isGet ? {} : { 'Content-Type': 'application/json' }),
-      ...(customHeaders as Record<string, string>),
-    };
-
-    // Inject Bearer token if present
-    if (!skipAuth) {
-      const token = await this.getAuthToken();
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-    }
-
-    // In web browsers (e.g. localhost preview), headers not in WordPress's Access-Control-Allow-Headers cause preflight CORS failures.
-    if (Platform.OS === 'web') {
-      delete headers['Cache-Control'];
-      delete headers['cache-control'];
-      delete headers['Pragma'];
-      delete headers['pragma'];
-    }
-
-    // In web browsers (e.g. localhost preview), headers not in WordPress's Access-Control-Allow-Headers cause preflight CORS failures.
-    if (Platform.OS === 'web') {
-      delete headers['Cache-Control'];
-      delete headers['cache-control'];
-      delete headers['Pragma'];
-      delete headers['pragma'];
-    }
+    const token = skipAuth ? null : this.activeToken || (await this.getAuthToken());
+    const headers = this.createHeaders(isGet, token, customHeaders);
 
     if (Env.DEBUG_API) {
-      console.log(`[API Request] ${options.method || 'GET'} ${fullUrl}`);
+      console.log(`[API ${logLabel}] ${options.method || 'GET'} ${fullUrl}`);
     }
 
     let attempt = 0;
@@ -215,19 +200,15 @@ export class HttpClient {
         clearTimeout(timer);
 
         const contentType = response.headers.get('content-type') || '';
-        let responseData: any = null;
-
-        if (contentType.includes('application/json')) {
-          responseData = await response.json();
-        } else {
-          responseData = await response.text();
-        }
+        const responseData: any = contentType.includes('application/json')
+          ? await response.json()
+          : await response.text();
 
         if (Env.DEBUG_API) {
-          console.log(`[API Response ${response.status}] ${fullUrl}`);
+          const respTag = logLabel === 'RequestWithMeta' ? 'ResponseWithMeta' : 'Response';
+          console.log(`[API ${respTag} ${response.status}] ${fullUrl}`);
         }
 
-        // Handle WordPress / LearnPress error structures
         if (
           !response.ok ||
           (responseData &&
@@ -240,19 +221,42 @@ export class HttpClient {
             responseData?.message || `Request failed with HTTP status ${response.status}`;
           const cleanMessage = sanitizeWpMessage(rawMessage);
           const errorCode = responseData?.code || `HTTP_${response.status}`;
-
           throw new ApiError(cleanMessage, response.status, errorCode, responseData);
         }
 
         this.connectivityListener?.(true);
-        return responseData as T;
+
+        const totalCountHeader =
+          response.headers.get('x-wp-total') || response.headers.get('X-WP-Total');
+        const totalPagesHeader =
+          response.headers.get('x-wp-totalpages') || response.headers.get('X-WP-TotalPages');
+        const totalCount = totalCountHeader
+          ? parseInt(totalCountHeader, 10)
+          : Array.isArray(responseData)
+            ? responseData.length
+            : 0;
+        const totalPages = totalPagesHeader ? parseInt(totalPagesHeader, 10) : 1;
+
+        const headerMap: Record<string, string> = {};
+        if (typeof (response.headers as any).forEach === 'function') {
+          (response.headers as any).forEach((val: string, key: string) => {
+            headerMap[key.toLowerCase()] = val;
+          });
+        }
+
+        return {
+          data: responseData as T,
+          totalCount,
+          totalPages,
+          headers: headerMap,
+          status: response.status,
+        };
       } catch (err: any) {
         clearTimeout(timer);
 
         const isAbort = err.name === 'AbortError';
         const isNetworkErr = err instanceof TypeError || isAbort;
 
-        // If network error and we have retries remaining, wait with exponential backoff
         if (isNetworkErr && attempt <= retries) {
           const delay = Math.min(1000 * Math.pow(2, attempt - 1), 3000);
           if (Env.DEBUG_API) {
@@ -262,14 +266,7 @@ export class HttpClient {
           continue;
         }
 
-        // Dual-host failover: if primary host encounters network failure or gateway error, try fallback host
-        const isServerOutage =
-          err instanceof ApiError &&
-          (err.status === 502 ||
-            err.status === 503 ||
-            err.status === 504 ||
-            err.status === 521 ||
-            err.status === 522);
+        const isServerOutage = err instanceof ApiError && SERVER_OUTAGE_STATUSES.has(err.status);
         if (canAttemptFallback && (isNetworkErr || isServerOutage)) {
           if (Env.DEBUG_API) {
             console.log(
@@ -277,12 +274,16 @@ export class HttpClient {
             );
           }
           try {
-            return await this.executeRequest<T>(endpoint, {
-              ...options,
-              baseUrl: Env.FALLBACK_API_URL,
-              allowFallback: false,
-              retries: 1,
-            });
+            return await this.executeCore<T>(
+              endpoint,
+              {
+                ...options,
+                baseUrl: Env.FALLBACK_API_URL,
+                allowFallback: false,
+                retries: 1,
+              },
+              logLabel
+            );
           } catch (fallbackErr) {
             if (Env.DEBUG_API) {
               console.warn(`[API Failover] Fallback host also failed:`, fallbackErr);
@@ -317,6 +318,60 @@ export class HttpClient {
     }
 
     throw new ApiError('Maximum retry attempts exceeded', 0, 'MAX_RETRIES_EXCEEDED');
+  }
+
+  /**
+   * Core execution method with in-flight GET deduplication, timeout, and retry logic
+   */
+  static request<T = any>(endpoint: string, options: RequestOptions = {}): Promise<T> {
+    const isGet = !options.method || options.method.toUpperCase() === 'GET';
+    const requestKey = `${options.method || 'GET'}:${this.buildUrl(endpoint, options.params)}`;
+
+    if (isGet && this.inFlightRequests.has(requestKey)) {
+      return this.inFlightRequests.get(requestKey) as Promise<T>;
+    }
+
+    const task = this.executeCore<T>(endpoint, options, 'Request')
+      .then((res) => res.data)
+      .finally(() => {
+        if (isGet) {
+          this.inFlightRequests.delete(requestKey);
+        }
+      });
+
+    if (isGet) {
+      this.inFlightRequests.set(requestKey, task);
+    }
+
+    return task;
+  }
+
+  /**
+   * Request with complete pagination metadata extracted from HTTP response headers
+   * (e.g. WordPress x-wp-total, x-wp-totalpages)
+   */
+  static requestWithMeta<T = any>(
+    endpoint: string,
+    options: RequestOptions = {}
+  ): Promise<ApiResponseMeta<T>> {
+    const isGet = !options.method || options.method.toUpperCase() === 'GET';
+    const requestKey = `META:${options.method || 'GET'}:${this.buildUrl(endpoint, options.params, options.baseUrl)}`;
+
+    if (isGet && this.inFlightRequests.has(requestKey)) {
+      return this.inFlightRequests.get(requestKey) as Promise<ApiResponseMeta<T>>;
+    }
+
+    const task = this.executeCore<T>(endpoint, options, 'RequestWithMeta').finally(() => {
+      if (isGet) {
+        this.inFlightRequests.delete(requestKey);
+      }
+    });
+
+    if (isGet) {
+      this.inFlightRequests.set(requestKey, task);
+    }
+
+    return task;
   }
 
   // HTTP Verb Convenience Methods
@@ -366,202 +421,6 @@ export class HttpClient {
 
   static delete<T = any>(endpoint: string, options?: Omit<RequestOptions, 'method'>): Promise<T> {
     return this.request<T>(endpoint, { ...options, method: 'DELETE' });
-  }
-
-  /**
-   * Request with complete pagination metadata extracted from HTTP response headers
-   * (e.g. WordPress x-wp-total, x-wp-totalpages)
-   */
-  static async requestWithMeta<T = any>(
-    endpoint: string,
-    options: RequestOptions = {}
-  ): Promise<ApiResponseMeta<T>> {
-    const {
-      params,
-      timeoutMs = Env.REQUEST_TIMEOUT_MS,
-      skipAuth = false,
-      retries = options.method && options.method !== 'GET' ? 0 : Env.MAX_RETRIES,
-      headers: customHeaders,
-      allowFallback = true,
-      baseUrl,
-      ...fetchOptions
-    } = options;
-
-    const isGet = !options.method || options.method.toUpperCase() === 'GET';
-    const fallbackBaseUrl = Env.FALLBACK_API_URL;
-    const canAttemptFallback =
-      allowFallback &&
-      isGet &&
-      Env.ENABLE_FALLBACK &&
-      !baseUrl &&
-      Boolean(fallbackBaseUrl) &&
-      fallbackBaseUrl !== Env.API_URL;
-
-    const fullUrl = this.buildUrl(endpoint, params, baseUrl);
-    const headers: Record<string, string> = {
-      Accept: 'application/json',
-      ...(isGet ? {} : { 'Content-Type': 'application/json' }),
-      ...(customHeaders as Record<string, string>),
-    };
-
-    if (!skipAuth) {
-      const token = await this.getAuthToken();
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-    }
-
-    // In web browsers (e.g. localhost preview), headers not in WordPress's Access-Control-Allow-Headers cause preflight CORS failures.
-    if (Platform.OS === 'web') {
-      delete headers['Cache-Control'];
-      delete headers['cache-control'];
-      delete headers['Pragma'];
-      delete headers['pragma'];
-    }
-
-    if (Env.DEBUG_API) {
-      console.log(`[API RequestWithMeta] ${options.method || 'GET'} ${fullUrl}`);
-    }
-
-    let attempt = 0;
-    while (attempt <= retries) {
-      attempt++;
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-      try {
-        const response = await fetch(fullUrl, {
-          ...fetchOptions,
-          headers,
-          signal: controller.signal,
-        });
-
-        clearTimeout(timer);
-
-        const contentType = response.headers.get('content-type') || '';
-        let responseData: any = null;
-
-        if (contentType.includes('application/json')) {
-          responseData = await response.json();
-        } else {
-          responseData = await response.text();
-        }
-
-        if (Env.DEBUG_API) {
-          console.log(`[API ResponseWithMeta ${response.status}] ${fullUrl}`);
-        }
-
-        if (
-          !response.ok ||
-          (responseData &&
-            typeof responseData === 'object' &&
-            responseData.code &&
-            responseData.message &&
-            responseData.data?.status)
-        ) {
-          const rawMessage =
-            responseData?.message || `Request failed with HTTP status ${response.status}`;
-          const cleanMessage = sanitizeWpMessage(rawMessage);
-          const errorCode = responseData?.code || `HTTP_${response.status}`;
-          throw new ApiError(cleanMessage, response.status, errorCode, responseData);
-        }
-
-        this.connectivityListener?.(true);
-
-        const totalCountHeader =
-          response.headers.get('x-wp-total') || response.headers.get('X-WP-Total');
-        const totalPagesHeader =
-          response.headers.get('x-wp-totalpages') || response.headers.get('X-WP-TotalPages');
-        const totalCount = totalCountHeader
-          ? parseInt(totalCountHeader, 10)
-          : Array.isArray(responseData)
-            ? responseData.length
-            : 0;
-        const totalPages = totalPagesHeader ? parseInt(totalPagesHeader, 10) : 1;
-
-        const headerMap: Record<string, string> = {};
-        if (typeof (response.headers as any).forEach === 'function') {
-          (response.headers as any).forEach((val: string, key: string) => {
-            headerMap[key.toLowerCase()] = val;
-          });
-        }
-
-        return {
-          data: responseData as T,
-          totalCount,
-          totalPages,
-          headers: headerMap,
-          status: response.status,
-        };
-      } catch (err: any) {
-        clearTimeout(timer);
-        const isAbort = err.name === 'AbortError';
-        const isNetworkErr = err instanceof TypeError || isAbort;
-
-        if (isNetworkErr && attempt <= retries) {
-          const delay = Math.min(1000 * Math.pow(2, attempt - 1), 3000);
-          if (Env.DEBUG_API) {
-            console.log(`[API Retry] ${fullUrl} in ${delay}ms (attempt ${attempt}/${retries})`);
-          }
-          await new Promise((res) => setTimeout(res, delay));
-          continue;
-        }
-
-        // Dual-host failover: if primary host encounters network failure or gateway error, try fallback host
-        const isServerOutage =
-          err instanceof ApiError &&
-          (err.status === 502 ||
-            err.status === 503 ||
-            err.status === 504 ||
-            err.status === 521 ||
-            err.status === 522);
-        if (canAttemptFallback && (isNetworkErr || isServerOutage)) {
-          if (Env.DEBUG_API) {
-            console.log(
-              `[API Failover withMeta] Primary ${fullUrl} failed. Attempting failover to ${Env.FALLBACK_API_URL}...`
-            );
-          }
-          try {
-            return await this.requestWithMeta<T>(endpoint, {
-              ...options,
-              baseUrl: Env.FALLBACK_API_URL,
-              allowFallback: false,
-              retries: 1,
-            });
-          } catch (fallbackErr) {
-            if (Env.DEBUG_API) {
-              console.warn(`[API Failover withMeta] Fallback host also failed:`, fallbackErr);
-            }
-          }
-        }
-
-        if (isAbort) {
-          this.connectivityListener?.(false, 'Connection timed out.');
-          throw new ApiError(`Request timeout after ${timeoutMs}ms`, 408, 'REQUEST_TIMEOUT');
-        }
-
-        if (err instanceof ApiError) {
-          this.connectivityListener?.(true);
-          throw err;
-        }
-
-        let userFriendlyMsg =
-          err.message || 'Network request failed. Please check your internet connection.';
-        if (
-          userFriendlyMsg.includes('UnknownHostException') ||
-          userFriendlyMsg.includes('Unable to resolve host') ||
-          userFriendlyMsg.includes('ENOTFOUND')
-        ) {
-          userFriendlyMsg =
-            'Cannot reach server (DNS resolution failed). Please check your internet connection, try mobile data (4G), or enable Private DNS in Android settings.';
-        }
-
-        this.connectivityListener?.(false, userFriendlyMsg);
-        throw new ApiError(userFriendlyMsg, 0, 'NETWORK_ERROR', err);
-      }
-    }
-
-    throw new ApiError('Maximum retry attempts exceeded', 0, 'MAX_RETRIES_EXCEEDED');
   }
 
   static getWithMeta<T = any>(

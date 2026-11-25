@@ -1,23 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   StyleSheet,
   Text,
   Platform,
   Pressable,
-  BackHandler,
   UIManager,
-  Image,
-  ActivityIndicator,
   Animated,
   Easing,
   LayoutAnimation,
-  Linking,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { shape } from './src/theme/shapes';
 
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
@@ -29,33 +25,20 @@ import { GamificationProvider, useGamification } from './src/context/Gamificatio
 import { YouTubeProvider, useYouTube } from './src/context/YouTubeContext';
 import { FeedbackProvider, useFeedback } from './src/context/FeedbackContext';
 import { NetworkProvider } from './src/context/NetworkContext';
+import { ModalProvider, useModal } from './src/context/ModalContext';
 import { triggerHaptic } from './src/utils/haptics';
 import { RootTab } from './src/types';
-import { useNavigationStack } from './src/hooks';
-
-import { HomeScreen } from './src/screens/HomeScreen';
-import { CoursesScreen } from './src/screens/CoursesScreen';
-import { MyLearningScreen } from './src/screens/MyLearningScreen';
-import { WorkshopsScreen } from './src/screens/WorkshopsScreen';
-import { ProfileScreen } from './src/screens/ProfileScreen';
-import { CourseDetailScreen } from './src/screens/CourseDetailScreen';
-import { LessonPlayerScreen } from './src/screens/LessonPlayerScreen';
-import { YouTubeVideosScreen } from './src/screens/YouTubeVideosScreen';
+import {
+  AppNavigator,
+  navigateToTab,
+  navigateToCourse,
+  openYouTubeVideos,
+  navigateByNotificationData,
+} from './src/navigation/AppNavigator';
+import { RootStackParamList } from './src/navigation/deepLinking';
 
 import {
-  SubscriptionModal,
-  NotificationModal,
-  SkillAssessmentModal,
-  CorporateInquiryModal,
-  AuthModal,
-  AuthMode,
   YouTubeMiniPlayer,
-  YouTubePlayerModal,
-  UniversalSearchModal,
-  BrandDrawer,
-  AppUpdateModal,
-  SupportContactModal,
-  ScreenTransition,
   SlidingTabBarIndicator,
   CelebrationToast,
   ActionToast,
@@ -67,6 +50,7 @@ import {
   IosActionNotificationPanel,
   BrandSplashScreen,
 } from './src/components';
+import { AppModalHost } from './src/components/common/AppModalHost';
 import { AppUpdateService } from './src/services/appUpdateService';
 import { TelemetryService } from './src/services/telemetry/telemetryService';
 import { PushNotificationService } from './src/services/notifications/pushNotificationService';
@@ -105,6 +89,27 @@ if (Platform.OS === 'web' && typeof console !== 'undefined') {
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+const APP_PROVIDERS: React.ComponentType<{ children: React.ReactNode }>[] = [
+  NetworkProvider,
+  FeedbackProvider,
+  AuthProvider,
+  GamificationProvider,
+  SaaSProvider,
+  LearningProvider,
+  YouTubeProvider,
+  ModalProvider,
+];
+
+function composeProviders(
+  providers: React.ComponentType<{ children: React.ReactNode }>[],
+  children: React.ReactNode
+): React.ReactElement {
+  return providers.reduceRight<React.ReactElement>(
+    (acc, Provider) => <Provider>{acc}</Provider>,
+    <>{children}</>
+  );
 }
 
 const AnimatedTabIcon: React.FC<{
@@ -148,16 +153,10 @@ const MainAppContent: React.FC = () => {
   const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const { userProgress, hasActiveLiveWorkshop, toggleBookmark } = useLearning();
-  const {
-    user,
-    isAuthenticated,
-    isGuest,
-    isLoading: isAuthLoading,
-    isAuthModalVisible,
-    setAuthModalVisible,
-  } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { celebration, clearCelebration } = useGamification();
-  const { activeVideo, playerMode, closePlayer, minimizePlayer, playVideo } = useYouTube();
+  const { activeVideo, playerMode } = useYouTube();
+  const { openModal } = useModal();
   const {
     currentToast,
     dismissToast,
@@ -171,14 +170,18 @@ const MainAppContent: React.FC = () => {
     dismissPopup,
   } = useFeedback();
 
-  // Option D: Telemetry & Push Notification Infrastructure Initialization
-  // Env.init() is awaited in root App() before network-calling providers mount.
+  const [currentRouteName, setCurrentRouteName] = useState<keyof RootStackParamList>('MainTabs');
+  const [tabBarWidth, setTabBarWidth] = useState(0);
+  const updateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasCheckedUpdateRef = useRef<boolean>(false);
+
+  // Telemetry & Push Notification Infrastructure Initialization (Env.init() already awaited in root App)
   useEffect(() => {
     TelemetryService.initialize();
     PushNotificationService.registerForPushNotifications();
     HabitNotificationQueue.resetStartupSession();
-    // Schedule daily streak reminder (guarded by once-per-calendar-day throttle)
     PushNotificationService.scheduleDailyStreakNudge();
+    StorageSanitizer.runStartupSanitization().catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -190,24 +193,10 @@ const MainAppContent: React.FC = () => {
     }
   }, [isAuthenticated, user]);
 
-  // CR-1: Brand splash screen state and intent synchronization
-  const [isSplashVisible, setIsSplashVisible] = useState(true);
-  const [authInitialMode, setAuthInitialMode] = useState<AuthMode>('register');
-
-  useEffect(() => {
-    // Sanitize local storage of any legacy mock avatars or comments
-    StorageSanitizer.runStartupSanitization().catch(() => {});
-  }, []);
-
-  // Cross-platform timer for proactive background OTA check
-  const updateTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hasCheckedUpdateRef = useRef<boolean>(false);
-
   useEffect(() => {
     if (hasCheckedUpdateRef.current) return;
     hasCheckedUpdateRef.current = true;
 
-    // Proactive background OTA check in standalone builds (silently bypassed in Expo Go)
     updateTimerRef.current = setTimeout(async () => {
       try {
         const update = await AppUpdateService.checkForUpdate();
@@ -233,119 +222,27 @@ const MainAppContent: React.FC = () => {
     };
   }, [showToast]);
 
-  // Type-Safe Navigation Stack Architecture
-  const {
-    currentScreen: activeScreen,
-    activeTab,
-    direction: navDirection,
-    canGoBack,
-    push,
-    pop: navigateBack,
-    navigateToTab,
-    navigateToCourse,
-    navigateToLesson,
-  } = useNavigationStack({ initialTab: 'Home' });
-
-  // Tab bar dimension for fluid sliding indicator
-  const [tabBarWidth, setTabBarWidth] = useState(0);
-
-  useEffect(() => {
-    TelemetryService.addBreadcrumb({
-      category: 'navigation',
-      message: `Navigated to ${activeScreen.name}`,
-    });
-    HabitNotificationQueue.recordUserActivity().catch(() => {});
-  }, [activeScreen.name]);
-
-  // Deep-link routing when learner taps native Android status bar drop-down notification
+  // Unified cold-start & warm-start deep-link routing when learner taps native push notification
   useEffect(() => {
     const unsub = PushNotificationService.addNativeNotificationResponseListener((data) => {
-      if (data?.courseId) {
-        navigateToCourse(String(data.courseId));
-      } else if (data?.postUrl) {
-        Linking.openURL(String(data.postUrl)).catch(() => {});
-      }
+      navigateByNotificationData(data);
     });
     return unsub;
-  }, [navigateToCourse]);
+  }, []);
 
-  // Global Modals State
-  const [subscriptionModalVisible, setSubscriptionModalVisible] = useState(false);
-  const [notificationModalVisible, setNotificationModalVisible] = useState(false);
-  const [assessmentModalVisible, setAssessmentModalVisible] = useState(false);
-  const [corporateModalVisible, setCorporateModalVisible] = useState(false);
-  const [searchModalVisible, setSearchModalVisible] = useState(false);
-  const [brandDrawerVisible, setBrandDrawerVisible] = useState(false);
-  const [updateModalVisible, setUpdateModalVisible] = useState(false);
-  const [supportModalVisible, setSupportModalVisible] = useState(false);
+  const handleRouteChange = useCallback(
+    ({ routeName }: { routeName: keyof RootStackParamList; activeTab: RootTab }) => {
+      setCurrentRouteName(routeName);
+      TelemetryService.addBreadcrumb({
+        category: 'navigation',
+        message: `Navigated to ${routeName}`,
+      });
+      HabitNotificationQueue.recordUserActivity().catch(() => {});
+    },
+    []
+  );
 
   const inProgressCount = Object.values(userProgress).filter((p) => !p.isCompleted).length;
-
-  // Android Hardware Back Button Hook (prevents accidental app exit)
-  useEffect(() => {
-    const onHardwareBack = () => {
-      if (brandDrawerVisible) {
-        setBrandDrawerVisible(false);
-        return true;
-      }
-      if (isAuthModalVisible) {
-        setAuthModalVisible(false);
-        return true;
-      }
-      if (searchModalVisible) {
-        setSearchModalVisible(false);
-        return true;
-      }
-      if (updateModalVisible) {
-        setUpdateModalVisible(false);
-        return true;
-      }
-      if (supportModalVisible) {
-        setSupportModalVisible(false);
-        return true;
-      }
-      if (subscriptionModalVisible) {
-        setSubscriptionModalVisible(false);
-        return true;
-      }
-      if (notificationModalVisible) {
-        setNotificationModalVisible(false);
-        return true;
-      }
-      if (assessmentModalVisible) {
-        setAssessmentModalVisible(false);
-        return true;
-      }
-      if (corporateModalVisible) {
-        setCorporateModalVisible(false);
-        return true;
-      }
-      if (playerMode === 'modal') {
-        minimizePlayer();
-        return true;
-      }
-      if (canGoBack) {
-        navigateBack();
-        return true;
-      }
-      return false;
-    };
-
-    const sub = BackHandler.addEventListener('hardwareBackPress', onHardwareBack);
-    return () => sub.remove();
-  }, [
-    brandDrawerVisible,
-    isAuthModalVisible,
-    searchModalVisible,
-    updateModalVisible,
-    subscriptionModalVisible,
-    notificationModalVisible,
-    assessmentModalVisible,
-    corporateModalVisible,
-    playerMode,
-    canGoBack,
-    navigateBack,
-  ]);
 
   const tabItems: {
     id: RootTab;
@@ -374,128 +271,10 @@ const MainAppContent: React.FC = () => {
     { id: 'Profile', label: t('tabProfile'), icon: 'person', iconOutline: 'person-outline' },
   ];
 
-  return (
-    <SafeAreaView
-      style={[styles.safeArea, { backgroundColor: colors.background }]}
-      edges={['left', 'right']}
-    >
-      <StatusBar style={isDark ? 'light' : 'dark'} />
-
-      <View style={styles.screenContainer}>
-        {activeScreen.name === 'CourseDetail' ? (
-          <ScreenTransition
-            key={`detail-${activeScreen.courseId}`}
-            direction={navDirection === 'backward' ? 'backward' : 'forward'}
-          >
-            <CourseDetailScreen
-              courseId={activeScreen.courseId}
-              onBack={navigateBack}
-              onNavigateToLesson={navigateToLesson}
-            />
-          </ScreenTransition>
-        ) : activeScreen.name === 'LessonPlayer' ? (
-          <ScreenTransition
-            key={`player-${activeScreen.lessonId}`}
-            direction={navDirection === 'backward' ? 'backward' : 'forward'}
-          >
-            <LessonPlayerScreen
-              courseId={activeScreen.courseId}
-              lessonId={activeScreen.lessonId}
-              onBack={navigateBack}
-              onSelectLesson={navigateToLesson}
-            />
-          </ScreenTransition>
-        ) : activeScreen.name === 'YouTubeVideos' ? (
-          <ScreenTransition
-            key="yt-videos"
-            direction={navDirection === 'backward' ? 'backward' : 'forward'}
-          >
-            <YouTubeVideosScreen onBack={navigateBack} onNavigateToCourse={navigateToCourse} />
-          </ScreenTransition>
-        ) : (
-          <>
-            {activeTab === 'Home' && (
-              <ScreenTransition key="tab-Home" direction="fade" duration={160}>
-                <HomeScreen
-                  onNavigateToCourse={navigateToCourse}
-                  onNavigateToLesson={navigateToLesson}
-                  onNavigateTab={navigateToTab}
-                  onOpenCorporateModal={() => setCorporateModalVisible(true)}
-                  onOpenSubscription={() => setSubscriptionModalVisible(true)}
-                  onOpenNotifications={() => setNotificationModalVisible(true)}
-                  onOpenAssessment={() => setAssessmentModalVisible(true)}
-                  onOpenYouTube={() => push({ name: 'YouTubeVideos' })}
-                  onOpenSearch={() => setSearchModalVisible(true)}
-                  onOpenDrawer={() => setBrandDrawerVisible(true)}
-                  onOpenSupport={() => setSupportModalVisible(true)}
-                />
-              </ScreenTransition>
-            )}
-            {activeTab === 'Courses' && (
-              <ScreenTransition key="tab-Courses" direction="fade" duration={160}>
-                <CoursesScreen
-                  onNavigateToCourse={navigateToCourse}
-                  onOpenSubscription={() => setSubscriptionModalVisible(true)}
-                  onOpenNotifications={() => setNotificationModalVisible(true)}
-                  onOpenDrawer={() => setBrandDrawerVisible(true)}
-                  onOpenSupport={() => setSupportModalVisible(true)}
-                  onOpenSearch={() => setSearchModalVisible(true)}
-                />
-              </ScreenTransition>
-            )}
-            {activeTab === 'MyLearning' && (
-              <ScreenTransition key="tab-MyLearning" direction="fade" duration={160}>
-                <MyLearningScreen
-                  onNavigateToCourse={navigateToCourse}
-                  onNavigateToLesson={navigateToLesson}
-                  onBrowseCourses={() => navigateToTab('Courses')}
-                  onOpenSubscription={() => setSubscriptionModalVisible(true)}
-                  onOpenNotifications={() => setNotificationModalVisible(true)}
-                  onOpenYouTube={() => push({ name: 'YouTubeVideos' })}
-                  onOpenDrawer={() => setBrandDrawerVisible(true)}
-                  onOpenSupport={() => setSupportModalVisible(true)}
-                />
-              </ScreenTransition>
-            )}
-            {activeTab === 'Workshops' && (
-              <ScreenTransition key="tab-Workshops" direction="fade" duration={160}>
-                <WorkshopsScreen
-                  onOpenSubscription={() => setSubscriptionModalVisible(true)}
-                  onOpenNotifications={() => setNotificationModalVisible(true)}
-                  onOpenDrawer={() => setBrandDrawerVisible(true)}
-                  onOpenSupport={() => setSupportModalVisible(true)}
-                />
-              </ScreenTransition>
-            )}
-            {activeTab === 'Profile' && (
-              <ScreenTransition key="tab-Profile" direction="fade" duration={160}>
-                <ProfileScreen
-                  onOpenCorporateModal={() => setCorporateModalVisible(true)}
-                  onOpenSubscription={() => setSubscriptionModalVisible(true)}
-                  onOpenNotifications={() => setNotificationModalVisible(true)}
-                  onNavigateTab={navigateToTab}
-                  onNavigateToCourse={navigateToCourse}
-                  onNavigateToLesson={navigateToLesson}
-                  onOpenDrawer={() => setBrandDrawerVisible(true)}
-                  onOpenSupport={() => setSupportModalVisible(true)}
-                />
-              </ScreenTransition>
-            )}
-          </>
-        )}
-      </View>
-
-      {/* Floating Mini Player (visible when player is minimized) */}
-      <YouTubeMiniPlayer
-        bottomOffset={
-          activeScreen.name === 'MainTabs'
-            ? 64 + Math.max(insets.bottom, Platform.OS === 'ios' ? 12 : 8)
-            : Math.max(insets.bottom, 16)
-        }
-      />
-
-      {/* Bottom Tab Bar (shown only when on MainTabs) */}
-      {activeScreen.name === 'MainTabs' && (
+  const renderTabBar = useCallback(
+    (props: BottomTabBarProps) => {
+      const currentTab = (props.state.routes[props.state.index]?.name as RootTab) || 'Home';
+      return (
         <View
           style={[
             styles.tabBar,
@@ -516,16 +295,15 @@ const MainAppContent: React.FC = () => {
               }
             }}
           >
-            {/* Sliding Morphing Active Tab Indicator */}
             <SlidingTabBarIndicator
-              activeIndex={tabItems.findIndex((t) => t.id === activeTab)}
+              activeIndex={tabItems.findIndex((item) => item.id === currentTab)}
               tabCount={tabItems.length}
               containerWidth={tabBarWidth}
               isDark={isDark}
               accentColor={colors.accent}
             />
             {tabItems.map((tab) => {
-              const isActive = activeTab === tab.id;
+              const isActive = currentTab === tab.id;
               return (
                 <Pressable
                   key={tab.id}
@@ -533,7 +311,7 @@ const MainAppContent: React.FC = () => {
                   onPress={() => {
                     triggerHaptic('selection');
                     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-                    navigateToTab(tab.id);
+                    props.navigation.navigate(tab.id);
                   }}
                   android_ripple={{
                     color: isDark ? 'rgba(255, 182, 6, 0.12)' : 'rgba(16, 47, 83, 0.08)',
@@ -583,138 +361,64 @@ const MainAppContent: React.FC = () => {
             })}
           </View>
         </View>
-      )}
+      );
+    },
+    [colors, insets.bottom, isDark, tabBarWidth, tabItems]
+  );
 
-      {/* Brand Drawer */}
-      <BrandDrawer
-        visible={brandDrawerVisible}
-        onClose={() => setBrandDrawerVisible(false)}
+  const isMainTabs = currentRouteName === 'MainTabs';
+  const bottomToastOffset = isMainTabs
+    ? 74 + Math.max(insets.bottom, Platform.OS === 'ios' ? 12 : 8)
+    : Math.max(insets.bottom, 16) + 12;
+
+  return (
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: colors.background }]}
+      edges={['left', 'right']}
+    >
+      <StatusBar style={isDark ? 'light' : 'dark'} />
+
+      <View style={styles.screenContainer}>
+        <AppNavigator renderTabBar={renderTabBar} onRouteChange={handleRouteChange} />
+      </View>
+
+      <YouTubeMiniPlayer
+        bottomOffset={
+          isMainTabs
+            ? 64 + Math.max(insets.bottom, Platform.OS === 'ios' ? 12 : 8)
+            : Math.max(insets.bottom, 16)
+        }
+      />
+
+      <AppModalHost
         onNavigateTab={navigateToTab}
-        onOpenYouTube={() => push({ name: 'YouTubeVideos' })}
-        onOpenAssessment={() => setAssessmentModalVisible(true)}
-        onOpenSubscription={() => setSubscriptionModalVisible(true)}
-        onOpenUpdate={() => setUpdateModalVisible(true)}
-        onOpenSupport={() => setSupportModalVisible(true)}
-        onOpenCorporate={() => setCorporateModalVisible(true)}
-      />
-
-      {/* Official CRM & Helpdesk Support Modal */}
-      <SupportContactModal
-        visible={supportModalVisible}
-        onClose={() => setSupportModalVisible(false)}
-      />
-
-      {/* Global In-App Update Modal */}
-      <AppUpdateModal visible={updateModalVisible} onClose={() => setUpdateModalVisible(false)} />
-
-      {/* Global SaaS Modals */}
-      <SubscriptionModal
-        visible={subscriptionModalVisible}
-        onClose={() => setSubscriptionModalVisible(false)}
-      />
-
-      <NotificationModal
-        visible={notificationModalVisible}
-        onClose={() => setNotificationModalVisible(false)}
-        onNavigateToTab={(tab, courseId) => {
-          if (tab) navigateToTab(tab);
-          if (courseId) navigateToCourse(courseId);
-        }}
-      />
-
-      <SkillAssessmentModal
-        visible={assessmentModalVisible}
-        onClose={() => setAssessmentModalVisible(false)}
         onNavigateToCourse={navigateToCourse}
+        onOpenYouTube={openYouTubeVideos}
       />
 
-      <CorporateInquiryModal
-        visible={corporateModalVisible}
-        onClose={() => setCorporateModalVisible(false)}
-      />
-
-      {/* WordPress LearnPress Auth Modal (Mandatory Access Control per CR-1) */}
-      <AuthModal
-        visible={isAuthModalVisible || (!isAuthenticated && !isAuthLoading && !isSplashVisible)}
-        initialMode={authInitialMode}
-        dismissible={isAuthenticated}
-        onClose={() => setAuthModalVisible(false)}
-      />
-
-      {/* Global In-App YouTube Player Modal */}
-      <YouTubePlayerModal
-        visible={playerMode === 'modal' && activeVideo !== null}
-        video={activeVideo}
-        onClose={closePlayer}
-        onMinimize={minimizePlayer}
-        onNavigateToCourse={navigateToCourse}
-        onSelectVideo={(v) => playVideo(v, 'modal')}
-      />
-
-      {/* Universal Search & Spotlight Modal */}
-      <UniversalSearchModal
-        visible={searchModalVisible}
-        onClose={() => setSearchModalVisible(false)}
-        onSelectCourse={(courseId) => {
-          setSearchModalVisible(false);
-          navigateToCourse(courseId);
-        }}
-        onSelectYouTubeVideo={(video) => {
-          setSearchModalVisible(false);
-          playVideo(video, 'modal');
-        }}
-        onSelectWorkshop={() => {
-          setSearchModalVisible(false);
-          navigateToTab('Workshops');
-        }}
-      />
-
-      {/* Omnipresent Floating Draggable WhatsApp & Messenger CRM Widget */}
-      {(activeScreen.name === 'MainTabs' || activeScreen.name === 'CourseDetail') && (
+      {(isMainTabs || currentRouteName === 'CourseDetail') && (
         <FloatingCrmWidget
           bottomOffset={
-            activeScreen.name === 'CourseDetail'
+            currentRouteName === 'CourseDetail'
               ? 84 + Math.max(insets.bottom, Platform.OS === 'ios' ? 12 : 8)
               : (playerMode === 'mini' && activeVideo !== null ? 134 : 68) +
                 Math.max(insets.bottom, Platform.OS === 'ios' ? 12 : 8)
           }
-          inquiryType={activeScreen.name === 'CourseDetail' ? 'course' : 'general'}
-          onOpenFullModal={() => setSupportModalVisible(true)}
+          inquiryType={currentRouteName === 'CourseDetail' ? 'course' : 'general'}
+          onOpenFullModal={() => openModal('support')}
         />
       )}
 
-      {/* Global Milestone & Lesson Completion Celebration HUD */}
       <CelebrationToast data={celebration} onDismiss={clearCelebration} />
-
-      {/* Global Immediate Action Feedback & Undo Toast */}
-      <ActionToast
-        toast={currentToast}
-        onDismiss={dismissToast}
-        bottomOffset={
-          activeScreen.name === 'MainTabs'
-            ? 74 + Math.max(insets.bottom, Platform.OS === 'ios' ? 12 : 8)
-            : Math.max(insets.bottom, 16) + 12
-        }
-      />
-
-      {/* Global Interactive Bottom Snackbar with Undo & Duration Progress */}
+      <ActionToast toast={currentToast} onDismiss={dismissToast} bottomOffset={bottomToastOffset} />
       <ModernSnackbar
         snackbar={currentSnackbar}
         onDismiss={dismissSnackbar}
-        bottomOffset={
-          activeScreen.name === 'MainTabs'
-            ? 74 + Math.max(insets.bottom, Platform.OS === 'ios' ? 12 : 8)
-            : Math.max(insets.bottom, 16) + 12
-        }
+        bottomOffset={bottomToastOffset}
       />
-
-      {/* Global In-App Sticky Announcement & System Banner */}
       <ModernBanner banner={currentBanner} onDismiss={dismissBanner} sticky />
-
-      {/* Global Modern Confirmation & Alert Popup Dialog */}
       <ModernPopup popup={currentPopup} onDismiss={dismissPopup} />
 
-      {/* Interactive iOS & Android Action Notification Panel */}
       <IosActionNotificationPanel
         onNavigateToCourse={navigateToCourse}
         onBookmarkCourse={(courseId) => {
@@ -726,35 +430,8 @@ const MainAppContent: React.FC = () => {
             type: 'success',
           });
         }}
-        onOpenNotifications={() => setNotificationModalVisible(true)}
+        onOpenNotifications={() => openModal('notifications')}
       />
-
-      {/* CR-1: Startup Brand Splash Screen with Seamless Synchronized Transition */}
-      {(isSplashVisible || isAuthLoading) && (
-        <BrandSplashScreen
-          isLoading={isAuthLoading}
-          onGetStarted={() => {
-            setIsSplashVisible(false);
-            if (!isAuthenticated) {
-              setAuthInitialMode('register');
-              setAuthModalVisible(true);
-            }
-          }}
-          onSignIn={() => {
-            setIsSplashVisible(false);
-            if (!isAuthenticated) {
-              setAuthInitialMode('login');
-              setAuthModalVisible(true);
-            }
-          }}
-          onDismiss={() => {
-            setIsSplashVisible(false);
-          }}
-          onExitComplete={() => {
-            setIsSplashVisible(false);
-          }}
-        />
-      )}
     </SafeAreaView>
   );
 };
@@ -795,21 +472,7 @@ export default function App() {
             ) : !envReady ? (
               <BrandSplashScreen isLoading={true} />
             ) : (
-              <NetworkProvider>
-                <FeedbackProvider>
-                  <AuthProvider>
-                    <GamificationProvider>
-                      <SaaSProvider>
-                        <LearningProvider>
-                          <YouTubeProvider>
-                            <MainAppContent />
-                          </YouTubeProvider>
-                        </LearningProvider>
-                      </SaaSProvider>
-                    </GamificationProvider>
-                  </AuthProvider>
-                </FeedbackProvider>
-              </NetworkProvider>
+              composeProviders(APP_PROVIDERS, <MainAppContent />)
             )}
           </LanguageProvider>
         </ThemeProvider>
