@@ -44,6 +44,14 @@
         "EXPO_PUBLIC_WP_ADMIN_URL": "https://thrivingskill.com/wp-admin/",
         "EXPO_PUBLIC_DEFAULT_ENVIRONMENT": "production"
       }
+    },
+    "production-apk": {
+      "extends": "production",
+      "distribution": "internal",
+      "environment": "production",
+      "android": {
+        "buildType": "apk"
+      }
     }
   },
   "submit": {

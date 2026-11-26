@@ -22,6 +22,7 @@
     "build:eas:local": "eas build --platform android --profile production --local",
     "build:preview": "eas build --profile preview --platform android",
     "build:prod": "eas build --profile production --platform android",
+    "build:prod:apk": "eas build --profile production-apk --platform android",
     "update:prod": "eas update --channel production",
     "update:eas": "eas update --channel production",
     "export:self-hosted": "npx expo export"
