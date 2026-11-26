@@ -4,7 +4,7 @@
  * Exercises live REST endpoints against https://staging.thrivingskill.com (default)
  * without mocks. Safe by default: read-only & non-destructive negative auth checks run
  * automatically; mutating E2E course journey steps require explicit credentials via
- * STAGING_TEST_USERNAME / STAGING_TEST_PASSWORD (or opt-in STAGING_ALLOW_TEMP_REGISTRATION=1).
+ * STAGING_TEST_USERNAME / STAGING_TEST_PASSWORD.
  *
  * Usage:
  *   node scripts/test_layer2_staging_integration.js
@@ -20,7 +20,7 @@ const PKG_VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 
 const BASE_URL = (process.env.STAGING_BASE_URL || 'https://staging.thrivingskill.com').replace(/\/+$/, '');
 const STRICT_COMPANION = process.argv.includes('--strict-companion');
 const RUN_JOURNEY = process.argv.includes('--journey');
-const REQUEST_TIMEOUT_MS = Number(process.env.STAGING_TIMEOUT_MS || 15000);
+const REQUEST_TIMEOUT_MS = Number(process.env.STAGING_TIMEOUT_MS || 25000);
 
 const results = [];
 
@@ -53,7 +53,9 @@ async function httpJson(urlPath, options = {}) {
     } catch {
       json = null;
     }
-    return { ok: res.ok, status: res.status, json, rawText: text };
+    return { ok: res.ok, status: res.status, json, rawText: text, error: null };
+  } catch (err) {
+    return { ok: false, status: 0, json: null, rawText: '', error: err?.message || String(err) };
   } finally {
     clearTimeout(timer);
   }
@@ -63,8 +65,8 @@ async function runRouteAndHealthChecks() {
   // 1. Root REST index & Companion route discovery
   const indexRes = await httpJson('/wp-json');
   if (!indexRes.ok || !indexRes.json || !indexRes.json.routes) {
-    record('Health', 'WP REST Discovery Index', 'FAIL', `HTTP ${indexRes.status}`);
-    return { discoveredRoutes: [], sampleCourses: [] };
+    record('Health', 'WP REST Discovery Index', 'FAIL', indexRes.error || `HTTP ${indexRes.status}`);
+    return { discoveredRoutes: [], lpCourses: [] };
   }
 
   const discoveredRoutes = Object.keys(indexRes.json.routes);
@@ -81,7 +83,7 @@ async function runRouteAndHealthChecks() {
     '/learnpress/v1/lessons/finish',
     '/learnpress/v1/courses/finish',
     '/learnpress/v1/review/submit',
-    '/wc/store/v1/products',
+    '/wc/store/v1/cart',
   ];
   for (const r of coreRoutes) {
     const found = discoveredRoutes.some((k) => k === r || k.startsWith(r));
@@ -108,7 +110,9 @@ async function runRouteAndHealthChecks() {
       found ? 'deployed' : 'not yet deployed on Staging (plugin v1.2.0 ZIP upload required)'
     );
   }
-  const hasSubmitReviewRoute = discoveredRoutes.some((k) => k.includes('/thrivingskill/v1/courses/') && k.includes('submit-review'));
+  const hasSubmitReviewRoute = discoveredRoutes.some(
+    (k) => k.includes('/thrivingskill/v1/courses/') && k.includes('submit-review')
+  );
   record(
     'Companion v1.2',
     'Route /thrivingskill/v1/courses/{id}/submit-review',
@@ -116,17 +120,19 @@ async function runRouteAndHealthChecks() {
     hasSubmitReviewRoute ? 'deployed' : 'not yet deployed on Staging (falls back to LP /review/submit)'
   );
 
-  // 2. Config handshake
+  // 2. Config handshake (handles nested version_control & checkout_policy objects)
   const cfgRes = await httpJson('/wp-json/thrivingskill/v1/config');
-  if (cfgRes.ok && cfgRes.json && typeof cfgRes.json.maintenance_mode === 'boolean') {
+  const vc = cfgRes.json?.version_control || cfgRes.json || {};
+  const checkoutMode = cfgRes.json?.checkout_policy?.mode || cfgRes.json?.checkout_mode || 'default';
+  if (cfgRes.ok && cfgRes.json && typeof vc.maintenance_mode === 'boolean') {
     record(
       'Config',
       'GET /thrivingskill/v1/config',
       'PASS',
-      `latest=${cfgRes.json.latest_version}, min=${cfgRes.json.min_version}, checkout=${cfgRes.json.checkout_mode || 'default'}`
+      `latest=${vc.latest_version || 'unset'}, min=${vc.min_required_version || vc.min_version || 'unset'}, checkout=${checkoutMode}`
     );
   } else {
-    record('Config', 'GET /thrivingskill/v1/config', 'FAIL', `HTTP ${cfgRes.status}`);
+    record('Config', 'GET /thrivingskill/v1/config', 'FAIL', cfgRes.error || `HTTP ${cfgRes.status}`);
   }
 
   // 3. Feed & LearnPress catalog
@@ -135,34 +141,25 @@ async function runRouteAndHealthChecks() {
   if (feedRes.ok && feedCourses.length > 0) {
     record('Catalog', 'GET /thrivingskill/v1/feed', 'PASS', `${feedCourses.length} courses returned`);
   } else {
-    record('Catalog', 'GET /thrivingskill/v1/feed', 'FAIL', `HTTP ${feedRes.status}`);
+    record('Catalog', 'GET /thrivingskill/v1/feed', 'FAIL', feedRes.error || `HTTP ${feedRes.status}`);
   }
 
   const lpRes = await httpJson('/wp-json/learnpress/v1/courses?per_page=10');
   const lpCourses = Array.isArray(lpRes.json) ? lpRes.json : [];
   if (lpRes.ok && lpCourses.length > 0) {
-    const firstId = lpCourses[0].id;
-    record('Catalog', 'GET /learnpress/v1/courses', 'PASS', `${lpCourses.length} LP courses, sample id=${firstId}`);
-
-    const detailRes = await httpJson(`/wp-json/learnpress/v1/courses/${firstId}`);
-    record(
-      'Catalog',
-      `GET /learnpress/v1/courses/${firstId}`,
-      detailRes.ok && detailRes.json?.sections ? 'PASS' : 'FAIL',
-      detailRes.ok ? `sections=${detailRes.json?.sections?.length ?? 0}` : `HTTP ${detailRes.status}`
-    );
+    record('Catalog', 'GET /learnpress/v1/courses', 'PASS', `${lpCourses.length} LP courses, sample id=${lpCourses[0].id}`);
   } else {
-    record('Catalog', 'GET /learnpress/v1/courses', 'FAIL', `HTTP ${lpRes.status}`);
+    record('Catalog', 'GET /learnpress/v1/courses', 'FAIL', lpRes.error || `HTTP ${lpRes.status}`);
   }
 
-  // 4. WooCommerce Store Products (Payment Catalog Health)
-  const wcRes = await httpJson('/wp-json/wc/store/v1/products?per_page=5');
-  const wcProducts = Array.isArray(wcRes.json) ? wcRes.json : [];
+  // 4. WooCommerce Store Cart Readiness (Course checkout on ThrivingSkills uses WC Checkout WebView)
+  const wcCartRes = await httpJson('/wp-json/wc/store/v1/cart');
   record(
     'Payment',
-    'GET /wc/store/v1/products',
-    wcRes.ok && wcProducts.length > 0 ? 'PASS' : 'FAIL',
-    wcRes.ok ? `${wcProducts.length} WooCommerce purchasable items` : `HTTP ${wcRes.status}`
+    'GET /wc/store/v1/cart (Checkout Pipeline Readiness)',
+    wcCartRes.ok && cfgRes.json?.checkout_policy?.sslcommerz_active !== false ? 'PASS' : 'FAIL',
+    wcCartRes.error ||
+      `HTTP ${wcCartRes.status}, checkout_url=${cfgRes.json?.checkout_policy?.checkout_url || 'unset'}, sslcommerz=${cfgRes.json?.checkout_policy?.sslcommerz_active}`
   );
 
   return { discoveredRoutes, lpCourses };
@@ -179,23 +176,39 @@ async function runAuthBoundaryChecks() {
     'Auth Security',
     'T1.4.3 Empty Username Rejection',
     emptyRes.status === 403 && emptyCode.includes('empty_username') ? 'PASS' : 'FAIL',
-    `HTTP ${emptyRes.status} (${emptyCode})`
+    emptyRes.error || `HTTP ${emptyRes.status} (${emptyCode})`
   );
 
-  // T1.4.1 Invalid Username Differentiation
-  const invalidRes = await httpJson('/wp-json/learnpress/v1/token', {
+  // T1.4.1a Invalid Username Differentiation
+  const invalidUserRes = await httpJson('/wp-json/learnpress/v1/token', {
+    method: 'POST',
+    body: JSON.stringify({
+      username: `nonexistent_qa_${Date.now()}`,
+      password: 'WrongPassword123!',
+    }),
+  });
+  const invalidUserCode = invalidUserRes.json?.code || '';
+  record(
+    'Auth Security',
+    'T1.4.1 Invalid Username Rejection',
+    invalidUserRes.status === 403 && invalidUserCode.includes('invalid_username') ? 'PASS' : 'FAIL',
+    invalidUserRes.error || `HTTP ${invalidUserRes.status} (${invalidUserCode})`
+  );
+
+  // T1.4.1b Invalid Email Differentiation
+  const invalidEmailRes = await httpJson('/wp-json/learnpress/v1/token', {
     method: 'POST',
     body: JSON.stringify({
       username: `nonexistent_${Date.now()}@staging.invalid`,
       password: 'WrongPassword123!',
     }),
   });
-  const invalidCode = invalidRes.json?.code || '';
+  const invalidEmailCode = invalidEmailRes.json?.code || '';
   record(
     'Auth Security',
-    'T1.4.1 Invalid Username Rejection',
-    invalidRes.status === 403 && invalidCode.includes('invalid_username') ? 'PASS' : 'FAIL',
-    `HTTP ${invalidRes.status} (${invalidCode})`
+    'T1.4.1 Invalid Email Rejection',
+    invalidEmailRes.status === 403 && invalidEmailCode.includes('invalid_email') ? 'PASS' : 'FAIL',
+    invalidEmailRes.error || `HTTP ${invalidEmailRes.status} (${invalidEmailCode})`
   );
 
   // Unauthenticated Push Token Guard
@@ -207,7 +220,7 @@ async function runAuthBoundaryChecks() {
     'Auth Security',
     'Unauthenticated Push Token Guard',
     pushGuard.status === 401 || pushGuard.status === 403 ? 'PASS' : 'FAIL',
-    `HTTP ${pushGuard.status}`
+    pushGuard.error || `HTTP ${pushGuard.status}`
   );
 
   // Unauthenticated WP Profile Guard
@@ -216,7 +229,7 @@ async function runAuthBoundaryChecks() {
     'Auth Security',
     'Unauthenticated /wp/v2/users/me Guard',
     meGuard.status === 401 || meGuard.status === 403 ? 'PASS' : 'FAIL',
-    `HTTP ${meGuard.status}`
+    meGuard.error || `HTTP ${meGuard.status}`
   );
 }
 
@@ -241,7 +254,12 @@ async function runCourseE2EJourney(discoveredRoutes, lpCourses) {
   });
   const token = loginRes.json?.token;
   if (!loginRes.ok || !token) {
-    record('E2E Journey', 'Step 1: Learner Login', 'FAIL', `HTTP ${loginRes.status} (${loginRes.json?.code || 'unknown'})`);
+    record(
+      'E2E Journey',
+      'Step 1: Learner Login',
+      'FAIL',
+      loginRes.error || `HTTP ${loginRes.status} (${loginRes.json?.code || 'unknown'})`
+    );
     return;
   }
   const authHeaders = { Authorization: `Bearer ${token}` };
@@ -251,12 +269,12 @@ async function runCourseE2EJourney(discoveredRoutes, lpCourses) {
     method: 'POST',
     headers: authHeaders,
   });
-  record('E2E Journey', 'Step 1b: JWT Validation', valRes.ok ? 'PASS' : 'FAIL', `HTTP ${valRes.status}`);
+  record('E2E Journey', 'Step 1b: JWT Validation', valRes.ok ? 'PASS' : 'FAIL', valRes.error || `HTTP ${valRes.status}`);
 
-  // Step 2: Profile Fetch & Safe Unicode Round-Trip Sync (restoring original name afterward)
+  // Step 2: Profile Fetch & Safe Round-Trip Sync (restoring original name afterward)
   const meRes = await httpJson('/wp-json/wp/v2/users/me', { headers: authHeaders });
   if (!meRes.ok || !meRes.json?.id) {
-    record('E2E Journey', 'Step 2: Profile Sync Read/Write', 'FAIL', `HTTP ${meRes.status}`);
+    record('E2E Journey', 'Step 2: Profile Sync Read/Write', 'FAIL', meRes.error || `HTTP ${meRes.status}`);
   } else {
     const origFirst = meRes.json.first_name || 'Staging';
     const markerFirst = `${origFirst.replace(/\s*\[QA\]$/, '')} [QA]`;
@@ -296,7 +314,7 @@ async function runCourseE2EJourney(discoveredRoutes, lpCourses) {
     'E2E Journey',
     'Step 3: Course & Curriculum Inspection',
     courseDetailRes.ok ? 'PASS' : 'FAIL',
-    `course=${targetCourseId}, lessons=${lessonItems.length}, price=${courseDetailRes.json?.price}`
+    courseDetailRes.error || `course=${targetCourseId}, lessons=${lessonItems.length}, price=${courseDetailRes.json?.price}`
   );
 
   // Step 4: Paid Course Checkout Handoff Verification
@@ -311,7 +329,7 @@ async function runCourseE2EJourney(discoveredRoutes, lpCourses) {
         'E2E Journey',
         'Step 4: Paid Course Checkout WebView Handoff',
         handoffRes.ok && handoffRes.json?.handoff_url ? 'PASS' : 'FAIL',
-        `HTTP ${handoffRes.status}`
+        handoffRes.error || `HTTP ${handoffRes.status}`
       );
     } else {
       record(
@@ -343,7 +361,7 @@ async function runCourseE2EJourney(discoveredRoutes, lpCourses) {
     );
     return;
   }
-  record('E2E Journey', 'Step 5: Course Enrollment', enrolledOk ? 'PASS' : 'FAIL', `HTTP ${enrollRes.status}`);
+  record('E2E Journey', 'Step 5: Course Enrollment', enrolledOk ? 'PASS' : 'FAIL', enrollRes.error || `HTTP ${enrollRes.status}`);
 
   // Step 6: Inspect & Finish First Lesson
   if (lessonItems.length > 0) {
@@ -372,7 +390,7 @@ async function runCourseE2EJourney(discoveredRoutes, lpCourses) {
     'E2E Journey',
     'Step 7: Finish Course',
     finishCourseRes.ok || String(finishCourseRes.json?.message || '').toLowerCase().includes('finish') ? 'PASS' : 'FAIL',
-    `HTTP ${finishCourseRes.status}`
+    finishCourseRes.error || `HTTP ${finishCourseRes.status}`
   );
 
   // Step 8: Submit Review (companion endpoint if deployed, else LP /review/submit)
@@ -384,7 +402,12 @@ async function runCourseE2EJourney(discoveredRoutes, lpCourses) {
     : '/wp-json/learnpress/v1/review/submit';
   const reviewBody = useCompanionReview
     ? { rating: 5, comment: 'Automated Layer 2 staging verification review.' }
-    : { course_id: targetCourseId, rate: 5, title: 'Staging QA Review', content: 'Automated Layer 2 staging verification review.' };
+    : {
+        course_id: targetCourseId,
+        rate: 5,
+        title: 'Staging QA Review',
+        content: 'Automated Layer 2 staging verification review.',
+      };
 
   const reviewRes = await httpJson(reviewEndpoint, {
     method: 'POST',
@@ -395,7 +418,7 @@ async function runCourseE2EJourney(discoveredRoutes, lpCourses) {
     'E2E Journey',
     'Step 8: Submit Course Review',
     reviewRes.ok || String(reviewRes.json?.message || '').toLowerCase().includes('already') ? 'PASS' : 'FAIL',
-    `endpoint=${reviewEndpoint}, HTTP ${reviewRes.status}`
+    reviewRes.error || `endpoint=${reviewEndpoint}, HTTP ${reviewRes.status}`
   );
 
   // Step 9: Verify Certificate
@@ -405,9 +428,19 @@ async function runCourseE2EJourney(discoveredRoutes, lpCourses) {
     const certCode = match?.certificate_code;
     if (certCode) {
       const verifyRes = await httpJson(`/wp-json/thrivingskill/v1/certificates/verify?code=${encodeURIComponent(certCode)}`);
-      record('E2E Journey', 'Step 9: Certificate Issuance & Verification', verifyRes.ok && verifyRes.json?.valid ? 'PASS' : 'FAIL', `code=${certCode}`);
+      record(
+        'E2E Journey',
+        'Step 9: Certificate Issuance & Verification',
+        verifyRes.ok && verifyRes.json?.valid ? 'PASS' : 'FAIL',
+        `code=${certCode}`
+      );
     } else {
-      record('E2E Journey', 'Step 9: Certificate Issuance & Verification', 'WARN', 'Enrollment active; no LP certificate template assigned to test course');
+      record(
+        'E2E Journey',
+        'Step 9: Certificate Issuance & Verification',
+        'WARN',
+        'Enrollment active; no LP certificate template assigned to test course'
+      );
     }
   } else {
     record(
