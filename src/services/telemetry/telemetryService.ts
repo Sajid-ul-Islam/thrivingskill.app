@@ -117,6 +117,11 @@ export class TelemetryService {
   private static breadcrumbs: TelemetryBreadcrumb[] = [];
   private static currentUser: { id: string; username?: string; role?: string } | null = null;
   private static activeDsn = '';
+  private static recommendationImpressions = 0;
+  private static recommendationClicks = 0;
+  private static recommendationConversions = 0;
+  private static lastImpressedRecommendationSignature = '';
+  private static recommendedCoursePool = new Set<string>();
 
   /**
    * Initializes official @sentry/react-native crash reporting using static build-time Env.SENTRY_DSN.
@@ -258,6 +263,92 @@ export class TelemetryService {
       message: `Event: ${eventName}`,
       data: properties,
     });
+  }
+
+  /**
+   * Records a deduplicated recommendation impression when a personalized shelf is displayed.
+   */
+  static trackRecommendationImpression(courseIds: string[], surface: string = 'home'): void {
+    const normalizedIds = Array.from(new Set(courseIds.map((id) => String(id)).filter(Boolean)));
+    if (normalizedIds.length === 0) return;
+
+    const signature = `${surface}:${normalizedIds.join(',')}`;
+    if (signature === this.lastImpressedRecommendationSignature) {
+      return;
+    }
+
+    this.lastImpressedRecommendationSignature = signature;
+    this.recommendationImpressions += 1;
+    normalizedIds.forEach((id) => this.recommendedCoursePool.add(id));
+
+    this.trackEvent('recommendation_impression', {
+      surface,
+      count: normalizedIds.length,
+      courseIds: normalizedIds,
+    });
+  }
+
+  /**
+   * Records a user click on a recommended course card.
+   */
+  static trackRecommendationClick(courseId: string, category?: string, position?: number): void {
+    const idStr = String(courseId);
+    if (!idStr) return;
+    this.recommendedCoursePool.add(idStr);
+    this.recommendationClicks += 1;
+
+    this.trackEvent('recommendation_click', {
+      courseId: idStr,
+      category: category || 'unknown',
+      position,
+    });
+  }
+
+  /**
+   * Attributes an enrollment or purchase conversion when the course appeared in recommendations.
+   */
+  static trackRecommendationConversion(
+    courseId: string,
+    conversionType: 'enroll' | 'purchase' = 'enroll'
+  ): boolean {
+    const idStr = String(courseId);
+    if (!idStr || !this.recommendedCoursePool.has(idStr)) {
+      return false;
+    }
+
+    this.recommendationConversions += 1;
+    this.trackEvent('recommendation_conversion', {
+      courseId: idStr,
+      conversionType,
+    });
+    return true;
+  }
+
+  static getRecommendationMetrics(): {
+    impressions: number;
+    clicks: number;
+    conversions: number;
+    ctr: number;
+    conversionRate: number;
+  } {
+    const impressions = this.recommendationImpressions;
+    const clicks = this.recommendationClicks;
+    const conversions = this.recommendationConversions;
+    return {
+      impressions,
+      clicks,
+      conversions,
+      ctr: impressions > 0 ? Number((clicks / impressions).toFixed(4)) : 0,
+      conversionRate: clicks > 0 ? Number((conversions / clicks).toFixed(4)) : 0,
+    };
+  }
+
+  static resetRecommendationMetrics(): void {
+    this.recommendationImpressions = 0;
+    this.recommendationClicks = 0;
+    this.recommendationConversions = 0;
+    this.lastImpressedRecommendationSignature = '';
+    this.recommendedCoursePool.clear();
   }
 
   private static async persistCrashLocally(event: TelemetryEvent): Promise<void> {

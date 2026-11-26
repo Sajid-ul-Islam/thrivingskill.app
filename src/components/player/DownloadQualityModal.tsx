@@ -10,20 +10,16 @@ import { shape } from '../../theme/shapes';
 interface DownloadQualityModalProps {
   visible: boolean;
   onClose: () => void;
-  mode?: 'download' | 'streamQuality';
   currentQuality?: string;
   onSelectStreamQuality?: (quality: string) => void;
-  onStartDownload?: (quality: '360p' | '720p' | '1080p') => void;
   lessonTitle: string;
 }
 
 export const DownloadQualityModal: React.FC<DownloadQualityModalProps> = ({
   visible,
   onClose,
-  mode = 'download',
-  currentQuality = '720p',
+  currentQuality = 'Auto',
   onSelectStreamQuality,
-  onStartDownload,
   lessonTitle,
 }) => {
   const { colors, isDark } = useTheme();
@@ -32,13 +28,13 @@ export const DownloadQualityModal: React.FC<DownloadQualityModalProps> = ({
   const streamOptions = [
     {
       id: 'Auto',
-      label: 'Auto (Media3 Adaptive)',
-      sublabel: 'Dynamically adapts to network speed',
+      label: 'Auto (Adaptive Streaming)',
+      sublabel: 'Dynamically matches your connection speed',
     },
-    { id: '1080p', label: '1080p Full HD', sublabel: 'Requires fast Wi-Fi connection' },
-    { id: '720p', label: '720p HD', sublabel: 'Recommended balanced bitrate' },
-    { id: '480p', label: '480p SD', sublabel: 'Consistent playback on slower networks' },
-    { id: '360p', label: '360p Data Saver', sublabel: 'Minimum bandwidth consumption' },
+    { id: '1080p', label: '1080p Full HD', sublabel: 'Crispest video for fast Wi-Fi' },
+    { id: '720p', label: '720p HD', sublabel: 'Recommended balanced streaming quality' },
+    { id: '480p', label: '480p SD', sublabel: 'Steady playback on mobile data' },
+    { id: '360p', label: '360p Data Saver', sublabel: 'Lowest mobile data usage' },
   ];
 
   return (
@@ -65,15 +61,11 @@ export const DownloadQualityModal: React.FC<DownloadQualityModalProps> = ({
           <View style={[styles.headerRow, { borderBottomColor: colors.border }]}>
             <View style={styles.headerLeft}>
               <View style={[styles.headerIconBg, { backgroundColor: colors.primaryLight }]}>
-                <Ionicons
-                  name={mode === 'download' ? 'cloud-download' : 'options'}
-                  size={20}
-                  color={colors.primary}
-                />
+                <Ionicons name="options" size={20} color={colors.primary} />
               </View>
               <View style={styles.headerTitleCol}>
                 <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>
-                  {mode === 'download' ? 'Download Lesson' : 'Streaming Quality'}
+                  Online Streaming Quality
                 </Text>
                 <Text style={[styles.headerSub, { color: colors.textMuted }]} numberOfLines={1}>
                   {lessonTitle}
@@ -94,115 +86,56 @@ export const DownloadQualityModal: React.FC<DownloadQualityModalProps> = ({
 
           {/* Options List */}
           <View style={styles.optionsList}>
-            {mode === 'download' ? (
-              <View
-                style={{
-                  padding: 16,
-                  alignItems: 'center',
-                  backgroundColor: colors.surfaceSubtle,
-                  borderRadius: shape.medium,
-                }}
-              >
-                <Ionicons
-                  name="shield-checkmark"
-                  size={36}
-                  color="#102F53"
-                  style={{ marginBottom: 8 }}
-                />
-                <Text
-                  style={{
-                    fontSize: 15,
-                    fontWeight: '800',
-                    color: colors.text,
-                    textAlign: 'center',
-                    marginBottom: 4,
-                  }}
-                >
-                  Online Streaming Only
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 12,
-                    color: colors.textMuted,
-                    textAlign: 'center',
-                    lineHeight: 18,
-                    marginBottom: 14,
-                  }}
-                >
-                  Offline video downloads have been removed to protect intellectual property. All
-                  lessons stream directly in HD online.
-                </Text>
+            {streamOptions.map((opt) => {
+              const isSelected = currentQuality === opt.id;
+              return (
                 <TouchableOpacity
-                  style={{
-                    backgroundColor: '#102F53',
-                    paddingHorizontal: 18,
-                    paddingVertical: 10,
-                    borderRadius: shape.small,
-                    minHeight: MIN_TOUCH_TARGET,
-                    justifyContent: 'center',
-                    alignItems: 'center',
+                  key={opt.id}
+                  style={[
+                    styles.optionCard,
+                    {
+                      backgroundColor: isSelected
+                        ? isDark
+                          ? 'rgba(227, 66, 52, 0.12)'
+                          : 'rgba(227, 66, 52, 0.06)'
+                        : colors.surfaceSubtle,
+                      borderColor: isSelected ? '#E34234' : colors.border,
+                    },
+                  ]}
+                  onPress={() => {
+                    triggerHaptic('light');
+                    if (onSelectStreamQuality) onSelectStreamQuality(opt.id);
+                    onClose();
                   }}
-                  onPress={onClose}
+                  activeOpacity={0.7}
                   accessibilityRole="button"
-                  accessibilityLabel="Understand and dismiss"
+                  accessibilityLabel={`Select ${opt.label}`}
                 >
-                  <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 13 }}>
-                    Continue Watching Online
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              streamOptions.map((opt) => {
-                const isSelected = currentQuality === opt.id;
-                return (
-                  <TouchableOpacity
-                    key={opt.id}
-                    style={[
-                      styles.optionCard,
-                      {
-                        backgroundColor: isSelected
-                          ? isDark
-                            ? 'rgba(227, 66, 52, 0.12)'
-                            : 'rgba(227, 66, 52, 0.06)'
-                          : colors.surfaceSubtle,
-                        borderColor: isSelected ? '#E34234' : colors.border,
-                      },
-                    ]}
-                    onPress={() => {
-                      triggerHaptic('light');
-                      if (onSelectStreamQuality) onSelectStreamQuality(opt.id);
-                      onClose();
-                    }}
-                    activeOpacity={0.7}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Select ${opt.label}`}
-                  >
-                    <View style={styles.optionLeft}>
-                      <Ionicons
-                        name={isSelected ? 'radio-button-on' : 'radio-button-off'}
-                        size={20}
-                        color={isSelected ? '#E34234' : colors.textMuted}
-                      />
-                      <View style={styles.optionTextCol}>
-                        <Text
-                          style={[
-                            styles.optionLabel,
-                            { color: colors.text, fontWeight: isSelected ? '700' : '600' },
-                          ]}
-                        >
-                          {opt.label}
-                        </Text>
-                        <Text style={[styles.optionSublabel, { color: colors.textMuted }]}>
-                          {opt.sublabel}
-                        </Text>
-                      </View>
+                  <View style={styles.optionLeft}>
+                    <Ionicons
+                      name={isSelected ? 'radio-button-on' : 'radio-button-off'}
+                      size={20}
+                      color={isSelected ? '#E34234' : colors.textMuted}
+                    />
+                    <View style={styles.optionTextCol}>
+                      <Text
+                        style={[
+                          styles.optionLabel,
+                          { color: colors.text, fontWeight: isSelected ? '700' : '600' },
+                        ]}
+                      >
+                        {opt.label}
+                      </Text>
+                      <Text style={[styles.optionSublabel, { color: colors.textMuted }]}>
+                        {opt.sublabel}
+                      </Text>
                     </View>
+                  </View>
 
-                    {isSelected && <Ionicons name="checkmark" size={20} color="#10B981" />}
-                  </TouchableOpacity>
-                );
-              })
-            )}
+                  {isSelected && <Ionicons name="checkmark" size={20} color="#10B981" />}
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
       </View>

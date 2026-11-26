@@ -377,16 +377,16 @@ This document presents a comprehensive **5-dimensional justification** for every
 
 ### Domain 10: Offline-First Resilience & Storage
 
-#### 10.1 Offline Video Download Manager (`offlineManager.ts`, `DownloadQualityModal.tsx`)
-- **File Link**: [offlineManager.ts](../src/services/offlineManager.ts)
-- **1. Strategic Business Justification**: Critical for the Bangladesh market, where mobile internet connectivity can be intermittent or expensive. Enables learners to download lessons on home/office Wi-Fi and study anywhere.
-- **2. Pedagogical Justification**: Eliminates buffering frustrations, allowing uninterrupted study on buses, ferries, or in rural areas.
+#### 10.1 Offline Study Guides & Notes Deck (`offlineManager.ts`, `OfflineStudyDeckModal.tsx`)
+- **File Link**: [offlineManager.ts](../src/services/offline/offlineManager.ts)
+- **1. Strategic Business Justification**: Lets Bangladesh learners save lightweight lecture summaries, takeaways, and personal notes for zero-data reading while keeping licensed course videos online-only to protect intellectual property.
+- **2. Pedagogical Justification**: Reinforces spaced repetition and quick exam/project revision without needing to re-stream full lectures on mobile data.
 - **3. Psychological & UI/UX Law Justification**:
-  - *Feeling of Control & Reliability*: Clear progress bars during download and an obvious "Downloaded" tab.
+  - *Honest System Status*: Explicitly separates saved text study guides (`OfflineStudyDeckModal`) from online-only video streaming (`DownloadQualityModal` / `LessonVideoContainer`).
 - **4. Technical Implementation**:
-  - Downloads video files to app-scoped `FileSystem.documentDirectory`.
-  - Supports selectable quality presets (360p, 720p, 1080p) to preserve device storage.
-- **5. Single Source of Truth Alignment**: Encrypted local cache of authorized enrolled course lessons.
+  - Stores structured lesson study guide JSON (`OfflineLessonData`) in `AsyncStorage` with per-lesson save/delete and storage inspection in `StorageManagerModal.tsx`.
+  - Video playback streams strictly over HTTPS (no unencrypted or unprotected video file downloads).
+- **5. Single Source of Truth Alignment**: All video streams and enrollments remain authorized by WordPress/LearnPress (`https://thrivingskill.com`).
 
 #### 10.2 Resilient Offline Mutation Queue (`syncQueue.ts` / `SyncQueueManager`)
 - **File Link**: [syncQueue.ts](../src/services/offline/syncQueue.ts)

@@ -25,6 +25,9 @@ interface LessonPlayerTabsSectionProps {
   courseId: string;
   currentLesson: Lesson;
   displayLesson: Lesson;
+  rawLessonContent?: string;
+  isStudyGuideSaved?: boolean;
+  onSaveStudyGuideOffline?: () => void;
   allLessons: { moduleTitle: string; lesson: Lesson }[];
   completedLessonIds: string[];
   isCourseCompleted: boolean;
@@ -59,6 +62,9 @@ export const LessonPlayerTabsSection: React.FC<LessonPlayerTabsSectionProps> = (
   courseId,
   currentLesson,
   displayLesson,
+  rawLessonContent,
+  isStudyGuideSaved,
+  onSaveStudyGuideOffline,
   allLessons,
   completedLessonIds,
   isCourseCompleted,
@@ -162,6 +168,8 @@ export const LessonPlayerTabsSection: React.FC<LessonPlayerTabsSectionProps> = (
         <LessonNotesTab
           lessonNotes={lessonNotes}
           insetsBottom={insetsBottom}
+          isStudyGuideSaved={isStudyGuideSaved}
+          onSaveStudyGuideOffline={onSaveStudyGuideOffline}
           onOpenNewNote={onOpenNotesFAB}
           onSeekTo={onSeekTo}
           onDeleteNote={onDeleteNote}
@@ -175,6 +183,7 @@ export const LessonPlayerTabsSection: React.FC<LessonPlayerTabsSectionProps> = (
           lessonTitle={displayLesson.title}
           instructorName={course.instructor.name}
           lessonSummary={displayLesson.summary}
+          lessonContent={rawLessonContent}
           durationSeconds={totalLessonSeconds}
           onSeekTo={onSeekTo}
         />

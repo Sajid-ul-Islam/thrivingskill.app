@@ -37,22 +37,22 @@ thrivingskill.app/
 │   │   ├── GamificationContext.tsx # Daily streaks, XP points, badges
 │   │   ├── LanguageContext.tsx # Bilingual Bangla/English translation
 │   │   ├── ThemeContext.tsx    # ThrivingSkills brand token injector
-│   │   └── OfflineContext.tsx  # NetInfo network status & downloads
+│   │   └── NetworkContext.tsx  # NetInfo network status & online recovery
 │   ├── screens/                # Primary application screens
 │   │   ├── HomeScreen.tsx      # Banner, CR-01 recommendations, categories
 │   │   ├── ExploreScreen.tsx   # Search, filters, and full 370+ course catalog
-│   │   ├── MyLearningScreen.tsx# In-progress & offline downloaded courses
+│   │   ├── MyLearningScreen.tsx# Enrolled courses, history & certificates
 │   │   ├── CourseDetailScreen.tsx # Syllabus accordion, instructor, reviews
-│   │   ├── LessonPlayerScreen.tsx # Lesson streaming, CR-03 auto-play, notes
+│   │   ├── LessonPlayerScreen.tsx # Online video streaming, CR-03 auto-play, notes
 │   │   ├── ProfileScreen.tsx   # CR-05 Enrolled/Graduated shelves & analytics
 │   │   ├── CopilotScreen.tsx   # Interactive AI skill assistant
 │   │   └── EnterpriseScreen.tsx# B2B team training & corporate inquiry
 │   ├── services/               # Infrastructure & domain services
-│   │   ├── api/                # httpClient, apiConfig, transformers
-│   │   ├── auth/               # authService (JWT login, register, OTP)
+│   │   ├── api/                # httpClient, endpoints, transformers
+│   │   ├── auth/               # JWT login, register, password reset
 │   │   ├── course/             # courseService (LearnPress REST API sync)
-│   │   ├── payment/            # paymentService (bKash/Nagad simulation)
-│   │   └── offline/            # offlineManager (file downloads, queues)
+│   │   ├── payment/            # WooCommerce + SSLCommerz WebView checkout
+│   │   └── offline/            # offlineManager (study notes), syncQueue
 │   ├── theme/                  # Brand colors, typography, spacing tokens
 │   └── types/                  # TypeScript interfaces and entity types
 ├── app.json                    # Google Android & iOS production configuration
@@ -106,7 +106,7 @@ The app utilizes `@react-native-async-storage/async-storage` for offline and ses
 | `@thriving_skill_theme` | `'light' \| 'dark' \| 'system'` | Theme preference |
 | `@thriving_skill_behavior` | `BehaviorMetrics` | User category views, search terms & dwell time for CR-01 |
 | `@thriving_skill_gamification` | `GamificationState` | Learning streak count, XP points, and unlocked badges |
-| `@thriving_skill_offline_index` | `OfflineIndex` | Metadata and local disk paths of downloaded lessons |
+| `@ts_offline_index` | `string[]` | Saved offline study guide lesson IDs (text notes only; videos stream online) |
 
 ---
 

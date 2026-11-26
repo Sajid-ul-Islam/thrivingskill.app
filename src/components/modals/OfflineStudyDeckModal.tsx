@@ -112,7 +112,7 @@ export const OfflineStudyDeckModal: React.FC<OfflineStudyDeckModalProps> = ({
                   ? selectedLesson.duration
                     ? `${selectedLesson.courseTitle || 'Course Lesson'} • ${selectedLesson.duration}`
                     : selectedLesson.courseTitle || 'Course Lesson'
-                  : 'Distraction-free offline lecture summaries & study guides'}
+                  : 'Offline lecture notes & study guides (videos stream online)'}
               </Text>
             </View>
 
@@ -236,7 +236,7 @@ export const OfflineStudyDeckModal: React.FC<OfflineStudyDeckModalProps> = ({
                   style={[styles.deleteBtn, { backgroundColor: isDark ? '#7F1D1D' : '#FEE2E2' }]}
                   onPress={() => handleDeleteLesson(selectedLesson.lessonId)}
                   accessibilityRole="button"
-                  accessibilityLabel="Remove Download"
+                  accessibilityLabel="Remove Saved Study Guide"
                 >
                   <Ionicons name="trash-outline" size={18} color="#DC2626" />
                 </TouchableOpacity>
@@ -246,14 +246,14 @@ export const OfflineStudyDeckModal: React.FC<OfflineStudyDeckModalProps> = ({
             /* Empty State */
             <View style={styles.centerContainer}>
               <View style={[styles.emptyIconCircle, { backgroundColor: colors.surfaceSubtle }]}>
-                <Ionicons name="cloud-download-outline" size={44} color={colors.primary} />
+                <Ionicons name="book-outline" size={44} color={colors.primary} />
               </View>
               <Text style={[styles.emptyTitle, { color: colors.text }]}>
-                No Offline Lessons Yet
+                No Saved Study Notes Yet
               </Text>
               <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>
-                Tap the download button while watching any lecture in the course player to save
-                study guides and read offline without internet.
+                Open any lecture's Notes tab and tap "Save Study Guide" to read summaries and notes
+                offline. Course videos stream online only.
               </Text>
             </View>
           ) : (

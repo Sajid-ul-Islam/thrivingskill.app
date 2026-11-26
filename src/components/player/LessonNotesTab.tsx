@@ -9,6 +9,8 @@ import { Note } from '../../types';
 interface LessonNotesTabProps {
   lessonNotes: Note[];
   insetsBottom: number;
+  isStudyGuideSaved?: boolean;
+  onSaveStudyGuideOffline?: () => void;
   onOpenNewNote: () => void;
   onSeekTo: (seconds: number) => void;
   onDeleteNote: (note: Note) => void;
@@ -23,6 +25,8 @@ interface LessonNotesTabProps {
 export const LessonNotesTab: React.FC<LessonNotesTabProps> = ({
   lessonNotes,
   insetsBottom,
+  isStudyGuideSaved = false,
+  onSaveStudyGuideOffline,
   onOpenNewNote,
   onSeekTo,
   onDeleteNote,
@@ -73,6 +77,43 @@ export const LessonNotesTab: React.FC<LessonNotesTabProps> = ({
           </Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {onSaveStudyGuideOffline && (
+            <TouchableOpacity
+              style={[
+                styles.exportBtn,
+                {
+                  borderColor: isStudyGuideSaved ? colors.primary : colors.border,
+                  backgroundColor: isStudyGuideSaved ? colors.primaryLight : colors.surfaceCard,
+                  flexDirection: 'row',
+                  gap: 4,
+                },
+              ]}
+              onPress={() => {
+                triggerHaptic('light');
+                onSaveStudyGuideOffline();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={
+                isBangla ? 'স্টাডি গাইড অফলাইনে সেভ করুন' : 'Save study guide for offline reading'
+              }
+              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            >
+              <Ionicons
+                name={isStudyGuideSaved ? 'bookmark' : 'bookmark-outline'}
+                size={14}
+                color={colors.primary}
+              />
+              <Text style={{ fontSize: 11, fontWeight: '700', color: colors.primary }}>
+                {isStudyGuideSaved
+                  ? isBangla
+                    ? 'সেভড'
+                    : 'Saved'
+                  : isBangla
+                    ? 'গাইড সেভ'
+                    : 'Save Guide'}
+              </Text>
+            </TouchableOpacity>
+          )}
           {lessonNotes.length > 0 && (
             <TouchableOpacity
               style={[

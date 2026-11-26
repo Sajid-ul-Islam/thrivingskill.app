@@ -30,10 +30,12 @@ const AUTH_DEV_MODE_KEY = '@ts_dev_mode_unlocked';
 
 /**
  * Strict administrator check based only on verified WordPress server roles.
+ * Matches server-side `manage_options` capability (`administrator`/`admin` only;
+ * editorial `editor` and course `instructor` roles do not grant full app admin bypass).
  */
 export function isUserAdmin(user: UserProfile | WpUser | null | undefined): boolean {
   if (!user) return false;
-  const adminRoles = new Set(['administrator', 'admin', 'editor', 'instructor']);
+  const adminRoles = new Set(['administrator', 'admin']);
   if (Array.isArray(user.roles)) {
     if (user.roles.some((r) => typeof r === 'string' && adminRoles.has(r.toLowerCase().trim()))) {
       return true;
@@ -120,6 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     async (showExpiredFeedback: boolean = true) => {
       activeSessionRef.current = false;
       HttpClient.setAuthToken(null);
+      SyncQueueManager.setUserScope('_guest');
       if (isMountedRef.current) {
         setUser(null);
         setToken(null);
@@ -227,6 +230,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
             activeSessionRef.current = true;
             HttpClient.setAuthToken(candidateToken);
+            SyncQueueManager.setUserScope(restoredUser.id ? `_u_${restoredUser.id}` : '_guest');
             setUser(restoredUser);
             setToken(candidateToken);
             setSessionExpiredNotice(false);
@@ -285,6 +289,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isHandlingUnauthorizedRef.current = false;
     setSessionExpiredNotice(false);
     HttpClient.setAuthToken(userToken);
+    SyncQueueManager.setUserScope(userWithToken.id ? `_u_${userWithToken.id}` : '_guest');
     setToken(userToken);
     setUser(userWithToken);
     setIsGuest(false);
@@ -539,6 +544,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isHandlingUnauthorizedRef.current = false;
     setSessionExpiredNotice(false);
     HttpClient.setAuthToken(null);
+    SyncQueueManager.setUserScope('_guest');
     setToken(null);
     setUser(null);
     setIsGuest(true);

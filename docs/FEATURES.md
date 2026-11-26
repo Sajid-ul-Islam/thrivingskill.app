@@ -18,7 +18,7 @@ This document provides a comprehensive inventory of all features, capabilities, 
 | **F-07** | Course Curriculum & Section Accordion | `CourseDetailScreen.tsx` | ✅ Production Ready |
 | **F-08** | In-Player Lesson Notes & Bookmarks | `LessonPlayerScreen.tsx`, `NotesModal.tsx` | ✅ Production Ready |
 | **F-09** | Interactive Quiz & Assessment Engine | `LessonPlayerScreen.tsx`, `QuizTab.tsx` | ✅ Production Ready |
-| **F-10** | Offline Study Deck (Text Notes) / Offline Video | `OfflineStudyDeckModal.tsx`, `offlineManager.ts` | ⚠️ Study Notes Ready / **No Video Download** |
+| **F-10** | Offline Study Deck (Text Notes) | `OfflineStudyDeckModal.tsx`, `offlineManager.ts` | ✅ Study Notes Ready (Videos stream online only) |
 | **F-11** | Hybrid Checkout (WooCommerce + SSLCommerz WebView) | `PaymentModal.tsx`, `usePaymentCheckout.ts` | ✅ WebView Implemented (**No native MFS SDK**) |
 | **F-12** | Promo Code & Coupon Engine | `PaymentModal.tsx` | ✅ Production Ready |
 | **F-13** | Bilingual Bangla ⇄ English Localization | `LanguageContext.tsx` | ✅ Production Ready |
@@ -87,9 +87,9 @@ This document provides a comprehensive inventory of all features, capabilities, 
 - Switchable via one-tap language selector with instant reactive re-rendering and persistent storage.
 
 ### 8. Offline Study Deck & Action Sync Queue *(Text Guides Only)*
-- `OfflineManager.ts` saves lesson text summaries and structured key takeaways to `AsyncStorage` for offline reading (`OfflineStudyDeckModal.tsx`).
+- `OfflineManager.ts` saves lesson text summaries, study guides, and resources to `AsyncStorage` for offline reading (`OfflineStudyDeckModal.tsx`).
 - `SyncQueueManager.ts` queues offline lesson completions, enrollments, and quiz submissions and replays them automatically once connectivity returns.
-- **Scope Note**: Encrypted offline **video file downloading** (`expo-file-system` binary media storage) is **not implemented yet** and remains in Milestone 7.
+- **Scope Note**: All course videos stream online only (`player.vimeo.com`, YouTube, or direct Media3 HTTPS streams). Offline video file downloading is intentionally omitted to protect course intellectual property.
 
 ### 9. AI Study Copilot (`ThriveGenHub` & `LessonAiTutorModal`)
 - `GeminiNanoService` checks Android AICore model availability honestly and reports unavailable without generating fake canned answers.

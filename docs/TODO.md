@@ -3,7 +3,7 @@
 
 **Current Version**: 1.4.0  
 **Current Milestone**: Milestone 6 Completed (UI/UX Motion Overhaul, Vimeo Pro Integration, Local APK Build & GitHub Release)  
-**Next Milestone**: Milestone 7 (Encrypted Offline Video, Companion v1.2.0 Deploy, Layer 3 QA & Play Store Submission)  
+**Next Milestone**: Milestone 7 (Companion v1.2.0 Deploy, Layer 3 QA & Play Store Submission)  
 **Repository**: `https://github.com/Sajid-ul-Islam/thrivingskill.app`  
 **Last Updated**: November 2026  
 
@@ -35,7 +35,7 @@
 - [x] Bilingual Bangla ⇄ English switching with persistent language preference (`LanguageContext.tsx`).
 - [x] Interactive Lesson Player (`LessonPlayerScreen.tsx`) with commute mode audio and video playback.
 - [x] Interactive Quiz assessment engine with immediate score calculations (`QuizPlayerModal.tsx`).
-- [x] Offline Study Deck with `AsyncStorage` JSON lesson summaries/notes & `SyncQueueManager` (`OfflineManager.ts`; actual encrypted video downloads remain in Milestone 7).
+- [x] Offline Study Deck with `AsyncStorage` JSON lesson summaries/notes & `SyncQueueManager` (`OfflineManager.ts`; videos stream online only).
 - [x] Daily gamification engine (learning streaks, XP points, and achievement badges stored locally in `GamificationContext.tsx`).
 
 ### Phase 4: Client Functional Requirements (CR-01 to CR-05)
@@ -167,11 +167,11 @@
 - [ ] **Production Live Cohort & Streak Push Dispatch**:
   - Wire WordPress cron / admin triggers for instructor live-session reminders via `/thrivingskill/v1/register-push-token` (`tsmb_push_tokens`).
 
-### 3. Media & Offline Video Enhancements
-- [ ] **Encrypted Offline Video Caching**:
-  - Add native video segment download & encrypted playback (`expo-file-system`) to upgrade `OfflineManager.ts` from study-guide text caching to true offline video playback.
-- [ ] **Background Audio Service**:
-  - Enable continuous commuter lecture playback even when the phone screen is locked.
+### 3. Media & Streaming Enhancements
+- [x] **Online Video Streaming Only (No Offline Video Downloads)**:
+  - All course lectures stream online via Vimeo Pro, YouTube, or direct Media3 HTTPS streams; `OfflineManager.ts` caches text study guides & notes only (`OfflineStudyDeckModal.tsx`).
+- [ ] **Enhanced Background Audio Service**:
+  - Continue optimizing lock-screen media controls for direct audio/MP4/HLS lesson streams.
 
 ### 4. Direct Native Payments & Store Submission
 - [ ] **Native MFS Gateway Evaluation (Optional Post-Launch)**:

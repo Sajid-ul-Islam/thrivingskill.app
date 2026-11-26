@@ -94,7 +94,7 @@ The application strictly implements the official Thriving Skills Limited brand p
 ## 5. Non-Functional Requirements & Performance Standards
 
 1. **Cold Start Time**: Launch to interactive state in under 1.8 seconds on mid-tier Android devices.
-2. **Offline-First Resilience**: Enrolled lesson metadata, offline study deck text notes, and completion sync queues remain accessible without internet connection (encrypted offline video binaries remain in Milestone 7 backlog; see [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)).
+2. **Online Video Streaming & Offline Study Notes**: Course lectures stream securely online via Vimeo Pro / YouTube / Media3 streams; offline-capable components cover **Study Deck text guides, personal notes, and progress sync queues** (`OfflineManager` + `SyncQueueManager`), with no offline video file downloads ([IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)).
 3. **Data Reduction**: Two-tier memory and persistent cache ensuring repeat screen transitions make 0 unnecessary network roundtrips.
 4. **Memory Hygiene**: Zero memory leaks; all timer handles (`setTimeout`, `setInterval`) explicitly cleared on component unmount using safe cross-platform refs.
 5. **Type Safety**: 100% TypeScript coverage with `tsc --noEmit` returning zero errors.

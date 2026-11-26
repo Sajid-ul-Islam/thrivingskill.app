@@ -209,6 +209,7 @@ export function useHomeDashboard({
               title: isBangla ? 'আপনার জন্য বিশেষ প্রস্তাবিত' : 'Recommended For You',
               subtitle: isBangla ? recData.rationaleBn : recData.rationale,
               courses: recData.courses,
+              isRecommendationRow: true,
             },
           ]
         : [];

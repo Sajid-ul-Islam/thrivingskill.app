@@ -10,6 +10,10 @@ export interface OfflineResource {
   type: string;
 }
 
+/**
+ * Text-only study guide record stored locally for offline reading.
+ * Course videos stream online only and are never saved as offline video binaries.
+ */
 export interface OfflineLessonData {
   lessonId: string;
   courseId: string;
@@ -21,13 +25,12 @@ export interface OfflineLessonData {
   content: string;
   takeaways?: string[];
   resources?: OfflineResource[];
-  quality?: string;
-  fileSize?: string;
 }
 
 export class OfflineManager {
   /**
-   * Save lesson for offline reading with rich takeaways & companion resources
+   * Save lesson text study guide, summary, and resources for offline reading.
+   * Does not download or store video files (all course videos stream online).
    */
   static async saveLessonOffline(
     courseId: string,
@@ -35,29 +38,23 @@ export class OfflineManager {
     content?: string,
     courseTitle?: string,
     takeaways?: string[],
-    resources?: OfflineResource[],
-    quality?: string
+    resources?: OfflineResource[]
   ): Promise<void> {
+    const cleanSummary = (lesson.summary || '').trim();
+    const cleanContent = (content || cleanSummary).trim();
+    const validTakeaways = (takeaways || []).map((t) => t.trim()).filter(Boolean);
+
     const offlineData: OfflineLessonData = {
       lessonId: lesson.id,
       courseId,
-      courseTitle: courseTitle || 'Thriving Skills Professional Course',
+      courseTitle: courseTitle || 'Thriving Skills Course',
       title: lesson.title,
       duration: lesson.duration || '',
-      summary:
-        lesson.summary ||
-        'Downloaded offline lesson content for flexible learning without internet.',
+      summary: cleanSummary || 'Saved lesson notes and overview for offline reading.',
       savedAt: new Date().toISOString(),
-      content:
-        content || lesson.summary || 'Complete study guide and key insights for this lecture.',
-      takeaways: takeaways || [
-        'Core architectural concepts and practical application.',
-        'Production readiness and industry best practices.',
-        'Step-by-step implementation notes.',
-      ],
+      content: cleanContent || 'Open this lesson online to watch the lecture video.',
+      ...(validTakeaways.length > 0 ? { takeaways: validTakeaways } : {}),
       resources: resources || [],
-      quality: quality || '720p HD',
-      fileSize: quality === '1080p' ? '~140 MB' : quality === '360p' ? '~25 MB' : '~65 MB',
     };
 
     await AsyncStorage.setItem(
@@ -65,7 +62,6 @@ export class OfflineManager {
       JSON.stringify(offlineData)
     );
 
-    // Update index
     const index = await this.getDownloadedLessonIds();
     if (!index.includes(lesson.id)) {
       index.push(lesson.id);
@@ -74,7 +70,7 @@ export class OfflineManager {
   }
 
   /**
-   * Check if lesson is downloaded
+   * Check if lesson study guide is saved for offline reading
    */
   static async isLessonDownloaded(lessonId: string): Promise<boolean> {
     const item = await AsyncStorage.getItem(`${OFFLINE_LESSONS_PREFIX}${lessonId}`);
@@ -82,7 +78,7 @@ export class OfflineManager {
   }
 
   /**
-   * Get single downloaded lesson data
+   * Get single saved lesson study guide
    */
   static async getDownloadedLesson(lessonId: string): Promise<OfflineLessonData | null> {
     try {
@@ -94,7 +90,7 @@ export class OfflineManager {
   }
 
   /**
-   * Get all downloaded lesson IDs
+   * Get all saved study guide lesson IDs
    */
   static async getDownloadedLessonIds(): Promise<string[]> {
     try {
@@ -106,7 +102,7 @@ export class OfflineManager {
   }
 
   /**
-   * Get all downloaded lessons with full contents
+   * Get all saved lesson study guides
    */
   static async getAllDownloadedLessons(): Promise<OfflineLessonData[]> {
     const ids = await this.getDownloadedLessonIds();
@@ -130,7 +126,7 @@ export class OfflineManager {
   }
 
   /**
-   * Get downloaded lessons grouped by course
+   * Get saved study guides grouped by course
    */
   static async getDownloadedCoursesGrouped(): Promise<
     { courseId: string; courseTitle: string; lessons: OfflineLessonData[] }[]
@@ -148,7 +144,7 @@ export class OfflineManager {
       } else {
         map.set(l.courseId, {
           courseId: l.courseId,
-          courseTitle: l.courseTitle || 'Professional Course',
+          courseTitle: l.courseTitle || 'Thriving Skills Course',
           lessons: [l],
         });
       }
@@ -158,7 +154,7 @@ export class OfflineManager {
   }
 
   /**
-   * Remove downloaded lesson
+   * Remove saved study guide for a lesson
    */
   static async removeDownloadedLesson(lessonId: string): Promise<void> {
     await AsyncStorage.removeItem(`${OFFLINE_LESSONS_PREFIX}${lessonId}`);

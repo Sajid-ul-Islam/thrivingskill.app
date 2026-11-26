@@ -8,10 +8,12 @@ export interface NativeMedia3PlayerProps {
   title: string;
   courseTitle?: string;
   playbackSpeed?: number;
+  initialPositionSeconds?: number;
   isCommuteMode?: boolean; // Background audio mode
   onProgress?: (currentTime: number, duration: number) => void;
   onPlayStateChange?: (isPlaying: boolean) => void;
   onEnd?: () => void;
+  onError?: (message: string) => void;
   onPictureInPictureStart?: () => void;
   onPictureInPictureStop?: () => void;
   style?: StyleProp<ViewStyle>;
@@ -37,10 +39,12 @@ export const NativeMedia3Player = forwardRef<NativeMedia3PlayerRef, NativeMedia3
       title,
       courseTitle,
       playbackSpeed = 1.0,
+      initialPositionSeconds = 0,
       isCommuteMode = false,
       onProgress,
       onPlayStateChange,
       onEnd,
+      onError,
       onPictureInPictureStart,
       onPictureInPictureStop,
       style,
@@ -50,6 +54,9 @@ export const NativeMedia3Player = forwardRef<NativeMedia3PlayerRef, NativeMedia3
     const videoViewRef = useRef<VideoView>(null);
     const [isBuffering, setIsBuffering] = useState<boolean>(true);
     const [hasError, setHasError] = useState<boolean>(false);
+    const appliedInitialSeekUrlRef = useRef<string | null>(null);
+    const initialSeekRef = useRef<number>(initialPositionSeconds);
+    initialSeekRef.current = initialPositionSeconds;
 
     const player = useVideoPlayer(sourceUrl, (p) => {
       p.loop = false;
@@ -58,6 +65,13 @@ export const NativeMedia3Player = forwardRef<NativeMedia3PlayerRef, NativeMedia3
       p.playbackRate = playbackSpeed;
       p.play();
     });
+
+    // Reset loading/error state whenever stream source changes
+    useEffect(() => {
+      setHasError(false);
+      setIsBuffering(true);
+      appliedInitialSeekUrlRef.current = null;
+    }, [sourceUrl]);
 
     // Synchronize background mode and lock-screen metadata
     useEffect(() => {
@@ -94,15 +108,31 @@ export const NativeMedia3Player = forwardRef<NativeMedia3PlayerRef, NativeMedia3
       onEnd?.();
     });
 
-    // Handle status change for buffering
+    // Handle status change for buffering, initial resume seek, and honest stream error surfacing
     useEventListener(player, 'statusChange', ({ status, error }) => {
       if (status === 'loading') {
         setIsBuffering(true);
       } else if (status === 'readyToPlay') {
         setIsBuffering(false);
+        setHasError(false);
+        const targetSeek = initialSeekRef.current;
+        const duration = player.duration || 0;
+        if (
+          appliedInitialSeekUrlRef.current !== sourceUrl &&
+          targetSeek > 2 &&
+          (duration <= 0 || targetSeek < duration - 5)
+        ) {
+          appliedInitialSeekUrlRef.current = sourceUrl;
+          try {
+            player.currentTime = targetSeek;
+          } catch {}
+        } else {
+          appliedInitialSeekUrlRef.current = sourceUrl;
+        }
       } else if (status === 'error') {
         setIsBuffering(false);
         setHasError(true);
+        onError?.(error?.message || 'Unable to load media stream.');
       }
     });
 
@@ -162,14 +192,14 @@ export const NativeMedia3Player = forwardRef<NativeMedia3PlayerRef, NativeMedia3
           player={player}
           style={styles.videoView}
           allowsPictureInPicture
-          startsPictureInPictureAutomatically
+          startsPictureInPictureAutomatically={!isCommuteMode}
           contentFit="contain"
           nativeControls={false}
           onPictureInPictureStart={onPictureInPictureStart}
           onPictureInPictureStop={onPictureInPictureStop}
         />
 
-        {isBuffering && (
+        {isBuffering && !hasError && (
           <View style={styles.loadingOverlay} pointerEvents="none">
             <ActivityIndicator size="large" color="#E34234" />
             <Text style={styles.loadingText}>Buffering Media3 Stream...</Text>
@@ -178,7 +208,7 @@ export const NativeMedia3Player = forwardRef<NativeMedia3PlayerRef, NativeMedia3
 
         {hasError && (
           <View style={styles.errorOverlay} pointerEvents="none">
-            <Text style={styles.errorText}>Stream error. Switching to fallback...</Text>
+            <Text style={styles.errorText}>Stream unavailable. Check connection or retry.</Text>
           </View>
         )}
       </View>

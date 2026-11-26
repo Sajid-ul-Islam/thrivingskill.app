@@ -17,7 +17,7 @@ import { triggerHaptic } from '../../utils/haptics';
 import { resolveLessonVideoData } from '../../data/lessonVideosRegistry';
 import { OfflineManager } from '../../services/offline/offlineManager';
 import { LessonsService, LessonDetail } from '../../services/api/lessonsService';
-import { NativeMedia3PlayerRef } from '../../components';
+import { NativeMedia3PlayerRef, WebViewPlayerController } from '../../components';
 import { Lesson } from '../../types';
 import { parseDurationToSeconds, extractZoomMeetingUrl } from './lessonHelpers';
 import type { PlayerTab } from './LessonPlayerTabsSection';
@@ -62,14 +62,11 @@ export function useLessonPlayerState({
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [aiTutorVisible, setAiTutorVisible] = useState(false);
   const nativePlayerRef = useRef<NativeMedia3PlayerRef | null>(null);
+  const webViewControllerRef = useRef<WebViewPlayerController | null>(null);
 
-  const [streamQuality, setStreamQuality] = useState('720p HD');
-  const [selectedDownloadQuality, setSelectedDownloadQuality] = useState('720p HD');
+  const [streamQuality, setStreamQuality] = useState('Auto');
   const [qualityModalVisible, setQualityModalVisible] = useState(false);
-  const [qualityModalMode, setQualityModalMode] = useState<'download' | 'streamQuality'>(
-    'download'
-  );
-  const [isDownloaded, setIsDownloaded] = useState(false);
+  const [isStudyGuideSaved, setIsStudyGuideSaved] = useState(false);
 
   const [quizModalVisible, setQuizModalVisible] = useState(false);
   const [quizPlayerVisible, setQuizPlayerVisible] = useState(false);
@@ -81,10 +78,13 @@ export function useLessonPlayerState({
   const [autoplayCountdown, setAutoplayCountdown] = useState<number | null>(null);
   const [unlockedCert, setUnlockedCert] = useState<any>(null);
   const [currentPositionSeconds, setCurrentPositionSeconds] = useState(0);
+  const [initialResumeSeconds, setInitialResumeSeconds] = useState(0);
+  const [reportedDurationSeconds, setReportedDurationSeconds] = useState(0);
   const [lessonDetail, setLessonDetail] = useState<LessonDetail | null>(null);
   const [isLoadingVideo, setIsLoadingVideo] = useState(true);
   const [isAccessBlocked, setIsAccessBlocked] = useState(false);
   const [isFlashcardsVisible, setIsFlashcardsVisible] = useState(false);
+  const [hasLiveTelemetry, setHasLiveTelemetry] = useState(false);
 
   const currentPosRef = useRef(currentPositionSeconds);
   currentPosRef.current = currentPositionSeconds;
@@ -92,6 +92,8 @@ export function useLessonPlayerState({
   const autoplayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const activeSecondsBufferRef = useRef(0);
+  const lastStudyTickSecRef = useRef<number | null>(null);
+  const lastSavedPosRef = useRef<number>(0);
   const checkpointTriggeredRef = useRef<Record<string, boolean>>({});
   const prefetchedNextLessonRef = useRef<string | null>(null);
   const isManualLandscapeRef = useRef(false);
@@ -141,6 +143,9 @@ export function useLessonPlayerState({
     let isMounted = true;
     setLessonDetail(null);
     setIsAccessBlocked(false);
+    setReportedDurationSeconds(0);
+    setHasLiveTelemetry(false);
+    lastStudyTickSecRef.current = null;
     if (!currentLesson?.id || !hasAccessIntent) {
       setIsLoadingVideo(false);
       return;
@@ -187,9 +192,10 @@ export function useLessonPlayerState({
       ? lessonDetail
       : null;
 
-  const totalLessonSeconds = parseDurationToSeconds(
+  const metaDurationSeconds = parseDurationToSeconds(
     activeLessonDetail?.duration || currentLesson?.duration
   );
+  const totalLessonSeconds = Math.max(metaDurationSeconds, reportedDurationSeconds);
 
   const mergedLessonForVideo = currentLesson
     ? {
@@ -208,18 +214,66 @@ export function useLessonPlayerState({
     mergedLessonForVideo
   );
   const hasPlayableVideo = resolvedLessonVideo.hasVideo && Boolean(resolvedLessonVideo.videoUrl);
+  const activeVideoIntro = resolvedLessonVideo.videoIntro;
+  const activeVideoUrl = resolvedLessonVideo.videoUrl;
+  const rawContent = activeLessonDetail?.content || currentLesson?.summary || '';
+  const zoomMeetingUrl = extractZoomMeetingUrl([
+    activeLessonDetail?.videoIntro,
+    currentLesson?.videoIntro,
+    activeVideoUrl,
+    rawContent,
+  ]);
+  const isDirectStream = !!(
+    activeVideoUrl && activeVideoUrl.match(/\.(mp4|m3u8|mpd|webm|aac|mp3|m4a)($|\?)/i)
+  );
 
   useEffect(() => {
     if (currentLesson?.id) {
-      OfflineManager.isLessonDownloaded(currentLesson.id).then(setIsDownloaded);
-      setCurrentPositionSeconds(getWatchPosition(courseId, currentLesson.id) || 0);
+      OfflineManager.isLessonDownloaded(currentLesson.id).then(setIsStudyGuideSaved);
+      const savedPos = getWatchPosition(courseId, currentLesson.id) || 0;
+      setCurrentPositionSeconds(savedPos);
+      setInitialResumeSeconds(savedPos);
+      lastSavedPosRef.current = savedPos;
       setAutoplayCountdown(null);
+      setIsPlaying(true);
     }
   }, [currentLesson?.id, courseId]);
 
   useEffect(() => {
     if (course?.category) recordCategoryInteraction(course.category);
   }, [course?.category]);
+
+  const completeCurrentLessonAndAdvance = () => {
+    if (!currentLesson || !course) return;
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+
+    const wasAlreadyCompleted = progress?.completedLessonIds.includes(currentLesson.id) || false;
+    markLessonCompleted(course.id, currentLesson.id);
+    flushStudyTimeBuffer();
+
+    if (!wasAlreadyCompleted) {
+      addXP(50);
+      unlockBadge('streak_champ');
+    }
+
+    const completedSet = new Set(progress?.completedLessonIds || []);
+    completedSet.add(currentLesson.id);
+    const allDone =
+      allLessons.length > 0 && allLessons.every((item) => completedSet.has(item.lesson.id));
+
+    if (allDone && isEnrolled) {
+      setIsPlaying(false);
+      if (!hasReviewedCourse(course.id)) setMandatoryReviewVisible(true);
+      else setCertModalVisible(true);
+    } else if (currentLessonIndex < allLessons.length - 1) {
+      setAutoplayCountdown(5);
+    } else {
+      setIsPlaying(false);
+    }
+  };
 
   useEffect(() => {
     if (autoplayCountdown === null) return;
@@ -247,6 +301,13 @@ export function useLessonPlayerState({
     };
   }, [autoplayCountdown, currentLessonIndex, allLessons, courseId]);
 
+  // Fallback elapsed timer ONLY for opaque generic iframes that emit no live player telemetry
+  const supportsTelemetry =
+    isDirectStream ||
+    resolvedLessonVideo.videoType === 'vimeo' ||
+    resolvedLessonVideo.videoType === 'youtube' ||
+    hasLiveTelemetry;
+
   useEffect(() => {
     if (
       !isPlaying ||
@@ -255,9 +316,11 @@ export function useLessonPlayerState({
       autoplayCountdown !== null ||
       !canPlayVideo ||
       isLoadingVideo ||
-      !hasPlayableVideo
-    )
+      !hasPlayableVideo ||
+      supportsTelemetry
+    ) {
       return;
+    }
 
     if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
     progressIntervalRef.current = setInterval(() => {
@@ -273,21 +336,7 @@ export function useLessonPlayerState({
       }
 
       if (next >= totalLessonSeconds && totalLessonSeconds > 0) {
-        if (progressIntervalRef.current) {
-          clearInterval(progressIntervalRef.current);
-          progressIntervalRef.current = null;
-        }
-        markLessonCompleted(course.id, currentLesson.id);
-        flushStudyTimeBuffer();
-        addXP(50);
-        unlockBadge('streak_champ');
-        if (currentLessonIndex >= allLessons.length - 1) {
-          setIsPlaying(false);
-          if (!hasReviewedCourse(course.id)) setMandatoryReviewVisible(true);
-          else setCertModalVisible(true);
-        } else {
-          setAutoplayCountdown(5);
-        }
+        completeCurrentLessonAndAdvance();
       }
     }, 1000);
 
@@ -307,24 +356,30 @@ export function useLessonPlayerState({
     course?.id,
     autoplayCountdown,
     totalLessonSeconds,
-    currentLessonIndex,
-    allLessons.length,
     canPlayVideo,
     isLoadingVideo,
     hasPlayableVideo,
+    supportsTelemetry,
   ]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
       if (nextAppState === 'background') {
         flushStudyTimeBuffer();
-        if (!isCommuteMode && !isPiPActive && !isSystemPiPActive && course && currentLesson) {
+        if (course && currentLesson) {
           recordWatchPosition(course.id, currentLesson.id, currentPosRef.current);
         }
       }
     });
     return () => subscription.remove();
-  }, [course, currentLesson, isCommuteMode, isPiPActive, isSystemPiPActive, recordWatchPosition]);
+  }, [course, currentLesson, recordWatchPosition]);
+
+  const handlePausePlayback = () => {
+    setIsPlaying(false);
+    flushStudyTimeBuffer();
+    if (nativePlayerRef.current) nativePlayerRef.current.pause();
+    if (webViewControllerRef.current) webViewControllerRef.current.pause();
+  };
 
   const handleTogglePlay = () => {
     triggerHaptic('light');
@@ -335,14 +390,10 @@ export function useLessonPlayerState({
       if (nextPlaying) nativePlayerRef.current.play();
       else nativePlayerRef.current.pause();
     }
-  };
-
-  const handleSeekOffset = (delta: number) => {
-    const next = Math.max(0, currentPosRef.current + delta);
-    currentPosRef.current = next;
-    setCurrentPositionSeconds(next);
-    nativePlayerRef.current?.seekTo(next);
-    if (course && currentLesson) recordWatchPosition(course.id, currentLesson.id, next);
+    if (webViewControllerRef.current) {
+      if (nextPlaying) webViewControllerRef.current.play();
+      else webViewControllerRef.current.pause();
+    }
   };
 
   const handleSeekTo = (sec: number) => {
@@ -351,21 +402,42 @@ export function useLessonPlayerState({
     currentPosRef.current = next;
     setCurrentPositionSeconds(next);
     nativePlayerRef.current?.seekTo(next);
+    webViewControllerRef.current?.seekTo(next);
     if (course && currentLesson) recordWatchPosition(course.id, currentLesson.id, next);
   };
 
-  const activeVideoIntro = resolvedLessonVideo.videoIntro;
-  const activeVideoUrl = resolvedLessonVideo.videoUrl;
-  const rawContent = activeLessonDetail?.content || currentLesson?.summary || '';
-  const zoomMeetingUrl = extractZoomMeetingUrl([
-    activeLessonDetail?.videoIntro,
-    currentLesson?.videoIntro,
-    activeVideoUrl,
-    rawContent,
-  ]);
-  const isDirectStream = !!(
-    activeVideoUrl && activeVideoUrl.match(/\.(mp4|m3u8|mpd|webm|aac|mp3|m4a)($|\?)/i)
-  );
+  const handleSeekOffset = (delta: number) => {
+    handleSeekTo(currentPosRef.current + delta);
+  };
+
+  const handleLiveProgressUpdate = (currSec: number, reportedDuration?: number) => {
+    setHasLiveTelemetry(true);
+    if (reportedDuration && reportedDuration > 0) {
+      const roundedDur = Math.round(reportedDuration);
+      setReportedDurationSeconds((prev) => (prev === roundedDur ? prev : roundedDur));
+    }
+
+    const sec = Math.max(0, Math.floor(currSec));
+    currentPosRef.current = sec;
+    setCurrentPositionSeconds(sec);
+
+    if (course && currentLesson && Math.abs(sec - lastSavedPosRef.current) >= 5) {
+      lastSavedPosRef.current = sec;
+      recordWatchPosition(course.id, currentLesson.id, sec);
+    }
+
+    if (lastStudyTickSecRef.current === null || sec < lastStudyTickSecRef.current) {
+      lastStudyTickSecRef.current = sec;
+    } else if (sec > lastStudyTickSecRef.current) {
+      const delta = Math.min(5, sec - lastStudyTickSecRef.current);
+      lastStudyTickSecRef.current = sec;
+      activeSecondsBufferRef.current += delta;
+      if (activeSecondsBufferRef.current >= 60) {
+        activeSecondsBufferRef.current -= 60;
+        recordStudyTime(1);
+      }
+    }
+  };
 
   const handleTriggerPiP = async () => {
     triggerHaptic('medium');
@@ -445,15 +517,43 @@ export function useLessonPlayerState({
         type: 'info',
       });
     }
-    const completedCount = isAlreadyMarked
-      ? progress?.completedLessonIds.length || 0
-      : (progress?.completedLessonIds.length || 0) + 1;
-    if (completedCount >= allLessons.length) {
+    const completedSet = new Set(progress?.completedLessonIds || []);
+    completedSet.add(currentLesson.id);
+    const allCompleted =
+      allLessons.length > 0 && allLessons.every((item) => completedSet.has(item.lesson.id));
+    if (allCompleted && isEnrolled) {
       if (!hasReviewedCourse(course.id)) setMandatoryReviewVisible(true);
       else setCertModalVisible(true);
-    } else {
+    } else if (currentLessonIndex < allLessons.length - 1) {
       setAutoplayCountdown(5);
     }
+  };
+
+  const handleSaveStudyGuideOffline = async () => {
+    if (!currentLesson || !course) return;
+    if (isStudyGuideSaved) {
+      await OfflineManager.removeDownloadedLesson(currentLesson.id);
+      setIsStudyGuideSaved(false);
+      showToast({
+        message: isBangla ? 'অফলাইন স্টাডি গাইড সরানো হয়েছে' : 'Removed saved study guide',
+        type: 'info',
+      });
+      return;
+    }
+
+    await OfflineManager.saveLessonOffline(
+      course.id,
+      currentLesson,
+      rawContent || undefined,
+      course.title
+    );
+    setIsStudyGuideSaved(true);
+    showToast({
+      message: isBangla
+        ? 'অফলাইন স্টাডি গাইডে সেভ হয়েছে (নোটস শুধুমাত্র)'
+        : 'Study guide saved for offline reading',
+      type: 'success',
+    });
   };
 
   const handleSubmitReview = async (rating: number, feedback: string) => {
@@ -475,13 +575,15 @@ export function useLessonPlayerState({
   const cycleSpeed = () => {
     const speeds = ['1.0x', '1.25x', '1.5x', '2.0x', '0.75x'];
     const next = speeds[(speeds.indexOf(playbackSpeed) + 1) % speeds.length];
+    const numericRate = parseFloat(next) || 1.0;
     setPlaybackSpeed(next);
+    webViewControllerRef.current?.setPlaybackRate(numericRate);
     showToast({ message: `Playback speed: ${next}`, type: 'info' });
   };
 
   const handleOpenNotesFAB = () => {
     triggerHaptic('medium');
-    setIsPlaying(false);
+    handlePausePlayback();
     setIsQuickNoteOpen(true);
   };
 
@@ -535,6 +637,7 @@ export function useLessonPlayerState({
     progress,
     isLessonCompleted,
     lessonNotes,
+    rawLessonContent: rawContent,
     windowDimensions,
     isDeviceLandscape,
     isPlaying,
@@ -556,16 +659,12 @@ export function useLessonPlayerState({
     aiTutorVisible,
     setAiTutorVisible,
     nativePlayerRef,
+    webViewControllerRef,
     streamQuality,
     setStreamQuality,
-    selectedDownloadQuality,
-    setSelectedDownloadQuality,
     qualityModalVisible,
     setQualityModalVisible,
-    qualityModalMode,
-    setQualityModalMode,
-    isDownloaded,
-    setIsDownloaded,
+    isStudyGuideSaved,
     quizModalVisible,
     setQuizModalVisible,
     quizPlayerVisible,
@@ -584,6 +683,7 @@ export function useLessonPlayerState({
     setAutoplayCountdown,
     currentPositionSeconds,
     setCurrentPositionSeconds,
+    initialResumeSeconds,
     isLoadingVideo,
     isFlashcardsVisible,
     setIsFlashcardsVisible,
@@ -601,9 +701,13 @@ export function useLessonPlayerState({
     TABS,
     userCert,
     handleTogglePlay,
+    handlePausePlayback,
     handleRewind: (sec: number = 10) => handleSeekOffset(-sec),
     handleForward: (sec: number = 10) => handleSeekOffset(sec),
     handleSeekTo,
+    handleLiveProgressUpdate,
+    completeCurrentLessonAndAdvance,
+    handleSaveStudyGuideOffline,
     handleTriggerPiP,
     handleToggleFullscreen,
     handleNextLesson,
@@ -616,7 +720,6 @@ export function useLessonPlayerState({
     handleTabScrollEnd,
     handleOpenStreamQualityModal: () => {
       triggerHaptic('light');
-      setQualityModalMode('streamQuality');
       setQualityModalVisible(true);
     },
     markLessonCompleted,

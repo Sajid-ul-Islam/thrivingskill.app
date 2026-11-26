@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { triggerHaptic } from '../../utils/haptics';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
@@ -19,6 +20,7 @@ interface LessonTranscriptTabProps {
   lessonTitle: string;
   instructorName: string;
   lessonSummary?: string;
+  lessonContent?: string;
   durationSeconds?: number;
   onSeekTo: (seconds: number) => void;
 }
@@ -29,85 +31,68 @@ const formatSeconds = (sec: number): string => {
   return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 };
 
+function parseTimestampPrefix(line: string): { seconds: number; text: string } | null {
+  const match = line.match(/^\[?(\d{1,2}):(\d{2})(?::(\d{2}))?\]?\s*(?:[-–—:]\s*)?(.+)$/);
+  if (!match) return null;
+  const hasHours = match[3] !== undefined;
+  const seconds = hasHours
+    ? Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3])
+    : Number(match[1]) * 60 + Number(match[2]);
+  return { seconds, text: match[4].trim() };
+}
+
 export const LessonTranscriptTab: React.FC<LessonTranscriptTabProps> = ({
   currentPositionSeconds,
   lessonTitle,
   instructorName,
   lessonSummary,
-  durationSeconds = 600,
+  lessonContent,
+  durationSeconds = 0,
   onSeekTo,
 }) => {
   const { colors, isDark } = useTheme();
+  const { isBangla } = useLanguage();
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  // Generate structured, realistic timestamped transcript segments
+  // Build lesson outline / transcript strictly from verified lesson content & summary (never fabricated prose)
   const transcriptLines: TranscriptLine[] = useMemo(() => {
-    const total = Math.max(300, durationSeconds);
-    const step = Math.max(30, Math.floor(total / 8));
+    const combinedRaw = [lessonContent, lessonSummary]
+      .filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
+      .join('\n');
 
-    const defaultLines = [
-      {
-        id: 'ts-1',
-        seconds: 0,
-        timestamp: '00:00',
-        speaker: instructorName || 'Lead Instructor',
-        text: `Welcome to this lecture on "${lessonTitle}". In this session, we will break down the essential methodologies and core principles step-by-step.`,
-      },
-      {
-        id: 'ts-2',
-        seconds: Math.min(step, total - 10),
-        timestamp: formatSeconds(Math.min(step, total - 10)),
-        speaker: instructorName || 'Lead Instructor',
-        text:
-          lessonSummary ||
-          'Let us first examine the strategic foundation and architectural context needed to apply these concepts in production environments.',
-      },
-      {
-        id: 'ts-3',
-        seconds: Math.min(step * 2, total - 10),
-        timestamp: formatSeconds(Math.min(step * 2, total - 10)),
-        speaker: instructorName || 'Lead Instructor',
-        text: 'Notice how separating concerns allows teams to scale without operational bottlenecks or cascading failures.',
-      },
-      {
-        id: 'ts-4',
-        seconds: Math.min(step * 3, total - 10),
-        timestamp: formatSeconds(Math.min(step * 3, total - 10)),
-        speaker: instructorName || 'Lead Instructor',
-        text: 'Here is a live demonstration showing how the input parameters interact with our core evaluation loop.',
-      },
-      {
-        id: 'ts-5',
-        seconds: Math.min(step * 4, total - 10),
-        timestamp: formatSeconds(Math.min(step * 4, total - 10)),
-        speaker: instructorName || 'Lead Instructor',
-        text: 'When testing these edge cases, always verify that fallbacks and recovery mechanisms maintain zero downtime.',
-      },
-      {
-        id: 'ts-6',
-        seconds: Math.min(step * 5, total - 10),
-        timestamp: formatSeconds(Math.min(step * 5, total - 10)),
-        speaker: instructorName || 'Lead Instructor',
-        text: 'Next, let us analyze real-world benchmark data to observe the performance gains under heavy concurrent load.',
-      },
-      {
-        id: 'ts-7',
-        seconds: Math.min(step * 6, total - 10),
-        timestamp: formatSeconds(Math.min(step * 6, total - 10)),
-        speaker: instructorName || 'Lead Instructor',
-        text: 'To summarize this module: focus on consistency, validate inputs thoroughly, and monitor your key metrics continuously.',
-      },
-      {
-        id: 'ts-8',
-        seconds: Math.min(step * 7, total - 5),
-        timestamp: formatSeconds(Math.min(step * 7, total - 5)),
-        speaker: instructorName || 'Lead Instructor',
-        text: 'In the next lecture, we will proceed into practical hands-on exercises and implement this workflow in code. See you there!',
-      },
-    ];
+    if (!combinedRaw) {
+      return [];
+    }
 
-    return defaultLines;
-  }, [lessonTitle, instructorName, lessonSummary, durationSeconds]);
+    const lines = combinedRaw
+      .split(/\r?\n|(?<=[.!?।])\s+/)
+      .map((s) => s.trim())
+      .filter((s) => s.length >= 6 && !/^https?:\/\//i.test(s));
+
+    if (lines.length === 0) {
+      return [];
+    }
+
+    const speaker = instructorName || lessonTitle || 'Instructor';
+    const parsedExplicit = lines.map(parseTimestampPrefix);
+    const effectiveTotal = Math.max(60, durationSeconds || lines.length * 45);
+    const step = Math.max(10, Math.floor(effectiveTotal / lines.length));
+
+    return lines.map((rawLine, index) => {
+      const explicit = parsedExplicit[index];
+      const sec = explicit
+        ? explicit.seconds
+        : Math.min(index * step, Math.max(0, effectiveTotal - 5));
+      const cleanText = explicit ? explicit.text : rawLine;
+      return {
+        id: `ts-${index + 1}`,
+        seconds: sec,
+        timestamp: formatSeconds(sec),
+        speaker,
+        text: cleanText,
+      };
+    });
+  }, [lessonTitle, instructorName, lessonSummary, lessonContent, durationSeconds]);
 
   // Find currently active segment
   const activeIndex = useMemo(() => {
@@ -164,7 +149,16 @@ export const LessonTranscriptTab: React.FC<LessonTranscriptTabProps> = ({
         contentContainerStyle={styles.scrollList}
         nestedScrollEnabled
       >
-        {filteredLines.length === 0 ? (
+        {transcriptLines.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Ionicons name="document-text-outline" size={36} color={colors.textLight} />
+            <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+              {isBangla
+                ? 'এই লেসনের জন্য এখনো কোনো লিখিত ট্রান্সক্রিপ্ট বা পাঠ-নোট যুক্ত করা হয়নি। ভিডিও চলাকালীন গুরুত্বপূর্ণ মুহূর্ত সংরক্ষণ করতে "নোটস" ট্যাব ব্যবহার করুন।'
+                : 'No written transcript is published for this lesson yet. Use the Notes tab to save timestamped bookmarks while watching.'}
+            </Text>
+          </View>
+        ) : filteredLines.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Ionicons name="document-text-outline" size={36} color={colors.textLight} />
             <Text style={[styles.emptyText, { color: colors.textMuted }]}>

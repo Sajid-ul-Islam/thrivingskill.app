@@ -72,6 +72,24 @@ export function isJwtTokenExpired(token: string, nowMs: number = Date.now()): bo
   return payload.exp * 1000 <= nowMs;
 }
 
+export function getJwtRemainingMs(token: string, nowMs: number = Date.now()): number | null {
+  const payload = decodeJwtPayload(token);
+  if (!payload || typeof payload.exp !== 'number' || !Number.isFinite(payload.exp)) {
+    return null;
+  }
+  return payload.exp * 1000 - nowMs;
+}
+
+export function isJwtExpiringSoon(
+  token: string,
+  thresholdMs: number = 15 * 60 * 1000,
+  nowMs: number = Date.now()
+): boolean {
+  const remaining = getJwtRemainingMs(token, nowMs);
+  if (remaining === null) return false;
+  return remaining <= thresholdMs;
+}
+
 function isNetworkFailureError(err: any): boolean {
   const msg = String(err?.message || '');
   return (

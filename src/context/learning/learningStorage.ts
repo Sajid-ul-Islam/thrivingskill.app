@@ -3,6 +3,7 @@ import { Certificate, Note, UserProgress } from '../../types';
 
 export const LEARNING_STORAGE_KEYS = {
   PROGRESS: '@thriving_skill_progress',
+  WATCH_POSITIONS: '@thriving_skill_watch_positions',
   BOOKMARKS: '@thriving_skill_bookmarks',
   NOTES: '@thriving_skill_notes',
   WORKSHOPS: '@thriving_skill_rsvps',
@@ -14,6 +15,7 @@ export const LEARNING_STORAGE_KEYS = {
 
 export interface HydratedLearningScope {
   userProgress: Record<string, UserProgress>;
+  watchPositions: Record<string, Record<string, number>>;
   bookmarks: string[];
   notes: Note[];
   rsvpWorkshops: string[];
@@ -45,6 +47,7 @@ export async function persistUserLearningKey(
 export async function hydrateUserLearningScope(userScope: string): Promise<HydratedLearningScope> {
   const [
     savedProgress,
+    savedWatchPositions,
     savedBookmarks,
     savedNotes,
     savedWorkshops,
@@ -54,6 +57,7 @@ export async function hydrateUserLearningScope(userScope: string): Promise<Hydra
     savedCertificates,
   ] = await Promise.all([
     AsyncStorage.getItem(`${LEARNING_STORAGE_KEYS.PROGRESS}${userScope}`),
+    AsyncStorage.getItem(`${LEARNING_STORAGE_KEYS.WATCH_POSITIONS}${userScope}`),
     AsyncStorage.getItem(`${LEARNING_STORAGE_KEYS.BOOKMARKS}${userScope}`),
     AsyncStorage.getItem(`${LEARNING_STORAGE_KEYS.NOTES}${userScope}`),
     AsyncStorage.getItem(`${LEARNING_STORAGE_KEYS.WORKSHOPS}${userScope}`),
@@ -65,6 +69,7 @@ export async function hydrateUserLearningScope(userScope: string): Promise<Hydra
 
   return {
     userProgress: safeParseJson<Record<string, UserProgress>>(savedProgress, {}),
+    watchPositions: safeParseJson<Record<string, Record<string, number>>>(savedWatchPositions, {}),
     bookmarks: safeParseJson<string[]>(savedBookmarks, []),
     notes: safeParseJson<Note[]>(savedNotes, []),
     rsvpWorkshops: safeParseJson<string[]>(savedWorkshops, []),

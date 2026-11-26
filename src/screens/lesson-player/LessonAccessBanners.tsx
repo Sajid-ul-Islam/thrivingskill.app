@@ -47,28 +47,30 @@ export const LessonAccessBanners: React.FC<LessonAccessBannersProps> = ({
             : 'Master bypass: Unrestricted playback of all course videos'}
         </Text>
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-          <TouchableOpacity
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 5,
-              backgroundColor: '#E34234',
-              paddingHorizontal: 10,
-              paddingVertical: 5,
-              borderRadius: 6,
-            }}
-            onPress={() => {
-              triggerHaptic('success');
-              onUnlockTestCert();
-            }}
-            accessibilityRole="button"
-            accessibilityLabel="Test Certificate Generation"
-          >
-            <Ionicons name="ribbon" size={12} color="#FFFFFF" />
-            <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '800' }}>
-              {isBangla ? 'সার্টিফিকেট টেস্ট' : 'Test Certificate'}
-            </Text>
-          </TouchableOpacity>
+          {typeof __DEV__ !== 'undefined' && __DEV__ && (
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 5,
+                backgroundColor: '#E34234',
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 6,
+              }}
+              onPress={() => {
+                triggerHaptic('success');
+                onUnlockTestCert();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Test Certificate Generation"
+            >
+              <Ionicons name="ribbon" size={12} color="#FFFFFF" />
+              <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '800' }}>
+                {isBangla ? 'সার্টিফিকেট টেস্ট' : 'Test Certificate'}
+              </Text>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             style={{

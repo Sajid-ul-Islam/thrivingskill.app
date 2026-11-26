@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Linking } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { WebView } from 'react-native-webview';
@@ -15,30 +15,92 @@ import { VideoPlayerGestureOverlay } from './VideoPlayerGestureOverlay';
 import { LessonCommuteCard } from './LessonCommuteCard';
 import { Lesson, Course } from '../../types';
 
+export interface WebViewPlayerController {
+  play: () => void;
+  pause: () => void;
+  seekTo: (seconds: number) => void;
+  setPlaybackRate: (rate: number) => void;
+}
+
+function appendOrReplaceQueryParams(url: string, params: Record<string, string>): string {
+  const decodedUrl = url.replace(/&amp;/gi, '&');
+  const hashSplit = decodedUrl.split('#');
+  const baseWithQuery = hashSplit[0];
+  const fragment = hashSplit[1] ? `#${hashSplit[1]}` : '';
+  const qIdx = baseWithQuery.indexOf('?');
+  const base = qIdx >= 0 ? baseWithQuery.slice(0, qIdx) : baseWithQuery;
+  const rawQuery = qIdx >= 0 ? baseWithQuery.slice(qIdx + 1) : '';
+  const searchParams = new URLSearchParams(rawQuery);
+  searchParams.delete('controls');
+  Object.entries(params).forEach(([key, val]) => {
+    if (!searchParams.has(key)) {
+      searchParams.set(key, val);
+    }
+  });
+  const qs = searchParams.toString();
+  return `${base}${qs ? `?${qs}` : ''}${fragment}`;
+}
+
 /**
- * Builds sanitized embed HTML for lesson videos (iframe validation + HTTPS stream guard).
+ * Builds sanitized embed HTML for lesson videos with bidirectional Vimeo/YouTube/HTML5
+ * playback telemetry, resume-seek support, and strict HTTPS origin guards.
  */
-export function buildLessonVideoHtml(activeVideoIntro?: string, activeVideoUrl?: string): string {
+export function buildLessonVideoHtml(
+  activeVideoIntro?: string,
+  activeVideoUrl?: string,
+  initialSeekSeconds: number = 0,
+  initialPlaybackRate: number = 1
+): string {
   let embedMarkup = '';
+  let detectedHost: 'vimeo' | 'youtube' | 'video' | 'other' = 'other';
+
   if (activeVideoIntro && activeVideoIntro.includes('<iframe')) {
     const iframeSrcMatch = activeVideoIntro.match(/src=["']([^"']+)["']/i);
+    const rawSrc = (iframeSrcMatch?.[1] || '')
+      .replace(/&amp;|&#0*38;/gi, '&')
+      .replace(/&quot;/gi, '"');
     const isSafeIframe =
-      !iframeSrcMatch ||
-      (/^(https:)?\/\//i.test(iframeSrcMatch[1]) && !/javascript:/i.test(iframeSrcMatch[1]));
+      !iframeSrcMatch || (/^(https:)?\/\//i.test(rawSrc) && !/javascript:/i.test(rawSrc));
     if (isSafeIframe) {
-      embedMarkup = activeVideoIntro
-        .replace(/src=["']\/\//gi, 'src="https://')
-        .replace(/width="[^"]*"/gi, 'width="100%"')
-        .replace(/height="[^"]*"/gi, 'height="100%"');
-      if (!embedMarkup.includes('allow=')) {
-        embedMarkup = embedMarkup.replace(
-          '<iframe',
-          '<iframe allow="autoplay; fullscreen; picture-in-picture" allowfullscreen'
-        );
+      let normalizedSrc = rawSrc.replace(/^\/\//, 'https://');
+      if (normalizedSrc.includes('vimeo.com')) {
+        detectedHost = 'vimeo';
+        normalizedSrc = appendOrReplaceQueryParams(normalizedSrc, {
+          autoplay: '1',
+          playsinline: '1',
+          title: '0',
+          byline: '0',
+          portrait: '0',
+          dnt: '1',
+        });
+      } else if (
+        normalizedSrc.includes('youtube.com') ||
+        normalizedSrc.includes('youtube-nocookie.com')
+      ) {
+        detectedHost = 'youtube';
+        normalizedSrc = appendOrReplaceQueryParams(normalizedSrc, {
+          autoplay: '1',
+          controls: '1',
+          playsinline: '1',
+          modestbranding: '1',
+          rel: '0',
+          enablejsapi: '1',
+          origin: 'https://thrivingskill.com',
+        });
+      }
+      const escapedSrc = normalizedSrc.replace(/"/g, '&quot;');
+      if (escapedSrc) {
+        embedMarkup = `<iframe id="tsPlayerFrame" src="${escapedSrc}" width="100%" height="100%" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
+      } else {
+        embedMarkup = activeVideoIntro
+          .replace(/src=["']\/\//gi, 'src="https://')
+          .replace(/width="[^"]*"/gi, 'width="100%"')
+          .replace(/height="[^"]*"/gi, 'height="100%"');
       }
     }
   } else if (activeVideoUrl) {
     if (activeVideoUrl.includes('vimeo.com')) {
+      detectedHost = 'vimeo';
       let vSrc = activeVideoUrl;
       if (!activeVideoUrl.includes('player.vimeo.com/video/')) {
         const vMatch = activeVideoUrl.match(/vimeo\.com\/(\d+)/);
@@ -46,27 +108,41 @@ export function buildLessonVideoHtml(activeVideoIntro?: string, activeVideoUrl?:
         vSrc = vId ? `https://player.vimeo.com/video/${vId}` : '';
       }
       if (vSrc) {
-        const joinChar = vSrc.includes('?') ? '&' : '?';
-        const vUrlWithParams = `${vSrc}${joinChar}autoplay=1&controls=0&title=0&byline=0&portrait=0&dnt=1`;
-        embedMarkup = `<iframe src="${vUrlWithParams}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
+        const vUrlWithParams = appendOrReplaceQueryParams(vSrc, {
+          autoplay: '1',
+          playsinline: '1',
+          title: '0',
+          byline: '0',
+          portrait: '0',
+          dnt: '1',
+        });
+        embedMarkup = `<iframe id="tsPlayerFrame" src="${vUrlWithParams}" width="100%" height="100%" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
       }
     } else if (activeVideoUrl.includes('youtube.com') || activeVideoUrl.includes('youtu.be')) {
+      detectedHost = 'youtube';
       let ytId = '';
       const yMatch = activeVideoUrl.match(
-        /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/
+        /(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/
       );
       if (yMatch && yMatch[1]) ytId = yMatch[1];
       const ytSrc = ytId
-        ? `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&controls=0&playsinline=1&modestbranding=1&rel=0&enablejsapi=1`
-        : activeVideoUrl;
-      embedMarkup = `<iframe src="${ytSrc}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
+        ? `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&controls=1&playsinline=1&modestbranding=1&rel=0&enablejsapi=1&origin=https://thrivingskill.com`
+        : appendOrReplaceQueryParams(activeVideoUrl, {
+            autoplay: '1',
+            controls: '1',
+            playsinline: '1',
+            enablejsapi: '1',
+            origin: 'https://thrivingskill.com',
+          });
+      embedMarkup = `<iframe id="tsPlayerFrame" src="${ytSrc}" width="100%" height="100%" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
     } else if (activeVideoUrl.match(/\.(mp4|m3u8|mpd|webm)($|\?)/i)) {
-      embedMarkup = `<video id="media3Player" src="${activeVideoUrl}" playsinline webkit-playsinline autoplay style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;"></video>`;
+      detectedHost = 'video';
+      embedMarkup = `<video id="media3Player" src="${activeVideoUrl}" controls playsinline webkit-playsinline autoplay style="position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;background:#000;"></video>`;
     } else {
       const isSafeHttps = activeVideoUrl.startsWith('https://');
       if (isSafeHttps) {
         const escapedUrl = activeVideoUrl.replace(/"/g, '&quot;');
-        embedMarkup = `<iframe src="${escapedUrl}" width="100%" height="100%" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
+        embedMarkup = `<iframe id="tsPlayerFrame" src="${escapedUrl}" width="100%" height="100%" frameborder="0" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; picture-in-picture; encrypted-media" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe>`;
       } else {
         embedMarkup = `<div style="color:#FFF;font-family:system-ui,sans-serif;text-align:center;padding:40px 20px;"><div style="font-size:32px;margin-bottom:8px;">🔒</div><div>Secure stream required (HTTPS only).</div></div>`;
       }
@@ -75,10 +151,22 @@ export function buildLessonVideoHtml(activeVideoIntro?: string, activeVideoUrl?:
     embedMarkup = `<div style="color:#FFF;font-family:system-ui,sans-serif;text-align:center;padding:40px 20px;"><div style="font-size:28px;margin-bottom:8px;">🎬</div><div>Video coming soon</div></div>`;
   }
 
+  const safeInitialSeek = Math.max(0, Math.floor(initialSeekSeconds || 0));
+  const safeInitialRate =
+    Number.isFinite(initialPlaybackRate) && initialPlaybackRate > 0 ? initialPlaybackRate : 1;
+
+  const sdkScriptTag =
+    detectedHost === 'vimeo'
+      ? '<script src="https://player.vimeo.com/api/player.js" async></script>'
+      : detectedHost === 'youtube'
+        ? '<script src="https://www.youtube.com/iframe_api" async></script>'
+        : '';
+
   return `<!DOCTYPE html>
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <style>
     * { box-sizing: border-box; }
     html, body {
@@ -111,11 +199,203 @@ export function buildLessonVideoHtml(activeVideoIntro?: string, activeVideoUrl?:
       border: 0;
     }
   </style>
+  ${sdkScriptTag}
 </head>
 <body>
   <div class="video-wrapper">
     ${embedMarkup}
   </div>
+  <script>
+    (function() {
+      var initialSeek = ${safeInitialSeek};
+      var initialRate = ${safeInitialRate};
+      var resumeApplied = false;
+      var vimeoPlayer = null;
+      var ytPlayer = null;
+      var ytPollId = null;
+
+      function post(payload) {
+        try {
+          if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+            window.ReactNativeWebView.postMessage(JSON.stringify(payload));
+          }
+        } catch (e) {}
+      }
+
+      window.__TS_PLAYER__ = {
+        play: function() {
+          try {
+            if (vimeoPlayer) { vimeoPlayer.play().catch(function() {}); }
+            else if (ytPlayer && ytPlayer.playVideo) { ytPlayer.playVideo(); }
+            else {
+              var v = document.getElementById('media3Player');
+              if (v && v.play) v.play();
+            }
+          } catch (e) {}
+        },
+        pause: function() {
+          try {
+            if (vimeoPlayer) { vimeoPlayer.pause().catch(function() {}); }
+            else if (ytPlayer && ytPlayer.pauseVideo) { ytPlayer.pauseVideo(); }
+            else {
+              var v = document.getElementById('media3Player');
+              if (v && v.pause) v.pause();
+            }
+          } catch (e) {}
+        },
+        seekTo: function(sec) {
+          var target = Math.max(0, Number(sec) || 0);
+          try {
+            if (vimeoPlayer) { vimeoPlayer.setCurrentTime(target).catch(function() {}); }
+            else if (ytPlayer && ytPlayer.seekTo) { ytPlayer.seekTo(target, true); }
+            else {
+              var v = document.getElementById('media3Player');
+              if (v) v.currentTime = target;
+            }
+          } catch (e) {}
+        },
+        setRate: function(rate) {
+          var targetRate = Number(rate) || 1;
+          try {
+            if (vimeoPlayer) { vimeoPlayer.setPlaybackRate(targetRate).catch(function() {}); }
+            else if (ytPlayer && ytPlayer.setPlaybackRate) { ytPlayer.setPlaybackRate(targetRate); }
+            else {
+              var v = document.getElementById('media3Player');
+              if (v) v.playbackRate = targetRate;
+            }
+          } catch (e) {}
+        }
+      };
+
+      function applyInitialSeekAndRate(duration) {
+        if (resumeApplied) return;
+        resumeApplied = true;
+        if (initialSeek > 2 && (!duration || initialSeek < duration - 5)) {
+          window.__TS_PLAYER__.seekTo(initialSeek);
+        }
+        if (initialRate && initialRate !== 1) {
+          window.__TS_PLAYER__.setRate(initialRate);
+        }
+      }
+
+      var videoEl = document.getElementById('media3Player');
+      if (videoEl) {
+        videoEl.addEventListener('loadedmetadata', function() {
+          var dur = Number(videoEl.duration) || 0;
+          applyInitialSeekAndRate(dur);
+          post({ type: 'VIDEO_LOADED', duration: dur, provider: 'html5' });
+        });
+        videoEl.addEventListener('play', function() {
+          post({ type: 'PLAY_STATE', playing: true, currentTime: Number(videoEl.currentTime) || 0, duration: Number(videoEl.duration) || 0 });
+        });
+        videoEl.addEventListener('pause', function() {
+          post({ type: 'PLAY_STATE', playing: false, currentTime: Number(videoEl.currentTime) || 0, duration: Number(videoEl.duration) || 0 });
+        });
+        videoEl.addEventListener('timeupdate', function() {
+          post({ type: 'PROGRESS', currentTime: Number(videoEl.currentTime) || 0, duration: Number(videoEl.duration) || 0 });
+        });
+        videoEl.addEventListener('ended', function() {
+          post({ type: 'VIDEO_ENDED', currentTime: Number(videoEl.duration) || 0, duration: Number(videoEl.duration) || 0 });
+        });
+        videoEl.addEventListener('error', function() {
+          post({ type: 'VIDEO_ERROR', message: 'HTML5 video stream failed to load' });
+        });
+      }
+
+      function attachVimeo() {
+        var frame = document.getElementById('tsPlayerFrame');
+        if (!frame || !window.Vimeo || !window.Vimeo.Player || vimeoPlayer) return false;
+        try {
+          vimeoPlayer = new window.Vimeo.Player(frame);
+          vimeoPlayer.on('loaded', function() {
+            vimeoPlayer.getDuration().then(function(dur) {
+              var cleanDur = Number(dur) || 0;
+              applyInitialSeekAndRate(cleanDur);
+              post({ type: 'VIDEO_LOADED', duration: cleanDur, provider: 'vimeo' });
+            }).catch(function() {
+              post({ type: 'VIDEO_LOADED', duration: 0, provider: 'vimeo' });
+            });
+          });
+          vimeoPlayer.on('play', function(data) {
+            post({ type: 'PLAY_STATE', playing: true, currentTime: (data && Number(data.seconds)) || 0, duration: (data && Number(data.duration)) || 0 });
+          });
+          vimeoPlayer.on('pause', function(data) {
+            post({ type: 'PLAY_STATE', playing: false, currentTime: (data && Number(data.seconds)) || 0, duration: (data && Number(data.duration)) || 0 });
+          });
+          vimeoPlayer.on('timeupdate', function(data) {
+            if (!data) return;
+            post({ type: 'PROGRESS', currentTime: Number(data.seconds) || 0, duration: Number(data.duration) || 0 });
+          });
+          vimeoPlayer.on('ended', function(data) {
+            post({ type: 'VIDEO_ENDED', currentTime: (data && Number(data.duration)) || 0, duration: (data && Number(data.duration)) || 0 });
+          });
+          vimeoPlayer.on('error', function(err) {
+            post({ type: 'VIDEO_ERROR', message: (err && (err.message || err.name)) || 'Vimeo playback error' });
+          });
+          return true;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      if ('${detectedHost}' === 'vimeo') {
+        var vimeoTries = 0;
+        var vimeoWait = setInterval(function() {
+          vimeoTries++;
+          if (attachVimeo() || vimeoTries > 30) {
+            clearInterval(vimeoWait);
+          }
+        }, 250);
+      }
+
+      if ('${detectedHost}' === 'youtube') {
+        window.onYouTubeIframeAPIReady = function() {
+          var frame = document.getElementById('tsPlayerFrame');
+          if (!frame || !window.YT || !window.YT.Player) return;
+          try {
+            ytPlayer = new window.YT.Player('tsPlayerFrame', {
+              events: {
+                onReady: function(ev) {
+                  var dur = ev && ev.target && ev.target.getDuration ? Number(ev.target.getDuration()) || 0 : 0;
+                  applyInitialSeekAndRate(dur);
+                  post({ type: 'VIDEO_LOADED', duration: dur, provider: 'youtube' });
+                },
+                onStateChange: function(ev) {
+                  if (!ev) return;
+                  var dur = ytPlayer && ytPlayer.getDuration ? Number(ytPlayer.getDuration()) || 0 : 0;
+                  var cur = ytPlayer && ytPlayer.getCurrentTime ? Number(ytPlayer.getCurrentTime()) || 0 : 0;
+                  if (ev.data === window.YT.PlayerState.PLAYING) {
+                    post({ type: 'PLAY_STATE', playing: true, currentTime: cur, duration: dur });
+                    if (ytPollId) clearInterval(ytPollId);
+                    ytPollId = setInterval(function() {
+                      if (!ytPlayer || !ytPlayer.getCurrentTime) return;
+                      post({ type: 'PROGRESS', currentTime: Number(ytPlayer.getCurrentTime()) || 0, duration: Number(ytPlayer.getDuration()) || dur });
+                    }, 500);
+                  } else if (ev.data === window.YT.PlayerState.PAUSED) {
+                    if (ytPollId) { clearInterval(ytPollId); ytPollId = null; }
+                    post({ type: 'PLAY_STATE', playing: false, currentTime: cur, duration: dur });
+                  } else if (ev.data === window.YT.PlayerState.ENDED) {
+                    if (ytPollId) { clearInterval(ytPollId); ytPollId = null; }
+                    post({ type: 'VIDEO_ENDED', currentTime: dur, duration: dur });
+                  }
+                },
+                onError: function(ev) {
+                  post({ type: 'VIDEO_ERROR', message: 'YouTube embed error (' + (ev && ev.data) + ')' });
+                }
+              }
+            });
+          } catch (e) {}
+        };
+      }
+
+      var genericFrame = document.getElementById('tsPlayerFrame');
+      if (genericFrame) {
+        genericFrame.addEventListener('load', function() {
+          post({ type: 'IFRAME_READY', provider: '${detectedHost}' });
+        });
+      }
+    })();
+  </script>
 </body>
 </html>`;
 }
@@ -132,6 +412,7 @@ interface LessonVideoContainerProps {
   isPlaying: boolean;
   playbackSpeed: string;
   streamQuality: string;
+  initialPositionSeconds?: number;
   isFullscreen: boolean;
   isDeviceLandscape: boolean;
   isScreenLocked: boolean;
@@ -149,11 +430,13 @@ interface LessonVideoContainerProps {
   hasPrevLesson: boolean;
   hasNextLesson: boolean;
   nativePlayerRef: React.RefObject<NativeMedia3PlayerRef | null>;
+  webViewControllerRef?: React.MutableRefObject<WebViewPlayerController | null>;
   previewLesson?: Lesson;
   onSelectLesson: (courseId: string, lessonId: string) => void;
   onOpenPaymentModal: () => void;
   onOpenQuizPlayer: (lesson: Lesson) => void;
   onTogglePlay: () => void;
+  onPausePlayback?: () => void;
   onSeekTo: (sec: number) => void;
   onRewind: (sec: number) => void;
   onForward: (sec: number) => void;
@@ -168,8 +451,10 @@ interface LessonVideoContainerProps {
   onMarkComplete: () => void;
   onPictureInPictureStart: () => void;
   onPictureInPictureStop: () => void;
-  onProgressUpdate: (sec: number) => void;
+  onProgressUpdate: (sec: number, durationSec?: number) => void;
+  onDurationDetected?: (durationSec: number) => void;
   onPlayStateChange: (playing: boolean) => void;
+  onVideoEnded?: () => void;
   formatSeconds: (sec: number) => string;
 }
 
@@ -185,6 +470,7 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
   isPlaying,
   playbackSpeed,
   streamQuality,
+  initialPositionSeconds = 0,
   isFullscreen,
   isDeviceLandscape,
   isScreenLocked,
@@ -202,11 +488,13 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
   hasPrevLesson,
   hasNextLesson,
   nativePlayerRef,
+  webViewControllerRef,
   previewLesson,
   onSelectLesson,
   onOpenPaymentModal,
   onOpenQuizPlayer,
   onTogglePlay,
+  onPausePlayback,
   onSeekTo,
   onRewind,
   onForward,
@@ -222,7 +510,9 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
   onPictureInPictureStart,
   onPictureInPictureStop,
   onProgressUpdate,
+  onDurationDetected,
   onPlayStateChange,
+  onVideoEnded,
   formatSeconds,
 }) => {
   const { colors, isDark } = useTheme();
@@ -232,10 +522,123 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
     (course.priceBdt && course.priceBdt > 0) || (course.price && course.price > 0)
   );
 
+  const internalWebViewRef = useRef<any>(null);
+  const webViewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [webViewError, setWebViewError] = useState<string | null>(null);
+  const [isWebViewLoading, setIsWebViewLoading] = useState<boolean>(false);
+  const [webViewReloadKey, setWebViewReloadKey] = useState<number>(0);
+
+  useEffect(() => {
+    setWebViewError(null);
+    if (!isDirectStream && effectiveHasVideo && canPlayVideo && !isLoadingVideo) {
+      setIsWebViewLoading(true);
+      if (webViewTimeoutRef.current) clearTimeout(webViewTimeoutRef.current);
+      webViewTimeoutRef.current = setTimeout(() => {
+        setIsWebViewLoading(false);
+      }, 6000);
+    } else {
+      setIsWebViewLoading(false);
+    }
+    return () => {
+      if (webViewTimeoutRef.current) {
+        clearTimeout(webViewTimeoutRef.current);
+        webViewTimeoutRef.current = null;
+      }
+    };
+  }, [
+    currentLesson.id,
+    activeVideoUrl,
+    videoHtml,
+    isDirectStream,
+    effectiveHasVideo,
+    canPlayVideo,
+    isLoadingVideo,
+  ]);
+
+  useEffect(() => {
+    if (!webViewControllerRef) return;
+    if (isDirectStream || !effectiveHasVideo) {
+      webViewControllerRef.current = null;
+      return;
+    }
+    webViewControllerRef.current = {
+      play: () => {
+        internalWebViewRef.current?.injectJavaScript?.(
+          'window.__TS_PLAYER__ && window.__TS_PLAYER__.play(); true;'
+        );
+      },
+      pause: () => {
+        internalWebViewRef.current?.injectJavaScript?.(
+          'window.__TS_PLAYER__ && window.__TS_PLAYER__.pause(); true;'
+        );
+      },
+      seekTo: (seconds: number) => {
+        const cleanSec = Math.max(0, Math.floor(seconds));
+        internalWebViewRef.current?.injectJavaScript?.(
+          `window.__TS_PLAYER__ && window.__TS_PLAYER__.seekTo(${cleanSec}); true;`
+        );
+      },
+      setPlaybackRate: (rate: number) => {
+        const cleanRate = Number.isFinite(rate) && rate > 0 ? rate : 1;
+        internalWebViewRef.current?.injectJavaScript?.(
+          `window.__TS_PLAYER__ && window.__TS_PLAYER__.setRate(${cleanRate}); true;`
+        );
+      },
+    };
+    return () => {
+      webViewControllerRef.current = null;
+    };
+  }, [webViewControllerRef, isDirectStream, effectiveHasVideo, currentLesson.id]);
+
+  const handleWebViewMessage = (event: any) => {
+    const raw = event?.nativeEvent?.data;
+    if (!raw || typeof raw !== 'string') return;
+    try {
+      const msg = JSON.parse(raw);
+      if (!msg || typeof msg.type !== 'string') return;
+      if (msg.type === 'VIDEO_LOADED' || msg.type === 'IFRAME_READY') {
+        setIsWebViewLoading(false);
+        if (typeof msg.duration === 'number' && msg.duration > 0) {
+          onDurationDetected?.(msg.duration);
+        }
+      } else if (msg.type === 'PLAY_STATE') {
+        setIsWebViewLoading(false);
+        onPlayStateChange(Boolean(msg.playing));
+        if (typeof msg.currentTime === 'number') {
+          onProgressUpdate(
+            msg.currentTime,
+            typeof msg.duration === 'number' ? msg.duration : undefined
+          );
+        }
+      } else if (msg.type === 'PROGRESS') {
+        setIsWebViewLoading(false);
+        if (typeof msg.currentTime === 'number') {
+          onProgressUpdate(
+            msg.currentTime,
+            typeof msg.duration === 'number' ? msg.duration : undefined
+          );
+        }
+      } else if (msg.type === 'VIDEO_ENDED') {
+        setIsWebViewLoading(false);
+        onPlayStateChange(false);
+        if (onVideoEnded) {
+          onVideoEnded();
+        } else {
+          onMarkComplete();
+        }
+      } else if (msg.type === 'VIDEO_ERROR') {
+        setIsWebViewLoading(false);
+        onPlayStateChange(false);
+        setWebViewError(msg.message || 'Video playback failed');
+      }
+    } catch {}
+  };
+
   return (
     <View
       style={[
         styles.stickyPlayerFrame,
+        isCommuteMode && !isFullscreen && styles.commuteExpandedFrame,
         isFullscreen &&
           (isDeviceLandscape
             ? styles.fullscreenLandscapeFrame
@@ -469,95 +872,152 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
             </TouchableOpacity>
           )}
         </View>
-      ) : isCommuteMode ? (
-        /* Interactive Commute Audio Mode */
-        <LessonCommuteCard
-          currentLesson={currentLesson}
-          course={course}
-          moduleTitle={moduleTitle}
-          isPlaying={isPlaying}
-          currentPositionSeconds={currentPositionSeconds}
-          totalLessonSeconds={totalLessonSeconds}
-          playbackSpeed={playbackSpeed}
-          hasPrevLesson={hasPrevLesson}
-          hasNextLesson={hasNextLesson}
-          onTogglePlay={onTogglePlay}
-          onRewind={onRewind}
-          onForward={onForward}
-          onPrevLesson={onPrevLesson}
-          onNextLesson={onNextLesson}
-          onCycleSpeed={onCycleSpeed}
-          formatSeconds={formatSeconds}
-        />
       ) : (
-        /* ACTUAL REAL VIDEO PLAYER: WebView with Android Media3 / ExoPlayer & Gesture Overlay */
+        /* ACTUAL REAL VIDEO/AUDIO PLAYER: Keep active media mounted even during Commute Audio Mode */
         <View style={styles.playerContainer}>
-          {isDirectStream && activeVideoUrl ? (
-            <NativeMedia3Player
-              ref={nativePlayerRef}
-              sourceUrl={activeVideoUrl}
-              title={currentLesson.title}
-              courseTitle={course?.title}
-              playbackSpeed={parseFloat(playbackSpeed) || 1.0}
-              isCommuteMode={isCommuteMode}
-              onProgress={onProgressUpdate}
-              onPlayStateChange={onPlayStateChange}
-              onEnd={onMarkComplete}
-              onPictureInPictureStart={onPictureInPictureStart}
-              onPictureInPictureStop={onPictureInPictureStop}
-            />
-          ) : (
-            <WebView
-              source={{ html: videoHtml, baseUrl: 'https://thrivingskill.com' }}
-              style={styles.videoWebView}
-              allowFileAccess={false}
-              allowUniversalAccessFromFileURLs={false}
-              allowsFullscreenVideo
-              javaScriptEnabled
-              domStorageEnabled
-              mediaPlaybackRequiresUserAction={false}
-              allowsInlineMediaPlayback
-              originWhitelist={['https://*']}
-              mixedContentMode="never"
-              androidLayerType="hardware"
-              allowsProtectedMedia={true}
-              userAgent="Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
-              renderError={() => (
-                <View style={styles.loadingVideoOverlay}>
-                  <Ionicons name="alert-circle-outline" size={32} color="#E34234" />
-                  <Text style={[styles.loadingVideoText, { color: '#FFFFFF', marginTop: 4 }]}>
-                    {isBangla ? 'ভিডিও স্ট্রিমে সংযোগ ব্যর্থ হয়েছে' : 'Video stream unavailable'}
-                  </Text>
-                  {resolvedVideoUrl && (
-                    <TouchableOpacity
-                      style={styles.videoFallbackBtn}
-                      onPress={() => {
-                        triggerHaptic('light');
-                        const safeUrl = resolvedVideoUrl.startsWith('//')
-                          ? `https:${resolvedVideoUrl}`
-                          : resolvedVideoUrl;
-                        if (safeUrl.startsWith('https://') || safeUrl.startsWith('http://')) {
-                          Linking.openURL(safeUrl).catch(() => {});
-                        }
-                      }}
-                      accessibilityRole="button"
-                      accessibilityLabel={
-                        isBangla ? 'ব্রাউজারে ভিডিও চালু করুন' : 'Watch in Browser / App'
-                      }
-                    >
-                      <Ionicons name="open-outline" size={14} color="#102F53" />
-                      <Text style={styles.videoFallbackBtnText}>
-                        {isBangla ? 'ব্রাউজারে ভিডিও চালু করুন' : 'Watch in Browser / App'}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              )}
-            />
+          <View
+            style={isCommuteMode ? styles.commuteHiddenMedia : styles.playerMediaFill}
+            pointerEvents={isCommuteMode ? 'none' : 'auto'}
+          >
+            {isDirectStream && activeVideoUrl ? (
+              <NativeMedia3Player
+                ref={nativePlayerRef}
+                sourceUrl={activeVideoUrl}
+                title={currentLesson.title}
+                courseTitle={course?.title}
+                playbackSpeed={parseFloat(playbackSpeed) || 1.0}
+                initialPositionSeconds={initialPositionSeconds}
+                isCommuteMode={isCommuteMode}
+                onProgress={onProgressUpdate}
+                onPlayStateChange={onPlayStateChange}
+                onEnd={onVideoEnded || onMarkComplete}
+                onError={(msg) => setWebViewError(msg)}
+                onPictureInPictureStart={onPictureInPictureStart}
+                onPictureInPictureStop={onPictureInPictureStop}
+              />
+            ) : (
+              <WebView
+                key={`wv-${currentLesson.id}-${webViewReloadKey}`}
+                ref={internalWebViewRef}
+                source={{ html: videoHtml, baseUrl: 'https://thrivingskill.com' }}
+                style={styles.videoWebView}
+                allowFileAccess={false}
+                allowUniversalAccessFromFileURLs={false}
+                allowsFullscreenVideo
+                javaScriptEnabled
+                domStorageEnabled
+                mediaPlaybackRequiresUserAction={false}
+                allowsInlineMediaPlayback
+                originWhitelist={['https://*']}
+                mixedContentMode="never"
+                androidLayerType="hardware"
+                allowsProtectedMedia={true}
+                onLoadEnd={() => setIsWebViewLoading(false)}
+                onMessage={handleWebViewMessage}
+                onError={() => {
+                  setIsWebViewLoading(false);
+                  setWebViewError('Connection to video server interrupted.');
+                }}
+                onHttpError={(ev: any) => {
+                  const status = ev?.nativeEvent?.statusCode;
+                  if (status && status >= 400) {
+                    setIsWebViewLoading(false);
+                    setWebViewError(`Video stream returned HTTP ${status}.`);
+                  }
+                }}
+                userAgent="Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+              />
+            )}
+          </View>
+
+          {!isCommuteMode && isWebViewLoading && !webViewError && (
+            <View style={styles.loadingVideoOverlay} pointerEvents="none">
+              <ActivityIndicator size="large" color="#E34234" />
+              <Text style={styles.loadingVideoText}>
+                {isBangla ? 'ভিডিও প্লেয়ার প্রস্তুত হচ্ছে...' : 'Preparing video stream...'}
+              </Text>
+            </View>
           )}
 
-          {/* DUAL-MODE CONTROLLER */}
-          {isDirectStream ? (
+          {!isCommuteMode && webViewError && (
+            <View style={styles.loadingVideoOverlay}>
+              <Ionicons name="alert-circle-outline" size={32} color="#E34234" />
+              <Text
+                style={[
+                  styles.loadingVideoText,
+                  { color: '#FFFFFF', marginTop: 4, textAlign: 'center' },
+                ]}
+              >
+                {isBangla ? 'ভিডিও স্ট্রিমে সংযোগ ব্যর্থ হয়েছে' : webViewError}
+              </Text>
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+                <TouchableOpacity
+                  style={styles.videoFallbackBtn}
+                  onPress={() => {
+                    triggerHaptic('light');
+                    setWebViewError(null);
+                    setIsWebViewLoading(true);
+                    setWebViewReloadKey((k) => k + 1);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={isBangla ? 'পুনরায় চেষ্টা করুন' : 'Retry video stream'}
+                >
+                  <Ionicons name="refresh" size={14} color="#FFFFFF" />
+                  <Text style={styles.videoFallbackBtnText}>
+                    {isBangla ? 'আবার চেষ্টা' : 'Retry'}
+                  </Text>
+                </TouchableOpacity>
+                {resolvedVideoUrl && (
+                  <TouchableOpacity
+                    style={styles.videoFallbackBtn}
+                    onPress={() => {
+                      triggerHaptic('light');
+                      const safeUrl = resolvedVideoUrl.startsWith('//')
+                        ? `https:${resolvedVideoUrl}`
+                        : resolvedVideoUrl;
+                      if (safeUrl.startsWith('https://') || safeUrl.startsWith('http://')) {
+                        Linking.openURL(safeUrl).catch(() => {});
+                      }
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      isBangla ? 'ব্রাউজারে ভিডিও চালু করুন' : 'Watch in Browser / App'
+                    }
+                  >
+                    <Ionicons name="open-outline" size={14} color="#FFFFFF" />
+                    <Text style={styles.videoFallbackBtnText}>
+                      {isBangla ? 'ব্রাউজার' : 'Open Browser'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          )}
+
+          {isCommuteMode ? (
+            <View style={styles.commuteOverlay}>
+              <LessonCommuteCard
+                currentLesson={currentLesson}
+                course={course}
+                moduleTitle={moduleTitle}
+                isPlaying={isPlaying}
+                isNativeBackgroundAudio={isDirectStream}
+                currentPositionSeconds={currentPositionSeconds}
+                totalLessonSeconds={totalLessonSeconds}
+                playbackSpeed={playbackSpeed}
+                hasPrevLesson={hasPrevLesson}
+                hasNextLesson={hasNextLesson}
+                onTogglePlay={onTogglePlay}
+                onPauseForSleep={onPausePlayback}
+                onRewind={onRewind}
+                onForward={onForward}
+                onPrevLesson={onPrevLesson}
+                onNextLesson={onNextLesson}
+                onCycleSpeed={onCycleSpeed}
+                formatSeconds={formatSeconds}
+              />
+            </View>
+          ) : isDirectStream ? (
             <VideoPlayerGestureOverlay
               isPlaying={isPlaying}
               onTogglePlay={onTogglePlay}
@@ -579,7 +1039,7 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
               onToggleLock={onToggleScreenLock}
             />
           ) : (
-            /* Minimalist Floating Controls for Server-Driven Video */
+            /* Minimalist Floating Controls for Embedded Video (Vimeo / YouTube) */
             <View style={styles.serverPlayerControlsOverlay} pointerEvents="box-none">
               <View style={styles.serverPlayerTopBar} pointerEvents="box-none">
                 <View style={styles.serverPlayerTitleBadge} pointerEvents="none">
@@ -590,6 +1050,18 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
                 </View>
 
                 <View style={styles.serverPlayerActionsRow}>
+                  <TouchableOpacity
+                    style={[
+                      styles.serverPlayerActionBtn,
+                      playbackSpeed !== '1.0x' && styles.serverPlayerActionBtnActive,
+                    ]}
+                    onPress={onCycleSpeed}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Playback speed ${playbackSpeed}`}
+                  >
+                    <Text style={styles.landscapePillText}>{playbackSpeed}</Text>
+                  </TouchableOpacity>
+
                   <TouchableOpacity
                     style={styles.serverPlayerActionBtn}
                     onPress={onToggleScreenLock}
@@ -721,6 +1193,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderRadius: 14,
   },
+  commuteExpandedFrame: {
+    aspectRatio: undefined,
+    minHeight: 236,
+  },
   fullscreenLandscapeFrame: {
     width: '100%',
     height: '100%',
@@ -735,6 +1211,7 @@ const styles = StyleSheet.create({
   },
   forcedLandscapeFrame: {
     position: 'absolute',
+    aspectRatio: undefined,
     transform: [{ rotate: '90deg' }],
     borderRadius: 0,
     zIndex: 9999,
@@ -743,6 +1220,22 @@ const styles = StyleSheet.create({
     flex: 1,
     position: 'relative',
     backgroundColor: '#0F192C',
+  },
+  playerMediaFill: {
+    flex: 1,
+  },
+  commuteHiddenMedia: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 2,
+    height: 2,
+    opacity: 0.01,
+    overflow: 'hidden',
+  },
+  commuteOverlay: {
+    flex: 1,
+    zIndex: 25,
   },
   videoWebView: {
     flex: 1,
@@ -777,7 +1270,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     minHeight: 44,
     borderRadius: 8,
-    marginTop: 12,
   },
   videoFallbackBtnText: {
     color: '#FFFFFF',
@@ -910,7 +1402,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 14,
-    maxWidth: '65%',
+    maxWidth: '52%',
   },
   serverPlayerTitleText: {
     color: '#FFFFFF',
@@ -920,7 +1412,7 @@ const styles = StyleSheet.create({
   serverPlayerActionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
   },
   serverPlayerActionBtn: {
     flexDirection: 'row',
@@ -1022,6 +1514,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+    zIndex: 35,
   },
   autoplayCard: {
     padding: 16,

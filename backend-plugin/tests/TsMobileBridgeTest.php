@@ -289,4 +289,42 @@ final class TsMobileBridgeTest extends TestCase
         $this->assertInstanceOf(WP_REST_Response::class, $verifyRes);
         $this->assertTrue($verifyRes->get_data()['valid']);
     }
+
+    public function test_lesson_detail_extracts_trimmed_meta_and_post_content_videos(): void
+    {
+        TSMB_Test_State::$posts[950] = (object) [
+            'ID'           => 950,
+            'post_type'    => 'lp_lesson',
+            'post_status'  => 'publish',
+            'post_title'   => 'Vimeo With Spaces',
+            'post_content' => 'Watch this lesson.',
+            'post_excerpt' => 'Summary',
+        ];
+        TSMB_Test_State::$post_meta[950]['_lp_preview'] = 'yes';
+        TSMB_Test_State::$post_meta[950]['_lp_lesson_video_intro'] = "  https://player.vimeo.com/video/1228513027?h=abc123  \n";
+
+        $res1 = TSMB_Rest_API::get_lesson_detail(new WP_REST_Request([], ['id' => 950]));
+        $this->assertInstanceOf(WP_REST_Response::class, $res1);
+        $d1 = $res1->get_data();
+        $this->assertSame('vimeo', $d1['video_type']);
+        $this->assertSame('1228513027', $d1['video_id']);
+        $this->assertSame('https://player.vimeo.com/video/1228513027?h=abc123', $d1['video_url']);
+
+        TSMB_Test_State::$posts[951] = (object) [
+            'ID'           => 951,
+            'post_type'    => 'lp_lesson',
+            'post_status'  => 'publish',
+            'post_title'   => 'Content Embedded Lesson',
+            'post_content' => '<p>Intro</p><iframe src="//player.vimeo.com/video/987654321"></iframe>',
+            'post_excerpt' => '',
+        ];
+        TSMB_Test_State::$post_meta[951]['_lp_preview'] = 'yes';
+
+        $res2 = TSMB_Rest_API::get_lesson_detail(new WP_REST_Request([], ['id' => 951]));
+        $this->assertInstanceOf(WP_REST_Response::class, $res2);
+        $d2 = $res2->get_data();
+        $this->assertSame('vimeo', $d2['video_type']);
+        $this->assertSame('987654321', $d2['video_id']);
+        $this->assertSame('https://player.vimeo.com/video/987654321', $d2['video_url']);
+    }
 }

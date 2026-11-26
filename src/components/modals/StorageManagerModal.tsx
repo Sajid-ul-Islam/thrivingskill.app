@@ -157,8 +157,8 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({ visibl
   const handleClearOfflineDownloads = async () => {
     triggerHaptic('warning');
     Alert.alert(
-      'Remove All Downloads',
-      'Are you sure you want to delete all saved offline lessons? You can re-download them anytime when connected to the internet.',
+      'Remove Saved Study Guides',
+      'Are you sure you want to delete all saved offline study notes? Videos remain available via online streaming anytime.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -171,7 +171,7 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({ visibl
             }
             await calculateStorage();
             triggerHaptic('success');
-            showToast({ message: 'All offline lessons removed.', type: 'info' });
+            showToast({ message: 'All saved study guides removed.', type: 'info' });
           },
         },
       ]
@@ -292,7 +292,7 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({ visibl
                     <View style={styles.metricLeft}>
                       <View style={[styles.dot, { backgroundColor: colors.accent }]} />
                       <Text style={[styles.metricLabel, { color: colors.text }]}>
-                        Downloaded Study Lessons ({stats.downloadedCount})
+                        Saved Study Guides ({stats.downloadedCount})
                       </Text>
                     </View>
                     <Text style={[styles.metricValue, { color: colors.textMuted }]}>
@@ -556,7 +556,7 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({ visibl
                 onPress={handleClearOfflineDownloads}
                 disabled={stats.downloadedCount === 0}
                 accessibilityRole="button"
-                accessibilityLabel="Remove all offline lessons"
+                accessibilityLabel="Remove all saved study guides"
               >
                 <View style={{ flex: 1 }}>
                   <Text
@@ -565,10 +565,10 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({ visibl
                       { color: stats.downloadedCount > 0 ? colors.text : colors.textMuted },
                     ]}
                   >
-                    Remove All Offline Lessons ({stats.downloadedCount})
+                    Remove All Saved Study Guides ({stats.downloadedCount})
                   </Text>
                   <Text style={[styles.subtext, { color: colors.textMuted }]}>
-                    Frees up {formatSize(stats.offlineSizeKb)} from downloaded lessons.
+                    Frees up {formatSize(stats.offlineSizeKb)} from cached study notes.
                   </Text>
                 </View>
                 <Ionicons

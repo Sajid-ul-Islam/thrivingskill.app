@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -9,7 +9,6 @@ import { useLanguage } from '../context/LanguageContext';
 import { useFeedback } from '../context/FeedbackContext';
 import { Header, StateView, LessonVideoContainer, buildLessonVideoHtml } from '../components';
 import { triggerHaptic } from '../utils/haptics';
-import { OfflineManager } from '../services/offline/offlineManager';
 import { LessonsService } from '../services/api/lessonsService';
 import { Lesson } from '../types';
 import { lessonPlayerStyles as styles } from './lesson-player/lessonPlayerStyles';
@@ -41,6 +40,11 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
 
   const p = useLessonPlayerState({ courseId, lessonId, onSelectLesson });
   const { course, currentLesson } = p;
+
+  const memoizedVideoHtml = useMemo(() => {
+    if (!p.hasPlayableVideo) return '';
+    return buildLessonVideoHtml(p.activeVideoIntro, p.activeVideoUrl, p.initialResumeSeconds, 1.0);
+  }, [p.hasPlayableVideo, p.activeVideoIntro, p.activeVideoUrl, p.initialResumeSeconds]);
 
   if (!course || !currentLesson) {
     return (
@@ -78,30 +82,6 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
   const previewLesson =
     course.modules?.flatMap((m) => m.lessons || []).find((l) => l.isFreePreview) ||
     course.modules?.[0]?.lessons?.[0];
-
-  const handleStartDownloadWithQuality = async (quality: '360p' | '720p' | '1080p') => {
-    p.setSelectedDownloadQuality(`${quality} HD`);
-    await OfflineManager.saveLessonOffline(
-      course.id,
-      currentLesson,
-      undefined,
-      course.title,
-      undefined,
-      undefined,
-      `${quality} HD`
-    );
-    p.setIsDownloaded(true);
-    showToast({
-      message: `Lesson downloaded in ${quality} HD`,
-      type: 'success',
-      actionLabel: 'Undo',
-      onAction: async () => {
-        await OfflineManager.removeDownloadedLesson(currentLesson.id);
-        p.setIsDownloaded(false);
-        showToast({ message: 'Download removed', type: 'info' });
-      },
-    });
-  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -178,9 +158,13 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
                   p.setIsCommuteMode(nextMode);
                   showToast({
                     message: nextMode
-                      ? isBangla
-                        ? 'ব্যাকগ্রাউন্ড অডিও মোড সক্রিয় (স্ক্রিন বন্ধ করেও চলবে)'
-                        : 'Background Audio Mode active (listens with screen locked)'
+                      ? p.isDirectStream
+                        ? isBangla
+                          ? 'ব্যাকগ্রাউন্ড অডিও মোড সক্রিয় (স্ক্রিন বন্ধ করেও চলবে)'
+                          : 'Background Audio Mode active (continues with screen locked)'
+                        : isBangla
+                          ? 'অডিও-ফোকাস শোনার মোড সক্রিয়'
+                          : 'Audio Listening Mode active'
                       : isBangla
                         ? 'স্ট্যান্ডার্ড প্লেয়ার সক্রিয়'
                         : 'Standard Player active',
@@ -235,6 +219,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
           isPlaying={p.isPlaying}
           playbackSpeed={p.playbackSpeed}
           streamQuality={p.streamQuality}
+          initialPositionSeconds={p.initialResumeSeconds}
           isFullscreen={p.isFullscreen}
           isDeviceLandscape={p.isDeviceLandscape}
           isScreenLocked={p.isScreenLocked}
@@ -243,9 +228,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
           activeVideoUrl={p.activeVideoUrl}
           resolvedVideoUrl={p.activeVideoUrl}
           zoomMeetingUrl={p.zoomMeetingUrl}
-          videoHtml={
-            p.hasPlayableVideo ? buildLessonVideoHtml(p.activeVideoIntro, p.activeVideoUrl) : ''
-          }
+          videoHtml={memoizedVideoHtml}
           windowDimensions={p.windowDimensions}
           currentPositionSeconds={p.currentPositionSeconds}
           totalLessonSeconds={p.totalLessonSeconds}
@@ -254,6 +237,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
           hasPrevLesson={p.currentLessonIndex > 0}
           hasNextLesson={p.currentLessonIndex < p.allLessons.length - 1}
           nativePlayerRef={p.nativePlayerRef}
+          webViewControllerRef={p.webViewControllerRef}
           previewLesson={previewLesson}
           onSelectLesson={onSelectLesson}
           onOpenPaymentModal={() => p.setPaymentModalVisible(true)}
@@ -262,6 +246,7 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
             p.setQuizPlayerVisible(true);
           }}
           onTogglePlay={p.handleTogglePlay}
+          onPausePlayback={p.handlePausePlayback}
           onSeekTo={p.handleSeekTo}
           onRewind={p.handleRewind}
           onForward={p.handleForward}
@@ -284,22 +269,24 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
             p.setAutoplayCountdown(null);
           }}
           onMarkComplete={p.handleMarkComplete}
+          onVideoEnded={p.completeCurrentLessonAndAdvance}
           onPictureInPictureStart={() => p.setIsSystemPiPActive(true)}
           onPictureInPictureStop={() => p.setIsSystemPiPActive(false)}
-          onProgressUpdate={(curr) => {
+          onDurationDetected={(dur) => p.handleLiveProgressUpdate(p.currentPosRef.current, dur)}
+          onProgressUpdate={(curr, reportedDuration) => {
+            p.handleLiveProgressUpdate(curr, reportedDuration);
             const sec = Math.floor(curr);
-            p.currentPosRef.current = sec;
-            p.setCurrentPositionSeconds(sec);
+            const totalDur = Math.max(p.totalLessonSeconds, Math.round(reportedDuration || 0));
 
             if (
               currentLesson.quiz &&
               currentLesson.quiz.length > 0 &&
               !p.checkpointTriggeredRef.current[currentLesson.id]
             ) {
-              const midpoint = Math.floor((p.totalLessonSeconds || 300) / 2);
+              const midpoint = Math.floor((totalDur || 300) / 2);
               if (sec >= midpoint && midpoint >= 30) {
                 p.checkpointTriggeredRef.current[currentLesson.id] = true;
-                p.setIsPlaying(false);
+                p.handlePausePlayback();
                 triggerHaptic('medium');
                 p.setSelectedQuizLesson(currentLesson);
                 p.setQuizPlayerVisible(true);
@@ -313,8 +300,8 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
             }
 
             if (
-              p.totalLessonSeconds > 60 &&
-              sec / p.totalLessonSeconds >= 0.85 &&
+              totalDur > 60 &&
+              sec / totalDur >= 0.85 &&
               p.currentLessonIndex < p.allLessons.length - 1
             ) {
               const nextLessonObj = p.allLessons[p.currentLessonIndex + 1]?.lesson;
@@ -355,6 +342,9 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
               courseId={courseId}
               currentLesson={currentLesson}
               displayLesson={displayLesson}
+              rawLessonContent={p.rawLessonContent}
+              isStudyGuideSaved={p.isStudyGuideSaved}
+              onSaveStudyGuideOffline={p.handleSaveStudyGuideOffline}
               allLessons={p.allLessons}
               completedLessonIds={p.progress?.completedLessonIds || []}
               isCourseCompleted={isCourseCompleted}
@@ -419,8 +409,6 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         aiTutorVisible={p.aiTutorVisible}
         isPiPActive={p.isPiPActive}
         qualityModalVisible={p.qualityModalVisible}
-        qualityModalMode={p.qualityModalMode}
-        selectedDownloadQuality={p.selectedDownloadQuality}
         streamQuality={p.streamQuality}
         quizModalVisible={p.quizModalVisible}
         quizPlayerVisible={p.quizPlayerVisible}
@@ -449,7 +437,6 @@ export const LessonPlayerScreen: React.FC<LessonPlayerScreenProps> = ({
         onMarkLessonCompleted={p.markLessonCompleted}
         onSeekTo={p.handleSeekTo}
         onTogglePlay={p.handleTogglePlay}
-        onStartDownloadWithQuality={handleStartDownloadWithQuality}
         onSubmitReview={p.handleSubmitReview}
         showToast={showToast}
       />

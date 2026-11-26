@@ -20,15 +20,20 @@ export const LiveAudioWaveform: React.FC<LiveAudioWaveformProps> = ({
 
   useEffect(() => {
     if (!isPlaying) {
-      animatedValues.forEach((val) => {
+      const resetAnimations = animatedValues.map((val) => {
         val.stopAnimation();
-        Animated.timing(val, {
+        return Animated.timing(val, {
           toValue: 0.18,
           duration: 180,
           useNativeDriver: true,
-        }).start();
+        });
       });
-      return;
+      const resetComposite = Animated.parallel(resetAnimations);
+      resetComposite.start();
+      return () => {
+        resetComposite.stop();
+        animatedValues.forEach((val) => val.stopAnimation());
+      };
     }
 
     const animations = animatedValues.map((val, i) => {
@@ -55,9 +60,11 @@ export const LiveAudioWaveform: React.FC<LiveAudioWaveformProps> = ({
       );
     });
 
-    Animated.parallel(animations).start();
+    const composite = Animated.parallel(animations);
+    composite.start();
 
     return () => {
+      composite.stop();
       animatedValues.forEach((val) => val.stopAnimation());
     };
   }, [isPlaying, animatedValues]);

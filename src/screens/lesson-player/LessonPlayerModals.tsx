@@ -27,8 +27,6 @@ interface LessonPlayerModalsProps {
   aiTutorVisible: boolean;
   isPiPActive: boolean;
   qualityModalVisible: boolean;
-  qualityModalMode: 'download' | 'streamQuality';
-  selectedDownloadQuality: string;
   streamQuality: string;
   quizModalVisible: boolean;
   quizPlayerVisible: boolean;
@@ -57,7 +55,6 @@ interface LessonPlayerModalsProps {
   onMarkLessonCompleted: (courseId: string, lessonId: string) => void;
   onSeekTo: (sec: number) => void;
   onTogglePlay: () => void;
-  onStartDownloadWithQuality: (q: '360p' | '720p' | '1080p') => void;
   onSubmitReview: (rating: number, feedback: string) => Promise<void> | void;
   showToast: (opts: any) => void;
 }
@@ -73,8 +70,6 @@ export const LessonPlayerModals: React.FC<LessonPlayerModalsProps> = ({
   aiTutorVisible,
   isPiPActive,
   qualityModalVisible,
-  qualityModalMode,
-  selectedDownloadQuality,
   streamQuality,
   quizModalVisible,
   quizPlayerVisible,
@@ -103,7 +98,6 @@ export const LessonPlayerModals: React.FC<LessonPlayerModalsProps> = ({
   onMarkLessonCompleted,
   onSeekTo,
   onTogglePlay,
-  onStartDownloadWithQuality,
   onSubmitReview,
   showToast,
 }) => {
@@ -159,15 +153,13 @@ export const LessonPlayerModals: React.FC<LessonPlayerModalsProps> = ({
 
       <DownloadQualityModal
         visible={qualityModalVisible}
-        mode={qualityModalMode}
-        currentQuality={qualityModalMode === 'download' ? selectedDownloadQuality : streamQuality}
+        currentQuality={streamQuality}
         lessonTitle={currentLesson.title}
         onClose={() => setQualityModalVisible(false)}
         onSelectStreamQuality={(q) => {
           setStreamQuality(q);
           showToast({ message: `Streaming quality set to ${q}`, type: 'info' });
         }}
-        onStartDownload={onStartDownloadWithQuality}
       />
 
       {currentLesson.quiz && (

@@ -44,6 +44,7 @@ import {
 import type { WpPost, Course, RootTab } from '../types';
 import { triggerHaptic } from '../utils/haptics';
 import { typography, MIN_TOUCH_TARGET } from '../theme/typography';
+import { TelemetryService } from '../services/telemetry/telemetryService';
 import { homeStyles as styles } from './home/homeStyles';
 import { HomeGreetingCard } from './home/HomeGreetingCard';
 import { useHomeDashboard } from './home/useHomeDashboard';
@@ -52,6 +53,7 @@ interface CategoryRowProps {
   title: string;
   subtitle?: string;
   courses: Course[];
+  isRecommendationRow?: boolean;
   onNavigateToCourse: (id: string) => void;
   onNavigateTab: (tab: RootTab) => void;
   colors: ReturnType<typeof useTheme>['colors'];
@@ -63,6 +65,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
   title,
   subtitle,
   courses,
+  isRecommendationRow = false,
   onNavigateToCourse,
   onNavigateTab,
   colors,
@@ -89,6 +92,15 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
   }, [isTablet, isLandscape, effectiveWidth, itemCount, width]);
 
   const cardSnap = cardWidth + CARD_GAP;
+
+  useEffect(() => {
+    if (isRecommendationRow && displayCourses.length > 0) {
+      TelemetryService.trackRecommendationImpression(
+        displayCourses.map((c) => c.id),
+        'home'
+      );
+    }
+  }, [isRecommendationRow, displayCourses]);
 
   useEffect(() => {
     if (
@@ -195,6 +207,9 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
                 course={item}
                 onPress={() => {
                   triggerHaptic('light');
+                  if (isRecommendationRow) {
+                    TelemetryService.trackRecommendationClick(item.id, item.category, idx);
+                  }
                   onNavigateToCourse(item.id);
                 }}
               />
@@ -235,6 +250,9 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
                 course={item}
                 onPress={() => {
                   triggerHaptic('light');
+                  if (isRecommendationRow) {
+                    TelemetryService.trackRecommendationClick(item.id, item.category, index);
+                  }
                   onNavigateToCourse(item.id);
                 }}
               />
@@ -487,6 +505,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               key={`cat-${row.title}`}
               title={row.title}
               courses={row.courses}
+              isRecommendationRow={Boolean((row as any).isRecommendationRow)}
               onNavigateToCourse={onNavigateToCourse}
               onNavigateTab={onNavigateTab}
               colors={colors}

@@ -1280,24 +1280,45 @@ class TSMB_Rest_API
 
         $video_intro = get_post_meta($lesson_id, '_lp_lesson_video_intro', true);
         $video_url   = get_post_meta($lesson_id, 'video_url', true);
+        $thim_video  = get_post_meta($lesson_id, '_thim_lesson_video', true);
 
         $parsed_video_url = '';
         $video_type       = 'none';
         $video_id         = null;
 
-        if (!empty($video_url)) {
-            $parsed_video_url = html_entity_decode((string) $video_url, ENT_QUOTES, 'UTF-8');
-        } elseif (!empty($video_intro)) {
-            if (preg_match('/src=["\']([^"\']+)["\']/i', (string) $video_intro, $matches)) {
-                $parsed_video_url = html_entity_decode($matches[1], ENT_QUOTES, 'UTF-8');
-            } elseif (filter_var($video_intro, FILTER_VALIDATE_URL)) {
-                $parsed_video_url = (string) $video_intro;
+        $candidates = array_filter([
+            is_string($video_url) ? trim($video_url) : '',
+            is_string($video_intro) ? trim($video_intro) : '',
+            is_string($thim_video) ? trim($thim_video) : '',
+            is_string($post->post_content) ? $post->post_content : '',
+        ]);
+
+        foreach ($candidates as $candidate) {
+            if (preg_match('/<(?:iframe|video|source)[^>]+src=["\']([^"\']+)["\']/i', $candidate, $matches)) {
+                $parsed_video_url = html_entity_decode(trim($matches[1]), ENT_QUOTES, 'UTF-8');
+                break;
             }
+            $decoded_candidate = html_entity_decode(trim($candidate), ENT_QUOTES, 'UTF-8');
+            if (strpos($decoded_candidate, '//') === 0) {
+                $decoded_candidate = 'https:' . $decoded_candidate;
+            }
+            if (filter_var($decoded_candidate, FILTER_VALIDATE_URL)) {
+                $parsed_video_url = $decoded_candidate;
+                break;
+            }
+            if (preg_match('/(https?:\/\/[^\s"\'<>]*(?:vimeo\.com|youtube\.com|youtu\.be|[^\s"\'<>]+\.(?:mp4|m3u8|webm))[^\s"\'<>]*)/i', $decoded_candidate, $url_matches)) {
+                $parsed_video_url = trim($url_matches[1]);
+                break;
+            }
+        }
+
+        if (strpos($parsed_video_url, '//') === 0) {
+            $parsed_video_url = 'https:' . $parsed_video_url;
         }
 
         if (!empty($parsed_video_url)) {
             if (strpos($parsed_video_url, 'vimeo.com') !== false) {
-                if (preg_match('/(?:player\.vimeo\.com\/video\/|vimeo\.com\/(?:channels\/[^\/]+\/|groups\/[^\/]+\/videos\/|video\/)?)(\d+)/i', $parsed_video_url, $id_matches)) {
+                if (preg_match('/(?:player\.vimeo\.com\/video\/|vimeo\.com\/(?:channels\/[^\/]+\/|groups\/[^\/]+\/videos\/|album\/\d+\/video\/|video\/)?)(\d+)/i', $parsed_video_url, $id_matches)) {
                     $video_type = 'vimeo';
                     $video_id   = $id_matches[1];
                 } else {
@@ -1310,7 +1331,7 @@ class TSMB_Rest_API
                 } else {
                     $parsed_video_url = '';
                 }
-            } elseif (preg_match('/\.(mp4|m3u8|webm)($|\?)/i', $parsed_video_url)) {
+            } elseif (preg_match('/\.(mp4|m3u8|mpd|webm)($|\?)/i', $parsed_video_url)) {
                 $video_type = 'mp4';
             } else {
                 $video_type = 'iframe';
@@ -1325,6 +1346,7 @@ class TSMB_Rest_API
             'content'     => wp_strip_all_tags($post->post_content),
             'summary'     => wp_strip_all_tags($post->post_excerpt ?: ''),
             'raw_content' => $post->post_content,
+            'video_intro' => !empty($video_intro) ? (string) $video_intro : null,
             'video_url'   => $parsed_video_url ? set_url_scheme($parsed_video_url, 'https') : null,
             'video_id'    => $video_id,
             'video_type'  => $video_type,

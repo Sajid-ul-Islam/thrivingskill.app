@@ -460,6 +460,21 @@ function esc_url_raw($url, $protocols = ['http', 'https']): string
     }
     return $url;
 }
+function set_url_scheme($url, $scheme = null): string
+{
+    $orig_scheme = $scheme;
+    if (!$orig_scheme) {
+        $scheme = 'https';
+    }
+    $url = trim((string) $url);
+    if (substr($url, 0, 2) === '//') {
+        $url = 'http:' . $url;
+    }
+    if (strpos($url, 'http') === 0) {
+        return preg_replace('#^\w+://#', $scheme . '://', $url);
+    }
+    return $url;
+}
 function is_wp_error($thing): bool { return $thing instanceof WP_Error; }
 function rest_ensure_response($data) { return new WP_REST_Response($data); }
 function wp_json_encode($data, $options = 0) { return json_encode($data, $options); }

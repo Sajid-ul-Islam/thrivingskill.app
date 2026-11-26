@@ -462,23 +462,25 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
             </View>
 
             <View style={styles.devActionBtnRow}>
-              <TouchableOpacity
-                style={styles.devActionBtnPrimary}
-                onPress={() => {
-                  triggerHaptic('success');
-                  const cert = unlockCertificateForDev(course.id);
-                  if (cert) {
-                    setCertPreviewVisible(true);
-                  }
-                }}
-                accessibilityRole="button"
-                accessibilityLabel="Test and Unlock Certificate"
-              >
-                <Ionicons name="ribbon" size={12} color="#FFFFFF" />
-                <Text style={styles.devActionBtnText}>
-                  {isBangla ? 'সার্টিফিকেট টেস্ট' : 'Test Certificate'}
-                </Text>
-              </TouchableOpacity>
+              {typeof __DEV__ !== 'undefined' && __DEV__ && (
+                <TouchableOpacity
+                  style={styles.devActionBtnPrimary}
+                  onPress={() => {
+                    triggerHaptic('success');
+                    const cert = unlockCertificateForDev(course.id);
+                    if (cert) {
+                      setCertPreviewVisible(true);
+                    }
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Test and Unlock Certificate"
+                >
+                  <Ionicons name="ribbon" size={12} color="#FFFFFF" />
+                  <Text style={styles.devActionBtnText}>
+                    {isBangla ? 'সার্টিফিকেট টেস্ট' : 'Test Certificate'}
+                  </Text>
+                </TouchableOpacity>
+              )}
 
               <TouchableOpacity
                 style={styles.devActionBtnSecondary}

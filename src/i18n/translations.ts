@@ -102,8 +102,8 @@ export const translations = {
 
     // Video & Lesson Player
     playbackSpeed: 'Speed',
-    saveOffline: 'Save Offline',
-    savedOffline: 'Saved Offline',
+    saveOffline: 'Save Study Guide',
+    savedOffline: 'Study Guide Saved',
     takeQuiz: 'Take Chapter Quiz',
     markComplete: 'Mark Lesson Complete',
     lessonCompleted: 'Completed',
@@ -127,7 +127,7 @@ export const translations = {
     accountSettings: 'Account Settings',
     membershipStatus: 'Membership Status',
     language: 'Language',
-    offlineDownloads: 'Offline Downloads',
+    offlineDownloads: 'Offline Study Guides',
     achievements: 'Earned Badges',
     signInWordPress: 'Sign In with Thriving Skills Account',
     signOut: 'Sign Out',
@@ -241,8 +241,8 @@ export const translations = {
 
     // Video & Lesson Player
     playbackSpeed: 'স্পিড',
-    saveOffline: 'অফলাইন সেভ',
-    savedOffline: 'অফলাইনে সেভড',
+    saveOffline: 'স্টাডি গাইড সেভ',
+    savedOffline: 'স্টাডি গাইড সেভড',
     takeQuiz: 'অধ্যায়ের কুইজ দিন',
     markComplete: 'লেসন সম্পন্ন চিহ্নিত করুন',
     lessonCompleted: 'সম্পন্ন',
@@ -266,7 +266,7 @@ export const translations = {
     accountSettings: 'অ্যাকাউন্ট সেটিংস',
     membershipStatus: 'মেম্বারশিপ স্ট্যাটাস',
     language: 'ভাষা (Language)',
-    offlineDownloads: 'ডাউনলোডকৃত লেসন',
+    offlineDownloads: 'অফলাইন স্টাডি গাইড',
     achievements: 'অর্জিত ব্যাজসমূহ',
     signInWordPress: 'থ্রাইভিং স্কিলস অ্যাকাউন্টে সাইন ইন',
     signOut: 'সাইন আউট',

@@ -12,12 +12,14 @@ interface LessonCommuteCardProps {
   course: Course;
   moduleTitle?: string;
   isPlaying: boolean;
+  isNativeBackgroundAudio?: boolean;
   currentPositionSeconds: number;
   totalLessonSeconds: number;
   playbackSpeed: string;
   hasPrevLesson: boolean;
   hasNextLesson: boolean;
   onTogglePlay: () => void;
+  onPauseForSleep?: () => void;
   onRewind: (sec: number) => void;
   onForward: (sec: number) => void;
   onPrevLesson: () => void;
@@ -38,12 +40,14 @@ export const LessonCommuteCard: React.FC<LessonCommuteCardProps> = ({
   course,
   moduleTitle,
   isPlaying,
+  isNativeBackgroundAudio = false,
   currentPositionSeconds,
   totalLessonSeconds,
   playbackSpeed,
   hasPrevLesson,
   hasNextLesson,
   onTogglePlay,
+  onPauseForSleep,
   onRewind,
   onForward,
   onPrevLesson,
@@ -57,6 +61,10 @@ export const LessonCommuteCard: React.FC<LessonCommuteCardProps> = ({
   const [sleepTimerOption, setSleepTimerOption] = useState<SleepTimerOption>('off');
   const [sleepRemainingSec, setSleepRemainingSec] = useState<number | null>(null);
   const sleepIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const onPauseRef = useRef(onPauseForSleep || onTogglePlay);
+  onPauseRef.current = onPauseForSleep || onTogglePlay;
+  const isPlayingRef = useRef(isPlaying);
+  isPlayingRef.current = isPlaying;
 
   useEffect(() => {
     if (sleepIntervalRef.current) {
@@ -64,27 +72,16 @@ export const LessonCommuteCard: React.FC<LessonCommuteCardProps> = ({
       sleepIntervalRef.current = null;
     }
 
-    if (sleepTimerOption === 'off' || sleepRemainingSec === null) {
+    if (sleepTimerOption === 'off' || !isPlaying) {
       return;
     }
 
-    if (isPlaying && sleepRemainingSec > 0) {
-      sleepIntervalRef.current = setInterval(() => {
-        setSleepRemainingSec((prev) => {
-          if (prev === null || prev <= 1) {
-            if (sleepIntervalRef.current) {
-              clearInterval(sleepIntervalRef.current);
-              sleepIntervalRef.current = null;
-            }
-            onTogglePlay();
-            triggerHaptic('medium');
-            setSleepTimerOption('off');
-            return null;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
+    sleepIntervalRef.current = setInterval(() => {
+      setSleepRemainingSec((prev) => {
+        if (prev === null) return null;
+        return Math.max(0, prev - 1);
+      });
+    }, 1000);
 
     return () => {
       if (sleepIntervalRef.current) {
@@ -92,7 +89,22 @@ export const LessonCommuteCard: React.FC<LessonCommuteCardProps> = ({
         sleepIntervalRef.current = null;
       }
     };
-  }, [sleepTimerOption, isPlaying, onTogglePlay]);
+  }, [sleepTimerOption, isPlaying]);
+
+  useEffect(() => {
+    if (sleepTimerOption !== 'off' && sleepRemainingSec === 0) {
+      if (sleepIntervalRef.current) {
+        clearInterval(sleepIntervalRef.current);
+        sleepIntervalRef.current = null;
+      }
+      if (isPlayingRef.current) {
+        onPauseRef.current();
+      }
+      triggerHaptic('medium');
+      setSleepTimerOption('off');
+      setSleepRemainingSec(null);
+    }
+  }, [sleepRemainingSec, sleepTimerOption]);
 
   const cycleSleepTimer = () => {
     triggerHaptic('selection');
@@ -270,12 +282,21 @@ export const LessonCommuteCard: React.FC<LessonCommuteCardProps> = ({
 
       <View style={styles.commuteBottomBar}>
         <Text style={styles.commuteTimeText}>
-          {formatSeconds(currentPositionSeconds)} / {currentLesson.duration}
+          {formatSeconds(currentPositionSeconds)} /{' '}
+          {totalLessonSeconds > 0
+            ? formatSeconds(totalLessonSeconds)
+            : currentLesson.duration || '--:--'}
         </Text>
         <View style={styles.bgPlaybackNotice}>
           <Ionicons name="radio" size={12} color="#10B981" />
           <Text style={styles.bgPlaybackText}>
-            {isBangla ? 'ব্যাকগ্রাউন্ড সক্রিয়' : 'Background Active'}
+            {isNativeBackgroundAudio
+              ? isBangla
+                ? 'ব্যাকগ্রাউন্ড অডিও সক্রিয়'
+                : 'Background Audio Active'
+              : isBangla
+                ? 'অডিও-ফোকাস মোড'
+                : 'Audio Focus Mode'}
           </Text>
         </View>
         <TouchableOpacity

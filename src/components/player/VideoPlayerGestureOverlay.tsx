@@ -65,6 +65,8 @@ export const VideoPlayerGestureOverlay: React.FC<VideoPlayerGestureOverlayProps>
     width: 360,
     height: 202,
   });
+  const [scrubWidth, setScrubWidth] = useState<number>(300);
+  const scrubWidthRef = useRef<number>(300);
 
   // Ripple feedback states for double-tap seek
   const [leftRippleActive, setLeftRippleActive] = useState<boolean>(false);
@@ -483,8 +485,34 @@ export const VideoPlayerGestureOverlay: React.FC<VideoPlayerGestureOverlayProps>
 
             {/* BOTTOM BAR: Progress Bar, Time, Speed Pill, Media3 Quality Pill */}
             <View style={styles.bottomControlBar}>
-              {/* Scrub Track */}
-              <View style={styles.progressTrackContainer}>
+              {/* Interactive Scrub Track */}
+              <View
+                style={styles.progressTrackContainer}
+                onLayout={(e) => {
+                  const w = e.nativeEvent.layout.width;
+                  if (w > 0) {
+                    scrubWidthRef.current = w;
+                    setScrubWidth(w);
+                  }
+                }}
+                onStartShouldSetResponder={() => true}
+                onResponderRelease={(e) => {
+                  if (totalDurationSeconds <= 0) return;
+                  const trackW = scrubWidthRef.current > 0 ? scrubWidthRef.current : scrubWidth;
+                  const ratio = Math.max(0, Math.min(1, e.nativeEvent.locationX / trackW));
+                  triggerHaptic('selection');
+                  onSeekTo(Math.round(ratio * totalDurationSeconds));
+                  resetControlsTimer();
+                }}
+                accessible={true}
+                accessibilityRole="adjustable"
+                accessibilityLabel="Seek video timeline"
+                accessibilityValue={{
+                  min: 0,
+                  max: Math.max(1, totalDurationSeconds),
+                  now: currentPositionSeconds,
+                }}
+              >
                 <View style={styles.progressTrackBg}>
                   <View style={[styles.progressTrackFill, { width: `${percent}%` }]} />
                 </View>
