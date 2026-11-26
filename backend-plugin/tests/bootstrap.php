@@ -28,6 +28,12 @@ if (!defined('HOUR_IN_SECONDS')) {
 if (!defined('DAY_IN_SECONDS')) {
     define('DAY_IN_SECONDS', 86400);
 }
+if (!defined('ARRAY_A')) {
+    define('ARRAY_A', 'ARRAY_A');
+}
+if (!defined('OBJECT')) {
+    define('OBJECT', 'OBJECT');
+}
 
 class WP_Error
 {
@@ -175,6 +181,7 @@ final class TSMB_Test_State
     public static array $enrolled_courses = [];
     public static array $lp_orders = [];
     public static array $wc_orders = [];
+    public static array $tables = [];
     public static array $sent_emails = [];
     public static array $sent_sms = [];
     public static array $auth_cookies = [];
@@ -204,6 +211,7 @@ final class TSMB_Test_State
         self::$enrolled_courses  = [];
         self::$lp_orders         = [];
         self::$wc_orders         = [];
+        self::$tables            = [];
         self::$sent_emails       = [];
         self::$sent_sms          = [];
         self::$auth_cookies      = [];
@@ -347,9 +355,52 @@ final class TSMB_Fake_WPDB
         return [];
     }
 
+    public function get_charset_collate(): string
+    {
+        return 'DEFAULT CHARACTER SET utf8mb4';
+    }
+
+    public function insert($table, $data, $format = null)
+    {
+        $tbl = (string) $table;
+        if (!isset(TSMB_Test_State::$tables[$tbl])) {
+            TSMB_Test_State::$tables[$tbl] = [];
+        }
+        $nextId = count(TSMB_Test_State::$tables[$tbl]) + 1;
+        $row = array_merge(['id' => $nextId], (array) $data);
+        TSMB_Test_State::$tables[$tbl][] = $row;
+        return 1;
+    }
+
     public function get_results($prepared, $output = null): array
     {
-        return [];
+        $sql  = is_array($prepared) ? (string) ($prepared['query'] ?? '') : (string) $prepared;
+        $args = is_array($prepared) ? (array) ($prepared['args'] ?? []) : [];
+
+        $matchedTable = null;
+        foreach (array_keys(TSMB_Test_State::$tables) as $tbl) {
+            if (strpos($sql, $tbl) !== false) {
+                $matchedTable = $tbl;
+                break;
+            }
+        }
+        if ($matchedTable === null) {
+            return [];
+        }
+
+        $rows = TSMB_Test_State::$tables[$matchedTable];
+        if (strpos($sql, 'WHERE user_id = %d') !== false) {
+            $uid  = intval($args[0] ?? 0);
+            $rows = array_values(array_filter($rows, static fn($r) => intval($r['user_id'] ?? 0) === $uid));
+        }
+        if (strpos($sql, 'ORDER BY id DESC') !== false) {
+            $rows = array_reverse($rows);
+        }
+
+        if ($output === ARRAY_A) {
+            return $rows;
+        }
+        return array_map(static fn($r) => (object) $r, $rows);
     }
 
     public function update($table, $data, $where, $format = null, $where_format = null)
@@ -358,6 +409,21 @@ final class TSMB_Fake_WPDB
             $uid = intval($where['ID']);
             if (isset(TSMB_Test_State::$users[$uid])) {
                 TSMB_Test_State::$users[$uid]->user_pass = (string) $data['user_pass'];
+            }
+        }
+        $tbl = (string) $table;
+        if (isset(TSMB_Test_State::$tables[$tbl]) && is_array($where)) {
+            foreach (TSMB_Test_State::$tables[$tbl] as $idx => $row) {
+                $match = true;
+                foreach ($where as $wk => $wv) {
+                    if (!isset($row[$wk]) || (string) $row[$wk] !== (string) $wv) {
+                        $match = false;
+                        break;
+                    }
+                }
+                if ($match) {
+                    TSMB_Test_State::$tables[$tbl][$idx] = array_merge($row, (array) $data);
+                }
             }
         }
         return 1;

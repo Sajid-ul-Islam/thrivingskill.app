@@ -1,12 +1,26 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Modal,
+  TouchableOpacity,
+  ScrollView,
+  TextInput,
+  ActivityIndicator,
+} from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useFeedback } from '../../context/FeedbackContext';
+import { useAuth } from '../../context/AuthContext';
 import { useLearning } from '../../context/LearningContext';
-import { resolveSupportContacts } from '../../services/api/companionService';
+import {
+  CompanionService,
+  SupportTicketRecord,
+  resolveSupportContacts,
+} from '../../services/api/companionService';
 import { triggerHaptic } from '../../utils/haptics';
 import {
   CRM_CHANNELS,
@@ -34,9 +48,117 @@ export const SupportContactModal: React.FC<SupportContactModalProps> = ({
   const { colors } = useTheme();
   const { isBangla } = useLanguage();
   const { showToast } = useFeedback();
+  const { isAuthenticated, user, setAuthModalVisible } = useAuth();
   const { appRemoteConfig } = useLearning();
   const insets = useSafeAreaInsets();
   const [selectedTopic, setSelectedTopic] = useState<CrmInquiryType>(initialInquiryType);
+  const [ticketSubject, setTicketSubject] = useState('');
+  const [ticketMessage, setTicketMessage] = useState('');
+  const [tickets, setTickets] = useState<SupportTicketRecord[]>([]);
+  const [isLoadingTickets, setIsLoadingTickets] = useState(false);
+  const [isSubmittingTicket, setIsSubmittingTicket] = useState(false);
+  const [ticketError, setTicketError] = useState<string | null>(null);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!visible || !isAuthenticated) {
+      if (!isAuthenticated) setTickets([]);
+      return;
+    }
+    let active = true;
+    setIsLoadingTickets(true);
+    CompanionService.getSupportTickets()
+      .then((list) => {
+        if (!active || !isMountedRef.current) return;
+        if (Array.isArray(list)) {
+          setTickets(list);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (active && isMountedRef.current) {
+          setIsLoadingTickets(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [visible, isAuthenticated]);
+
+  const handleCreateTicket = async () => {
+    if (isSubmittingTicket) return;
+    const cleanSubject = ticketSubject.trim();
+    const cleanMessage = ticketMessage.trim();
+    if (cleanSubject.length < 3) {
+      setTicketError(
+        isBangla
+          ? 'কমপক্ষে ৩ অক্ষরের একটি শিরোনাম লিখুন।'
+          : 'Please enter a brief subject (min 3 characters).'
+      );
+      triggerHaptic('warning');
+      return;
+    }
+    if (cleanMessage.length < 10) {
+      setTicketError(
+        isBangla
+          ? 'অনুগ্রহ করে সমস্যাটি কমপক্ষে ১০ অক্ষরে লিখুন।'
+          : 'Please describe your issue in at least 10 characters.'
+      );
+      triggerHaptic('warning');
+      return;
+    }
+
+    setTicketError(null);
+    setIsSubmittingTicket(true);
+    try {
+      const created = await CompanionService.createSupportTicket({
+        topic: selectedTopic,
+        subject: cleanSubject,
+        message: cleanMessage,
+        contactEmail: user?.email,
+      });
+      if (!isMountedRef.current) return;
+      if (!created) {
+        setTicketError(
+          isBangla
+            ? 'সার্ভারে টিকেট এন্ডপয়েন্ট পাওয়া যায়নি। হোয়াটসঅ্যাপ বা মেসেঞ্জার ব্যবহার করুন।'
+            : 'Support ticket endpoint is unavailable on this server. Please use WhatsApp or Messenger above.'
+        );
+        return;
+      }
+      setTickets((prev) => [created, ...prev.filter((item) => item.ticketId !== created.ticketId)]);
+      setTicketSubject('');
+      setTicketMessage('');
+      triggerHaptic('success');
+      showToast({
+        message: isBangla
+          ? `টিকেট তৈরি হয়েছে (${created.ticketId})`
+          : `Support ticket submitted (${created.ticketId})`,
+        type: 'success',
+      });
+    } catch (err: any) {
+      if (!isMountedRef.current) return;
+      triggerHaptic('error');
+      const msg =
+        err?.message ||
+        (isBangla
+          ? 'টিকেট পাঠানো যায়নি। আবার চেষ্টা করুন।'
+          : 'Could not submit ticket. Please try again.');
+      setTicketError(msg);
+      showToast({ message: msg, type: 'error' });
+    } finally {
+      if (isMountedRef.current) {
+        setIsSubmittingTicket(false);
+      }
+    }
+  };
 
   const remoteSupport = resolveSupportContacts(appRemoteConfig?.support);
   const activeWhatsapp = remoteSupport.whatsapp ?? CRM_CHANNELS.whatsappNumber;
@@ -346,6 +468,191 @@ export const SupportContactModal: React.FC<SupportContactModalProps> = ({
             </TouchableOpacity>
           </View>
 
+          {/* 3. In-App Tracked Support Tickets */}
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              {isBangla ? '৩. সাপোর্ট টিকেট জমা ও ট্র্যাক করুন' : '3. Submit & Track Support Ticket'}
+            </Text>
+            <Text style={[styles.sectionSub, { color: colors.textMuted }]}>
+              {isBangla
+                ? 'অফিসিয়াল রেফারেন্স আইডি সহ আপনার সমস্যার স্ট্যাটাস দেখুন'
+                : 'Log a tracked request with a reference ID & advisor status'}
+            </Text>
+          </View>
+
+          {!isAuthenticated ? (
+            <View
+              style={[
+                styles.ticketCard,
+                { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+              ]}
+            >
+              <Text style={[styles.ticketHintText, { color: colors.textMuted }]}>
+                {isBangla
+                  ? 'সাপোর্ট টিকেট তৈরি ও স্ট্যাটাস ট্র্যাক করতে আপনার অ্যাকাউন্টে সাইন ইন করুন।'
+                  : 'Sign in to submit tracked support tickets and receive advisor replies in-app.'}
+              </Text>
+              <TouchableOpacity
+                style={[styles.ticketSubmitBtn, { backgroundColor: colors.primary }]}
+                onPress={() => {
+                  triggerHaptic('light');
+                  onClose();
+                  setAuthModalVisible(true);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Sign In to Track Tickets"
+              >
+                <Ionicons name="log-in-outline" size={18} color={colors.onPrimary} />
+                <Text style={[styles.ticketSubmitText, { color: colors.onPrimary }]}>
+                  {isBangla ? 'টিকেট ট্র্যাক করতে সাইন ইন করুন' : 'Sign In to Track Tickets'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View
+              style={[
+                styles.ticketCard,
+                { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+              ]}
+            >
+              <TextInput
+                style={[
+                  styles.ticketInput,
+                  {
+                    backgroundColor: colors.surfaceSubtle,
+                    borderColor: colors.border,
+                    color: colors.text,
+                  },
+                ]}
+                placeholder={
+                  isBangla
+                    ? 'সংক্ষিপ্ত শিরোনাম লিখুন (যেমন: পেমেন্ট, সার্টিফিকেট)'
+                    : 'Brief summary (e.g. certificate, playback)'
+                }
+                placeholderTextColor={colors.textLight}
+                value={ticketSubject}
+                onChangeText={setTicketSubject}
+              />
+
+              <TextInput
+                style={[
+                  styles.ticketArea,
+                  {
+                    backgroundColor: colors.surfaceSubtle,
+                    borderColor: colors.border,
+                    color: colors.text,
+                  },
+                ]}
+                placeholder={
+                  isBangla
+                    ? 'আপনার সমস্যাটি বিস্তারিত লিখুন (কমপক্ষে ১০ অক্ষর)...'
+                    : 'Describe your issue (min 10 characters)...'
+                }
+                placeholderTextColor={colors.textLight}
+                value={ticketMessage}
+                onChangeText={setTicketMessage}
+                multiline
+                textAlignVertical="top"
+              />
+
+              {ticketError ? (
+                <View
+                  style={[styles.errorBox, { backgroundColor: colors.accentLight }]}
+                  accessibilityRole="alert"
+                >
+                  <Ionicons name="alert-circle" size={16} color={colors.accent} />
+                  <Text style={[styles.errorText, { color: colors.accent }]}>{ticketError}</Text>
+                </View>
+              ) : null}
+
+              <TouchableOpacity
+                style={[styles.ticketSubmitBtn, { backgroundColor: colors.primary }]}
+                onPress={handleCreateTicket}
+                disabled={isSubmittingTicket}
+                accessibilityRole="button"
+                accessibilityLabel="Submit Support Ticket"
+              >
+                {isSubmittingTicket ? (
+                  <ActivityIndicator size="small" color={colors.onPrimary} />
+                ) : (
+                  <>
+                    <Ionicons name="paper-plane-outline" size={16} color={colors.onPrimary} />
+                    <Text style={[styles.ticketSubmitText, { color: colors.onPrimary }]}>
+                      {isBangla ? 'সাপোর্ট টিকেট পাঠান' : 'Submit Support Ticket'}
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              {isLoadingTickets ? (
+                <ActivityIndicator size="small" color={colors.primary} style={{ marginTop: 12 }} />
+              ) : tickets.length > 0 ? (
+                <View style={styles.ticketListWrap}>
+                  {tickets.slice(0, 5).map((item) => {
+                    const statusColor =
+                      item.status === 'resolved'
+                        ? colors.success
+                        : item.status === 'in_progress'
+                          ? colors.brandNavy
+                          : colors.brandRed;
+                    const statusTextColor =
+                      item.status === 'resolved' ? colors.onSuccess : '#FFFFFF';
+                    const statusLabel =
+                      item.status === 'resolved'
+                        ? isBangla
+                          ? 'সমাধান হয়েছে'
+                          : 'Resolved'
+                        : item.status === 'in_progress'
+                          ? isBangla
+                            ? 'চলমান'
+                            : 'In Progress'
+                          : isBangla
+                            ? 'খোলা'
+                            : 'Open';
+                    return (
+                      <View
+                        key={item.ticketId}
+                        style={[
+                          styles.ticketItem,
+                          {
+                            backgroundColor: colors.surfaceSubtle,
+                            borderColor: colors.border,
+                          },
+                        ]}
+                      >
+                        <View style={styles.ticketHeaderRow}>
+                          <Text style={[styles.ticketIdText, { color: colors.primary }]}>
+                            {item.ticketId}
+                          </Text>
+                          <View style={[styles.ticketStatusPill, { backgroundColor: statusColor }]}>
+                            <Text style={[styles.ticketStatusText, { color: statusTextColor }]}>
+                              {statusLabel}
+                            </Text>
+                          </View>
+                        </View>
+                        <Text style={[styles.ticketSubjectText, { color: colors.text }]}>
+                          {item.subject}
+                        </Text>
+                        {item.adminReply ? (
+                          <View
+                            style={[
+                              styles.ticketReplyBox,
+                              { backgroundColor: colors.surfaceCard, borderColor: colors.border },
+                            ]}
+                          >
+                            <Text style={[styles.ticketReplyText, { color: colors.textMuted }]}>
+                              Advisor: {item.adminReply}
+                            </Text>
+                          </View>
+                        ) : null}
+                      </View>
+                    );
+                  })}
+                </View>
+              ) : null}
+            </View>
+          )}
+
           {/* Confidence Note */}
           <View style={[styles.footerNote, { backgroundColor: colors.surfaceSubtle }]}>
             <Ionicons name="information-circle-outline" size={16} color={colors.textMuted} />
@@ -547,6 +854,99 @@ const styles = StyleSheet.create({
     fontSize: 10.5,
     fontWeight: '600',
     marginTop: 1,
+  },
+  ticketCard: {
+    padding: 14,
+    borderRadius: shape.large,
+    borderWidth: 1,
+    gap: 10,
+    marginBottom: 18,
+  },
+  ticketHintText: {
+    fontSize: 12.5,
+    lineHeight: 18,
+  },
+  ticketInput: {
+    minHeight: MIN_TOUCH_TARGET,
+    borderRadius: shape.medium,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    fontSize: 13.5,
+  },
+  ticketArea: {
+    minHeight: 84,
+    borderRadius: shape.medium,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 13.5,
+  },
+  errorBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 10,
+    borderRadius: shape.small,
+  },
+  errorText: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  ticketSubmitBtn: {
+    minHeight: MIN_TOUCH_TARGET,
+    borderRadius: shape.medium,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+  },
+  ticketSubmitText: {
+    fontSize: 13.5,
+    fontWeight: '700',
+  },
+  ticketListWrap: {
+    marginTop: 4,
+    gap: 8,
+  },
+  ticketItem: {
+    padding: 10,
+    borderRadius: shape.medium,
+    borderWidth: 1,
+    gap: 6,
+  },
+  ticketHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  ticketIdText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  ticketStatusPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: shape.small,
+  },
+  ticketStatusText: {
+    fontSize: 10.5,
+    fontWeight: '800',
+  },
+  ticketSubjectText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  ticketReplyBox: {
+    padding: 8,
+    borderRadius: shape.small,
+    borderWidth: 1,
+  },
+  ticketReplyText: {
+    fontSize: 12,
+    lineHeight: 16,
   },
   footerNote: {
     flexDirection: 'row',

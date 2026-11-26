@@ -327,4 +327,114 @@ final class TsMobileBridgeTest extends TestCase
         $this->assertSame('987654321', $d2['video_id']);
         $this->assertSame('https://player.vimeo.com/video/987654321', $d2['video_url']);
     }
+
+    public function test_corporate_inquiry_validates_inputs_and_persists_lead_receipt(): void
+    {
+        $badReq = new WP_REST_Request([
+            'service_type' => 'Corporate Training',
+            'company_name' => 'A',
+            'contact_name' => 'Tariq',
+            'work_email'   => 'not-an-email',
+        ]);
+        $badRes = TSMB_Rest_API::submit_corporate_inquiry($badReq);
+        $this->assertInstanceOf(WP_Error::class, $badRes);
+
+        $okReq = new WP_REST_Request([
+            'service_type' => 'Team Training Access',
+            'company_name' => 'Apex Enterprise Ltd',
+            'contact_name' => 'Nadia Hasan',
+            'work_email'   => 'nadia@apex.example.com',
+            'phone'        => '+8801711000000',
+            'team_size'    => '20-50',
+            'notes'        => 'Need AI workshop seats for Q1.',
+        ]);
+        $okRes = TSMB_Rest_API::submit_corporate_inquiry($okReq);
+        $this->assertInstanceOf(WP_REST_Response::class, $okRes);
+        $this->assertSame(201, $okRes->get_status());
+        $data = $okRes->get_data();
+        $this->assertSame('success', $data['status']);
+        $this->assertStringStartsWith('CORP-', $data['reference_id']);
+
+        $rows = TSMB_Test_State::$tables['wp_tsmb_corporate_inquiries'] ?? [];
+        $this->assertCount(1, $rows);
+        $this->assertSame('Apex Enterprise Ltd', $rows[0]['company_name']);
+        $this->assertNotEmpty(TSMB_Test_State::$sent_emails);
+    }
+
+    public function test_support_tickets_require_auth_and_are_strictly_scoped_per_user(): void
+    {
+        $u1 = wp_insert_user(['user_login' => 'learner1', 'user_email' => 'l1@example.com']);
+        $u2 = wp_insert_user(['user_login' => 'learner2', 'user_email' => 'l2@example.com']);
+
+        wp_set_current_user($u1);
+        $createRes = TSMB_Rest_API::create_support_ticket(new WP_REST_Request([
+            'topic'   => 'certificate',
+            'subject' => 'Certificate name check',
+            'message' => 'Please verify the spelling on my AI course certificate.',
+            'course_id' => 901,
+        ]));
+        $this->assertInstanceOf(WP_REST_Response::class, $createRes);
+        $this->assertSame(201, $createRes->get_status());
+        $ticket = $createRes->get_data()['ticket'];
+        $this->assertStringStartsWith('TS-', $ticket['ticket_id']);
+        $this->assertSame('open', $ticket['status']);
+
+        $listU1 = TSMB_Rest_API::get_support_tickets(new WP_REST_Request([]))->get_data();
+        $this->assertCount(1, $listU1['tickets']);
+        $this->assertSame('Certificate name check', $listU1['tickets'][0]['subject']);
+
+        // Second user cannot see User 1's support tickets
+        wp_set_current_user($u2);
+        $listU2 = TSMB_Rest_API::get_support_tickets(new WP_REST_Request([]))->get_data();
+        $this->assertCount(0, $listU2['tickets']);
+    }
+
+    public function test_engagement_sync_merges_streaks_monotonically_and_isolates_watch_positions(): void
+    {
+        $uid = wp_insert_user(['user_login' => 'syncuser', 'user_email' => 'sync@example.com']);
+        wp_set_current_user($uid);
+
+        // Device A syncs 120 XP, 20 total minutes, streak 4, plus preview watch position
+        $res1 = TSMB_Rest_API::sync_engagement_state(new WP_REST_Request([
+            'watch_positions' => ['88180' => ['88181' => 145]],
+            'gamification'    => [
+                'streakDays'        => 4,
+                'lastActiveDate'    => '2026-11-26',
+                'dailyMinutesSpent' => 20,
+                'totalStudyMinutes' => 20,
+                'dailyHistory'      => ['2026-11-26' => 20],
+                'xp'                => 120,
+                'unlockedBadges'    => [['id' => 'first_step', 'unlockedAt' => '2026-11-25']],
+                'updatedAt'         => 2000,
+            ],
+        ]));
+        $this->assertInstanceOf(WP_REST_Response::class, $res1);
+
+        // Fresh Device B sends lower totals (xp 50, streak 1) with an older date -> monotonic merge keeps higher totals
+        $res2 = TSMB_Rest_API::sync_engagement_state(new WP_REST_Request([
+            'gamification' => [
+                'streakDays'        => 1,
+                'lastActiveDate'    => '2026-11-24',
+                'dailyMinutesSpent' => 10,
+                'totalStudyMinutes' => 10,
+                'dailyHistory'      => ['2026-11-24' => 10],
+                'xp'                => 50,
+                'unlockedBadges'    => [['id' => 'streak_champ', 'unlockedAt' => '2026-11-26']],
+                'updatedAt'         => 3000,
+            ],
+        ]));
+        $d2 = $res2->get_data();
+        $this->assertSame(120, $d2['gamification']['xp']);
+        $this->assertSame(20, $d2['gamification']['totalStudyMinutes']);
+        $this->assertSame(4, $d2['gamification']['streakDays']);
+        $this->assertSame(20, $d2['gamification']['dailyHistory']['2026-11-26']);
+        $this->assertSame(10, $d2['gamification']['dailyHistory']['2026-11-24']);
+        $this->assertCount(2, $d2['gamification']['unlockedBadges']);
+
+        // Learning state includes watch_positions + gamification without fabricating paid course enrollment
+        $state = TSMB_Rest_API::get_learning_state(new WP_REST_Request([]))->get_data();
+        $this->assertSame([], $state['enrolled_course_ids']);
+        $this->assertSame(145, $state['watch_positions']['88180']['88181']);
+        $this->assertSame(120, $state['gamification']['xp']);
+    }
 }

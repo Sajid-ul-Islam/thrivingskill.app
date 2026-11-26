@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useFeedback } from '../../context/FeedbackContext';
+import { CompanionService } from '../../services/api/companionService';
 import { triggerHaptic } from '../../utils/haptics';
 import { shape } from '../../theme/shapes';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
@@ -82,6 +83,16 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [referenceId, setReferenceId] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
 
   const companyError =
     touched.companyName && companyName.trim().length < 2
@@ -114,10 +125,12 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
     }
     triggerHaptic('selection');
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setSubmitError(null);
     setStep(3);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
     if (!isStep2Valid) {
       triggerHaptic('warning');
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -125,19 +138,48 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
       setTouched({ companyName: true, contactName: true, workEmail: true, phone: true });
       return;
     }
-    triggerHaptic('medium');
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+
+    setSubmitError(null);
     setIsSubmitting(true);
-    setSubmitted(true);
-    setIsSubmitting(false);
-    showToast({
-      message: 'Enterprise proposal request submitted!',
-      type: 'success',
-    });
+    try {
+      const receipt = await CompanionService.submitCorporateInquiry({
+        serviceType: selectedService,
+        companyName: companyName.trim(),
+        contactName: contactName.trim(),
+        workEmail: workEmail.trim(),
+        phone: phone.trim(),
+        teamSize,
+      });
+      if (!isMountedRef.current) return;
+      triggerHaptic('success');
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setReferenceId(receipt.referenceId);
+      setSubmitted(true);
+      showToast({
+        message: `Enterprise proposal submitted (${receipt.referenceId})`,
+        type: 'success',
+      });
+    } catch (err: any) {
+      if (!isMountedRef.current) return;
+      triggerHaptic('error');
+      const reason =
+        err?.message || 'Unable to reach server. Please check your connection and try again.';
+      setSubmitError(`Could not submit inquiry: ${reason}`);
+      showToast({
+        message: reason,
+        type: 'error',
+      });
+    } finally {
+      if (isMountedRef.current) {
+        setIsSubmitting(false);
+      }
+    }
   };
 
   const handleResetAndClose = () => {
     setSubmitted(false);
+    setReferenceId(null);
+    setSubmitError(null);
     setStep(1);
     setCompanyName('');
     setContactName('');
@@ -256,6 +298,24 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
                   Our Enterprise Strategic Advisor will contact {contactName} at {workEmail} within
                   24 hours with a custom {selectedService} proposal for {teamSize} learners.
                 </Text>
+
+                {referenceId ? (
+                  <View
+                    style={[
+                      styles.contactBox,
+                      {
+                        backgroundColor: colors.primaryLight,
+                        borderColor: colors.primary,
+                        marginBottom: 12,
+                      },
+                    ]}
+                  >
+                    <Text style={[typography.caption, { color: colors.textMuted }]}>
+                      Tracking Reference ID
+                    </Text>
+                    <Text style={[typography.h5, { color: colors.primary }]}>{referenceId}</Text>
+                  </View>
+                ) : null}
 
                 <View
                   style={[
@@ -599,6 +659,33 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
                     </Text>
                   </View>
                 </View>
+
+                {submitError ? (
+                  <View
+                    style={[
+                      styles.summaryCard,
+                      {
+                        backgroundColor: colors.dangerLight,
+                        borderColor: colors.danger,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 8,
+                        marginBottom: 14,
+                      },
+                    ]}
+                    accessibilityRole="alert"
+                  >
+                    <Ionicons name="alert-circle" size={18} color={colors.danger} />
+                    <Text
+                      style={[
+                        typography.caption,
+                        { color: colors.danger, flex: 1, fontWeight: '600' },
+                      ]}
+                    >
+                      {submitError}
+                    </Text>
+                  </View>
+                ) : null}
 
                 <View style={styles.wizardNavRow}>
                   <TouchableOpacity

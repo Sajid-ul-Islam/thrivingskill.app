@@ -94,5 +94,8 @@ export const Endpoints = {
     REVOKE_TOKEN: '/thrivingskill/v1/revoke-token',
     CONFIRM_PASSWORD_RESET: '/thrivingskill/v1/auth/reset-password/confirm',
     WEBVIEW_HANDOFF: '/thrivingskill/v1/auth/webview-handoff',
+    CORPORATE_INQUIRY: '/thrivingskill/v1/corporate-inquiry',
+    SUPPORT_TICKETS: '/thrivingskill/v1/support-tickets',
+    ENGAGEMENT_SYNC: '/thrivingskill/v1/engagement-sync',
   },
 } as const;

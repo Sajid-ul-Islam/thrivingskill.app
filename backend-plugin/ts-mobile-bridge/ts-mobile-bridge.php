@@ -4,7 +4,7 @@
  * Plugin Name: TS Mobile Bridge
  * Plugin URI: https://thrivingskill.com
  * Description: Hardened mobile REST API bridge, remote configuration, push notification engine, and Mobile App Command Center for Thriving Skills.
- * Version: 1.2.0
+ * Version: 1.3.0
  * Requires PHP: 7.4
  * Author: Thriving Skills Engineering
  * Author URI: https://thrivingskill.com
@@ -16,8 +16,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('TSMB_VERSION', '1.2.0');
-define('TSMB_DB_VERSION', '1.2.0');
+define('TSMB_VERSION', '1.3.0');
+define('TSMB_DB_VERSION', '1.3.0');
 
 /* ==========================================================================
    1. PLUGIN LIFECYCLE (SCHEMA, MIGRATIONS & UNINSTALL CLEANUP)
@@ -27,12 +27,26 @@ class TSMB_Lifecycle
 {
     public const DB_VERSION_OPTION = 'tsmb_db_version';
     public const PUSH_TABLE_SUFFIX = 'tsmb_push_tokens';
+    public const LEADS_TABLE_SUFFIX = 'tsmb_corporate_inquiries';
+    public const TICKETS_TABLE_SUFFIX = 'tsmb_support_tickets';
     public const CRON_RECEIPTS_HOOK = 'tsmb_process_expo_receipts';
 
     public static function get_push_tokens_table(): string
     {
         global $wpdb;
         return $wpdb->prefix . self::PUSH_TABLE_SUFFIX;
+    }
+
+    public static function get_leads_table(): string
+    {
+        global $wpdb;
+        return $wpdb->prefix . self::LEADS_TABLE_SUFFIX;
+    }
+
+    public static function get_tickets_table(): string
+    {
+        global $wpdb;
+        return $wpdb->prefix . self::TICKETS_TABLE_SUFFIX;
     }
 
     public static function activate(): void
@@ -56,12 +70,22 @@ class TSMB_Lifecycle
     {
         global $wpdb;
 
-        $table_name = self::get_push_tokens_table();
+        $push_table    = self::get_push_tokens_table();
+        $leads_table   = self::get_leads_table();
+        $tickets_table = self::get_tickets_table();
         $charset_collate = $wpdb->get_charset_collate();
 
-        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        if (!function_exists('dbDelta')) {
+            $upgrade_file = ABSPATH . 'wp-admin/includes/upgrade.php';
+            if (file_exists($upgrade_file)) {
+                require_once $upgrade_file;
+            }
+        }
+        if (!function_exists('dbDelta')) {
+            return;
+        }
 
-        $sql = "CREATE TABLE {$table_name} (
+        $sql_push = "CREATE TABLE {$push_table} (
             id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
             user_id bigint(20) unsigned NOT NULL DEFAULT 0,
             token varchar(255) NOT NULL,
@@ -74,7 +98,50 @@ class TSMB_Lifecycle
             KEY idx_last_seen (last_seen)
         ) {$charset_collate};";
 
-        dbDelta($sql);
+        $sql_leads = "CREATE TABLE {$leads_table} (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            reference_id varchar(40) NOT NULL,
+            user_id bigint(20) unsigned NOT NULL DEFAULT 0,
+            service_type varchar(120) NOT NULL,
+            company_name varchar(180) NOT NULL,
+            contact_name varchar(140) NOT NULL,
+            work_email varchar(180) NOT NULL,
+            phone varchar(64) NOT NULL DEFAULT '',
+            team_size varchar(40) NOT NULL DEFAULT '',
+            notes text NOT NULL,
+            status varchar(32) NOT NULL DEFAULT 'new',
+            ip_address varchar(64) NOT NULL DEFAULT '',
+            created_at datetime NOT NULL,
+            updated_at datetime NOT NULL,
+            PRIMARY KEY  (id),
+            UNIQUE KEY uniq_reference (reference_id),
+            KEY idx_email (work_email),
+            KEY idx_status (status),
+            KEY idx_created_at (created_at)
+        ) {$charset_collate};";
+
+        $sql_tickets = "CREATE TABLE {$tickets_table} (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            ticket_id varchar(40) NOT NULL,
+            user_id bigint(20) unsigned NOT NULL,
+            topic varchar(64) NOT NULL DEFAULT 'general',
+            subject varchar(200) NOT NULL,
+            message text NOT NULL,
+            course_id bigint(20) unsigned NOT NULL DEFAULT 0,
+            contact_email varchar(180) NOT NULL DEFAULT '',
+            status varchar(32) NOT NULL DEFAULT 'open',
+            admin_reply text NOT NULL,
+            created_at datetime NOT NULL,
+            updated_at datetime NOT NULL,
+            PRIMARY KEY  (id),
+            UNIQUE KEY uniq_ticket (ticket_id),
+            KEY idx_user_status (user_id, status),
+            KEY idx_created_at (created_at)
+        ) {$charset_collate};";
+
+        dbDelta($sql_push);
+        dbDelta($sql_leads);
+        dbDelta($sql_tickets);
     }
 
     public static function migrate_legacy_tokens(): void
@@ -158,8 +225,12 @@ class TSMB_Lifecycle
             )
         );
 
-        $table_name = self::get_push_tokens_table();
+        $table_name    = self::get_push_tokens_table();
+        $leads_table   = self::get_leads_table();
+        $tickets_table = self::get_tickets_table();
         $wpdb->query("DROP TABLE IF EXISTS {$table_name}");
+        $wpdb->query("DROP TABLE IF EXISTS {$leads_table}");
+        $wpdb->query("DROP TABLE IF EXISTS {$tickets_table}");
 
         wp_clear_scheduled_hook(self::CRON_RECEIPTS_HOOK);
         wp_clear_scheduled_hook(TSMB_Notifications::BATCH_BROADCAST_HOOK);
@@ -724,6 +795,8 @@ class TSMB_Rest_API
     public const MAX_FEED_LIMIT = 50;
     public const DEFAULT_FEED_LIMIT = 30;
     public const MIN_PASSWORD_LENGTH = 12;
+    public const USER_META_WATCH_POSITIONS = 'tsmb_watch_positions_v1';
+    public const USER_META_GAMIFICATION = 'tsmb_gamification_v1';
     private static $user_paid_courses_cache = [];
 
     public static function reset_request_caches(): void
@@ -857,6 +930,31 @@ class TSMB_Rest_API
             'methods'             => 'GET',
             'callback'            => [__CLASS__, 'verify_certificate'],
             'permission_callback' => '__return_true',
+        ]);
+
+        register_rest_route(self::NAMESPACE, '/corporate-inquiry', [
+            'methods'             => 'POST',
+            'callback'            => [__CLASS__, 'submit_corporate_inquiry'],
+            'permission_callback' => '__return_true',
+        ]);
+
+        register_rest_route(self::NAMESPACE, '/support-tickets', [
+            [
+                'methods'             => 'GET',
+                'callback'            => [__CLASS__, 'get_support_tickets'],
+                'permission_callback' => [__CLASS__, 'check_authenticated_user'],
+            ],
+            [
+                'methods'             => 'POST',
+                'callback'            => [__CLASS__, 'create_support_ticket'],
+                'permission_callback' => [__CLASS__, 'check_authenticated_user'],
+            ],
+        ]);
+
+        register_rest_route(self::NAMESPACE, '/engagement-sync', [
+            'methods'             => 'POST',
+            'callback'            => [__CLASS__, 'sync_engagement_state'],
+            'permission_callback' => [__CLASS__, 'check_authenticated_user'],
         ]);
     }
 
@@ -2843,6 +2941,8 @@ class TSMB_Rest_API
             'reviewed_course_ids' => array_map('strval', $reviewed_ids),
             'progress'            => $progress_map,
             'certificates'        => $certificates,
+            'watch_positions'     => self::get_user_watch_positions($user_id),
+            'gamification'        => self::get_user_gamification_state($user_id),
         ]);
     }
 
@@ -2922,6 +3022,504 @@ class TSMB_Rest_API
         if (!defined('TSMB_TESTING') || !TSMB_TESTING) {
             exit;
         }
+    }
+
+    private static function get_admin_support_email(): string
+    {
+        $configured = sanitize_email((string) get_option('tsmb_support_email', ''));
+        if ($configured !== '' && is_email($configured)) {
+            return $configured;
+        }
+        $admin_email = sanitize_email((string) get_option('admin_email', ''));
+        return ($admin_email !== '' && is_email($admin_email)) ? $admin_email : 'support@thrivingskill.com';
+    }
+
+    public static function submit_corporate_inquiry($request)
+    {
+        global $wpdb;
+
+        $params = $request->get_json_params();
+        if (!is_array($params)) {
+            $params = [];
+        }
+
+        $service_type = sanitize_text_field((string) ($params['service_type'] ?? ($params['serviceType'] ?? ($params['service'] ?? 'Corporate Training'))));
+        $company_name = sanitize_text_field((string) ($params['company_name'] ?? ($params['companyName'] ?? '')));
+        $contact_name = sanitize_text_field((string) ($params['contact_name'] ?? ($params['contactName'] ?? '')));
+        $work_email   = sanitize_email((string) ($params['work_email'] ?? ($params['workEmail'] ?? '')));
+        $phone        = sanitize_text_field((string) ($params['phone'] ?? ''));
+        $team_size    = sanitize_text_field((string) ($params['team_size'] ?? ($params['teamSize'] ?? '20-50')));
+        $notes        = sanitize_textarea_field((string) ($params['notes'] ?? ''));
+
+        if ($service_type === '') {
+            $service_type = 'Corporate Training';
+        }
+        if (strlen($company_name) < 2) {
+            return new WP_Error('invalid_company_name', __('Company or organization name must be at least 2 characters.', 'ts-mobile-bridge'), ['status' => 400]);
+        }
+        if (strlen($contact_name) < 2) {
+            return new WP_Error('invalid_contact_name', __('Contact name must be at least 2 characters.', 'ts-mobile-bridge'), ['status' => 400]);
+        }
+        if ($work_email === '' || !is_email($work_email)) {
+            return new WP_Error('invalid_work_email', __('Please enter a valid corporate email address.', 'ts-mobile-bridge'), ['status' => 400]);
+        }
+
+        $client_ip = TSMB_Security::get_client_ip();
+        $rl_ip     = TSMB_Security::consume_rate_limit('corp_inquiry_ip', $client_ip, 5, HOUR_IN_SECONDS);
+        if (is_wp_error($rl_ip)) {
+            return $rl_ip;
+        }
+        $rl_email = TSMB_Security::consume_rate_limit('corp_inquiry_email', strtolower($work_email), 5, HOUR_IN_SECONDS);
+        if (is_wp_error($rl_email)) {
+            return $rl_email;
+        }
+
+        TSMB_Lifecycle::maybe_upgrade();
+        $table        = TSMB_Lifecycle::get_leads_table();
+        $now_gmt      = current_time('mysql', true);
+        $reference_id = 'CORP-' . gmdate('Ymd') . '-' . strtoupper(substr(bin2hex(random_bytes(3)), 0, 6));
+        $user_id      = get_current_user_id();
+
+        $inserted = $wpdb->insert(
+            $table,
+            [
+                'reference_id' => $reference_id,
+                'user_id'      => $user_id > 0 ? $user_id : 0,
+                'service_type' => substr($service_type, 0, 120),
+                'company_name' => substr($company_name, 0, 180),
+                'contact_name' => substr($contact_name, 0, 140),
+                'work_email'   => substr($work_email, 0, 180),
+                'phone'        => substr($phone, 0, 64),
+                'team_size'    => substr($team_size, 0, 40),
+                'notes'        => substr($notes, 0, 2000),
+                'status'       => 'new',
+                'ip_address'   => substr($client_ip, 0, 64),
+                'created_at'   => $now_gmt,
+                'updated_at'   => $now_gmt,
+            ],
+            ['%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s']
+        );
+
+        if ($inserted === false) {
+            return new WP_Error('lead_save_failed', __('Could not record corporate inquiry. Please try again.', 'ts-mobile-bridge'), ['status' => 500]);
+        }
+
+        if (function_exists('wp_mail')) {
+            wp_mail(
+                self::get_admin_support_email(),
+                sprintf('[Thriving Skills Enterprise] %s (%s)', $company_name, $reference_id),
+                sprintf(
+                    "Reference: %s\nSolution: %s\nCompany: %s\nContact: %s\nWork Email: %s\nPhone: %s\nTeam Size: %s\nNotes: %s\nSubmitted (UTC): %s\n",
+                    $reference_id,
+                    $service_type,
+                    $company_name,
+                    $contact_name,
+                    $work_email,
+                    $phone !== '' ? $phone : 'N/A',
+                    $team_size,
+                    $notes !== '' ? $notes : 'N/A',
+                    $now_gmt
+                )
+            );
+        }
+
+        return new WP_REST_Response(
+            [
+                'status'         => 'success',
+                'reference_id'   => $reference_id,
+                'inquiry_status' => 'new',
+                'submitted_at'   => $now_gmt,
+            ],
+            201
+        );
+    }
+
+    public static function get_support_tickets($request)
+    {
+        global $wpdb;
+
+        $user_id = get_current_user_id();
+        if ($user_id <= 0) {
+            return new WP_Error('rest_forbidden', __('Authentication required.', 'ts-mobile-bridge'), ['status' => 401]);
+        }
+
+        $rl = TSMB_Security::consume_rate_limit('support_list', (string) $user_id, 60, MINUTE_IN_SECONDS);
+        if (is_wp_error($rl)) {
+            return $rl;
+        }
+
+        TSMB_Lifecycle::maybe_upgrade();
+        $table = TSMB_Lifecycle::get_tickets_table();
+        $rows  = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT ticket_id, topic, subject, message, course_id, contact_email, status, admin_reply, created_at, updated_at
+                 FROM {$table}
+                 WHERE user_id = %d
+                 ORDER BY id DESC
+                 LIMIT 50",
+                $user_id
+            ),
+            ARRAY_A
+        );
+
+        $allowed_statuses = ['open', 'in_progress', 'resolved'];
+        $tickets          = [];
+        if (is_array($rows)) {
+            foreach ($rows as $row) {
+                $status = sanitize_key((string) ($row['status'] ?? 'open'));
+                if (!in_array($status, $allowed_statuses, true)) {
+                    $status = 'open';
+                }
+                $cid = intval($row['course_id'] ?? 0);
+                $tickets[] = [
+                    'ticket_id'     => sanitize_text_field((string) ($row['ticket_id'] ?? '')),
+                    'topic'         => sanitize_key((string) ($row['topic'] ?? 'general')),
+                    'subject'       => sanitize_text_field((string) ($row['subject'] ?? '')),
+                    'message'       => sanitize_textarea_field((string) ($row['message'] ?? '')),
+                    'course_id'     => $cid > 0 ? (string) $cid : null,
+                    'contact_email' => sanitize_email((string) ($row['contact_email'] ?? '')),
+                    'status'        => $status,
+                    'admin_reply'   => sanitize_textarea_field((string) ($row['admin_reply'] ?? '')),
+                    'created_at'    => sanitize_text_field((string) ($row['created_at'] ?? '')),
+                    'updated_at'    => sanitize_text_field((string) ($row['updated_at'] ?? '')),
+                ];
+            }
+        }
+
+        return rest_ensure_response([
+            'status'  => 'success',
+            'tickets' => $tickets,
+        ]);
+    }
+
+    public static function create_support_ticket($request)
+    {
+        global $wpdb;
+
+        $user_id = get_current_user_id();
+        if ($user_id <= 0) {
+            return new WP_Error('rest_forbidden', __('Authentication required.', 'ts-mobile-bridge'), ['status' => 401]);
+        }
+
+        $rl = TSMB_Security::consume_rate_limit('support_create', (string) $user_id, 10, HOUR_IN_SECONDS);
+        if (is_wp_error($rl)) {
+            return $rl;
+        }
+
+        $params = $request->get_json_params();
+        if (!is_array($params)) {
+            $params = [];
+        }
+
+        $allowed_topics = ['general', 'payment', 'live', 'certificate', 'corporate', 'bug'];
+        $topic          = sanitize_key((string) ($params['topic'] ?? 'general'));
+        if (!in_array($topic, $allowed_topics, true)) {
+            $topic = 'general';
+        }
+
+        $subject   = sanitize_text_field((string) ($params['subject'] ?? ''));
+        $message   = sanitize_textarea_field((string) ($params['message'] ?? ''));
+        $course_id = absint($params['course_id'] ?? ($params['courseId'] ?? 0));
+
+        if (strlen($subject) < 3) {
+            return new WP_Error('invalid_subject', __('Support subject must be at least 3 characters.', 'ts-mobile-bridge'), ['status' => 400]);
+        }
+        if (strlen($message) < 10) {
+            return new WP_Error('invalid_message', __('Please describe your issue in at least 10 characters.', 'ts-mobile-bridge'), ['status' => 400]);
+        }
+
+        $user_obj      = get_userdata($user_id);
+        $raw_email     = sanitize_email((string) ($params['contact_email'] ?? ($params['contactEmail'] ?? ($user_obj->user_email ?? ''))));
+        $contact_email = ($raw_email !== '' && is_email($raw_email))
+            ? $raw_email
+            : sanitize_email((string) ($user_obj->user_email ?? ''));
+
+        TSMB_Lifecycle::maybe_upgrade();
+        $table     = TSMB_Lifecycle::get_tickets_table();
+        $now_gmt   = current_time('mysql', true);
+        $ticket_id = 'TS-' . gmdate('Ymd') . '-' . strtoupper(substr(bin2hex(random_bytes(3)), 0, 6));
+
+        $inserted = $wpdb->insert(
+            $table,
+            [
+                'ticket_id'     => $ticket_id,
+                'user_id'       => $user_id,
+                'topic'         => $topic,
+                'subject'       => substr($subject, 0, 200),
+                'message'       => substr($message, 0, 3000),
+                'course_id'     => $course_id,
+                'contact_email' => substr($contact_email, 0, 180),
+                'status'        => 'open',
+                'admin_reply'   => '',
+                'created_at'    => $now_gmt,
+                'updated_at'    => $now_gmt,
+            ],
+            ['%s', '%d', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s']
+        );
+
+        if ($inserted === false) {
+            return new WP_Error('ticket_save_failed', __('Could not create support ticket. Please try again.', 'ts-mobile-bridge'), ['status' => 500]);
+        }
+
+        if (function_exists('wp_mail')) {
+            wp_mail(
+                self::get_admin_support_email(),
+                sprintf('[Thriving Skills Support %s] %s', $ticket_id, $subject),
+                sprintf(
+                    "Ticket ID: %s\nUser ID: %d\nEmail: %s\nTopic: %s\nCourse ID: %s\nSubject: %s\nMessage:\n%s\n",
+                    $ticket_id,
+                    $user_id,
+                    $contact_email !== '' ? $contact_email : 'N/A',
+                    $topic,
+                    $course_id > 0 ? (string) $course_id : 'N/A',
+                    $subject,
+                    $message
+                )
+            );
+        }
+
+        return new WP_REST_Response(
+            [
+                'status' => 'success',
+                'ticket' => [
+                    'ticket_id'     => $ticket_id,
+                    'topic'         => $topic,
+                    'subject'       => substr($subject, 0, 200),
+                    'message'       => substr($message, 0, 3000),
+                    'course_id'     => $course_id > 0 ? (string) $course_id : null,
+                    'contact_email' => substr($contact_email, 0, 180),
+                    'status'        => 'open',
+                    'admin_reply'   => '',
+                    'created_at'    => $now_gmt,
+                    'updated_at'    => $now_gmt,
+                ],
+            ],
+            201
+        );
+    }
+
+    public static function get_user_watch_positions(int $user_id): array
+    {
+        if ($user_id <= 0) {
+            return [];
+        }
+        $raw = get_user_meta($user_id, self::USER_META_WATCH_POSITIONS, true);
+        return self::normalize_watch_positions(is_array($raw) ? $raw : []);
+    }
+
+    private static function normalize_watch_positions(array $raw): array
+    {
+        $clean = [];
+        foreach ($raw as $cid => $lessons) {
+            $cid_key = trim((string) $cid);
+            if ($cid_key === '' || !preg_match('/^[A-Za-z0-9_-]{1,32}$/', $cid_key) || !is_array($lessons)) {
+                continue;
+            }
+            $lesson_map = [];
+            foreach ($lessons as $lid => $sec) {
+                $lid_key = trim((string) $lid);
+                if ($lid_key === '' || !preg_match('/^[A-Za-z0-9_-]{1,32}$/', $lid_key) || !is_numeric($sec)) {
+                    continue;
+                }
+                $lesson_map[$lid_key] = max(0, min(86400, intval($sec)));
+                if (count($lesson_map) >= 120) {
+                    break;
+                }
+            }
+            if (!empty($lesson_map)) {
+                $clean[$cid_key] = $lesson_map;
+            }
+            if (count($clean) >= 150) {
+                break;
+            }
+        }
+        return $clean;
+    }
+
+    public static function get_user_gamification_state(int $user_id): ?array
+    {
+        if ($user_id <= 0) {
+            return null;
+        }
+        $raw = get_user_meta($user_id, self::USER_META_GAMIFICATION, true);
+        if (!is_array($raw) || empty($raw)) {
+            return null;
+        }
+        return self::normalize_gamification_snapshot($raw);
+    }
+
+    private static function normalize_gamification_snapshot(array $raw): array
+    {
+        $last_active = trim((string) ($raw['lastActiveDate'] ?? gmdate('Y-m-d')));
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $last_active)) {
+            $last_active = gmdate('Y-m-d');
+        }
+
+        $daily_history = [];
+        if (isset($raw['dailyHistory']) && is_array($raw['dailyHistory'])) {
+            foreach ($raw['dailyHistory'] as $day => $mins) {
+                $day_str = trim((string) $day);
+                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $day_str) && is_numeric($mins)) {
+                    $daily_history[$day_str] = max(0, min(1440, intval($mins)));
+                }
+            }
+            ksort($daily_history);
+            if (count($daily_history) > 90) {
+                $daily_history = array_slice($daily_history, -90, 90, true);
+            }
+        }
+
+        $badges_by_id = [];
+        $raw_badges   = $raw['unlockedBadges'] ?? ($raw['badges'] ?? []);
+        if (is_array($raw_badges)) {
+            foreach ($raw_badges as $badge) {
+                if (is_string($badge)) {
+                    $bid = sanitize_key($badge);
+                    $at  = $last_active;
+                } elseif (is_array($badge) && (!isset($badge['isUnlocked']) || !empty($badge['isUnlocked']))) {
+                    $bid = sanitize_key((string) ($badge['id'] ?? ''));
+                    $at  = trim((string) ($badge['unlockedAt'] ?? $last_active));
+                } else {
+                    continue;
+                }
+                if ($bid === '') {
+                    continue;
+                }
+                if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $at)) {
+                    $at = $last_active;
+                }
+                $badges_by_id[$bid] = [
+                    'id'         => $bid,
+                    'unlockedAt' => $at,
+                ];
+            }
+        }
+
+        return [
+            'streakDays'            => max(0, min(3650, intval($raw['streakDays'] ?? 0))),
+            'lastActiveDate'        => $last_active,
+            'dailyMinutesSpent'     => max(0, min(1440, intval($raw['dailyMinutesSpent'] ?? 0))),
+            'dailyGoalMinutes'      => max(5, min(240, intval($raw['dailyGoalMinutes'] ?? 15))),
+            'totalStudyMinutes'     => max(0, min(1000000, intval($raw['totalStudyMinutes'] ?? 0))),
+            'dailyHistory'          => $daily_history,
+            'xp'                    => max(0, min(10000000, intval($raw['xp'] ?? 0))),
+            'streakFreezes'         => max(0, min(10, intval($raw['streakFreezes'] ?? 1))),
+            'streakFreezeUsedToday' => !empty($raw['streakFreezeUsedToday']),
+            'preferredStudyHour'    => max(0, min(23, intval($raw['preferredStudyHour'] ?? 20))),
+            'unlockedBadges'        => array_values($badges_by_id),
+            'updatedAt'             => max(0, intval($raw['updatedAt'] ?? 0)),
+        ];
+    }
+
+    private static function merge_gamification_snapshot(?array $existing, array $incoming): array
+    {
+        if (!is_array($existing) || empty($existing)) {
+            return $incoming;
+        }
+
+        $merged_history = $existing['dailyHistory'] ?? [];
+        foreach (($incoming['dailyHistory'] ?? []) as $day => $mins) {
+            $merged_history[$day] = max(intval($merged_history[$day] ?? 0), intval($mins));
+        }
+        ksort($merged_history);
+        if (count($merged_history) > 90) {
+            $merged_history = array_slice($merged_history, -90, 90, true);
+        }
+
+        $badge_map = [];
+        foreach (($existing['unlockedBadges'] ?? []) as $b) {
+            if (!empty($b['id'])) {
+                $badge_map[$b['id']] = $b;
+            }
+        }
+        foreach (($incoming['unlockedBadges'] ?? []) as $b) {
+            if (!empty($b['id']) && !isset($badge_map[$b['id']])) {
+                $badge_map[$b['id']] = $b;
+            }
+        }
+
+        $existing_date = (string) ($existing['lastActiveDate'] ?? '');
+        $incoming_date = (string) ($incoming['lastActiveDate'] ?? '');
+        if ($incoming_date > $existing_date) {
+            $last_active  = $incoming_date;
+            $streak_days  = intval($incoming['streakDays'] ?? 0);
+            $daily_mins   = intval($incoming['dailyMinutesSpent'] ?? 0);
+            $freeze_today = !empty($incoming['streakFreezeUsedToday']);
+        } elseif ($incoming_date === $existing_date) {
+            $last_active  = $existing_date;
+            $streak_days  = max(intval($existing['streakDays'] ?? 0), intval($incoming['streakDays'] ?? 0));
+            $daily_mins   = max(intval($existing['dailyMinutesSpent'] ?? 0), intval($incoming['dailyMinutesSpent'] ?? 0));
+            $freeze_today = !empty($existing['streakFreezeUsedToday']) || !empty($incoming['streakFreezeUsedToday']);
+        } else {
+            $last_active  = $existing_date;
+            $streak_days  = intval($existing['streakDays'] ?? 0);
+            $daily_mins   = intval($existing['dailyMinutesSpent'] ?? 0);
+            $freeze_today = !empty($existing['streakFreezeUsedToday']);
+        }
+
+        $use_incoming_prefs = intval($incoming['updatedAt'] ?? 0) >= intval($existing['updatedAt'] ?? 0);
+
+        return [
+            'streakDays'            => $streak_days,
+            'lastActiveDate'        => $last_active,
+            'dailyMinutesSpent'     => $daily_mins,
+            'dailyGoalMinutes'      => $use_incoming_prefs ? $incoming['dailyGoalMinutes'] : $existing['dailyGoalMinutes'],
+            'totalStudyMinutes'     => max(intval($existing['totalStudyMinutes'] ?? 0), intval($incoming['totalStudyMinutes'] ?? 0)),
+            'dailyHistory'          => $merged_history,
+            'xp'                    => max(intval($existing['xp'] ?? 0), intval($incoming['xp'] ?? 0)),
+            'streakFreezes'         => $use_incoming_prefs ? $incoming['streakFreezes'] : $existing['streakFreezes'],
+            'streakFreezeUsedToday' => $freeze_today,
+            'preferredStudyHour'    => $use_incoming_prefs ? $incoming['preferredStudyHour'] : $existing['preferredStudyHour'],
+            'unlockedBadges'        => array_values($badge_map),
+            'updatedAt'             => max(intval($existing['updatedAt'] ?? 0), intval($incoming['updatedAt'] ?? 0)),
+        ];
+    }
+
+    public static function sync_engagement_state($request)
+    {
+        $user_id = get_current_user_id();
+        if ($user_id <= 0) {
+            return new WP_Error('rest_forbidden', __('Authentication required.', 'ts-mobile-bridge'), ['status' => 401]);
+        }
+
+        $rl = TSMB_Security::consume_rate_limit('engagement_sync', (string) $user_id, 60, MINUTE_IN_SECONDS);
+        if (is_wp_error($rl)) {
+            return $rl;
+        }
+
+        $params = $request->get_json_params();
+        if (!is_array($params)) {
+            $params = [];
+        }
+
+        $watch_positions = self::get_user_watch_positions($user_id);
+        $raw_positions   = $params['watch_positions'] ?? ($params['watchPositions'] ?? null);
+        if (is_array($raw_positions)) {
+            $incoming_pos = self::normalize_watch_positions($raw_positions);
+            foreach ($incoming_pos as $cid => $lesson_map) {
+                $existing_course = $watch_positions[$cid] ?? [];
+                foreach ($lesson_map as $lid => $sec) {
+                    $existing_course[$lid] = $sec;
+                }
+                $watch_positions[$cid] = $existing_course;
+            }
+            $watch_positions = self::normalize_watch_positions($watch_positions);
+            update_user_meta($user_id, self::USER_META_WATCH_POSITIONS, $watch_positions);
+        }
+
+        $gamification     = self::get_user_gamification_state($user_id);
+        $raw_gamification = $params['gamification'] ?? null;
+        if (is_array($raw_gamification)) {
+            $normalized_incoming = self::normalize_gamification_snapshot($raw_gamification);
+            $gamification        = self::merge_gamification_snapshot($gamification, $normalized_incoming);
+            update_user_meta($user_id, self::USER_META_GAMIFICATION, $gamification);
+        }
+
+        return rest_ensure_response([
+            'status'          => 'success',
+            'watch_positions' => $watch_positions,
+            'gamification'    => $gamification,
+        ]);
     }
 }
 
@@ -3533,6 +4131,64 @@ class TSMB_Admin
             } else {
                 add_settings_error('tsmb_notices', 'settings_saved', 'Mobile App Command Center settings saved successfully!', 'updated');
             }
+            return;
+        }
+
+        if (isset($_POST['tsmb_update_ticket'])) {
+            check_admin_referer('tsmb_update_ticket_nonce');
+            if (!current_user_can('manage_options')) {
+                return;
+            }
+            global $wpdb;
+            TSMB_Lifecycle::maybe_upgrade();
+            $ticket_id = sanitize_text_field(wp_unslash($_POST['ticket_id'] ?? ''));
+            $status    = sanitize_key(wp_unslash($_POST['ticket_status'] ?? 'open'));
+            $reply     = sanitize_textarea_field(wp_unslash($_POST['admin_reply'] ?? ''));
+            if (!in_array($status, ['open', 'in_progress', 'resolved'], true)) {
+                $status = 'open';
+            }
+            if ($ticket_id !== '') {
+                $wpdb->update(
+                    TSMB_Lifecycle::get_tickets_table(),
+                    [
+                        'status'      => $status,
+                        'admin_reply' => substr($reply, 0, 2000),
+                        'updated_at'  => current_time('mysql', true),
+                    ],
+                    ['ticket_id' => $ticket_id],
+                    ['%s', '%s', '%s'],
+                    ['%s']
+                );
+                add_settings_error('tsmb_notices', 'ticket_updated', 'Support ticket ' . esc_html($ticket_id) . ' updated.', 'updated');
+            }
+            return;
+        }
+
+        if (isset($_POST['tsmb_update_lead'])) {
+            check_admin_referer('tsmb_update_lead_nonce');
+            if (!current_user_can('manage_options')) {
+                return;
+            }
+            global $wpdb;
+            TSMB_Lifecycle::maybe_upgrade();
+            $reference_id = sanitize_text_field(wp_unslash($_POST['reference_id'] ?? ''));
+            $status       = sanitize_key(wp_unslash($_POST['lead_status'] ?? 'new'));
+            if (!in_array($status, ['new', 'contacted', 'closed'], true)) {
+                $status = 'new';
+            }
+            if ($reference_id !== '') {
+                $wpdb->update(
+                    TSMB_Lifecycle::get_leads_table(),
+                    [
+                        'status'     => $status,
+                        'updated_at' => current_time('mysql', true),
+                    ],
+                    ['reference_id' => $reference_id],
+                    ['%s', '%s'],
+                    ['%s']
+                );
+                add_settings_error('tsmb_notices', 'lead_updated', 'Corporate inquiry ' . esc_html($reference_id) . ' updated.', 'updated');
+            }
         }
     }
 
@@ -3573,6 +4229,7 @@ class TSMB_Admin
                 <a href="?page=thriving-skills-app&tab=flash" class="nav-tab <?php echo $active_tab === 'flash' ? 'nav-tab-active' : ''; ?>">Flash Sale &amp; Countdown</a>
                 <a href="?page=thriving-skills-app&tab=chips" class="nav-tab <?php echo $active_tab === 'chips' ? 'nav-tab-active' : ''; ?>">Trending Search &amp; Support</a>
                 <a href="?page=thriving-skills-app&tab=version" class="nav-tab <?php echo $active_tab === 'version' ? 'nav-tab-active' : ''; ?>">App Version &amp; Security</a>
+                <a href="?page=thriving-skills-app&tab=inbox" class="nav-tab <?php echo $active_tab === 'inbox' ? 'nav-tab-active' : ''; ?>">Support &amp; Leads</a>
             </h2>
 
             <div style="display:flex;gap:24px;flex-wrap:wrap;">
@@ -3790,6 +4447,109 @@ class TSMB_Admin
                                 <input type="submit" name="purge_cache" class="button button-secondary" value="Purge Mobile Feed Cache" />
                             </p>
                         </form>
+                    <?php elseif ($active_tab === 'inbox') : ?>
+                        <?php
+                        global $wpdb;
+                        TSMB_Lifecycle::maybe_upgrade();
+                        $tickets_table = TSMB_Lifecycle::get_tickets_table();
+                        $leads_table   = TSMB_Lifecycle::get_leads_table();
+                        $tickets       = $wpdb->get_results("SELECT * FROM {$tickets_table} ORDER BY id DESC LIMIT 30", ARRAY_A);
+                        $leads         = $wpdb->get_results("SELECT * FROM {$leads_table} ORDER BY id DESC LIMIT 30", ARRAY_A);
+                        ?>
+                        <h2 style="margin-top:0;">Learner Support Tickets</h2>
+                        <?php if (empty($tickets)) : ?>
+                            <p style="color:#64748b;">No support tickets submitted yet.</p>
+                        <?php else : ?>
+                            <table class="widefat striped" style="margin-bottom:24px;">
+                                <thead>
+                                    <tr>
+                                        <th>Ticket</th>
+                                        <th>Topic &amp; Learner</th>
+                                        <th>Message</th>
+                                        <th>Status &amp; Reply</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($tickets as $t) : ?>
+                                        <tr>
+                                            <td>
+                                                <strong><?php echo esc_html((string) ($t['ticket_id'] ?? '')); ?></strong><br />
+                                                <small><?php echo esc_html((string) ($t['created_at'] ?? '')); ?></small>
+                                            </td>
+                                            <td>
+                                                <code><?php echo esc_html((string) ($t['topic'] ?? 'general')); ?></code><br />
+                                                <small>UID #<?php echo intval($t['user_id'] ?? 0); ?> • <?php echo esc_html((string) ($t['contact_email'] ?? '')); ?></small>
+                                            </td>
+                                            <td>
+                                                <strong><?php echo esc_html((string) ($t['subject'] ?? '')); ?></strong>
+                                                <p style="margin:4px 0 0;"><?php echo esc_html((string) ($t['message'] ?? '')); ?></p>
+                                            </td>
+                                            <td>
+                                                <form method="post" action="?page=thriving-skills-app&tab=inbox">
+                                                    <?php wp_nonce_field('tsmb_update_ticket_nonce'); ?>
+                                                    <input type="hidden" name="ticket_id" value="<?php echo esc_attr((string) ($t['ticket_id'] ?? '')); ?>" />
+                                                    <select name="ticket_status" style="margin-bottom:6px;width:100%;">
+                                                        <option value="open" <?php selected((string) ($t['status'] ?? 'open'), 'open'); ?>>Open</option>
+                                                        <option value="in_progress" <?php selected((string) ($t['status'] ?? ''), 'in_progress'); ?>>In Progress</option>
+                                                        <option value="resolved" <?php selected((string) ($t['status'] ?? ''), 'resolved'); ?>>Resolved</option>
+                                                    </select>
+                                                    <textarea name="admin_reply" rows="2" class="large-text" placeholder="Advisor reply visible to learner..."><?php echo esc_textarea((string) ($t['admin_reply'] ?? '')); ?></textarea>
+                                                    <button type="submit" name="tsmb_update_ticket" class="button button-small button-primary" style="margin-top:6px;">Save</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        <?php endif; ?>
+
+                        <hr style="margin:24px 0;" />
+                        <h2>Corporate &amp; Enterprise Leads</h2>
+                        <?php if (empty($leads)) : ?>
+                            <p style="color:#64748b;">No corporate inquiries submitted yet.</p>
+                        <?php else : ?>
+                            <table class="widefat striped">
+                                <thead>
+                                    <tr>
+                                        <th>Reference</th>
+                                        <th>Company &amp; Contact</th>
+                                        <th>Solution &amp; Team Size</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($leads as $l) : ?>
+                                        <tr>
+                                            <td>
+                                                <strong><?php echo esc_html((string) ($l['reference_id'] ?? '')); ?></strong><br />
+                                                <small><?php echo esc_html((string) ($l['created_at'] ?? '')); ?></small>
+                                            </td>
+                                            <td>
+                                                <strong><?php echo esc_html((string) ($l['company_name'] ?? '')); ?></strong><br />
+                                                <?php echo esc_html((string) ($l['contact_name'] ?? '')); ?> (<?php echo esc_html((string) ($l['work_email'] ?? '')); ?>)<br />
+                                                <small><?php echo esc_html((string) ($l['phone'] ?? '')); ?></small>
+                                            </td>
+                                            <td>
+                                                <strong><?php echo esc_html((string) ($l['service_type'] ?? '')); ?></strong><br />
+                                                <small>Team: <?php echo esc_html((string) ($l['team_size'] ?? '')); ?></small>
+                                            </td>
+                                            <td>
+                                                <form method="post" action="?page=thriving-skills-app&tab=inbox">
+                                                    <?php wp_nonce_field('tsmb_update_lead_nonce'); ?>
+                                                    <input type="hidden" name="reference_id" value="<?php echo esc_attr((string) ($l['reference_id'] ?? '')); ?>" />
+                                                    <select name="lead_status" style="margin-bottom:6px;">
+                                                        <option value="new" <?php selected((string) ($l['status'] ?? 'new'), 'new'); ?>>New</option>
+                                                        <option value="contacted" <?php selected((string) ($l['status'] ?? ''), 'contacted'); ?>>Contacted</option>
+                                                        <option value="closed" <?php selected((string) ($l['status'] ?? ''), 'closed'); ?>>Closed</option>
+                                                    </select>
+                                                    <button type="submit" name="tsmb_update_lead" class="button button-small">Update</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        <?php endif; ?>
                     <?php endif; ?>
 
                 </div>
@@ -3823,8 +4583,11 @@ class TSMB_Admin
                         <li><code>/wp-json/thrivingskill/v1/register-push-token</code></li>
                         <li><code>/wp-json/thrivingskill/v1/auth/webview-handoff</code></li>
                         <li><code>/wp-json/thrivingskill/v1/learning-state</code></li>
+                        <li><code>/wp-json/thrivingskill/v1/engagement-sync</code></li>
                         <li><code>/wp-json/thrivingskill/v1/courses/{id}/submit-review</code></li>
                         <li><code>/wp-json/thrivingskill/v1/certificates/verify</code></li>
+                        <li><code>/wp-json/thrivingskill/v1/corporate-inquiry</code></li>
+                        <li><code>/wp-json/thrivingskill/v1/support-tickets</code></li>
                     </ul>
                 </div>
             </div>

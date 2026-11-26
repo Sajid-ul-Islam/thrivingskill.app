@@ -107,8 +107,9 @@ export const PartnerLogoMarquee: React.FC<PartnerLogoMarqueeProps> = ({ logos })
             style={[
               styles.logoCard,
               {
-                backgroundColor: isDark ? colors.surfaceCard : '#FFFFFF',
-                borderColor: colors.border,
+                // Keep partner logo tiles on crisp white in dark mode so dark-ink brand marks remain legible.
+                backgroundColor: '#FFFFFF',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.16)' : colors.border,
               },
             ]}
             accessibilityRole="image"

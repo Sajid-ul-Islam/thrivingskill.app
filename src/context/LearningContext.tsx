@@ -39,6 +39,17 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const catalogCoursesRef = useRef<Course[]>([]);
   const watchPositionsRef = useRef<Record<string, Record<string, number>>>({});
+  const watchSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingWatchDeltaRef = useRef<Record<string, Record<string, number>>>({});
+
+  useEffect(() => {
+    return () => {
+      if (watchSyncTimerRef.current) {
+        clearTimeout(watchSyncTimerRef.current);
+        watchSyncTimerRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const unsub = SyncQueueManager.subscribe((count, isSyncing) => {
@@ -136,6 +147,20 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         serverLearning.certificates
       );
 
+      if (serverLearning.watchPositions) {
+        const mergedWatch: Record<string, Record<string, number>> = {
+          ...watchPositionsRef.current,
+        };
+        for (const [cid, lessons] of Object.entries(serverLearning.watchPositions)) {
+          mergedWatch[cid] = {
+            ...lessons,
+            ...(mergedWatch[cid] || {}),
+          };
+        }
+        watchPositionsRef.current = mergedWatch;
+        persistUserLearningKey(LEARNING_STORAGE_KEYS.WATCH_POSITIONS, userScope, mergedWatch);
+      }
+
       return serverIds;
     }
 
@@ -204,6 +229,11 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setSearchKeywordsHistory([]);
     setReviewedCourseIds([]);
     watchPositionsRef.current = {};
+    pendingWatchDeltaRef.current = {};
+    if (watchSyncTimerRef.current) {
+      clearTimeout(watchSyncTimerRef.current);
+      watchSyncTimerRef.current = null;
+    }
 
     (async () => {
       try {
@@ -482,6 +512,27 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       watchPositionsRef.current = nextPositions;
       persistUserLearningKey(LEARNING_STORAGE_KEYS.WATCH_POSITIONS, userScope, nextPositions);
 
+      if (user?.id && token && !isOffline) {
+        pendingWatchDeltaRef.current = {
+          ...pendingWatchDeltaRef.current,
+          [courseId]: {
+            ...(pendingWatchDeltaRef.current[courseId] || {}),
+            [lessonId]: clampedSec,
+          },
+        };
+        if (watchSyncTimerRef.current) {
+          clearTimeout(watchSyncTimerRef.current);
+        }
+        watchSyncTimerRef.current = setTimeout(() => {
+          watchSyncTimerRef.current = null;
+          const delta = pendingWatchDeltaRef.current;
+          pendingWatchDeltaRef.current = {};
+          if (Object.keys(delta).length > 0) {
+            CompanionService.syncEngagementState({ watchPositions: delta }).catch(() => {});
+          }
+        }, 2000);
+      }
+
       // Update lastAccessedLessonId only for genuinely enrolled courses (never fabricate enrollment from preview playback)
       setUserProgress((prev) => {
         const existing = prev[courseId];
@@ -507,7 +558,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return updated;
       });
     },
-    [userScope]
+    [userScope, user?.id, token, isOffline]
   );
 
   const getWatchPosition = useCallback(

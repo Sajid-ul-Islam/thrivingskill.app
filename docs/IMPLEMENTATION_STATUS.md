@@ -4,8 +4,8 @@
 > Consolidates and supersedes conflicting claims across legacy planning and feature documents.
 
 - **App Release Version**: 1.4.0 (Build 10400) *(enforced via `scripts/sync_version.js` from `package.json`)*
-- **Companion Plugin (Repository)**: `ts-mobile-bridge v1.2.0` ([ts-mobile-bridge.php](../backend-plugin/ts-mobile-bridge/ts-mobile-bridge.php))
-- **Companion Plugin (Staging Observed 2026-11-26)**: Older deployment on `https://staging.thrivingskill.com` exposing `/config` (`latest_version: 1.1.0`), `/feed`, `/lessons/{id}`, `/register`, `/register-push-token`; repo `v1.2.0` hardening and endpoints await ZIP deployment.
+- **Companion Plugin (Repository)**: `ts-mobile-bridge v1.3.0` ([ts-mobile-bridge.php](../backend-plugin/ts-mobile-bridge/ts-mobile-bridge.php))
+- **Companion Plugin (Staging Observed 2026-11-26)**: Older deployment on `https://staging.thrivingskill.com` exposing `/config` (`latest_version: 1.1.0`), `/feed`, `/lessons/{id}`, `/register`, `/register-push-token`; repo `v1.3.0` hardening and endpoints await ZIP deployment.
 
 ---
 
@@ -31,12 +31,13 @@ Legend:
 | **Certificates & Verification** | Yes | Yes | Needs staging deploy | Yes | No evidence | `CertificateModal.tsx`, `CompanionService.verifyCertificate`. Repo `v1.2.0` adds `GET /thrivingskill/v1/certificates/verify` & LP cert auto-grant on completion/review (`reviewAndCertificateSync.test.tsx`, `TsMobileBridgeTest.php`). Dev local cert helper (`unlockCertificateForDev`) is strictly restricted to `__DEV__` builds; backend is authoritative in production. |
 | **Learner Profile Sync (CR-05)** | Yes | Yes | Yes | Yes | To verify | `ProfileScreen.tsx`, `EditProfileModal.tsx`, `UserService.updateProfile`; Unicode/Bangla sync via `GET/POST /wp/v2/users/me` + `/learnpress/v1/users/{id}`; `test_profile_and_checkout_sync.js`. |
 | **Offline Study Deck & Sync Queue** | Yes | Yes | N/A | Yes | To verify | `OfflineStudyDeckModal.tsx`, `OfflineManager.ts` (JSON text guides), `SyncQueueManager.ts` (per-operation captured user scope, per-scope processor lock & storage mutex preventing cross-account races, payload validation rejecting privilege/malformed fields, deterministic `X-Idempotency-Key`, Jest `syncQueueAndPermissions.test.tsx`). |
-| **Offline Video Download** | Partial | **No actual video download** | No | No | No | `DownloadQualityModal.tsx` quality selector persists text study guides only; **encrypted MP4/video downloading (`expo-file-system`) is not implemented yet** (Milestone 7 backlog). |
-| **Push Notifications & Streak Scheduling** | Yes | Yes | Needs staging deploy | Yes | To verify | `NotificationService`, `habitNotificationQueue.ts`; `/thrivingskill/v1/register-push-token` active on Staging currently accepts unauthenticated POST (HTTP 200 found in 2026-11-26 Layer 2 run); repo `v1.2.0` locks down auth + `tsmb_push_tokens` table (`pushAndTelemetry.test.tsx`, `TsMobileBridgeTest.php`). |
+| **Offline Video Download** | **Dropped** | Online streaming only | N/A | Yes | To verify | Offline video downloads removed per product scope (`OfflineManager.ts` caches text Study Guides only; `DownloadQualityModal.tsx` selects online streaming quality only; Jest `videoPlaybackAndCommute.test.tsx`). |
+| **Push Notifications & Streak Scheduling** | Yes | Yes | Needs staging deploy | Yes | To verify | `NotificationService`, `habitNotificationQueue.ts`; `/thrivingskill/v1/register-push-token` active on Staging currently accepts unauthenticated POST (HTTP 200 found in 2026-11-26 Layer 2 run); repo `v1.3.0` locks down auth + `tsmb_push_tokens` table (`pushAndTelemetry.test.tsx`, `TsMobileBridgeTest.php`). |
 | **AI Study Copilot (`ThriveGenHub` & Tutor)** | Yes | Yes | N/A | Yes | To verify | `GeminiNanoService` reports genuine unavailability without Android AICore weights (zero fake fallback or shipped keys); `AiTutorService` / `AiAssessmentService` search loaded lesson text via BM25 (`aiStudyCapabilities.test.tsx`). |
 | **Paid eBooks** | Yes | Partial | Partial | Partial | No evidence | `EbookModal.tsx` opens `Env.SITE_URL` web checkout via `Linking.openURL` with local `AsyncStorage` purchase tracking (`test_paid_ebooks.js`); no server entitlement sync endpoint yet. |
-| **Corporate Enterprise Inquiries (B2B)** | Yes | Local only | **No** | No | No | `CorporateInquiryModal.tsx` displays local confirmation state (`setSubmitted(true)`) without posting to a backend endpoint. |
-| **Gamification & Spaced Repetition** | Yes | Yes | No | No | No | `GamificationContext.tsx` & `SpacedRepetitionService.ts` persist XP, streaks, and flashcards strictly in device `AsyncStorage`. |
+| **Corporate Enterprise Inquiries (B2B)** | Yes | Yes | Needs staging deploy | Yes | No evidence | `CorporateInquiryModal.tsx`, `CompanionService.submitCorporateInquiry`; persists reference ID (`CORP-...`) & lead row in `tsmb_corporate_inquiries` (`Support & Leads` WP Admin tab) via `POST /thrivingskill/v1/corporate-inquiry`; Jest `persistenceAndEngagementSync.test.tsx` + `TsMobileBridgeTest.php`. |
+| **Learner Support Tickets** | Yes | Yes | Needs staging deploy | Yes | No evidence | `SupportContactModal.tsx` + WhatsApp/Messenger channels; authenticated ticket creation & user-scoped status tracking (`TS-...`, `open` / `in_progress` / `resolved` + advisor reply) via `/thrivingskill/v1/support-tickets` (`Support & Leads` WP Admin tab); Jest + `TsMobileBridgeTest.php`. |
+| **Gamification & Cross-Device Watch Sync** | Yes | Yes | Needs staging deploy | Yes | No evidence | `GamificationContext.tsx` & `LearningContext.tsx`; monotonic streak/XP merge & isolated `watch_positions` resume sync via `/thrivingskill/v1/engagement-sync` & `/learning-state`; `SpacedRepetitionService.ts` flashcards remain device-local. |
 | **Biometric Authentication** | **Dropped** | Dropped | N/A | N/A | N/A | Incomplete non-functional UI toggle removed completely from app, translations, and roadmap. |
 
 ---
@@ -49,15 +50,15 @@ Legend:
 
 ---
 
-## 2. Companion Plugin Deployment Delta (`Staging` vs `Repo v1.2.0`)
+## 2. Companion Plugin Deployment Delta (`Staging` vs `Repo v1.3.0`)
 
 Live `node scripts/test_layer2_staging_integration.js` execution on `2026-11-26` against `https://staging.thrivingskill.com` confirmed:
 - Active WordPress / LearnPress / WooCommerce routes (`/learnpress/v1/token`, `/learnpress/v1/courses`, `/learnpress/v1/courses/enroll`, `/learnpress/v1/lessons/finish`, `/learnpress/v1/courses/finish`, `/learnpress/v1/review/submit`, `/wc/store/v1/cart`) and older `thrivingskill/v1` routes (`/config`, `/feed`, `/register`, `/register-push-token`).
 - **Pending Staging/Production Plugin Deployment Gaps**:
-  1. Nine new `v1.2.0` companion routes (`/enrollments`, `/learning-state`, `/courses/{id}/submit-review`, `/certificates/verify`, `/auth/webview-handoff`, `/revoke-token`, `/verify-registration`, `/resend-registration`, `/auth/reset-password/confirm`) are not yet live on Staging.
-  2. Staging's older `POST /thrivingskill/v1/register-push-token` still returns HTTP 200 without authentication (fixed in repo `v1.2.0` + verified in `TsMobileBridgeTest.php`).
+  1. New `v1.2.0`–`v1.3.0` companion routes (`/enrollments`, `/learning-state`, `/engagement-sync`, `/courses/{id}/submit-review`, `/certificates/verify`, `/auth/webview-handoff`, `/revoke-token`, `/verify-registration`, `/resend-registration`, `/auth/reset-password/confirm`, `/corporate-inquiry`, `/support-tickets`) await plugin upload on Staging.
+  2. Staging's older `POST /thrivingskill/v1/register-push-token` still returns HTTP 200 without authentication (fixed in repo `v1.3.0` + verified in `TsMobileBridgeTest.php`).
 
-**Required Manual Staging Verification Once `ts-mobile-bridge.zip` (`v1.2.0`) Is Deployed:**
+**Required Manual Staging Verification Once `ts-mobile-bridge.zip` (`v1.3.0`) Is Deployed:**
 1. Re-run `node scripts/test_layer2_staging_integration.js --strict-companion --journey` with `STAGING_TEST_USERNAME` & `STAGING_TEST_PASSWORD` to verify HTTP 200 authenticated flows and 401/403 unauthenticated blocks end-to-end.
 2. Complete a sandbox course checkout from a fresh email-registered account via single-use `/webview-handoff` and verify order attribution & `/enrollments` unlock.
 3. Complete 100% lessons, submit mandatory review, and verify LearnPress certificate issuance & cross-device `/learning-state` sync.

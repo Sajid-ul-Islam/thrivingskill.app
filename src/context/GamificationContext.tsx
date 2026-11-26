@@ -1,6 +1,8 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from './AuthContext';
+import { useNetwork } from './NetworkContext';
+import { CompanionService, ServerGamificationSnapshot } from '../services/api/companionService';
 
 const GAMIFICATION_STORAGE_KEY = '@thriving_skill_gamification';
 
@@ -152,10 +154,112 @@ interface GamificationContextType extends GamificationState {
 
 const GamificationContext = createContext<GamificationContextType>({} as GamificationContextType);
 
+const buildServerSnapshot = (state: GamificationState): ServerGamificationSnapshot => ({
+  streakDays: state.streakDays || 0,
+  lastActiveDate: state.lastActiveDate || getLocalDateString(),
+  dailyMinutesSpent: state.dailyMinutesSpent || 0,
+  dailyGoalMinutes: state.dailyGoalMinutes || 15,
+  totalStudyMinutes: state.totalStudyMinutes || 0,
+  dailyHistory: state.dailyHistory || {},
+  xp: state.xp || 0,
+  streakFreezes: state.streakFreezes ?? 1,
+  streakFreezeUsedToday: Boolean(state.streakFreezeUsedToday),
+  preferredStudyHour: state.preferredStudyHour ?? 20,
+  unlockedBadges: state.badges
+    .filter((b) => b.isUnlocked)
+    .map((b) => ({
+      id: b.id,
+      unlockedAt: b.unlockedAt || state.lastActiveDate || getLocalDateString(),
+    })),
+  updatedAt: Date.now(),
+});
+
+const mergeServerGamification = (
+  local: GamificationState,
+  server: ServerGamificationSnapshot
+): GamificationState => {
+  const today = getLocalDateString();
+  const mergedHistory: Record<string, number> = { ...(local.dailyHistory || {}) };
+  Object.entries(server.dailyHistory || {}).forEach(([day, mins]) => {
+    mergedHistory[day] = Math.max(mergedHistory[day] || 0, mins || 0);
+  });
+
+  const serverBadgeMap = new Map<string, string>();
+  (server.unlockedBadges || []).forEach((b) => {
+    if (b?.id) serverBadgeMap.set(b.id, b.unlockedAt || server.lastActiveDate || today);
+  });
+
+  const mergedBadges = local.badges.map((b) => {
+    const serverUnlockedAt = serverBadgeMap.get(b.id);
+    if (b.isUnlocked || serverUnlockedAt !== undefined) {
+      return {
+        ...b,
+        isUnlocked: true,
+        unlockedAt: b.unlockedAt || serverUnlockedAt || today,
+      };
+    }
+    return b;
+  });
+
+  const localDate = local.lastActiveDate || '';
+  const serverDate = server.lastActiveDate || '';
+  let lastActiveDate = localDate || serverDate || today;
+  let streakDays = local.streakDays || 0;
+  let dailyMinutesSpent = local.dailyMinutesSpent || 0;
+  let streakFreezeUsedToday = Boolean(local.streakFreezeUsedToday);
+
+  if (serverDate > localDate) {
+    lastActiveDate = serverDate;
+    streakDays = server.streakDays || 0;
+    dailyMinutesSpent =
+      serverDate === today ? server.dailyMinutesSpent || 0 : mergedHistory[today] || 0;
+    streakFreezeUsedToday = Boolean(server.streakFreezeUsedToday);
+  } else if (serverDate === localDate && serverDate !== '') {
+    lastActiveDate = serverDate;
+    streakDays = Math.max(local.streakDays || 0, server.streakDays || 0);
+    dailyMinutesSpent = Math.max(local.dailyMinutesSpent || 0, server.dailyMinutesSpent || 0);
+    streakFreezeUsedToday =
+      Boolean(local.streakFreezeUsedToday) || Boolean(server.streakFreezeUsedToday);
+  }
+
+  const preferServerPrefs = server.updatedAt > 0 && (local.xp === 0 || server.xp >= local.xp);
+
+  return {
+    ...local,
+    streakDays,
+    lastActiveDate,
+    dailyMinutesSpent,
+    dailyGoalMinutes: preferServerPrefs ? server.dailyGoalMinutes : local.dailyGoalMinutes,
+    totalStudyMinutes: Math.max(local.totalStudyMinutes || 0, server.totalStudyMinutes || 0),
+    dailyHistory: mergedHistory,
+    badges: mergedBadges,
+    xp: Math.max(local.xp || 0, server.xp || 0),
+    streakFreezes: preferServerPrefs ? server.streakFreezes : local.streakFreezes,
+    streakFreezeUsedToday,
+    preferredStudyHour: preferServerPrefs ? server.preferredStudyHour : local.preferredStudyHour,
+  };
+};
+
 export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
+  const { isOffline } = useNetwork();
   const scopedStorageKey = `${GAMIFICATION_STORAGE_KEY}${user?.id ? `_u_${user.id}` : '_guest'}`;
   const [celebration, setCelebration] = useState<CelebrationEvent | null>(null);
+  const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const streakBadgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (syncTimerRef.current) {
+        clearTimeout(syncTimerRef.current);
+        syncTimerRef.current = null;
+      }
+      if (streakBadgeTimerRef.current) {
+        clearTimeout(streakBadgeTimerRef.current);
+        streakBadgeTimerRef.current = null;
+      }
+    };
+  }, []);
 
   const getInitialState = (): GamificationState => ({
     streakDays: 0,
@@ -173,8 +277,25 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const [state, setState] = useState<GamificationState>(getInitialState);
 
+  const scheduleServerSync = (nextState: GamificationState) => {
+    if (!user?.id || !token || isOffline) return;
+    if (syncTimerRef.current) {
+      clearTimeout(syncTimerRef.current);
+    }
+    syncTimerRef.current = setTimeout(() => {
+      syncTimerRef.current = null;
+      CompanionService.syncEngagementState({
+        gamification: buildServerSnapshot(nextState),
+      }).catch(() => {});
+    }, 2000);
+  };
+
   useEffect(() => {
     let active = true;
+    if (syncTimerRef.current) {
+      clearTimeout(syncTimerRef.current);
+      syncTimerRef.current = null;
+    }
     setState(getInitialState());
 
     (async () => {
@@ -223,20 +344,24 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
             }),
           }));
         }
+
+        if (active && user?.id && token && !isOffline) {
+          const serverLearning = await CompanionService.fetchLearningState();
+          if (active && serverLearning?.gamification) {
+            setState((prev) => {
+              const merged = mergeServerGamification(prev, serverLearning.gamification!);
+              AsyncStorage.setItem(scopedStorageKey, JSON.stringify(merged)).catch(() => {});
+              return merged;
+            });
+          }
+        }
       } catch {}
     })();
 
     return () => {
       active = false;
     };
-  }, [scopedStorageKey]);
-
-  const saveState = async (newState: GamificationState) => {
-    setState(newState);
-    try {
-      await AsyncStorage.setItem(scopedStorageKey, JSON.stringify(newState));
-    } catch {}
-  };
+  }, [scopedStorageKey, user?.id, token, isOffline]);
 
   const recordStudyTime = (minutes: number) => {
     if (minutes <= 0) return;
@@ -278,11 +403,16 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       };
 
       AsyncStorage.setItem(scopedStorageKey, JSON.stringify(updated)).catch(() => {});
+      scheduleServerSync(updated);
 
       if (newStreak >= 3) {
         const streakBadge = prevState.badges.find((b) => b.id === 'streak_champ');
         if (streakBadge && !streakBadge.isUnlocked) {
-          setTimeout(() => unlockBadge('streak_champ'), 0);
+          if (streakBadgeTimerRef.current) clearTimeout(streakBadgeTimerRef.current);
+          streakBadgeTimerRef.current = setTimeout(() => {
+            streakBadgeTimerRef.current = null;
+            unlockBadge('streak_champ');
+          }, 0);
         }
       }
 
@@ -298,6 +428,7 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         xp: (prevState.xp || 0) + amount,
       };
       AsyncStorage.setItem(scopedStorageKey, JSON.stringify(updated)).catch(() => {});
+      scheduleServerSync(updated);
       return updated;
     });
   };
@@ -311,6 +442,7 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         lastActiveDate: today,
       };
       AsyncStorage.setItem(scopedStorageKey, JSON.stringify(updated)).catch(() => {});
+      scheduleServerSync(updated);
       return updated;
     });
   };
@@ -342,6 +474,7 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       };
 
       AsyncStorage.setItem(scopedStorageKey, JSON.stringify(updated)).catch(() => {});
+      scheduleServerSync(updated);
 
       if (existing && !existing.isUnlocked) {
         triggerCelebration({
@@ -364,6 +497,7 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         dailyGoalMinutes: minutes,
       };
       AsyncStorage.setItem(scopedStorageKey, JSON.stringify(updated)).catch(() => {});
+      scheduleServerSync(updated);
       return updated;
     });
   };
@@ -375,6 +509,7 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         preferredStudyHour: hour,
       };
       AsyncStorage.setItem(scopedStorageKey, JSON.stringify(updated)).catch(() => {});
+      scheduleServerSync(updated);
       return updated;
     });
   };
@@ -388,6 +523,7 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         streakFreezeUsedToday: true,
       };
       AsyncStorage.setItem(scopedStorageKey, JSON.stringify(updated)).catch(() => {});
+      scheduleServerSync(updated);
       return updated;
     });
     return true;

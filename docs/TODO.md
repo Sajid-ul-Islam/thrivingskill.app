@@ -18,7 +18,7 @@
 - [x] Authentic Bengali typography and slogans (*"শিখুন এবং গড়ুন নিজের ক্যারিয়ার"*).
 - [x] Bottom tab navigation hierarchy (Home, My Learning, Explore, Live Workshops, Profile).
 - [x] Course card presentation with dynamic star ratings, instructor avatars, and BDT currency formatting (`৳১,৫০০`).
-- [x] B2B Enterprise Team Hub modal UI (`CorporateInquiryModal.tsx` — client confirmation only; backend API submission pending).
+- [x] B2B Enterprise Team Hub modal UI (`CorporateInquiryModal.tsx` wired to `POST /thrivingskill/v1/corporate-inquiry` with reference IDs & admin inbox tracking).
 
 ### Phase 2: Live WordPress & LearnPress LMS Integration
 - [x] Production WordPress REST API client integration (`https://thrivingskill.com/wp-json`).
@@ -148,10 +148,10 @@
 
 ## 🛠️ In-Progress & Deployment Tasks
 
-- [ ] **Deploy Companion Plugin `v1.2.0` (`ts-mobile-bridge.zip`) to Staging & Production**:
-  - Upload updated plugin archive containing `/enrollments`, `/learning-state`, `/courses/{id}/submit-review`, `/certificates/verify`, and `/auth/webview-handoff`.
-- [ ] **Connect Corporate Inquiry Modal (`CorporateInquiryModal.tsx`) to Backend Lead Endpoint**:
-  - Replace local-only confirmation state with persisted WordPress/CRM submission.
+- [ ] **Deploy Companion Plugin `v1.3.0` (`ts-mobile-bridge.zip`) to Staging & Production**:
+  - Upload updated plugin archive containing `/enrollments`, `/learning-state`, `/engagement-sync`, `/courses/{id}/submit-review`, `/certificates/verify`, `/auth/webview-handoff`, `/corporate-inquiry`, and `/support-tickets`.
+- [x] **Connect Corporate Inquiry Modal (`CorporateInquiryModal.tsx`) to Backend Lead Endpoint**:
+  - Persists to WordPress (`tsmb_corporate_inquiries`) with unique reference IDs (`CORP-...`), email alerts, and `Support & Leads` WP Admin inbox; `SupportContactModal.tsx` also tracks learner support tickets (`TS-...`) and `GamificationContext` / `LearningContext` sync streaks & watch positions.
 - [ ] **Wire Paid eBook Server Entitlement Sync (`EbookModal.tsx`)**:
   - Sync purchased eBook entitlements from WooCommerce orders instead of device-local `AsyncStorage` tracking.
 

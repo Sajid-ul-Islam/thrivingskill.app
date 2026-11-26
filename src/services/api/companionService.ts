@@ -71,11 +71,67 @@ export interface ServerEnrollmentCheck {
   paymentConfirmed?: boolean;
 }
 
+export interface ServerGamificationSnapshot {
+  streakDays: number;
+  lastActiveDate: string;
+  dailyMinutesSpent: number;
+  dailyGoalMinutes: number;
+  totalStudyMinutes: number;
+  dailyHistory: Record<string, number>;
+  xp: number;
+  streakFreezes: number;
+  streakFreezeUsedToday: boolean;
+  preferredStudyHour: number;
+  unlockedBadges: { id: string; unlockedAt: string }[];
+  updatedAt: number;
+}
+
+export interface CorporateInquiryPayload {
+  serviceType: string;
+  companyName: string;
+  contactName: string;
+  workEmail: string;
+  phone?: string;
+  teamSize?: string;
+  notes?: string;
+}
+
+export interface CorporateInquiryReceipt {
+  referenceId: string;
+  status: string;
+  submittedAt: string;
+}
+
+export type SupportTicketStatus = 'open' | 'in_progress' | 'resolved';
+
+export interface SupportTicketRecord {
+  ticketId: string;
+  topic: string;
+  subject: string;
+  message: string;
+  courseId?: string | null;
+  contactEmail?: string;
+  status: SupportTicketStatus;
+  adminReply?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateSupportTicketPayload {
+  topic: string;
+  subject: string;
+  message: string;
+  courseId?: string;
+  contactEmail?: string;
+}
+
 export interface ServerLearningState {
   enrolledCourseIds: string[];
   reviewedCourseIds: string[];
   progress: Record<string, UserProgress>;
   certificates: Certificate[];
+  watchPositions?: Record<string, Record<string, number>>;
+  gamification?: ServerGamificationSnapshot | null;
 }
 
 export interface ServerReviewSubmitResult {
@@ -133,6 +189,8 @@ export function resolveSupportContacts(support?: LearnerSupportHotline | null): 
 }
 
 export class CompanionService {
+  private static inFlightLearningStatePromise: Promise<ServerLearningState | null> | null = null;
+
   /**
    * Fetches live remote configuration and Mobile Command Center parameters
    * from the TS Mobile Bridge companion plugin with SWR caching.
@@ -362,11 +420,91 @@ export class CompanionService {
     }
   }
 
+  private static normalizeWatchPositions(raw: any): Record<string, Record<string, number>> {
+    const out: Record<string, Record<string, number>> = {};
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      return out;
+    }
+    for (const [cid, lessons] of Object.entries(raw)) {
+      if (!lessons || typeof lessons !== 'object' || Array.isArray(lessons)) continue;
+      const lessonMap: Record<string, number> = {};
+      for (const [lid, sec] of Object.entries(lessons as Record<string, unknown>)) {
+        const parsed = Number(sec);
+        if (Number.isFinite(parsed) && parsed >= 0) {
+          lessonMap[String(lid)] = Math.min(86400, Math.floor(parsed));
+        }
+      }
+      if (Object.keys(lessonMap).length > 0) {
+        out[String(cid)] = lessonMap;
+      }
+    }
+    return out;
+  }
+
+  private static normalizeGamificationSnapshot(raw: any): ServerGamificationSnapshot | null {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      return null;
+    }
+    const dailyHistory: Record<string, number> = {};
+    if (raw.dailyHistory && typeof raw.dailyHistory === 'object') {
+      for (const [day, mins] of Object.entries(raw.dailyHistory)) {
+        const n = Number(mins);
+        if (typeof day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(day) && Number.isFinite(n)) {
+          dailyHistory[day] = Math.max(0, Math.floor(n));
+        }
+      }
+    }
+
+    const unlockedBadges = Array.isArray(raw.unlockedBadges)
+      ? raw.unlockedBadges
+          .filter((b: any) => b && typeof b.id === 'string' && b.id.trim().length > 0)
+          .map((b: any) => ({
+            id: String(b.id).trim(),
+            unlockedAt: String(b.unlockedAt || ''),
+          }))
+      : [];
+
+    return {
+      streakDays: Math.max(0, Math.floor(Number(raw.streakDays) || 0)),
+      lastActiveDate: String(raw.lastActiveDate || ''),
+      dailyMinutesSpent: Math.max(0, Math.floor(Number(raw.dailyMinutesSpent) || 0)),
+      dailyGoalMinutes: Math.max(5, Math.min(240, Math.floor(Number(raw.dailyGoalMinutes) || 15))),
+      totalStudyMinutes: Math.max(0, Math.floor(Number(raw.totalStudyMinutes) || 0)),
+      dailyHistory,
+      xp: Math.max(0, Math.floor(Number(raw.xp) || 0)),
+      streakFreezes: Math.max(0, Math.min(10, Math.floor(Number(raw.streakFreezes) || 0))),
+      streakFreezeUsedToday: Boolean(raw.streakFreezeUsedToday),
+      preferredStudyHour: Math.max(
+        0,
+        Math.min(
+          23,
+          Math.floor(raw.preferredStudyHour !== undefined ? Number(raw.preferredStudyHour) : 20)
+        )
+      ),
+      unlockedBadges,
+      updatedAt: Math.max(0, Math.floor(Number(raw.updatedAt) || 0)),
+    };
+  }
+
   /**
-   * Queries authoritative enrollments, completed lessons, reviewed courses, and server-issued certificates.
+   * Queries authoritative enrollments, completed lessons, reviewed courses, server-issued certificates,
+   * video resume timestamps, and synced study engagement. Coalesces concurrent mount requests.
    * Returns null only if unauthenticated or the server lacks /learning-state.
    */
   static async fetchLearningState(): Promise<ServerLearningState | null> {
+    if (this.inFlightLearningStatePromise) {
+      return this.inFlightLearningStatePromise;
+    }
+
+    this.inFlightLearningStatePromise = this.fetchLearningStateOnce();
+    try {
+      return await this.inFlightLearningStatePromise;
+    } finally {
+      this.inFlightLearningStatePromise = null;
+    }
+  }
+
+  private static async fetchLearningStateOnce(): Promise<ServerLearningState | null> {
     const authToken = await HttpClient.getAuthToken();
     if (!authToken) {
       return null;
@@ -379,6 +517,8 @@ export class CompanionService {
         reviewed_course_ids?: (number | string)[];
         progress?: Record<string, any>;
         certificates?: any[];
+        watch_positions?: Record<string, Record<string, number>>;
+        gamification?: any;
       }>(
         Endpoints.COMPANION.LEARNING_STATE,
         { _t: Date.now() },
@@ -446,11 +586,188 @@ export class CompanionService {
         reviewedCourseIds,
         progress,
         certificates,
+        watchPositions: this.normalizeWatchPositions(res.watch_positions),
+        gamification: this.normalizeGamificationSnapshot(res.gamification),
       };
     } catch (err: any) {
       if (Env.DEBUG_API) {
         console.warn('[CompanionService] Learning state sync unavailable:', err);
       }
+      return null;
+    }
+  }
+
+  /**
+   * Submits a B2B corporate training proposal request to WordPress and returns a tracked reference ID.
+   */
+  static async submitCorporateInquiry(
+    payload: CorporateInquiryPayload
+  ): Promise<CorporateInquiryReceipt> {
+    const res = await HttpClient.post<{
+      status?: string;
+      reference_id?: string;
+      inquiry_status?: string;
+      submitted_at?: string;
+    }>(
+      Endpoints.COMPANION.CORPORATE_INQUIRY,
+      {
+        service_type: payload.serviceType.trim(),
+        company_name: payload.companyName.trim(),
+        contact_name: payload.contactName.trim(),
+        work_email: payload.workEmail.trim(),
+        phone: (payload.phone || '').trim(),
+        team_size: (payload.teamSize || '20-50').trim(),
+        notes: (payload.notes || '').trim(),
+      },
+      { retries: 0 }
+    );
+
+    if (!res || res.status !== 'success' || !res.reference_id) {
+      throw new ApiError(
+        'Could not confirm enterprise inquiry receipt from server.',
+        500,
+        'INQUIRY_UNCONFIRMED'
+      );
+    }
+
+    return {
+      referenceId: String(res.reference_id),
+      status: String(res.inquiry_status || 'new'),
+      submittedAt: String(res.submitted_at || new Date().toISOString()),
+    };
+  }
+
+  /**
+   * Fetches support tickets submitted by the authenticated learner.
+   */
+  static async getSupportTickets(): Promise<SupportTicketRecord[] | null> {
+    const authToken = await HttpClient.getAuthToken();
+    if (!authToken) {
+      return null;
+    }
+
+    try {
+      const res = await HttpClient.get<{ status?: string; tickets?: any[] }>(
+        Endpoints.COMPANION.SUPPORT_TICKETS,
+        { _t: Date.now() },
+        { retries: 1 }
+      );
+      if (!res || !Array.isArray(res.tickets)) {
+        return [];
+      }
+      return res.tickets.map((t) => ({
+        ticketId: String(t.ticket_id || ''),
+        topic: String(t.topic || 'general'),
+        subject: String(t.subject || ''),
+        message: String(t.message || ''),
+        courseId: t.course_id ? String(t.course_id) : null,
+        contactEmail: t.contact_email ? String(t.contact_email) : '',
+        status:
+          t.status === 'in_progress' || t.status === 'resolved' || t.status === 'open'
+            ? t.status
+            : 'open',
+        adminReply: String(t.admin_reply || ''),
+        createdAt: String(t.created_at || ''),
+        updatedAt: String(t.updated_at || ''),
+      }));
+    } catch (err: any) {
+      if (err?.status === 404 || err?.code === 'rest_no_route') {
+        return null;
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * Creates a tracked support ticket in WordPress for the signed-in learner.
+   */
+  static async createSupportTicket(
+    payload: CreateSupportTicketPayload
+  ): Promise<SupportTicketRecord | null> {
+    const authToken = await HttpClient.getAuthToken();
+    if (!authToken) {
+      throw new ApiError(
+        'Please sign in to submit a tracked support ticket.',
+        401,
+        'UNAUTHENTICATED'
+      );
+    }
+
+    try {
+      const res = await HttpClient.post<{ status?: string; ticket?: any }>(
+        Endpoints.COMPANION.SUPPORT_TICKETS,
+        {
+          topic: payload.topic,
+          subject: payload.subject.trim(),
+          message: payload.message.trim(),
+          ...(payload.courseId ? { course_id: payload.courseId } : {}),
+          ...(payload.contactEmail ? { contact_email: payload.contactEmail.trim() } : {}),
+        },
+        { retries: 0 }
+      );
+      const t = res?.ticket;
+      if (!t || !t.ticket_id) {
+        return null;
+      }
+      return {
+        ticketId: String(t.ticket_id),
+        topic: String(t.topic || payload.topic),
+        subject: String(t.subject || payload.subject.trim()),
+        message: String(t.message || payload.message.trim()),
+        courseId: t.course_id ? String(t.course_id) : null,
+        contactEmail: t.contact_email ? String(t.contact_email) : '',
+        status:
+          t.status === 'in_progress' || t.status === 'resolved' || t.status === 'open'
+            ? t.status
+            : 'open',
+        adminReply: String(t.admin_reply || ''),
+        createdAt: String(t.created_at || ''),
+        updatedAt: String(t.updated_at || ''),
+      };
+    } catch (err: any) {
+      if (err?.status === 404 || err?.code === 'rest_no_route') {
+        return null;
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * Persists debounced lesson watch positions and study streaks/XP for cross-device continuity.
+   */
+  static async syncEngagementState(payload: {
+    watchPositions?: Record<string, Record<string, number>>;
+    gamification?: ServerGamificationSnapshot;
+  }): Promise<{
+    watchPositions: Record<string, Record<string, number>>;
+    gamification: ServerGamificationSnapshot | null;
+  } | null> {
+    const authToken = await HttpClient.getAuthToken();
+    if (!authToken) {
+      return null;
+    }
+
+    try {
+      const res = await HttpClient.post<{
+        status?: string;
+        watch_positions?: Record<string, Record<string, number>>;
+        gamification?: any;
+      }>(
+        Endpoints.COMPANION.ENGAGEMENT_SYNC,
+        {
+          ...(payload.watchPositions ? { watch_positions: payload.watchPositions } : {}),
+          ...(payload.gamification ? { gamification: payload.gamification } : {}),
+        },
+        { retries: 0 }
+      );
+      if (!res || res.status !== 'success') {
+        return null;
+      }
+      return {
+        watchPositions: this.normalizeWatchPositions(res.watch_positions),
+        gamification: this.normalizeGamificationSnapshot(res.gamification),
+      };
+    } catch {
       return null;
     }
   }
