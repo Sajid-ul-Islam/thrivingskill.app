@@ -142,6 +142,8 @@ export interface Course {
   reviews: Review[];
   isProExclusive?: boolean;
   isEnrolled?: boolean;
+  isCompleted?: boolean;
+  serverGraduation?: string;
   skillTrack?: string;
   isCareerBundle?: boolean;
   bundleCourses?: { id: string; title: string; priceBdt?: number }[];
@@ -210,6 +212,7 @@ export interface Certificate {
   credentialId: string;
   instructorName: string;
   verificationUrl: string;
+  serverVerified?: boolean;
   skillsEarned?: string[];
 }
 

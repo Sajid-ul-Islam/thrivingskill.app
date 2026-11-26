@@ -447,7 +447,7 @@ export const LegalPolicyModal: React.FC<LegalPolicyModalProps> = ({
             ]}
           >
             <View style={styles.sealRow}>
-              <Ionicons name="ribbon" size={22} color="#F59E0B" />
+              <Ionicons name="ribbon" size={22} color={colors.accent} />
               <View style={{ flex: 1 }}>
                 <Text style={[styles.sealTitle, { color: colors.text }]}>
                   {isBangla

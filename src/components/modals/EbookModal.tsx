@@ -137,13 +137,8 @@ export const EbookModal: React.FC<EbookModalProps> = ({
           ]}
         >
           <View style={styles.headerLeft}>
-            <View
-              style={[
-                styles.iconWrap,
-                { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.15)' : '#FFFBEB' },
-              ]}
-            >
-              <Ionicons name="book" size={20} color="#FFB606" />
+            <View style={[styles.iconWrap, { backgroundColor: colors.primaryLight }]}>
+              <Ionicons name="book" size={20} color={colors.primary} />
             </View>
             <View>
               <Text style={[styles.headerTitle, { color: colors.text }]}>
@@ -195,7 +190,7 @@ export const EbookModal: React.FC<EbookModalProps> = ({
             />
           </View>
 
-          {/* Category Filter Pills — High-contrast brand gold active state */}
+          {/* Category Filter Pills — Official high-contrast brand palette */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -216,13 +211,11 @@ export const EbookModal: React.FC<EbookModalProps> = ({
                     styles.categoryPill,
                     {
                       backgroundColor: isActive
-                        ? isDark
-                          ? 'rgba(255, 182, 6, 0.22)'
-                          : '#FFB606'
+                        ? colors.primary
                         : isDark
                           ? 'rgba(255, 255, 255, 0.05)'
                           : colors.surfaceSubtle,
-                      borderColor: isActive ? '#FFB606' : colors.border,
+                      borderColor: isActive ? colors.primary : colors.border,
                     },
                   ]}
                 >
@@ -230,7 +223,7 @@ export const EbookModal: React.FC<EbookModalProps> = ({
                     style={[
                       styles.categoryPillText,
                       {
-                        color: isActive ? (isDark ? '#FFB606' : '#102F53') : colors.textMuted,
+                        color: isActive ? colors.onPrimary : colors.textMuted,
                         fontWeight: isActive ? '700' : '500',
                       },
                     ]}
@@ -265,17 +258,8 @@ export const EbookModal: React.FC<EbookModalProps> = ({
                 ]}
               >
                 <View style={styles.cardHeader}>
-                  <View
-                    style={[
-                      styles.bookIconBadge,
-                      { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : '#EFF6FF' },
-                    ]}
-                  >
-                    <Ionicons
-                      name="document-text"
-                      size={24}
-                      color={isDark ? colors.primary : '#102F53'}
-                    />
+                  <View style={[styles.bookIconBadge, { backgroundColor: colors.primaryLight }]}>
+                    <Ionicons name="document-text" size={24} color={colors.primary} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <View style={styles.categoryBadgeRow}>

@@ -32,11 +32,11 @@ jobs:
           node-version: 22
           cache: 'npm'
 
-      - name: Setup PHP 8.3 & PHPCS
+      - name: Setup PHP 8.3, Composer & PHPCS
         uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
         with:
           php-version: '8.3'
-          tools: phpcs
+          tools: phpcs, composer
           coverage: none
 
       - name: Install Dependencies
@@ -66,10 +66,12 @@ jobs:
       - name: Codebase Import & Timer Audit
         run: npm run audit
 
-      - name: WordPress Plugin PHP Syntax & Coding Standards (php -l / phpcs)
+      - name: WordPress Plugin PHP Syntax, Coding Standards & PHPUnit Tests
         run: |
-          find backend-plugin -name '*.php' -print0 | xargs -0 -n1 php -l
-          phpcs --standard=backend-plugin/phpcs.xml backend-plugin
+          find backend-plugin -name '*.php' -not -path 'backend-plugin/vendor/*' -print0 | xargs -0 -n1 php -l
+          phpcs --standard=backend-plugin/phpcs.xml backend-plugin/ts-mobile-bridge
+          composer install --working-dir=backend-plugin --no-interaction --no-progress
+          backend-plugin/vendor/bin/phpunit -c backend-plugin/phpunit.xml.dist
 
       - name: Package WordPress Companion Plugin ZIP
         run: python3 scripts/package_plugin.py

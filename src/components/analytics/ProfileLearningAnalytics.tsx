@@ -135,13 +135,8 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
       {/* Header with Title and Streak Pill */}
       <View style={styles.headerRow}>
         <View style={styles.titleWithIcon}>
-          <View
-            style={[
-              styles.titleIconBg,
-              { backgroundColor: colors.brandGoldSubtle || 'rgba(255, 182, 6, 0.15)' },
-            ]}
-          >
-            <Ionicons name="pie-chart" size={17} color={colors.brandGold || '#FFB606'} />
+          <View style={[styles.titleIconBg, { backgroundColor: colors.primaryLight }]}>
+            <Ionicons name="pie-chart" size={17} color={colors.primary} />
           </View>
           <View style={styles.titleTextWrap}>
             <Text style={[styles.title, { color: colors.text }]} numberOfLines={1}>
@@ -177,7 +172,7 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
             <Defs>
               <LinearGradient id="donutGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                 <Stop offset="0%" stopColor={colors.brandNavy} />
-                <Stop offset="100%" stopColor={colors.brandGold} />
+                <Stop offset="100%" stopColor={colors.accent} />
               </LinearGradient>
             </Defs>
             {/* Background Circle */}
@@ -255,7 +250,7 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
             style={[
               styles.legendRow,
               (activeCourseTab === 'passed' || activeCourseTab === 'finished') && {
-                backgroundColor: colors.brandGoldSubtle || 'rgba(255,182,6,0.12)',
+                backgroundColor: colors.successLight,
               },
             ]}
             onPress={() => onSelectTab && onSelectTab('passed')}
@@ -264,17 +259,17 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
               isBangla ? `উত্তীর্ণ কোর্স: ${completedCount}` : `Passed courses: ${completedCount}`
             }
           >
-            <View style={[styles.legendDot, { backgroundColor: colors.brandGold }]} />
+            <View style={[styles.legendDot, { backgroundColor: colors.success }]} />
             <Text style={[styles.legendLabel, { color: colors.textMuted }]}>
               {isBangla ? 'উত্তীর্ণ কোর্স' : 'Passed / Finished'}:
             </Text>
-            <Text style={[styles.legendValue, { color: colors.brandGold, fontWeight: '800' }]}>
+            <Text style={[styles.legendValue, { color: colors.success, fontWeight: '800' }]}>
               {completedCount}
             </Text>
           </TouchableOpacity>
 
           <View style={styles.legendRow}>
-            <View style={[styles.legendDot, { backgroundColor: '#10B981' }]} />
+            <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
             <Text style={[styles.legendLabel, { color: colors.textMuted }]}>
               {isBangla ? 'লার্নিং সময়' : 'Total Hours'}:
             </Text>
@@ -315,7 +310,7 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
             <View
               style={[
                 styles.tooltipDot,
-                { backgroundColor: activeDay.hours >= 2.0 ? colors.brandGold : colors.primary },
+                { backgroundColor: activeDay.hours >= 2.0 ? colors.accent : colors.primary },
               ]}
             />
             <Text style={[styles.tooltipText, { color: colors.text }]}>
@@ -375,16 +370,16 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
               return (
                 <G key={idx}>
                   {isSelected && (
-                    <Circle cx={pt.x} cy={pt.y} r={9} fill={colors.brandGold} fillOpacity={0.25} />
+                    <Circle cx={pt.x} cy={pt.y} r={9} fill={colors.accent} fillOpacity={0.22} />
                   )}
                   <Circle
                     cx={pt.x}
                     cy={pt.y}
                     r={isSelected ? 5.5 : 3.5}
                     fill={
-                      isToday ? colors.brandGold : isSelected ? colors.primary : colors.surfaceCard
+                      isToday ? colors.accent : isSelected ? colors.primary : colors.surfaceCard
                     }
-                    stroke={isSelected ? colors.brandGold : colors.primary}
+                    stroke={isSelected ? colors.accent : colors.primary}
                     strokeWidth={isSelected ? 2.5 : 1.5}
                   />
                 </G>
@@ -402,8 +397,8 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
                   style={[
                     styles.dayPillBtn,
                     isSelected && {
-                      backgroundColor: colors.brandGoldSubtle || 'rgba(255, 182, 6, 0.16)',
-                      borderColor: colors.brandGold,
+                      backgroundColor: colors.primaryLight,
+                      borderColor: colors.accent,
                       borderWidth: 1,
                     },
                   ]}
@@ -419,7 +414,7 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
                     style={[
                       styles.dayPillText,
                       {
-                        color: isSelected ? colors.brandGold || '#FFB606' : colors.textMuted,
+                        color: isSelected ? colors.primary : colors.textMuted,
                         fontWeight: isSelected || item.isToday ? '800' : '600',
                       },
                     ]}
@@ -427,9 +422,7 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
                     {isBangla ? item.dayBn : item.day}
                   </Text>
                   {item.isToday && (
-                    <View
-                      style={[styles.todayIndicatorDot, { backgroundColor: colors.brandGold }]}
-                    />
+                    <View style={[styles.todayIndicatorDot, { backgroundColor: colors.accent }]} />
                   )}
                 </TouchableOpacity>
               );
@@ -445,7 +438,7 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
             styles.kpiCard,
             { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderSubtle },
             activeCourseTab === 'in-progress' && {
-              borderColor: colors.brandNavy,
+              borderColor: colors.primary,
               borderWidth: 1.5,
             },
           ]}
@@ -457,8 +450,8 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
               : `Filter in-progress courses: ${inProgressCount}`
           }
         >
-          <Ionicons name="book-outline" size={17} color={colors.brandNavy} />
-          <Text style={[styles.kpiNumber, { color: colors.brandNavy }]}>{inProgressCount}</Text>
+          <Ionicons name="book-outline" size={17} color={colors.primary} />
+          <Text style={[styles.kpiNumber, { color: colors.primary }]}>{inProgressCount}</Text>
           <Text style={[styles.kpiLabel, { color: colors.textMuted }]}>
             {isBangla ? 'চলমান' : 'Enrolled'}
           </Text>
@@ -469,7 +462,7 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
             styles.kpiCard,
             { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderSubtle },
             (activeCourseTab === 'passed' || activeCourseTab === 'finished') && {
-              borderColor: colors.brandGold,
+              borderColor: colors.success,
               borderWidth: 1.5,
             },
           ]}
@@ -481,8 +474,8 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
               : `Filter completed courses: ${completedCount}`
           }
         >
-          <Ionicons name="school" size={17} color={colors.brandGold} />
-          <Text style={[styles.kpiNumber, { color: colors.brandGold }]}>{completedCount}</Text>
+          <Ionicons name="school" size={17} color={colors.success} />
+          <Text style={[styles.kpiNumber, { color: colors.success }]}>{completedCount}</Text>
           <Text style={[styles.kpiLabel, { color: colors.textMuted }]}>
             {isBangla ? 'উত্তীর্ণ' : 'Passed'}
           </Text>
@@ -494,8 +487,8 @@ export const ProfileLearningAnalytics: React.FC<ProfileLearningAnalyticsProps> =
             { backgroundColor: colors.surfaceSubtle, borderColor: colors.borderSubtle },
           ]}
         >
-          <Ionicons name="time-outline" size={17} color="#10B981" />
-          <Text style={[styles.kpiNumber, { color: '#10B981' }]}>{totalHours}h</Text>
+          <Ionicons name="time-outline" size={17} color={colors.primary} />
+          <Text style={[styles.kpiNumber, { color: colors.primary }]}>{totalHours}h</Text>
           <Text style={[styles.kpiLabel, { color: colors.textMuted }]}>
             {isBangla ? 'ঘণ্টা' : 'Hours'}
           </Text>

@@ -1,0 +1,13 @@
+{
+  "core": "WordPress/WordPress#6.7",
+  "plugins": [
+    "./backend-plugin/ts-mobile-bridge"
+  ],
+  "config": {
+    "WP_ENVIRONMENT_TYPE": "development"
+  },
+  "mappings": {
+    "wp-content/plugins/ts-mobile-bridge/tests": "./backend-plugin/tests",
+    "wp-content/plugins/ts-mobile-bridge/phpunit.xml.dist": "./backend-plugin/phpunit.xml.dist"
+  }
+}

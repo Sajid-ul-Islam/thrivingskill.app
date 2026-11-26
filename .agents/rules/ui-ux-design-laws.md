@@ -82,6 +82,7 @@ Use layered navy surfaces. Different shades of navy will create visual hierarchy
 ### Enforcement
 - Use brand tokens exclusively from `src/theme/colors.ts` (`primary`, `accent`, `surface`, `surfaceCard`, `onPrimary`, `onAccent`, etc.) and never hardcode bare hex values such as `#102F53` / `#E34234` / `#FFFFFF` in component code.
 - The brand tokens are the canonical source for these three palette colors; do not re-introduce older alternate brand hues (for example `brandGold`, `danger`, `success`) as replacements for the three primary palette colors.
+- Yellow/gold (`starColor`: `#FFB606`) is reserved strictly for course rating star icons (matching live `thrivingskill.com`), never for badges, ribbons, buttons, charts, or primary UI tokens.
 - Both light and dark themes MUST preserve Deep Royal Blue, Accent Red, and Pure White as the brand identity through equivalent token mappings, not by changing the primary palette owner in dark mode.
 
 ## 1. Psychological Laws (Mandatory Enforcements)

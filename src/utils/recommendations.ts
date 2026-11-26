@@ -1,5 +1,5 @@
 import { Category, Course, UserProgress } from '../types';
-import { LiteRtService } from '../services/ai/liteRtService';
+import { computeBm25Scores, tokenizeSearchText } from '../services/search/bm25';
 
 export interface RecommendationInput {
   courses: Course[];
@@ -16,19 +16,10 @@ export interface RecommendationResult {
   rationaleBn: string;
 }
 
-function dotProduct(vecA: number[], vecB: number[]): number {
-  const len = Math.min(vecA.length, vecB.length);
-  let sum = 0;
-  for (let i = 0; i < len; i++) {
-    sum += vecA[i] * vecB[i];
-  }
-  return sum;
-}
-
 /**
- * Pure behavior-based + LiteRT semantic course recommendation engine.
+ * Pure behavior-based + BM25 keyword course recommendation engine.
  * Scores courses by category affinity, active/completed progress, recent searches,
- * semantic similarity to engaged history, rating, and popularity.
+ * BM25 keyword relevance to engaged history, rating, and popularity.
  */
 export function computeRecommendedCourses({
   courses,
@@ -68,9 +59,21 @@ export function computeRecommendedCourses({
     engagedTexts.push(...searchKeywordsHistory.slice(0, 5));
   }
 
-  const profileSource = engagedTexts.join(' ').trim();
-  const profileVector =
-    profileSource.length > 0 ? LiteRtService.generateEmbedding(profileSource) : null;
+  const profileTokens = tokenizeSearchText(engagedTexts.join(' '), true);
+  const bm25CourseScores =
+    profileTokens.length > 0
+      ? computeBm25Scores(
+          profileTokens,
+          courses.map((course) => ({
+            id: course.id,
+            tokens: tokenizeSearchText(
+              `${course.title} ${course.category || ''} ${course.subtitle || ''} ${course.description || ''}`,
+              true
+            ),
+          })),
+          { allowPrefixMatch: true }
+        )
+      : new Map();
 
   const scoredCourses = courses.map((course) => {
     let score = 0;
@@ -97,13 +100,10 @@ export function computeRecommendedCourses({
       if (matches) score += 30;
     }
 
-    // On-device LiteRT semantic vector similarity against learner profile
-    if (profileVector) {
-      const courseVec = LiteRtService.generateEmbedding(
-        `${course.title} ${course.category || ''} ${course.subtitle || ''} ${course.description || ''}`
-      );
-      const similarity = Math.max(0, dotProduct(profileVector, courseVec));
-      score += Math.round(similarity * 20);
+    // BM25 keyword overlap against learner profile history
+    const bm25Entry = bm25CourseScores.get(course.id);
+    if (bm25Entry && bm25Entry.score > 0) {
+      score += Math.min(25, Math.round(bm25Entry.score * 6));
     }
 
     // Rating quality score (only when authentic rating exists)

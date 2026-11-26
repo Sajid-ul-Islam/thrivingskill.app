@@ -97,7 +97,7 @@ export const HomeGreetingCard: React.FC<HomeGreetingCardProps> = ({
         style={[
           styles.avatarOnlineDot,
           {
-            backgroundColor: isAuthenticated ? '#10B981' : '#F59E0B',
+            backgroundColor: isAuthenticated ? colors.success : colors.accent,
             borderColor: isDark ? colors.surfaceCard : '#FFFFFF',
           },
         ]}
@@ -249,14 +249,14 @@ export const HomeGreetingCard: React.FC<HomeGreetingCardProps> = ({
               size={36}
               strokeWidth={3.5}
               trackColor={isDark ? colors.border : '#E2E8F0'}
-              progressColor={isGoalAchieved ? '#10B981' : colors.brandGold || '#FFB606'}
+              progressColor={isGoalAchieved ? colors.success : colors.accent}
               showText={false}
               centerContent={
                 <Text
                   style={[
                     styles.radialCenterIcon,
                     {
-                      color: isGoalAchieved ? '#10B981' : colors.brandGold || '#FFB606',
+                      color: isGoalAchieved ? colors.success : colors.accent,
                       fontSize: 10,
                     },
                   ]}
@@ -331,14 +331,14 @@ export const HomeGreetingCard: React.FC<HomeGreetingCardProps> = ({
                   size={20}
                   strokeWidth={2.4}
                   trackColor={isDark ? colors.border : '#E2E8F0'}
-                  progressColor={isGoalAchieved ? '#10B981' : colors.brandGold || '#FFB606'}
+                  progressColor={isGoalAchieved ? colors.success : colors.accent}
                   showText={false}
                   centerContent={
                     <Text
                       style={[
                         styles.radialCenterIcon,
                         {
-                          color: isGoalAchieved ? '#10B981' : colors.brandGold || '#FFB606',
+                          color: isGoalAchieved ? colors.success : colors.accent,
                           fontSize: 7.5,
                         },
                       ]}

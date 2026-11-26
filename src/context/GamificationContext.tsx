@@ -31,7 +31,7 @@ const DEFAULT_BADGES: AchievementBadge[] = [
     banglaTitle: 'ধারাবাহিক লার্নার',
     description: 'Maintained a 3-day active learning streak',
     icon: 'flame',
-    color: '#F59E0B',
+    color: '#E34234',
     isUnlocked: false,
   },
   {

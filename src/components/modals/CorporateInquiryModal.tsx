@@ -534,13 +534,13 @@ export const CorporateInquiryModal: React.FC<CorporateInquiryModalProps> = ({
                     style={[
                       styles.volumeDiscountPill,
                       {
-                        backgroundColor: 'rgba(255, 182, 6, 0.12)',
-                        borderColor: 'rgba(255, 182, 6, 0.3)',
+                        backgroundColor: colors.accentLight,
+                        borderColor: colors.accent,
                       },
                     ]}
                   >
-                    <Ionicons name="pricetag" size={13} color="#D97706" />
-                    <Text style={[styles.volumeDiscountText, { color: '#B45309' }]}>
+                    <Ionicons name="pricetag" size={13} color={colors.accent} />
+                    <Text style={[styles.volumeDiscountText, { color: colors.text }]}>
                       {teamSize === '5-20'
                         ? '10% Team Volume Discount Applied (Save ৳3,000+)'
                         : teamSize === '20-50'

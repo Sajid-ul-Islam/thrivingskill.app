@@ -33,6 +33,7 @@ export function isAllowedSyncEndpoint(endpoint: string): boolean {
 
 export type MutationAction =
   | 'COMPLETE_LESSON'
+  | 'COMPLETE_COURSE'
   | 'SUBMIT_QUIZ'
   | 'ENROLL_COURSE'
   | 'ADD_NOTE'

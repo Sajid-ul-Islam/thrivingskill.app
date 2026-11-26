@@ -14,13 +14,13 @@ interface Particle {
 }
 
 const BRAND_CONFETTI_COLORS = [
-  '#FFB606', // Sunshine Gold
   '#102F53', // Deep Navy
   '#E34234', // Crimson / Coral
-  '#10B981', // Emerald
+  '#1D4476', // Royal Blue Light
+  '#FFFFFF', // Pure White
+  '#047857', // Emerald
   '#3B82F6', // Tech Blue
   '#8B5CF6', // Purple
-  '#EC4899', // Pink
 ];
 
 interface ConfettiBurstProps {

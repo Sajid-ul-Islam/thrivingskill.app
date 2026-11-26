@@ -46,10 +46,13 @@ jest.mock('../context/ThemeContext', () => ({
       textMuted: '#64748B',
       textLight: '#94A3B8',
       primary: '#102F53',
-      primaryLight: '#E0F2FE',
-      secondary: '#FFB606',
-      secondaryLight: '#FEF3C7',
+      primaryLight: '#E8EEF5',
+      secondary: '#1D4476',
+      secondaryLight: '#EFF6FF',
+      accent: '#E34234',
       onPrimary: '#FFFFFF',
+      onSecondary: '#FFFFFF',
+      onAccent: '#FFFFFF',
       cardShadow: '#000000',
       starColor: '#FFB606',
       badgeBackground: '#102F53',
@@ -250,13 +253,19 @@ jest.mock('../services/api/brandingService', () => {
 
 jest.mock('../services/api/companionService', () => {
   const actual = jest.requireActual('../services/api/companionService');
+  const mockCompanion: Record<string, any> = {};
+  for (const key of Object.getOwnPropertyNames(actual.CompanionService)) {
+    const val = (actual.CompanionService as any)[key];
+    if (typeof val === 'function') {
+      mockCompanion[key] = val.bind(actual.CompanionService);
+    }
+  }
+  mockCompanion.fetchAppConfig = jest.fn(async () => null);
+  mockCompanion.checkServerEnrollment = jest.fn(async () => null);
+  mockCompanion.fetchLearningState = jest.fn(async () => null);
   return {
     ...actual,
-    CompanionService: {
-      ...actual.CompanionService,
-      fetchAppConfig: jest.fn(async () => null),
-      checkServerEnrollment: jest.fn(async () => null),
-    },
+    CompanionService: mockCompanion,
   };
 });
 

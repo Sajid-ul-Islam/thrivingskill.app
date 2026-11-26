@@ -76,17 +76,17 @@ The mobile app maintains bidirectional synchronization with the live WordPress/L
   4. *Weekly Velocity Bar Chart*: 7-day activity tracking (Mon–Sun) with active study streak indicator (`🔥 X-Day Streak`).
   5. *KPI Cards*: Total Enrolled Courses, Graduated Courses, Total Study Hours, and Verified Certificates.
   6. *Active Enrolled Courses Shelf*: In-progress courses with quick "Continue Learning" CTA.
-  7. *Graduated Courses Shelf*: 100% completed courses with one-tap "View Certificate" action and Sunshine Gold (`#FFB606`) graduate ribbon.
+  7. *Graduated Courses Shelf*: 100% completed courses with one-tap "View Certificate" action in Accent Red (`#E34234`) and Deep Navy (`#102F53`) graduate badges.
 
 ---
 
 ## 4. Brand Identity & Aesthetic Specifications
 
-The application strictly implements the official Thriving Skills Limited brand palette:
-* **Deep Navy (`#102F53`)**: Primary brand identity, headers, card backgrounds in dark mode, and navigation accents.
-* **Sunshine Gold (`#FFB606`)**: Accent color, graduation ribbons, star ratings, certificate borders, and achievement badges.
-* **Crimson / Coral (`#E34234`)**: Primary call-to-action buttons, active indicators, and high-priority notices.
-* **Crisp Slate & Surface Whites (`#F8FAFC`, `#FFFFFF`, `#0F192C`)**: High-contrast, WCAG AAA compliant text and card surfaces.
+The application strictly implements the official Thriving Skills Limited brand palette (in strict parity with `https://thrivingskill.com` and `.agents/rules/ui-ux-design-laws.md`):
+* **Deep Royal Blue / Navy (`#102F53`)**: Primary brand identity, headers, primary buttons, card accents, and primary light-mode typography.
+* **Accent Crimson / Red (`#E34234`)**: Primary call-to-action buttons, certificate actions, notification badges, active indicators, and discount tags.
+* **Pure White & Layered Navy Surfaces (`#FFFFFF`, `#F5F7FA`, `#0B1420`, `#162538`)**: High-contrast, WCAG AA compliant typography and card surfaces.
+* **Rating Stars Only (`#FFB606`)**: Reserved solely for course rating star icons (`starColor`), matching Eduma/LearnPress rating stars on the live website.
 * **Bilingual Typography**: Clean Latin sans-serif paired with optimized Bengali system fonts.
 
 ---
@@ -94,7 +94,7 @@ The application strictly implements the official Thriving Skills Limited brand p
 ## 5. Non-Functional Requirements & Performance Standards
 
 1. **Cold Start Time**: Launch to interactive state in under 1.8 seconds on mid-tier Android devices.
-2. **Offline-First Resilience**: All enrolled lesson metadata, notes, and downloaded media accessible without internet connection.
+2. **Offline-First Resilience**: Enrolled lesson metadata, offline study deck text notes, and completion sync queues remain accessible without internet connection (encrypted offline video binaries remain in Milestone 7 backlog; see [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md)).
 3. **Data Reduction**: Two-tier memory and persistent cache ensuring repeat screen transitions make 0 unnecessary network roundtrips.
 4. **Memory Hygiene**: Zero memory leaks; all timer handles (`setTimeout`, `setInterval`) explicitly cleared on component unmount using safe cross-platform refs.
 5. **Type Safety**: 100% TypeScript coverage with `tsc --noEmit` returning zero errors.
@@ -107,7 +107,7 @@ The application strictly implements the official Thriving Skills Limited brand p
 | :--- | :--- | :--- |
 | **Milestone 1** | Native UI Architecture & Bilingual Design Tokens | ✅ Completed |
 | **Milestone 2** | Live WordPress REST API & LearnPress Course Sync | ✅ Completed |
-| **Milestone 3** | Local MFS Payments (bKash, Nagad, Rocket) & Promo Engine | ✅ Completed |
+| **Milestone 3** | Hybrid WooCommerce / SSLCommerz WebView Checkout & Autofill Sync | ✅ Implemented (Layer 3 Gateway QA pending) |
 | **Milestone 4** | Client Requirements CR-01 through CR-05 | ✅ Completed |
 | **Milestone 5** | Full App Static Analysis, Bug Eradication & Git Remote Sync | ✅ Completed |
 | **Milestone 6** | EAS Standalone Android Production APK/AAB | 🚀 In Progress |

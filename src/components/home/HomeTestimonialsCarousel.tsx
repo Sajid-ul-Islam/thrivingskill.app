@@ -84,7 +84,7 @@ export const HomeTestimonialsCarousel: React.FC<HomeTestimonialsCarouselProps> =
               <View style={styles.cardTopRow}>
                 <View style={styles.starsRow}>
                   {[1, 2, 3, 4, 5].map((star) => (
-                    <Ionicons key={star} name="star" size={14} color="#FFB606" />
+                    <Ionicons key={star} name="star" size={14} color={colors.starColor} />
                   ))}
                 </View>
                 <Ionicons name="chatbox-ellipses-outline" size={18} color={colors.textMuted} />

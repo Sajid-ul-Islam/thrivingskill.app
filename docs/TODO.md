@@ -1,9 +1,9 @@
 # Project Task List & Implementation Roadmap (TODO)
 ## Thriving Skills Mobile Application
 
-**Current Version**: 1.5.0  
+**Current Version**: 1.4.0  
 **Current Milestone**: Milestone 6 Completed (UI/UX Motion Overhaul, Vimeo Pro Integration, Local APK Build & GitHub Release)  
-**Next Milestone**: Milestone 7 (Direct MFS Gateway SDK, Biometrics & Play Store Submission)  
+**Next Milestone**: Milestone 7 (Encrypted Offline Video, Companion v1.2.0 Deploy, Layer 3 QA & Play Store Submission)  
 **Repository**: `https://github.com/Sajid-ul-Islam/thrivingskill.app`  
 **Last Updated**: November 2026  
 
@@ -14,11 +14,11 @@
 ### Phase 1: Core Foundation & Presentation UI
 - [x] React Native 0.76 + Expo 52/58 project scaffolding with TypeScript strict mode.
 - [x] Responsive layout with Android safe area handling and notch accommodation.
-- [x] Dark Mode and Light Mode theme engine with ThrivingSkills brand tokens (`#102F53`, `#FFB606`, `#E34234`, `#0F192C`/`#1E293B`, `#FFFFFF`/`#F8FAFC`).
+- [x] Dark Mode and Light Mode theme engine with ThrivingSkills brand tokens (`#102F53`, `#E34234`, `#FFFFFF`/`#F5F7FA`, `#0B1420`/`#162538`; `#FFB606` reserved solely for rating stars).
 - [x] Authentic Bengali typography and slogans (*"শিখুন এবং গড়ুন নিজের ক্যারিয়ার"*).
 - [x] Bottom tab navigation hierarchy (Home, My Learning, Explore, Live Workshops, Profile).
 - [x] Course card presentation with dynamic star ratings, instructor avatars, and BDT currency formatting (`৳১,৫০০`).
-- [x] B2B Enterprise Team Hub & Corporate Training Inquiry modal.
+- [x] B2B Enterprise Team Hub modal UI (`CorporateInquiryModal.tsx` — client confirmation only; backend API submission pending).
 
 ### Phase 2: Live WordPress & LearnPress LMS Integration
 - [x] Production WordPress REST API client integration (`https://thrivingskill.com/wp-json`).
@@ -28,19 +28,15 @@
 - [x] WordPress editorial blog articles synchronization with rich-text excerpt rendering.
 - [x] Two-tier caching layer (L1 In-Memory + L2 Persistent AsyncStorage) with TTL invalidation.
 
-### Phase 3: Commercial Upgrades & Local Ecosystem
-- [x] Multi-method local MFS payment gateway modal (`PaymentModal.tsx`):
-  - bKash (বিকাশ) wallet integration.
-  - Nagad (নগদ) wallet integration.
-  - DBBL Rocket checkout.
-  - Credit/Debit Cards and Internet Banking.
-- [x] Coupon and promo code engine (`TS50`, `EID2026`, `SKILLPRO`, `FREEPASS`).
-- [x] Instant LearnPress course enrollment upon payment confirmation.
+### Phase 3: Commercial Upgrades & Checkout Integration
+- [x] Hybrid WooCommerce + SSLCommerz WebView payment flow (`PaymentModal.tsx`, supporting bKash, Nagad, Rocket & cards via site checkout; no native MFS SDK).
+- [x] Coupon and promo code handling via WooCommerce checkout & catalog pricing.
+- [x] Instant LearnPress course enrollment polling upon WebView checkout confirmation (`/enrollments`).
 - [x] Bilingual Bangla ⇄ English switching with persistent language preference (`LanguageContext.tsx`).
 - [x] Interactive Lesson Player (`LessonPlayerScreen.tsx`) with commute mode audio and video playback.
 - [x] Interactive Quiz assessment engine with immediate score calculations (`QuizPlayerModal.tsx`).
-- [x] Offline mode with local storage of lesson notes and downloaded video assets (`OfflineManager.ts`).
-- [x] Daily gamification engine (learning streaks, XP points, and achievement badges in `GamificationContext.tsx`).
+- [x] Offline Study Deck with `AsyncStorage` JSON lesson summaries/notes & `SyncQueueManager` (`OfflineManager.ts`; actual encrypted video downloads remain in Milestone 7).
+- [x] Daily gamification engine (learning streaks, XP points, and achievement badges stored locally in `GamificationContext.tsx`).
 
 ### Phase 4: Client Functional Requirements (CR-01 to CR-05)
 - [x] **CR-01: Behavior-Based Course Recommendation Engine**:
@@ -60,7 +56,7 @@
   - Native WordPress password recovery via `action=lostpassword` with deep link handling.
 - [x] **CR-05: Authenticated Learner Profile & Analytics Dashboard**:
   - Active Enrolled Courses shelf with progress tracking and direct "Continue Learning" CTA.
-  - Graduated Courses shelf with verified completion certificates and Gold ribbon badges.
+  - Graduated Courses shelf with verified completion certificates and Brand Navy/Crimson completion badges (`#102F53` / `#E34234`).
   - SVG Circular Skill Mastery Donut Chart and 7-day Weekly Learning Velocity Bar Chart.
   - Total Study Hours and Certified Achievements KPI metrics.
 
@@ -150,35 +146,36 @@
 
 ---
 
-## 🛠️ In-Progress Tasks
+## 🛠️ In-Progress & Deployment Tasks
 
-- [ ] **Direct MFS Gateway SDK Transition**:
-  - Coordinate with bKash and Nagad developer portals to transition from web-view token checkout to native in-app payment SDKs.
-- [ ] **WordPress Staging SMS Gateway Linking**:
-  - Coordinate with backend infrastructure to link SMS OTP endpoint with Bangladeshi telco gateway (Banglalink / Grameenphone SMS API).
+- [ ] **Deploy Companion Plugin `v1.2.0` (`ts-mobile-bridge.zip`) to Staging & Production**:
+  - Upload updated plugin archive containing `/enrollments`, `/learning-state`, `/courses/{id}/submit-review`, `/certificates/verify`, and `/auth/webview-handoff`.
+- [ ] **Connect Corporate Inquiry Modal (`CorporateInquiryModal.tsx`) to Backend Lead Endpoint**:
+  - Replace local-only confirmation state with persisted WordPress/CRM submission.
+- [ ] **Wire Paid eBook Server Entitlement Sync (`EbookModal.tsx`)**:
+  - Sync purchased eBook entitlements from WooCommerce orders instead of device-local `AsyncStorage` tracking.
 
 ---
 
 ## 🔮 Upcoming Tasks & Future Roadmap (Milestone 7)
 
-### 1. Security & Fast Authentication
-- [ ] **Biometric Login (Expo LocalAuthentication)**:
-  - Add Fingerprint / Face ID unlock for instant access without re-entering password or waiting for SMS.
-- [ ] **Remember Device & Refresh Token Rotation**:
-  - Implement silent JWT token renewal to maintain session longevity safely.
+### 1. Security & Session Longevity
+- [ ] **Silent JWT Refresh / Token Rotation**:
+  - Implement server-backed token renewal alongside session revocation (`/revoke-token`) to extend active sessions safely without re-login friction.
 
 ### 2. Notifications & Re-Engagement
-- [ ] **Push Notification Infrastructure (Expo / Firebase Cloud Messaging)**:
-  - Implement automated daily streak notifications (*"🔥 Don't break your 5-day study streak!"*).
-  - Instructor live session announcements and Zoom class reminders 15 minutes before broadcast.
+- [ ] **Production Live Cohort & Streak Push Dispatch**:
+  - Wire WordPress cron / admin triggers for instructor live-session reminders via `/thrivingskill/v1/register-push-token` (`tsmb_push_tokens`).
 
 ### 3. Media & Offline Video Enhancements
 - [ ] **Encrypted Offline Video Caching**:
-  - Store encrypted video segments locally via `expo-file-system` for true flight/commute offline playback without internet.
+  - Add native video segment download & encrypted playback (`expo-file-system`) to upgrade `OfflineManager.ts` from study-guide text caching to true offline video playback.
 - [ ] **Background Audio Service**:
   - Enable continuous commuter lecture playback even when the phone screen is locked.
 
-### 4. Community & Social Learning
+### 4. Direct Native Payments & Store Submission
+- [ ] **Native MFS Gateway Evaluation (Optional Post-Launch)**:
+  - Keep compliant WooCommerce + SSLCommerz WebView checkout for Google Play release; evaluate direct MFS SDKs where policy-compatible.
 - [ ] **In-App Student Discussion & Q&A Replies**:
   - Allow learners to upvote top answers, attach code snippets, and receive push alerts when instructors reply.
 - [ ] **Direct 1-on-1 Mentor Consultation Booking**:

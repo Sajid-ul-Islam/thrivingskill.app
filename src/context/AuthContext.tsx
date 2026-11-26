@@ -17,8 +17,6 @@ import {
   loginWpUser,
   registerWpUser,
   verifyWpRegistrationOtp,
-  sendWpPhoneOtp,
-  verifyWpPhoneOtp,
   confirmWpPasswordReset,
 } from '../services/wordpressApi';
 
@@ -64,8 +62,6 @@ interface AuthContextType {
   sessionExpiredNotice: boolean;
   clearSessionExpiredNotice: () => void;
   login: (username: string, password: string, dismissModal?: boolean) => Promise<void>;
-  loginWithPhone: (phone: string, otp: string, fullName?: string) => Promise<void>;
-  sendPhoneOtp: (phone: string) => Promise<{ success: boolean; message: string; testOtp?: string }>;
   register: (
     username: string,
     email: string,
@@ -440,20 +436,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const loginWithPhone = async (phone: string, otp: string, fullName?: string) => {
-    setIsLoading(true);
-    try {
-      const loggedInUser = await verifyWpPhoneOtp(phone, otp, fullName);
-      await saveUserSession(loggedInUser);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const sendPhoneOtp = async (phone: string) => {
-    return sendWpPhoneOtp(phone);
-  };
-
   const register = async (
     username: string,
     email: string,
@@ -603,8 +585,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sessionExpiredNotice,
         clearSessionExpiredNotice,
         login,
-        loginWithPhone,
-        sendPhoneOtp,
         register,
         verifyRegistrationOtp,
         confirmPasswordReset,

@@ -19,7 +19,7 @@ export const CircularProgressRing: React.FC<CircularProgressRingProps> = ({
   size = 56,
   strokeWidth = 5,
   trackColor = 'rgba(16, 47, 83, 0.1)',
-  progressColor = '#FFB606',
+  progressColor = '#E34234',
   centerContent,
   showText = true,
   textSize = 11,

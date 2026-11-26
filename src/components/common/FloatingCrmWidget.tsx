@@ -407,7 +407,7 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
               styles.helplineItem,
               {
                 backgroundColor: colors.surfaceCard,
-                borderColor: isDark ? 'rgba(255, 182, 6, 0.35)' : 'rgba(255, 182, 6, 0.45)',
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(16, 47, 83, 0.22)',
               },
             ]}
             onPress={handleCall}
@@ -416,7 +416,7 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
             accessibilityLabel={`Call Official Helpline (${CRM_CHANNELS.phoneDisplay})`}
           >
             <View style={[styles.menuIconBg, { backgroundColor: '#102F53' }]}>
-              <Ionicons name="call" size={17} color="#FFB606" />
+              <Ionicons name="call" size={17} color="#FFFFFF" />
             </View>
             <View style={styles.menuTextCol}>
               <Text style={[styles.helplineTitle, { color: colors.text }]}>
@@ -426,7 +426,7 @@ export const FloatingCrmWidget: React.FC<FloatingCrmWidgetProps> = ({
                 {CRM_CHANNELS.phoneDisplay}
               </Text>
             </View>
-            <Ionicons name="call-outline" size={16} color="#FFB606" />
+            <Ionicons name="call-outline" size={16} color={colors.primary} />
           </TouchableOpacity>
 
           {/* 4. More Options / Full Support Sheet Trigger */}

@@ -199,7 +199,7 @@ export const CourseQuickPeekModal: React.FC<CourseQuickPeekModalProps> = ({
                 {typeof course.rating === 'number' && course.rating > 0 && (
                   <>
                     <View style={styles.metricItem}>
-                      <Ionicons name="star" size={16} color="#FFB606" />
+                      <Ionicons name="star" size={16} color={colors.starColor} />
                       <Text style={[styles.metricVal, { color: colors.text }]}>
                         {course.rating.toFixed(1)}
                       </Text>

@@ -1,0 +1,62 @@
+name: Layer 2 — Staging Integration & E2E Journey
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_journey:
+        description: 'Run authenticated course enrollment -> lesson -> review -> certificate journey'
+        required: false
+        default: 'true'
+        type: boolean
+      strict_companion:
+        description: 'Fail if ts-mobile-bridge v1.2.0 routes are not yet deployed on Staging'
+        required: false
+        default: 'false'
+        type: boolean
+  schedule:
+    - cron: '0 3 * * 1' # Weekly Monday 03:00 UTC health verification
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  staging-integration:
+    name: Staging Backend Integration & E2E Journey
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies (for version & runtime verification)
+        run: npm ci
+
+      - name: Enforce Release Version & Tag Parity
+        run: |
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            node scripts/sync_version.js --check --tag "${GITHUB_REF_NAME}"
+          else
+            npm run version:check
+          fi
+
+      - name: Run Layer 2 Staging Integration & Journey Checks
+        env:
+          STAGING_BASE_URL: https://staging.thrivingskill.com
+          STAGING_TEST_USERNAME: ${{ secrets.STAGING_TEST_USERNAME }}
+          STAGING_TEST_PASSWORD: ${{ secrets.STAGING_TEST_PASSWORD }}
+          STAGING_JOURNEY_COURSE_ID: ${{ secrets.STAGING_JOURNEY_COURSE_ID }}
+        run: |
+          ARGS=""
+          if [ "${{ inputs.strict_companion }}" = "true" ] || [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            ARGS="$ARGS --strict-companion"
+          fi
+          if [ "${{ inputs.run_journey }}" != "false" ] && [ -n "$STAGING_TEST_USERNAME" ]; then
+            ARGS="$ARGS --journey"
+          fi
+          node scripts/test_layer2_staging_integration.js $ARGS

@@ -335,7 +335,7 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({ visibl
                 <Ionicons
                   name="cloud-offline-outline"
                   size={20}
-                  color={pendingSyncCount > 0 ? colors.brandGold : colors.success}
+                  color={pendingSyncCount > 0 ? colors.accent : colors.success}
                 />
                 <View style={{ flex: 1, marginLeft: 8 }}>
                   <Text style={[styles.cardTitle, { color: colors.text }]}>
@@ -352,13 +352,7 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({ visibl
                     styles.syncBadge,
                     {
                       backgroundColor:
-                        pendingSyncCount > 0
-                          ? isDark
-                            ? '#78350F'
-                            : '#FEF3C7'
-                          : isDark
-                            ? '#064E3B'
-                            : '#D1FAE5',
+                        pendingSyncCount > 0 ? colors.accentLight : colors.successLight,
                     },
                   ]}
                 >
@@ -367,13 +361,7 @@ export const StorageManagerModal: React.FC<StorageManagerModalProps> = ({ visibl
                       styles.syncBadgeText,
                       {
                         color:
-                          pendingSyncCount > 0
-                            ? isDark
-                              ? '#FCD34D'
-                              : '#92400E'
-                            : isDark
-                              ? '#6EE7B7'
-                              : '#065F46',
+                          pendingSyncCount > 0 ? (isDark ? '#FCA5A5' : '#B91C1C') : colors.success,
                       },
                     ]}
                   >

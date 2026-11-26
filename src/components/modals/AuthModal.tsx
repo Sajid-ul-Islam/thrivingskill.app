@@ -361,8 +361,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       : 'Sign in to access your masterclasses, certificates, and learning track.'
                     : state.mode === 'register'
                       ? isBangla
-                        ? 'নাম, ইমেইল, মোবাইল নম্বর ও পাসওয়ার্ড দিয়ে সহজে যুক্ত হোন।'
-                        : 'Fast 4-field registration. Join learners and professionals across Bangladesh.'
+                        ? 'আপনার অনন্য ইমেইল এবং পছন্দের ইউজারনেম দিয়ে সহজেই যুক্ত হোন।'
+                        : 'Sign up with your unique email and an optional username.'
                       : state.mode === 'register_success'
                         ? isBangla
                           ? 'আপনার অ্যাকাউন্টের একটি নিশ্চিতকরণ ইমেইল পাঠানো হয়েছে।'
@@ -839,6 +839,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     isBangla={isBangla}
                     regFullName={state.regFullName}
                     setRegFullName={state.setRegFullName}
+                    regUsername={state.regUsername}
+                    setRegUsername={state.setRegUsername}
                     regEmail={state.regEmail}
                     setRegEmail={state.setRegEmail}
                     regPhone={state.regPhone}
@@ -854,6 +856,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     setInfoMessage={state.setInfoMessage}
                     isRegistering={state.isRegistering}
                     regNameInputRef={state.regNameInputRef}
+                    regUsernameInputRef={state.regUsernameInputRef}
                     regEmailInputRef={state.regEmailInputRef}
                     regPhoneInputRef={state.regPhoneInputRef}
                     regPasswordInputRef={state.regPasswordInputRef}

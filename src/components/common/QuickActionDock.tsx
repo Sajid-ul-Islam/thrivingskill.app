@@ -55,9 +55,9 @@ export const QuickActionDock: React.FC<QuickActionDockProps> = ({
       sublabel: isBangla ? 'প্রো মেম্বার' : 'Pro Pass',
       icon: 'ribbon',
       badgeText: 'PRO',
-      badgeBgColor: '#D97706',
-      color: '#D97706',
-      bgColor: '#FEF3C7',
+      badgeBgColor: '#E34234',
+      color: '#102F53',
+      bgColor: '#E8EEF5',
       onPress: onOpenSubscription,
     },
     {

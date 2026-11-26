@@ -47,6 +47,7 @@ export function useAuthModalState({
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   const [regFullName, setRegFullName] = useState('');
+  const [regUsername, setRegUsername] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPhone, setRegPhone] = useState('');
   const [regPassword, setRegPassword] = useState('');
@@ -72,6 +73,7 @@ export function useAuthModalState({
   const passwordInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
   const forgotEmailInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
   const regNameInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
+  const regUsernameInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
   const regEmailInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
   const regPhoneInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
   const regPasswordInputRef = useRef<React.ElementRef<typeof TextInput>>(null);
@@ -237,6 +239,7 @@ export function useAuthModalState({
       type: 'success',
     });
     setRegFullName('');
+    setRegUsername('');
     setRegEmail('');
     setRegPhone('');
     setRegPassword('');
@@ -245,6 +248,7 @@ export function useAuthModalState({
 
   const handleRegister = async () => {
     const trimmedName = regFullName.trim();
+    const trimmedUsername = regUsername.trim();
     const trimmedEmail = regEmail.trim().toLowerCase();
     const trimmedPhone = regPhone.trim().replace(/[\s\-()]/g, '');
     const trimmedPassword = regPassword;
@@ -252,16 +256,11 @@ export function useAuthModalState({
     setTouched((p) => ({
       ...p,
       regFullName: true,
+      regUsername: true,
       regEmail: true,
       regPhone: true,
       regPassword: true,
     }));
-
-    if (!trimmedName || trimmedName.length < 2) {
-      setErrorMessage(isBangla ? 'অনুগ্রহ করে আপনার পুরো নাম লিখুন।' : 'Please enter your full name.');
-      triggerHaptic('warning');
-      return;
-    }
 
     if (!trimmedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
       setErrorMessage(
@@ -271,11 +270,21 @@ export function useAuthModalState({
       return;
     }
 
-    if (!trimmedPhone || trimmedPhone.replace(/\D/g, '').length < 10) {
+    if (trimmedUsername.length > 0 && !/^[a-zA-Z0-9._-]{3,60}$/.test(trimmedUsername)) {
       setErrorMessage(
         isBangla
-          ? 'কোর্স ভর্তি ও ভেরিফিকেশনে সঠিক মোবাইল নম্বর প্রদান আবশ্যক (যেমন: 017xxxxxxxx)।'
-          : 'Please enter a valid mobile number required for enrollment & support (e.g. 017xxxxxxxx).'
+          ? 'ইউজারনেম ৩ থেকে ৬০ অক্ষরের হতে হবে (শুধুমাত্র অক্ষর, সংখ্যা, ., _, বা - ব্যবহার করুন)।'
+          : 'Username must be 3–60 characters (letters, numbers, ., _, or - only).'
+      );
+      triggerHaptic('warning');
+      return;
+    }
+
+    if (trimmedPhone.length > 0 && trimmedPhone.replace(/\D/g, '').length < 10) {
+      setErrorMessage(
+        isBangla
+          ? 'অনুগ্রহ করে সঠিক মোবাইল নম্বর লিখুন (যেমন: 017xxxxxxxx)।'
+          : 'Please enter a valid mobile number (e.g. 017xxxxxxxx).'
       );
       triggerHaptic('warning');
       return;
@@ -293,17 +302,17 @@ export function useAuthModalState({
 
     setErrorMessage(null);
     setIsRegistering(true);
-    const autoUsername = generateUsernameFromEmail(trimmedEmail);
+    const chosenUsername = trimmedUsername || generateUsernameFromEmail(trimmedEmail);
 
     try {
       const regRes = await register(
-        autoUsername,
+        chosenUsername,
         trimmedEmail,
         trimmedPassword,
-        trimmedPhone,
-        trimmedName
+        trimmedPhone || undefined,
+        trimmedName || undefined
       );
-      commitRegistrationSuccess(regRes, trimmedEmail, autoUsername);
+      commitRegistrationSuccess(regRes, trimmedEmail, chosenUsername);
     } catch (err: any) {
       triggerHaptic('error');
       const code = String(err?.code || err?.data?.code || '');
@@ -314,17 +323,34 @@ export function useAuthModalState({
           isBangla ? 'অনুগ্রহ করে সঠিক ইমেইল এড্রেস লিখুন।' : 'Please provide a valid email address.'
         );
       } else if (
+        code.includes('email-exists') ||
+        msg.toLowerCase().includes('already registered')
+      ) {
+        setErrorMessage(
+          isBangla
+            ? 'এই ইমেইল দিয়ে ইতিমধ্যেই অ্যাকাউন্ট রয়েছে। অনুগ্রহ করে সাইন ইন করুন।'
+            : 'An account with this email already exists. Please sign in instead.'
+        );
+      } else if (
         code.includes('username-exists') ||
         msg.toLowerCase().includes('username already')
       ) {
+        if (trimmedUsername) {
+          setErrorMessage(
+            isBangla
+              ? 'এই ইউজারনেমটি ইতিমধ্যেই ব্যবহৃত হচ্ছে। অন্য একটি লিখুন অথবা খালি রাখুন।'
+              : 'This username is already taken. Please choose another or leave Username blank.'
+          );
+          return;
+        }
         try {
-          const retryUsername = `${autoUsername}${Math.floor(10 + Math.random() * 90)}`;
+          const retryUsername = `${chosenUsername}${Math.floor(10 + Math.random() * 90)}`;
           const retryRes = await register(
             retryUsername,
             trimmedEmail,
             trimmedPassword,
-            trimmedPhone,
-            trimmedName
+            trimmedPhone || undefined,
+            trimmedName || undefined
           );
           commitRegistrationSuccess(retryRes, trimmedEmail, retryUsername);
           return;
@@ -492,6 +518,8 @@ export function useAuthModalState({
     keyboardHeight,
     regFullName,
     setRegFullName,
+    regUsername,
+    setRegUsername,
     regEmail,
     setRegEmail,
     regPhone,
@@ -524,6 +552,7 @@ export function useAuthModalState({
     passwordInputRef,
     forgotEmailInputRef,
     regNameInputRef,
+    regUsernameInputRef,
     regEmailInputRef,
     regPhoneInputRef,
     regPasswordInputRef,

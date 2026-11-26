@@ -122,15 +122,15 @@ The five client requirements are:
      - Engaging empty state with direct course catalog exploration for new students.
   3. **Graduated Courses Shelf**:
      - Dedicated showcase of finished courses (`userProgress[id].isCompleted === true`).
-     - Premium **"🎓 Graduated / সম্পন্ন"** badge rendered in ThrivingSkills Sunshine Gold (`#FFB606`).
+     - Premium **"🎓 Graduated / সম্পন্ন"** badge and verification highlight aligned with ThrivingSkills Navy (`#102F53`) and Crimson Accent (`#E34234`).
      - Completion date and score verification badge (`100% Mastery`).
      - One-tap **"সনদপত্র দেখুন / View Certificate"** action that directly launches the interactive `CertificateModal` with PDF download and verification links.
      - Direct course rating and review submission.
-  4. **ThrivingSkills Brand Color Harmonization**:
+  4. **ThrivingSkills Brand Color Harmonization (Strict Parity with `https://thrivingskill.com`)**:
      - **Brand Deep Navy (`#102F53`)**: Primary brand identity, header backgrounds, profile cards, and key navigation accents.
-     - **Sunshine Gold (`#FFB606`)**: Achievement badges, graduation ribbons, star ratings, and progress highlights.
-     - **Crimson / Coral Accent (`#E34234` / `#E11D48`)**: Primary calls to action, active indicators, and attention alerts.
-     - **Crisp Slate & Surface Whites (`#F8FAFC`, `#FFFFFF`, `#0F192C`)**: Accessible high-contrast typography and card surfaces.
+     - **Crimson / Accent Red (`#E34234`)**: Primary calls to action, certificate actions, notification badges, active indicators, and attention alerts.
+     - **Pure White & Layered Navy Surfaces (`#FFFFFF`, `#F5F7FA`, `#0B1420`, `#162538`)**: Accessible high-contrast typography and card surfaces.
+     - **Course Rating Stars (`#FFB606`)**: Reserved naturally for course rating stars only, never for achievement badges, graduation ribbons, or primary UI tokens.
 
 ## 3. Comparative Gap Analysis with CyberCraft Presentable Proposal
 

@@ -65,13 +65,13 @@ export const StateView: React.FC<StateViewProps> = ({
   const resolvedIcon = icon || defaults.icon;
 
   const iconTint =
-    mode === 'error' ? colors.danger : mode === 'offline' ? colors.brandGold : colors.primary;
+    mode === 'error' ? colors.danger : mode === 'offline' ? colors.accent : colors.primary;
 
   const iconBg =
     mode === 'error'
       ? colors.dangerLight
       : mode === 'offline'
-        ? colors.brandGoldSubtle
+        ? colors.accentLight
         : colors.primaryLight;
 
   return (

@@ -6,18 +6,14 @@ module.exports = {
   transformIgnorePatterns: [
     'node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@sentry/react-native|native-base|react-native-svg|react-native-webview|@react-native-async-storage/async-storage)',
   ],
-  collectCoverageFrom: [
-    'src/**/*.{ts,tsx}',
-    '!src/**/*.d.ts',
-    '!src/**/__tests__/**',
-  ],
+  collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/*.d.ts', '!src/**/__tests__/**'],
   coverageReporters: ['text', 'text-summary', 'json-summary', 'lcov'],
   coverageThreshold: {
     global: {
-      statements: 20,
-      branches: 12,
-      functions: 12,
-      lines: 20,
+      statements: 22,
+      branches: 14,
+      functions: 14,
+      lines: 22,
     },
   },
 };

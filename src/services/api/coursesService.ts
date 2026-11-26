@@ -1,9 +1,9 @@
-import { HttpClient } from './httpClient';
+import { ApiError, HttpClient } from './httpClient';
 import { Endpoints } from './endpoints';
 import { CacheManager } from '../cache/cacheManager';
 import { Course, Category, Workshop, Review } from '../../types';
 import { transformWpCourse, transformCompanionCourse, cleanHtml } from './transformers';
-import { CompanionService } from './companionService';
+import { CompanionService, ServerReviewSubmitResult } from './companionService';
 import { Env } from '../../config/env';
 
 export interface CourseQueryParams {
@@ -921,5 +921,103 @@ export class CoursesService {
    */
   static async finishCourse(courseId: string | number): Promise<any> {
     return HttpClient.post(Endpoints.LEARNPRESS.COURSE_FINISH, { id: courseId });
+  }
+
+  /**
+   * Persists a course review to WordPress and (when mandatory) verifies 100% completion
+   * before returning a backend-issued certificate.
+   */
+  static async submitCourseReview(params: {
+    courseId: string | number;
+    rating: number;
+    feedback: string;
+    title?: string;
+    requireCompletion?: boolean;
+  }): Promise<ServerReviewSubmitResult> {
+    const authToken = await HttpClient.getAuthToken();
+    if (!authToken) {
+      throw new ApiError('Please sign in to submit a course review.', 401, 'UNAUTHENTICATED');
+    }
+
+    const courseIdStr = String(params.courseId);
+    const rate = Math.max(1, Math.min(5, Math.round(params.rating)));
+    const cleanContent = params.feedback.trim();
+    const cleanTitle = (params.title || cleanContent.slice(0, 48) || 'Course Review').trim();
+    const requireCompletion = params.requireCompletion !== false;
+
+    if (cleanContent.length < 5) {
+      throw new Error('Please write at least 5 characters in your review.');
+    }
+
+    const companionResult = await CompanionService.submitCourseReviewAndCertificate({
+      courseId: courseIdStr,
+      rating: rate,
+      content: cleanContent,
+      title: cleanTitle,
+      requireCompletion,
+    });
+
+    if (companionResult !== null) {
+      await CacheManager.remove(`course_reviews_${courseIdStr}`).catch(() => {});
+      return companionResult;
+    }
+
+    // Fallback when companion /submit-review route is absent (404 / rest_no_route):
+    // Verify completion & submit directly against LearnPress native REST API.
+    if (requireCompletion) {
+      await this.finishCourse(courseIdStr).catch(() => null);
+    }
+
+    const freshCourse = await this.getCourseDetail(courseIdStr, true);
+    if (!freshCourse?.isEnrolled) {
+      throw new ApiError(
+        'You must be enrolled in this course to submit a review.',
+        403,
+        'NOT_ENROLLED'
+      );
+    }
+
+    const isCompletedOnServer = Boolean(
+      freshCourse.isCompleted && freshCourse.serverGraduation !== 'failed'
+    );
+    if (requireCompletion && !isCompletedOnServer) {
+      throw new ApiError(
+        'Complete 100% of this course on the server before claiming your certificate.',
+        403,
+        'COURSE_NOT_COMPLETED'
+      );
+    }
+
+    await HttpClient.post<any>(
+      Endpoints.LEARNPRESS.COURSE_REVIEW_SUBMIT,
+      {
+        id: Number(courseIdStr) || courseIdStr,
+        rate,
+        title: cleanTitle,
+        content: cleanContent,
+      },
+      { retries: 0 }
+    );
+
+    await CacheManager.remove(`course_reviews_${courseIdStr}`).catch(() => {});
+    const refreshed = await this.getCourseReviews(courseIdStr, true).catch(() => ({
+      reviews: [] as Review[],
+      rating: null,
+      reviewsCount: null,
+    }));
+
+    return {
+      courseCompleted: isCompletedOnServer,
+      hasReviewed: true,
+      review: refreshed.reviews[0] || {
+        id: `rev-${courseIdStr}-${Date.now()}`,
+        userName: 'Learner',
+        userAvatar: '',
+        rating: rate,
+        date: new Date().toISOString().split('T')[0],
+        comment: cleanContent,
+      },
+      certificate: null,
+    };
   }
 }

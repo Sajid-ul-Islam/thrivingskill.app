@@ -74,7 +74,7 @@ export interface LearningContextType {
     feedback: string,
     userName?: string,
     userRole?: string
-  ) => Certificate | null;
+  ) => Promise<Certificate | null>;
 
   // Local-First Outbox Sync (Phase 1)
   pendingSyncCount: number;

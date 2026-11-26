@@ -305,12 +305,14 @@ export function transformWpCourse(raw: any): Course {
   }
 
   const courseStatus = String(raw.course_data?.status || '').toLowerCase();
+  const graduation = String(raw.course_data?.graduation || '').toLowerCase();
   const isServerEnrolled =
     raw.enrolled === true ||
     raw.is_enrolled === true ||
     courseStatus === 'enrolled' ||
     courseStatus === 'finished' ||
     courseStatus === 'purchased';
+  const isServerCompleted = courseStatus === 'finished' && graduation !== 'failed';
 
   const moduleMinutes = modules.reduce(
     (sum, m) => sum + m.lessons.reduce((lSum, l) => lSum + parseDurationMinutes(l.duration), 0),
@@ -346,6 +348,8 @@ export function transformWpCourse(raw: any): Course {
     categoryIds,
     level: 'All Levels',
     isEnrolled: isServerEnrolled,
+    isCompleted: isServerCompleted,
+    serverGraduation: graduation || undefined,
     rating: typeof raw.rating === 'number' && raw.rating > 0 ? Number(raw.rating.toFixed(1)) : null,
     reviewsCount:
       typeof raw.rating_count === 'number' && raw.rating_count > 0
@@ -433,12 +437,14 @@ export function transformCompanionCourse(raw: any): Course {
     typeof raw.students_count === 'number' && raw.students_count > 0 ? raw.students_count : null;
 
   const courseStatus = String(raw.course_data?.status || '').toLowerCase();
+  const graduation = String(raw.course_data?.graduation || '').toLowerCase();
   const isServerEnrolled =
     raw.enrolled === true ||
     raw.is_enrolled === true ||
     courseStatus === 'enrolled' ||
     courseStatus === 'finished' ||
     courseStatus === 'purchased';
+  const isServerCompleted = courseStatus === 'finished' && graduation !== 'failed';
 
   return {
     id,

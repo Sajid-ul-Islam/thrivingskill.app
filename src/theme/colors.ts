@@ -1,18 +1,19 @@
 /**
  * Thriving Skills Color Palette — Official Design Rule
  *
- * The color system is built to convey professionalism, trust, and action-driven learning.
+ * Strictly aligned with https://thrivingskill.com and .agents/rules/ui-ux-design-laws.md:
  *
- * Primary Colors:
+ * Primary Brand Palette:
  * • Deep Royal Blue (Primary Brand Color) — #102F53
  *   Usage: App bar headers, primary buttons, major card backgrounds, main branding elements, and primary text headers.
  * • Secondary / Accent Red — #E34234
  *   Usage: Call-to-action (CTA) highlights, notification badges, active states, important alerts, and discount tags.
  * • Pure White — #FFFFFF
- *   Usage: Card backgrounds, container surfaces in dark modes, body text on dark headers, and negative space separation.
+ *   Usage: Card backgrounds, container surfaces, body text on dark headers, and negative space separation.
  *
- * Enforcement: Use these brand tokens exclusively in component code. Do not hardcode bare hex values,
- * and do not treat other alternate brand hues as replacements for the three primary palette colors.
+ * Exception: `starColor` (#FFB606) is reserved strictly for course rating stars
+ * (matching Eduma/LearnPress rating stars on live https://thrivingskill.com),
+ * never for badges, ribbons, buttons, charts, or general UI tokens.
  */
 
 export const lightColors = {
@@ -21,20 +22,17 @@ export const lightColors = {
   primaryLight: '#E8EEF5',
   primaryGradientStart: '#102F53',
   primaryGradientEnd: '#1D4476',
-  secondary: '#FFB606', // Thriving Skills Golden Amber
-  secondaryLight: '#FFFBEB',
+  secondary: '#1D4476', // Deep Royal Blue Light
+  secondaryLight: '#EFF6FF',
   accent: '#E34234', // Secondary / Accent Red (CTA, badges, alerts, discounts)
   accentLight: '#FEE2E2',
   brandNavy: '#102F53',
   brandRed: '#E34234',
-  brandGold: '#FFB606',
-  brandGoldLight: '#FEF3C7',
-  brandGoldSubtle: 'rgba(255, 182, 6, 0.12)',
   brandNavySubtle: 'rgba(16, 47, 83, 0.08)',
   danger: '#DC2626',
   dangerLight: '#FEE2E2',
-  success: '#10B981',
-  successLight: 'rgba(16, 185, 129, 0.16)',
+  success: '#047857', // WCAG AA compliant >= 4.5:1 on white/light surfaces
+  successLight: 'rgba(4, 120, 87, 0.14)',
   onSuccess: '#FFFFFF',
   background: '#FFFFFF', // Light mode base background
   surface: '#FFFFFF',
@@ -48,14 +46,13 @@ export const lightColors = {
   textLight: '#64748B', // WCAG AA Compliant Tertiary Text (>= 4.5:1)
   textInverse: '#FFFFFF',
   onPrimary: '#FFFFFF', // Pure White on Deep Royal Blue
-  onSecondary: '#102F53',
+  onSecondary: '#FFFFFF', // Pure White on Deep Royal Blue Light
   onAccent: '#FFFFFF', // Pure White on Accent Red
   onDanger: '#FFFFFF',
-  onGold: '#102F53',
   cardShadow: 'rgba(16, 47, 83, 0.08)',
   badgeBackground: '#E8EEF5',
   badgeText: '#102F53',
-  starColor: '#FFB606',
+  starColor: '#FFB606', // Strictly for course rating stars
   tabBarBg: '#FFFFFF',
   tabBarBorder: '#E2E8F0',
   tabActive: '#102F53',
@@ -74,9 +71,6 @@ export const darkColors = {
   accentLight: '#450A0A',
   brandNavy: '#102F53', // Primary brand #102F53 consistent across themes
   brandRed: '#E34234', // Accent red #E34234 consistent across themes
-  brandGold: '#FFFFFF',
-  brandGoldLight: '#1C2E46',
-  brandGoldSubtle: 'rgba(255, 255, 255, 0.12)',
   brandNavySubtle: 'rgba(255, 255, 255, 0.12)',
   danger: '#F87171',
   dangerLight: '#7F1D1D',
@@ -98,11 +92,10 @@ export const darkColors = {
   onSecondary: '#102F53',
   onAccent: '#FFFFFF',
   onDanger: '#0B1420',
-  onGold: '#102F53',
   cardShadow: 'rgba(0, 0, 0, 0.4)',
   badgeBackground: '#1E3147', // Layered navy badge container
   badgeText: '#FFFFFF', // Clean white badge text on dark navy
-  starColor: '#FFB606',
+  starColor: '#FFB606', // Strictly for course rating stars
   tabBarBg: '#0B1420', // Deep Navy Navigation Bar
   tabBarBorder: '#1F3147',
   tabActive: '#FFFFFF', // Crisp White active tab state in dark mode

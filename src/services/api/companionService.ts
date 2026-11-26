@@ -1,7 +1,9 @@
-import { HttpClient } from './httpClient';
+import { ApiError, HttpClient } from './httpClient';
 import { Endpoints } from './endpoints';
 import { CacheManager } from '../cache/cacheManager';
 import { Env } from '../../config/env';
+import { isTrustedCheckoutOrigin } from '../checkout/checkoutHelpers';
+import { Certificate, Review, UserProgress } from '../../types';
 
 export interface HeroSlide {
   id: number | string;
@@ -67,6 +69,20 @@ export interface ServerEnrollmentCheck {
   enrolledCourseIds: string[];
   orderStatus?: string | null;
   paymentConfirmed?: boolean;
+}
+
+export interface ServerLearningState {
+  enrolledCourseIds: string[];
+  reviewedCourseIds: string[];
+  progress: Record<string, UserProgress>;
+  certificates: Certificate[];
+}
+
+export interface ServerReviewSubmitResult {
+  courseCompleted: boolean;
+  hasReviewed: boolean;
+  review: Review | null;
+  certificate: Certificate | null;
 }
 
 const CONFIG_CACHE_KEY = '@thrivingskill_remote_companion_config_v1';
@@ -287,6 +303,235 @@ export class CompanionService {
         console.warn('[CompanionService] Enrollment status endpoint unavailable:', err);
       }
       return null;
+    }
+  }
+
+  /**
+   * Requests a short-lived, single-use WordPress cookie login handoff URL so an
+   * authenticated learner opens WooCommerce checkout signed in rather than as a guest.
+   * Returns null only if the server lacks the handoff endpoint (404 / rest_no_route).
+   */
+  static async createWebViewHandoffUrl(params?: {
+    courseId?: string | number;
+    redirectPath?: string;
+  }): Promise<{ loginUrl: string; expiresIn: number } | null> {
+    const authToken = await HttpClient.getAuthToken();
+    if (!authToken) {
+      throw new ApiError('Authentication required before checkout.', 401, 'UNAUTHENTICATED');
+    }
+
+    try {
+      const payload: Record<string, any> = {};
+      if (params?.courseId !== undefined) {
+        const parsedId = Number(params.courseId);
+        if (Number.isFinite(parsedId) && parsedId > 0) {
+          payload.course_id = Math.floor(parsedId);
+        }
+      }
+      if (params?.redirectPath) {
+        payload.redirect_to = params.redirectPath;
+      }
+
+      const res = await HttpClient.post<{
+        status?: string;
+        login_url?: string;
+        expires_in?: number;
+      }>(Endpoints.COMPANION.WEBVIEW_HANDOFF, payload, { retries: 0 });
+
+      const loginUrl = typeof res?.login_url === 'string' ? res.login_url.trim() : '';
+      if (!loginUrl || !isTrustedCheckoutOrigin(loginUrl, Env.SITE_URL)) {
+        throw new ApiError(
+          'Server returned an untrusted checkout handoff URL.',
+          502,
+          'INVALID_HANDOFF_URL'
+        );
+      }
+
+      return {
+        loginUrl,
+        expiresIn: Number(res?.expires_in) || 120,
+      };
+    } catch (err: any) {
+      if (err?.status === 404 || err?.code === 'rest_no_route') {
+        if (Env.DEBUG_API) {
+          console.warn('[CompanionService] WebView handoff route unavailable on server:', err);
+        }
+        return null;
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * Queries authoritative enrollments, completed lessons, reviewed courses, and server-issued certificates.
+   * Returns null only if unauthenticated or the server lacks /learning-state.
+   */
+  static async fetchLearningState(): Promise<ServerLearningState | null> {
+    const authToken = await HttpClient.getAuthToken();
+    if (!authToken) {
+      return null;
+    }
+
+    try {
+      const res = await HttpClient.get<{
+        status?: string;
+        enrolled_course_ids?: (number | string)[];
+        reviewed_course_ids?: (number | string)[];
+        progress?: Record<string, any>;
+        certificates?: any[];
+      }>(
+        Endpoints.COMPANION.LEARNING_STATE,
+        { _t: Date.now() },
+        {
+          retries: 1,
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            Pragma: 'no-cache',
+          },
+        }
+      );
+
+      if (!res || res.status !== 'success') {
+        return null;
+      }
+
+      const enrolledCourseIds = Array.isArray(res.enrolled_course_ids)
+        ? Array.from(new Set(res.enrolled_course_ids.map((id) => String(id)).filter(Boolean)))
+        : [];
+      const reviewedCourseIds = Array.isArray(res.reviewed_course_ids)
+        ? Array.from(new Set(res.reviewed_course_ids.map((id) => String(id)).filter(Boolean)))
+        : [];
+
+      const progress: Record<string, UserProgress> = {};
+      if (res.progress && typeof res.progress === 'object') {
+        for (const [cid, rawProg] of Object.entries(res.progress)) {
+          if (!rawProg || typeof rawProg !== 'object') continue;
+          progress[String(cid)] = {
+            courseId: String(rawProg.courseId ?? cid),
+            enrolledDate: String(rawProg.enrolledDate || new Date().toISOString().split('T')[0]),
+            completedLessonIds: Array.isArray(rawProg.completedLessonIds)
+              ? rawProg.completedLessonIds.map((lid: any) => String(lid))
+              : [],
+            lastAccessedLessonId: rawProg.lastAccessedLessonId
+              ? String(rawProg.lastAccessedLessonId)
+              : undefined,
+            isCompleted: Boolean(rawProg.isCompleted),
+            hasReviewed: Boolean(rawProg.hasReviewed),
+            completedDate: rawProg.completedDate ? String(rawProg.completedDate) : undefined,
+            certificateId: rawProg.certificateId ? String(rawProg.certificateId) : undefined,
+            status: rawProg.status,
+            grade: rawProg.grade,
+          };
+        }
+      }
+
+      const certificates: Certificate[] = Array.isArray(res.certificates)
+        ? res.certificates
+            .filter((c) => c && c.courseId && c.credentialId)
+            .map((c) => ({
+              id: String(c.id || `cert-${c.courseId}`),
+              courseId: String(c.courseId),
+              courseTitle: String(c.courseTitle || `Course #${c.courseId}`),
+              studentName: String(c.studentName || 'Executive Graduate'),
+              issueDate: String(c.issueDate || ''),
+              credentialId: String(c.credentialId),
+              instructorName: String(c.instructorName || 'Thriving Skills Instructor'),
+              verificationUrl: String(c.verificationUrl || ''),
+              serverVerified: Boolean(c.serverVerified ?? true),
+            }))
+        : [];
+
+      return {
+        enrolledCourseIds,
+        reviewedCourseIds,
+        progress,
+        certificates,
+      };
+    } catch (err: any) {
+      if (Env.DEBUG_API) {
+        console.warn('[CompanionService] Learning state sync unavailable:', err);
+      }
+      return null;
+    }
+  }
+
+  /**
+   * Submits a course review to the WordPress companion backend and receives an authoritative
+   * certificate only after the backend confirms 100% course completion + persisted review.
+   * Returns null only when the server lacks the route (404 / rest_no_route).
+   */
+  static async submitCourseReviewAndCertificate(params: {
+    courseId: string | number;
+    rating: number;
+    content: string;
+    title?: string;
+    requireCompletion?: boolean;
+  }): Promise<ServerReviewSubmitResult | null> {
+    const authToken = await HttpClient.getAuthToken();
+    if (!authToken) {
+      throw new ApiError('Please sign in to submit a course review.', 401, 'UNAUTHENTICATED');
+    }
+
+    const cleanContent = params.content.trim();
+    const cleanTitle = (params.title || cleanContent.slice(0, 48) || 'Course Review').trim();
+
+    try {
+      const res = await HttpClient.post<{
+        status?: string;
+        course_completed?: boolean;
+        has_reviewed?: boolean;
+        review?: any;
+        certificate?: any;
+      }>(
+        Endpoints.COMPANION.COURSE_REVIEW_AND_CERT(params.courseId),
+        {
+          rate: Math.max(1, Math.min(5, Math.round(params.rating))),
+          title: cleanTitle,
+          content: cleanContent,
+          require_completion: params.requireCompletion !== false,
+        },
+        { retries: 0 }
+      );
+
+      const rawRev = res?.review;
+      const review: Review | null = rawRev
+        ? {
+            id: String(rawRev.id || `rev-${Date.now()}`),
+            userName: String(rawRev.user_name || 'Learner'),
+            userAvatar: '',
+            rating: Math.max(1, Math.min(5, Number(rawRev.rating ?? params.rating) || 5)),
+            date: String(rawRev.date || new Date().toISOString().split('T')[0]),
+            comment: String(rawRev.comment || cleanContent),
+          }
+        : null;
+
+      const rawCert = res?.certificate;
+      const certificate: Certificate | null =
+        rawCert && rawCert.credentialId
+          ? {
+              id: String(rawCert.id || `cert-${params.courseId}`),
+              courseId: String(rawCert.courseId || params.courseId),
+              courseTitle: String(rawCert.courseTitle || ''),
+              studentName: String(rawCert.studentName || 'Executive Graduate'),
+              issueDate: String(rawCert.issueDate || ''),
+              credentialId: String(rawCert.credentialId),
+              instructorName: String(rawCert.instructorName || 'Thriving Skills Instructor'),
+              verificationUrl: String(rawCert.verificationUrl || ''),
+              serverVerified: Boolean(rawCert.serverVerified ?? true),
+            }
+          : null;
+
+      return {
+        courseCompleted: Boolean(res?.course_completed),
+        hasReviewed: Boolean(res?.has_reviewed ?? true),
+        review,
+        certificate,
+      };
+    } catch (err: any) {
+      if (err?.status === 404 || err?.code === 'rest_no_route') {
+        return null;
+      }
+      throw err;
     }
   }
 }

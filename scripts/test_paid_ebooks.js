@@ -38,7 +38,7 @@ assert(!modalContent.includes('Read & Download Free'), 'EbookModal completely el
 assert(modalContent.includes('Buy eBook • ৳') || modalContent.includes('Buy eBook'), 'EbookModal renders Buy eBook paid action');
 assert(modalContent.includes('৳{book.price}'), 'EbookModal displays transparent eBook price tag');
 assert(modalContent.includes('minHeight: 44'), 'Buy and Read buttons enforce 44dp minimum touch target (Fitts Law)');
-assert(modalContent.includes('#FFB606'), 'Category pills use brand Sunshine Gold #FFB606 to prevent solid white pill contrast bug');
+assert(modalContent.includes('colors.primary') && modalContent.includes('colors.onPrimary'), 'Category pills use official primary/onPrimary brand tokens for WCAG contrast');
 assert(modalContent.includes('STORAGE_KEY_PURCHASED_EBOOKS'), 'EbookModal supports persistent purchase tracking in AsyncStorage');
 
 console.log(`\n====================================================`);

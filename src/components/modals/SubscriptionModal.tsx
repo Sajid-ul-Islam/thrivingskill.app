@@ -47,7 +47,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
           >
             <View style={styles.headerTitleCol}>
               <View style={styles.titleRow}>
-                <Ionicons name="ribbon-outline" size={20} color="#F59E0B" />
+                <Ionicons name="ribbon-outline" size={20} color={colors.accent} />
                 <Text style={[styles.headerTitle, { color: colors.text }]}>
                   {isBangla ? 'মেম্বারশিপ ও লার্নিং অ্যাক্সেস' : 'Membership & Learning Access'}
                 </Text>
@@ -378,15 +378,17 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({ visible, o
               style={[
                 styles.consultancyCard,
                 {
-                  backgroundColor: isDark ? colors.surfaceCard : '#FEF3C7',
-                  borderColor: isDark ? '#F59E0B' : '#FBBF24',
+                  backgroundColor: isDark ? colors.surfaceCard : colors.primaryLight,
+                  borderColor: colors.primary,
                 },
               ]}
             >
               <View style={styles.consultancyHeader}>
                 <View style={styles.consultancyBadge}>
-                  <Ionicons name="trending-up" size={13} color="#D97706" />
-                  <Text style={styles.consultancyBadgeText}>EXECUTIVE CONSULTANCY</Text>
+                  <Ionicons name="trending-up" size={13} color={colors.accent} />
+                  <Text style={[styles.consultancyBadgeText, { color: colors.accent }]}>
+                    EXECUTIVE CONSULTANCY
+                  </Text>
                 </View>
                 <Text style={[styles.consultancyTitle, { color: colors.text }]}>
                   {isBangla
@@ -691,7 +693,6 @@ const styles = StyleSheet.create({
   consultancyBadgeText: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#D97706',
     letterSpacing: 0.5,
   },
   consultancyTitle: {

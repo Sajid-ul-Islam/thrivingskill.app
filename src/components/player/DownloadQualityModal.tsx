@@ -64,16 +64,11 @@ export const DownloadQualityModal: React.FC<DownloadQualityModalProps> = ({
           {/* Header */}
           <View style={[styles.headerRow, { borderBottomColor: colors.border }]}>
             <View style={styles.headerLeft}>
-              <View
-                style={[
-                  styles.headerIconBg,
-                  { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : 'rgba(16, 47, 83, 0.1)' },
-                ]}
-              >
+              <View style={[styles.headerIconBg, { backgroundColor: colors.primaryLight }]}>
                 <Ionicons
                   name={mode === 'download' ? 'cloud-download' : 'options'}
                   size={20}
-                  color={isDark ? colors.primary : '#102F53'}
+                  color={colors.primary}
                 />
               </View>
               <View style={styles.headerTitleCol}>

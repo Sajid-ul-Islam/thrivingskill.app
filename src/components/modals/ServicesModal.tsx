@@ -79,13 +79,8 @@ export const ServicesModal: React.FC<ServicesModalProps> = ({
           ]}
         >
           <View style={styles.headerLeft}>
-            <View
-              style={[
-                styles.iconWrap,
-                { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : '#FFFBEB' },
-              ]}
-            >
-              <Ionicons name="briefcase" size={20} color={isDark ? colors.primary : '#102F53'} />
+            <View style={[styles.iconWrap, { backgroundColor: colors.primaryLight }]}>
+              <Ionicons name="briefcase" size={20} color={colors.primary} />
             </View>
             <View>
               <Text style={[styles.headerTitle, { color: colors.text }]}>

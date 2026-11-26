@@ -15,6 +15,7 @@ interface CourseDetailModalsProps {
   isUnlocked: boolean;
   hasReviewed: boolean;
   certificateId?: string;
+  verificationUrl?: string;
   mandatoryReviewVisible: boolean;
   paymentModalVisible: boolean;
   certPreviewVisible: boolean;
@@ -24,7 +25,7 @@ interface CourseDetailModalsProps {
   isSubmittingReview: boolean;
   onCloseMandatoryReview: () => void;
   onOpenMandatoryReview: () => void;
-  onSubmitMandatoryReview: (rating: number, feedback: string) => void;
+  onSubmitMandatoryReview: (rating: number, feedback: string) => Promise<void> | void;
   onClosePayment: () => void;
   onPaymentSuccess: () => void;
   onCloseCertPreview: () => void;
@@ -42,6 +43,7 @@ export const CourseDetailModals: React.FC<CourseDetailModalsProps> = ({
   isUnlocked,
   hasReviewed,
   certificateId,
+  verificationUrl,
   mandatoryReviewVisible,
   paymentModalVisible,
   certPreviewVisible,
@@ -84,6 +86,7 @@ export const CourseDetailModals: React.FC<CourseDetailModalsProps> = ({
       isCompleted={isCompleted}
       hasReviewed={hasReviewed}
       certificateId={certificateId}
+      verificationUrl={verificationUrl}
       onClose={onCloseCertPreview}
       onOpenMandatoryReview={onOpenMandatoryReview}
     />

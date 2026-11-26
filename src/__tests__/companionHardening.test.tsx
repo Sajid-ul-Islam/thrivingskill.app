@@ -3,6 +3,7 @@ import { render } from '@testing-library/react-native';
 
 const fs = require('fs');
 const path = require('path');
+const packageJson = require('../../package.json');
 import { transformCompanionCourse, transformWpCourse } from '../services/api/transformers';
 import {
   CompanionService,
@@ -91,10 +92,9 @@ describe('Companion Plugin Hardening & Issues 7-9 Compliance', () => {
     expect(php).not.toContain('TSMB_Auto_Updates');
     expect(php).not.toContain('auto_update_plugins');
     expect(php).toContain('register_uninstall_hook');
-    expect(php).toContain("get_option('tsmb_latest_app_version', '1.4.0')");
-    expect(php).toContain("public const NAMESPACE = 'tsl/v1'");
-    expect(php).toContain("'/auth/send-otp'");
-    expect(php).toContain("'/auth/verify-otp'");
+    expect(php).toContain(`get_option('tsmb_latest_app_version', '${packageJson.version}')`);
+    expect(php).not.toContain('TSMB_OTP_Auth');
+    expect(php).not.toContain("'tsl/v1'");
     expect(php).toContain('wp_get_environment_type()');
 
     // Issue 7 invariants
@@ -137,6 +137,11 @@ describe('Companion Plugin Hardening & Issues 7-9 Compliance', () => {
     expect(php).toContain("'/auth/reset-password/confirm'");
     expect(php).toContain('confirm_password_reset');
     expect(php).toContain('check_password_reset_key(');
+    expect(php).toContain("'/learning-state'");
+    expect(php).toContain("'/courses/(?P<id>\\d+)/submit-review'");
+    expect(php).toContain("'/certificates/verify'");
+    expect(php).toContain('verify_and_finalize_course_completion');
+    expect(php).toContain('issue_authoritative_certificate');
   });
 
   it('derives isFreePreview strictly from server preview flags rather than synthetic first-lesson overrides', () => {

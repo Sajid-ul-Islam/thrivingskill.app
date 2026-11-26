@@ -191,7 +191,7 @@ const MainAppContent: React.FC = () => {
       user ? { id: String(user.id), username: user.username, role: user.roles?.[0] } : null
     );
     if (isAuthenticated && user?.id) {
-      PushNotificationService.syncGrantedPushRegistration().catch(() => {});
+      PushNotificationService.syncGrantedPushRegistration(String(user.id)).catch(() => {});
       PushNotificationService.scheduleDailyStreakNudge().catch(() => {});
     }
   }, [isAuthenticated, user]);
@@ -317,7 +317,7 @@ const MainAppContent: React.FC = () => {
                     props.navigation.navigate(tab.id);
                   }}
                   android_ripple={{
-                    color: isDark ? 'rgba(255, 182, 6, 0.12)' : 'rgba(16, 47, 83, 0.08)',
+                    color: isDark ? 'rgba(255, 255, 255, 0.14)' : 'rgba(16, 47, 83, 0.08)',
                     borderless: true,
                     radius: 32,
                   }}
@@ -607,7 +607,7 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   envErrorTitle: {
-    color: '#FFB606',
+    color: '#E34234',
     fontSize: 20,
     fontWeight: '700',
     marginBottom: 12,

@@ -124,8 +124,10 @@ export const SpecialBundlesCarousel: React.FC<SpecialBundlesCarouselProps> = ({
                   <View style={styles.ratingRow}>
                     {item.rating > 0 && (
                       <View style={styles.starsContainer}>
-                        <Ionicons name="star" size={13} color="#FFB606" />
-                        <Text style={styles.ratingNumber}>{item.rating.toFixed(1)}</Text>
+                        <Ionicons name="star" size={13} color={colors.starColor} />
+                        <Text style={[styles.ratingNumber, { color: colors.text }]}>
+                          {item.rating.toFixed(1)}
+                        </Text>
                       </View>
                     )}
                     {item.enrolledCount > 0 && (
@@ -292,7 +294,6 @@ const styles = StyleSheet.create({
   ratingNumber: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#FFB606',
   },
   enrolledText: {
     fontSize: 11,

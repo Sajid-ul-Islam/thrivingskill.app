@@ -83,19 +83,16 @@ export const Endpoints = {
     FEED: '/thrivingskill/v1/feed',
     LESSON_DETAIL: (id: string | number) => `/thrivingskill/v1/lessons/${id}`,
     ENROLLMENTS: '/thrivingskill/v1/enrollments',
+    LEARNING_STATE: '/thrivingskill/v1/learning-state',
+    COURSE_REVIEW_AND_CERT: (courseId: string | number) =>
+      `/thrivingskill/v1/courses/${courseId}/submit-review`,
+    VERIFY_CERTIFICATE: '/thrivingskill/v1/certificates/verify',
     REGISTER_PUSH_TOKEN: '/thrivingskill/v1/register-push-token',
     REGISTER: '/thrivingskill/v1/register',
     VERIFY_REGISTRATION: '/thrivingskill/v1/verify-registration',
     RESEND_REGISTRATION: '/thrivingskill/v1/resend-registration',
     REVOKE_TOKEN: '/thrivingskill/v1/revoke-token',
     CONFIRM_PASSWORD_RESET: '/thrivingskill/v1/auth/reset-password/confirm',
-  },
-
-  // --------------------------------------------------------------------------
-  // Thriving Skills OTP Authentication Routes
-  // --------------------------------------------------------------------------
-  TSL: {
-    SEND_OTP: '/tsl/v1/auth/send-otp',
-    VERIFY_OTP: '/tsl/v1/auth/verify-otp',
+    WEBVIEW_HANDOFF: '/thrivingskill/v1/auth/webview-handoff',
   },
 } as const;

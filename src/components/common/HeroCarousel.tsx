@@ -62,7 +62,7 @@ const SLIDES: CarouselSlide[] = [
     title: 'শিখুন এবং গড়ুন নিজের ক্যারিয়ার',
     subtitle: '৩০০+ প্রিমিয়াম কোর্স, সাপ্তাহিক লাইভ সেশন এবং এক্সিকিউটিভ সার্টিফিকেশন।',
     ctaText: 'Explore All Courses →',
-    gradientColors: ['#102F53', '#1D4476', '#FFB606'],
+    gradientColors: ['#102F53', '#1D4476', '#E34234'],
     actionType: 'course',
     imageUrl: 'https://thrivingskill.com/wp-content/uploads/2026/10/sty-ai-era.png',
   },
@@ -256,7 +256,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({
           {/* Top Badge Row */}
           <View style={styles.badgeRow}>
             <View style={styles.badge}>
-              <Ionicons name={item.badgeIcon as any} size={isTablet ? 13 : 11} color="#FBBF24" />
+              <Ionicons name={item.badgeIcon as any} size={isTablet ? 13 : 11} color="#E34234" />
               <Text
                 style={[styles.badgeText, isTablet && { fontSize: 11 }]}
                 numberOfLines={1}

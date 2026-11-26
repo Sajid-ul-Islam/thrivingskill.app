@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GeminiNanoService, GeminiNanoStatus } from './geminiNanoService';
-import { LiteRtService } from './liteRtService';
+import { rankSentencesBm25 } from '../search/bm25';
 
 export interface AiTutorContext {
   courseId: string;
@@ -77,12 +77,8 @@ export class AiTutorService {
       }
     }
 
-    // 2. Semantic excerpt lookup strictly over real lesson summary/content via LiteRT embeddings
-    const excerptMatch = await this.findRelevantLessonExcerpt(
-      trimmed,
-      context.lessonSummary,
-      isBangla
-    );
+    // 2. Honest BM25 keyword search strictly over real written lesson notes
+    const excerptMatch = this.findRelevantLessonExcerpt(trimmed, context.lessonSummary, isBangla);
     if (excerptMatch) {
       return {
         available: true,
@@ -114,11 +110,11 @@ export class AiTutorService {
     return res.text;
   }
 
-  private static async findRelevantLessonExcerpt(
+  private static findRelevantLessonExcerpt(
     question: string,
     lessonSummary?: string,
     isBangla: boolean = false
-  ): Promise<string | null> {
+  ): string | null {
     const clean = (lessonSummary || '')
       .replace(/<[^>]+>/g, ' ')
       .replace(/\s+/g, ' ')
@@ -135,20 +131,9 @@ export class AiTutorService {
       return null;
     }
 
-    const queryVec = LiteRtService.generateEmbedding(question);
-    const scored = await Promise.all(
-      sentences.map(async (sentence) => ({
-        sentence,
-        similarity: await LiteRtService.computeCosineSimilarity(
-          queryVec,
-          LiteRtService.generateEmbedding(sentence)
-        ),
-      }))
-    );
-
-    const best = scored
-      .filter((item) => item.similarity >= 0.28)
-      .sort((a, b) => b.similarity - a.similarity)
+    const ranked = rankSentencesBm25(question, sentences);
+    const best = ranked
+      .filter((item) => item.matchedTerms.length >= 1 && item.score >= 0.35)
       .slice(0, 2);
 
     if (best.length === 0) {
@@ -156,8 +141,8 @@ export class AiTutorService {
     }
 
     const header = isBangla
-      ? '🔎 **লেকচার নোট থেকে প্রাসঙ্গিক অংশ (অফলাইন সার্চ):**\n\n'
-      : '🔎 **Relevant Excerpts From This Lesson:**\n\n';
+      ? '🔎 **লেকচার নোট থেকে পাওয়া অংশ (অফলাইন কীওয়ার্ড সার্চ):**\n\n'
+      : '🔎 **Matching Excerpts From This Lesson (Keyword Search):**\n\n';
     return `${header}${best.map((b) => `• ${b.sentence}`).join('\n')}`;
   }
 

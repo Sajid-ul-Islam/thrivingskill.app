@@ -165,10 +165,10 @@ export const SpacedRepetitionModal: React.FC<SpacedRepetitionModalProps> = ({
               <View
                 style={[
                   styles.trophyCircle,
-                  { backgroundColor: isDark ? colors.surfaceSubtle : '#FEF3C7' },
+                  { backgroundColor: isDark ? colors.surfaceSubtle : colors.accentLight },
                 ]}
               >
-                <Ionicons name="trophy" size={48} color={colors.brandGold} />
+                <Ionicons name="trophy" size={48} color={colors.accent} />
               </View>
               <Text style={[styles.completeTitle, { color: colors.text }]}>
                 Session Complete! 🎉

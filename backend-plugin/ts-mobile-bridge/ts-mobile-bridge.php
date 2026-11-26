@@ -1,8 +1,9 @@
 <?php
+
 /**
  * Plugin Name: TS Mobile Bridge
  * Plugin URI: https://thrivingskill.com
- * Description: Hardened mobile REST API bridge, remote configuration, push notification engine, OTP auth, and Mobile App Command Center for Thriving Skills.
+ * Description: Hardened mobile REST API bridge, remote configuration, push notification engine, and Mobile App Command Center for Thriving Skills.
  * Version: 1.2.0
  * Requires PHP: 7.4
  * Author: Thriving Skills Engineering
@@ -186,14 +187,28 @@ class TSMB_Security
     private const TOKEN_TTL_SECONDS = 604800; // 7 days
     public const TOKEN_VERSION_META = 'tsmb_token_version';
     private static $last_mail_error = null;
+    private static $current_token_context = null;
 
     public static function init(): void
     {
         add_filter('determine_current_user', [__CLASS__, 'determine_current_user'], 20);
+        add_filter('determine_current_user', [__CLASS__, 'enforce_revoked_token'], 99);
+        add_action('init', [__CLASS__, 'handle_webview_handoff'], 1);
         add_action('wp_mail_failed', [__CLASS__, 'log_mail_failure']);
         add_action('after_password_reset', [__CLASS__, 'on_password_reset'], 10, 1);
         add_action('profile_update', [__CLASS__, 'on_profile_update'], 10, 2);
         add_action('wp_set_password', [__CLASS__, 'on_wp_set_password'], 10, 2);
+    }
+
+    public static function reset_request_context(): void
+    {
+        self::$current_token_context = null;
+        self::$last_mail_error = null;
+    }
+
+    public static function get_current_token_context(): ?array
+    {
+        return self::$current_token_context;
     }
 
     public static function get_user_token_version(int $user_id): int
@@ -210,6 +225,52 @@ class TSMB_Security
         $next = self::get_user_token_version($user_id) + 1;
         update_user_meta($user_id, self::TOKEN_VERSION_META, $next);
         return $next;
+    }
+
+    public static function revoke_single_token(?string $jti, ?string $raw_jwt = null, int $exp = 0): bool
+    {
+        $ttl = $exp > time() ? min(self::TOKEN_TTL_SECONDS, $exp - time() + 60) : self::TOKEN_TTL_SECONDS;
+        $revoked = false;
+
+        if (is_string($jti) && $jti !== '') {
+            set_transient('tsmb_rev_jti_' . hash('sha256', $jti), 1, $ttl);
+            $revoked = true;
+        }
+        if (is_string($raw_jwt) && $raw_jwt !== '') {
+            set_transient('tsmb_rev_tok_' . hash('sha256', $raw_jwt), 1, $ttl);
+            $revoked = true;
+        }
+
+        return $revoked;
+    }
+
+    public static function is_jti_revoked(string $jti): bool
+    {
+        if ($jti === '') {
+            return false;
+        }
+        return get_transient('tsmb_rev_jti_' . hash('sha256', $jti)) !== false;
+    }
+
+    public static function is_bearer_token_revoked(): bool
+    {
+        $auth_header = self::get_authorization_header();
+        if ($auth_header === '' || stripos($auth_header, 'Bearer ') !== 0) {
+            return false;
+        }
+        $jwt = trim(substr($auth_header, 7));
+        if ($jwt === '') {
+            return false;
+        }
+        return get_transient('tsmb_rev_tok_' . hash('sha256', $jwt)) !== false;
+    }
+
+    public static function enforce_revoked_token($user_id)
+    {
+        if (!empty($user_id) && self::is_bearer_token_revoked()) {
+            return 0;
+        }
+        return $user_id;
     }
 
     public static function on_password_reset($user): void
@@ -260,41 +321,78 @@ class TSMB_Security
         return get_option('tsmb_trust_proxy_headers', '0') === '1';
     }
 
+    public static function get_trusted_proxy_header(): string
+    {
+        $allowed = ['HTTP_CF_CONNECTING_IP', 'HTTP_X_REAL_IP', 'REMOTE_ADDR'];
+        if (defined('TSMB_TRUSTED_PROXY_HEADER') && in_array(TSMB_TRUSTED_PROXY_HEADER, $allowed, true)) {
+            return TSMB_TRUSTED_PROXY_HEADER;
+        }
+        $opt = sanitize_text_field((string) get_option('tsmb_trusted_proxy_header', 'HTTP_CF_CONNECTING_IP'));
+        return in_array($opt, $allowed, true) ? $opt : 'HTTP_CF_CONNECTING_IP';
+    }
+
+    public static function is_remote_addr_trusted_proxy(string $remote_addr): bool
+    {
+        $raw_list = defined('TSMB_TRUSTED_PROXY_IPS')
+            ? (string) TSMB_TRUSTED_PROXY_IPS
+            : (string) get_option('tsmb_trusted_proxy_ips', '');
+        $trimmed = trim($raw_list);
+        if ($trimmed === '') {
+            return true;
+        }
+        $allowed_proxies = array_filter(array_map('trim', preg_split('/[\r\n,]+/', $trimmed) ?: []));
+        return in_array($remote_addr, $allowed_proxies, true);
+    }
+
     public static function get_client_ip(): string
     {
         $ip = '0.0.0.0';
+        $remote_addr = '';
 
-        if (self::should_trust_proxy_headers()) {
-            $header_candidates = [
-                'HTTP_CF_CONNECTING_IP',
-                'HTTP_X_REAL_IP',
-                'HTTP_X_FORWARDED_FOR',
-            ];
+        if (!empty($_SERVER['REMOTE_ADDR'])) {
+            $raw_remote = wp_unslash((string) $_SERVER['REMOTE_ADDR']);
+            $clean_remote = sanitize_text_field($raw_remote);
+            if (filter_var($clean_remote, FILTER_VALIDATE_IP)) {
+                $remote_addr = $clean_remote;
+            }
+        }
 
-            foreach ($header_candidates as $header) {
-                if (!empty($_SERVER[$header])) {
-                    $raw_value = wp_unslash((string) $_SERVER[$header]);
-                    $ips = explode(',', $raw_value);
-                    foreach ($ips as $candidate) {
-                        $candidate = trim(sanitize_text_field($candidate));
-                        if (filter_var($candidate, FILTER_VALIDATE_IP)) {
-                            $ip = $candidate;
-                            break 2;
-                        }
-                    }
+        if (self::should_trust_proxy_headers() && self::is_remote_addr_trusted_proxy($remote_addr)) {
+            $header = self::get_trusted_proxy_header();
+            if ($header !== 'REMOTE_ADDR' && !empty($_SERVER[$header])) {
+                $candidate = trim(sanitize_text_field(wp_unslash((string) $_SERVER[$header])));
+                if (filter_var($candidate, FILTER_VALIDATE_IP)) {
+                    $ip = $candidate;
                 }
             }
         }
 
-        if ($ip === '0.0.0.0' && !empty($_SERVER['REMOTE_ADDR'])) {
-            $raw = wp_unslash((string) $_SERVER['REMOTE_ADDR']);
-            $clean = sanitize_text_field($raw);
-            if (filter_var($clean, FILTER_VALIDATE_IP)) {
-                $ip = $clean;
-            }
+        if ($ip === '0.0.0.0' && $remote_addr !== '') {
+            $ip = $remote_addr;
         }
 
         return apply_filters('tsmb_client_ip', $ip);
+    }
+
+    public static function pad_mail_timing(float $started_at, bool $dispatched_mail, float $mail_elapsed_sec = 0.0): void
+    {
+        $floor_key = 'tsmb_mail_timing_floor_ms';
+        if ($dispatched_mail) {
+            $measured_ms = max(120, min(850, intval(round($mail_elapsed_sec * 1000))));
+            set_transient($floor_key, $measured_ms, HOUR_IN_SECONDS);
+            return;
+        }
+
+        $target_ms = intval(get_transient($floor_key) ?: 250);
+        $target_ms = max(120, min(850, $target_ms));
+        if (function_exists('random_int')) {
+            $target_ms += random_int(-25, 25);
+        }
+        $elapsed_ms = (microtime(true) - $started_at) * 1000.0;
+        $remaining_ms = $target_ms - $elapsed_ms;
+        if ($remaining_ms > 5 && !defined('TSMB_DISABLE_TIMING_SLEEP')) {
+            usleep(intval($remaining_ms * 1000));
+        }
     }
 
     public static function consume_rate_limit(
@@ -457,7 +555,7 @@ class TSMB_Security
             'ver' => $ver,
             'iat' => $now,
             'exp' => $now + $ttl,
-            'jti' => bin2hex(random_bytes(8)),
+            'jti' => bin2hex(random_bytes(16)),
         ]));
         $signature = self::base64url_encode(
             hash_hmac('sha256', $header . '.' . $payload, wp_salt('auth'), true)
@@ -521,7 +619,72 @@ class TSMB_Security
             return $user_id;
         }
 
+        $jti = (string) ($payload['jti'] ?? '');
+        if (self::is_jti_revoked($jti)) {
+            return $user_id;
+        }
+
+        self::$current_token_context = [
+            'user_id' => $sub,
+            'jti'     => $jti,
+            'exp'     => $exp,
+            'raw_jwt' => $jwt,
+        ];
+
         return $sub;
+    }
+
+    public static function handle_webview_handoff(): void
+    {
+        if (is_admin() || !isset($_GET['tsmb_handoff'])) {
+            return;
+        }
+
+        $raw_code = trim(sanitize_text_field(wp_unslash((string) $_GET['tsmb_handoff'])));
+        if ($raw_code === '' || !preg_match('/^[a-f0-9]{32,128}$/i', $raw_code)) {
+            return;
+        }
+
+        $transient_key = 'tsmb_wv_handoff_' . hash('sha256', $raw_code);
+        $record = get_transient($transient_key);
+        delete_transient($transient_key);
+
+        nocache_headers();
+
+        if (!is_array($record) || empty($record['user_id'])) {
+            wp_safe_redirect(home_url('/'));
+            if (!defined('TSMB_TESTING')) {
+                exit;
+            }
+            return;
+        }
+
+        $uid  = intval($record['user_id']);
+        $user = get_userdata($uid);
+        if (!$user) {
+            wp_safe_redirect(home_url('/'));
+            if (!defined('TSMB_TESTING')) {
+                exit;
+            }
+            return;
+        }
+
+        wp_clear_auth_cookie();
+        wp_set_current_user($uid);
+        wp_set_auth_cookie($uid, false, is_ssl());
+        do_action('wp_login', $user->user_login, $user);
+
+        $redirect_to = (string) ($record['redirect_to'] ?? '/');
+        $target = wp_validate_redirect($redirect_to, home_url('/'));
+        wp_safe_redirect($target);
+        if (!defined('TSMB_TESTING')) {
+            exit;
+        }
+    }
+
+    public static function get_authorization_header_public(): string
+    {
+        return self::get_authorization_header();
     }
 
     private static function get_authorization_header(): string
@@ -561,10 +724,17 @@ class TSMB_Rest_API
     public const MAX_FEED_LIMIT = 50;
     public const DEFAULT_FEED_LIMIT = 30;
     public const MIN_PASSWORD_LENGTH = 12;
+    private static $user_paid_courses_cache = [];
+
+    public static function reset_request_caches(): void
+    {
+        self::$user_paid_courses_cache = [];
+    }
 
     public static function init(): void
     {
         add_action('rest_api_init', [__CLASS__, 'register_routes']);
+        add_action('template_redirect', [__CLASS__, 'maybe_serve_certificate_verification'], 2);
         add_action('save_post_lp_course', [__CLASS__, 'clear_feed_cache']);
         add_filter('rest_request_before_callbacks', [__CLASS__, 'guard_learnpress_paid_enroll'], 10, 3);
         add_filter('learn_press_user_can_enroll_course', [__CLASS__, 'filter_learnpress_can_enroll_course'], 10, 3);
@@ -657,6 +827,91 @@ class TSMB_Rest_API
             'callback'            => [__CLASS__, 'revoke_token'],
             'permission_callback' => [__CLASS__, 'check_authenticated_user'],
         ]);
+
+        register_rest_route(self::NAMESPACE, '/auth/webview-handoff', [
+            'methods'             => 'POST',
+            'callback'            => [__CLASS__, 'create_webview_handoff'],
+            'permission_callback' => [__CLASS__, 'check_authenticated_user'],
+        ]);
+
+        register_rest_route(self::NAMESPACE, '/learning-state', [
+            'methods'             => 'GET',
+            'callback'            => [__CLASS__, 'get_learning_state'],
+            'permission_callback' => [__CLASS__, 'check_authenticated_user'],
+        ]);
+
+        register_rest_route(self::NAMESPACE, '/courses/(?P<id>\d+)/submit-review', [
+            'methods'             => 'POST',
+            'callback'            => [__CLASS__, 'submit_course_review'],
+            'permission_callback' => [__CLASS__, 'check_authenticated_user'],
+            'args'                => [
+                'id' => [
+                    'validate_callback' => function ($param) {
+                        return is_numeric($param) && intval($param) > 0;
+                    },
+                ],
+            ],
+        ]);
+
+        register_rest_route(self::NAMESPACE, '/certificates/verify', [
+            'methods'             => 'GET',
+            'callback'            => [__CLASS__, 'verify_certificate'],
+            'permission_callback' => '__return_true',
+        ]);
+    }
+
+    public static function create_webview_handoff($request)
+    {
+        $user_id = get_current_user_id();
+        if ($user_id <= 0) {
+            return new WP_Error('rest_forbidden', __('Authentication required.', 'ts-mobile-bridge'), ['status' => 401]);
+        }
+
+        $rl = TSMB_Security::consume_rate_limit('wv_handoff', (string) $user_id, 20, 15 * MINUTE_IN_SECONDS);
+        if (is_wp_error($rl)) {
+            return $rl;
+        }
+
+        $params = $request->get_json_params();
+        if (!is_array($params)) {
+            $params = [];
+        }
+
+        $course_id   = absint($params['course_id'] ?? ($request->get_param('course_id') ?? 0));
+        $redirect_in = trim(sanitize_text_field((string) ($params['redirect_to'] ?? ($request->get_param('redirect_to') ?? ''))));
+
+        if ($redirect_in === '' && $course_id > 0) {
+            $redirect_in = '/checkout/?add-to-cart=' . $course_id;
+        }
+        if ($redirect_in === '') {
+            $redirect_in = '/checkout/';
+        }
+
+        // Convert relative path cleanly to active site origin, or validate same-host URL strictly.
+        if (strpos($redirect_in, '/') === 0 && strpos($redirect_in, '//') !== 0) {
+            $candidate_url = home_url($redirect_in);
+        } else {
+            $candidate_url = wp_validate_redirect($redirect_in, home_url('/checkout/'));
+        }
+        $safe_redirect = wp_validate_redirect($candidate_url, home_url('/checkout/'));
+
+        $code          = bin2hex(random_bytes(32));
+        $transient_key = 'tsmb_wv_handoff_' . hash('sha256', $code);
+        set_transient(
+            $transient_key,
+            [
+                'user_id'     => $user_id,
+                'redirect_to' => $safe_redirect,
+                'created_at'  => time(),
+            ],
+            120
+        );
+
+        return rest_ensure_response([
+            'status'     => 'success',
+            'login_url'  => add_query_arg('tsmb_handoff', $code, home_url('/')),
+            'expires_in' => 120,
+        ]);
     }
 
     public static function revoke_token($request)
@@ -666,13 +921,37 @@ class TSMB_Rest_API
             return new WP_Error('rest_forbidden', __('Authentication required.', 'ts-mobile-bridge'), ['status' => 401]);
         }
 
-        $new_ver = TSMB_Security::revoke_user_tokens($user_id);
+        $params      = is_object($request) && method_exists($request, 'get_json_params') ? $request->get_json_params() : [];
+        $all_devices = is_array($params) && !empty($params['all_devices']);
+        if (!$all_devices && is_object($request) && method_exists($request, 'get_param')) {
+            $all_devices = (bool) $request->get_param('all_devices');
+        }
+
+        if ($all_devices) {
+            $new_ver = TSMB_Security::revoke_user_tokens($user_id);
+            return rest_ensure_response([
+                'status'        => 'success',
+                'revoked'       => true,
+                'scope'         => 'all_devices',
+                'token_version' => $new_ver,
+                'message'       => __('All active mobile sessions have been revoked.', 'ts-mobile-bridge'),
+            ]);
+        }
+
+        $ctx        = TSMB_Security::get_current_token_context();
+        $auth_hdr   = TSMB_Security::get_authorization_header_public();
+        $bearer_jwt = (stripos($auth_hdr, 'Bearer ') === 0) ? trim(substr($auth_hdr, 7)) : '';
+        $jti        = is_array($ctx) ? (string) ($ctx['jti'] ?? '') : '';
+        $exp        = is_array($ctx) ? intval($ctx['exp'] ?? 0) : 0;
+
+        TSMB_Security::revoke_single_token($jti, $bearer_jwt, $exp);
 
         return rest_ensure_response([
             'status'        => 'success',
             'revoked'       => true,
-            'token_version' => $new_ver,
-            'message'       => __('All active mobile sessions have been revoked.', 'ts-mobile-bridge'),
+            'scope'         => 'current_session',
+            'token_version' => TSMB_Security::get_user_token_version($user_id),
+            'message'       => __('Current device session has been revoked.', 'ts-mobile-bridge'),
         ]);
     }
 
@@ -1209,30 +1488,17 @@ class TSMB_Rest_API
             return false;
         }
 
-        if (function_exists('learn_press_get_user')) {
-            $lp_user = learn_press_get_user($user_id);
-            if ($lp_user) {
-                if (
-                    method_exists($lp_user, 'has_purchased_course') &&
-                    method_exists($lp_user, 'get_course_order') &&
-                    $lp_user->has_purchased_course($course_id)
-                ) {
-                    $lp_order_id = $lp_user->get_course_order($course_id);
-                    if ($lp_order_id && function_exists('learn_press_get_order')) {
-                        $lp_order = learn_press_get_order($lp_order_id);
-                        if ($lp_order && method_exists($lp_order, 'has_status') && $lp_order->has_status('completed')) {
-                            return true;
-                        }
-                    }
-                }
-            }
+        if (isset(self::$user_paid_courses_cache[$user_id])) {
+            return isset(self::$user_paid_courses_cache[$user_id][$course_id]);
         }
 
-        // Check completed LearnPress orders directly in case user_items does not yet hold an enrolled row.
+        $paid_courses = [];
+
+        // Check completed LearnPress orders once per user per request.
         $lp_orders = get_posts([
             'post_type'      => 'lp_order',
             'post_status'    => 'lp-completed',
-            'posts_per_page' => 25,
+            'posts_per_page' => 50,
             'fields'         => 'ids',
             'meta_query'     => [
                 [
@@ -1251,19 +1517,19 @@ class TSMB_Rest_API
                 }
                 foreach ((array) $lp_order->get_items() as $item) {
                     $item_course_id = is_array($item) ? absint($item['course_id'] ?? 0) : 0;
-                    if ($item_course_id === $course_id) {
-                        return true;
+                    if ($item_course_id > 0) {
+                        $paid_courses[$item_course_id] = true;
                     }
                 }
             }
         }
 
-        // Check paid WooCommerce orders mapped directly to the course or via LearnPress–WooCommerce product meta.
+        // Check paid WooCommerce orders mapped directly to courses or via LearnPress product meta.
         if (function_exists('wc_get_orders')) {
             $wc_orders = wc_get_orders([
                 'customer_id' => $user_id,
                 'status'      => ['completed', 'processing'],
-                'limit'       => 25,
+                'limit'       => 50,
                 'orderby'     => 'date',
                 'order'       => 'DESC',
             ]);
@@ -1286,19 +1552,45 @@ class TSMB_Rest_API
                         if ($product_id <= 0) {
                             continue;
                         }
-                        if ($product_id === $course_id) {
-                            return true;
-                        }
+                        $paid_courses[$product_id] = true;
                         foreach (['_learnpress_course', '_lp_course'] as $meta_key) {
                             $mapped = get_post_meta($product_id, $meta_key, true);
                             if (is_array($mapped)) {
-                                if (in_array($course_id, array_map('absint', $mapped), true)) {
-                                    return true;
+                                foreach (array_map('absint', $mapped) as $mapped_id) {
+                                    if ($mapped_id > 0) {
+                                        $paid_courses[$mapped_id] = true;
+                                    }
                                 }
-                            } elseif (absint($mapped) === $course_id) {
-                                return true;
+                            } elseif (absint($mapped) > 0) {
+                                $paid_courses[absint($mapped)] = true;
                             }
                         }
+                    }
+                }
+            }
+        }
+
+        self::$user_paid_courses_cache[$user_id] = $paid_courses;
+
+        if (isset($paid_courses[$course_id])) {
+            return true;
+        }
+
+        // Fallback single-course LearnPress check in case older LP setups track outside post queries.
+        if (function_exists('learn_press_get_user')) {
+            $lp_user = learn_press_get_user($user_id);
+            if (
+                $lp_user &&
+                method_exists($lp_user, 'has_purchased_course') &&
+                method_exists($lp_user, 'get_course_order') &&
+                $lp_user->has_purchased_course($course_id)
+            ) {
+                $lp_order_id = $lp_user->get_course_order($course_id);
+                if ($lp_order_id && function_exists('learn_press_get_order')) {
+                    $lp_order = learn_press_get_order($lp_order_id);
+                    if ($lp_order && method_exists($lp_order, 'has_status') && $lp_order->has_status('completed')) {
+                        self::$user_paid_courses_cache[$user_id][$course_id] = true;
+                        return true;
                     }
                 }
             }
@@ -1502,6 +1794,7 @@ class TSMB_Rest_API
         $username      = $username_data['username'];
         $is_suggested  = $username_data['is_suggested'];
         $mail_sent     = false;
+        $timing_start  = microtime(true);
 
         if (!$email_already_registered) {
             $name_parts = preg_split('/\s+/', trim($name));
@@ -1535,11 +1828,16 @@ class TSMB_Rest_API
                 $otp
             );
 
+            $mail_begin = microtime(true);
             $mail_sent = wp_mail($email, $subject, $body);
+            $mail_elapsed = microtime(true) - $mail_begin;
             if (!$mail_sent) {
                 $err_msg = TSMB_Security::get_last_mail_error() ?: 'wp_mail returned false (SMTP/PHPMailer delivery failure)';
                 error_log(sprintf('[TSMB Registration] Failed to send OTP email to %s: %s', $email, $err_msg));
             }
+            TSMB_Security::pad_mail_timing($timing_start, true, $mail_elapsed);
+        } else {
+            TSMB_Security::pad_mail_timing($timing_start, false);
         }
 
         // Identical response for existing and non-existing emails to prevent email enumeration.
@@ -1730,10 +2028,12 @@ class TSMB_Rest_API
             return $email_limit;
         }
 
-        $pending_key = 'tsmb_reg_otp_' . hash('sha256', $email);
-        $record      = get_transient($pending_key);
+        $pending_key  = 'tsmb_reg_otp_' . hash('sha256', $email);
+        $record       = get_transient($pending_key);
+        $timing_start = microtime(true);
 
         if (!is_array($record) || empty($record['email']) || email_exists($email)) {
+            TSMB_Security::pad_mail_timing($timing_start, false);
             return new WP_Error(
                 'no_pending_registration',
                 __('No pending registration found for this email address or the code has expired. Please register again.', 'ts-mobile-bridge'),
@@ -1755,11 +2055,14 @@ class TSMB_Rest_API
             $otp
         );
 
-        $mail_sent = wp_mail($email, $subject, $body);
+        $mail_begin   = microtime(true);
+        $mail_sent    = wp_mail($email, $subject, $body);
+        $mail_elapsed = microtime(true) - $mail_begin;
         if (!$mail_sent) {
             $err_msg = TSMB_Security::get_last_mail_error() ?: 'wp_mail returned false (SMTP/PHPMailer delivery failure)';
             error_log(sprintf('[TSMB Registration Resend] Failed to deliver OTP email to %s: %s', $email, $err_msg));
         }
+        TSMB_Security::pad_mail_timing($timing_start, true, $mail_elapsed);
 
         $response = [
             'status'     => 'success',
@@ -1957,369 +2260,651 @@ class TSMB_Rest_API
 
         return $stats;
     }
-}
 
-/* ==========================================================================
-   4. PHONE OTP AUTH CONTROLLER (/wp-json/tsl/v1/auth/*)
-   ========================================================================== */
-
-class TSMB_OTP_Auth
-{
-    public const NAMESPACE = 'tsl/v1';
-    public const VERIFIED_PHONE_META = 'tsmb_verified_phone';
-
-    public static function init(): void
+    private static function get_course_curriculum_item_ids(int $course_id): array
     {
-        add_action('rest_api_init', [__CLASS__, 'register_routes']);
+        global $wpdb;
+
+        if ($course_id <= 0) {
+            return [];
+        }
+
+        $items_table    = $wpdb->prefix . 'learnpress_section_items';
+        $sections_table = $wpdb->prefix . 'learnpress_sections';
+
+        $rows = [];
+        if (
+            $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $sections_table)) === $sections_table &&
+            $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $items_table)) === $items_table
+        ) {
+            $rows = $wpdb->get_col(
+                $wpdb->prepare(
+                    "SELECT DISTINCT si.item_id
+                     FROM {$items_table} si
+                     INNER JOIN {$sections_table} s ON s.section_id = si.section_id
+                     INNER JOIN {$wpdb->posts} p ON p.ID = si.item_id
+                     WHERE s.section_course_id = %d
+                       AND si.item_type IN ('lp_lesson', 'lp_quiz')
+                       AND p.post_status = 'publish'",
+                    $course_id
+                )
+            );
+        }
+
+        $ids = is_array($rows) ? array_values(array_unique(array_filter(array_map('intval', $rows)))) : [];
+        return apply_filters('tsmb_course_curriculum_items', $ids, $course_id);
     }
 
-    public static function register_routes(): void
+    private static function get_user_course_item_state(int $user_id, int $course_id): ?array
     {
-        register_rest_route(self::NAMESPACE, '/auth/send-otp', [
-            'methods'             => 'POST',
-            'callback'            => [__CLASS__, 'send_otp'],
-            'permission_callback' => '__return_true',
-        ]);
+        global $wpdb;
 
-        register_rest_route(self::NAMESPACE, '/auth/verify-otp', [
-            'methods'             => 'POST',
-            'callback'            => [__CLASS__, 'verify_otp'],
-            'permission_callback' => '__return_true',
-        ]);
-    }
-
-    public static function send_otp($request)
-    {
-        $client_ip = TSMB_Security::get_client_ip();
-        $ip_limit  = TSMB_Security::consume_rate_limit('otp_send_ip', $client_ip, 5, 15 * MINUTE_IN_SECONDS);
-        if (is_wp_error($ip_limit)) {
-            return $ip_limit;
-        }
-
-        $params = $request->get_json_params();
-        if (!is_array($params)) {
-            $params = [];
-        }
-
-        $phone = self::normalize_bd_phone((string) ($params['phone'] ?? ''));
-        if ($phone === '') {
-            return new WP_Error(
-                'invalid_phone',
-                __('Please enter a valid Bangladeshi mobile number (e.g. 017XXXXXXXX).', 'ts-mobile-bridge'),
-                ['status' => 400]
-            );
-        }
-
-        $cooldown_key = 'tsmb_sms_cd_' . hash('sha256', $phone);
-        if (get_transient($cooldown_key) !== false) {
-            return new WP_Error(
-                'otp_cooldown',
-                __('Please wait 60 seconds before requesting another OTP.', 'ts-mobile-bridge'),
-                ['status' => 429]
-            );
-        }
-
-        $phone_limit = TSMB_Security::consume_rate_limit('otp_send_phone', $phone, 3, 15 * MINUTE_IN_SECONDS);
-        if (is_wp_error($phone_limit)) {
-            return $phone_limit;
-        }
-
-        $otp     = TSMB_Security::generate_numeric_otp(6);
-        $otp_key = 'tsmb_phone_otp_' . hash('sha256', $phone);
-
-        set_transient(
-            $otp_key,
-            [
-                'hash'     => wp_hash_password($otp),
-                'attempts' => 0,
-            ],
-            5 * MINUTE_IN_SECONDS
-        );
-        set_transient($cooldown_key, 1, 60);
-
-        $dispatched = self::dispatch_sms($phone, $otp);
-        $is_dev     = TSMB_Security::is_dev_environment();
-
-        if (!$dispatched && !$is_dev) {
-            delete_transient($otp_key);
-            delete_transient($cooldown_key);
-            return new WP_Error(
-                'sms_gateway_unavailable',
-                __('Phone OTP verification service is currently unavailable. Please sign in with email and password.', 'ts-mobile-bridge'),
-                ['status' => 503]
-            );
-        }
-
-        $response = [
-            'success'             => true,
-            'message'             => __('Verification code sent to your mobile number.', 'ts-mobile-bridge'),
-            'expires_in'          => 300,
-            'resend_available_in' => 60,
-        ];
-
-        // Strictly only expose testOtp in local/development environments.
-        if ($is_dev) {
-            $response['testOtp'] = $otp;
-        }
-
-        return rest_ensure_response($response);
-    }
-
-    public static function verify_otp($request)
-    {
-        $client_ip = TSMB_Security::get_client_ip();
-        $ip_limit  = TSMB_Security::consume_rate_limit('otp_verify_ip', $client_ip, 10, 15 * MINUTE_IN_SECONDS);
-        if (is_wp_error($ip_limit)) {
-            return $ip_limit;
-        }
-
-        $params = $request->get_json_params();
-        if (!is_array($params)) {
-            $params = [];
-        }
-
-        $phone        = self::normalize_bd_phone((string) ($params['phone'] ?? ''));
-        $otp          = trim(sanitize_text_field((string) ($params['otp'] ?? '')));
-        $display_name = sanitize_text_field((string) ($params['display_name'] ?? ''));
-
-        if ($phone === '' || !preg_match('/^\d{6}$/', $otp)) {
-            return new WP_Error(
-                'invalid_otp_input',
-                __('Please enter a valid mobile number and 6-digit OTP.', 'ts-mobile-bridge'),
-                ['status' => 400]
-            );
-        }
-
-        $phone_limit = TSMB_Security::consume_rate_limit('otp_verify_phone', $phone, 5, 15 * MINUTE_IN_SECONDS);
-        if (is_wp_error($phone_limit)) {
-            return $phone_limit;
-        }
-
-        $otp_key = 'tsmb_phone_otp_' . hash('sha256', $phone);
-        $record  = get_transient($otp_key);
-
-        if (!is_array($record) || empty($record['hash'])) {
-            return new WP_Error(
-                'invalid_otp',
-                __('OTP has expired or is invalid. Please request a new code.', 'ts-mobile-bridge'),
-                ['status' => 403]
-            );
-        }
-
-        $attempts = intval($record['attempts'] ?? 0) + 1;
-        if ($attempts > 3) {
-            delete_transient($otp_key);
-            return new WP_Error(
-                'otp_attempts_exceeded',
-                __('Too many incorrect OTP attempts. Please request a new code.', 'ts-mobile-bridge'),
-                ['status' => 429]
-            );
-        }
-
-        if (!wp_check_password($otp, (string) $record['hash'])) {
-            $record['attempts'] = $attempts;
-            set_transient($otp_key, $record, 5 * MINUTE_IN_SECONDS);
-            return new WP_Error(
-                'invalid_otp',
-                __('Incorrect OTP code. Please check and try again.', 'ts-mobile-bridge'),
-                ['status' => 403]
-            );
-        }
-
-        // Consume OTP once verified to eliminate replay attacks.
-        delete_transient($otp_key);
-
-        $user = self::find_user_by_phone($phone);
-        if (is_wp_error($user)) {
-            return $user;
-        }
-
-        if (!$user) {
-            if (!get_option('users_can_register')) {
-                return new WP_Error(
-                    'registration_disabled',
-                    __('New account registration is currently disabled.', 'ts-mobile-bridge'),
-                    ['status' => 403]
-                );
-            }
-
-            $username = TSMB_Security::generate_secure_username('student_' . substr($phone, -4));
-            $email    = $username . '@phone.thrivingskill.com';
-            $name     = $display_name !== '' ? $display_name : ('Student (' . substr($phone, -4) . ')');
-
-            $user_id = wp_insert_user([
-                'user_login'   => $username,
-                'user_pass'    => wp_generate_password(24, true, true),
-                'user_email'   => $email,
-                'display_name' => $name,
-                'role'         => 'subscriber',
-            ]);
-
-            if (is_wp_error($user_id)) {
-                return $user_id;
-            }
-
-            $user = get_userdata($user_id);
-            if ($user) {
-                $user->set_role('subscriber');
-            }
-
-            $claimed = self::claim_verified_phone($user_id, $phone);
-            if (is_wp_error($claimed)) {
-                return $claimed;
-            }
-
-            update_user_meta($user_id, 'phone', $phone);
-            update_user_meta($user_id, 'phone_number', $phone);
-            update_user_meta($user_id, 'billing_phone', $phone);
-            update_user_meta($user_id, '_lp_phone', $phone);
-        } else {
-            $user_id = intval($user->ID);
-        }
-
-        $token = TSMB_Security::issue_bearer_token($user_id);
-
-        return rest_ensure_response([
-            'success'           => true,
-            'token'             => $token,
-            'user_id'           => $user_id,
-            'user_email'        => $user ? $user->user_email : '',
-            'user_nicename'     => $user ? $user->user_nicename : '',
-            'user_display_name' => $user ? $user->display_name : $display_name,
-        ]);
-    }
-
-    private static function normalize_bd_phone(string $raw): string
-    {
-        $clean = preg_replace('/[\s\-\(\)]+/', '', trim($raw));
-        if (preg_match('/^(?:\+?88)?(01[3-9]\d{8})$/', (string) $clean, $matches)) {
-            return $matches[1];
-        }
-        return '';
-    }
-
-    /**
-     * Look up an account strictly by its OTP-verified phone meta.
-     * Never matches unverified `phone`, `billing_phone`, or `user_login` to prevent phone squatting.
-     *
-     * @return WP_User|WP_Error|null
-     */
-    private static function find_user_by_phone(string $phone)
-    {
-        $normalized = self::normalize_bd_phone($phone);
-        if ($normalized === '') {
+        if ($user_id <= 0 || $course_id <= 0) {
             return null;
         }
 
-        $users = get_users([
-            'number'     => 2,
-            'meta_query' => [
-                [
-                    'key'     => self::VERIFIED_PHONE_META,
-                    'value'   => $normalized,
-                    'compare' => '=',
-                ],
-            ],
-        ]);
-
-        if (count($users) > 1) {
-            error_log(sprintf('[TSMB OTP Auth] Duplicate %s detected for phone ending in %s', self::VERIFIED_PHONE_META, substr($normalized, -4)));
-            return new WP_Error(
-                'verified_phone_conflict',
-                __('Multiple accounts are linked to this phone number. Please contact support.', 'ts-mobile-bridge'),
-                ['status' => 409]
+        $lp_table = $wpdb->prefix . 'learnpress_user_items';
+        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $lp_table)) === $lp_table) {
+            $rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT user_item_id, item_id, status, graduation, start_time, end_time
+                     FROM {$lp_table}
+                     WHERE user_id = %d
+                       AND item_id = %d
+                       AND item_type = 'lp_course'
+                     ORDER BY user_item_id DESC
+                     LIMIT 1",
+                    $user_id,
+                    $course_id
+                ),
+                ARRAY_A
             );
+            if (is_array($rows) && !empty($rows[0])) {
+                return $rows[0];
+            }
         }
 
-        return !empty($users) ? $users[0] : null;
+        $filtered = apply_filters('tsmb_user_course_item_state', null, $user_id, $course_id);
+        if (is_array($filtered)) {
+            return $filtered;
+        }
+
+        if (function_exists('learn_press_get_user')) {
+            $lp_user = learn_press_get_user($user_id);
+            if ($lp_user && method_exists($lp_user, 'get_course_data')) {
+                $course_data = $lp_user->get_course_data($course_id);
+                if ($course_data && method_exists($course_data, 'get_status')) {
+                    return [
+                        'user_item_id' => method_exists($course_data, 'get_user_item_id') ? intval($course_data->get_user_item_id()) : 0,
+                        'item_id'      => $course_id,
+                        'status'       => (string) $course_data->get_status(),
+                        'graduation'   => method_exists($course_data, 'get_graduation') ? (string) $course_data->get_graduation() : '',
+                        'start_time'   => '',
+                        'end_time'     => '',
+                    ];
+                }
+            }
+        }
+
+        return null;
     }
 
-    /**
-     * Atomically assign a unique OTP-verified phone number to a user account.
-     *
-     * @return true|WP_Error
-     */
-    public static function claim_verified_phone(int $user_id, string $raw_phone)
+    private static function get_user_completed_lesson_ids(int $user_id, int $course_id, int $course_user_item_id = 0): array
     {
-        $normalized = self::normalize_bd_phone($raw_phone);
-        if ($normalized === '') {
-            return new WP_Error(
-                'invalid_phone',
-                __('Please enter a valid Bangladeshi mobile number (e.g. 017XXXXXXXX).', 'ts-mobile-bridge'),
-                ['status' => 400]
-            );
+        global $wpdb;
+
+        if ($user_id <= 0 || $course_id <= 0) {
+            return [];
         }
 
-        $existing = get_users([
-            'number'     => 1,
-            'exclude'    => [$user_id],
-            'fields'     => 'ID',
-            'meta_query' => [
-                [
-                    'key'     => self::VERIFIED_PHONE_META,
-                    'value'   => $normalized,
-                    'compare' => '=',
-                ],
-            ],
-        ]);
+        $lp_table       = $wpdb->prefix . 'learnpress_user_items';
+        $items_table    = $wpdb->prefix . 'learnpress_section_items';
+        $sections_table = $wpdb->prefix . 'learnpress_sections';
 
-        if (!empty($existing)) {
-            return new WP_Error(
-                'verified_phone_already_in_use',
-                __('This phone number is already verified on another account.', 'ts-mobile-bridge'),
-                ['status' => 409]
-            );
+        $completed = [];
+        if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $lp_table)) === $lp_table) {
+            if ($course_user_item_id > 0) {
+                $rows = $wpdb->get_col(
+                    $wpdb->prepare(
+                        "SELECT DISTINCT item_id
+                         FROM {$lp_table}
+                         WHERE user_id = %d
+                           AND parent_id = %d
+                           AND item_type IN ('lp_lesson', 'lp_quiz')
+                           AND status = 'completed'",
+                        $user_id,
+                        $course_user_item_id
+                    )
+                );
+                if (is_array($rows)) {
+                    $completed = array_merge($completed, array_map('intval', $rows));
+                }
+            }
+
+            if (
+                empty($completed) &&
+                $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $sections_table)) === $sections_table &&
+                $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $items_table)) === $items_table
+            ) {
+                $rows = $wpdb->get_col(
+                    $wpdb->prepare(
+                        "SELECT DISTINCT ui.item_id
+                         FROM {$lp_table} ui
+                         INNER JOIN {$items_table} si ON si.item_id = ui.item_id
+                         INNER JOIN {$sections_table} s ON s.section_id = si.section_id
+                         WHERE ui.user_id = %d
+                           AND s.section_course_id = %d
+                           AND ui.item_type IN ('lp_lesson', 'lp_quiz')
+                           AND ui.status = 'completed'",
+                        $user_id,
+                        $course_id
+                    )
+                );
+                if (is_array($rows)) {
+                    $completed = array_merge($completed, array_map('intval', $rows));
+                }
+            }
         }
 
-        update_user_meta($user_id, self::VERIFIED_PHONE_META, $normalized);
-        return true;
+        $completed = array_values(array_unique(array_filter(array_map('intval', $completed))));
+        return apply_filters('tsmb_user_completed_lesson_ids', $completed, $user_id, $course_id);
     }
 
-    private static function dispatch_sms(string $phone, string $otp): bool
+    private static function verify_and_finalize_course_completion(int $user_id, int $course_id): array
     {
-        $handled = apply_filters('tsmb_send_sms_otp', false, $phone, $otp);
-        if ($handled === true) {
-            return true;
+        global $wpdb;
+
+        if (!self::is_user_enrolled_in_course($user_id, $course_id)) {
+            return [
+                'enrolled'             => false,
+                'completed'            => false,
+                'status'               => '',
+                'graduation'           => '',
+                'completed_date'       => '',
+                'enrolled_date'        => '',
+                'completed_lesson_ids' => [],
+            ];
         }
 
-        $gateway_url = esc_url_raw((string) get_option('tsmb_sms_gateway_url', ''));
-        $api_key     = (string) get_option('tsmb_sms_api_key', '');
-        $sender_id   = sanitize_text_field((string) get_option('tsmb_sms_sender_id', 'ThrivingSkills'));
+        $state          = self::get_user_course_item_state($user_id, $course_id);
+        $user_item_id   = is_array($state) ? intval($state['user_item_id'] ?? 0) : 0;
+        $status         = is_array($state) ? strtolower((string) ($state['status'] ?? 'enrolled')) : 'enrolled';
+        $graduation     = is_array($state) ? strtolower((string) ($state['graduation'] ?? '')) : '';
+        $completed_ids  = self::get_user_completed_lesson_ids($user_id, $course_id, $user_item_id);
+        $curriculum_ids = self::get_course_curriculum_item_ids($course_id);
 
-        if (empty($gateway_url)) {
-            return false;
+        $is_completed = ($status === 'finished' && $graduation !== 'failed');
+
+        if (!$is_completed && !empty($curriculum_ids)) {
+            $missing = array_diff($curriculum_ids, $completed_ids);
+            if (empty($missing)) {
+                if (function_exists('learn_press_get_user')) {
+                    $lp_user = learn_press_get_user($user_id);
+                    if ($lp_user && method_exists($lp_user, 'finish_course')) {
+                        try {
+                            $lp_user->finish_course($course_id);
+                            $state = self::get_user_course_item_state($user_id, $course_id);
+                            if (is_array($state)) {
+                                $status     = strtolower((string) ($state['status'] ?? $status));
+                                $graduation = strtolower((string) ($state['graduation'] ?? $graduation));
+                            }
+                        } catch (\Throwable $e) {
+                            error_log('[TSMB Completion] LearnPress finish_course note: ' . $e->getMessage());
+                        }
+                    }
+                }
+
+                if ($status !== 'finished') {
+                    $lp_table = $wpdb->prefix . 'learnpress_user_items';
+                    if (
+                        $user_item_id > 0 &&
+                        $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $lp_table)) === $lp_table
+                    ) {
+                        $now_gmt = current_time('mysql', true);
+                        $wpdb->update(
+                            $lp_table,
+                            [
+                                'status'     => 'finished',
+                                'graduation' => 'passed',
+                                'end_time'   => $now_gmt,
+                            ],
+                            ['user_item_id' => $user_item_id],
+                            ['%s', '%s', '%s'],
+                            ['%d']
+                        );
+                        $status     = 'finished';
+                        $graduation = 'passed';
+                    }
+                }
+
+                $is_completed = ($status === 'finished' && $graduation !== 'failed');
+            }
         }
 
-        $message = sprintf(
-            __('Your Thriving Skills verification code is %s. Valid for 5 minutes.', 'ts-mobile-bridge'),
-            $otp
-        );
+        $enrolled_date  = is_array($state) && !empty($state['start_time']) ? substr((string) $state['start_time'], 0, 10) : '';
+        $completed_date = ($is_completed && is_array($state) && !empty($state['end_time']) && strpos((string) $state['end_time'], '0000-00-00') !== 0)
+            ? substr((string) $state['end_time'], 0, 10)
+            : ($is_completed ? gmdate('Y-m-d') : '');
 
-        $res = wp_remote_post($gateway_url, [
-            'timeout' => 10,
-            'headers' => [
-                'Accept'       => 'application/json',
-                'Content-Type' => 'application/json',
-            ],
-            'body'    => wp_json_encode([
-                'api_key'   => $api_key,
-                'sender_id' => $sender_id,
-                'to'        => $phone,
-                'message'   => $message,
-            ]),
+        return [
+            'enrolled'             => true,
+            'completed'            => $is_completed,
+            'status'               => $status,
+            'graduation'           => $graduation !== '' ? $graduation : ($is_completed ? 'passed' : 'in-progress'),
+            'completed_date'       => $completed_date,
+            'enrolled_date'        => $enrolled_date,
+            'completed_lesson_ids' => array_map('strval', $completed_ids),
+        ];
+    }
+
+    private static function get_user_course_review(int $user_id, int $course_id): ?array
+    {
+        if ($user_id <= 0 || $course_id <= 0) {
+            return null;
+        }
+
+        $comments = get_comments([
+            'post_id' => $course_id,
+            'user_id' => $user_id,
+            'type'    => 'review',
+            'number'  => 1,
+            'status'  => 'any',
         ]);
 
-        if (is_wp_error($res)) {
-            return false;
+        if (empty($comments)) {
+            return null;
         }
 
-        $status_code = intval(wp_remote_retrieve_response_code($res));
-        return ($status_code >= 200 && $status_code < 300);
+        $comment = $comments[0];
+        $cid     = intval($comment->comment_ID ?? 0);
+        $rating  = intval(get_comment_meta($cid, '_lpr_rating', true));
+        $title   = sanitize_text_field((string) get_comment_meta($cid, '_lpr_review_title', true));
+
+        return [
+            'id'        => (string) $cid,
+            'user_name' => sanitize_text_field((string) ($comment->comment_author ?? 'Learner')),
+            'rating'    => $rating > 0 ? min(5, max(1, $rating)) : 5,
+            'title'     => $title !== '' ? $title : __('Course Review', 'ts-mobile-bridge'),
+            'comment'   => sanitize_textarea_field((string) ($comment->comment_content ?? '')),
+            'date'      => substr((string) ($comment->comment_date_gmt ?? gmdate('Y-m-d')), 0, 10),
+        ];
+    }
+
+    private static function get_user_reviewed_course_ids(int $user_id): array
+    {
+        if ($user_id <= 0) {
+            return [];
+        }
+
+        $comments = get_comments([
+            'user_id' => $user_id,
+            'type'    => 'review',
+            'status'  => 'any',
+            'number'  => 200,
+        ]);
+
+        $ids = [];
+        foreach ((array) $comments as $comment) {
+            $pid = intval($comment->comment_post_ID ?? 0);
+            if ($pid > 0) {
+                $ids[] = $pid;
+            }
+        }
+        return array_values(array_unique($ids));
+    }
+
+    private static function persist_user_course_review(int $user_id, int $course_id, int $rating, string $title, string $content)
+    {
+        $existing = self::get_user_course_review($user_id, $course_id);
+        if (is_array($existing)) {
+            return $existing;
+        }
+
+        $user = get_userdata($user_id);
+        if (!$user) {
+            return new WP_Error('invalid_user', __('User account not found.', 'ts-mobile-bridge'), ['status' => 404]);
+        }
+
+        $clean_title = trim(sanitize_text_field($title));
+        if ($clean_title === '') {
+            $clean_title = wp_html_excerpt(sanitize_text_field($content), 48, '...');
+            if ($clean_title === '') {
+                $clean_title = __('Course Review', 'ts-mobile-bridge');
+            }
+        }
+
+        if (function_exists('learn_press_add_course_review')) {
+            $comment_id = learn_press_add_course_review([
+                'user_id'   => $user_id,
+                'course_id' => $course_id,
+                'rate'      => $rating,
+                'title'     => $clean_title,
+                'content'   => $content,
+                'force'     => true,
+            ]);
+            if (is_wp_error($comment_id)) {
+                return $comment_id;
+            }
+        } else {
+            $comment_id = wp_insert_comment([
+                'comment_post_ID'      => $course_id,
+                'comment_author'       => $user->display_name ?: $user->user_login,
+                'comment_author_email' => $user->user_email,
+                'comment_author_url'   => '',
+                'comment_content'      => $content,
+                'comment_parent'       => 0,
+                'user_id'              => $user_id,
+                'comment_approved'     => 1,
+                'comment_type'         => 'review',
+                'comment_date_gmt'     => gmdate('Y-m-d H:i:s'),
+            ]);
+            if (!$comment_id || is_wp_error($comment_id)) {
+                return new WP_Error('review_save_failed', __('Could not save course review.', 'ts-mobile-bridge'), ['status' => 500]);
+            }
+            add_comment_meta(intval($comment_id), '_lpr_rating', $rating, true);
+            add_comment_meta(intval($comment_id), '_lpr_review_title', $clean_title, true);
+        }
+
+        if (class_exists('LP_Course_Review_Cache') && method_exists('LP_Course_Review_Cache', 'instance')) {
+            try {
+                LP_Course_Review_Cache::instance()->clean_rating($course_id, $user_id);
+            } catch (\Throwable $e) {
+                // Non-fatal cache clean
+            }
+        }
+
+        self::clear_feed_cache();
+
+        return self::get_user_course_review($user_id, $course_id) ?: [
+            'id'        => (string) intval($comment_id),
+            'user_name' => $user->display_name ?: $user->user_login,
+            'rating'    => $rating,
+            'title'     => $clean_title,
+            'comment'   => $content,
+            'date'      => gmdate('Y-m-d'),
+        ];
+    }
+
+    private static function issue_authoritative_certificate(int $user_id, int $course_id, array $review, string $completed_date = ''): array
+    {
+        $user         = get_userdata($user_id);
+        $course_post  = get_post($course_id);
+        $student_name = $user && !empty($user->display_name) ? (string) $user->display_name : ($user ? (string) $user->user_login : 'Executive Graduate');
+        $course_title = $course_post ? sanitize_text_field((string) $course_post->post_title) : ('Course #' . $course_id);
+
+        $author_id       = $course_post && isset($course_post->post_author) ? intval($course_post->post_author) : 0;
+        $author_user     = $author_id > 0 ? get_userdata($author_id) : null;
+        $instructor_name = $author_user && !empty($author_user->display_name)
+            ? (string) $author_user->display_name
+            : 'Thriving Skills Instructor';
+
+        $lp_cert_id = absint(get_post_meta($course_id, '_lp_cert', true));
+        if ($lp_cert_id > 0 && get_post_status($lp_cert_id) === 'publish') {
+            $credential_id = md5($user_id . ':' . $course_id . ':' . $lp_cert_id);
+            update_option('user_cert_' . $credential_id, [
+                'user_id'   => $user_id,
+                'course_id' => $course_id,
+                'cert_id'   => $lp_cert_id,
+            ]);
+            $cert_slug        = trim((string) get_option('learn_press_lp_cert_slug', 'certificates'), '/');
+            $verification_url = home_url('/' . ($cert_slug !== '' ? $cert_slug : 'certificates') . '/' . $credential_id . '/');
+        } else {
+            $digest           = strtoupper(substr(hash_hmac('sha256', $user_id . ':' . $course_id, wp_salt('auth')), 0, 12));
+            $credential_id    = 'TS-' . gmdate('Y') . '-' . $digest;
+            $verification_url = add_query_arg('tsmb_cert', $credential_id, home_url('/'));
+        }
+
+        $issue_iso  = $completed_date !== '' ? $completed_date : gmdate('Y-m-d');
+        $issue_dt   = \DateTimeImmutable::createFromFormat('!Y-m-d', $issue_iso, new \DateTimeZone('UTC'));
+        $issue_ts   = $issue_dt instanceof \DateTimeImmutable ? $issue_dt->getTimestamp() : time();
+        $issue_date = gmdate('F j, Y', $issue_ts);
+
+        $existing_record = get_option('tsmb_cert_' . $credential_id);
+        if (!is_array($existing_record)) {
+            update_option('tsmb_cert_' . $credential_id, [
+                'credential_id'    => $credential_id,
+                'user_id'          => $user_id,
+                'course_id'        => $course_id,
+                'lp_cert_id'       => $lp_cert_id,
+                'course_title'     => $course_title,
+                'student_name'     => $student_name,
+                'instructor_name'  => $instructor_name,
+                'issue_date'       => $issue_date,
+                'review_id'        => (string) ($review['id'] ?? ''),
+                'verification_url' => $verification_url,
+                'issued_at'        => time(),
+            ]);
+        } else {
+            $issue_date = (string) ($existing_record['issue_date'] ?? $issue_date);
+        }
+
+        $issued_map = get_user_meta($user_id, 'tsmb_issued_certificates', true);
+        if (!is_array($issued_map)) {
+            $issued_map = [];
+        }
+        $issued_map[(string) $course_id] = $credential_id;
+        update_user_meta($user_id, 'tsmb_issued_certificates', $issued_map);
+
+        return [
+            'id'               => 'cert-' . $course_id . '-' . $user_id,
+            'courseId'         => (string) $course_id,
+            'courseTitle'      => $course_title,
+            'studentName'      => $student_name,
+            'issueDate'        => $issue_date,
+            'credentialId'     => $credential_id,
+            'instructorName'   => $instructor_name,
+            'verificationUrl'  => $verification_url,
+            'serverVerified'   => true,
+        ];
+    }
+
+    public static function submit_course_review($request)
+    {
+        $user_id = get_current_user_id();
+        if ($user_id <= 0) {
+            return new WP_Error('rest_forbidden', __('Authentication required.', 'ts-mobile-bridge'), ['status' => 401]);
+        }
+
+        $rl = TSMB_Security::consume_rate_limit('submit_review', (string) $user_id, 10, 15 * MINUTE_IN_SECONDS);
+        if (is_wp_error($rl)) {
+            return $rl;
+        }
+
+        $course_id = absint($request['id'] ?? 0);
+        $post      = get_post($course_id);
+        if (!$post || $post->post_type !== 'lp_course' || $post->post_status !== 'publish') {
+            return new WP_Error('invalid_course', __('Course not found.', 'ts-mobile-bridge'), ['status' => 404]);
+        }
+
+        $params = $request->get_json_params();
+        if (!is_array($params)) {
+            $params = [];
+        }
+
+        $rating  = intval($params['rate'] ?? ($params['rating'] ?? 0));
+        $title   = sanitize_text_field((string) ($params['title'] ?? ''));
+        $content = trim(sanitize_textarea_field((string) ($params['content'] ?? ($params['feedback'] ?? ($params['comment'] ?? '')))));
+        $require_completion = array_key_exists('require_completion', $params) ? (bool) $params['require_completion'] : true;
+
+        if ($rating < 1 || $rating > 5) {
+            return new WP_Error('invalid_rating', __('Please select a star rating from 1 to 5.', 'ts-mobile-bridge'), ['status' => 400]);
+        }
+
+        if (strlen($content) < 5) {
+            return new WP_Error('invalid_review_content', __('Please write at least 5 characters in your review.', 'ts-mobile-bridge'), ['status' => 400]);
+        }
+
+        $completion = self::verify_and_finalize_course_completion($user_id, $course_id);
+        if (empty($completion['enrolled'])) {
+            return new WP_Error('not_enrolled', __('You must be enrolled in this course to submit a review.', 'ts-mobile-bridge'), ['status' => 403]);
+        }
+
+        if ($require_completion && empty($completion['completed'])) {
+            return new WP_Error(
+                'course_not_completed',
+                __('Complete 100% of this course on the server before claiming your certificate.', 'ts-mobile-bridge'),
+                ['status' => 403]
+            );
+        }
+
+        $review = self::persist_user_course_review($user_id, $course_id, $rating, $title, $content);
+        if (is_wp_error($review)) {
+            return $review;
+        }
+
+        $certificate = null;
+        if (!empty($completion['completed'])) {
+            $certificate = self::issue_authoritative_certificate(
+                $user_id,
+                $course_id,
+                $review,
+                (string) ($completion['completed_date'] ?? '')
+            );
+        }
+
+        return rest_ensure_response([
+            'status'           => 'success',
+            'course_completed' => !empty($completion['completed']),
+            'has_reviewed'     => true,
+            'review'           => $review,
+            'certificate'      => $certificate,
+        ]);
+    }
+
+    public static function get_learning_state($request)
+    {
+        $user_id = get_current_user_id();
+        if ($user_id <= 0) {
+            return new WP_Error('rest_forbidden', __('Authentication required.', 'ts-mobile-bridge'), ['status' => 401]);
+        }
+
+        $enrolled_ids  = self::get_user_enrolled_course_ids($user_id);
+        $reviewed_ids  = self::get_user_reviewed_course_ids($user_id);
+        $reviewed_set  = array_flip($reviewed_ids);
+        $progress_map  = [];
+        $certificates  = [];
+
+        foreach ($enrolled_ids as $course_id) {
+            $completion  = self::verify_and_finalize_course_completion($user_id, intval($course_id));
+            $has_review  = isset($reviewed_set[$course_id]);
+            $cert_record = null;
+
+            if (!empty($completion['completed']) && $has_review) {
+                $review_data = self::get_user_course_review($user_id, intval($course_id));
+                if (is_array($review_data)) {
+                    $cert_record    = self::issue_authoritative_certificate(
+                        $user_id,
+                        intval($course_id),
+                        $review_data,
+                        (string) ($completion['completed_date'] ?? '')
+                    );
+                    $certificates[] = $cert_record;
+                }
+            }
+
+            $progress_map[(string) $course_id] = [
+                'courseId'           => (string) $course_id,
+                'enrolledDate'       => $completion['enrolled_date'] ?: gmdate('Y-m-d'),
+                'completedLessonIds' => $completion['completed_lesson_ids'],
+                'isCompleted'        => !empty($completion['completed']),
+                'hasReviewed'        => $has_review,
+                'completedDate'      => $completion['completed_date'] ?: null,
+                'certificateId'      => is_array($cert_record) ? $cert_record['credentialId'] : null,
+                'status'             => $completion['status'] ?: 'enrolled',
+                'grade'              => $completion['graduation'] ?: 'in-progress',
+            ];
+        }
+
+        return rest_ensure_response([
+            'status'              => 'success',
+            'enrolled_course_ids' => array_map('strval', $enrolled_ids),
+            'reviewed_course_ids' => array_map('strval', $reviewed_ids),
+            'progress'            => $progress_map,
+            'certificates'        => $certificates,
+        ]);
+    }
+
+    public static function verify_certificate($request)
+    {
+        $code = sanitize_text_field((string) ($request['code'] ?? ($request->get_param('code') ?? '')));
+        if ($code === '') {
+            return new WP_Error('invalid_code', __('Certificate code is required.', 'ts-mobile-bridge'), ['status' => 400]);
+        }
+
+        $record = get_option('tsmb_cert_' . $code);
+        if (is_array($record) && !empty($record['user_id']) && !empty($record['course_id'])) {
+            $uid        = intval($record['user_id']);
+            $cid        = intval($record['course_id']);
+            $completion = self::verify_and_finalize_course_completion($uid, $cid);
+            $review     = self::get_user_course_review($uid, $cid);
+            $valid      = !empty($completion['completed']) && is_array($review);
+
+            return rest_ensure_response([
+                'valid'       => $valid,
+                'certificate' => $valid ? $record : null,
+            ]);
+        }
+
+        $lp_record = get_option('user_cert_' . $code);
+        if (is_array($lp_record) && !empty($lp_record['user_id']) && !empty($lp_record['course_id'])) {
+            $uid        = intval($lp_record['user_id']);
+            $cid        = intval($lp_record['course_id']);
+            $completion = self::verify_and_finalize_course_completion($uid, $cid);
+            $review     = self::get_user_course_review($uid, $cid);
+            if (!empty($completion['completed']) && is_array($review)) {
+                $issued = self::issue_authoritative_certificate($uid, $cid, $review, (string) ($completion['completed_date'] ?? ''));
+                return rest_ensure_response([
+                    'valid'       => true,
+                    'certificate' => $issued,
+                ]);
+            }
+        }
+
+        return rest_ensure_response([
+            'valid'       => false,
+            'certificate' => null,
+        ]);
+    }
+
+    public static function maybe_serve_certificate_verification(): void
+    {
+        if (!isset($_GET['tsmb_cert'])) {
+            return;
+        }
+        $code = sanitize_text_field(wp_unslash((string) $_GET['tsmb_cert']));
+        if ($code === '') {
+            return;
+        }
+
+        $req = new WP_REST_Request('GET', '/thrivingskill/v1/certificates/verify');
+        $req->set_param('code', $code);
+        $res  = self::verify_certificate($req);
+        $data = ($res instanceof WP_REST_Response) ? $res->get_data() : ['valid' => false];
+
+        nocache_headers();
+        header('Content-Type: text/html; charset=utf-8');
+        if (empty($data['valid']) || !is_array($data['certificate'])) {
+            status_header(404);
+            echo '<!doctype html><html><body style="font-family:sans-serif;padding:40px;max-width:560px;margin:auto;"><h2>Certificate Not Verified</h2><p>This credential could not be verified.</p></body></html>';
+        } else {
+            $c = $data['certificate'];
+            status_header(200);
+            echo '<!doctype html><html><body style="font-family:sans-serif;padding:40px;max-width:600px;margin:auto;">';
+            echo '<h2 style="color:#102F53;">Verified Thriving Skills Certificate</h2>';
+            echo '<p><strong>Recipient:</strong> ' . esc_html((string) ($c['student_name'] ?? ($c['studentName'] ?? ''))) . '</p>';
+            echo '<p><strong>Course:</strong> ' . esc_html((string) ($c['course_title'] ?? ($c['courseTitle'] ?? ''))) . '</p>';
+            echo '<p><strong>Credential ID:</strong> ' . esc_html((string) ($c['credential_id'] ?? ($c['credentialId'] ?? $code))) . '</p>';
+            echo '<p><strong>Issued:</strong> ' . esc_html((string) ($c['issue_date'] ?? ($c['issueDate'] ?? ''))) . '</p>';
+            echo '</body></html>';
+        }
+        if (!defined('TSMB_TESTING') || !TSMB_TESTING) {
+            exit;
+        }
     }
 }
 
 /* ==========================================================================
-   5. PUSH NOTIFICATIONS CONTROLLER (CUSTOM TABLE + EXPO RECEIPT PRUNING)
+   4. ANDROID APP LINKS & DEEP LINK ROUTING
    ========================================================================== */
 
 class TSMB_DeepLinks
@@ -2744,6 +3329,56 @@ class TSMB_Notifications
 
 class TSMB_Admin
 {
+    public static function sanitize_hero_slides(array $raw_slides): array
+    {
+        $sanitized = [];
+        foreach ($raw_slides as $idx => $slide) {
+            if (!is_array($slide)) {
+                continue;
+            }
+            if (count($sanitized) >= 20) {
+                break;
+            }
+
+            $raw_id = sanitize_key((string) ($slide['id'] ?? ('slide_' . ($idx + 1))));
+            $title  = sanitize_text_field((string) ($slide['title'] ?? ''));
+            if ($title === '') {
+                continue;
+            }
+
+            $image_raw = trim((string) ($slide['image_url'] ?? ''));
+            $image_url = '';
+            if ($image_raw !== '') {
+                $cleaned_img = esc_url_raw($image_raw, ['https', 'http']);
+                if (is_string($cleaned_img) && preg_match('#^https?://#i', $cleaned_img)) {
+                    $image_url = $cleaned_img;
+                }
+            }
+
+            $target_raw = trim(sanitize_text_field((string) ($slide['target'] ?? '')));
+            $target     = '';
+            if ($target_raw !== '') {
+                if (preg_match('#^https?://#i', $target_raw)) {
+                    $target = esc_url_raw($target_raw, ['https', 'http']);
+                } elseif (!preg_match('/^[a-zA-Z][a-zA-Z0-9+.-]*:/', $target_raw)) {
+                    $target = $target_raw;
+                }
+            }
+
+            $sanitized[] = [
+                'id'          => $raw_id !== '' ? $raw_id : ('slide_' . ($idx + 1)),
+                'tag'         => sanitize_text_field((string) ($slide['tag'] ?? '')),
+                'title'       => $title,
+                'subtitle'    => sanitize_text_field((string) ($slide['subtitle'] ?? '')),
+                'button_text' => sanitize_text_field((string) ($slide['button_text'] ?? '')),
+                'image_url'   => $image_url,
+                'target'      => $target,
+            ];
+        }
+
+        return $sanitized;
+    }
+
     public static function init(): void
     {
         add_action('admin_menu', [__CLASS__, 'add_menu']);
@@ -2812,14 +3447,18 @@ class TSMB_Admin
                 update_option('tsmb_min_app_version', sanitize_text_field(wp_unslash($_POST['min_version'] ?? '1.0.0')));
                 update_option('tsmb_latest_app_version', sanitize_text_field(wp_unslash($_POST['latest_version'] ?? '1.4.0')));
                 update_option('tsmb_maintenance_mode', isset($_POST['maintenance_mode']) ? 1 : 0);
-
-                update_option('tsmb_sms_gateway_url', esc_url_raw(wp_unslash($_POST['sms_gateway_url'] ?? '')));
-                $new_api_key = sanitize_text_field(wp_unslash($_POST['sms_api_key'] ?? ''));
-                if ($new_api_key !== '') {
-                    update_option('tsmb_sms_api_key', $new_api_key);
-                }
-                update_option('tsmb_sms_sender_id', sanitize_text_field(wp_unslash($_POST['sms_sender_id'] ?? 'ThrivingSkills')));
                 update_option('tsmb_android_sha256_fingerprints', sanitize_textarea_field(wp_unslash($_POST['android_sha256_fingerprints'] ?? '')));
+                update_option('tsmb_trust_proxy_headers', isset($_POST['trust_proxy_headers']) ? '1' : '0');
+                $allowed_headers = ['HTTP_CF_CONNECTING_IP', 'HTTP_X_REAL_IP', 'REMOTE_ADDR'];
+                $chosen_header = sanitize_text_field(wp_unslash($_POST['trusted_proxy_header'] ?? 'HTTP_CF_CONNECTING_IP'));
+                update_option(
+                    'tsmb_trusted_proxy_header',
+                    in_array($chosen_header, $allowed_headers, true) ? $chosen_header : 'HTTP_CF_CONNECTING_IP'
+                );
+                update_option(
+                    'tsmb_trusted_proxy_ips',
+                    sanitize_textarea_field(wp_unslash($_POST['trusted_proxy_ips'] ?? ''))
+                );
             } elseif ($submitted_tab === 'banners') {
                 update_option('tsmb_banner_active', isset($_POST['banner_active']) ? 1 : 0);
                 update_option('tsmb_banner_text', sanitize_text_field(wp_unslash($_POST['banner_text'] ?? '')));
@@ -2829,7 +3468,15 @@ class TSMB_Admin
                     $raw_json = wp_unslash((string) $_POST['hero_slides_json']);
                     $decoded  = json_decode($raw_json, true);
                     if (is_array($decoded)) {
-                        update_option('tsmb_hero_slides', $decoded);
+                        $sanitized_slides = self::sanitize_hero_slides($decoded);
+                        update_option('tsmb_hero_slides', $sanitized_slides);
+                    } else {
+                        add_settings_error(
+                            'tsmb_notices',
+                            'invalid_hero_json',
+                            'Hero slides JSON must be a valid JSON array.',
+                            'error'
+                        );
                     }
                 }
             } elseif ($submitted_tab === 'flash') {
@@ -2889,16 +3536,12 @@ class TSMB_Admin
         $support_mail   = (string) get_option('tsmb_support_email', '');
         $support_phone  = (string) get_option('tsmb_support_helpline', '');
 
-        $sms_url        = (string) get_option('tsmb_sms_gateway_url', '');
-        $has_sms_key    = ((string) get_option('tsmb_sms_api_key', '')) !== '';
-        $sms_sender     = (string) get_option('tsmb_sms_sender_id', 'ThrivingSkills');
-
         $hero_slides    = get_option('tsmb_hero_slides', []);
         $total_devices  = TSMB_Notifications::get_registered_count();
         ?>
         <div class="wrap">
             <h1><span class="dashicons dashicons-smartphone" style="font-size:32px;line-height:1;margin-right:10px;color:#102F53;"></span> Thriving Skills Mobile Command Center</h1>
-            <p style="color:#64748b;margin-bottom:16px;">Live control over mobile banners, push notifications, flash sales, search keywords, OTP gateway, and remote configuration.</p>
+            <p style="color:#64748b;margin-bottom:16px;">Live control over mobile banners, push notifications, flash sales, search keywords, security, and remote configuration.</p>
 
             <?php settings_errors('tsmb_notices'); ?>
 
@@ -2907,7 +3550,7 @@ class TSMB_Admin
                 <a href="?page=thriving-skills-app&tab=banners" class="nav-tab <?php echo $active_tab === 'banners' ? 'nav-tab-active' : ''; ?>">Hero Slides &amp; Banners</a>
                 <a href="?page=thriving-skills-app&tab=flash" class="nav-tab <?php echo $active_tab === 'flash' ? 'nav-tab-active' : ''; ?>">Flash Sale &amp; Countdown</a>
                 <a href="?page=thriving-skills-app&tab=chips" class="nav-tab <?php echo $active_tab === 'chips' ? 'nav-tab-active' : ''; ?>">Trending Search &amp; Support</a>
-                <a href="?page=thriving-skills-app&tab=version" class="nav-tab <?php echo $active_tab === 'version' ? 'nav-tab-active' : ''; ?>">App Version &amp; SMS OTP</a>
+                <a href="?page=thriving-skills-app&tab=version" class="nav-tab <?php echo $active_tab === 'version' ? 'nav-tab-active' : ''; ?>">App Version &amp; Security</a>
             </h2>
 
             <div style="display:flex;gap:24px;flex-wrap:wrap;">
@@ -3061,7 +3704,7 @@ class TSMB_Admin
                         </form>
 
                     <?php elseif ($active_tab === 'version') : ?>
-                        <h2 style="margin-top:0;">App Version Control, System &amp; SMS OTP Gateway</h2>
+                        <h2 style="margin-top:0;">App Version Control, Deep Links &amp; Security</h2>
                         <form method="post" action="?page=thriving-skills-app&tab=version">
                             <?php wp_nonce_field('tsmb_save_settings_nonce'); ?>
                             <table class="form-table">
@@ -3077,31 +3720,45 @@ class TSMB_Admin
                                     <th scope="row">Maintenance Mode</th>
                                     <td><label><input name="maintenance_mode" type="checkbox" value="1" <?php checked($maintenance, true); ?> /> Display a maintenance notice on mobile.</label></td>
                                 </tr>
-                            </table>
-
-                            <hr style="margin:24px 0;" />
-
-                            <h3>SMS OTP Gateway (/wp-json/tsl/v1/auth/*)</h3>
-                            <table class="form-table">
-                                <tr>
-                                    <th scope="row">Gateway Webhook URL</th>
-                                    <td><input name="sms_gateway_url" type="url" value="<?php echo esc_attr($sms_url); ?>" class="large-text" placeholder="https://sms-gateway.example/api/send" /></td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">Gateway API Key</th>
-                                    <td>
-                                        <input name="sms_api_key" type="password" value="" autocomplete="new-password" class="regular-text" placeholder="<?php echo $has_sms_key ? 'Stored (enter to replace)' : 'Enter SMS API key'; ?>" />
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <th scope="row">Sender ID</th>
-                                    <td><input name="sms_sender_id" type="text" value="<?php echo esc_attr($sms_sender); ?>" class="regular-text" /></td>
-                                </tr>
                                 <tr>
                                     <th scope="row">Android App Links SHA-256 Fingerprints</th>
                                     <td>
                                         <textarea name="android_sha256_fingerprints" rows="3" class="large-text code" placeholder="AA:BB:CC:... (one SHA-256 per line)"><?php echo esc_textarea((string) get_option('tsmb_android_sha256_fingerprints', '')); ?></textarea>
                                         <p class="description">Served live at <code>/.well-known/assetlinks.json</code> for Android <code>autoVerify</code> App Links.</p>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <hr style="margin:24px 0;" />
+
+                            <h3>Rate Limiting &amp; Reverse Proxy IP Security</h3>
+                            <table class="form-table">
+                                <tr>
+                                    <th scope="row">Trust Reverse Proxy Header</th>
+                                    <td>
+                                        <label>
+                                            <input name="trust_proxy_headers" type="checkbox" value="1" <?php checked(get_option('tsmb_trust_proxy_headers', '0'), '1'); ?> />
+                                            Honor a single reverse proxy client IP header instead of <code>REMOTE_ADDR</code>.
+                                        </label>
+                                        <p class="description"><strong>Warning:</strong> Only enable if direct origin access is blocked at your firewall/Cloudflare Origin Rules.</p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><label for="trusted_proxy_header">Trusted Header</label></th>
+                                    <td>
+                                        <?php $cur_hdr = TSMB_Security::get_trusted_proxy_header(); ?>
+                                        <select name="trusted_proxy_header" id="trusted_proxy_header">
+                                            <option value="HTTP_CF_CONNECTING_IP" <?php selected($cur_hdr, 'HTTP_CF_CONNECTING_IP'); ?>>CF-Connecting-IP (Cloudflare)</option>
+                                            <option value="HTTP_X_REAL_IP" <?php selected($cur_hdr, 'HTTP_X_REAL_IP'); ?>>X-Real-IP (Nginx)</option>
+                                            <option value="REMOTE_ADDR" <?php selected($cur_hdr, 'REMOTE_ADDR'); ?>>REMOTE_ADDR Only</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><label for="trusted_proxy_ips">Allowed Proxy <code>REMOTE_ADDR</code> IPs (Optional)</label></th>
+                                    <td>
+                                        <textarea name="trusted_proxy_ips" id="trusted_proxy_ips" rows="2" class="regular-text code" placeholder="127.0.0.1"><?php echo esc_textarea((string) get_option('tsmb_trusted_proxy_ips', '')); ?></textarea>
+                                        <p class="description">Comma/newline separated proxy peer IPs allowed to forward the chosen header.</p>
                                     </td>
                                 </tr>
                             </table>
@@ -3142,8 +3799,10 @@ class TSMB_Admin
                         <li><code>/wp-json/thrivingskill/v1/register</code></li>
                         <li><code>/wp-json/thrivingskill/v1/verify-registration</code></li>
                         <li><code>/wp-json/thrivingskill/v1/register-push-token</code></li>
-                        <li><code>/wp-json/tsl/v1/auth/send-otp</code></li>
-                        <li><code>/wp-json/tsl/v1/auth/verify-otp</code></li>
+                        <li><code>/wp-json/thrivingskill/v1/auth/webview-handoff</code></li>
+                        <li><code>/wp-json/thrivingskill/v1/learning-state</code></li>
+                        <li><code>/wp-json/thrivingskill/v1/courses/{id}/submit-review</code></li>
+                        <li><code>/wp-json/thrivingskill/v1/certificates/verify</code></li>
                     </ul>
                 </div>
             </div>
@@ -3161,7 +3820,6 @@ function tsmb_init_plugin(): void
     TSMB_Lifecycle::maybe_upgrade();
     TSMB_Security::init();
     TSMB_Rest_API::init();
-    TSMB_OTP_Auth::init();
     TSMB_Notifications::init();
     if (is_admin()) {
         TSMB_Admin::init();

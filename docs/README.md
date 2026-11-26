@@ -10,6 +10,7 @@ Welcome to the centralized documentation repository for the **Thriving Skills** 
 - 📄 [PRD.md](PRD.md) — Product Requirements Document: Learner personas, business rules, client requirements (CR-01–CR-05), and release criteria.
 - 📄 [TRD.md](TRD.md) — Technical Requirements Document: Architecture, state contexts, API layer, recommendation engine, and memory safety.
 - 📄 [FEATURES.md](FEATURES.md) — Comprehensive inventory of all 18+ functional modules, screen flows, and client deliverables.
+- 📄 [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md) — **Authoritative Source of Truth** tracking UI, local logic, backend routes, automated tests, and production verification per feature.
 - 📄 [TODO.md](TODO.md) — Milestone execution roadmap, active sprint tasks, and backlog tracker.
 - 📄 [TRACK.md](TRACK.md) — Milestones progress and execution log.
 

@@ -6,6 +6,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { useLearning } from '../../../context/LearningContext';
 import { Course } from '../../../types';
 import { CoursesService } from '../../../services/api/coursesService';
+import { CompanionService } from '../../../services/api/companionService';
 import { Env } from '../../../config/env';
 import {
   ServerProductData,
@@ -79,6 +80,8 @@ export function usePaymentCheckout({
         if (!isMounted) return;
         if (user) {
           const parts = (user.displayName || user.username || '').trim().split(' ');
+          const resolvedEmail = cached?.email || user.email || '';
+
           setFirstName(cached?.firstName || user.first_name || parts[0] || '');
           setLastName(
             cached?.lastName ||
@@ -86,11 +89,13 @@ export function usePaymentCheckout({
               parts.slice(1).join(' ') ||
               (parts[0] ? '' : 'Learner')
           );
-          setEmail(cached?.email || user.email || '');
+          setEmail(resolvedEmail);
           setPhone(cached?.phone || user.phone || '');
           setCity(cached?.city || user.city || '');
           setAddress(cached?.address || '');
-          setIsEditingDetails(!user.displayName || !user.email || !(cached?.phone || user.phone));
+          setIsEditingDetails(
+            !user.displayName || !resolvedEmail || !(cached?.phone || user.phone)
+          );
         } else if (cached) {
           setFirstName(cached.firstName || '');
           setLastName(cached.lastName || '');
@@ -98,18 +103,20 @@ export function usePaymentCheckout({
           setPhone(cached.phone || '');
           setCity(cached.city || '');
           setAddress(cached.address || '');
-          setIsEditingDetails(false);
+          setIsEditingDetails(!cached.email);
         } else {
           setIsEditingDetails(true);
         }
       } catch {
         if (isMounted && user) {
           const parts = (user.displayName || user.username || '').trim().split(' ');
+          const userEmail = user.email || '';
           setFirstName(user.first_name || parts[0] || '');
           setLastName(user.last_name || parts.slice(1).join(' ') || (parts[0] ? '' : 'Learner'));
-          setEmail(user.email || '');
+          setEmail(userEmail);
           setPhone(user.phone || '');
           setCity(user.city || '');
+          setIsEditingDetails(!userEmail || !user.phone);
         }
       }
     };
@@ -202,7 +209,7 @@ export function usePaymentCheckout({
     return Object.keys(errors).length === 0;
   };
 
-  const handleProceedToCheckout = () => {
+  const handleProceedToCheckout = async () => {
     if (!course) return;
     if (!isAuthenticated) {
       onClose();
@@ -225,6 +232,8 @@ export function usePaymentCheckout({
       return;
     }
 
+    const cleanEmail = email.trim();
+
     triggerHaptic('medium');
     setIsPlacingOrder(true);
     hasCompletedPurchaseRef.current = false;
@@ -234,7 +243,7 @@ export function usePaymentCheckout({
         JSON.stringify({
           firstName: firstName.trim(),
           lastName: lastName.trim(),
-          email: email.trim(),
+          email: cleanEmail,
           phone: phone.trim(),
           city: city.trim(),
           address: address.trim(),
@@ -242,14 +251,23 @@ export function usePaymentCheckout({
       ).catch(() => {});
 
       updateUserProfile({ phone: phone.trim(), city: city.trim() }, true).catch(() => {});
-      setCheckoutWebUrl(`${Env.SITE_URL}/checkout/?add-to-cart=${course.id}`);
+
+      const fallbackCheckoutUrl = `${Env.SITE_URL}/checkout/?add-to-cart=${course.id}`;
+      const handoff = await CompanionService.createWebViewHandoffUrl({
+        courseId: course.id,
+        redirectPath: `/checkout/?add-to-cart=${course.id}`,
+      });
+      if (!isMountedRef.current || isCancelledRef.current) return;
+      setCheckoutWebUrl(handoff?.loginUrl || fallbackCheckoutUrl);
     } catch (err: any) {
       Alert.alert(
         isBangla ? 'ত্রুটি' : 'Checkout Error',
         err?.message || (isBangla ? 'অর্ডার প্রক্রিয়া শুরু করা যায়নি।' : 'Could not initiate checkout.')
       );
     } finally {
-      setIsPlacingOrder(false);
+      if (isMountedRef.current) {
+        setIsPlacingOrder(false);
+      }
     }
   };
 

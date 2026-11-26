@@ -103,15 +103,15 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
       case 'course':
         return { name: 'school', color: '#4F46E5', bg: '#EEF2FF' };
       case 'recommendation':
-        return { name: 'sparkles', color: '#D97706', bg: '#FEF3C7' };
+        return { name: 'sparkles', color: '#102F53', bg: '#E8EEF5' };
       case 'update':
-        return { name: 'megaphone', color: '#16A34A', bg: '#DCFCE7' };
+        return { name: 'megaphone', color: '#047857', bg: '#DCFCE7' };
       case 'assignment':
-        return { name: 'calendar', color: '#6366F1', bg: '#EEF2FF' };
+        return { name: 'calendar', color: '#1D4476', bg: '#EFF6FF' };
       case 'workshop':
-        return { name: 'videocam', color: '#059669', bg: '#D1FAE5' };
+        return { name: 'videocam', color: '#047857', bg: '#D1FAE5' };
       case 'certificate':
-        return { name: 'ribbon', color: '#F59E0B', bg: '#FEF3C7' };
+        return { name: 'ribbon', color: '#E34234', bg: '#FEE2E2' };
       case 'ai':
         return { name: 'sparkles', color: '#8B5CF6', bg: '#F3E8FF' };
       default:

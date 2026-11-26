@@ -89,11 +89,11 @@ export const SkillRadarChart: React.FC<SkillRadarChartProps> = ({
 
   const getScoreTier = (score: number) => {
     if (score >= 85)
-      return { label: isBangla ? 'উন্নত (Advanced)' : 'Advanced Mastery', color: '#10B981' };
+      return { label: isBangla ? 'উন্নত (Advanced)' : 'Advanced Mastery', color: colors.success };
     if (score >= 60)
       return {
         label: isBangla ? 'দক্ষ (Proficient)' : 'Proficient',
-        color: colors.brandGold || '#FFB606',
+        color: colors.primary,
       };
     return {
       label: isBangla ? 'উন্নতি প্রয়োজন (Growth Area)' : 'Growth Priority',
@@ -142,8 +142,8 @@ export const SkillRadarChart: React.FC<SkillRadarChartProps> = ({
         <Svg width={size} height={size}>
           <Defs>
             <LinearGradient id="radarFillGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-              <Stop offset="0%" stopColor={colors.primary} stopOpacity={0.42} />
-              <Stop offset="70%" stopColor={colors.brandGold || '#FFB606'} stopOpacity={0.22} />
+              <Stop offset="0%" stopColor={colors.primary} stopOpacity={0.38} />
+              <Stop offset="70%" stopColor={colors.accent} stopOpacity={0.18} />
               <Stop offset="100%" stopColor={colors.primary} stopOpacity={0.08} />
             </LinearGradient>
           </Defs>
@@ -191,19 +191,13 @@ export const SkillRadarChart: React.FC<SkillRadarChartProps> = ({
             return (
               <G key={`point-${i}`}>
                 {isSelected && (
-                  <Circle
-                    cx={pt.x}
-                    cy={pt.y}
-                    r={9}
-                    fill={colors.brandGold || '#FFB606'}
-                    fillOpacity={0.28}
-                  />
+                  <Circle cx={pt.x} cy={pt.y} r={9} fill={colors.accent} fillOpacity={0.24} />
                 )}
                 <Circle
                   cx={pt.x}
                   cy={pt.y}
                   r={isSelected ? 5.5 : 4}
-                  fill={isSelected ? colors.brandGold || '#FFB606' : colors.primary}
+                  fill={isSelected ? colors.accent : colors.primary}
                   stroke="#FFFFFF"
                   strokeWidth={1.5}
                 />
@@ -226,7 +220,7 @@ export const SkillRadarChart: React.FC<SkillRadarChartProps> = ({
                 textAnchor="middle"
                 fontSize={isSelected ? '10.5' : '9.5'}
                 fontWeight={isSelected ? '800' : '600'}
-                fill={isSelected ? colors.brandGold || '#FFB606' : colors.textMuted}
+                fill={isSelected ? colors.accent : colors.textMuted}
               >
                 {labelText}
               </SvgText>
@@ -246,10 +240,8 @@ export const SkillRadarChart: React.FC<SkillRadarChartProps> = ({
               style={[
                 styles.domainPill,
                 {
-                  backgroundColor: isSelected
-                    ? colors.brandGoldSubtle || 'rgba(255, 182, 6, 0.16)'
-                    : colors.surfaceSubtle,
-                  borderColor: isSelected ? colors.brandGold || '#FFB606' : colors.borderSubtle,
+                  backgroundColor: isSelected ? colors.primaryLight : colors.surfaceSubtle,
+                  borderColor: isSelected ? colors.accent : colors.borderSubtle,
                 },
               ]}
               onPress={() => {
@@ -266,7 +258,7 @@ export const SkillRadarChart: React.FC<SkillRadarChartProps> = ({
                 style={[
                   styles.domainPillText,
                   {
-                    color: isSelected ? colors.brandGold || '#FFB606' : colors.text,
+                    color: isSelected ? colors.primary : colors.text,
                     fontWeight: isSelected ? '800' : '500',
                   },
                 ]}

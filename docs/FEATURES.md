@@ -18,8 +18,8 @@ This document provides a comprehensive inventory of all features, capabilities, 
 | **F-07** | Course Curriculum & Section Accordion | `CourseDetailScreen.tsx` | ✅ Production Ready |
 | **F-08** | In-Player Lesson Notes & Bookmarks | `LessonPlayerScreen.tsx`, `NotesModal.tsx` | ✅ Production Ready |
 | **F-09** | Interactive Quiz & Assessment Engine | `LessonPlayerScreen.tsx`, `QuizTab.tsx` | ✅ Production Ready |
-| **F-10** | Offline Mode & Video Download Manager | `MyLearningScreen.tsx`, `offlineManager.ts` | ✅ Production Ready |
-| **F-11** | Local MFS Checkout (bKash, Nagad, Rocket) | `PaymentModal.tsx`, `paymentService.ts` | ✅ Production Ready |
+| **F-10** | Offline Study Deck (Text Notes) / Offline Video | `OfflineStudyDeckModal.tsx`, `offlineManager.ts` | ⚠️ Study Notes Ready / **No Video Download** |
+| **F-11** | Hybrid Checkout (WooCommerce + SSLCommerz WebView) | `PaymentModal.tsx`, `usePaymentCheckout.ts` | ✅ WebView Implemented (**No native MFS SDK**) |
 | **F-12** | Promo Code & Coupon Engine | `PaymentModal.tsx` | ✅ Production Ready |
 | **F-13** | Bilingual Bangla ⇄ English Localization | `LanguageContext.tsx` | ✅ Production Ready |
 | **F-14** | Gamification (Streaks, XP, Badges) | `GamificationContext.tsx`, `StreakBadge.tsx` | ✅ Production Ready |
@@ -73,29 +73,28 @@ This document provides a comprehensive inventory of all features, capabilities, 
   - **Weekly Learning Velocity Bar Chart**: 7-day activity metrics (Mon–Sun) tracking lessons completed and study duration, with an active streak indicator (`🔥 X-Day Streak`).
   - **KPI Metric Cards**: Enrolled Courses, Graduated Courses, Total Study Hours, and Verified Digital Certificates.
   - **Active Enrolled Courses Shelf**: Displays in-progress courses with real-time progress bars and a **"চালিয়ে যান / Continue Learning"** CTA.
-  - **Graduated Courses Shelf**: Features 100% completed courses with a Sunshine Gold (`#FFB606`) graduate ribbon and instant **"সনদপত্র দেখুন / View Certificate"** modal trigger.
+  - **Graduated Courses Shelf**: Features 100% completed courses with a Brand Deep Navy (`#102F53`) graduate badge and instant **"সনদপত্র দেখুন / View Certificate"** modal trigger.
 
-### 6. Local Payment Gateway Integration (bKash, Nagad, Rocket)
-- **Payment Methods Supported**:
-  - **bKash (বিকাশ)**: Mobile wallet verification with simulated PIN/OTP gateway.
-  - **Nagad (নগদ)**: Fast mobile payment gateway.
-  - **DBBL Rocket (রকেট)**: Dutch-Bangla Bank mobile banking.
-  - **Cards & NetBanking**: Visa, MasterCard, and direct internet banking.
-- **Coupon Engine**:
-  - Validates discount codes (`TS50`, `EID2026`, `SKILLPRO`, `FREEPASS`) with instant price recalculation.
-  - Automatically creates a LearnPress course enrollment upon transaction success.
+### 6. Hybrid WooCommerce & SSLCommerz WebView Checkout
+*(Authoritative feature matrix: [`IMPLEMENTATION_STATUS.md`](./IMPLEMENTATION_STATUS.md))*
+- **Supported Site Checkout Flow**:
+  - Launches authenticated WooCommerce checkout inside `PaymentModal.tsx` (`POST /thrivingskill/v1/auth/webview-handoff` when companion `v1.2.0` is active) so learners can pay via SSLCommerz (bKash, Nagad, DBBL Rocket, Visa/MasterCard) without building unapproved native wallet bypasses.
+  - Polls `/thrivingskill/v1/enrollments` on checkout completion to unlock enrolled course content automatically.
+  - **Scope Note**: No direct native bKash/Nagad mobile SDK is integrated; promo/coupon handling uses live WooCommerce site checkout pricing.
 
 ### 7. Bilingual Bangla ⇄ English Localization
-- Complete system-wide translation spanning every button, navigation tab, error notice, and modal.
+- Complete system-wide translation spanning navigation tabs, headings, form validation notices, and modals.
 - Switchable via one-tap language selector with instant reactive re-rendering and persistent storage.
 
-### 8. Full Offline Capability & Download Manager
-- Allows learners to download entire lesson videos and text guides to local device storage.
-- Downloaded lessons can be played with zero internet connectivity.
-- Offline progress queues and automatically syncs to WordPress LearnPress once connectivity is restored.
+### 8. Offline Study Deck & Action Sync Queue *(Text Guides Only)*
+- `OfflineManager.ts` saves lesson text summaries and structured key takeaways to `AsyncStorage` for offline reading (`OfflineStudyDeckModal.tsx`).
+- `SyncQueueManager.ts` queues offline lesson completions, enrollments, and quiz submissions and replays them automatically once connectivity returns.
+- **Scope Note**: Encrypted offline **video file downloading** (`expo-file-system` binary media storage) is **not implemented yet** and remains in Milestone 7.
 
-### 9. AI Skill Copilot
-- Integrated interactive conversational assistant helping learners determine personalized career roadmaps, course prerequisites, and career transition advice tailored to the Bangladesh job market.
+### 9. AI Study Copilot (`ThriveGenHub` & `LessonAiTutorModal`)
+- `GeminiNanoService` checks Android AICore model availability honestly and reports unavailable without generating fake canned answers.
+- `AiTutorService` and `AiAssessmentService` run grounded BM25 keyword retrieval over loaded lesson summaries and verify quizzes from domain banks.
 
 ### 10. B2B Corporate Enterprise Hub
-- Dedicated enterprise training section enabling HR leaders and corporate executives to review cohort training programs, explore diagnostic skill assessments, and submit bulk enrollment inquiries.
+- Dedicated enterprise training UI (`CorporateInquiryModal.tsx`) enabling executives and HR leaders to explore cohort training options.
+- **Scope Note**: Currently displays a local confirmation message without posting inquiries to a WordPress REST backend endpoint.

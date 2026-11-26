@@ -515,8 +515,8 @@ export const CertificateModal: React.FC<CertificateModalProps> = ({
           visible={reviewModalVisible}
           courseTitle={certificate.courseTitle}
           instructorName={certificate.instructorName}
-          onSubmit={(rating, feedback) => {
-            submitMandatoryCourseReview(
+          onSubmit={async (rating, feedback) => {
+            await submitMandatoryCourseReview(
               certificate.courseId,
               rating,
               feedback,

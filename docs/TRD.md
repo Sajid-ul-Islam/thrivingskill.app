@@ -36,12 +36,12 @@ The Thriving Skills mobile app follows a clean, modular, layered architecture de
 │                    NETWORK & PERSISTENCE INFRASTRUCTURE                 │
 │    httpClient (Retries, Timeout, AbortController, Error Formatter)     │
 │    CacheManager (L1 In-Memory + L2 Persistent AsyncStorage, TTL)      │
-│    OfflineManager (Asset Download, Progress Sync Queue)                │
+│    OfflineManager (Study Guide Text Cache, Progress Sync Queue)        │
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │ HTTPS / REST
 ┌───────────────────────────────────▼────────────────────────────────────┐
 │                      WORDPRESS / LEARNPRESS BACKEND                    │
-│    LearnPress v1 Endpoints  │  WordPress v2 Endpoints  │  bKash/Nagad   │
+│    LearnPress v1 Endpoints  │  WordPress v2 Endpoints  │  WooCommerce   │
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -81,7 +81,7 @@ The application isolates concerns into six (6) React Context Providers:
 4. **`LanguageContext`** (`src/context/LanguageContext.tsx`):
    - Manages instant bilingual toggle between English (`en`) and Bengali (`bn`) with deep translation dictionaries.
 5. **`ThemeContext`** (`src/context/ThemeContext.tsx`):
-   - Injects ThrivingSkills brand tokens (`#102F53`, `#FFB606`, `#E34234`) with Light and Dark theme switching.
+   - Injects ThrivingSkills brand tokens (`#102F53`, `#E34234`, `#FFFFFF` surfaces, with `#FFB606` reserved for course rating stars) with Light and Dark theme switching.
 6. **`OfflineContext`** (`src/context/OfflineContext.tsx`):
    - Monitors network connectivity status via NetInfo and manages offline download jobs.
 

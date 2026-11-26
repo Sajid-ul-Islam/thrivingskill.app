@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   badgePill: {
-    backgroundColor: 'rgba(255, 182, 6, 0.95)',
+    backgroundColor: '#E34234',
     paddingHorizontal: 7,
     paddingVertical: 2.5,
     borderRadius: shape.full,
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 9,
     fontWeight: '800',
-    color: '#102F53',
+    color: '#FFFFFF',
     letterSpacing: 0.5,
   },
   arrowIconWrap: {

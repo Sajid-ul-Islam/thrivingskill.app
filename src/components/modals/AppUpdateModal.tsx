@@ -16,6 +16,7 @@ import { AppUpdateService } from '../../services/appUpdateService';
 import { triggerHaptic } from '../../utils/haptics';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
+import { APP_VERSION } from '../../config/appVersion';
 
 interface AppUpdateModalProps {
   visible: boolean;
@@ -53,9 +54,12 @@ export const AppUpdateModal: React.FC<AppUpdateModalProps> = ({ visible, onClose
       triggerHaptic('success');
       setApkUpdateReady(true);
       setApkUrl(result.apkDownloadUrl || null);
-      setLatestVersion(result.latestVersion || '1.4.1');
+      setLatestVersion(result.latestVersion || APP_VERSION);
       setChangelog(result.changelog || null);
-      showToast({ message: `Version ${result.latestVersion || '1.4.1'} available!`, type: 'info' });
+      showToast({
+        message: `Version ${result.latestVersion || APP_VERSION} available!`,
+        type: 'info',
+      });
     } else {
       showToast({ message: "You're on the latest version!", type: 'success' });
     }

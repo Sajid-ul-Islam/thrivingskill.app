@@ -21,6 +21,7 @@ import { triggerHaptic } from '../utils/haptics';
 import { MIN_TOUCH_TARGET } from '../theme/typography';
 import { shape } from '../theme/shapes';
 import { useResponsive } from '../theme/responsive';
+import { APP_VERSION } from '../config/appVersion';
 import { Header } from '../components';
 import {
   ProfileHeaderCard,
@@ -186,8 +187,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           videoQuality={state.videoQuality}
           cycleVideoQuality={state.cycleVideoQuality}
           onOpenUpdateModal={() => state.setUpdateModalVisible(true)}
-          biometricEnabled={state.biometricEnabled}
-          setBiometricEnabled={state.setBiometricEnabled}
           onChangePassword={() => state.setChangePasswordModalVisible(true)}
           onOpenNotifications={onOpenNotifications}
           onClearCache={state.handleClearCache}
@@ -239,7 +238,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
             accessibilityLabel="App Version"
           >
             <Text style={[styles.versionTapText, { color: colors.textMuted }]}>
-              v1.4.0 • Thriving <Text style={{ color: '#E34234' }}>Skills</Text> App
+              v{APP_VERSION} • Thriving <Text style={{ color: '#E34234' }}>Skills</Text> App
               {__DEV__ ? ' • [DEV]' : ''}
             </Text>
           </TouchableOpacity>

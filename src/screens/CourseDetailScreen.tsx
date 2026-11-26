@@ -58,6 +58,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     getCourseById,
     loadCourseDetail,
     userProgress,
+    certificates,
     confirmServerEnrollments,
     isBookmarked,
     toggleBookmark,
@@ -167,8 +168,8 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
   const bookmarked = isBookmarked(course.id);
   const trailerVideo = findRelatedVideoForCourse(course, videos);
 
-  const handleSubmitMandatoryReview = (rating: number, feedback: string) => {
-    submitMandatoryCourseReview(
+  const handleSubmitMandatoryReview = async (rating: number, feedback: string) => {
+    const cert = await submitMandatoryCourseReview(
       course.id,
       rating,
       feedback,
@@ -176,13 +177,22 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
       'Student'
     );
     setMandatoryReviewVisible(false);
-    setCertPreviewVisible(true);
-    Alert.alert(
-      isBangla ? 'সার্টিফিকেট আনলক হয়েছে! 🎓' : 'Certificate Unlocked! 🎓',
-      isBangla
-        ? 'আপনার রিভিউ সফলভাবে যুক্ত হয়েছে এবং সার্টিফিকেট আনলক করা হয়েছে।'
-        : 'Thank you for your review! Your official verified certificate is now unlocked.'
-    );
+    if (cert) {
+      setCertPreviewVisible(true);
+      Alert.alert(
+        isBangla ? 'সার্টিফিকেট আনলক হয়েছে! 🎓' : 'Certificate Unlocked! 🎓',
+        isBangla
+          ? 'আপনার রিভিউ সফলভাবে যুক্ত হয়েছে এবং সার্টিফিকেট আনলক করা হয়েছে।'
+          : 'Thank you for your review! Your official verified certificate is now unlocked.'
+      );
+    } else {
+      Alert.alert(
+        isBangla ? 'রিভিউ সংরক্ষিত হয়েছে' : 'Review Saved',
+        isBangla
+          ? 'আপনার রিভিউ সার্ভারে সংরক্ষণ করা হয়েছে।'
+          : 'Your review has been saved on the server.'
+      );
+    }
   };
 
   const resolveInitialLessonId = () => {
@@ -270,38 +280,67 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     onNavigateToLesson(course.id, lesson.id);
   };
 
-  const handleSubmitReview = () => {
-    if (!reviewComment.trim()) {
+  const handleSubmitReview = async () => {
+    if (!isAuthenticated) {
+      Alert.alert(
+        isBangla ? 'সাইন ইন প্রয়োজন' : 'Sign In Required',
+        isBangla
+          ? 'কোর্সে রিভিউ দিতে অনুগ্রহ করে সাইন ইন করুন।'
+          : 'Please sign in to submit a course review.'
+      );
+      setAuthModalVisible(true);
+      return;
+    }
+    if (!reviewComment.trim() || reviewComment.trim().length < 5) {
       Alert.alert(
         isBangla ? 'রিভিউ আবশ্যক' : 'Review Required',
         isBangla
-          ? 'অনুগ্রহ করে এই কোর্স সম্পর্কে আপনার মতামত লিখুন।'
-          : 'Please share your feedback or experience with this course.'
+          ? 'অনুগ্রহ করে এই কোর্স সম্পর্কে অন্তত ৫ অক্ষরের মতামত লিখুন।'
+          : 'Please write at least 5 characters sharing your experience with this course.'
       );
       return;
     }
     setIsSubmittingReview(true);
-    addCourseReview(course.id, {
-      userName: user?.displayName || user?.username || 'Executive Learner',
-      userAvatar: user?.avatar || '',
-      rating: reviewRating,
-      comment: reviewComment.trim(),
-      userRole: isPrivileged
-        ? 'Developer / Admin Reviewer'
-        : isEnrolled
-          ? 'Enrolled Student'
-          : 'Verified Learner',
-      company: 'Corporate Professional',
-    });
-    setIsSubmittingReview(false);
-    setWriteReviewModalVisible(false);
-    setReviewComment('');
-    Alert.alert(
-      isBangla ? 'রিভিউ জমা দেওয়া হয়েছে! 🌟' : 'Review Submitted! 🌟',
-      isBangla
-        ? 'আপনার রেটিং এবং মতামতের জন্য ধন্যবাদ। এটি অন্য শিক্ষার্থীদের সঠিক সিদ্ধান্ত নিতে সহায়তা করবে।'
-        : 'Thank you for your rating and review. Your feedback helps fellow executives make informed learning decisions.'
-    );
+    try {
+      const serverResult = await CoursesService.submitCourseReview({
+        courseId: course.id,
+        rating: reviewRating,
+        feedback: reviewComment.trim(),
+        requireCompletion: false,
+      });
+      if (serverResult.review) {
+        addCourseReview(course.id, {
+          userName:
+            serverResult.review.userName || user?.displayName || user?.username || 'Learner',
+          userAvatar: user?.avatar || '',
+          rating: serverResult.review.rating,
+          comment: serverResult.review.comment,
+          userRole: isPrivileged
+            ? 'Developer / Admin Reviewer'
+            : isEnrolled
+              ? 'Enrolled Student'
+              : 'Verified Learner',
+        });
+      }
+      setWriteReviewModalVisible(false);
+      setReviewComment('');
+      Alert.alert(
+        isBangla ? 'রিভিউ জমা দেওয়া হয়েছে! 🌟' : 'Review Submitted! 🌟',
+        isBangla
+          ? 'আপনার রেটিং এবং মতামত সার্ভারে সংরক্ষিত হয়েছে।'
+          : 'Thank you! Your rating and review have been saved to your account.'
+      );
+    } catch (err: any) {
+      Alert.alert(
+        isBangla ? 'রিভিউ জমা দেওয়া যায়নি' : 'Review Submission Failed',
+        err?.message ||
+          (isBangla
+            ? 'সার্ভারে রিভিউ সংরক্ষণ করা যায়নি।'
+            : 'Could not save your review on the server right now.')
+      );
+    } finally {
+      setIsSubmittingReview(false);
+    }
   };
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -566,9 +605,11 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
         isUnlocked={isPrivileged || isCertificateUnlocked(course.id)}
         hasReviewed={isPrivileged || hasReviewedCourse(course.id)}
         certificateId={
+          certificates.find((c) => c.courseId === course.id)?.credentialId ||
           userProgress[course.id]?.certificateId ||
           (isPrivileged ? `TS-2026-DEV${course.id.slice(-4).toUpperCase()}` : undefined)
         }
+        verificationUrl={certificates.find((c) => c.courseId === course.id)?.verificationUrl}
         mandatoryReviewVisible={mandatoryReviewVisible}
         paymentModalVisible={paymentModalVisible}
         certPreviewVisible={certPreviewVisible}

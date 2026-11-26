@@ -82,7 +82,7 @@ const getPopupTheme = (type: PopupType, colors: any, isDark: boolean): PopupThem
       return {
         icon: 'help-circle-outline',
         iconColor: isDark ? colors.primary : colors.brandNavy,
-        iconBg: isDark ? 'rgba(255, 182, 6, 0.16)' : 'rgba(16, 47, 83, 0.08)',
+        iconBg: isDark ? colors.primaryLight : 'rgba(16, 47, 83, 0.08)',
         primaryBg: colors.primary,
         primaryText: colors.onPrimary,
       };
@@ -90,7 +90,7 @@ const getPopupTheme = (type: PopupType, colors: any, isDark: boolean): PopupThem
       return {
         icon: 'information-circle-outline',
         iconColor: isDark ? colors.primary : colors.brandNavy,
-        iconBg: isDark ? 'rgba(255, 182, 6, 0.16)' : 'rgba(16, 47, 83, 0.08)',
+        iconBg: isDark ? colors.primaryLight : 'rgba(16, 47, 83, 0.08)',
         primaryBg: colors.primary,
         primaryText: colors.onPrimary,
       };

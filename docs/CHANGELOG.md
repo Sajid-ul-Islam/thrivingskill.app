@@ -7,115 +7,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.4.3] - 2026-11-22
+## [Unreleased]
 
-### 🚀 Simplified 4-Field Registration & Auto-Login
-- **Native 4-Field Onboarding Form**:
-  - Replaced complex registration requirements and external email link barriers with a streamlined 4-field native form in `AuthModal.tsx`:
-    1. Full Name (`fullName` split cleanly into `first_name` and `last_name`).
-    2. Email Address (`email`).
-    3. Mobile Phone Number (`phone` saved to billing metadata).
-    4. Password (`password` with show/hide toggle).
-- **Auto-Generated Clean Usernames**:
-  - Added `generateUsernameFromEmail` logic generating unique, clean usernames (e.g., `sajid.islam.lead@gmail.com` $\rightarrow$ `sajidislamlead582`) so learners never need to guess or create an available username.
-- **Instant Tokenized Auto-Login**:
-  - Automatically acquires JWT session token upon registration and logs the user straight into the mobile platform without forcing email link verification.
+### 🔒 Security, Auth & Server-Authoritative Learning Hardening
+- **Backend-Authoritative Review, Certificates & Cross-Device Sync (Gap 1)**:
+  - Added `/learning-state`, `/courses/{id}/submit-review`, and `/certificates/verify` REST endpoints in `ts-mobile-bridge.php` so course completion and reviews are verified and persisted on WordPress before issuing certificates.
+  - Updated `LearningContext`, `CompanionService`, `CoursesService`, and UI modals so certificates only unlock from server-verified records and synchronize across devices.
+- **Email-Mandatory Registration & Optional Username**:
+  - Removed unbacked Phone OTP (`tsl/v1`) and synthetic `@phone.thrivingskill.com` addresses; standardized on unique email registration with optional custom username preservation.
+- **Single-Use WebView Checkout Handoff & Session Hygiene**:
+  - Added `/webview-handoff` single-use auth handoff so in-app WooCommerce checkout opens authenticated as the logged-in mobile user, plus session-scoped token revocation.
+- **Push Notifications, Telemetry, Search & CI Quality**:
+  - Purged legacy `ts_push_*` fake tokens, avoided caching synthetic tokens on failure, and scheduled daily streak reminders via `Notifications.scheduleNotificationAsync`.
+  - Replaced hash-bucket embeddings with Okapi BM25 keyword search (`src/services/search/bm25.ts`).
+  - Added Sentry `sendDefaultPii: false`, `order_key`/credential scrubbing, phone-username stripping, `{ "policy": "fingerprint" }` runtimeVersion, canonical `scripts/sync_version.js`, and PHPUnit test suite in `backend-plugin/tests/`.
+- **Version Governance, Biometric Cleanup, Brand Parity & Three-Layer QA**:
+  - Standardized release versioning on `package.json` (`1.4.0` / `versionCode: 10400`) via automated `scripts/sync_version.js --check/--write` and generated `src/config/appVersion.ts`.
+  - Removed incomplete fake Biometric Unlock toggle/state (`ProfilePreferencesSection.tsx`, `useProfileScreenState.ts`, translations, roadmap).
+  - Enforced strict `#102F53` + `#E34234` + `#FFFFFF` brand palette parity with `thrivingskill.com` (`#FFB606` restricted strictly to course rating stars).
+  - Added authoritative [`docs/IMPLEMENTATION_STATUS.md`](./IMPLEMENTATION_STATUS.md), runnable Layer 2 Staging E2E suite ([`scripts/test_layer2_staging_integration.js`](../scripts/test_layer2_staging_integration.js) + `.github/workflows/staging-e2e.yml`), and Layer 3 [`docs/REAL_DEVICE_TEST_CHECKLIST.md`](./REAL_DEVICE_TEST_CHECKLIST.md).
 
-### 🔄 In-App Profile Editing & Live Database Sync
-- **Full In-App Profile Management**:
-  - Enabled live editing of Full Name, Bio, Phone Number, City, Social Links, and Avatar directly inside `ProfileScreen.tsx`.
-  - Persists edits to WordPress Core REST API (`/wp/v2/users/me`) and LearnPress (`/learnpress/v1/users/{id}`).
-- **Web-to-App Bi-directional Sync**:
-  - Integrated `AppState` foreground listener in `AuthContext.tsx` that re-fetches and syncs user profile data whenever the app returns from background.
-  - Added pull-to-refresh on `ProfileScreen.tsx` for immediate on-demand profile synchronization.
+---
 
-### 🔔 Habit-Based Notification Queue
-- **Smart Notification Scheduling**:
-  - Added `habitNotificationQueue.ts` to schedule study prompts tailored to user activity patterns and active study hours.
-  - Added 1-tap dismiss/clear action to prevent notification clutter and fatigue.
+## [1.4.0] - 2026-11-26
 
-### 🎨 Uniform Course Cards & UI/UX Consistency
-- **Pixel-Perfect Course Cards**:
-  - Standardized `CourseCard.tsx` height (332dp), 16:9 thumbnail ratio, 2-line clamped title height (40dp), and fixed footer alignment across grid, carousel, and list views.
-- **Event Tab Layout Stabilization**:
-  - Fixed segmented event tab layouts in `WorkshopsScreen.tsx` to prevent vertical column stretching and ensure responsive tab bar rendering.
+### 🚀 Consolidated v1.4 Release Milestones
 
-### 📁 Clean Repository & Centralized Documentation
+#### Registration, Profile Sync & UI Refinements
+- **Streamlined Registration & Auto-Login**:
+  - Unified native registration in `AuthModal.tsx` with clean username resolution (`resolve_registration_username`) and immediate tokenized sign-in.
+- **In-App Profile Editing & Live Database Sync**:
+  - Enabled live editing of Full Name, Bio, Phone Number, City, Social Links, and Avatar directly inside `ProfileScreen.tsx` backed by `/wp/v2/users/me` and `/learnpress/v1/users/{id}`.
+  - Integrated `AppState` foreground listener in `AuthContext.tsx` and pull-to-refresh on `ProfileScreen.tsx`.
+- **Habit-Based Notification Queue & Uniform Course Cards**:
+  - Standardized `CourseCard.tsx` geometry (16:9 thumbnail ratio, 2-line title clamp, aligned footer) and stabilized event tab layouts.
 - **Consolidated `docs/` Directory**:
-  - Moved all 24+ loose markdown files, 4 client proposal Word documents, and client review PDF into `docs/` with dedicated `proposals/` and `releases/` subdirectories.
-  - Relocated local preview APK binaries to `builds/`.
-  - Cleaned repository root to contain only essential project configuration and source files.
+  - Organized markdown docs, client proposals, and release notes under `docs/` and preview binaries under `builds/`.
 
-
-## [1.4.2] - 2026-11-07
-
-### ♿ Accessibility & Modern Web Guidance Implementation
+#### Accessibility & Modern Web Guidance
 - **Dynamic Accessible Error & Status Announcements**:
-  - Injected `accessibilityRole="alert"` and `accessibilityLiveRegion="polite"` on dynamic error notices in `AuthModal.tsx` and `MandatoryReviewModal.tsx`.
-  - Added `accessibilityRole="status"` on verification and success message banners.
-- **Browser Autofill & Form Semantics**:
-  - Configured `autoComplete="email"`, `autoComplete="tel"`, `autoComplete="name"`, and `autoComplete="one-time-code"` across authentication and payment forms.
-  - Enabled browser password autofill (`current-password` / `new-password`) with `textContentType` integration.
-- **Semantic Dialog & Button Controls**:
-  - Enforced `accessibilityViewIsModal={true}` across all modal containers (`AuthModal`, `PaymentModal`, `CertificateModal`, `MandatoryReviewModal`, `CorporateInquiryModal`).
-  - Added explicit `accessibilityRole="button"` and `accessibilityLabel` for icon-only close buttons, password visibility toggles, and catalog cards.
-  - Configured payment method selectors with `accessibilityRole="radio"` and `accessibilityState={{ selected }}`.
+  - Injected `accessibilityRole="alert"` and `accessibilityLiveRegion="polite"` on dynamic error notices in `AuthModal.tsx` and `MandatoryReviewModal.tsx`, plus `accessibilityRole="status"` on verification banners.
+- **Autofill & Semantic Dialog Controls**:
+  - Configured `autoComplete` and `textContentType` across auth and payment forms, `accessibilityViewIsModal={true}` across modals, and `accessibilityRole="radio"` on payment selectors.
 - **Timer Hygiene & Memory Safety**:
-  - Eliminated unhandled `setTimeout` calls in `CertificateModal.tsx` using `pdfTimerRef` and `copyTimerRef` with component unmount teardown.
-- **Compiler Health**:
-  - Maintained 100% strict TypeScript compliance (0 errors) across all 117 files.
+  - Replaced unhandled `setTimeout` calls in `CertificateModal.tsx` with `useRef` timers cleaned up on unmount.
 
----
-
-## [1.4.1] - 2026-11-06
-
-### 🚀 Upgraded (Google Android & Architecture Standards)
+#### Google Android & Modular Architecture Upgrades
 - **Google Play Store Production Compliance**:
-  - Added monotonic `android.versionCode: 10400` in `app.json`.
-  - Configured Android 12+ Adaptive Splash Screen API with `#102F53` Deep Navy background and contained branding asset.
-  - Added `android.softwareKeyboardLayoutMode: "resize"` to prevent virtual keyboard obscuring checkout/auth forms.
-  - Enabled deep linking URI scheme `thrivingskill://`.
-- **EAS Build Architecture Upgrade**:
-  - Configured `eas.json` production profile to output Google Play-mandated Android App Bundle (`.aab`) with resource split optimization.
-  - Retained fast standalone `.apk` distribution for team `preview` testing.
-- **Component Architecture Modularization**:
-  - Decomposed flat 34-component directory into clean domain submodules:
-    - `src/components/common/`: Shared UI primitives and headers.
-    - `src/components/cards/`: Course and event catalog cards.
-    - `src/components/modals/`: Interactive dialogs and payment bottom sheets.
-    - `src/components/player/`: Video curriculum accordion and player controls.
-    - `src/components/analytics/`: High-contrast SVG progress charts.
-  - Preserved complete backward compatibility with root and subdirectory `index.ts` barrel exports.
-  - Verified 0 broken imports and 0 compiler errors across all 117 source files.
+  - Added monotonic `android.versionCode: 10400` in `app.json`, Android 12+ Adaptive Splash Screen with `#102F53` background, `android.softwareKeyboardLayoutMode: "resize"`, and `thrivingskill://` deep linking.
+- **EAS Build & Component Modularization**:
+  - Configured `eas.json` production `.aab` and preview `.apk` profiles and decomposed components into `common/`, `cards/`, `modals/`, `player/`, and `analytics/` submodules.
 
----
-
-## [1.4.0] - 2026-11-06
-
-### 🛠️ Fixed & Audited (Full Codebase Health Audit)
+#### Full Codebase Health Audit & Documentation Alignment
 - **Hardcoded Student Names Eradicated**:
   - Replaced hardcoded `'Sajid-ul Islam'` in `LessonPlayerScreen.tsx`, `CourseDetailScreen.tsx`, and `LearningContext.tsx` with dynamic authenticated student identity: `user?.displayName || user?.username || 'Executive Graduate'`.
 - **Memory & Timer Leak Resolution**:
   - Resolved `setTimeout` timer leak in `PaymentModal.tsx` using `useRef<ReturnType<typeof setTimeout> | null>(null)` with component unmount teardown effect.
 - **Type Safety & Strictness**:
-  - Fixed cross-platform timer type in `PaymentModal.tsx` to `ReturnType<typeof setTimeout>`.
-  - Added missing `phone?: string;` property to `WpUser` interface in `src/types/index.ts`.
-  - Added `onNavigateToCourse` and `onNavigateToLesson` to `ProfileScreenProps`.
-  - Achieved **0 TypeScript errors** on `npm run typecheck` across all 75 source files.
-- **Automated Verification Tooling**:
-  - Built and deployed `scripts/audit_app.js` to perform continuous 5-dimension static analysis across all files for import resolution, StyleSheet keys, timer hygiene, and unhandled JSON operations.
-
-### 📚 Documentation Suite Overhaul
-- Added and aligned the complete documentation suite:
-  - `prd.md`: Product Requirements Document
-  - `trd.md`: Technical Requirements Document
-  - `todo.md`: Task Management & Roadmap
-  - `bugfix.md`: Bug Fix & Incident Resolution Log
-  - `agents.md`: AI Agents Specification & Operating Instructions
-  - `context.md`: Project Context & Domain Reference
-  - `featurs.md`: Master Features Inventory
-  - `skills.md`: Antigravity Skills & Tooling Manual
-  - `README.md`: Modernized with badges, quickstart, and documentation links.
+  - Fixed cross-platform timer types to `ReturnType<typeof setTimeout>`, added `phone?: string;` to `WpUser`, added `onNavigateToCourse`/`onNavigateToLesson` to `ProfileScreenProps`, and added `scripts/audit_app.js`.
+- **Documentation Suite Overhaul**:
+  - Aligned `docs/PRD.md`, `docs/TRD.md`, `docs/TODO.md`, `docs/BUGFIX.md`, `docs/AGENTS.md`, `docs/CONTEXT.md`, and `README.md`.
 
 ---
 

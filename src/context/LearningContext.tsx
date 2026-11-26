@@ -3,6 +3,7 @@ import { Course, UserProgress, Certificate, Note, CategoryId, Review } from '../
 import { useAuth } from './AuthContext';
 import { useNetwork } from './NetworkContext';
 import { CoursesService } from '../services/api/coursesService';
+import { CompanionService } from '../services/api/companionService';
 import { Endpoints } from '../services/api/endpoints';
 import { SyncQueueManager } from '../services/offline/syncQueue';
 import { computeRecommendedCourses } from '../utils/recommendations';
@@ -45,28 +46,101 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return unsub;
   }, []);
 
-  const syncOfflineData = useCallback(async (force?: boolean) => {
-    return SyncQueueManager.processQueue(force);
-  }, []);
-
   const syncUserEnrollments = useCallback(async (): Promise<string[] | null> => {
     if (!user?.id || !token) return null;
+
+    const serverLearning = await CompanionService.fetchLearningState();
+    let pendingMutations: { action: string; payload: any }[] = [];
+    try {
+      pendingMutations = await SyncQueueManager.getPendingMutations();
+    } catch {}
+
+    const pendingEnrollIds = new Set(
+      pendingMutations
+        .filter((m) => m.action === 'ENROLL_COURSE' && m.payload?.id != null)
+        .map((m) => String(m.payload.id))
+    );
+    const pendingLessonsByCourse: Record<string, string[]> = {};
+    for (const m of pendingMutations) {
+      if (m.action === 'COMPLETE_LESSON' && m.payload?.course_id != null && m.payload?.id != null) {
+        const cid = String(m.payload.course_id);
+        if (!pendingLessonsByCourse[cid]) pendingLessonsByCourse[cid] = [];
+        pendingLessonsByCourse[cid].push(String(m.payload.id));
+      }
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+
+    if (serverLearning !== null) {
+      const serverIds = serverLearning.enrolledCourseIds;
+      const serverIdSet = new Set(serverIds);
+
+      setUserProgress((prev) => {
+        const next: Record<string, UserProgress> = {};
+        const candidateIds = Array.from(
+          new Set([...serverIds, ...Object.keys(prev).filter((cid) => pendingEnrollIds.has(cid))])
+        );
+
+        for (const cId of candidateIds) {
+          const prevProg = prev[cId];
+          const serverProg = serverLearning.progress[cId];
+          const matchedCourse = catalogCoursesRef.current.find((c) => c.id === cId);
+          const firstLessonId = matchedCourse?.modules?.[0]?.lessons?.[0]?.id || `les-${cId}-1`;
+
+          const mergedCompletedLessons = Array.from(
+            new Set([
+              ...(serverProg?.completedLessonIds || []),
+              ...(pendingLessonsByCourse[cId] || []),
+            ])
+          );
+
+          if (!serverIdSet.has(cId) && prevProg) {
+            next[cId] = prevProg;
+            continue;
+          }
+
+          next[cId] = {
+            courseId: cId,
+            enrolledDate: serverProg?.enrolledDate || prevProg?.enrolledDate || today,
+            completedLessonIds: mergedCompletedLessons,
+            lastAccessedLessonId: prevProg?.lastAccessedLessonId || firstLessonId,
+            lastWatchPositionSeconds: prevProg?.lastWatchPositionSeconds,
+            isCompleted: Boolean(serverProg?.isCompleted),
+            hasReviewed: Boolean(
+              serverProg?.hasReviewed || serverLearning.reviewedCourseIds.includes(cId)
+            ),
+            completedDate: serverProg?.completedDate || prevProg?.completedDate,
+            certificateId: serverProg?.certificateId,
+            status: serverProg?.status,
+            grade: serverProg?.grade,
+          };
+        }
+
+        persistUserLearningKey(LEARNING_STORAGE_KEYS.PROGRESS, userScope, next);
+        return next;
+      });
+
+      setReviewedCourseIds(serverLearning.reviewedCourseIds);
+      persistUserLearningKey(
+        LEARNING_STORAGE_KEYS.REVIEWS,
+        userScope,
+        serverLearning.reviewedCourseIds
+      );
+
+      setCertificates(serverLearning.certificates);
+      persistUserLearningKey(
+        LEARNING_STORAGE_KEYS.CERTIFICATES,
+        userScope,
+        serverLearning.certificates
+      );
+
+      return serverIds;
+    }
 
     const serverIds = await CoursesService.fetchEnrolledCourseIdsFromServer();
     if (serverIds === null) return null;
 
-    let pendingEnrollIds = new Set<string>();
-    try {
-      const pending = await SyncQueueManager.getPendingMutations();
-      pendingEnrollIds = new Set(
-        pending
-          .filter((m) => m.action === 'ENROLL_COURSE' && m.payload?.id != null)
-          .map((m) => String(m.payload.id))
-      );
-    } catch {}
-
     const serverIdSet = new Set(serverIds);
-    const today = new Date().toISOString().split('T')[0];
 
     setUserProgress((prev) => {
       let changed = false;
@@ -89,7 +163,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           enrolledDate: today,
           completedLessonIds: [],
           lastAccessedLessonId: firstLessonId,
-          isCompleted: false,
+          isCompleted: Boolean(matchedCourse?.isCompleted),
         };
         changed = true;
       }
@@ -101,6 +175,17 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     return serverIds;
   }, [user?.id, token, userScope]);
+
+  const syncOfflineData = useCallback(
+    async (force?: boolean) => {
+      const result = await SyncQueueManager.processQueue(force);
+      if (result.succeeded > 0 && user?.id && token) {
+        await syncUserEnrollments().catch(() => null);
+      }
+      return result;
+    },
+    [syncUserEnrollments, user?.id, token]
+  );
 
   const catalog = useCatalogAndBrandingSync(isOffline, syncUserEnrollments);
   catalogCoursesRef.current = catalog.courses;
@@ -222,18 +307,6 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const totalLessons = course.modules?.reduce((acc, m) => acc + (m.lessons?.length || 0), 0) || 0;
     const isCompleted = totalLessons > 0 && newCompleted.length >= totalLessons;
     const userHasReviewed = reviewedCourseIds.includes(courseId) || !!current.hasReviewed;
-    let certId = current.certificateId;
-
-    if (isCompleted && userHasReviewed && !certId) {
-      const studentName = user?.displayName || user?.name || user?.username || 'Executive Graduate';
-      const newCert = buildCertificateRecord(course, studentName, undefined, 'Course Instructor');
-      certId = newCert.credentialId;
-      setCertificates((prev) => {
-        const nextCerts = [newCert, ...prev];
-        persistUserLearningKey(LEARNING_STORAGE_KEYS.CERTIFICATES, userScope, nextCerts);
-        return nextCerts;
-      });
-    }
 
     const updated = {
       ...userProgress,
@@ -246,7 +319,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         completedDate: isCompleted
           ? current.completedDate || new Date().toISOString().split('T')[0]
           : current.completedDate,
-        certificateId: certId,
+        certificateId: current.certificateId,
       },
     };
 
@@ -256,9 +329,19 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     SyncQueueManager.enqueue('COMPLETE_LESSON', Endpoints.LEARNPRESS.LESSON_FINISH, {
       id: lessonId,
       course_id: courseId,
-    }).then(() => {
-      SyncQueueManager.processQueue().catch(() => {});
-    });
+    })
+      .then(async () => {
+        if (isCompleted) {
+          await SyncQueueManager.enqueue('COMPLETE_COURSE', Endpoints.LEARNPRESS.COURSE_FINISH, {
+            id: courseId,
+          });
+        }
+        const res = await SyncQueueManager.processQueue().catch(() => null);
+        if (isCompleted && res && res.succeeded > 0 && user?.id && token) {
+          await syncUserEnrollments().catch(() => null);
+        }
+      })
+      .catch(() => {});
   };
 
   const toggleBookmark = (courseId: string) => {
@@ -413,7 +496,9 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const isCertificateUnlocked = (courseId: string) => {
     if (canBypassCourseLocks) return true;
     const progress = userProgress[courseId];
-    return Boolean(progress?.isCompleted && hasReviewedCourse(courseId));
+    const hasServerCert =
+      Boolean(progress?.certificateId) || certificates.some((c) => c.courseId === courseId);
+    return Boolean(progress?.isCompleted && hasReviewedCourse(courseId) && hasServerCert);
   };
 
   const unlockCertificateForDev = (courseId: string, studentName?: string): Certificate | null => {
@@ -467,51 +552,96 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return cert;
   };
 
-  const submitMandatoryCourseReview = (
+  const submitMandatoryCourseReview = async (
     courseId: string,
     rating: number,
     feedback: string,
     userName = 'Executive Graduate',
     userRole = 'Learner'
-  ): Certificate | null => {
-    addCourseReview(courseId, { userName, userAvatar: '', rating, comment: feedback, userRole });
+  ): Promise<Certificate | null> => {
+    if (!user?.id || !token) {
+      throw new Error('Please sign in to submit your review and unlock your certificate.');
+    }
 
-    const nextReviewed = reviewedCourseIds.includes(courseId)
-      ? reviewedCourseIds
-      : [...reviewedCourseIds, courseId];
-    setReviewedCourseIds(nextReviewed);
-    persistUserLearningKey(LEARNING_STORAGE_KEYS.REVIEWS, userScope, nextReviewed);
+    // Flush any pending lesson/course completion mutations so WordPress reflects 100% completion first.
+    await SyncQueueManager.processQueue(true).catch(() => null);
 
-    const course = catalog.courses.find((c) => c.id === courseId);
-    const current = userProgress[courseId] || {
+    const serverResult = await CoursesService.submitCourseReview({
       courseId,
-      enrolledDate: new Date().toISOString().split('T')[0],
-      completedLessonIds: [],
-      isCompleted: true,
-    };
+      rating,
+      feedback,
+      requireCompletion: true,
+    });
 
-    let certId = current.certificateId;
-    let cert: Certificate | null = null;
+    if (!serverResult.courseCompleted || !serverResult.hasReviewed) {
+      throw new Error(
+        'Course completion and review verification could not be confirmed by the server.'
+      );
+    }
 
-    if (!certId && course) {
-      cert = buildCertificateRecord(course, userName);
-      certId = cert.credentialId;
+    if (serverResult.review) {
+      catalog.setCourses((prevCourses) =>
+        prevCourses.map((c) => {
+          if (c.id !== courseId) return c;
+          const existing = (c.reviews || []).filter((r) => r.id !== serverResult.review!.id);
+          const updatedReviews = [
+            {
+              ...serverResult.review!,
+              userName: serverResult.review!.userName || userName,
+              userRole,
+            },
+            ...existing,
+          ];
+          const avg = updatedReviews.reduce((sum, r) => sum + r.rating, 0) / updatedReviews.length;
+          return {
+            ...c,
+            reviews: updatedReviews,
+            reviewsCount: Math.max(c.reviewsCount || 0, updatedReviews.length),
+            rating: Number(avg.toFixed(1)),
+          };
+        })
+      );
+    } else {
+      addCourseReview(courseId, { userName, userAvatar: '', rating, comment: feedback, userRole });
+    }
+
+    setReviewedCourseIds((prev) => {
+      const next = prev.includes(courseId) ? prev : [...prev, courseId];
+      persistUserLearningKey(LEARNING_STORAGE_KEYS.REVIEWS, userScope, next);
+      return next;
+    });
+
+    const serverCert = serverResult.certificate;
+    if (serverCert) {
       setCertificates((prev) => {
-        const nextCerts = [cert!, ...prev];
+        const nextCerts = [serverCert, ...prev.filter((c) => c.courseId !== courseId)];
         persistUserLearningKey(LEARNING_STORAGE_KEYS.CERTIFICATES, userScope, nextCerts);
         return nextCerts;
       });
-    } else if (certId) {
-      cert = certificates.find((c) => c.credentialId === certId || c.courseId === courseId) || null;
     }
 
-    const updated = {
-      ...userProgress,
-      [courseId]: { ...current, isCompleted: true, hasReviewed: true, certificateId: certId },
-    };
-    setUserProgress(updated);
-    persistUserLearningKey(LEARNING_STORAGE_KEYS.PROGRESS, userScope, updated);
-    return cert;
+    setUserProgress((prev) => {
+      const current = prev[courseId] || {
+        courseId,
+        enrolledDate: new Date().toISOString().split('T')[0],
+        completedLessonIds: [],
+        isCompleted: true,
+      };
+      const updated = {
+        ...prev,
+        [courseId]: {
+          ...current,
+          isCompleted: true,
+          hasReviewed: true,
+          completedDate: current.completedDate || new Date().toISOString().split('T')[0],
+          certificateId: serverCert?.credentialId || current.certificateId,
+        },
+      };
+      persistUserLearningKey(LEARNING_STORAGE_KEYS.PROGRESS, userScope, updated);
+      return updated;
+    });
+
+    return serverCert;
   };
 
   const getRecommendedCourses = () =>

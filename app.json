@@ -130,7 +130,9 @@
       }
     },
     "owner": "sajid.islam",
-    "runtimeVersion": "1.4.0",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
     "updates": {
       "url": "https://u.expo.dev/0b66cee6-c1a5-4c67-b12a-08f8f4356787",
       "checkAutomatically": "ON_LOAD",

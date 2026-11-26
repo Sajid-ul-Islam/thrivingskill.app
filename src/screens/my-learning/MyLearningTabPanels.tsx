@@ -186,25 +186,25 @@ export const EnrolledCoursesGrid: React.FC<EnrolledCoursesGridProps> = ({
 
               {courseStatus === 'passed' && hasReviewedCourse(course.id) && cert ? (
                 <SpringPressable
-                  style={[styles.resumeBtn, { backgroundColor: colors.brandGold }]}
+                  style={[styles.resumeBtn, { backgroundColor: colors.accent }]}
                   onPress={() => onSelectCert(cert)}
                   activeScale={0.96}
                   accessibilityRole="button"
                 >
-                  <Ionicons name="ribbon" size={14} color="#102F53" />
-                  <Text style={[styles.resumeBtnText, { color: '#102F53' }]}>
+                  <Ionicons name="ribbon" size={14} color={colors.onAccent} />
+                  <Text style={[styles.resumeBtnText, { color: colors.onAccent }]}>
                     {isBangla ? 'সনদপত্র দেখুন' : 'Certificate'}
                   </Text>
                 </SpringPressable>
               ) : courseStatus === 'passed' && !hasReviewedCourse(course.id) ? (
                 <SpringPressable
-                  style={[styles.resumeBtn, { backgroundColor: '#F59E0B' }]}
+                  style={[styles.resumeBtn, { backgroundColor: colors.primary }]}
                   onPress={() => onOpenMandatoryReview(course)}
                   activeScale={0.96}
                   accessibilityRole="button"
                 >
-                  <Ionicons name="lock-closed" size={14} color="#FFFFFF" />
-                  <Text style={[styles.resumeBtnText, { color: '#FFFFFF' }]}>
+                  <Ionicons name="lock-closed" size={14} color={colors.onPrimary} />
+                  <Text style={[styles.resumeBtnText, { color: colors.onPrimary }]}>
                     {isBangla ? 'রিভিউ দিন (লক)' : 'Review to Unlock'}
                   </Text>
                 </SpringPressable>
@@ -415,7 +415,7 @@ export const CertificatesTabPanel: React.FC<{
               styles.certItemCard,
               {
                 backgroundColor: colors.surfaceCard,
-                borderColor: isReviewed ? colors.border : '#F59E0B',
+                borderColor: isReviewed ? colors.border : colors.accent,
                 shadowColor: colors.cardShadow,
               },
             ]}
@@ -493,7 +493,7 @@ export const CertificatesTabPanel: React.FC<{
             <Ionicons
               name={isReviewed ? 'chevron-forward' : 'lock-closed-outline'}
               size={18}
-              color={isReviewed ? colors.textMuted : '#F59E0B'}
+              color={isReviewed ? colors.textMuted : colors.accent}
             />
           </TouchableOpacity>
         );

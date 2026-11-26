@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Env, ApiEnvironment } from '../../config/env';
+import { APP_VERSION, APP_VERSION_CODE } from '../../config/appVersion';
 import { CacheManager } from '../../services/cache/cacheManager';
 import { triggerHaptic } from '../../utils/haptics';
 
@@ -327,7 +328,9 @@ export const DeveloperOptionsModal: React.FC<DeveloperOptionsModalProps> = ({
 
               <View style={styles.infoRow}>
                 <Text style={styles.infoKey}>App Version</Text>
-                <Text style={styles.infoVal}>v1.4.0 (Build 10400)</Text>
+                <Text style={styles.infoVal}>
+                  v{APP_VERSION} (Build {APP_VERSION_CODE})
+                </Text>
               </View>
               <View style={styles.infoRow}>
                 <Text style={styles.infoKey}>Platform / OS</Text>

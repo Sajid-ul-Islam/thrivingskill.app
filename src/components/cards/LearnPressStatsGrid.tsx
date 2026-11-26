@@ -317,7 +317,7 @@ export const LearnPressStatsGrid: React.FC<LearnPressStatsGridProps> = ({
           >
             {tabs.map((tab) => {
               const isActive = activeFilter === tab.id;
-              const activeColor = isDark ? colors.brandGold : colors.primary;
+              const activeColor = colors.primary;
 
               return (
                 <TouchableOpacity

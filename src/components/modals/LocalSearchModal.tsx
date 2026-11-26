@@ -20,7 +20,6 @@ import {
   SearchDocType,
   SearchResult,
 } from '../../services/search/localSearchEngine';
-import { LiteRtService } from '../../services/ai/liteRtService';
 import { GeminiNanoService } from '../../services/ai/geminiNanoService';
 import { SpacedRepetitionService } from '../../services/study/spacedRepetitionService';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
@@ -48,22 +47,20 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
   const [query, setQuery] = useState('');
   const [filterType, setFilterType] = useState<FilterOption>('all');
   const [results, setResults] = useState<SearchResult[]>([]);
-  const [isSemanticActive, setIsSemanticActive] = useState<boolean>(
-    LiteRtService.isSemanticEnabled()
-  );
+  const [matchAllTerms, setMatchAllTerms] = useState<boolean>(false);
   const [suggestedEnhancement, setSuggestedEnhancement] = useState<string | null>(null);
   const [autoSuggestions, setAutoSuggestions] = useState<string[]>([]);
   const inputRef = useRef<React.ElementRef<typeof TextInput>>(null);
 
-  const handleToggleSemantic = async () => {
+  const handleToggleMatchAll = () => {
     triggerHaptic('selection');
-    const next = !isSemanticActive;
-    setIsSemanticActive(next);
-    await LiteRtService.setSemanticSearchEnabled(next);
+    const next = !matchAllTerms;
+    setMatchAllTerms(next);
     if (query.trim()) {
       const res = LocalSearchEngine.search(
         query.trim(),
-        filterType === 'all' ? undefined : filterType
+        filterType === 'all' ? undefined : filterType,
+        { matchAllTerms: next }
       );
       setResults(res);
     }
@@ -87,50 +84,58 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
         if (query.trim()) {
           const res = LocalSearchEngine.search(
             query.trim(),
-            filterType === 'all' ? undefined : filterType
+            filterType === 'all' ? undefined : filterType,
+            { matchAllTerms }
           );
           setResults(res);
         }
       })();
     }
-  }, [visible, courses, notes]);
+  }, [visible, courses, notes, matchAllTerms]);
 
-  const handleSearch = useCallback((text: string, filter: FilterOption) => {
-    setQuery(text);
-    const clean = text.trim();
-    if (!clean) {
-      setResults([]);
-      setSuggestedEnhancement(null);
-      setAutoSuggestions([]);
-      return;
-    }
+  const handleSearch = useCallback(
+    (text: string, filter: FilterOption) => {
+      setQuery(text);
+      const clean = text.trim();
+      if (!clean) {
+        setResults([]);
+        setSuggestedEnhancement(null);
+        setAutoSuggestions([]);
+        return;
+      }
 
-    // Fast In-Memory Prefix Trie suggestions (<1ms)
-    const suggestions = LocalSearchEngine.getAutoSuggestions(clean, 5);
-    setAutoSuggestions(suggestions.filter((s) => s.toLowerCase() !== clean.toLowerCase()));
+      // Fast In-Memory Prefix Trie suggestions (<1ms)
+      const suggestions = LocalSearchEngine.getAutoSuggestions(clean, 5);
+      setAutoSuggestions(suggestions.filter((s) => s.toLowerCase() !== clean.toLowerCase()));
 
-    // Check on-device Gemini Nano query proofreading / semantic expansion
-    if (clean.length >= 2) {
-      GeminiNanoService.enhanceSearchQuery(clean).then((res) => {
-        if (res.isExpanded && res.enhanced.toLowerCase() !== clean.toLowerCase()) {
-          setSuggestedEnhancement(res.enhanced);
-        } else {
-          setSuggestedEnhancement(null);
-        }
+      // Check on-device Gemini Nano query proofreading if available on device
+      if (clean.length >= 2) {
+        GeminiNanoService.enhanceSearchQuery(clean).then((res) => {
+          if (res.isExpanded && res.enhanced.toLowerCase() !== clean.toLowerCase()) {
+            setSuggestedEnhancement(res.enhanced);
+          } else {
+            setSuggestedEnhancement(null);
+          }
+        });
+      } else {
+        setSuggestedEnhancement(null);
+      }
+
+      const res = LocalSearchEngine.search(clean, filter === 'all' ? undefined : filter, {
+        matchAllTerms,
       });
-    } else {
-      setSuggestedEnhancement(null);
-    }
-
-    const res = LocalSearchEngine.search(clean, filter === 'all' ? undefined : filter);
-    setResults(res);
-  }, []);
+      setResults(res);
+    },
+    [matchAllTerms]
+  );
 
   const handleFilterChange = (filter: FilterOption) => {
     triggerHaptic('selection');
     setFilterType(filter);
     if (query.trim()) {
-      const res = LocalSearchEngine.search(query.trim(), filter === 'all' ? undefined : filter);
+      const res = LocalSearchEngine.search(query.trim(), filter === 'all' ? undefined : filter, {
+        matchAllTerms,
+      });
       setResults(res);
     }
   };
@@ -160,7 +165,7 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
       case 'lesson':
         return '#059669';
       case 'note':
-        return '#D97706';
+        return '#E34234';
       case 'flashcard':
         return '#7C3AED';
     }
@@ -298,9 +303,11 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
                       styles.suggestionPill,
                       {
                         backgroundColor: isDark
-                          ? 'rgba(255, 182, 6, 0.16)'
+                          ? 'rgba(255, 255, 255, 0.12)'
                           : 'rgba(16, 47, 83, 0.08)',
-                        borderColor: isDark ? 'rgba(255, 182, 6, 0.3)' : 'rgba(16, 47, 83, 0.15)',
+                        borderColor: isDark
+                          ? 'rgba(255, 255, 255, 0.25)'
+                          : 'rgba(16, 47, 83, 0.15)',
                       },
                     ]}
                     onPress={() => {
@@ -339,37 +346,33 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
               contentContainerStyle={styles.filterScroll}
             >
               <TouchableOpacity
-                onPress={handleToggleSemantic}
+                onPress={handleToggleMatchAll}
                 style={[
                   styles.filterChip,
                   {
-                    backgroundColor: isSemanticActive
-                      ? isDark
-                        ? '#3B0764'
-                        : '#EDE9FE'
-                      : colors.surfaceSubtle,
-                    borderColor: isSemanticActive ? '#7C3AED' : colors.border,
+                    backgroundColor: matchAllTerms ? colors.primaryLight : colors.surfaceSubtle,
+                    borderColor: matchAllTerms ? colors.primary : colors.border,
                     flexDirection: 'row',
                     alignItems: 'center',
                   },
                 ]}
                 accessibilityRole="button"
-                accessibilityLabel="Toggle Semantic Search"
+                accessibilityLabel="Toggle Match All Keywords"
               >
                 <Ionicons
-                  name="bulb-outline"
+                  name="funnel-outline"
                   size={13}
-                  color={isSemanticActive ? '#7C3AED' : colors.textMuted}
+                  color={matchAllTerms ? colors.primary : colors.textMuted}
                   style={{ marginRight: 4 }}
                 />
                 <Text
                   style={[
                     styles.filterChipText,
-                    { color: isSemanticActive ? '#7C3AED' : colors.textMuted },
-                    isSemanticActive && { fontWeight: '700' },
+                    { color: matchAllTerms ? colors.primary : colors.textMuted },
+                    matchAllTerms && { fontWeight: '700' },
                   ]}
                 >
-                  {isSemanticActive ? '✨ Nano + LiteRT: ON' : 'Semantic Match: OFF'}
+                  {matchAllTerms ? 'All Words: ON' : 'BM25 Ranked'}
                 </Text>
               </TouchableOpacity>
 
@@ -419,13 +422,13 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
           >
             {query.trim().length === 0 ? (
               <View style={styles.emptyStateContainer}>
-                <Ionicons name="hardware-chip-outline" size={48} color={colors.primary} />
+                <Ionicons name="search-outline" size={48} color={colors.primary} />
                 <Text style={[styles.emptyStateTitle, { color: colors.text, marginTop: 12 }]}>
-                  On-Device Fast Search (FTS)
+                  On-Device Keyword Search (BM25)
                 </Text>
                 <Text style={[styles.emptyStateDesc, { color: colors.textMuted }]}>
-                  Instant offline inverted-index search across all courses, downloaded lessons,
-                  study summaries, and personal notes with sub-10ms response time.
+                  Instant offline BM25 keyword search across all courses, downloaded lessons, study
+                  summaries, and personal notes.
                 </Text>
               </View>
             ) : results.length === 0 ? (
@@ -467,19 +470,6 @@ export const LocalSearchModal: React.FC<LocalSearchModalProps> = ({
                             {res.doc.type.toUpperCase()}
                           </Text>
                         </View>
-                        {res.isSemanticMatch && (
-                          <View style={[styles.typeBadge, { backgroundColor: '#7C3AED20' }]}>
-                            <Ionicons
-                              name="bulb-outline"
-                              size={11}
-                              color="#7C3AED"
-                              style={{ marginRight: 3 }}
-                            />
-                            <Text style={[styles.typeBadgeText, { color: '#7C3AED' }]}>
-                              SEMANTIC MATCH
-                            </Text>
-                          </View>
-                        )}
                       </View>
                       {res.doc.badge ? (
                         <Text

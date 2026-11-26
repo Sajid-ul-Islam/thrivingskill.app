@@ -25,6 +25,7 @@ interface CourseCertificatePreviewModalProps {
   isCompleted: boolean;
   hasReviewed: boolean;
   certificateId?: string;
+  verificationUrl?: string;
   onClose: () => void;
   onOpenMandatoryReview: () => void;
 }
@@ -37,6 +38,7 @@ export const CourseCertificatePreviewModal: React.FC<CourseCertificatePreviewMod
   isCompleted,
   hasReviewed,
   certificateId,
+  verificationUrl,
   onClose,
   onOpenMandatoryReview,
 }) => {
@@ -45,7 +47,8 @@ export const CourseCertificatePreviewModal: React.FC<CourseCertificatePreviewMod
   const insets = useSafeAreaInsets();
 
   const certId = certificateId || `TSL-CERT-${course.id}-2026`;
-  const verifyUrl = `${Env.SITE_URL.replace(/\/+$/, '')}/verify/${certId}`;
+  const verifyUrl =
+    verificationUrl || `${Env.SITE_URL.replace(/\/+$/, '')}/certificates/${certId}/`;
 
   const handleLinkedInShare = () => {
     const now = new Date();

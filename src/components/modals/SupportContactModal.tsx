@@ -31,7 +31,7 @@ export const SupportContactModal: React.FC<SupportContactModalProps> = ({
   onClose,
   initialInquiryType = 'general',
 }) => {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { isBangla } = useLanguage();
   const { showToast } = useFeedback();
   const { appRemoteConfig } = useLearning();
@@ -122,17 +122,8 @@ export const SupportContactModal: React.FC<SupportContactModalProps> = ({
           ]}
         >
           <View style={styles.headerRow}>
-            <View
-              style={[
-                styles.headerIconBg,
-                { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.15)' : colors.primaryLight },
-              ]}
-            >
-              <Ionicons
-                name="headset"
-                size={22}
-                color={isDark ? colors.brandGold : colors.primary}
-              />
+            <View style={[styles.headerIconBg, { backgroundColor: colors.primaryLight }]}>
+              <Ionicons name="headset" size={22} color={colors.primary} />
             </View>
             <View style={styles.headerTitleCol}>
               <Text style={[styles.headerTitle, { color: colors.text }]} numberOfLines={1}>

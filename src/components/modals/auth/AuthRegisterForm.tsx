@@ -8,6 +8,8 @@ interface Props {
   isBangla: boolean;
   regFullName: string;
   setRegFullName: (v: string) => void;
+  regUsername: string;
+  setRegUsername: (v: string) => void;
   regEmail: string;
   setRegEmail: (v: string) => void;
   regPhone: string;
@@ -23,6 +25,7 @@ interface Props {
   setInfoMessage: (v: string | null) => void;
   isRegistering: boolean;
   regNameInputRef: React.RefObject<React.ElementRef<typeof TextInput> | null>;
+  regUsernameInputRef: React.RefObject<React.ElementRef<typeof TextInput> | null>;
   regEmailInputRef: React.RefObject<React.ElementRef<typeof TextInput> | null>;
   regPhoneInputRef: React.RefObject<React.ElementRef<typeof TextInput> | null>;
   regPasswordInputRef: React.RefObject<React.ElementRef<typeof TextInput> | null>;
@@ -37,6 +40,8 @@ export const AuthRegisterForm: React.FC<Props> = ({
   isBangla,
   regFullName,
   setRegFullName,
+  regUsername,
+  setRegUsername,
   regEmail,
   setRegEmail,
   regPhone,
@@ -52,6 +57,7 @@ export const AuthRegisterForm: React.FC<Props> = ({
   setInfoMessage,
   isRegistering,
   regNameInputRef,
+  regUsernameInputRef,
   regEmailInputRef,
   regPhoneInputRef,
   regPasswordInputRef,
@@ -61,50 +67,6 @@ export const AuthRegisterForm: React.FC<Props> = ({
   onSwitchToSetPassword,
 }) => (
   <>
-    <View style={styles.inputGroup}>
-      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
-        {isBangla ? 'আপনার নাম *' : 'Full Name *'}
-      </Text>
-      <View
-        style={[
-          styles.inputWrapper,
-          {
-            backgroundColor: colors.surfaceSubtle,
-            borderColor: touched.regFullName && !regFullName.trim() ? colors.danger : colors.border,
-          },
-        ]}
-      >
-        <Ionicons
-          name="person-outline"
-          size={18}
-          color={colors.textMuted}
-          style={styles.inputIcon}
-        />
-        <TextInput
-          ref={regNameInputRef}
-          style={[styles.input, { color: colors.text }]}
-          placeholder={isBangla ? 'যেমন: সাজিদ ইসলাম' : 'e.g. Sajid Islam'}
-          placeholderTextColor={colors.textLight}
-          value={regFullName}
-          onChangeText={(t) => {
-            setRegFullName(t);
-            if (errorMessage) setErrorMessage(null);
-          }}
-          onFocus={() => scrollToInput(20)}
-          onBlur={() => setTouched((p) => ({ ...p, regFullName: true }))}
-          autoCapitalize="words"
-          autoCorrect={false}
-          returnKeyType="next"
-          onSubmitEditing={() => regEmailInputRef.current?.focus()}
-        />
-      </View>
-      {touched.regFullName && !regFullName.trim() && (
-        <Text style={[styles.inlineFieldError, { color: colors.danger }]}>
-          {isBangla ? 'অনুগ্রহ করে আপনার পুরো নাম লিখুন।' : 'Please enter your full name.'}
-        </Text>
-      )}
-    </View>
-
     <View style={styles.inputGroup}>
       <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
         {isBangla ? 'ইমেইল এড্রেস *' : 'Email Address *'}
@@ -129,13 +91,15 @@ export const AuthRegisterForm: React.FC<Props> = ({
             setRegEmail(t);
             if (errorMessage) setErrorMessage(null);
           }}
-          onFocus={() => scrollToInput(80)}
+          onFocus={() => scrollToInput(20)}
           onBlur={() => setTouched((p) => ({ ...p, regEmail: true }))}
           keyboardType="email-address"
           autoCapitalize="none"
           autoCorrect={false}
+          autoComplete="email"
+          textContentType="emailAddress"
           returnKeyType="next"
-          onSubmitEditing={() => regPhoneInputRef.current?.focus()}
+          onSubmitEditing={() => regUsernameInputRef.current?.focus()}
         />
       </View>
       {touched.regEmail && !regEmail.trim() && (
@@ -147,16 +111,112 @@ export const AuthRegisterForm: React.FC<Props> = ({
 
     <View style={styles.inputGroup}>
       <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
-        {isBangla
-          ? 'মোবাইল নম্বর * (কোর্স ভর্তি ও ভেরিফিকেশনে আবশ্যক)'
-          : 'Phone Number * (Required for enrollment & verification)'}
+        {isBangla ? 'ইউজারনেম (ঐচ্ছিক)' : 'Username (Optional)'}
       </Text>
       <View
         style={[
           styles.inputWrapper,
           {
             backgroundColor: colors.surfaceSubtle,
-            borderColor: touched.regPhone && !regPhone.trim() ? colors.danger : colors.border,
+            borderColor:
+              touched.regUsername &&
+              regUsername.trim().length > 0 &&
+              !/^[a-zA-Z0-9._-]{3,60}$/.test(regUsername.trim())
+                ? colors.danger
+                : colors.border,
+          },
+        ]}
+      >
+        <Ionicons name="at-outline" size={18} color={colors.textMuted} style={styles.inputIcon} />
+        <TextInput
+          ref={regUsernameInputRef}
+          style={[styles.input, { color: colors.text }]}
+          placeholder={
+            isBangla
+              ? 'যেমন: sajid_islam (খালি রাখলে তৈরি হবে)'
+              : 'e.g. sajid_islam (auto-created if blank)'
+          }
+          placeholderTextColor={colors.textLight}
+          value={regUsername}
+          onChangeText={(t) => {
+            setRegUsername(t);
+            if (errorMessage) setErrorMessage(null);
+          }}
+          onFocus={() => scrollToInput(70)}
+          onBlur={() => setTouched((p) => ({ ...p, regUsername: true }))}
+          autoCapitalize="none"
+          autoCorrect={false}
+          autoComplete="username-new"
+          textContentType="username"
+          returnKeyType="next"
+          onSubmitEditing={() => regNameInputRef.current?.focus()}
+        />
+      </View>
+      {touched.regUsername &&
+        regUsername.trim().length > 0 &&
+        !/^[a-zA-Z0-9._-]{3,60}$/.test(regUsername.trim()) && (
+          <Text style={[styles.inlineFieldError, { color: colors.danger }]}>
+            {isBangla
+              ? 'ইউজারনেম ৩–৬০ অক্ষরের হতে হবে (অক্ষর, সংখ্যা, ., _, -)।'
+              : 'Username must be 3–60 characters (letters, numbers, ., _, or - only).'}
+          </Text>
+        )}
+    </View>
+
+    <View style={styles.inputGroup}>
+      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
+        {isBangla ? 'আপনার নাম (ঐচ্ছিক)' : 'Full Name (Optional)'}
+      </Text>
+      <View
+        style={[
+          styles.inputWrapper,
+          {
+            backgroundColor: colors.surfaceSubtle,
+            borderColor: colors.border,
+          },
+        ]}
+      >
+        <Ionicons
+          name="person-outline"
+          size={18}
+          color={colors.textMuted}
+          style={styles.inputIcon}
+        />
+        <TextInput
+          ref={regNameInputRef}
+          style={[styles.input, { color: colors.text }]}
+          placeholder={isBangla ? 'যেমন: সাজিদ ইসলাম (ঐচ্ছিক)' : 'e.g. Sajid Islam (optional)'}
+          placeholderTextColor={colors.textLight}
+          value={regFullName}
+          onChangeText={(t) => {
+            setRegFullName(t);
+            if (errorMessage) setErrorMessage(null);
+          }}
+          onFocus={() => scrollToInput(120)}
+          onBlur={() => setTouched((p) => ({ ...p, regFullName: true }))}
+          autoCapitalize="words"
+          autoCorrect={false}
+          returnKeyType="next"
+          onSubmitEditing={() => regPhoneInputRef.current?.focus()}
+        />
+      </View>
+    </View>
+
+    <View style={styles.inputGroup}>
+      <Text style={[styles.inputLabel, { color: colors.textMuted }]}>
+        {isBangla ? 'মোবাইল নম্বর (ঐচ্ছিক)' : 'Phone Number (Optional)'}
+      </Text>
+      <View
+        style={[
+          styles.inputWrapper,
+          {
+            backgroundColor: colors.surfaceSubtle,
+            borderColor:
+              touched.regPhone &&
+              regPhone.trim().length > 0 &&
+              regPhone.replace(/\D/g, '').length < 10
+                ? colors.danger
+                : colors.border,
           },
         ]}
       >
@@ -164,7 +224,7 @@ export const AuthRegisterForm: React.FC<Props> = ({
         <TextInput
           ref={regPhoneInputRef}
           style={[styles.input, { color: colors.text }]}
-          placeholder="017xxxxxxxx"
+          placeholder="017xxxxxxxx (optional)"
           placeholderTextColor={colors.textLight}
           value={regPhone}
           onChangeText={(t) => {
@@ -178,13 +238,15 @@ export const AuthRegisterForm: React.FC<Props> = ({
           onSubmitEditing={() => regPasswordInputRef.current?.focus()}
         />
       </View>
-      {touched.regPhone && (!regPhone.trim() || regPhone.replace(/\D/g, '').length < 10) && (
-        <Text style={[styles.inlineFieldError, { color: colors.danger }]}>
-          {isBangla
-            ? 'কোর্স ভর্তি ও ভেরিফিকেশনে সঠিক মোবাইল নম্বর প্রদান আবশ্যক (যেমন: 017xxxxxxxx)।'
-            : 'Please enter a valid mobile number (e.g. 017xxxxxxxx).'}
-        </Text>
-      )}
+      {touched.regPhone &&
+        regPhone.trim().length > 0 &&
+        regPhone.replace(/\D/g, '').length < 10 && (
+          <Text style={[styles.inlineFieldError, { color: colors.danger }]}>
+            {isBangla
+              ? 'অনুগ্রহ করে সঠিক মোবাইল নম্বর লিখুন (যেমন: 017xxxxxxxx)।'
+              : 'Please enter a valid mobile number (e.g. 017xxxxxxxx).'}
+          </Text>
+        )}
     </View>
 
     <View style={styles.inputGroup}>

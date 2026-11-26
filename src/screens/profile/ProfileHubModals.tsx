@@ -49,7 +49,7 @@ interface ProfileHubModalsProps {
     feedback: string,
     userName?: string,
     userRole?: string
-  ) => Certificate | null;
+  ) => Promise<Certificate | null>;
   showToast: (opts: any) => void;
 }
 
@@ -263,8 +263,8 @@ export const ProfileHubModals: React.FC<ProfileHubModalsProps> = ({
         visible={state.mandatoryReviewVisible}
         courseTitle={state.reviewTargetCourse.title}
         instructorName={state.reviewTargetCourse.instructor?.name || 'Course Instructor'}
-        onSubmit={(rating, feedback) => {
-          const unlockedCert = submitMandatoryCourseReview(
+        onSubmit={async (rating, feedback) => {
+          const unlockedCert = await submitMandatoryCourseReview(
             state.reviewTargetCourse!.id,
             rating,
             feedback,

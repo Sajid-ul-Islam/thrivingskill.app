@@ -31,7 +31,7 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
   progressPercent: propProgressPercent,
   style,
 }) => {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { isBangla } = useLanguage();
   const {
     isBookmarked: contextIsBookmarked,
@@ -197,14 +197,12 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
                     style={[
                       styles.ratingBadge,
                       {
-                        backgroundColor: isDark
-                          ? 'rgba(255, 182, 6, 0.16)'
-                          : 'rgba(255, 182, 6, 0.12)',
+                        backgroundColor: colors.surfaceSubtle,
                       },
                     ]}
                   >
-                    <Ionicons name="star" size={11.5} color="#FFB606" />
-                    <Text style={[styles.ratingNumber, { color: isDark ? '#FFB606' : '#946200' }]}>
+                    <Ionicons name="star" size={11.5} color={colors.starColor} />
+                    <Text style={[styles.ratingNumber, { color: colors.text }]}>
                       {formattedRating}
                     </Text>
                   </View>
@@ -365,14 +363,12 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
                     style={[
                       styles.ratingBadge,
                       {
-                        backgroundColor: isDark
-                          ? 'rgba(255, 182, 6, 0.16)'
-                          : 'rgba(255, 182, 6, 0.12)',
+                        backgroundColor: colors.surfaceSubtle,
                       },
                     ]}
                   >
-                    <Ionicons name="star" size={12} color="#FFB606" />
-                    <Text style={[styles.ratingNumber, { color: isDark ? '#FFB606' : '#946200' }]}>
+                    <Ionicons name="star" size={12} color={colors.starColor} />
+                    <Text style={[styles.ratingNumber, { color: colors.text }]}>
                       {formattedRating}
                     </Text>
                     {hasReviewsCount && (
@@ -455,7 +451,7 @@ const CourseCardComponent: React.FC<CourseCardProps> = ({
         <Ionicons
           name={bookmarked ? 'bookmark' : 'bookmark-outline'}
           size={16}
-          color={bookmarked ? '#FFB606' : '#FFFFFF'}
+          color={bookmarked ? '#E34234' : '#FFFFFF'}
         />
       </SpringPressable>
     </View>

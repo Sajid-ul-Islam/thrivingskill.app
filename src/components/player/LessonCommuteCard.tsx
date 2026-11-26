@@ -170,12 +170,12 @@ export const LessonCommuteCard: React.FC<LessonCommuteCardProps> = ({
           <Ionicons
             name={sleepTimerOption !== 'off' ? 'moon' : 'moon-outline'}
             size={12}
-            color={sleepTimerOption !== 'off' ? '#FFB606' : '#FFFFFF'}
+            color="#FFFFFF"
           />
           <Text
             style={[
               styles.sleepTimerText,
-              sleepTimerOption !== 'off' && { color: '#FFB606', fontWeight: '800' },
+              sleepTimerOption !== 'off' && { color: '#FFFFFF', fontWeight: '800' },
             ]}
           >
             {getSleepTimerLabel()}
@@ -333,8 +333,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   sleepTimerPillActive: {
-    backgroundColor: 'rgba(255, 182, 6, 0.2)',
-    borderColor: 'rgba(255, 182, 6, 0.4)',
+    backgroundColor: 'rgba(227, 66, 52, 0.24)',
+    borderColor: 'rgba(227, 66, 52, 0.55)',
     borderWidth: 1,
   },
   sleepTimerText: {

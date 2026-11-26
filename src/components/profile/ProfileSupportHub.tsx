@@ -220,13 +220,8 @@ export const ProfileSupportHub: React.FC<ProfileSupportHubProps> = ({
             accessibilityLabel="eBook Library"
           >
             <View style={styles.resourceLeft}>
-              <View
-                style={[
-                  styles.resourceIconBg,
-                  { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.15)' : '#FFFBEB' },
-                ]}
-              >
-                <Ionicons name="book" size={18} color="#FFB606" />
+              <View style={[styles.resourceIconBg, { backgroundColor: colors.primaryLight }]}>
+                <Ionicons name="book" size={18} color={colors.primary} />
               </View>
               <View style={styles.resourceTextCol}>
                 <Text style={[styles.resourceLabel, { color: colors.text }]}>

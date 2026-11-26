@@ -28,7 +28,7 @@ and components in the **Thriving Skills** React Native (Expo) application.
 1. **Usefulness**: Every screen must solve a concrete learner need (enrolled courses, video/audio lessons, quizzes, notes, certificates, live workshops, skill diagnostics). Remove dead buttons (`onPress={() => {}}`) and vanity filler blocks.
 2. **Usability**: Keep one primary job per screen, break complex forms into progressive disclosure steps with progress indicators, validate inputs inline, and offer non-destructive recovery (`Undo` toast actions).
 3. **Findability**: Support `UniversalSearchModal`, category/status filter tabs, `QuickActionDock`, clear section headers, and predictable `Header` back navigation.
-4. **Credibility**: Never render blank screens or silent failures. Use `StateView` (`loading`, `empty`, `offline`, `error`), `OfflineBanner`, accurate LearnPress sync metadata, and authentic Thriving Skills branding (`#102F53`, `#FFB606`, `#E34234`).
+4. **Credibility**: Never render blank screens or silent failures. Use `StateView` (`loading`, `empty`, `offline`, `error`), `OfflineBanner`, accurate LearnPress sync metadata, and authentic Thriving Skills branding (`#102F53`, `#E34234`, `#FFFFFF`, with `#FFB606` reserved solely for course rating stars).
 5. **Desirability**: Pair clean typography, `shape` radii, dark/light surfaces, and motivational gamification (`CelebrationToast`, XP/streaks, verified certificates) without clutter.
 6. **Accessibility**: Honor bilingual EN/BN i18n (`useLanguage()`), `>= 44dp` tap targets, screen-reader labels, and dual light/dark parity.
 7. **Value**: Surface clear outcomes (certificate verification, progress tracking, offline resilience, actionable quiz feedback).

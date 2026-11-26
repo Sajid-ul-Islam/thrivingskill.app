@@ -456,9 +456,9 @@ export function useLessonPlayerState({
     }
   };
 
-  const handleSubmitReview = (rating: number, feedback: string) => {
+  const handleSubmitReview = async (rating: number, feedback: string) => {
     if (!course) return;
-    const newCert = submitMandatoryCourseReview(
+    const newCert = await submitMandatoryCourseReview(
       course.id,
       rating,
       feedback,
@@ -466,8 +466,10 @@ export function useLessonPlayerState({
       'Course Graduate'
     );
     setMandatoryReviewVisible(false);
-    if (newCert) setUnlockedCert(newCert);
-    setCertModalVisible(true);
+    if (newCert) {
+      setUnlockedCert(newCert);
+      setCertModalVisible(true);
+    }
   };
 
   const cycleSpeed = () => {
@@ -515,22 +517,8 @@ export function useLessonPlayerState({
       ? certificates.find((c) => c.courseId === course.id) ||
         (progress?.certificateId
           ? certificates.find((c) => c.credentialId === progress.certificateId)
-          : null) || {
-          id: `cert-${course.id}`,
-          courseId: course.id,
-          courseTitle: course.title,
-          studentName: user?.displayName || user?.username || 'Executive Graduate',
-          issueDate: new Date().toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          }),
-          credentialId: progress?.certificateId || `TS-2026-${course.id.slice(-4).toUpperCase()}`,
-          verificationUrl: `https://thrivingskill.com/verify/${
-            progress?.certificateId || `TS-2026-${course.id.slice(-4).toUpperCase()}`
-          }`,
-          instructorName: course.instructor.name,
-        }
+          : null) ||
+        null
       : null);
 
   return {

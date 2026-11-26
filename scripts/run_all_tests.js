@@ -8,6 +8,7 @@ const path = require('path');
 const ROOT_DIR = path.join(__dirname, '..');
 
 const SUITES = [
+  { name: '0. Release Version Source-of-Truth Sync Check', script: 'scripts/sync_version.js --check' },
   { name: '1. Codebase Structural & Timer Audit', script: 'scripts/audit_app.js' },
   { name: '2. Security & WebView Hardening Suite', script: 'scripts/test_security_hardening.js' },
   { name: '3. Performance & Tree-Shaking Optimizations', script: 'scripts/test_optimizations.js' },

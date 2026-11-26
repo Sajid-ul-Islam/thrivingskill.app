@@ -262,8 +262,11 @@ try {
 } catch {}
 
 const STORAGE_KEY_TOKEN = '@thrivingskill_push_token';
+const STORAGE_KEY_LAST_REGISTERED_TOKEN = '@thrivingskill_last_registered_push_token';
+const STORAGE_KEY_STREAK_SCHEDULE = '@thrivingskill_streak_schedule_meta';
 const STORAGE_KEY_SETTINGS = '@thrivingskill_notification_settings';
 const STORAGE_KEY_INBOX = '@thrivingskill_notifications_inbox';
+const EXPO_PUSH_TOKEN_REGEX = /^(?:ExponentPushToken|ExpoPushToken)\[[A-Za-z0-9_-]{8,128}\]$/;
 
 const DEFAULT_SETTINGS: NotificationSettings = {
   streakReminders: true,
@@ -319,38 +322,52 @@ export class PushNotificationService {
   }
 
   /**
+   * Returns whether a token matches the Expo Push Token format.
+   */
+  static isValidExpoPushToken(token?: string | null): token is string {
+    return typeof token === 'string' && EXPO_PUSH_TOKEN_REGEX.test(token.trim());
+  }
+
+  /**
    * Synchronizes Android channels & push token ONLY if the learner has already granted permission.
    * Safe to call on app launch or login without triggering an OS permission dialog.
    */
-  static async syncGrantedPushRegistration(): Promise<string | null> {
-    return this.registerForPushNotifications({ requestPermission: false });
+  static async syncGrantedPushRegistration(userId?: string): Promise<string | null> {
+    return this.registerForPushNotifications({ requestPermission: false, userId });
   }
 
   /**
    * Explicitly requests OS push notification permission (from a user action) and registers the token.
    */
-  static async requestPermissionAndRegister(): Promise<{
+  static async requestPermissionAndRegister(userId?: string): Promise<{
     granted: boolean;
     token: string | null;
   }> {
-    const token = await this.registerForPushNotifications({ requestPermission: true });
+    const token = await this.registerForPushNotifications({ requestPermission: true, userId });
     const status = await this.getPermissionStatus();
     return { granted: status === 'granted', token };
   }
 
   /**
    * Registers the device for push notifications and sets up Android notification channels.
+   * Always re-fetches the Expo push token when permission is granted (never fabricates fake tokens)
+   * and re-registers with the server whenever the token changes.
    * Only prompts for OS permission when `options.requestPermission` is explicitly `true`.
    */
   static async registerForPushNotifications(options?: {
     requestPermission?: boolean;
+    userId?: string;
   }): Promise<string | null> {
     const shouldRequest = options?.requestPermission === true;
 
     try {
+      // Purge any legacy fake ts_push_* token stored by older releases
       const stored = await AsyncStorage.getItem(STORAGE_KEY_TOKEN);
-      if (stored) {
-        this.cachedToken = stored;
+      if (stored && !this.isValidExpoPushToken(stored)) {
+        await AsyncStorage.removeItem(STORAGE_KEY_TOKEN);
+        if (this.cachedToken && !this.isValidExpoPushToken(this.cachedToken)) {
+          this.cachedToken = null;
+        }
       }
 
       // Check (and optionally request) native system notification permissions (Android 13+ & iOS)
@@ -374,7 +391,7 @@ export class PushNotificationService {
             name: ANDROID_NOTIFICATION_CHANNELS.OFFERS.name,
             importance: Notifications.AndroidImportance.MAX,
             vibrationPattern: [0, 250, 250, 250],
-            lightColor: '#FFB606',
+            lightColor: '#E34234',
             sound: 'default',
             showBadge: true,
             enableLights: true,
@@ -432,31 +449,38 @@ export class PushNotificationService {
         return null;
       }
 
-      // Generate or retrieve push token
-      if (!this.cachedToken) {
-        let deviceToken: string | null = null;
-        try {
-          const expoToken = await Notifications.getExpoPushTokenAsync().catch(() => null);
-          if (expoToken?.data) {
-            deviceToken = expoToken.data;
-          }
-        } catch {}
-
-        if (!deviceToken) {
-          deviceToken = `ts_push_${Platform.OS}_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 8)}`;
+      // Always re-fetch live Expo Push Token on each launch when permission is granted;
+      // never synthesize or persist fake ts_push_* tokens.
+      let freshToken: string | null = null;
+      try {
+        const expoToken = await Notifications.getExpoPushTokenAsync().catch(() => null);
+        if (expoToken?.data && this.isValidExpoPushToken(expoToken.data)) {
+          freshToken = expoToken.data.trim();
         }
+      } catch {}
 
-        await AsyncStorage.setItem(STORAGE_KEY_TOKEN, deviceToken);
-        this.cachedToken = deviceToken;
+      if (!freshToken) {
+        return null;
       }
 
-      if (this.cachedToken && /^(?:ExponentPushToken|ExpoPushToken)\[/.test(this.cachedToken)) {
+      this.cachedToken = freshToken;
+      await AsyncStorage.setItem(STORAGE_KEY_TOKEN, freshToken);
+
+      const registrationKey = `${options?.userId || 'anon'}:${freshToken}`;
+      const lastRegisteredKey = await AsyncStorage.getItem(STORAGE_KEY_LAST_REGISTERED_TOKEN);
+
+      if (lastRegisteredKey !== registrationKey) {
         const platform =
           Platform.OS === 'ios' ? 'ios' : Platform.OS === 'android' ? 'android' : 'web';
-        CompanionService.registerPushToken(this.cachedToken, platform).catch(() => {});
+        const registered = await CompanionService.registerPushToken(freshToken, platform).catch(
+          () => false
+        );
+        if (registered) {
+          await AsyncStorage.setItem(STORAGE_KEY_LAST_REGISTERED_TOKEN, registrationKey);
+        }
       }
 
-      return this.cachedToken;
+      return freshToken;
     } catch {
       return null;
     }
@@ -476,13 +500,16 @@ export class PushNotificationService {
   }
 
   /**
-   * Updates notification preferences
+   * Updates notification preferences and keeps the scheduled daily streak reminder in sync.
    */
   static async saveSettings(settings: Partial<NotificationSettings>): Promise<void> {
     try {
       const current = await this.getSettings();
       const merged = { ...current, ...settings };
       await AsyncStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(merged));
+      if ('streakReminders' in settings || 'reminderHour' in settings) {
+        await this.scheduleDailyStreakNudge().catch(() => {});
+      }
     } catch {}
   }
 
@@ -760,39 +787,91 @@ export class PushNotificationService {
     );
   }
 
+  private static async cancelScheduledStreakNudges(): Promise<void> {
+    try {
+      if (typeof Notifications.getAllScheduledNotificationsAsync === 'function') {
+        const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+        for (const entry of scheduled || []) {
+          if (entry?.content?.data?.type === 'streak_nudge' && entry.identifier) {
+            await Notifications.cancelScheduledNotificationAsync?.(entry.identifier).catch(
+              () => {}
+            );
+          }
+        }
+      }
+      await AsyncStorage.removeItem(STORAGE_KEY_STREAK_SCHEDULE);
+    } catch {}
+  }
+
   /**
-   * Schedules a daily streak retention reminder (rate-limited to max once per calendar day)
+   * Schedules (or cancels) the daily study reminder for `settings.reminderHour` using native
+   * repeating daily notifications. Never fires an immediate notification on app launch.
    */
   static async scheduleDailyStreakNudge(
     isBangla: boolean = false,
-    force: boolean = false
+    forceReschedule: boolean = false
   ): Promise<void> {
     const settings = await this.getSettings();
-    if (!settings.streakReminders) return;
+    if (!settings.streakReminders || Platform.OS === 'web') {
+      await this.cancelScheduledStreakNudges();
+      return;
+    }
 
-    const STORAGE_KEY_LAST_NUDGE = '@thrivingskill_last_streak_nudge_date';
-    if (!force) {
+    const permission = await this.getPermissionStatus();
+    if (permission !== 'granted') {
+      return;
+    }
+
+    const parsedHour = Number(settings.reminderHour);
+    const targetHour = Number.isFinite(parsedHour)
+      ? Math.max(0, Math.min(23, Math.floor(parsedHour)))
+      : DEFAULT_SETTINGS.reminderHour;
+
+    if (!forceReschedule) {
       try {
-        const lastDate = await AsyncStorage.getItem(STORAGE_KEY_LAST_NUDGE);
-        const todayStr = new Date().toDateString();
-        if (lastDate === todayStr) {
-          // Already nudged today; do not spam on startup
-          return;
+        const metaRaw = await AsyncStorage.getItem(STORAGE_KEY_STREAK_SCHEDULE);
+        if (metaRaw) {
+          const meta = JSON.parse(metaRaw);
+          if (meta?.hour === targetHour && meta?.isBangla === isBangla && meta?.id) {
+            if (typeof Notifications.getAllScheduledNotificationsAsync === 'function') {
+              const active = await Notifications.getAllScheduledNotificationsAsync();
+              if (Array.isArray(active) && active.some((item) => item.identifier === meta.id)) {
+                return;
+              }
+            }
+          }
         }
       } catch {}
     }
 
-    await this.dispatchNotification(
-      isBangla ? '🔥 আপনার স্টাডি স্ট্রিক ধরে রাখুন!' : '🔥 Keep Your Daily Learning Streak!',
-      isBangla
-        ? 'প্রতিদিন মাত্র ১০ মিনিট শিখে পেশাগত দক্ষতার শীর্ষে থাকুন। আজকের লেকচার শুরু করুন!'
-        : 'Dedicate just 10 minutes today to maintain your executive learning streak.',
-      'streak_nudge',
-      { type: 'streak_nudge' }
-    );
+    await this.cancelScheduledStreakNudges();
 
+    const triggerType = Notifications.SchedulableTriggerInputTypes?.DAILY ?? ('daily' as any);
     try {
-      await AsyncStorage.setItem(STORAGE_KEY_LAST_NUDGE, new Date().toDateString());
+      const scheduledId = await Notifications.scheduleNotificationAsync({
+        content: {
+          title: isBangla
+            ? '🔥 আপনার স্টাডি স্ট্রিক ধরে রাখুন!'
+            : '🔥 Keep Your Daily Learning Streak!',
+          body: isBangla
+            ? 'প্রতিদিন মাত্র ১০ মিনিট শিখে পেশাগত দক্ষতার শীর্ষে থাকুন। আজকের লেকচার শুরু করুন!'
+            : 'Dedicate just 10 minutes today to maintain your executive learning streak.',
+          data: { type: 'streak_nudge', screen: 'MyLearning' },
+          sound: true,
+          // @ts-ignore Android channel config
+          channelId: ANDROID_NOTIFICATION_CHANNELS.RECOMMENDATIONS.id,
+        },
+        trigger: {
+          type: triggerType,
+          hour: targetHour,
+          minute: 0,
+        } as any,
+      });
+
+      await AsyncStorage.setItem(
+        STORAGE_KEY_STREAK_SCHEDULE,
+        JSON.stringify({ id: scheduledId, hour: targetHour, isBangla })
+      );
     } catch {}
   }
 

@@ -1,6 +1,7 @@
 import * as Updates from 'expo-updates';
 import { Linking } from 'react-native';
 import { Env } from '../config/env';
+import { APP_VERSION, APP_VERSION_CODE } from '../config/appVersion';
 
 export interface AppUpdateStatus {
   isChecking: boolean;
@@ -30,8 +31,8 @@ export interface CheckUpdateResult {
 }
 
 export class AppUpdateService {
-  public static readonly CURRENT_VERSION = '1.4.0';
-  public static readonly CURRENT_VERSION_CODE = 10400;
+  public static readonly CURRENT_VERSION = APP_VERSION;
+  public static readonly CURRENT_VERSION_CODE = APP_VERSION_CODE;
 
   /**
    * Get current OTA & build metadata
@@ -41,7 +42,7 @@ export class AppUpdateService {
       isEnabled: Updates.isEnabled,
       updateId: Updates.updateId || null,
       channel: Updates.channel || 'production',
-      runtimeVersion: Updates.runtimeVersion || '1.4.0',
+      runtimeVersion: Updates.runtimeVersion || APP_VERSION,
       isEmbeddedLaunch: Updates.isEmbeddedLaunch,
       createdAt: Updates.createdAt
         ? new Date(Updates.createdAt).toLocaleDateString()
@@ -107,8 +108,8 @@ export class AppUpdateService {
             changelog:
               data.changelog ||
               'A new native APK update is available with enhanced performance and features.',
-            latestVersion: data.version || data.latestVersion || '1.4.1',
-            message: `Version ${data.version || data.latestVersion || '1.4.1'} is available for download!`,
+            latestVersion: data.version || data.latestVersion || APP_VERSION,
+            message: `Version ${data.version || data.latestVersion || APP_VERSION} is available for download!`,
           };
         }
       }
@@ -127,7 +128,7 @@ export class AppUpdateService {
     return {
       isAvailable: false,
       isDownloaded: false,
-      message: 'You are on the latest version of Thriving Skills (v1.4.0).',
+      message: `You are on the latest version of Thriving Skills (v${APP_VERSION}).`,
     };
   }
 

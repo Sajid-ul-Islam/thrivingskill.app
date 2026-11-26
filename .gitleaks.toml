@@ -1,19 +1,20 @@
 # .gitleaks.toml
 # Gitleaks configuration for Thriving Skills codebase
-# Excludes test fixtures, mock sample keys, and markdown reports
+# Excludes verified mock-only test files and non-secret WooCommerce/doc examples.
 
 [allowlist]
-description = "Allowlist mock fixtures, dummy tokens, and documentation"
+description = "Scoped allowlist for test fixtures and documentation"
 paths = [
-  '''^\.github/''',
-  '''^src/__tests__/''',
-  '''^scripts/''',
-  '''^TECH_STACK_ANALYSIS\.md''',
-  '''^README\.md''',
+  '''^src/__tests__/checkoutHelpers\.test\.ts$''',
+  '''^src/__tests__/PaymentModal\.test\.tsx$''',
+  '''^src/__tests__/authService\.test\.ts$''',
+  '''^src/__tests__/sessionLifecycle\.test\.tsx$''',
+  '''^docs/''',
+  '''^TECH_STACK_ANALYSIS\.md$''',
+  '''^README\.md$''',
 ]
 
 regexes = [
   '''wc_order_[a-zA-Z0-9_]+''',
   '''orderKey:\s*['"][a-zA-Z0-9_]+['"]''',
-  '''\?key=[a-zA-Z0-9_]+''',
 ]

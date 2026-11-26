@@ -334,8 +334,8 @@ export const MyLearningScreen: React.FC<MyLearningScreenProps> = ({
           visible={reviewModalVisible}
           courseTitle={reviewTargetCourse.title}
           instructorName={reviewTargetCourse.instructor?.name || 'Course Instructor'}
-          onSubmit={(rating, feedback) => {
-            const unlockedCert = submitMandatoryCourseReview(
+          onSubmit={async (rating, feedback) => {
+            const unlockedCert = await submitMandatoryCourseReview(
               reviewTargetCourse.id,
               rating,
               feedback,

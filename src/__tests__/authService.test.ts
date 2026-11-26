@@ -213,28 +213,6 @@ describe('AuthService (with mocked fetch)', () => {
     expect(await AuthService.validateToken('bad_tok')).toBe(false);
   });
 
-  it('dispatches and verifies phone OTP via AuthService without accepting fake offline codes', async () => {
-    const fetchMock = globalThis.fetch as jest.Mock;
-    fetchMock.mockResolvedValueOnce(
-      mockJsonResponse({ success: true, message: 'OTP dispatched' }, 200)
-    );
-
-    const dispatchRes = await AuthService.sendPhoneOtp('01712 345-678');
-    expect(dispatchRes.success).toBe(true);
-    expect(safeParseBody(fetchMock.mock.calls[0][1].body)).toEqual({ phone: '01712345678' });
-
-    fetchMock.mockResolvedValueOnce(
-      mockJsonResponse(
-        { code: 'invalid_otp', message: 'OTP expired or incorrect', data: { status: 403 } },
-        403
-      )
-    );
-
-    await expect(AuthService.verifyPhoneOtp('01712345678', '123456')).rejects.toThrow(
-      'OTP expired or incorrect'
-    );
-  });
-
   it('confirms password reset via REST API and rejects invalid/expired keys without HTML scraping', async () => {
     const fetchMock = globalThis.fetch as jest.Mock;
 
@@ -317,7 +295,7 @@ describe('AuthService (with mocked fetch)', () => {
     expect(await AuthService.verifySession(activeTsmb)).toBe('invalid');
   });
 
-  it('rejects login and OTP responses that omit a valid token', async () => {
+  it('rejects login responses that omit a valid token', async () => {
     const fetchMock = globalThis.fetch as jest.Mock;
     fetchMock.mockResolvedValueOnce(mockJsonResponse({ user_id: 10 }, 200));
 
@@ -325,12 +303,60 @@ describe('AuthService (with mocked fetch)', () => {
       status: 401,
       code: 'INVALID_TOKEN_RESPONSE',
     });
+  });
 
+  it('registers with mandatory unique email and optional username without requiring phone or name', async () => {
+    const fetchMock = globalThis.fetch as jest.Mock;
     fetchMock.mockResolvedValueOnce(
-      mockJsonResponse({ success: true, token: 'ts_session_10' }, 200)
+      mockJsonResponse({
+        success: true,
+        pending_verification: true,
+        username: 'chosen_learner',
+        message: 'Verification code sent.',
+      })
     );
-    await expect(AuthService.verifyPhoneOtp('01712345678', '123456')).rejects.toThrow(
-      'valid session token'
-    );
+
+    const res = await AuthService.register({
+      username: ' chosen_learner ',
+      email: ' newlearner@example.com ',
+      password: 'Password1234!',
+    });
+
+    expect(res.success).toBe(true);
+    expect(fetchMock.mock.calls[0][0]).toContain('/thrivingskill/v1/register');
+    const body = safeParseBody(fetchMock.mock.calls[0][1].body);
+    expect(body.username).toBe('chosen_learner');
+    expect(body.email).toBe('newlearner@example.com');
+    expect(body.phone).toBeUndefined();
+    expect(body.phone_number).toBeUndefined();
+    expect(body.billing_phone).toBeUndefined();
+    expect(body.name).toBeUndefined();
+  });
+
+  it('falls back to LearnPress /token/register when companion register route is absent (404)', async () => {
+    const fetchMock = globalThis.fetch as jest.Mock;
+    fetchMock
+      .mockResolvedValueOnce(
+        mockJsonResponse({ code: 'rest_no_route', message: 'No route found' }, 404)
+      )
+      .mockResolvedValueOnce(
+        mockJsonResponse({
+          token: makeSignedMockJwt({
+            sub: 99,
+            exp: Math.floor(Date.now() / 1000) + 3600,
+          }),
+          user_id: 99,
+        })
+      );
+
+    const res = await AuthService.register({
+      username: 'sajid_wp',
+      email: 'sajid_wp@example.com',
+      password: 'Password1234!',
+    });
+
+    expect(fetchMock.mock.calls[0][0]).toContain('/thrivingskill/v1/register');
+    expect(fetchMock.mock.calls[1][0]).toContain('/learnpress/v1/token/register');
+    expect(res.user_id).toBe(99);
   });
 });

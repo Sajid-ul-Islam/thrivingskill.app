@@ -406,8 +406,10 @@ export const ThriveGenHub: React.FC<ThriveGenHubProps> = ({
                   <Text style={[styles.levelText, { color: colors.primary }]}>{levelLabel}</Text>
                   {item.rating > 0 && (
                     <View style={styles.ratingBadge}>
-                      <Ionicons name="star" size={11} color="#FFB606" />
-                      <Text style={styles.ratingText}>{item.rating.toFixed(1)}</Text>
+                      <Ionicons name="star" size={11} color={colors.starColor} />
+                      <Text style={[styles.ratingText, { color: colors.text }]}>
+                        {item.rating.toFixed(1)}
+                      </Text>
                     </View>
                   )}
                 </View>
@@ -669,7 +671,6 @@ const styles = StyleSheet.create({
   ratingText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#FFB606',
   },
   courseTitle: {
     fontSize: 13.5,

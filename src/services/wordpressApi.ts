@@ -120,26 +120,6 @@ export async function validateWpToken(token: string): Promise<boolean> {
 }
 
 /**
- * Optional helper: Send SMS OTP to phone number
- */
-export async function sendWpPhoneOtp(
-  phone: string
-): Promise<{ success: boolean; message: string; testOtp?: string }> {
-  return AuthService.sendPhoneOtp(phone);
-}
-
-/**
- * Optional helper: Verify SMS OTP and login/register user
- */
-export async function verifyWpPhoneOtp(
-  phone: string,
-  otp: string,
-  fullName?: string
-): Promise<WpUser> {
-  return AuthService.verifyPhoneOtp(phone, otp, fullName);
-}
-
-/**
  * Confirm password reset via WordPress action=resetpass
  */
 export async function confirmWpPasswordReset(

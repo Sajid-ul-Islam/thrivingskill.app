@@ -46,12 +46,13 @@ All autonomous agents working on this project MUST strictly adhere to the follow
 * The command must exit with code 0 (zero errors). Never suppress errors using `any` or `@ts-ignore` unless explicitly justified.
 
 ### Rule 2: Strict Brand Identity Preservation
-* All visual interfaces, buttons, badges, and progress gauges MUST align with the official Thriving Skills color tokens:
+* All visual interfaces, buttons, badges, and progress gauges MUST maintain strict parity with `https://thrivingskill.com` and `.agents/rules/ui-ux-design-laws.md`:
   - **Brand Deep Navy**: `#102F53`
-  - **Sunshine Gold**: `#FFB606`
-  - **Crimson / Coral**: `#E34234`
-  - **Dark Surfaces**: `#0F192C` / `#1E293B`
-  - **Light Surfaces**: `#FFFFFF` / `#F8FAFC`
+  - **Accent Crimson / Red**: `#E34234`
+  - **Pure White**: `#FFFFFF`
+  - **Dark Surfaces**: `#0B1420` / `#162538` / `#24364B`
+  - **Light Surfaces**: `#FFFFFF` / `#F5F7FA`
+  - *(Yellow/gold `#FFB606` is reserved strictly for course rating stars via `colors.starColor`, never for badges, ribbons, buttons, or general UI tokens.)*
 
 ### Rule 3: Cross-Platform Timer Hygiene
 * Never declare timers with `NodeJS.Timeout` in client code.

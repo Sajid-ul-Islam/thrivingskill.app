@@ -58,7 +58,7 @@ interface LessonPlayerModalsProps {
   onSeekTo: (sec: number) => void;
   onTogglePlay: () => void;
   onStartDownloadWithQuality: (q: '360p' | '720p' | '1080p') => void;
-  onSubmitReview: (rating: number, feedback: string) => void;
+  onSubmitReview: (rating: number, feedback: string) => Promise<void> | void;
   showToast: (opts: any) => void;
 }
 

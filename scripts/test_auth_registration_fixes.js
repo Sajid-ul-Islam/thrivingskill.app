@@ -84,12 +84,17 @@ assert(
   'Proxy trust supports both TSMB_TRUST_PROXY_HEADERS constant and WordPress option'
 );
 
-// Verify CF-Connecting-IP & X-Forwarded-For resolution
+// Verify single configured trusted proxy header (and intentionally exclude spoofable X-Forwarded-For)
 assert(
+  bridgeContent.includes('public static function get_trusted_proxy_header') &&
   bridgeContent.includes('HTTP_CF_CONNECTING_IP') &&
   bridgeContent.includes('HTTP_X_REAL_IP') &&
-  bridgeContent.includes('HTTP_X_FORWARDED_FOR'),
-  'Checks Cloudflare (HTTP_CF_CONNECTING_IP), Nginx (HTTP_X_REAL_IP), and HTTP_X_FORWARDED_FOR'
+  !bridgeContent.includes('HTTP_X_FORWARDED_FOR'),
+  'Uses a single configurable trusted proxy header (CF-Connecting-IP / X-Real-IP) and rejects spoofable X-Forwarded-For'
+);
+assert(
+  bridgeContent.includes('is_remote_addr_trusted_proxy'),
+  'Supports restricting trusted proxy headers to an explicit proxy IP allowlist'
 );
 
 // Verify IP validation and fallback to REMOTE_ADDR
@@ -222,36 +227,53 @@ assert(mockVerify(res2.username) === res2.username, "Verification preserves 'saj
 // --------------------------------------------------------------------------
 console.log('\n--- Proxy IP Resolution Simulation ---');
 
-function mockGetClientIp(headers, remoteAddr, trustProxy) {
+function mockGetClientIp(
+  headers,
+  remoteAddr,
+  trustProxy,
+  trustedHeader = 'HTTP_CF_CONNECTING_IP',
+  trustedProxyIps = ''
+) {
   let ip = '0.0.0.0';
-  if (trustProxy) {
-    const candidates = ['HTTP_CF_CONNECTING_IP', 'HTTP_X_REAL_IP', 'HTTP_X_FORWARDED_FOR'];
-    for (const header of candidates) {
-      if (headers[header]) {
-        const ips = headers[header].split(',');
-        for (let candidate of ips) {
-          candidate = candidate.trim();
-          if (candidate && candidate !== '0.0.0.0') {
-            ip = candidate;
-            return ip;
-          }
-        }
-      }
+  const allowedProxies = trustedProxyIps
+    .split(/[\r\n,]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const remoteTrusted = allowedProxies.length === 0 || allowedProxies.includes(remoteAddr);
+
+  if (trustProxy && remoteTrusted && trustedHeader !== 'REMOTE_ADDR' && headers[trustedHeader]) {
+    const candidate = String(headers[trustedHeader]).trim();
+    if (candidate && candidate !== '0.0.0.0') {
+      ip = candidate;
     }
   }
-  if (remoteAddr) {
+  if (ip === '0.0.0.0' && remoteAddr) {
     ip = remoteAddr;
   }
   return ip;
 }
 
-// Behind Cloudflare, trust enabled
+// Behind Cloudflare with single configured trusted header; spoofed X-Forwarded-For is ignored
 const cfIp = mockGetClientIp(
-  { HTTP_CF_CONNECTING_IP: '103.145.12.89', HTTP_X_FORWARDED_FOR: '103.145.12.89, 172.68.23.4' },
+  {
+    HTTP_CF_CONNECTING_IP: '103.145.12.89',
+    HTTP_X_FORWARDED_FOR: '1.2.3.4, 172.68.23.4',
+  },
   '172.68.23.4',
-  true
+  true,
+  'HTTP_CF_CONNECTING_IP'
 );
-assert(cfIp === '103.145.12.89', 'Resolves real user IP from HTTP_CF_CONNECTING_IP when proxy trust is on');
+assert(cfIp === '103.145.12.89', 'Resolves real user IP from configured HTTP_CF_CONNECTING_IP when proxy trust is on');
+
+// Direct origin attacker spoofing CF-Connecting-IP when proxy IP allowlist is configured
+const directIp = mockGetClientIp(
+  { HTTP_CF_CONNECTING_IP: '1.2.3.4' },
+  '198.51.100.77',
+  true,
+  'HTTP_CF_CONNECTING_IP',
+  '172.68.23.4'
+);
+assert(directIp === '198.51.100.77', 'Ignores spoofed proxy header when REMOTE_ADDR is not in proxy allowlist');
 
 // Behind Cloudflare, trust disabled (default safe)
 const defaultIp = mockGetClientIp(
@@ -262,47 +284,19 @@ const defaultIp = mockGetClientIp(
 assert(defaultIp === '172.68.23.4', 'Falls back safely to REMOTE_ADDR when proxy trust is off');
 
 // --------------------------------------------------------------------------
-// 5. Item C: Phone Number Squatting Prevention
+// 5. Item C: Phone OTP Dropped & Email-Keyed Registration Preserved
 // --------------------------------------------------------------------------
-console.log('\n--- Item C: Verified Phone Meta & Squatting Prevention ---');
+console.log('\n--- Item C: Phone OTP Removed & Email-Unique Registration ---');
 assert(
-  bridgeContent.includes("public const VERIFIED_PHONE_META = 'tsmb_verified_phone';"),
-  'TSMB_OTP_Auth defines dedicated tsmb_verified_phone meta key'
+  !bridgeContent.includes('TSMB_OTP_Auth') &&
+  !bridgeContent.includes("'/auth/send-otp'") &&
+  !bridgeContent.includes('@phone.thrivingskill.com'),
+  'Drops unbacked Phone OTP (tsl/v1) and synthetic @phone.thrivingskill.com emails'
 );
 
-// Verify verify_registration does NOT write tsmb_verified_phone
-const verifyRegSection = bridgeContent.slice(
-  bridgeContent.indexOf('public static function verify_registration('),
-  bridgeContent.indexOf('public static function resend_registration(')
-);
 assert(
-  !verifyRegSection.includes('tsmb_verified_phone') && !verifyRegSection.includes('VERIFIED_PHONE_META'),
-  'Email registration (verify_registration) never sets tsmb_verified_phone'
-);
-
-// Verify find_user_by_phone strictly queries VERIFIED_PHONE_META and not phone/billing_phone/user_login
-const findPhoneSection = bridgeContent.slice(
-  bridgeContent.indexOf('private static function find_user_by_phone('),
-  bridgeContent.indexOf('public static function claim_verified_phone(')
-);
-assert(
-  findPhoneSection.includes("'key'     => self::VERIFIED_PHONE_META") &&
-  !findPhoneSection.includes("'billing_phone'") &&
-  !findPhoneSection.includes("get_user_by('login'"),
-  'find_user_by_phone queries only tsmb_verified_phone (not unverified phone, billing_phone, or user_login)'
-);
-assert(
-  findPhoneSection.includes("'number'     => 2") &&
-  findPhoneSection.includes("verified_phone_conflict"),
-  'find_user_by_phone detects duplicate verified phone conflicts instead of taking first match'
-);
-
-// Verify claim_verified_phone enforces uniqueness and is called by verify_otp
-assert(
-  bridgeContent.includes('public static function claim_verified_phone(') &&
-  bridgeContent.includes('verified_phone_already_in_use') &&
-  bridgeContent.includes('self::claim_verified_phone($user_id, $phone)'),
-  'claim_verified_phone enforces uniqueness and is called only after OTP verification'
+  bridgeContent.includes('email_exists($email)'),
+  'Enforces email uniqueness on registration'
 );
 
 // Summary

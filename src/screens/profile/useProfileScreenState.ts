@@ -21,7 +21,6 @@ export function useProfileScreenState(onNavigateTab: (tab: any) => void) {
   const { user, isAuthenticated, logout, deleteAccount, setAuthModalVisible, updateUserProfile } =
     useAuth();
 
-  const [biometricEnabled, setBiometricEnabled] = useState(true);
   const [portfolioTab, setPortfolioTab] = useState<LearnPressCourseFilter>('all');
   const [selectedCert, setSelectedCert] = useState<Certificate | null>(null);
   const [mandatoryReviewVisible, setMandatoryReviewVisible] = useState(false);
@@ -508,8 +507,6 @@ export function useProfileScreenState(onNavigateTab: (tab: any) => void) {
   };
 
   return {
-    biometricEnabled,
-    setBiometricEnabled,
     portfolioTab,
     setPortfolioTab,
     selectedCert,

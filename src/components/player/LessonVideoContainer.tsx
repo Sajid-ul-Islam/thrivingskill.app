@@ -439,7 +439,7 @@ export const LessonVideoContainer: React.FC<LessonVideoContainerProps> = ({
           ]}
         >
           <View style={styles.comingSoonIconBg}>
-            <Ionicons name="videocam-off-outline" size={28} color="#FFB606" />
+            <Ionicons name="videocam-off-outline" size={28} color="#E34234" />
           </View>
           <Text style={styles.comingSoonTitle}>
             {isBangla
@@ -858,7 +858,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: 'rgba(255, 182, 6, 0.15)',
+    backgroundColor: 'rgba(227, 66, 52, 0.16)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 8,
@@ -977,7 +977,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: 'rgba(255, 182, 6, 0.16)',
+    backgroundColor: 'rgba(227, 66, 52, 0.18)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
@@ -1002,13 +1002,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#FFB606',
+    backgroundColor: '#E34234',
     paddingHorizontal: 16,
     minHeight: MIN_TOUCH_TARGET,
     borderRadius: 8,
   },
   comingSoonNextBtnText: {
-    color: '#102F53',
+    color: '#FFFFFF',
     fontSize: 12.5,
     fontWeight: '800',
   },

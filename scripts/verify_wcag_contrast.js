@@ -55,7 +55,7 @@ const themePairs = [
   ['onSecondary on secondary', 'onSecondary', 'secondary', 4.5],
   ['onAccent on accent (bold UI/CTA)', 'onAccent', 'accent', 3.0],
   ['onDanger on danger', 'onDanger', 'danger', 4.5],
-  ['onGold on brandGold', 'onGold', 'brandGold', 4.5],
+  ['onSuccess on success', 'onSuccess', 'success', 4.5],
   ['tabActive on tabBarBg', 'tabActive', 'tabBarBg', 4.5],
   ['tabInactive on tabBarBg', 'tabInactive', 'tabBarBg', 4.5],
   ['badgeText on badgeBackground', 'badgeText', 'badgeBackground', 4.5],

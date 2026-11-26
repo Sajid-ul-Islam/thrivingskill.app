@@ -28,6 +28,7 @@ import { InstructorsModal } from '../modals/InstructorsModal';
 import { RootTab } from '../../types';
 import { shape } from '../../theme/shapes';
 import { Env } from '../../config/env';
+import { APP_VERSION } from '../../config/appVersion';
 import { MessengerIcon } from './MessengerIcon';
 
 interface BrandDrawerProps {
@@ -290,17 +291,8 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
               style={styles.navItem}
               onPress={() => handleNav(() => onNavigateTab('Courses'))}
             >
-              <View
-                style={[
-                  styles.navIconBg,
-                  { backgroundColor: isDark ? 'rgba(255, 182, 6, 0.16)' : '#EFF6FF' },
-                ]}
-              >
-                <Ionicons
-                  name="compass-outline"
-                  size={18}
-                  color={isDark ? colors.primary : '#102F53'}
-                />
+              <View style={[styles.navIconBg, { backgroundColor: colors.primaryLight }]}>
+                <Ionicons name="compass-outline" size={18} color={colors.primary} />
               </View>
               <Text style={[styles.navLabel, { color: colors.text }]}>
                 {isBangla ? 'সকল কোর্স ও বান্ডেল' : 'All Courses & Bundles'}
@@ -772,7 +764,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
                 <Ionicons
                   name={isDark ? 'moon' : 'sunny'}
                   size={18}
-                  color={isDark ? '#FBBF24' : '#F59E0B'}
+                  color={isDark ? colors.primary : colors.accent}
                 />
                 <Text style={[styles.actionLabel, { color: colors.text }]}>
                   {isDark ? 'Dark Theme' : 'Light Theme'}
@@ -810,7 +802,7 @@ export const BrandDrawer: React.FC<BrandDrawerProps> = ({
                 <Ionicons name="cloud-download-outline" size={18} color="#10B981" />
                 <Text style={[styles.actionLabel, { color: colors.text }]}>Check OTA Updates</Text>
               </View>
-              <Text style={{ fontSize: 11, color: colors.textMuted }}>v1.4.0</Text>
+              <Text style={{ fontSize: 11, color: colors.textMuted }}>v{APP_VERSION}</Text>
             </TouchableOpacity>
 
             {/* Section 6: User Authentication & Logout */}

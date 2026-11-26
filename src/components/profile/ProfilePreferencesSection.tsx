@@ -50,8 +50,6 @@ interface ProfilePreferencesSectionProps {
   videoQuality: string;
   cycleVideoQuality: () => void;
   onOpenUpdateModal: () => void;
-  biometricEnabled: boolean;
-  setBiometricEnabled: (val: boolean) => void;
   onChangePassword: () => void;
   onOpenNotifications?: () => void;
   onClearCache: () => void;
@@ -99,8 +97,6 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
   videoQuality,
   cycleVideoQuality,
   onOpenUpdateModal,
-  biometricEnabled,
-  setBiometricEnabled,
   onChangePassword,
   onOpenNotifications,
   onClearCache,
@@ -581,32 +577,6 @@ export const ProfilePreferencesSection: React.FC<ProfilePreferencesSectionProps>
             { backgroundColor: colors.surfaceCard, borderColor: colors.border },
           ]}
         >
-          {/* Biometric unlock toggle */}
-          <View style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}>
-            <View style={styles.settingLeft}>
-              <Ionicons name="finger-print" size={20} color="#E34234" />
-              <Text style={[styles.settingLabel, { color: colors.text }]}>
-                {isBangla ? 'বায়োমেট্রিক আনলক (ফিঙ্গারপ্রিন্ট)' : 'Biometric Security'}
-              </Text>
-            </View>
-            <Switch
-              value={biometricEnabled}
-              accessibilityLabel={
-                isBangla ? 'বায়োমেট্রিক নিরাপত্তা টগল' : 'Toggle Biometric Security'
-              }
-              onValueChange={(val) => {
-                triggerHaptic('selection');
-                setBiometricEnabled(val);
-                showToast({
-                  message: val ? 'Biometric unlock enabled' : 'Biometric unlock disabled',
-                  type: 'info',
-                });
-              }}
-              trackColor={{ false: isDark ? '#334155' : '#CBD5E1', true: '#102F53' }}
-              thumbColor="#FFFFFF"
-            />
-          </View>
-
           {/* Change Account Password */}
           <TouchableOpacity
             style={[styles.settingRow, { borderBottomColor: colors.borderSubtle }]}

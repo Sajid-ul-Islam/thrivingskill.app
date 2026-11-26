@@ -165,9 +165,7 @@ export const OrderSummaryCard: React.FC<OrderSummaryCardProps> = ({
       <Text style={[styles.totalLabel, { color: colors.text }]}>
         {isBangla ? 'সর্বমোট' : 'Total'}
       </Text>
-      <Text style={[styles.totalValue, { color: isDark ? colors.brandGold : '#102F53' }]}>
-        {formattedPrice}
-      </Text>
+      <Text style={[styles.totalValue, { color: colors.primary }]}>{formattedPrice}</Text>
     </View>
   </View>
 );

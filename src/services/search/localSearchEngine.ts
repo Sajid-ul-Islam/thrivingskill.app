@@ -1,6 +1,6 @@
 import { Course, Note } from '../../types';
 import { Flashcard } from '../study/spacedRepetitionService';
-import { LiteRtService } from '../ai/liteRtService';
+import { computeBm25Scores, tokenizeSearchText } from './bm25';
 
 export type SearchDocType = 'course' | 'lesson' | 'note' | 'flashcard';
 
@@ -18,9 +18,7 @@ export interface SearchDocument {
 export interface SearchResult {
   doc: SearchDocument;
   score: number;
-  lexicalScore: number;
-  semanticScore: number;
-  isSemanticMatch: boolean;
+  bm25Score: number;
   matchedTerms: string[];
   snippet: string;
 }
@@ -120,59 +118,29 @@ export class PrefixTrie {
 
 export class LocalSearchEngine {
   private static documents = new Map<string, SearchDocument>();
-  // Inverted index: term -> Map<docId, termFrequency>
-  private static invertedIndex = new Map<string, Map<string, number>>();
-  // Title inverted index for weighted scoring (3x)
-  private static titleIndex = new Map<string, Map<string, number>>();
-  // LiteRT Dense Vector Embeddings (Phase 4 AI Hybrid Search)
-  private static documentEmbeddings = new Map<string, number[]>();
+  private static titleTokensMap = new Map<string, string[]>();
+  private static bodyTokensMap = new Map<string, string[]>();
   // High-performance In-Memory Prefix Trie for instant sub-millisecond search auto-complete
   private static prefixTrie = new PrefixTrie();
 
   /**
-   * Tokenize text into normalized search terms (supports English & Bengali unicode)
+   * Tokenize text into normalized search terms (supports English & Bengali unicode).
    */
   static tokenize(text?: string): string[] {
-    if (!text) return [];
-    return text
-      .toLowerCase()
-      .replace(/<[^>]+>/g, ' ') // Strip HTML tags
-      .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"'|[\]\\+]/g, ' ') // Strip punctuation
-      .split(/\s+/)
-      .filter((t) => t.length >= 2); // Exclude single characters
+    return tokenizeSearchText(text, false);
   }
 
   /**
-   * Index a single document with both Inverted Index tokens and LiteRT Vector Embeddings
+   * Index a single document for BM25 keyword ranking and prefix autocomplete.
    */
   static indexDocument(doc: SearchDocument): void {
     this.documents.set(doc.id, doc);
 
-    // 1. Index title
     const titleTokens = this.tokenize(doc.title);
-    for (const token of titleTokens) {
-      if (!this.titleIndex.has(token)) {
-        this.titleIndex.set(token, new Map());
-      }
-      const post = this.titleIndex.get(token)!;
-      post.set(doc.id, (post.get(doc.id) || 0) + 1);
-    }
-
-    // 2. Index body
     const bodyTokens = this.tokenize(doc.body);
-    for (const token of bodyTokens) {
-      if (!this.invertedIndex.has(token)) {
-        this.invertedIndex.set(token, new Map());
-      }
-      const post = this.invertedIndex.get(token)!;
-      post.set(doc.id, (post.get(doc.id) || 0) + 1);
-    }
+    this.titleTokensMap.set(doc.id, titleTokens);
+    this.bodyTokensMap.set(doc.id, bodyTokens);
 
-    // 3. Generate and index dense vector embedding for LiteRT Semantic Search (Phase 4)
-    const embedding = LiteRtService.generateEmbedding(`${doc.title} ${doc.body}`);
-    this.documentEmbeddings.set(doc.id, embedding);
-
-    // 4. Index in Prefix Trie for sub-millisecond instant auto-complete
     for (const token of titleTokens) {
       this.prefixTrie.insert(token, doc.id);
     }
@@ -185,42 +153,40 @@ export class LocalSearchEngine {
   }
 
   /**
-   * Fast In-Memory Prefix Trie suggestions for instant auto-complete (<1ms)
+   * Fast In-Memory Prefix Trie suggestions for instant auto-complete (<1ms).
    */
   static getAutoSuggestions(prefix: string, limit: number = 6): string[] {
     return this.prefixTrie.getSuggestions(prefix, limit);
   }
 
   /**
-   * Top indexed keywords from courses and modules
+   * Top indexed keywords from courses and modules.
    */
   static getTopKeywords(limit: number = 8): string[] {
     return this.prefixTrie.getTopKeywords(limit);
   }
 
   /**
-   * Remove a document from all indexes
+   * Remove a document from all indexes.
    */
   static removeDocument(docId: string): void {
     this.documents.delete(docId);
-    this.titleIndex.forEach((post) => post.delete(docId));
-    this.invertedIndex.forEach((post) => post.delete(docId));
-    this.documentEmbeddings.delete(docId);
+    this.titleTokensMap.delete(docId);
+    this.bodyTokensMap.delete(docId);
   }
 
   /**
-   * Clear all indexed documents
+   * Clear all indexed documents.
    */
   static clearIndex(): void {
     this.documents.clear();
-    this.titleIndex.clear();
-    this.invertedIndex.clear();
-    this.documentEmbeddings.clear();
+    this.titleTokensMap.clear();
+    this.bodyTokensMap.clear();
     this.prefixTrie.clear();
   }
 
   /**
-   * Rebuild the entire search index from all active entities
+   * Rebuild the entire search index from all active entities.
    */
   static rebuildIndex(
     courses: Course[] = [],
@@ -284,96 +250,62 @@ export class LocalSearchEngine {
   }
 
   /**
-   * Hybrid Search: Combines Lexical Inverted Index (BM25/TF-IDF) with
-   * On-Device LiteRT Vector Semantic Similarity.
+   * Honest Okapi BM25 keyword search across title (3.0x weight) and body (1.0x weight)
+   * with prefix matching support and no synthetic semantic projection scores.
    */
-  static search(query: string, filterType?: SearchDocType): SearchResult[] {
+  static search(
+    query: string,
+    filterType?: SearchDocType,
+    options?: { matchAllTerms?: boolean }
+  ): SearchResult[] {
     const queryTokens = this.tokenize(query);
     if (queryTokens.length === 0) return [];
 
-    const lexicalScores = new Map<string, { score: number; matched: Set<string> }>();
+    const candidateDocs = Array.from(this.documents.values()).filter(
+      (doc) => !filterType || doc.type === filterType
+    );
+    if (candidateDocs.length === 0) return [];
 
-    // 1. Lexical Matching
-    for (const qToken of queryTokens) {
-      // Title Matches (3.0x weight)
-      this.titleIndex.forEach((postMap, term) => {
-        if (term === qToken || term.startsWith(qToken)) {
-          const matchBoost = term === qToken ? 1.0 : 0.7;
-          postMap.forEach((tf, docId) => {
-            if (!lexicalScores.has(docId)) {
-              lexicalScores.set(docId, { score: 0, matched: new Set() });
-            }
-            const entry = lexicalScores.get(docId)!;
-            entry.score += tf * 3.0 * matchBoost;
-            entry.matched.add(term);
-          });
-        }
-      });
+    const titleInputs = candidateDocs.map((doc) => ({
+      id: doc.id,
+      tokens: this.titleTokensMap.get(doc.id) || [],
+    }));
+    const bodyInputs = candidateDocs.map((doc) => ({
+      id: doc.id,
+      tokens: this.bodyTokensMap.get(doc.id) || [],
+    }));
 
-      // Body Matches (1.0x weight)
-      this.invertedIndex.forEach((postMap, term) => {
-        if (term === qToken || term.startsWith(qToken)) {
-          const matchBoost = term === qToken ? 1.0 : 0.6;
-          postMap.forEach((tf, docId) => {
-            if (!lexicalScores.has(docId)) {
-              lexicalScores.set(docId, { score: 0, matched: new Set() });
-            }
-            const entry = lexicalScores.get(docId)!;
-            entry.score += tf * 1.0 * matchBoost;
-            entry.matched.add(term);
-          });
-        }
-      });
-    }
-
-    // 2. LiteRT On-Device Vector Semantic Similarity (Phase 4)
-    const isSemanticActive = LiteRtService.isSemanticEnabled();
-    const queryEmbedding = isSemanticActive ? LiteRtService.generateEmbedding(query) : null;
-    const semanticScores = new Map<string, number>();
-
-    if (queryEmbedding) {
-      this.documentEmbeddings.forEach((docVec, docId) => {
-        let dot = 0;
-        let normA = 0;
-        let normB = 0;
-        for (let i = 0; i < queryEmbedding.length; i++) {
-          dot += queryEmbedding[i] * docVec[i];
-          normA += queryEmbedding[i] * queryEmbedding[i];
-          normB += docVec[i] * docVec[i];
-        }
-        const denom = Math.sqrt(normA) * Math.sqrt(normB);
-        const similarity = denom > 0 ? dot / denom : 0;
-        if (similarity > 0.25) {
-          semanticScores.set(docId, similarity);
-        }
-      });
-    }
-
-    // 3. Merge Lexical & Semantic Scores
-    const allCandidateIds = new Set<string>([
-      ...Array.from(lexicalScores.keys()),
-      ...Array.from(semanticScores.keys()),
-    ]);
+    const titleScores = computeBm25Scores(queryTokens, titleInputs, { allowPrefixMatch: true });
+    const bodyScores = computeBm25Scores(queryTokens, bodyInputs, { allowPrefixMatch: true });
+    const matchAllTerms = options?.matchAllTerms === true;
 
     const results: SearchResult[] = [];
 
-    allCandidateIds.forEach((docId) => {
-      const doc = this.documents.get(docId);
-      if (!doc) return;
-      if (filterType && doc.type !== filterType) return;
+    for (const doc of candidateDocs) {
+      const tEntry = titleScores.get(doc.id);
+      const bEntry = bodyScores.get(doc.id);
+      if (!tEntry && !bEntry) continue;
 
-      const lexEntry = lexicalScores.get(docId);
-      const lexScore = lexEntry ? lexEntry.score : 0;
-      const semScore = semanticScores.get(docId) || 0;
+      const combinedScore = (tEntry?.score || 0) * 3.0 + (bEntry?.score || 0);
+      if (combinedScore <= 0) continue;
 
-      // Hybrid combination formula:
-      // Combined = LexicalScore + (SemanticScore * 6.5)
-      const hybridScore = lexScore + semScore * 6.5;
+      const matchedTermsSet = new Set<string>([
+        ...(tEntry?.matchedTerms || []),
+        ...(bEntry?.matchedTerms || []),
+      ]);
 
-      const matchedTerms = lexEntry ? Array.from(lexEntry.matched) : [];
-      const isSemanticMatch = semScore >= 0.35 && lexScore === 0;
+      if (matchAllTerms) {
+        const docAllTokens = [
+          ...(this.titleTokensMap.get(doc.id) || []),
+          ...(this.bodyTokensMap.get(doc.id) || []),
+        ];
+        const coversAll = queryTokens.every((qt) =>
+          docAllTokens.some((tok) => tok === qt || tok.startsWith(qt))
+        );
+        if (!coversAll) continue;
+      }
 
-      // Relevant snippet extraction
+      const matchedTerms = Array.from(matchedTermsSet);
       let snippet = doc.body.slice(0, 120);
       if (matchedTerms.length > 0) {
         const firstMatchIdx = doc.body.toLowerCase().indexOf(matchedTerms[0]);
@@ -385,16 +317,13 @@ export class LocalSearchEngine {
 
       results.push({
         doc,
-        score: hybridScore,
-        lexicalScore: lexScore,
-        semanticScore: semScore,
-        isSemanticMatch,
+        score: combinedScore,
+        bm25Score: combinedScore,
         matchedTerms,
         snippet,
       });
-    });
+    }
 
-    // Sort by hybrid score descending
     results.sort((a, b) => b.score - a.score);
     return results.slice(0, 30);
   }

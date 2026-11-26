@@ -37,7 +37,7 @@ jest.mock('../context/LanguageContext', () => ({
   useLanguage: () => ({ isBangla: false }),
 }));
 
-describe('Honest AI gating, behavior+LiteRT recommendations, and verified quizzes', () => {
+describe('Honest AI gating, BM25 keyword search & recommendations, and verified quizzes', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (GeminiNanoService as any).cachedStatus = null;
@@ -85,6 +85,21 @@ describe('Honest AI gating, behavior+LiteRT recommendations, and verified quizze
     expect(groundedRes.available).toBe(true);
     expect(groundedRes.source).toBe('lesson-search');
     expect(groundedRes.text).toContain('Safety stock acts as a buffer');
+    expect(groundedRes.text).toContain('Keyword Search');
+
+    // Two unrelated sentences sharing only a broad domain ("business") must NOT false-match
+    const unrelatedRes = await AiTutorService.askTutorDetailed(
+      'How do we calculate quarterly tax compliance?',
+      {
+        ...baseContext,
+        lessonSummary:
+          'Business leadership strategy focuses on growing executive management revenue and enterprise teams.',
+      },
+      [],
+      false
+    );
+    expect(unrelatedRes.available).toBe(false);
+    expect(unrelatedRes.source).toBe('unavailable');
   });
 
   it('never falls back to unrelated domain questions or canned 3-item boilerplate quizzes', async () => {

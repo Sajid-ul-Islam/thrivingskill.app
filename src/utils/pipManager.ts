@@ -68,7 +68,7 @@ export function getPlayerOverlayBadge(
       labelEn: 'PiP Overlay Active',
       labelBn: 'ভাসমান স্ক্রিন সক্রিয়',
       active: true,
-      badgeColor: '#FFB606',
+      badgeColor: '#E34234',
     };
   }
   if (isCommuteMode) {
@@ -76,7 +76,7 @@ export function getPlayerOverlayBadge(
       labelEn: 'Background Audio Mode',
       labelBn: 'ব্যাকগ্রাউন্ড অডিও সক্রিয়',
       active: true,
-      badgeColor: '#10B981',
+      badgeColor: '#047857',
     };
   }
   return {

@@ -70,7 +70,7 @@ export const CourseWriteReviewModal: React.FC<CourseWriteReviewModalProps> = ({
         >
           <View style={styles.reviewModalHeader}>
             <View style={styles.headerTitleRow}>
-              <Ionicons name="star" size={20} color="#F59E0B" style={{ flexShrink: 0 }} />
+              <Ionicons name="star" size={20} color={colors.starColor} style={{ flexShrink: 0 }} />
               <Text style={[styles.reviewModalTitle, { color: colors.text }]} numberOfLines={1}>
                 {isBangla ? 'কোর্স রেটিং ও রিভিউ' : 'Rate & Review Course'}
               </Text>
@@ -118,7 +118,7 @@ export const CourseWriteReviewModal: React.FC<CourseWriteReviewModalProps> = ({
                   <Ionicons
                     name={star <= rating ? 'star' : 'star-outline'}
                     size={32}
-                    color="#F59E0B"
+                    color={colors.starColor}
                   />
                 </TouchableOpacity>
               ))}

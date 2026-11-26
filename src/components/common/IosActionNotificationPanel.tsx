@@ -142,8 +142,8 @@ export const IosActionNotificationPanel: React.FC<IosActionNotificationPanelProp
       case 'recommendation':
         return {
           label: '✨ RECOMMENDED',
-          bg: '#FFFBEB',
-          text: '#D97706',
+          bg: '#FEE2E2',
+          text: '#E34234',
           icon: 'sparkles' as const,
         };
       case 'update':
@@ -212,7 +212,7 @@ export const IosActionNotificationPanel: React.FC<IosActionNotificationPanelProp
         <View style={styles.headerRow}>
           <View style={styles.appIdentity}>
             <View style={[styles.appIconBadge, { backgroundColor: '#102F53' }]}>
-              <Ionicons name="sparkles" size={10} color="#FFB606" />
+              <Ionicons name="sparkles" size={10} color="#E34234" />
             </View>
             <Text style={[styles.appName, { color: isDark ? '#94A3B8' : '#64748B' }]}>
               THRIVING <Text style={{ color: '#E34234' }}>SKILLS</Text>

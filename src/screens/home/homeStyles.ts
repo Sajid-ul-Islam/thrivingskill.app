@@ -53,7 +53,7 @@ export const homeStyles = StyleSheet.create({
     borderRadius: 6,
     marginLeft: 4,
   },
-  proBadgeText: { fontSize: 9, fontWeight: '800', color: '#D97706' },
+  proBadgeText: { fontSize: 9, fontWeight: '800', color: '#E34234' },
   greetingTitle: { fontSize: 17, fontWeight: '800', letterSpacing: -0.3 },
   momentumCapsule: {
     flexDirection: 'row',

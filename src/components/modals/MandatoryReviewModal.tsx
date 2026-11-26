@@ -10,6 +10,7 @@ import {
   Platform,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,7 +23,7 @@ interface MandatoryReviewModalProps {
   visible: boolean;
   courseTitle: string;
   instructorName: string;
-  onSubmit: (rating: number, feedback: string) => void;
+  onSubmit: (rating: number, feedback: string) => Promise<void> | void;
   onDismissLater?: () => void;
 }
 
@@ -40,6 +41,7 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
   const [rating, setRating] = useState<number>(5);
   const [feedback, setFeedback] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const getRatingLabel = (score: number) => {
     switch (score) {
@@ -58,7 +60,8 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
     if (rating === 0) {
       setErrorMessage(
         isBangla ? 'দয়া করে ১ থেকে ৫ এর মধ্যে স্টার রেটিং দিন।' : 'Please select a star rating (1-5).'
@@ -74,7 +77,19 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
       return;
     }
     setErrorMessage('');
-    onSubmit(rating, feedback.trim());
+    setIsSubmitting(true);
+    try {
+      await onSubmit(rating, feedback.trim());
+    } catch (err: any) {
+      setErrorMessage(
+        err?.message ||
+          (isBangla
+            ? 'সার্ভারে রিভিউ ও সার্টিফিকেট যাচাই করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।'
+            : 'Could not verify course completion and save review on the server. Please try again.')
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDismiss = () => {
@@ -242,17 +257,27 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
 
             {/* Submit Action Button */}
             <TouchableOpacity
-              style={[styles.submitButton, { backgroundColor: '#E34234' }]}
+              style={[
+                styles.submitButton,
+                { backgroundColor: '#E34234', opacity: isSubmitting ? 0.7 : 1 },
+              ]}
               onPress={handleSubmit}
+              disabled={isSubmitting}
               accessibilityRole="button"
               activeOpacity={0.85}
             >
-              <Ionicons name="lock-open" size={18} color="#FFFFFF" />
-              <Text style={[styles.submitButtonText, { color: '#FFFFFF' }]}>
-                {isBangla
-                  ? 'রিভিউ জমা দিন ও সার্টিফিকেট আনলক করুন'
-                  : 'Submit Review & Unlock Certificate'}
-              </Text>
+              {isSubmitting ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <>
+                  <Ionicons name="lock-open" size={18} color="#FFFFFF" />
+                  <Text style={[styles.submitButtonText, { color: '#FFFFFF' }]}>
+                    {isBangla
+                      ? 'রিভিউ জমা দিন ও সার্টিফিকেট আনলক করুন'
+                      : 'Submit Review & Unlock Certificate'}
+                  </Text>
+                </>
+              )}
             </TouchableOpacity>
 
             {/* Dismiss for now */}
@@ -260,6 +285,7 @@ export const MandatoryReviewModal: React.FC<MandatoryReviewModalProps> = ({
               <TouchableOpacity
                 style={styles.laterButton}
                 onPress={handleDismiss}
+                disabled={isSubmitting}
                 accessibilityRole="button"
                 accessibilityLabel={isBangla ? 'পরে রিভিউ দেব' : 'Review later'}
               >

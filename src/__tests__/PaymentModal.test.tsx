@@ -3,6 +3,7 @@ import { Alert, Linking } from 'react-native';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react-native';
 import { PaymentModal } from '../components/modals/PaymentModal';
 import { CoursesService } from '../services/api/coursesService';
+import { CompanionService } from '../services/api/companionService';
 import { Course } from '../types';
 
 let capturedWebViewProps: any = null;
@@ -58,19 +59,22 @@ jest.mock('../context/LanguageContext', () => ({
 const mockUpdateUserProfile = jest.fn(async () => undefined);
 const mockSetAuthModalVisible = jest.fn();
 
+const defaultMockAuthUser = {
+  id: 42,
+  username: 'learner42',
+  email: 'learner42@example.com',
+  displayName: 'Tariqul Islam',
+  first_name: 'Tariqul',
+  last_name: 'Islam',
+  phone: '01711223344',
+  city: 'Dhaka',
+};
+let mockAuthUser = { ...defaultMockAuthUser };
+
 jest.mock('../context/AuthContext', () => ({
   useAuth: () => ({
     isAuthenticated: true,
-    user: {
-      id: 42,
-      username: 'learner42',
-      email: 'learner42@example.com',
-      displayName: 'Tariqul Islam',
-      first_name: 'Tariqul',
-      last_name: 'Islam',
-      phone: '01711223344',
-      city: 'Dhaka',
-    },
+    user: mockAuthUser,
     setAuthModalVisible: mockSetAuthModalVisible,
     updateUserProfile: mockUpdateUserProfile,
   }),
@@ -104,6 +108,15 @@ jest.mock('../services/api/coursesService', () => ({
       enrolled: false,
       enrolledCourseIds: [],
       reason: 'not_enrolled',
+    })),
+  },
+}));
+
+jest.mock('../services/api/companionService', () => ({
+  CompanionService: {
+    createWebViewHandoffUrl: jest.fn(async ({ courseId }: { courseId?: string | number }) => ({
+      loginUrl: `https://thrivingskill.com/?tsmb_handoff=single_use_tok_${courseId || '0'}`,
+      expiresIn: 120,
     })),
   },
 }));
@@ -149,6 +162,7 @@ const sampleCourse: Course = {
 describe('PaymentModal (Issue 14 checkout hardening)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockAuthUser = { ...defaultMockAuthUser };
     capturedWebViewProps = null;
     (CoursesService.getWooCommerceProductPricing as jest.Mock).mockResolvedValue({
       id: '88180',
@@ -194,10 +208,17 @@ describe('PaymentModal (Issue 14 checkout hardening)', () => {
     await fireEvent.press(checkbox);
     expect(screen.getByRole('checkbox').props.accessibilityState?.checked).toBe(true);
 
-    // Now Proceed opens the WebView drawer
+    // Now Proceed acquires a single-use cookie handoff URL and opens the WebView drawer
     await fireEvent.press(screen.getByRole('button', { name: 'Proceed to Secure Checkout' }));
     await waitFor(() => {
+      expect(CompanionService.createWebViewHandoffUrl).toHaveBeenCalledWith({
+        courseId: '88180',
+        redirectPath: '/checkout/?add-to-cart=88180',
+      });
       expect(capturedWebViewProps).not.toBeNull();
+      expect(capturedWebViewProps.source?.uri).toBe(
+        'https://thrivingskill.com/?tsmb_handoff=single_use_tok_88180'
+      );
     });
   });
 

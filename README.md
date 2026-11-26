@@ -28,6 +28,8 @@ All detailed specifications, technical architectures, client proposals, and rele
 | **Features Inventory** | [FEATURES.md](./docs/FEATURES.md) | Exhaustive inventory of all 18+ functional modules and client deliverables |
 | **Developer Skills & Tools** | [SKILLS.md](./docs/SKILLS.md) | Automation scripts, `audit_app.js`, commands, testing runbooks |
 | **Client Requirements Audit** | [client_requirements.md](./docs/client_requirements.md) | Full audit of CR-01 to CR-05 against CyberCraft proposal |
+| **Implementation Status** | [IMPLEMENTATION_STATUS.md](./docs/IMPLEMENTATION_STATUS.md) | **Authoritative matrix**: UI, local logic, backend, tests & prod verification per feature |
+| **Testing & Layer 3 QA** | [TEST_INFRA.md](./docs/TEST_INFRA.md) / [REAL_DEVICE_TEST_CHECKLIST.md](./docs/REAL_DEVICE_TEST_CHECKLIST.md) | 3-Layer QA (Offline CI, Staging E2E Journey, Physical Device Checklist) |
 | **Changelog & History** | [CHANGELOG.md](./docs/CHANGELOG.md) | Detailed version history from v1.0.0 through v1.4.0 |
 | **Developer Contributing** | [CONTRIBUTING.md](./docs/CONTRIBUTING.md) | Git workflow, commit conventions, PR standards |
 | **Tech Stack Deep Dive** | [TECH_STACK_ANALYSIS.md](./docs/TECH_STACK_ANALYSIS.md) | Evaluation of Expo SDK 58, React 19.3, React Navigation 7, and WordPress REST APIs |
@@ -53,7 +55,7 @@ All detailed specifications, technical architectures, client proposals, and rele
    - Simplified **4-Field Registration** (`fullName`, `email`, `phone`, `password`) with automated unique username generation (`sajidislam582`) and instant tokenized auto-login.
 5. **CR-05: Authenticated Learner Profile & Analytics Dashboard**:
    - Enrolled Courses shelf with active progress tracking and direct "Continue Learning" CTA.
-   - Graduated Courses shelf with verified completion certificates and Gold ribbon badges.
+   - Graduated Courses shelf with verified completion certificates and Brand Navy/Crimson completion badges (`#102F53` / `#E34234`).
    - Visual learning analytics: SVG Circular Mastery Donut Chart & 7-day Weekly Velocity Bar Chart.
 
 ### Recent Enhancements (v1.4.0)
@@ -91,7 +93,7 @@ All client environment variables live in [`src/config/env.ts`](./src/config/env.
 ## 🎨 Official Brand Identity Palette
 
 - **Brand Deep Navy (`#102F53`)**: Primary headers, card backgrounds, navigation accents.
-- **Sunshine Gold (`#FFB606`)**: Achievement badges, graduation ribbons, star ratings, certificate highlights.
+- **Official Brand Navy (`#102F53`)**, **Brand Red (`#E34234`)**, and **Pure White (`#FFFFFF`)** core palette (`#FFB606` reserved exclusively for course rating stars).
 - **Crimson / Coral (`#E34234`)**: Primary CTA buttons, active state indicators.
 - **Slate & Crisp Surface Whites (`#F8FAFC`, `#FFFFFF`, `#0F192C`)**: High contrast WCAG AA/AAA compliant text and card surfaces.
 

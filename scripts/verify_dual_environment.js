@@ -16,7 +16,7 @@ function probeHttps(url, method = 'GET', body = null) {
     try {
       const parsed = new URL(url);
       const headers = {
-        'User-Agent': 'ThrivingSkillsApp/1.4.0 (Node Verification)',
+        'User-Agent': `ThrivingSkillsApp/${require('../package.json').version} (Node Verification)`,
         Accept: 'application/json',
       };
       if (body) {
