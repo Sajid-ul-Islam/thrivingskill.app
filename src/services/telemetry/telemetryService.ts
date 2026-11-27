@@ -3,6 +3,46 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Sentry from '@sentry/react-native';
 import { Env } from '../../config/env';
 import { APP_VERSION } from '../../config/appVersion';
+import {
+  AnalyticsService,
+  DEFAULT_RECOMMENDATION_ATTRIBUTION_WINDOW_MS,
+  type AnalyticsEventRecord,
+  type RecommendationAttributionRecord,
+  type RecommendationAttributionSummary,
+  type RecommendationClickOptions,
+  type RecommendationClickRecord,
+  type RecommendationConversionOptions,
+  type RecommendationImpressionItem,
+  type RecommendationImpressionOptions,
+  type RecommendationImpressionRecord,
+  type RecommendationSourceMetrics,
+} from '../analytics/analyticsService';
+import {
+  sanitizeSentryBreadcrumb,
+  sanitizeSentryEvent,
+  sanitizeSensitiveUrl,
+  isPhoneNumberUsername,
+} from './telemetrySanitizer';
+
+export {
+  DEFAULT_RECOMMENDATION_ATTRIBUTION_WINDOW_MS,
+  sanitizeSentryBreadcrumb,
+  sanitizeSentryEvent,
+  sanitizeSensitiveUrl,
+  isPhoneNumberUsername,
+};
+export type {
+  AnalyticsEventRecord,
+  RecommendationAttributionRecord,
+  RecommendationAttributionSummary,
+  RecommendationClickOptions,
+  RecommendationClickRecord,
+  RecommendationConversionOptions,
+  RecommendationImpressionItem,
+  RecommendationImpressionOptions,
+  RecommendationImpressionRecord,
+  RecommendationSourceMetrics,
+};
 
 export interface TelemetryBreadcrumb {
   category: 'navigation' | 'auth' | 'video' | 'checkout' | 'system' | 'network';
@@ -28,100 +68,11 @@ const STORAGE_KEY_CRASHES = '@thrivingskill_telemetry_crashes';
 const MAX_BREADCRUMBS = 30;
 const MAX_STORED_CRASHES = 20;
 
-const SENSITIVE_QUERY_PARAM_REGEX =
-  /([?&](?:order_key|key|rp_key|token|tsmb_handoff|otp|password|reset_key)=)[^&#\s]+/gi;
-
-export function sanitizeSensitiveUrl(raw: string): string {
-  if (!raw || typeof raw !== 'string') return '';
-  return raw.replace(SENSITIVE_QUERY_PARAM_REGEX, '$1[REDACTED]');
-}
-
-function sanitizeTelemetryRecord(value: any, depth: number = 0): any {
-  if (depth > 3 || value === null || value === undefined) return value;
-  if (typeof value === 'string') return sanitizeSensitiveUrl(value);
-  if (Array.isArray(value)) {
-    return value.map((item) => sanitizeTelemetryRecord(item, depth + 1));
-  }
-  if (typeof value === 'object') {
-    const out: Record<string, any> = {};
-    for (const [k, v] of Object.entries(value)) {
-      const lowerKey = k.toLowerCase();
-      if (
-        lowerKey === 'order_key' ||
-        lowerKey === 'orderkey' ||
-        lowerKey === 'tsmb_handoff' ||
-        lowerKey === 'token' ||
-        lowerKey === 'password' ||
-        lowerKey === 'otp'
-      ) {
-        out[k] = '[REDACTED]';
-      } else {
-        out[k] = sanitizeTelemetryRecord(v, depth + 1);
-      }
-    }
-    return out;
-  }
-  return value;
-}
-
-export function sanitizeSentryBreadcrumb<T extends Record<string, any> | null | undefined>(
-  breadcrumb: T
-): T {
-  if (!breadcrumb || typeof breadcrumb !== 'object') return breadcrumb;
-  return {
-    ...breadcrumb,
-    ...(typeof breadcrumb.message === 'string'
-      ? { message: sanitizeSensitiveUrl(breadcrumb.message) }
-      : {}),
-    ...(breadcrumb.data ? { data: sanitizeTelemetryRecord(breadcrumb.data) } : {}),
-  } as T;
-}
-
-export function sanitizeSentryEvent<T extends Record<string, any> | null | undefined>(event: T): T {
-  if (!event || typeof event !== 'object') return event;
-  const copy: any = { ...event };
-  if (copy.request) {
-    copy.request = sanitizeTelemetryRecord(copy.request);
-  }
-  if (Array.isArray(copy.breadcrumbs)) {
-    copy.breadcrumbs = copy.breadcrumbs.map((b: any) => sanitizeSentryBreadcrumb(b));
-  } else if (copy.breadcrumbs && Array.isArray(copy.breadcrumbs.values)) {
-    copy.breadcrumbs = {
-      ...copy.breadcrumbs,
-      values: copy.breadcrumbs.values.map((b: any) => sanitizeSentryBreadcrumb(b)),
-    };
-  }
-  if (copy.user && typeof copy.user === 'object') {
-    const cleanUser: Record<string, any> = {};
-    if (copy.user.id !== undefined) cleanUser.id = copy.user.id;
-    if (
-      typeof copy.user.username === 'string' &&
-      !isPhoneNumberUsername(copy.user.username) &&
-      !copy.user.username.endsWith('@phone.thrivingskill.com')
-    ) {
-      cleanUser.username = copy.user.username;
-    }
-    copy.user = cleanUser;
-  }
-  return copy;
-}
-
-export function isPhoneNumberUsername(username?: string | null): boolean {
-  if (!username || typeof username !== 'string') return false;
-  const clean = username.trim();
-  return /^\+?\d[\d\s()-]{6,}$/.test(clean);
-}
-
 export class TelemetryService {
   private static isInitialized = false;
   private static breadcrumbs: TelemetryBreadcrumb[] = [];
   private static currentUser: { id: string; username?: string; role?: string } | null = null;
   private static activeDsn = '';
-  private static recommendationImpressions = 0;
-  private static recommendationClicks = 0;
-  private static recommendationConversions = 0;
-  private static lastImpressedRecommendationSignature = '';
-  private static recommendedCoursePool = new Set<string>();
 
   /**
    * Initializes official @sentry/react-native crash reporting using static build-time Env.SENTRY_DSN.
@@ -191,10 +142,11 @@ export class TelemetryService {
   }
 
   /**
-   * Associates telemetry & Sentry crash events with the active authenticated learner without sending phone PII.
+   * Associates crash telemetry & product analytics with the active authenticated learner without sending phone PII.
    */
   static setUser(user: { id: string; username?: string; role?: string } | null): void {
     this.currentUser = user;
+    AnalyticsService.setUser(user);
     try {
       if (!user) {
         Sentry.setUser(null);
@@ -255,73 +207,58 @@ export class TelemetryService {
   }
 
   /**
-   * Tracks custom business/learning breadcrumbs.
+   * Delegates custom business/learning analytics events to the durable AnalyticsService store
+   * rather than recording product analytics inside Sentry crash breadcrumbs.
    */
-  static trackEvent(eventName: string, properties?: Record<string, any>): void {
-    this.addBreadcrumb({
-      category: 'system',
-      message: `Event: ${eventName}`,
-      data: properties,
-    });
+  static trackEvent(eventName: string, properties?: Record<string, any>): AnalyticsEventRecord {
+    return AnalyticsService.trackEvent(eventName, properties);
   }
 
-  /**
-   * Records a deduplicated recommendation impression when a personalized shelf is displayed.
-   */
-  static trackRecommendationImpression(courseIds: string[], surface: string = 'home'): void {
-    const normalizedIds = Array.from(new Set(courseIds.map((id) => String(id)).filter(Boolean)));
-    if (normalizedIds.length === 0) return;
-
-    const signature = `${surface}:${normalizedIds.join(',')}`;
-    if (signature === this.lastImpressedRecommendationSignature) {
-      return;
-    }
-
-    this.lastImpressedRecommendationSignature = signature;
-    this.recommendationImpressions += 1;
-    normalizedIds.forEach((id) => this.recommendedCoursePool.add(id));
-
-    this.trackEvent('recommendation_impression', {
-      surface,
-      count: normalizedIds.length,
-      courseIds: normalizedIds,
-    });
+  static getSessionId(): string {
+    return AnalyticsService.getSessionId();
   }
 
-  /**
-   * Records a user click on a recommended course card.
-   */
-  static trackRecommendationClick(courseId: string, category?: string, position?: number): void {
-    const idStr = String(courseId);
-    if (!idStr) return;
-    this.recommendedCoursePool.add(idStr);
-    this.recommendationClicks += 1;
-
-    this.trackEvent('recommendation_click', {
-      courseId: idStr,
-      category: category || 'unknown',
-      position,
-    });
+  static setSessionId(sessionId: string): string {
+    return AnalyticsService.setSessionId(sessionId);
   }
 
-  /**
-   * Attributes an enrollment or purchase conversion when the course appeared in recommendations.
-   */
+  static startNewSession(): string {
+    return AnalyticsService.startNewSession();
+  }
+
+  static setRecommendationAttributionWindowMs(windowMs: number): void {
+    AnalyticsService.setRecommendationAttributionWindowMs(windowMs);
+  }
+
+  static getRecommendationAttributionWindowMs(): number {
+    return AnalyticsService.getRecommendationAttributionWindowMs();
+  }
+
+  static trackRecommendationImpression(
+    items: (string | RecommendationImpressionItem)[],
+    surfaceOrOptions: string | RecommendationImpressionOptions = 'home'
+  ): string | null {
+    return AnalyticsService.trackRecommendationImpression(items, surfaceOrOptions);
+  }
+
+  static trackRecommendationClick(
+    courseId: string,
+    categoryOrOptions?: string | RecommendationClickOptions,
+    position?: number
+  ): RecommendationClickRecord | null {
+    return AnalyticsService.trackRecommendationClick(courseId, categoryOrOptions, position);
+  }
+
   static trackRecommendationConversion(
     courseId: string,
-    conversionType: 'enroll' | 'purchase' = 'enroll'
+    conversionTypeOrOptions: 'enroll' | 'purchase' | RecommendationConversionOptions = 'enroll',
+    extraOptions?: Omit<RecommendationConversionOptions, 'conversionType'>
   ): boolean {
-    const idStr = String(courseId);
-    if (!idStr || !this.recommendedCoursePool.has(idStr)) {
-      return false;
-    }
-
-    this.recommendationConversions += 1;
-    this.trackEvent('recommendation_conversion', {
-      courseId: idStr,
-      conversionType,
-    });
-    return true;
+    return AnalyticsService.trackRecommendationConversion(
+      courseId,
+      conversionTypeOrOptions,
+      extraOptions
+    );
   }
 
   static getRecommendationMetrics(): {
@@ -331,24 +268,31 @@ export class TelemetryService {
     ctr: number;
     conversionRate: number;
   } {
-    const impressions = this.recommendationImpressions;
-    const clicks = this.recommendationClicks;
-    const conversions = this.recommendationConversions;
-    return {
-      impressions,
-      clicks,
-      conversions,
-      ctr: impressions > 0 ? Number((clicks / impressions).toFixed(4)) : 0,
-      conversionRate: clicks > 0 ? Number((conversions / clicks).toFixed(4)) : 0,
-    };
+    return AnalyticsService.getRecommendationMetrics();
+  }
+
+  static getRecommendationAttributions(): RecommendationAttributionRecord[] {
+    return AnalyticsService.getRecommendationAttributions();
+  }
+
+  static getLastRecommendationAttribution(): RecommendationAttributionRecord | null {
+    return AnalyticsService.getLastRecommendationAttribution();
+  }
+
+  static getPendingRecommendationClicks(): RecommendationClickRecord[] {
+    return AnalyticsService.getPendingRecommendationClicks();
+  }
+
+  static getRecommendationAttributionSummary(): RecommendationAttributionSummary {
+    return AnalyticsService.getRecommendationAttributionSummary();
+  }
+
+  static async hydrateRecommendationAttributions(force: boolean = false): Promise<void> {
+    return AnalyticsService.hydrate(force);
   }
 
   static resetRecommendationMetrics(): void {
-    this.recommendationImpressions = 0;
-    this.recommendationClicks = 0;
-    this.recommendationConversions = 0;
-    this.lastImpressedRecommendationSignature = '';
-    this.recommendedCoursePool.clear();
+    AnalyticsService.resetAnalytics();
   }
 
   private static async persistCrashLocally(event: TelemetryEvent): Promise<void> {

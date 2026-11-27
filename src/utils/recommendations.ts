@@ -1,6 +1,8 @@
 import { Category, Course, UserProgress } from '../types';
 import { computeBm25Scores, tokenizeSearchText } from '../services/search/bm25';
 
+export const DEFAULT_RECOMMENDATION_SOURCE = 'home_bm25_behavioral_v1';
+
 export interface RecommendationInput {
   courses: Course[];
   categories: Category[];
@@ -8,12 +10,27 @@ export interface RecommendationInput {
   categoryAffinities: Record<string, number>;
   searchKeywordsHistory: string[];
   limit?: number;
+  source?: string;
+  recommendationId?: string;
 }
 
 export interface RecommendationResult {
+  recommendationId: string;
+  source: string;
   courses: Course[];
   rationale: string;
   rationaleBn: string;
+}
+
+function buildRecommendationId(source: string, courseIds: string[]): string {
+  const payload = `${source}:${courseIds.join(',')}`;
+  let hash = 2166136261;
+  for (let i = 0; i < payload.length; i++) {
+    hash ^= payload.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  const safeSource = source.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 32) || 'rec';
+  return `rec_${safeSource}_${(hash >>> 0).toString(16).padStart(8, '0')}`;
 }
 
 /**
@@ -28,6 +45,8 @@ export function computeRecommendedCourses({
   categoryAffinities,
   searchKeywordsHistory,
   limit = 6,
+  source = DEFAULT_RECOMMENDATION_SOURCE,
+  recommendationId,
 }: RecommendationInput): RecommendationResult {
   const scoreByCat: Record<string, number> = { ...categoryAffinities };
   const engagedTexts: string[] = [];
@@ -133,5 +152,19 @@ export function computeRecommendedCourses({
     rationaleBn = `আপনার আগ্রহের ভিত্তিতে সুপারিশ: "${topCatObj.banglaName || topCatObj.name}" বিষয়ক প্রস্তাবিত কোর্স`;
   }
 
-  return { courses: recommended, rationale, rationaleBn };
+  const resolvedSource = source.trim() || DEFAULT_RECOMMENDATION_SOURCE;
+  const resolvedRecommendationId =
+    recommendationId?.trim() ||
+    buildRecommendationId(
+      resolvedSource,
+      recommended.map((item) => String(item.id))
+    );
+
+  return {
+    recommendationId: resolvedRecommendationId,
+    source: resolvedSource,
+    courses: recommended,
+    rationale,
+    rationaleBn,
+  };
 }

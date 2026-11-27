@@ -20,6 +20,7 @@ import { useFeedback } from '../../context/FeedbackContext';
 import { PushNotificationService } from '../../services/notifications/pushNotificationService';
 import { StateView } from '../common';
 import { triggerHaptic } from '../../utils/haptics';
+import { AnalyticsService } from '../../services/analytics/analyticsService';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
 import { SaaSNotification } from '../../types';
@@ -96,6 +97,31 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
     return n.type === filterType;
   });
 
+  useEffect(() => {
+    if (!visible) return;
+    filtered.forEach((notif, idx) => {
+      if (notif.type !== 'recommendation') return;
+      const targetCourseId = notif.data?.courseId || notif.actionRoute?.courseId;
+      if (!targetCourseId) return;
+      AnalyticsService.trackRecommendationImpression(
+        [
+          {
+            courseId: String(targetCourseId),
+            position:
+              typeof notif.data?.recommendationPosition === 'number'
+                ? notif.data.recommendationPosition
+                : idx,
+          },
+        ],
+        {
+          recommendationId: notif.data?.recommendationId || `notif_${notif.id}`,
+          source: notif.data?.recommendationSource || 'push_notification_sync_v1',
+          surface: 'notification_center',
+        }
+      );
+    });
+  }, [visible, filtered]);
+
   const getIconForType = (type: SaaSNotification['type']) => {
     switch (type) {
       case 'offer':
@@ -119,9 +145,21 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
     }
   };
 
-  const handleNotificationPress = (notif: SaaSNotification) => {
+  const handleNotificationPress = (notif: SaaSNotification, position: number = 0) => {
     markNotificationRead(notif.id);
     const targetCourseId = notif.data?.courseId || notif.actionRoute?.courseId;
+
+    if (targetCourseId && notif.type === 'recommendation') {
+      AnalyticsService.trackRecommendationClick(String(targetCourseId), {
+        recommendationId: notif.data?.recommendationId || `notif_${notif.id}`,
+        source: notif.data?.recommendationSource || 'push_notification_sync_v1',
+        surface: 'notification_center',
+        position:
+          typeof notif.data?.recommendationPosition === 'number'
+            ? notif.data.recommendationPosition
+            : position,
+      });
+    }
 
     if (targetCourseId && onNavigateToTab) {
       onClose();
@@ -317,7 +355,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                 compact
               />
             ) : (
-              filtered.map((item) => {
+              filtered.map((item, itemIndex) => {
                 const icon = getIconForType(item.type);
                 const discount = item.data?.discountPercent;
                 const salePrice = item.data?.salePrice || item.data?.priceBdt;
@@ -333,7 +371,7 @@ export const NotificationModal: React.FC<NotificationModalProps> = ({
                         borderColor: colors.border,
                       },
                     ]}
-                    onPress={() => handleNotificationPress(item)}
+                    onPress={() => handleNotificationPress(item, itemIndex)}
                     activeOpacity={0.8}
                     accessibilityRole="button"
                     accessibilityLabel={`${item.title}, ${item.isRead ? 'read' : 'unread'}`}

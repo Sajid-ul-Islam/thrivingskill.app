@@ -14,6 +14,7 @@
     "test": "jest",
     "test:coverage": "jest --coverage",
     "test:php": "backend-plugin\\vendor\\bin\\phpunit -c backend-plugin/phpunit.xml.dist",
+    "test:php:integration": "backend-plugin\\vendor\\bin\\phpunit -c backend-plugin/phpunit.integration.xml.dist",
     "test:structural": "node scripts/run_all_tests.js",
     "test:staging": "node scripts/test_layer2_staging_integration.js",
     "test:e2e:journey": "node scripts/test_layer2_staging_integration.js --journey",

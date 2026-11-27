@@ -18,6 +18,7 @@ import {
   StudentTestimonialItem,
 } from '../../services/api/brandingService';
 import { AppRemoteConfig } from '../../services/api/companionService';
+import type { RecommendationResult } from '../../utils/recommendations';
 
 export interface LearningContextType {
   courses: Course[];
@@ -61,7 +62,7 @@ export interface LearningContextType {
   // Behavior-based Recommendations (CR-01)
   recordCategoryInteraction: (categoryId: string) => void;
   recordSearchKeyword: (keyword: string) => void;
-  getRecommendedCourses: () => { courses: Course[]; rationale: string; rationaleBn: string };
+  getRecommendedCourses: () => RecommendationResult;
 
   // Mandatory Review & Certificate Gating (CR-02)
   reviewedCourseIds: string[];

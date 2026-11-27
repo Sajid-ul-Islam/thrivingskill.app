@@ -138,6 +138,36 @@ final class TsMobileBridgeTest extends TestCase
         TSMB_Security::reset_request_context();
         $_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . $tokenB;
         $this->assertSame($uid, TSMB_Security::determine_current_user(0));
+
+        // External / LearnPress JWT passed via REDIRECT_HTTP_AUTHORIZATION is also blocklisted at REST auth layer
+        TSMB_Security::reset_request_context();
+        $lpHeader  = rtrim(strtr(base64_encode('{"alg":"HS256","typ":"JWT"}'), '+/', '-_'), '=');
+        $lpPayload = rtrim(
+            strtr(
+                base64_encode(json_encode([
+                    'iss'  => home_url('/'),
+                    'iat'  => time() - 10,
+                    'exp'  => time() + 3600,
+                    'data' => ['user' => ['id' => (string) $uid]],
+                ])),
+                '+/',
+                '-_'
+            ),
+            '='
+        );
+        $lpJwt = $lpHeader . '.' . $lpPayload . '.lp_sig';
+        unset($_SERVER['HTTP_AUTHORIZATION']);
+        $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] = 'Bearer ' . $lpJwt;
+        wp_set_current_user($uid);
+
+        $lpRevokeRes = TSMB_Rest_API::revoke_token(new WP_REST_Request([]));
+        $this->assertInstanceOf(WP_REST_Response::class, $lpRevokeRes);
+        $this->assertTrue($lpRevokeRes->get_data()['revoked']);
+
+        $this->assertSame(0, TSMB_Security::enforce_revoked_token($uid));
+        $restErr = TSMB_Security::reject_revoked_rest_token(true);
+        $this->assertInstanceOf(WP_Error::class, $restErr);
+        $this->assertSame(401, $restErr->get_error_data()['status']);
     }
 
     public function test_webview_handoff_is_single_use_and_sets_auth_cookie(): void
@@ -436,5 +466,46 @@ final class TsMobileBridgeTest extends TestCase
         $this->assertSame([], $state['enrolled_course_ids']);
         $this->assertSame(145, $state['watch_positions']['88180']['88181']);
         $this->assertSame(120, $state['gamification']['xp']);
+    }
+
+    public function test_engagement_sync_retains_newer_watch_position_when_older_device_syncs_later(): void
+    {
+        $uid = wp_insert_user(['user_login' => 'watchsync', 'user_email' => 'watchsync@example.com']);
+        wp_set_current_user($uid);
+
+        // Device A records 18 minutes (1080 seconds)
+        $resA = TSMB_Rest_API::sync_engagement_state(new WP_REST_Request([
+            'watch_positions' => ['88180' => ['88181' => 1080]],
+        ]));
+        $this->assertInstanceOf(WP_REST_Response::class, $resA);
+        $this->assertSame(1080, $resA->get_data()['watch_positions']['88180']['88181']);
+
+        // Device B still has older 10 minutes (600 seconds) for lesson 88181, plus progress on lesson 88182
+        $resB = TSMB_Rest_API::sync_engagement_state(new WP_REST_Request([
+            'watch_positions' => ['88180' => ['88181' => 600, '88182' => 310]],
+        ]));
+        $this->assertInstanceOf(WP_REST_Response::class, $resB);
+        $dataB = $resB->get_data();
+        $this->assertSame(1080, $dataB['watch_positions']['88180']['88181']);
+        $this->assertSame(310, $dataB['watch_positions']['88180']['88182']);
+
+        // Negative/invalid positions cannot regress stored watch positions either
+        $resNeg = TSMB_Rest_API::sync_engagement_state(new WP_REST_Request([
+            'watch_positions' => ['88180' => ['88181' => -25]],
+        ]));
+        $this->assertSame(1080, $resNeg->get_data()['watch_positions']['88180']['88181']);
+
+        // Subsequent learning-state fetch continues returning the newer 1080s position
+        $state = TSMB_Rest_API::get_learning_state(new WP_REST_Request([]))->get_data();
+        $this->assertSame(1080, $state['watch_positions']['88180']['88181']);
+        $this->assertSame(310, $state['watch_positions']['88180']['88182']);
+    }
+
+    public function test_get_config_exposes_plugin_version(): void
+    {
+        $res = TSMB_Rest_API::get_config();
+        $this->assertInstanceOf(WP_REST_Response::class, $res);
+        $data = $res->get_data();
+        $this->assertSame(TSMB_VERSION, $data['plugin_version']);
     }
 }

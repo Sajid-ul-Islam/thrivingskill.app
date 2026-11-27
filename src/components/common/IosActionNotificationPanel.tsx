@@ -18,6 +18,7 @@ import {
   InAppNotification,
 } from '../../services/notifications/pushNotificationService';
 import { triggerHaptic } from '../../utils/haptics';
+import { AnalyticsService } from '../../services/analytics/analyticsService';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
 import { getSafeImageSource } from '../../utils/imageUtils';
 
@@ -52,6 +53,25 @@ export const IosActionNotificationPanel: React.FC<IosActionNotificationPanelProp
       setActiveNotification(notif);
       setThumbError(false);
       triggerHaptic('success');
+
+      if (notif.type === 'recommendation' && notif.data?.courseId) {
+        AnalyticsService.trackRecommendationImpression(
+          [
+            {
+              courseId: String(notif.data.courseId),
+              position:
+                typeof notif.data?.recommendationPosition === 'number'
+                  ? notif.data.recommendationPosition
+                  : 0,
+            },
+          ],
+          {
+            recommendationId: notif.data?.recommendationId,
+            source: notif.data?.recommendationSource || 'push_notification_sync_v1',
+            surface: 'notification_banner',
+          }
+        );
+      }
 
       // Animate entry from top
       Animated.parallel([
@@ -168,6 +188,15 @@ export const IosActionNotificationPanel: React.FC<IosActionNotificationPanelProp
   const handlePrimaryAction = () => {
     triggerHaptic('light');
     dismissNotification();
+    if (courseId && type === 'recommendation') {
+      AnalyticsService.trackRecommendationClick(courseId, {
+        recommendationId: data?.recommendationId,
+        source: data?.recommendationSource || 'push_notification_sync_v1',
+        surface: 'notification_banner',
+        position:
+          typeof data?.recommendationPosition === 'number' ? data.recommendationPosition : 0,
+      });
+    }
     if (courseId && onNavigateToCourse) {
       onNavigateToCourse(courseId);
     } else if (postUrl) {

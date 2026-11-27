@@ -8,6 +8,7 @@
   },
   "mappings": {
     "wp-content/plugins/ts-mobile-bridge/tests": "./backend-plugin/tests",
-    "wp-content/plugins/ts-mobile-bridge/phpunit.xml.dist": "./backend-plugin/phpunit.xml.dist"
+    "wp-content/plugins/ts-mobile-bridge/phpunit.xml.dist": "./backend-plugin/phpunit.xml.dist",
+    "wp-content/plugins/ts-mobile-bridge/phpunit.integration.xml.dist": "./backend-plugin/phpunit.integration.xml.dist"
   }
 }

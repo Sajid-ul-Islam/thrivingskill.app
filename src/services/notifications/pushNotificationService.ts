@@ -761,7 +761,14 @@ export class PushNotificationService {
    * Dispatches an automated personalized course recommendation
    */
   static async notifyCourseRecommendation(
-    course: { id: string; title: string; reason: string; thumbnail?: string },
+    course: {
+      id: string;
+      title: string;
+      reason: string;
+      thumbnail?: string;
+      recommendationId?: string;
+      recommendationSource?: string;
+    },
     isBangla: boolean = false
   ): Promise<InAppNotification | null> {
     const settings = await this.getSettings();
@@ -771,6 +778,8 @@ export class PushNotificationService {
     const body = isBangla
       ? `${course.reason}: "${course.title}" কোর্সটি দিয়ে আপনার দক্ষতা একধাপ এগিয়ে নিন।`
       : `${course.reason}: Accelerate your learning journey with "${course.title}".`;
+    const recommendationId = course.recommendationId || `rec_push_${course.id}_${Date.now()}`;
+    const recommendationSource = course.recommendationSource || 'push_notification_sync_v1';
 
     return this.dispatchNotification(
       title,
@@ -780,6 +789,9 @@ export class PushNotificationService {
         courseId: course.id,
         courseName: course.title,
         recommendationReason: course.reason,
+        recommendationId,
+        recommendationSource,
+        recommendationPosition: 0,
         thumbnail: course.thumbnail,
         channelId: ANDROID_NOTIFICATION_CHANNELS.RECOMMENDATIONS.id,
       },

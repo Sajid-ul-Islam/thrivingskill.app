@@ -401,6 +401,9 @@ export class SiteSyncNotificationService {
       const throttle = await HabitNotificationQueue.canDeliverNotificationNow('normal');
       const isReceptive = await HabitNotificationQueue.isReceptiveTimeNow();
 
+      const recommendationId = `rec_push_${id}_${now}`;
+      const recommendationSource = 'push_notification_sync_v1';
+
       if (force || (throttle.allowed && isReceptive)) {
         await PushNotificationService.notifyCourseRecommendation(
           {
@@ -408,6 +411,8 @@ export class SiteSyncNotificationService {
             title,
             reason,
             thumbnail,
+            recommendationId,
+            recommendationSource,
           },
           isBangla
         );
@@ -426,6 +431,9 @@ export class SiteSyncNotificationService {
             courseId: id,
             courseName: title,
             recommendationReason: reason,
+            recommendationId,
+            recommendationSource,
+            recommendationPosition: 0,
             thumbnail,
           }
         );

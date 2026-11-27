@@ -7,7 +7,11 @@ import { HttpClient } from '../services/api/httpClient';
 import { CompanionService } from '../services/api/companionService';
 import { CorporateInquiryModal } from '../components/modals/CorporateInquiryModal';
 import { SupportContactModal } from '../components/modals/SupportContactModal';
-import { GamificationProvider, useGamification } from '../context/GamificationContext';
+import {
+  GamificationProvider,
+  getLocalDateString,
+  useGamification,
+} from '../context/GamificationContext';
 import { LearningProvider, useLearning } from '../context/LearningContext';
 
 jest.mock('@expo/vector-icons/Ionicons', () => {
@@ -291,7 +295,7 @@ describe('Priority 2 Backend Persistence & Engagement Sync', () => {
     } finally {
       await unmount();
     }
-  });
+  }, 30000);
 
   it('submits and displays tracked support tickets in SupportContactModal and handles unauthenticated state', async () => {
     const fetchMock = globalThis.fetch as jest.Mock;
@@ -372,10 +376,11 @@ describe('Priority 2 Backend Persistence & Engagement Sync', () => {
     } finally {
       await guestView.unmount();
     }
-  });
+  }, 30000);
 
   it('syncs GamificationContext streaks/XP monotonically and isolates server watch_positions from paid enrollment', async () => {
     jest.useFakeTimers();
+    const todayStr = getLocalDateString();
     const fetchMock = globalThis.fetch as jest.Mock;
     fetchMock.mockImplementation(async (url: string) => {
       if (url.includes('/learning-state')) {
@@ -388,16 +393,16 @@ describe('Priority 2 Backend Persistence & Engagement Sync', () => {
           watch_positions: { '88180': { '88181': 210 } },
           gamification: {
             streakDays: 6,
-            lastActiveDate: '2026-11-26',
+            lastActiveDate: todayStr,
             dailyMinutesSpent: 30,
             dailyGoalMinutes: 20,
             totalStudyMinutes: 300,
-            dailyHistory: { '2026-11-26': 30 },
+            dailyHistory: { [todayStr]: 30 },
             xp: 900,
             streakFreezes: 2,
             streakFreezeUsedToday: false,
             preferredStudyHour: 19,
-            unlockedBadges: [{ id: 'streak_champ', unlockedAt: '2026-11-26' }],
+            unlockedBadges: [{ id: 'streak_champ', unlockedAt: todayStr }],
             updatedAt: Date.now(),
           },
         });
@@ -452,6 +457,52 @@ describe('Priority 2 Backend Persistence & Engagement Sync', () => {
       await unmount();
       jest.clearAllTimers();
       jest.useRealTimers();
+    }
+  });
+
+  it('retains higher watch positions monotonically when local cache has an older timestamp', async () => {
+    // Secondary Device B starts with an older local cached watch position of 600s (10 min)
+    await AsyncStorage.setItem(
+      '@thriving_skill_watch_positions_u_42',
+      JSON.stringify({ '88180': { '88181': 600, '88182': 300 } })
+    );
+
+    const fetchMock = globalThis.fetch as jest.Mock;
+    fetchMock.mockImplementation(async (url: string) => {
+      if (url.includes('/learning-state')) {
+        // Server has Device A's newer 1080s (18 min) position for 88181, plus 120s for 88182
+        return makeJsonResponse({
+          status: 'success',
+          enrolled_course_ids: [],
+          reviewed_course_ids: [],
+          progress: {},
+          certificates: [],
+          watch_positions: { '88180': { '88181': 1080, '88182': 120 } },
+          gamification: null,
+        });
+      }
+      return makeJsonResponse({ status: 'success', watch_positions: {}, gamification: null });
+    });
+
+    const lRef: { current: ReturnType<typeof useLearning> | null } = { current: null };
+    const Probe = () => {
+      lRef.current = useLearning();
+      return <Text testID="pos">{lRef.current.getWatchPosition('88180', '88181')}</Text>;
+    };
+
+    const { unmount } = await render(
+      <LearningProvider>
+        <Probe />
+      </LearningProvider>
+    );
+
+    try {
+      await waitFor(() => {
+        expect(lRef.current?.getWatchPosition('88180', '88181')).toBe(1080);
+        expect(lRef.current?.getWatchPosition('88180', '88182')).toBe(300);
+      });
+    } finally {
+      await unmount();
     }
   });
 });

@@ -263,7 +263,8 @@ class TSMB_Security
     public static function init(): void
     {
         add_filter('determine_current_user', [__CLASS__, 'determine_current_user'], 20);
-        add_filter('determine_current_user', [__CLASS__, 'enforce_revoked_token'], 99);
+        add_filter('determine_current_user', [__CLASS__, 'enforce_revoked_token'], PHP_INT_MAX);
+        add_filter('rest_authentication_errors', [__CLASS__, 'reject_revoked_rest_token'], 999);
         add_action('init', [__CLASS__, 'handle_webview_handoff'], 1);
         add_action('wp_mail_failed', [__CLASS__, 'log_mail_failure']);
         add_action('after_password_reset', [__CLASS__, 'on_password_reset'], 10, 1);
@@ -295,11 +296,32 @@ class TSMB_Security
         }
         $next = self::get_user_token_version($user_id) + 1;
         update_user_meta($user_id, self::TOKEN_VERSION_META, $next);
+        update_user_meta($user_id, 'tsmb_tokens_revoked_before', time());
         return $next;
+    }
+
+    public static function decode_unverified_jwt_payload(string $raw_jwt): ?array
+    {
+        $parts = explode('.', trim($raw_jwt));
+        if (count($parts) !== 3) {
+            return null;
+        }
+        $decoded = json_decode(self::base64url_decode($parts[1]), true);
+        return is_array($decoded) ? $decoded : null;
     }
 
     public static function revoke_single_token(?string $jti, ?string $raw_jwt = null, int $exp = 0): bool
     {
+        if ($exp <= 0 && is_string($raw_jwt) && $raw_jwt !== '') {
+            $payload = self::decode_unverified_jwt_payload($raw_jwt);
+            if (is_array($payload)) {
+                $exp = intval($payload['exp'] ?? 0);
+                if (($jti === null || $jti === '') && !empty($payload['jti'])) {
+                    $jti = (string) $payload['jti'];
+                }
+            }
+        }
+
         $ttl = $exp > time() ? min(self::TOKEN_TTL_SECONDS, $exp - time() + 60) : self::TOKEN_TTL_SECONDS;
         $revoked = false;
 
@@ -333,7 +355,29 @@ class TSMB_Security
         if ($jwt === '') {
             return false;
         }
-        return get_transient('tsmb_rev_tok_' . hash('sha256', $jwt)) !== false;
+        if (get_transient('tsmb_rev_tok_' . hash('sha256', $jwt)) !== false) {
+            return true;
+        }
+
+        $payload = self::decode_unverified_jwt_payload($jwt);
+        if (!is_array($payload)) {
+            return false;
+        }
+
+        if (!empty($payload['jti']) && self::is_jti_revoked((string) $payload['jti'])) {
+            return true;
+        }
+
+        $token_uid = absint($payload['sub'] ?? ($payload['data']['user']['id'] ?? 0));
+        $token_iat = intval($payload['iat'] ?? 0);
+        if ($token_uid > 0 && $token_iat > 0) {
+            $revoked_before = intval(get_user_meta($token_uid, 'tsmb_tokens_revoked_before', true));
+            if ($revoked_before > 0 && $token_iat <= $revoked_before) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static function enforce_revoked_token($user_id)
@@ -342,6 +386,21 @@ class TSMB_Security
             return 0;
         }
         return $user_id;
+    }
+
+    public static function reject_revoked_rest_token($result)
+    {
+        if (self::is_bearer_token_revoked()) {
+            if (function_exists('wp_set_current_user')) {
+                wp_set_current_user(0);
+            }
+            return new WP_Error(
+                'tsmb_token_revoked',
+                __('This session token has been revoked. Please sign in again.', 'ts-mobile-bridge'),
+                ['status' => 401]
+            );
+        }
+        return $result;
     }
 
     public static function on_password_reset($user): void
@@ -760,12 +819,32 @@ class TSMB_Security
 
     private static function get_authorization_header(): string
     {
-        if (!empty($_SERVER['HTTP_AUTHORIZATION'])) {
-            return trim(sanitize_text_field(wp_unslash((string) $_SERVER['HTTP_AUTHORIZATION'])));
+        foreach (['HTTP_AUTHORIZATION', 'REDIRECT_HTTP_AUTHORIZATION', 'HTTP_X_AUTHORIZATION'] as $server_key) {
+            if (!empty($_SERVER[$server_key])) {
+                return trim(sanitize_text_field(wp_unslash((string) $_SERVER[$server_key])));
+            }
         }
-        if (!empty($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
-            return trim(sanitize_text_field(wp_unslash((string) $_SERVER['REDIRECT_HTTP_AUTHORIZATION'])));
+
+        $header_sources = [];
+        if (function_exists('getallheaders')) {
+            $header_sources[] = getallheaders();
         }
+        if (function_exists('apache_request_headers')) {
+            $header_sources[] = apache_request_headers();
+        }
+
+        foreach ($header_sources as $headers) {
+            if (!is_array($headers)) {
+                continue;
+            }
+            foreach ($headers as $name => $value) {
+                $lower = strtolower((string) $name);
+                if (($lower === 'authorization' || $lower === 'x-authorization') && is_string($value) && trim($value) !== '') {
+                    return trim(sanitize_text_field($value));
+                }
+            }
+        }
+
         return '';
     }
 
@@ -1039,10 +1118,20 @@ class TSMB_Rest_API
         $ctx        = TSMB_Security::get_current_token_context();
         $auth_hdr   = TSMB_Security::get_authorization_header_public();
         $bearer_jwt = (stripos($auth_hdr, 'Bearer ') === 0) ? trim(substr($auth_hdr, 7)) : '';
-        $jti        = is_array($ctx) ? (string) ($ctx['jti'] ?? '') : '';
-        $exp        = is_array($ctx) ? intval($ctx['exp'] ?? 0) : 0;
+        if ($bearer_jwt === '' && is_array($ctx) && !empty($ctx['raw_jwt'])) {
+            $bearer_jwt = (string) $ctx['raw_jwt'];
+        }
+        $jti = is_array($ctx) ? (string) ($ctx['jti'] ?? '') : '';
+        $exp = is_array($ctx) ? intval($ctx['exp'] ?? 0) : 0;
 
-        TSMB_Security::revoke_single_token($jti, $bearer_jwt, $exp);
+        $revoked = TSMB_Security::revoke_single_token($jti, $bearer_jwt, $exp);
+        if (!$revoked) {
+            return new WP_Error(
+                'missing_bearer_token',
+                __('No active Bearer token was found to revoke.', 'ts-mobile-bridge'),
+                ['status' => 400]
+            );
+        }
 
         return rest_ensure_response([
             'status'        => 'success',
@@ -1100,6 +1189,7 @@ class TSMB_Rest_API
 
         return rest_ensure_response([
             'status'          => 'success',
+            'plugin_version'  => TSMB_VERSION,
             'version_control' => [
                 'min_required_version' => $min_version,
                 'latest_version'       => $latest_version,
@@ -3336,6 +3426,23 @@ class TSMB_Rest_API
         return $clean;
     }
 
+    private static function merge_watch_positions(array $existing, array $incoming): array
+    {
+        $merged         = self::normalize_watch_positions($existing);
+        $clean_incoming = self::normalize_watch_positions($incoming);
+
+        foreach ($clean_incoming as $cid => $lesson_map) {
+            $existing_course = isset($merged[$cid]) && is_array($merged[$cid]) ? $merged[$cid] : [];
+            foreach ($lesson_map as $lid => $sec) {
+                $prev_sec              = isset($existing_course[$lid]) ? intval($existing_course[$lid]) : 0;
+                $existing_course[$lid] = max($prev_sec, intval($sec));
+            }
+            $merged[$cid] = $existing_course;
+        }
+
+        return self::normalize_watch_positions($merged);
+    }
+
     public static function get_user_gamification_state(int $user_id): ?array
     {
         if ($user_id <= 0) {
@@ -3495,15 +3602,7 @@ class TSMB_Rest_API
         $watch_positions = self::get_user_watch_positions($user_id);
         $raw_positions   = $params['watch_positions'] ?? ($params['watchPositions'] ?? null);
         if (is_array($raw_positions)) {
-            $incoming_pos = self::normalize_watch_positions($raw_positions);
-            foreach ($incoming_pos as $cid => $lesson_map) {
-                $existing_course = $watch_positions[$cid] ?? [];
-                foreach ($lesson_map as $lid => $sec) {
-                    $existing_course[$lid] = $sec;
-                }
-                $watch_positions[$cid] = $existing_course;
-            }
-            $watch_positions = self::normalize_watch_positions($watch_positions);
+            $watch_positions = self::merge_watch_positions($watch_positions, $raw_positions);
             update_user_meta($user_id, self::USER_META_WATCH_POSITIONS, $watch_positions);
         }
 

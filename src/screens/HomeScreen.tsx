@@ -44,7 +44,7 @@ import {
 import type { WpPost, Course, RootTab } from '../types';
 import { triggerHaptic } from '../utils/haptics';
 import { typography, MIN_TOUCH_TARGET } from '../theme/typography';
-import { TelemetryService } from '../services/telemetry/telemetryService';
+import { AnalyticsService } from '../services/analytics/analyticsService';
 import { homeStyles as styles } from './home/homeStyles';
 import { HomeGreetingCard } from './home/HomeGreetingCard';
 import { useHomeDashboard } from './home/useHomeDashboard';
@@ -54,6 +54,8 @@ interface CategoryRowProps {
   subtitle?: string;
   courses: Course[];
   isRecommendationRow?: boolean;
+  recommendationId?: string;
+  recommendationSource?: string;
   onNavigateToCourse: (id: string) => void;
   onNavigateTab: (tab: RootTab) => void;
   colors: ReturnType<typeof useTheme>['colors'];
@@ -61,11 +63,13 @@ interface CategoryRowProps {
 
 const CARD_GAP = 12;
 
-const CategoryRow: React.FC<CategoryRowProps> = ({
+export const CategoryRow: React.FC<CategoryRowProps> = ({
   title,
   subtitle,
   courses,
   isRecommendationRow = false,
+  recommendationId,
+  recommendationSource,
   onNavigateToCourse,
   onNavigateTab,
   colors,
@@ -76,9 +80,11 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const indexRef = useRef<number>(0);
   const isDraggingRef = useRef<boolean>(false);
+  const activeRecommendationIdRef = useRef<string | undefined>(recommendationId);
 
   const displayCourses = useMemo(() => courses.slice(0, 7), [courses]);
   const itemCount = displayCourses.length;
+  const isNonScrollableRow = itemCount === 1 || (isTablet && itemCount === 2 && !isLandscape);
   const effectiveWidth = Math.min(width, 1100);
 
   const cardWidth = useMemo(() => {
@@ -94,13 +100,80 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
   const cardSnap = cardWidth + CARD_GAP;
 
   useEffect(() => {
-    if (isRecommendationRow && displayCourses.length > 0) {
-      TelemetryService.trackRecommendationImpression(
-        displayCourses.map((c) => c.id),
-        'home'
-      );
+    activeRecommendationIdRef.current = recommendationId;
+  }, [recommendationId]);
+
+  useEffect(() => {
+    if (!isRecommendationRow || !isNonScrollableRow || displayCourses.length === 0) {
+      return;
     }
-  }, [isRecommendationRow, displayCourses]);
+    const visibleItems = displayCourses.map((c, idx) => ({
+      courseId: c.id,
+      position: idx,
+    }));
+    const trackedId = AnalyticsService.trackRecommendationImpression(visibleItems, {
+      surface: 'home',
+      source: recommendationSource || 'home_bm25_behavioral_v1',
+      recommendationId,
+    });
+    if (trackedId) {
+      activeRecommendationIdRef.current = trackedId;
+    }
+  }, [
+    isRecommendationRow,
+    isNonScrollableRow,
+    displayCourses,
+    recommendationId,
+    recommendationSource,
+  ]);
+
+  type ViewableItemsInfo = Parameters<
+    NonNullable<React.ComponentProps<typeof FlatList<Course>>['onViewableItemsChanged']>
+  >[0];
+
+  const viewabilityConfigRef = useRef({
+    itemVisiblePercentThreshold: 50,
+    minimumViewTime: 250,
+  });
+
+  const latestViewableHandlerRef = useRef<(info: ViewableItemsInfo) => void>(() => {});
+  latestViewableHandlerRef.current = ({ viewableItems }) => {
+    if (!isRecommendationRow || displayCourses.length === 0) return;
+    const visibleCards = viewableItems
+      .filter((token) => token.isViewable && token.item)
+      .map((token) => ({
+        courseId: String((token.item as Course).id),
+        position: typeof token.index === 'number' ? token.index : 0,
+      }));
+    if (visibleCards.length === 0) return;
+
+    const trackedId = AnalyticsService.trackRecommendationImpression(visibleCards, {
+      surface: 'home',
+      source: recommendationSource || 'home_bm25_behavioral_v1',
+      recommendationId: activeRecommendationIdRef.current || recommendationId,
+    });
+    if (trackedId) {
+      activeRecommendationIdRef.current = trackedId;
+    }
+  };
+
+  const onViewableItemsChangedRef = useRef((info: ViewableItemsInfo) => {
+    latestViewableHandlerRef.current(info);
+  });
+
+  const handleCoursePress = (item: Course, position: number) => {
+    triggerHaptic('light');
+    if (isRecommendationRow) {
+      AnalyticsService.trackRecommendationClick(item.id, {
+        recommendationId: activeRecommendationIdRef.current || recommendationId,
+        source: recommendationSource || 'home_bm25_behavioral_v1',
+        surface: 'home',
+        category: item.category,
+        position,
+      });
+    }
+    onNavigateToCourse(item.id);
+  };
 
   useEffect(() => {
     if (
@@ -181,10 +254,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
             <CourseCard
               course={displayCourses[0]}
               horizontal={true}
-              onPress={() => {
-                triggerHaptic('light');
-                onNavigateToCourse(displayCourses[0].id);
-              }}
+              onPress={() => handleCoursePress(displayCourses[0], 0)}
             />
           </StaggeredFadeIn>
         </View>
@@ -203,16 +273,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
               index={idx}
               style={{ flex: 1, height: '100%', alignSelf: 'stretch' }}
             >
-              <CourseCard
-                course={item}
-                onPress={() => {
-                  triggerHaptic('light');
-                  if (isRecommendationRow) {
-                    TelemetryService.trackRecommendationClick(item.id, item.category, idx);
-                  }
-                  onNavigateToCourse(item.id);
-                }}
-              />
+              <CourseCard course={item} onPress={() => handleCoursePress(item, idx)} />
             </StaggeredFadeIn>
           ))}
         </View>
@@ -234,6 +295,13 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
             alignItems: 'stretch',
           }}
           getItemLayout={(_, index) => ({ length: cardSnap, offset: cardSnap * index, index })}
+          {...(isRecommendationRow
+            ? {
+                testID: 'home-recommendation-flatlist',
+                viewabilityConfig: viewabilityConfigRef.current,
+                onViewableItemsChanged: onViewableItemsChangedRef.current,
+              }
+            : {})}
           onScrollBeginDrag={() => {
             isDraggingRef.current = true;
           }}
@@ -246,16 +314,7 @@ const CategoryRow: React.FC<CategoryRowProps> = ({
           }}
           renderItem={({ item, index }) => (
             <StaggeredFadeIn index={index} style={{ width: cardWidth, alignSelf: 'stretch' }}>
-              <CourseCard
-                course={item}
-                onPress={() => {
-                  triggerHaptic('light');
-                  if (isRecommendationRow) {
-                    TelemetryService.trackRecommendationClick(item.id, item.category, index);
-                  }
-                  onNavigateToCourse(item.id);
-                }}
-              />
+              <CourseCard course={item} onPress={() => handleCoursePress(item, index)} />
             </StaggeredFadeIn>
           )}
         />
@@ -502,10 +561,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         {courses.length > 0 &&
           dashboard.categoryRows.map((row) => (
             <CategoryRow
-              key={`cat-${row.title}`}
+              key={`cat-${row.isRecommendationRow ? 'rec-' : ''}${row.title}`}
               title={row.title}
               courses={row.courses}
-              isRecommendationRow={Boolean((row as any).isRecommendationRow)}
+              isRecommendationRow={Boolean(row.isRecommendationRow)}
+              recommendationId={row.recommendationId}
+              recommendationSource={row.recommendationSource}
               onNavigateToCourse={onNavigateToCourse}
               onNavigateTab={onNavigateTab}
               colors={colors}

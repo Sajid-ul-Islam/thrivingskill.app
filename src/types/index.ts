@@ -317,6 +317,9 @@ export interface SaaSNotification {
     actionType?: 'view_course' | 'enroll' | 'bookmark' | 'open_post';
     postUrl?: string;
     recommendationReason?: string;
+    recommendationId?: string;
+    recommendationSource?: string;
+    recommendationPosition?: number;
   };
 }
 

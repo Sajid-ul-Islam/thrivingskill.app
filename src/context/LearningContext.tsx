@@ -6,7 +6,7 @@ import { CoursesService } from '../services/api/coursesService';
 import { CompanionService } from '../services/api/companionService';
 import { Endpoints } from '../services/api/endpoints';
 import { SyncQueueManager } from '../services/offline/syncQueue';
-import { TelemetryService } from '../services/telemetry/telemetryService';
+import { AnalyticsService } from '../services/analytics/analyticsService';
 import { computeRecommendedCourses } from '../utils/recommendations';
 import { LearningContextType } from './learning/learningContext.types';
 import { buildCertificateRecord } from './learning/learningCatalogData';
@@ -152,10 +152,13 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           ...watchPositionsRef.current,
         };
         for (const [cid, lessons] of Object.entries(serverLearning.watchPositions)) {
-          mergedWatch[cid] = {
-            ...lessons,
-            ...(mergedWatch[cid] || {}),
-          };
+          const localLessons = mergedWatch[cid] || {};
+          const nextCoursePositions: Record<string, number> = { ...localLessons };
+          for (const [lid, serverSec] of Object.entries(lessons)) {
+            const localVal = typeof localLessons[lid] === 'number' ? localLessons[lid] : 0;
+            nextCoursePositions[lid] = Math.max(localVal, Number(serverSec) || 0);
+          }
+          mergedWatch[cid] = nextCoursePositions;
         }
         watchPositionsRef.current = mergedWatch;
         persistUserLearningKey(LEARNING_STORAGE_KEYS.WATCH_POSITIONS, userScope, mergedWatch);
@@ -220,6 +223,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     let active = true;
     SyncQueueManager.setUserScope(userScope);
+    AnalyticsService.hydrate().catch(() => {});
     setUserProgress({});
     setBookmarks([]);
     setCertificates([]);
@@ -285,7 +289,10 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return updated;
     });
 
-    TelemetryService.trackRecommendationConversion(courseId, 'enroll');
+    AnalyticsService.trackRecommendationConversion(courseId, {
+      conversionType: 'enroll',
+      learnerId: user?.id ? String(user.id) : null,
+    });
 
     SyncQueueManager.enqueue(
       'ENROLL_COURSE',
@@ -308,7 +315,10 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (uniqueIds.length === 0) return;
 
       for (const enrolledId of uniqueIds) {
-        TelemetryService.trackRecommendationConversion(enrolledId, 'purchase');
+        AnalyticsService.trackRecommendationConversion(enrolledId, {
+          conversionType: 'purchase',
+          learnerId: user?.id ? String(user.id) : null,
+        });
       }
 
       setUserProgress((prev) => {
@@ -332,7 +342,7 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return next;
       });
     },
-    [catalog.coursesRef, userScope]
+    [catalog.coursesRef, userScope, user?.id]
   );
 
   const markLessonCompleted = (courseId: string, lessonId: string) => {

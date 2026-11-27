@@ -216,7 +216,7 @@ function main() {
   // 3. src/config/appVersion.ts
   const expectedAppVersionTs = generateAppVersionTs(version, versionCode);
   const currentAppVersionTs = fs.existsSync(path.join(ROOT, 'src/config/appVersion.ts'))
-    ? readText('src/config/appVersion.ts')
+    ? readText('src/config/appVersion.ts').replace(/\r\n/g, '\n')
     : '';
   if (currentAppVersionTs !== expectedAppVersionTs) {
     if (writeMode) {

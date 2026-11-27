@@ -6,6 +6,16 @@ import type {
 } from '../../services/api/brandingService';
 import type { ThriveGenCourseItem } from '../../components/home/ThriveGenHub';
 import type { Course, RootTab } from '../../types';
+import type { RecommendationResult } from '../../utils/recommendations';
+
+export interface DashboardCategoryRow {
+  title: string;
+  subtitle?: string;
+  courses: Course[];
+  isRecommendationRow?: boolean;
+  recommendationId?: string;
+  recommendationSource?: string;
+}
 
 export function useHomeDashboard({
   courses,
@@ -23,7 +33,7 @@ export function useHomeDashboard({
   courses: Course[];
   userProgress: Record<string, any>;
   getCourseProgressPercentage: (courseId: string) => number;
-  getRecommendedCourses: () => { courses: Course[]; rationale: string; rationaleBn: string };
+  getRecommendedCourses: () => RecommendationResult;
   setSearchQuery: (q: string) => void;
   isBangla: boolean;
   streakDays: number;
@@ -198,11 +208,11 @@ export function useHomeDashboard({
     [courses]
   );
 
-  const categoryRows = useMemo(() => {
-    const recData = getRecommendedCourses
+  const categoryRows = useMemo<DashboardCategoryRow[]>(() => {
+    const recData: RecommendationResult = getRecommendedCourses
       ? getRecommendedCourses()
-      : { courses: [], rationale: '', rationaleBn: '' };
-    const recommendedRow =
+      : { recommendationId: '', source: '', courses: [], rationale: '', rationaleBn: '' };
+    const recommendedRow: DashboardCategoryRow[] =
       recData.courses && recData.courses.length > 0
         ? [
             {
@@ -210,11 +220,13 @@ export function useHomeDashboard({
               subtitle: isBangla ? recData.rationaleBn : recData.rationale,
               courses: recData.courses,
               isRecommendationRow: true,
+              recommendationId: recData.recommendationId,
+              recommendationSource: recData.source,
             },
           ]
         : [];
 
-    const rows = [
+    const rows: DashboardCategoryRow[] = [
       ...recommendedRow,
       { title: isBangla ? 'জনপ্রিয় কোর্সসমূহ' : 'Popular Courses', courses: popularCourses },
       { title: isBangla ? 'আসন্ন লাইভ ট্রেনিং' : 'Upcoming Live', courses: upcomingCourses },

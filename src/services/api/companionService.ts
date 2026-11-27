@@ -32,6 +32,7 @@ export interface LearnerSupportHotline {
 
 export interface AppRemoteConfig {
   status: string;
+  plugin_version?: string;
   version_control: {
     min_required_version: string;
     latest_version: string;

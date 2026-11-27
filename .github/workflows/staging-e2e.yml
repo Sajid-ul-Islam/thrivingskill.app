@@ -1,6 +1,12 @@
 name: Layer 2 — Staging Integration & E2E Journey
 
 on:
+  push:
+    branches: [ master ]
+    tags:
+      - 'v*.*.*'
+  schedule:
+    - cron: '0 3 * * 1' # Weekly Monday 03:00 UTC health verification
   workflow_dispatch:
     inputs:
       run_journey:
@@ -9,15 +15,17 @@ on:
         default: 'true'
         type: boolean
       strict_companion:
-        description: 'Fail if ts-mobile-bridge v1.2.0 routes are not yet deployed on Staging'
+        description: 'Fail if ts-mobile-bridge plugin version or any v1.2/v1.3 route is missing on Staging'
         required: false
-        default: 'false'
+        default: 'true'
         type: boolean
-  schedule:
-    - cron: '0 3 * * 1' # Weekly Monday 03:00 UTC health verification
-  push:
-    tags:
-      - 'v*.*.*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   staging-integration:
@@ -26,12 +34,12 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - name: Setup Node.js 20
-        uses: actions/setup-node@v4
+      - name: Setup Node.js 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '20'
+          node-version: 22
           cache: 'npm'
 
       - name: Install dependencies (for version & runtime verification)
@@ -53,10 +61,10 @@ jobs:
           STAGING_JOURNEY_COURSE_ID: ${{ secrets.STAGING_JOURNEY_COURSE_ID }}
         run: |
           ARGS=""
-          if [ "${{ inputs.strict_companion }}" = "true" ] || [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+          if [ "${GITHUB_EVENT_NAME}" != "workflow_dispatch" ] || [ "${{ inputs.strict_companion }}" != "false" ]; then
             ARGS="$ARGS --strict-companion"
           fi
-          if [ "${{ inputs.run_journey }}" != "false" ] && [ -n "$STAGING_TEST_USERNAME" ]; then
+          if [ "${GITHUB_EVENT_NAME}" != "workflow_dispatch" ] || [ "${{ inputs.run_journey }}" != "false" ]; then
             ARGS="$ARGS --journey"
           fi
           node scripts/test_layer2_staging_integration.js $ARGS

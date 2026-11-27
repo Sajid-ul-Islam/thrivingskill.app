@@ -238,15 +238,19 @@ describe('SyncQueue isolation, payload validation, idempotency, admin roles & re
 
     TelemetryService.trackRecommendationImpression(['c1', 'c2'], 'home');
     TelemetryService.trackRecommendationImpression(['c1', 'c2'], 'home'); // deduped
+    // Impression-only course ('c2') must not receive conversion credit without a click
+    expect(TelemetryService.trackRecommendationConversion('c2', 'enroll')).toBe(false);
     TelemetryService.trackRecommendationClick('c1', 'ai', 0);
     expect(TelemetryService.trackRecommendationConversion('c99', 'enroll')).toBe(false);
     expect(TelemetryService.trackRecommendationConversion('c1', 'enroll')).toBe(true);
+    // Single click cannot double-credit on repeat conversion call
+    expect(TelemetryService.trackRecommendationConversion('c1', 'enroll')).toBe(false);
 
     expect(TelemetryService.getRecommendationMetrics()).toEqual({
-      impressions: 1,
+      impressions: 2,
       clicks: 1,
       conversions: 1,
-      ctr: 1,
+      ctr: 0.5,
       conversionRate: 1,
     });
   });

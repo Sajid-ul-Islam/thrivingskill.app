@@ -181,5 +181,10 @@ describe('Issue #15, Item 2 & Item 6: Push tokens, streak schedule, & Sentry PII
       extra: { screen: 'LessonPlayer' },
     });
     expect(globalThis.fetch).not.toHaveBeenCalled();
+
+    // Business analytics events go to durable AnalyticsService storage, not Sentry breadcrumbs
+    const breadcrumbCallsBefore = (Sentry.addBreadcrumb as jest.Mock).mock.calls.length;
+    TelemetryService.trackEvent('course_preview_opened', { courseId: '85153' });
+    expect((Sentry.addBreadcrumb as jest.Mock).mock.calls.length).toBe(breadcrumbCallsBefore);
   });
 });

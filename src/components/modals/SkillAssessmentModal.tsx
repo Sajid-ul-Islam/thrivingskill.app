@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import { useSaaS } from '../../context/SaaSContext';
 import { useLearning } from '../../context/LearningContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { triggerHaptic } from '../../utils/haptics';
+import { AnalyticsService } from '../../services/analytics/analyticsService';
 import { MIN_TOUCH_TARGET } from '../../theme/typography';
 import { shape } from '../../theme/shapes';
 import { SkillAssessmentQuestion, SkillAssessmentResult, Course } from '../../types';
@@ -324,6 +325,14 @@ export const SkillAssessmentModal: React.FC<SkillAssessmentModalProps> = ({
 
   const handleEnrollTrack = () => {
     if (result && result.recommendedCourseIds.length > 0) {
+      const topCourse = recommendedCoursesList[0];
+      AnalyticsService.trackRecommendationClick(result.recommendedCourseIds[0], {
+        recommendationId: assessmentRecIdRef.current || undefined,
+        source: 'skill_assessment_gap_v1',
+        surface: 'skill_assessment',
+        category: topCourse?.category,
+        position: 0,
+      });
       onClose();
       if (onNavigateToCourse) {
         onNavigateToCourse(result.recommendedCourseIds[0]);
@@ -331,11 +340,29 @@ export const SkillAssessmentModal: React.FC<SkillAssessmentModalProps> = ({
     }
   };
 
-  const recommendedCoursesList: Course[] = result
-    ? result.recommendedCourseIds
-        .map((cId) => courses.find((c) => c.id === cId))
-        .filter((c): c is Course => Boolean(c))
-    : [];
+  const recommendedCoursesList: Course[] = useMemo(
+    () =>
+      result
+        ? result.recommendedCourseIds
+            .map((cId) => courses.find((c) => c.id === cId))
+            .filter((c): c is Course => Boolean(c))
+        : [],
+    [result, courses]
+  );
+
+  const assessmentRecIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (visible && recommendedCoursesList.length > 0) {
+      assessmentRecIdRef.current = AnalyticsService.trackRecommendationImpression(
+        recommendedCoursesList.map((c, idx) => ({ courseId: c.id, position: idx })),
+        {
+          surface: 'skill_assessment',
+          source: 'skill_assessment_gap_v1',
+        }
+      );
+    }
+  }, [visible, recommendedCoursesList]);
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -550,7 +577,7 @@ export const SkillAssessmentModal: React.FC<SkillAssessmentModalProps> = ({
                         : 'Curated courses to bridge competency gaps identified in your assessment'}
                     </Text>
                     <View style={styles.recommendCardsCol}>
-                      {recommendedCoursesList.map((c) => (
+                      {recommendedCoursesList.map((c, idx) => (
                         <TouchableOpacity
                           key={c.id}
                           style={[
@@ -561,6 +588,13 @@ export const SkillAssessmentModal: React.FC<SkillAssessmentModalProps> = ({
                             },
                           ]}
                           onPress={() => {
+                            AnalyticsService.trackRecommendationClick(c.id, {
+                              recommendationId: assessmentRecIdRef.current || undefined,
+                              source: 'skill_assessment_gap_v1',
+                              surface: 'skill_assessment',
+                              category: c.category,
+                              position: idx,
+                            });
                             onClose();
                             onNavigateToCourse?.(c.id);
                           }}
