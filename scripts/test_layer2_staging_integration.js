@@ -776,23 +776,43 @@ async function runCourseE2EJourney(discoveredRoutes, lpCourses, feedCourses = []
       );
     }
 
-    // Step 7: Complete Course
-    const finishCourseRes = await httpJson('/wp-json/learnpress/v1/courses/finish', {
-      method: 'POST',
-      headers: authHeaders,
-      body: JSON.stringify({ id: targetCourseId }),
-    });
-    record(
-      'E2E Journey',
-      'Step 7: Finish Course',
-      finishCourseRes.ok || String(finishCourseRes.json?.message || '').toLowerCase().includes('finish') ? 'PASS' : 'FAIL',
-      finishCourseRes.error || `HTTP ${finishCourseRes.status}`
-    );
-
-    // Step 8: Submit Review (enforces 100% completion gate cleanly when course is incomplete)
-    const stateAfterFinish = discoveredRoutes.includes('/thrivingskill/v1/learning-state')
+    // Step 7: Complete Course only once all lessons are finished (avoid prematurely marking partial courses failed)
+    const stateBeforeFinish = discoveredRoutes.includes('/thrivingskill/v1/learning-state')
       ? await httpJson('/wp-json/thrivingskill/v1/learning-state', { headers: authHeaders })
       : null;
+    const completedLessonCount = (
+      stateBeforeFinish?.json?.progress?.[String(targetCourseId)]?.completedLessonIds || []
+    ).length;
+    const readyToFinishCourse =
+      lessonItems.length === 0 ||
+      completedLessonCount >= lessonItems.length ||
+      Boolean(stateBeforeFinish?.json?.progress?.[String(targetCourseId)]?.isCompleted);
+
+    if (readyToFinishCourse) {
+      const finishCourseRes = await httpJson('/wp-json/learnpress/v1/courses/finish', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({ id: targetCourseId }),
+      });
+      record(
+        'E2E Journey',
+        'Step 7: Finish Course',
+        finishCourseRes.ok || String(finishCourseRes.json?.message || '').toLowerCase().includes('finish') ? 'PASS' : 'FAIL',
+        finishCourseRes.error || `HTTP ${finishCourseRes.status}`
+      );
+    } else {
+      record(
+        'E2E Journey',
+        'Step 7: Course Finish Deferred (Partial Progress)',
+        'PASS',
+        `${completedLessonCount}/${lessonItems.length} lessons completed; skipping premature /courses/finish`
+      );
+    }
+
+    // Step 8: Submit Review (enforces 100% completion gate cleanly when course is incomplete)
+    const stateAfterFinish = readyToFinishCourse && discoveredRoutes.includes('/thrivingskill/v1/learning-state')
+      ? await httpJson('/wp-json/thrivingskill/v1/learning-state', { headers: authHeaders })
+      : stateBeforeFinish;
     const isServerCompleted = Boolean(
       stateAfterFinish?.json?.progress?.[String(targetCourseId)]?.isCompleted
     );

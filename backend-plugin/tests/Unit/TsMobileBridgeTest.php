@@ -643,4 +643,66 @@ final class TsMobileBridgeTest extends TestCase
         $this->assertContains('platform_dau_wau_mau', $unsupportedKeys);
         $this->assertContains('course_view_to_checkout_ctr', $unsupportedKeys);
     }
+
+    public function test_zero_quiz_course_repairs_stale_failed_graduation_while_preserving_real_quiz_failures(): void
+    {
+        $uid = wp_insert_user([
+            'user_login'   => 'mindset_grad',
+            'user_email'   => 'mindset@example.com',
+            'display_name' => 'Mindset Graduate',
+        ]);
+        TSMB_Test_State::$posts[902] = (object) [
+            'ID'          => 902,
+            'post_type'   => 'lp_course',
+            'post_status' => 'publish',
+            'post_title'  => 'Creating Winning Mindset QA',
+            'post_author' => 1,
+        ];
+        TSMB_Test_State::$posts[991] = (object) [
+            'ID'          => 991,
+            'post_type'   => 'lp_cert',
+            'post_status' => 'publish',
+            'post_title'  => 'Mindset Cert Template',
+        ];
+        TSMB_Test_State::$post_meta[902] = [
+            '_lp_cert'              => 991,
+            '_lp_course_result'     => 'evaluate_quiz',
+            '_lp_passing_condition' => 70,
+        ];
+        TSMB_Test_State::$enrolled_courses[$uid] = [902];
+        TSMB_Test_State::$course_curriculum[902] = [1101, 1102];
+        TSMB_Test_State::$course_item_state[$uid][902] = [
+            'user_item_id' => 88,
+            'item_id'      => 902,
+            'status'       => 'finished',
+            'graduation'   => 'failed',
+            'start_time'   => '2026-11-27 04:31:48',
+            'end_time'     => '2026-11-27 16:35:43',
+        ];
+
+        wp_set_current_user($uid);
+
+        // Partial progress (1/2) on a finished/failed row must NOT auto-pass
+        TSMB_Test_State::$completed_lessons[$uid][902] = [1101];
+        $req = new WP_REST_Request([
+            'rate'    => 5,
+            'title'   => 'Review',
+            'content' => 'Great lessons.',
+        ], ['id' => 902]);
+        $partialErr = TSMB_Rest_API::submit_course_review($req);
+        $this->assertInstanceOf(WP_Error::class, $partialErr);
+        $this->assertSame('course_not_completed', $partialErr->get_error_code());
+
+        // Once 2/2 lessons complete on a zero-quiz course, stale graduation='failed' repairs -> 'passed'
+        TSMB_Test_State::$completed_lessons[$uid][902] = [1101, 1102];
+        $okRes = TSMB_Rest_API::submit_course_review($req);
+        $this->assertInstanceOf(WP_REST_Response::class, $okRes);
+        $data = $okRes->get_data();
+        $this->assertTrue($data['course_completed']);
+        $this->assertSame(md5($uid . ':902:991'), $data['certificate']['credentialId']);
+
+        $state = TSMB_Rest_API::get_learning_state(new WP_REST_Request([]))->get_data();
+        $this->assertTrue($state['progress']['902']['isCompleted']);
+        $this->assertSame('passed', $state['progress']['902']['grade']);
+    }
 }

@@ -2505,6 +2505,39 @@ class TSMB_Rest_API
         return apply_filters('tsmb_course_curriculum_items', $ids, $course_id);
     }
 
+    private static function get_course_quiz_count(int $course_id): int
+    {
+        global $wpdb;
+
+        if ($course_id <= 0) {
+            return 0;
+        }
+
+        $items_table    = $wpdb->prefix . 'learnpress_section_items';
+        $sections_table = $wpdb->prefix . 'learnpress_sections';
+
+        $count = 0;
+        if (
+            $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $sections_table)) === $sections_table &&
+            $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $items_table)) === $items_table
+        ) {
+            $count = (int) $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT COUNT(DISTINCT si.item_id)
+                     FROM {$items_table} si
+                     INNER JOIN {$sections_table} s ON s.section_id = si.section_id
+                     INNER JOIN {$wpdb->posts} p ON p.ID = si.item_id
+                     WHERE s.section_course_id = %d
+                       AND si.item_type = 'lp_quiz'
+                       AND p.post_status = 'publish'",
+                    $course_id
+                )
+            );
+        }
+
+        return max(0, intval(apply_filters('tsmb_course_quiz_count', $count, $course_id)));
+    }
+
     private static function get_user_course_item_state(int $user_id, int $course_id): ?array
     {
         global $wpdb;
@@ -2643,20 +2676,25 @@ class TSMB_Rest_API
         $completed_ids  = self::get_user_completed_lesson_ids($user_id, $course_id, $user_item_id);
         $curriculum_ids = self::get_course_curriculum_item_ids($course_id);
 
+        $quiz_count        = self::get_course_quiz_count($course_id);
+        $eval_type         = strtolower((string) get_post_meta($course_id, '_lp_course_result', true));
+        $allow_lesson_pass = ($quiz_count === 0) || in_array($eval_type, ['', 'evaluate_lesson', 'evaluate_lessons'], true);
+
         $is_completed = ($status === 'finished' && $graduation !== 'failed');
 
         if (!$is_completed && !empty($curriculum_ids)) {
             $missing = array_diff($curriculum_ids, $completed_ids);
             if (empty($missing)) {
-                if (function_exists('learn_press_get_user')) {
+                if ($status !== 'finished' && function_exists('learn_press_get_user')) {
                     $lp_user = learn_press_get_user($user_id);
                     if ($lp_user && method_exists($lp_user, 'finish_course')) {
                         try {
                             $lp_user->finish_course($course_id);
                             $state = self::get_user_course_item_state($user_id, $course_id);
                             if (is_array($state)) {
-                                $status     = strtolower((string) ($state['status'] ?? $status));
-                                $graduation = strtolower((string) ($state['graduation'] ?? $graduation));
+                                $user_item_id = intval($state['user_item_id'] ?? $user_item_id);
+                                $status       = strtolower((string) ($state['status'] ?? $status));
+                                $graduation   = strtolower((string) ($state['graduation'] ?? $graduation));
                             }
                         } catch (\Throwable $e) {
                             error_log('[TSMB Completion] LearnPress finish_course note: ' . $e->getMessage());
@@ -2664,26 +2702,41 @@ class TSMB_Rest_API
                     }
                 }
 
-                if ($status !== 'finished') {
+                // Repair stale/impossible graduation='failed' when all lessons passed on a 0-quiz
+                // or lesson-evaluated course (e.g. course meta left on evaluate_quiz with 0 quizzes).
+                $needs_db_repair = ($status !== 'finished') || ($graduation === 'failed' && $allow_lesson_pass);
+                if ($needs_db_repair) {
                     $lp_table = $wpdb->prefix . 'learnpress_user_items';
+                    $existing_end = is_array($state) ? (string) ($state['end_time'] ?? '') : '';
+                    $end_time = ($existing_end !== '' && strpos($existing_end, '0000-00-00') !== 0)
+                        ? $existing_end
+                        : current_time('mysql', true);
+
                     if (
                         $user_item_id > 0 &&
                         $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $lp_table)) === $lp_table
                     ) {
-                        $now_gmt = current_time('mysql', true);
                         $wpdb->update(
                             $lp_table,
                             [
                                 'status'     => 'finished',
                                 'graduation' => 'passed',
-                                'end_time'   => $now_gmt,
+                                'end_time'   => $end_time,
                             ],
                             ['user_item_id' => $user_item_id],
                             ['%s', '%s', '%s'],
                             ['%d']
                         );
-                        $status     = 'finished';
-                        $graduation = 'passed';
+                    }
+                    $status     = 'finished';
+                    $graduation = 'passed';
+                    if (is_array($state)) {
+                        $state['status']     = 'finished';
+                        $state['graduation'] = 'passed';
+                        $state['end_time']   = $end_time;
+                    }
+                    if (class_exists('TSMB_Analytics_Service')) {
+                        TSMB_Analytics_Service::invalidate_cache();
                     }
                 }
 
