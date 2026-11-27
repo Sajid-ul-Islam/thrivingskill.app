@@ -111,6 +111,13 @@ final class WordPressIntegrationTest extends WP_UnitTestCase
             '/thrivingskill/v1/support-tickets',
             '/thrivingskill/v1/engagement-sync',
             '/thrivingskill/v1/register-push-token',
+            '/thrivingskill/v1/admin/analytics',
+            '/thrivingskill/v1/admin/analytics/overview',
+            '/thrivingskill/v1/admin/analytics/users',
+            '/thrivingskill/v1/admin/analytics/enrollments',
+            '/thrivingskill/v1/admin/analytics/revenue',
+            '/thrivingskill/v1/admin/analytics/courses',
+            '/thrivingskill/v1/admin/analytics/conversions',
         ];
 
         foreach ($expected_routes as $route) {
@@ -132,6 +139,9 @@ final class WordPressIntegrationTest extends WP_UnitTestCase
             ['POST', '/thrivingskill/v1/engagement-sync'],
             ['POST', '/thrivingskill/v1/auth/webview-handoff'],
             ['POST', '/thrivingskill/v1/revoke-token'],
+            ['GET', '/thrivingskill/v1/admin/analytics'],
+            ['GET', '/thrivingskill/v1/admin/analytics/overview'],
+            ['GET', '/thrivingskill/v1/admin/analytics/revenue'],
         ];
 
         foreach ($protected as [$method, $path]) {
@@ -383,5 +393,161 @@ final class WordPressIntegrationTest extends WP_UnitTestCase
         $this->assertSame(1080, $stateData['watch_positions']['88180']['88181']);
         $this->assertSame(220, $stateData['watch_positions']['88180']['88182']);
         $this->assertSame([], $stateData['enrolled_course_ids']);
+    }
+
+    public function test_admin_analytics_enforces_roles_preserves_schema_and_calculates_real_wc_lp_metrics(): void
+    {
+        global $wpdb;
+
+        $tables_before = $wpdb->get_col('SHOW TABLES');
+        $db_ver_before = get_option(TSMB_Lifecycle::DB_VERSION_OPTION);
+
+        $subscriber_id = self::factory()->user->create(['role' => 'subscriber']);
+        $customer_id   = self::factory()->user->create(['role' => 'customer']);
+        $admin_id      = self::factory()->user->create(['role' => 'administrator']);
+
+        // Create Free course and Paid course with lessons + review
+        $free_course_id = wp_insert_post([
+            'post_type'   => 'lp_course',
+            'post_status' => 'publish',
+            'post_title'  => 'Free Starter Skills',
+        ]);
+        update_post_meta($free_course_id, '_lp_price', '0');
+
+        $paid_course_id = wp_insert_post([
+            'post_type'   => 'lp_course',
+            'post_status' => 'publish',
+            'post_title'  => 'Executive AI Workshop',
+        ]);
+        update_post_meta($paid_course_id, '_lp_price', '1500');
+
+        $lesson_id = wp_insert_post([
+            'post_type'   => 'lp_lesson',
+            'post_status' => 'publish',
+            'post_title'  => 'AI Module 1',
+        ]);
+        $sec_id = $this->insertMatchingColumns($wpdb->prefix . 'learnpress_sections', [
+            'section_name'      => 'Week 1',
+            'section_course_id' => $paid_course_id,
+            'section_order'     => 1,
+        ]);
+        $this->insertMatchingColumns($wpdb->prefix . 'learnpress_section_items', [
+            'section_id' => $sec_id,
+            'item_id'    => $lesson_id,
+            'item_order' => 1,
+            'item_type'  => 'lp_lesson',
+        ]);
+
+        // Confirmed WooCommerce order (৳1500) + linked lp_order + Pending order (৳500) + ৳0 Free order
+        $product = new WC_Product_Simple();
+        $product->set_name('Executive AI Product');
+        $product->set_status('publish');
+        $product->set_regular_price('1500');
+        $product->set_price('1500');
+        $product_id = $product->save();
+        update_post_meta($product_id, '_learnpress_course', $paid_course_id);
+
+        $free_product = new WC_Product_Simple();
+        $free_product->set_name('Free Starter Product');
+        $free_product->set_status('publish');
+        $free_product->set_regular_price('0');
+        $free_product->set_price('0');
+        $free_product_id = $free_product->save();
+        update_post_meta($free_product_id, '_learnpress_course', $free_course_id);
+
+        $paid_order = wc_create_order(['customer_id' => $customer_id, 'status' => 'completed']);
+        $paid_order->add_product(wc_get_product($product_id), 1);
+        $paid_order->set_payment_method('sslcommerz');
+        $paid_order->set_payment_method_title('SSLCommerz');
+        $paid_order->calculate_totals();
+        $paid_order->set_date_paid(time());
+        $paid_order->save();
+
+        $pending_order = wc_create_order(['customer_id' => $customer_id, 'status' => 'pending']);
+        $pending_order->add_product(wc_get_product($product_id), 1);
+        $pending_order->calculate_totals();
+        $pending_order->save();
+
+        $zero_order = wc_create_order(['customer_id' => $subscriber_id, 'status' => 'completed']);
+        $zero_order->add_product(wc_get_product($free_product_id), 1);
+        $zero_order->calculate_totals();
+        $zero_order->save();
+
+        // Woo-linked LP order (must dedupe) + Unverified manual LP order (must stay excluded from confirmed revenue)
+        $linked_lp_id = wp_insert_post([
+            'post_type'   => 'lp_order',
+            'post_status' => 'lp-completed',
+            'post_title'  => 'Order on Linked WC',
+        ]);
+        update_post_meta($linked_lp_id, '_order_total', '1500');
+        update_post_meta($linked_lp_id, '_woo_order_id', (string) $paid_order->get_id());
+        update_post_meta($linked_lp_id, '_payment_method', 'sslcommerz');
+
+        $manual_lp_id = wp_insert_post([
+            'post_type'   => 'lp_order',
+            'post_status' => 'lp-completed',
+            'post_title'  => 'Manual Admin LP Order',
+        ]);
+        update_post_meta($manual_lp_id, '_order_total', '500');
+        update_post_meta($manual_lp_id, '_payment_method', '');
+
+        // LearnPress course enrollments
+        $this->insertMatchingColumns($wpdb->prefix . 'learnpress_user_items', [
+            'user_id'    => $customer_id,
+            'item_id'    => $paid_course_id,
+            'item_type'  => 'lp_course',
+            'status'     => 'finished',
+            'graduation' => 'passed',
+            'start_time' => gmdate('Y-m-d H:i:s'),
+            'end_time'   => gmdate('Y-m-d H:i:s'),
+        ]);
+        $this->insertMatchingColumns($wpdb->prefix . 'learnpress_user_items', [
+            'user_id'    => $subscriber_id,
+            'item_id'    => $free_course_id,
+            'item_type'  => 'lp_course',
+            'status'     => 'enrolled',
+            'graduation' => 'in-progress',
+            'start_time' => gmdate('Y-m-d H:i:s'),
+        ]);
+
+        // Non-admin subscriber denied with 403
+        wp_set_current_user($subscriber_id);
+        $subRes = rest_do_request(new WP_REST_Request('GET', '/thrivingskill/v1/admin/analytics'));
+        $this->assertSame(403, $subRes->get_status());
+
+        // Administrator allowed and receives authoritative values
+        wp_set_current_user($admin_id);
+        TSMB_Analytics_Service::invalidate_cache();
+        $req = new WP_REST_Request('GET', '/thrivingskill/v1/admin/analytics');
+        $req->set_query_params(['preset' => 'all', 'refresh' => '1']);
+        $adminRes = rest_do_request($req);
+        $this->assertSame(200, $adminRes->get_status());
+        $data = $adminRes->get_data();
+
+        $this->assertFalse($data['meta']['schema_modified']);
+        $this->assertSame(1500.0, floatval($data['overview']['confirmed_revenue']));
+        $this->assertSame(1, intval($data['overview']['confirmed_paid_orders']));
+        $this->assertSame(1, intval($data['overview']['pending_orders_count']));
+        $this->assertSame(1500.0, floatval($data['overview']['pending_orders_amount']));
+        $this->assertSame(2, intval($data['enrollments']['active_snapshot_total']));
+        $this->assertSame(1, intval($data['enrollments']['free_enrollments_all_time']));
+        $this->assertSame(1, intval($data['revenue']['reconciliation']['woo_linked_lp_orders_deduped']));
+        $this->assertSame(1, intval($data['revenue']['reconciliation']['unverified_or_manual_lp_orders']));
+
+        // Transient cache hit on immediate repeat call
+        $reqCached = new WP_REST_Request('GET', '/thrivingskill/v1/admin/analytics');
+        $reqCached->set_query_params(['preset' => 'all']);
+        $cachedRes = rest_do_request($reqCached);
+        $this->assertTrue($cachedRes->get_data()['meta']['cache_hit']);
+
+        // Section endpoint check
+        $revSection = rest_do_request(new WP_REST_Request('GET', '/thrivingskill/v1/admin/analytics/revenue'));
+        $this->assertSame(200, $revSection->get_status());
+        $this->assertSame(1500.0, floatval($revSection->get_data()['data']['confirmed_revenue']));
+
+        // Verify zero database schema changes occurred
+        $tables_after = $wpdb->get_col('SHOW TABLES');
+        $this->assertSame($tables_before, $tables_after, 'Admin analytics must never create or drop database tables.');
+        $this->assertSame($db_ver_before, get_option(TSMB_Lifecycle::DB_VERSION_OPTION));
     }
 }

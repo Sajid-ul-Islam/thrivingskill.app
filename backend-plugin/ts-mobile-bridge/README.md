@@ -35,7 +35,7 @@ Upload to Staging WordPress Admin first (**Plugins -> Add New -> Upload Plugin**
 
 | Endpoint | Method | Auth | Description |
 | :--- | :---: | :---: | :--- |
-| `/config` | `GET` | Public | App version gates (`1.4.0`), `plugin_version` (`1.3.0`), maintenance mode, WP-timezone flash sale status, banners, and support channels. |
+| `/config` | `GET` | Public | App version gates (`1.4.0`), `plugin_version` (`1.4.0`), maintenance mode, WP-timezone flash sale status, banners, and support channels. |
 | `/feed` | `GET` | Public | Paginated, cache-scoped course feed (`limit` clamped `1..50`, `page >= 1`, `nocache` admin-only). |
 | `/lessons/{id}` | `GET` | Enrolled / Preview | Published lesson metadata and parsed video stream metadata (`401`/`403` paywall for unenrolled paid lessons and non-admin drafts). |
 | `/enrollments` | `GET` | Auth required | Authoritative server enrollment list and WooCommerce/LearnPress order payment verification. |
@@ -52,6 +52,8 @@ Upload to Staging WordPress Admin first (**Plugins -> Add New -> Upload Plugin**
 | `/revoke-token` | `POST` | Auth required | Blocklists the current session token (or increments user `token_version` for all devices). |
 | `/auth/webview-handoff` | `POST` | Auth required | Issues a short-lived single-use login handoff URL for authenticated WebView checkout. |
 | `/register-push-token` | `POST` | Auth required | Registers/updates Expo push token linked to authenticated `user_id`. |
+| `/admin/analytics` | `GET` | Admin (`manage_options`) | Consolidated platform analytics bundle (overview, users, enrollments, revenue, course performance, conversion, sources & unsupported metrics). |
+| `/admin/analytics/{overview,users,enrollments,revenue,courses,conversions}` | `GET` | Admin (`manage_options`) | Section-scoped administrator analytics endpoints with `preset`, `start_date`, `end_date`, `course_id`, and `refresh` filters. |
 
 ## Testing Layers
 

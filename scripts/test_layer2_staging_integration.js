@@ -182,6 +182,14 @@ async function runRouteAndHealthChecks() {
     { version: 'v1.3', route: '/thrivingskill/v1/corporate-inquiry' },
     { version: 'v1.3', route: '/thrivingskill/v1/support-tickets' },
     { version: 'v1.3', route: '/thrivingskill/v1/engagement-sync' },
+    // v1.4 Admin Analytics
+    { version: 'v1.4', route: '/thrivingskill/v1/admin/analytics' },
+    { version: 'v1.4', route: '/thrivingskill/v1/admin/analytics/overview' },
+    { version: 'v1.4', route: '/thrivingskill/v1/admin/analytics/users' },
+    { version: 'v1.4', route: '/thrivingskill/v1/admin/analytics/enrollments' },
+    { version: 'v1.4', route: '/thrivingskill/v1/admin/analytics/revenue' },
+    { version: 'v1.4', route: '/thrivingskill/v1/admin/analytics/courses' },
+    { version: 'v1.4', route: '/thrivingskill/v1/admin/analytics/conversions' },
   ];
   for (const { version, route } of companionRoutes) {
     const found = discoveredRoutes.some((k) => k === route);
@@ -405,6 +413,8 @@ async function runAuthBoundaryChecks(discoveredRoutes, lpCourses, feedCourses = 
     { method: 'GET', path: '/thrivingskill/v1/support-tickets', deployed: discoveredRoutes.includes('/thrivingskill/v1/support-tickets') },
     { method: 'POST', path: '/thrivingskill/v1/support-tickets', body: {}, deployed: discoveredRoutes.includes('/thrivingskill/v1/support-tickets') },
     { method: 'POST', path: '/thrivingskill/v1/engagement-sync', body: {}, deployed: discoveredRoutes.includes('/thrivingskill/v1/engagement-sync') },
+    { method: 'GET', path: '/thrivingskill/v1/admin/analytics', deployed: discoveredRoutes.includes('/thrivingskill/v1/admin/analytics') },
+    { method: 'GET', path: '/thrivingskill/v1/admin/analytics/revenue', deployed: discoveredRoutes.includes('/thrivingskill/v1/admin/analytics/revenue') },
   ];
   for (const ep of authCompanionEndpoints) {
     const labelPath = ep.routeLabel || ep.path;
@@ -861,6 +871,58 @@ async function runCourseE2EJourney(discoveredRoutes, lpCourses, feedCourses = []
   };
 
   await runEnrollmentSteps();
+
+  // Step 9b: Admin Analytics Authorization, Caching & Filter Verification
+  if (discoveredRoutes.includes('/thrivingskill/v1/admin/analytics')) {
+    const anLiveRes = await httpJson('/wp-json/thrivingskill/v1/admin/analytics?preset=all&refresh=1', {
+      headers: authHeaders,
+    });
+    if (!isAdminUser) {
+      record(
+        'Companion v1.4',
+        'Step 9b: Non-Admin Blocked From /admin/analytics (403)',
+        anLiveRes.status === 403 ? 'PASS' : 'FAIL',
+        anLiveRes.error || `HTTP ${anLiveRes.status} (${anLiveRes.json?.code || ''})`
+      );
+    } else {
+      const ov = anLiveRes.json?.overview || {};
+      const rev = anLiveRes.json?.revenue || {};
+      const okSchema = anLiveRes.json?.meta?.schema_modified === false;
+      const okData =
+        anLiveRes.ok &&
+        typeof ov.confirmed_revenue === 'number' &&
+        typeof ov.confirmed_paid_orders === 'number' &&
+        Array.isArray(anLiveRes.json?.course_performance) &&
+        Array.isArray(anLiveRes.json?.unsupported_metrics);
+      record(
+        'Companion v1.4',
+        'Step 9b: Admin Analytics Full Dashboard Endpoint',
+        okData && okSchema ? 'PASS' : 'FAIL',
+        anLiveRes.error ||
+          `HTTP ${anLiveRes.status}, revenue=${ov.currency || 'BDT'} ${ov.confirmed_revenue}, paid_orders=${ov.confirmed_paid_orders}, pending=${ov.pending_orders_count}, enrollments=${ov.enrollments_all_time_active}, deduped_lp=${rev.reconciliation?.woo_linked_lp_orders_deduped ?? '?'}, unverified_lp=${rev.reconciliation?.unverified_or_manual_lp_orders ?? '?'}, cache_hit=${anLiveRes.json?.meta?.cache_hit}`
+      );
+
+      // Verify WordPress transient cache hit + invalid preset validation
+      const anCacheRes = await httpJson('/wp-json/thrivingskill/v1/admin/analytics?preset=all', {
+        headers: authHeaders,
+      });
+      const anBadPreset = await httpJson('/wp-json/thrivingskill/v1/admin/analytics?preset=invalid_range', {
+        headers: authHeaders,
+      });
+      const anRevRes = await httpJson('/wp-json/thrivingskill/v1/admin/analytics/revenue?preset=ytd', {
+        headers: authHeaders,
+      });
+      record(
+        'Companion v1.4',
+        'Step 9b: Analytics Transient Cache & Input Validation',
+        anCacheRes.ok && anCacheRes.json?.meta?.cache_hit === true && anBadPreset.status === 400 && anRevRes.ok
+          ? 'PASS'
+          : 'FAIL',
+        `cache_hit=${anCacheRes.json?.meta?.cache_hit}, invalid_preset_status=${anBadPreset.status}, ytd_revenue=${anRevRes.json?.data?.confirmed_revenue ?? 'err'}`
+      );
+    }
+  }
+
   // Step 10: Token Revocation Verification (end-of-journey)
   if (discoveredRoutes.includes('/thrivingskill/v1/revoke-token')) {
     const revokeRes = await httpJson('/wp-json/thrivingskill/v1/revoke-token', {

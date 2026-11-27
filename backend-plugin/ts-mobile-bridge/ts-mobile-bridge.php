@@ -3,8 +3,8 @@
 /**
  * Plugin Name: TS Mobile Bridge
  * Plugin URI: https://thrivingskill.com
- * Description: Hardened mobile REST API bridge, remote configuration, push notification engine, and Mobile App Command Center for Thriving Skills.
- * Version: 1.3.0
+ * Description: Hardened mobile REST API bridge, remote configuration, push notification engine, platform analytics, and Mobile App Command Center for Thriving Skills.
+ * Version: 1.4.0
  * Requires PHP: 7.4
  * Author: Thriving Skills Engineering
  * Author URI: https://thrivingskill.com
@@ -16,8 +16,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('TSMB_VERSION', '1.3.0');
-define('TSMB_DB_VERSION', '1.3.0');
+define('TSMB_VERSION', '1.4.0');
+define('TSMB_DB_VERSION', '1.3.0'); // Unchanged: analytics reuses existing schemas without DDL changes.
 
 /* ==========================================================================
    1. PLUGIN LIFECYCLE (SCHEMA, MIGRATIONS & UNINSTALL CLEANUP)
@@ -4329,6 +4329,7 @@ class TSMB_Admin
                 <a href="?page=thriving-skills-app&tab=chips" class="nav-tab <?php echo $active_tab === 'chips' ? 'nav-tab-active' : ''; ?>">Trending Search &amp; Support</a>
                 <a href="?page=thriving-skills-app&tab=version" class="nav-tab <?php echo $active_tab === 'version' ? 'nav-tab-active' : ''; ?>">App Version &amp; Security</a>
                 <a href="?page=thriving-skills-app&tab=inbox" class="nav-tab <?php echo $active_tab === 'inbox' ? 'nav-tab-active' : ''; ?>">Support &amp; Leads</a>
+                <a href="?page=tsmb-admin-analytics" class="nav-tab">Platform Analytics</a>
             </h2>
 
             <div style="display:flex;gap:24px;flex-wrap:wrap;">
@@ -4687,6 +4688,7 @@ class TSMB_Admin
                         <li><code>/wp-json/thrivingskill/v1/certificates/verify</code></li>
                         <li><code>/wp-json/thrivingskill/v1/corporate-inquiry</code></li>
                         <li><code>/wp-json/thrivingskill/v1/support-tickets</code></li>
+                        <li><code>/wp-json/thrivingskill/v1/admin/analytics</code></li>
                     </ul>
                 </div>
             </div>
@@ -4696,8 +4698,19 @@ class TSMB_Admin
 }
 
 /* ==========================================================================
-   7. BOOTSTRAP INITIALIZATION
+   7. MODULAR ADMIN ANALYTICS INCLUDES & BOOTSTRAP INITIALIZATION
    ========================================================================== */
+
+$tsmb_analytics_includes = [
+    __DIR__ . '/includes/class-tsmb-analytics-service.php',
+    __DIR__ . '/includes/class-tsmb-analytics-rest.php',
+    __DIR__ . '/includes/class-tsmb-analytics-admin.php',
+];
+foreach ($tsmb_analytics_includes as $tsmb_inc_file) {
+    if (file_exists($tsmb_inc_file)) {
+        require_once $tsmb_inc_file;
+    }
+}
 
 function tsmb_init_plugin(): void
 {
@@ -4705,8 +4718,17 @@ function tsmb_init_plugin(): void
     TSMB_Security::init();
     TSMB_Rest_API::init();
     TSMB_Notifications::init();
+    if (class_exists('TSMB_Analytics_Service')) {
+        TSMB_Analytics_Service::register_cache_hooks();
+    }
+    if (class_exists('TSMB_Analytics_Rest')) {
+        TSMB_Analytics_Rest::init();
+    }
     if (is_admin()) {
         TSMB_Admin::init();
+        if (class_exists('TSMB_Analytics_Admin')) {
+            TSMB_Analytics_Admin::init();
+        }
     }
 }
 add_action('plugins_loaded', 'tsmb_init_plugin');

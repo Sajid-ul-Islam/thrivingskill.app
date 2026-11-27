@@ -508,4 +508,139 @@ final class TsMobileBridgeTest extends TestCase
         $data = $res->get_data();
         $this->assertSame(TSMB_VERSION, $data['plugin_version']);
     }
+
+    public function test_admin_analytics_access_control_validation_and_transient_caching(): void
+    {
+        // 1. Unauthenticated caller gets 401
+        $guestErr = TSMB_Analytics_Rest::check_admin_access();
+        $this->assertInstanceOf(WP_Error::class, $guestErr);
+        $this->assertSame(401, $guestErr->get_error_data()['status']);
+
+        // 2. Non-admin subscriber gets 403
+        $studentId = wp_insert_user(['user_login' => 'student_an', 'user_email' => 'san@example.com', 'role' => 'subscriber']);
+        wp_set_current_user($studentId);
+        $subErr = TSMB_Analytics_Rest::check_admin_access();
+        $this->assertInstanceOf(WP_Error::class, $subErr);
+        $this->assertSame(403, $subErr->get_error_data()['status']);
+
+        // 3. Administrator allowed (true) & filter validation rejects invalid presets / date ranges
+        $adminId = wp_insert_user(['user_login' => 'admin_an', 'user_email' => 'aan@example.com', 'role' => 'administrator']);
+        wp_set_current_user($adminId);
+        $this->assertTrue(TSMB_Analytics_Rest::check_admin_access());
+
+        $badPreset = TSMB_Analytics_Rest::get_dashboard(new WP_REST_Request([], ['preset' => 'bogus']));
+        $this->assertInstanceOf(WP_Error::class, $badPreset);
+        $this->assertSame(400, $badPreset->get_error_data()['status']);
+
+        $badRange = TSMB_Analytics_Rest::get_dashboard(new WP_REST_Request([], [
+            'preset'     => 'custom',
+            'start_date' => '2026-11-10',
+            'end_date'   => '2026-11-01',
+        ]));
+        $this->assertInstanceOf(WP_Error::class, $badRange);
+        $this->assertSame(400, $badRange->get_error_data()['status']);
+
+        // 4. First dashboard call computes live and caches in transient; second call hits cache
+        $res1 = TSMB_Analytics_Rest::get_dashboard(new WP_REST_Request([], ['preset' => 'all']));
+        $this->assertInstanceOf(WP_REST_Response::class, $res1);
+        $d1 = $res1->get_data();
+        $this->assertFalse($d1['meta']['cache_hit']);
+        $this->assertFalse($d1['meta']['schema_modified']);
+        $this->assertSame('wordpress_transient', $d1['meta']['cache_backend']);
+        $this->assertSame('no-store, no-cache, must-revalidate, max-age=0', $res1->get_headers()['Cache-Control']);
+
+        $res2 = TSMB_Analytics_Rest::get_dashboard(new WP_REST_Request([], ['preset' => 'all']));
+        $this->assertTrue($res2->get_data()['meta']['cache_hit']);
+
+        // 5. Invalidation forces fresh live recompute
+        TSMB_Analytics_Service::invalidate_cache();
+        $res3 = TSMB_Analytics_Rest::get_dashboard(new WP_REST_Request([], ['preset' => 'all']));
+        $this->assertFalse($res3->get_data()['meta']['cache_hit']);
+    }
+
+    public function test_admin_analytics_deduplicates_woo_lp_orders_and_excludes_free_pending_manual(): void
+    {
+        $adminId   = wp_insert_user(['user_login' => 'admin2', 'user_email' => 'a2@example.com', 'role' => 'administrator']);
+        $buyerId   = wp_insert_user(['user_login' => 'buyer2', 'user_email' => 'b2@example.com', 'role' => 'customer']);
+        $freeStuId = wp_insert_user(['user_login' => 'freestu', 'user_email' => 'fs@example.com', 'role' => 'customer']);
+        wp_set_current_user($adminId);
+
+        // Paid course #501 (৳500) + Free course #502 (৳0)
+        TSMB_Test_State::$posts[501] = (object) ['ID' => 501, 'post_type' => 'lp_course', 'post_status' => 'publish', 'post_title' => 'Paid Course'];
+        TSMB_Test_State::$posts[502] = (object) ['ID' => 502, 'post_type' => 'lp_course', 'post_status' => 'publish', 'post_title' => 'Free Course'];
+        TSMB_Test_State::$post_meta[501]['_lp_price'] = '500';
+        TSMB_Test_State::$post_meta[502]['_lp_price'] = '0';
+
+        // Completed paid WooCommerce order #801 (৳500 gross, ৳100 partial refund -> ৳400 net) linked to LP order #802
+        TSMB_Test_State::$posts[801] = (object) ['ID' => 801, 'post_type' => 'shop_order', 'post_status' => 'wc-completed', 'post_date_gmt' => gmdate('Y-m-d H:i:s')];
+        TSMB_Test_State::$post_meta[801] = [
+            '_order_total'          => '500',
+            '_order_currency'       => 'BDT',
+            '_customer_user'        => (string) $buyerId,
+            '_payment_method'       => 'sslcommerz',
+            '_payment_method_title' => 'SSLCommerz',
+            '_date_paid'            => (string) time(),
+            '_learn_press_order_id' => '802',
+        ];
+        TSMB_Test_State::$posts[809] = (object) ['ID' => 809, 'post_type' => 'shop_order_refund', 'post_parent' => 801, 'post_status' => 'wc-completed'];
+        TSMB_Test_State::$post_meta[809]['_refund_amount'] = '100';
+        TSMB_Test_State::$wc_order_items[] = ['order_item_id' => 1, 'order_id' => 801, 'name' => 'Paid Course', 'product_id' => 501, 'course_id' => 501, 'qty' => 1, 'line_total' => '500'];
+
+        // Woo-linked LP order #802 -> must be deduplicated, NOT double-counted
+        TSMB_Test_State::$posts[802] = (object) ['ID' => 802, 'post_type' => 'lp_order', 'post_status' => 'lp-completed', 'post_date_gmt' => gmdate('Y-m-d H:i:s')];
+        TSMB_Test_State::$post_meta[802] = ['_order_total' => '500', '_woo_order_id' => '801', '_payment_method' => 'sslcommerz', '_user_id' => (string) $buyerId];
+
+        // Pending WC order #803 (৳750) -> excluded from revenue, counted as pending
+        TSMB_Test_State::$posts[803] = (object) ['ID' => 803, 'post_type' => 'shop_order', 'post_status' => 'wc-pending', 'post_date_gmt' => gmdate('Y-m-d H:i:s')];
+        TSMB_Test_State::$post_meta[803] = ['_order_total' => '750', '_order_currency' => 'BDT', '_customer_user' => (string) $buyerId, '_payment_method' => 'sslcommerz'];
+
+        // Free ৳0 WC order #804 + free course enrollment -> never counted as paid purchase
+        TSMB_Test_State::$posts[804] = (object) ['ID' => 804, 'post_type' => 'shop_order', 'post_status' => 'wc-completed', 'post_date_gmt' => gmdate('Y-m-d H:i:s')];
+        TSMB_Test_State::$post_meta[804] = ['_order_total' => '0', '_order_currency' => 'BDT', '_customer_user' => (string) $freeStuId, '_payment_method' => 'free'];
+
+        // Gateway-less manual LP order #805 (৳500) -> excluded from confirmed revenue & surfaced in reconciliation
+        TSMB_Test_State::$posts[805] = (object) ['ID' => 805, 'post_type' => 'lp_order', 'post_status' => 'lp-completed', 'post_date_gmt' => gmdate('Y-m-d H:i:s')];
+        TSMB_Test_State::$post_meta[805] = ['_order_total' => '500', '_woo_order_id' => '', '_payment_method' => '', '_user_id' => (string) $adminId];
+
+        // Enrollments: buyer completed Paid Course #501; freeStu enrolled (in-progress) in Free Course #502
+        TSMB_Test_State::$lp_section_items = [
+            ['course_id' => 501, 'item_type' => 'lp_lesson', 'item_count' => 2],
+            ['course_id' => 502, 'item_type' => 'lp_lesson', 'item_count' => 2],
+        ];
+        TSMB_Test_State::$lp_user_items = [
+            ['user_item_id' => 1, 'user_id' => $buyerId, 'item_id' => 501, 'item_type' => 'lp_course', 'status' => 'finished', 'graduation' => 'passed', 'start_time' => gmdate('Y-m-d H:i:s'), 'end_time' => gmdate('Y-m-d H:i:s')],
+            ['user_item_id' => 2, 'user_id' => $freeStuId, 'item_id' => 502, 'item_type' => 'lp_course', 'status' => 'enrolled', 'graduation' => 'in-progress', 'start_time' => gmdate('Y-m-d H:i:s'), 'end_time' => ''],
+        ];
+
+        $data = TSMB_Analytics_Service::get_dashboard_data(['preset' => 'all', 'refresh' => true]);
+        $this->assertIsArray($data);
+        $this->assertSame(400.0, $data['overview']['confirmed_revenue']);
+        $this->assertSame(1, $data['overview']['confirmed_paid_orders']);
+        $this->assertSame(400.0, $data['overview']['average_order_value']);
+        $this->assertSame(1, $data['overview']['pending_orders_count']);
+        $this->assertSame(750.0, $data['overview']['pending_orders_amount']);
+        $this->assertSame(2, $data['enrollments']['active_snapshot_total']);
+        $this->assertSame(1, $data['enrollments']['free_enrollments_all_time']);
+        $this->assertSame(1, $data['enrollments']['completed_snapshot_total']);
+        $this->assertSame(50.0, $data['enrollments']['completion_rate_percent']);
+        $this->assertSame(1, $data['revenue']['free_zero_wc_orders']);
+        $this->assertSame(1, $data['revenue']['reconciliation']['woo_linked_lp_orders_deduped']);
+        $this->assertSame(1, $data['revenue']['reconciliation']['unverified_or_manual_lp_orders']);
+        $this->assertSame(500.0, $data['revenue']['reconciliation']['unverified_or_manual_lp_total']);
+
+        // Course #502 (free) has 0 paid orders and 0 confirmed revenue; Paid course #501 has 1 order & 400 revenue
+        $coursesById = [];
+        foreach ($data['course_performance'] as $cp) {
+            $coursesById[$cp['course_id']] = $cp;
+        }
+        $this->assertSame(0, $coursesById[502]['paid_orders_count']);
+        $this->assertSame(0.0, $coursesById[502]['confirmed_revenue']);
+        $this->assertSame(1, $coursesById[501]['paid_orders_count']);
+        $this->assertSame(400.0, $coursesById[501]['confirmed_revenue']);
+
+        // Unsupported metrics explicitly documented without fabrication
+        $unsupportedKeys = array_column($data['unsupported_metrics'], 'key');
+        $this->assertContains('platform_dau_wau_mau', $unsupportedKeys);
+        $this->assertContains('course_view_to_checkout_ctr', $unsupportedKeys);
+    }
 }

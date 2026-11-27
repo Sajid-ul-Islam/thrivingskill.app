@@ -69,6 +69,7 @@ class WP_User
     public $user_email = '';
     public $user_nicename = '';
     public $display_name = '';
+    public $user_registered = '';
     public $roles = [];
 
     public function __construct($id = 0)
@@ -86,6 +87,7 @@ class WP_REST_Response
 {
     private $data;
     private $status;
+    private $headers = [];
 
     public function __construct($data = null, int $status = 200)
     {
@@ -106,6 +108,16 @@ class WP_REST_Response
     public function get_status(): int
     {
         return $this->status;
+    }
+
+    public function header(string $key, string $value, bool $replace = true): void
+    {
+        $this->headers[$key] = $value;
+    }
+
+    public function get_headers(): array
+    {
+        return $this->headers;
     }
 }
 
@@ -178,6 +190,10 @@ final class TSMB_Test_State
     public static array $enrolled_courses = [];
     public static array $lp_orders = [];
     public static array $wc_orders = [];
+    public static array $wc_order_items = [];
+    public static array $lp_order_items = [];
+    public static array $lp_user_items = [];
+    public static array $lp_section_items = [];
     public static array $tables = [];
     public static array $sent_emails = [];
     public static array $sent_sms = [];
@@ -208,6 +224,10 @@ final class TSMB_Test_State
         self::$enrolled_courses  = [];
         self::$lp_orders         = [];
         self::$wc_orders         = [];
+        self::$wc_order_items    = [];
+        self::$lp_order_items    = [];
+        self::$lp_user_items     = [];
+        self::$lp_section_items  = [];
         self::$tables            = [];
         self::$sent_emails       = [];
         self::$sent_sms          = [];
@@ -306,7 +326,10 @@ final class TSMB_Fake_WPDB
 {
     public string $prefix = 'wp_';
     public string $posts = 'wp_posts';
+    public string $postmeta = 'wp_postmeta';
     public string $users = 'wp_users';
+    public string $usermeta = 'wp_usermeta';
+    public string $options = 'wp_options';
     public string $comments = 'wp_comments';
     public string $commentmeta = 'wp_commentmeta';
 
@@ -317,8 +340,74 @@ final class TSMB_Fake_WPDB
 
     public function get_var($prepared)
     {
-        if (is_array($prepared) && strpos($prepared['query'], 'SHOW TABLES LIKE') !== false) {
-            return (string) ($prepared['args'][0] ?? '');
+        $sql  = is_array($prepared) ? (string) ($prepared['query'] ?? '') : (string) $prepared;
+        $args = is_array($prepared) ? (array) ($prepared['args'] ?? []) : [];
+
+        if (strpos($sql, 'SHOW TABLES LIKE') !== false) {
+            return (string) ($args[0] ?? '');
+        }
+        if (strpos($sql, 'SHOW COLUMNS FROM') !== false) {
+            return (string) ($args[0] ?? 'item_id');
+        }
+        if (strpos($sql, 'FROM wp_users') !== false && strpos($sql, 'COUNT(*)') !== false) {
+            if (strpos($sql, 'user_registered >=') !== false && count($args) >= 2) {
+                $s = (string) $args[0];
+                $e = (string) $args[1];
+                $cnt = 0;
+                foreach (TSMB_Test_State::$users as $u) {
+                    $reg = (string) ($u->user_registered ?? '');
+                    if ($reg >= $s && $reg <= $e) {
+                        $cnt++;
+                    }
+                }
+                return $cnt;
+            }
+            return count(TSMB_Test_State::$users);
+        }
+        if (strpos($sql, 'FROM wp_usermeta') !== false && strpos($sql, 'COUNT(DISTINCT user_id)') !== false) {
+            $cnt = 0;
+            foreach (TSMB_Test_State::$user_meta as $uid => $meta) {
+                if (isset($meta['tsmb_watch_positions_v1']) || isset($meta['tsmb_gamification_v1'])) {
+                    $cnt++;
+                }
+            }
+            return $cnt;
+        }
+        if (strpos($sql, 'wp_learnpress_user_items') !== false && strpos($sql, 'COUNT(DISTINCT') !== false) {
+            $uids = [];
+            $is_lesson = strpos($sql, "'lp_lesson'") !== false;
+            $is_finished = strpos($sql, "'finished'") !== false && strpos($sql, "'enrolled'") === false;
+            foreach (TSMB_Test_State::$lp_user_items as $ui) {
+                if ($is_lesson) {
+                    if (in_array($ui['item_type'] ?? '', ['lp_lesson', 'lp_quiz'], true)) {
+                        $uids[intval($ui['user_id'] ?? 0)] = true;
+                    }
+                    continue;
+                }
+                if (($ui['item_type'] ?? '') !== 'lp_course') {
+                    continue;
+                }
+                if ($is_finished && (($ui['status'] ?? '') !== 'finished' || ($ui['graduation'] ?? '') === 'failed')) {
+                    continue;
+                }
+                $uids[intval($ui['user_id'] ?? 0)] = true;
+            }
+            return count($uids);
+        }
+        foreach (['wp_tsmb_push_tokens', 'wp_tsmb_corporate_inquiries', 'wp_tsmb_support_tickets'] as $tbl) {
+            if (strpos($sql, $tbl) !== false) {
+                $rows = TSMB_Test_State::$tables[$tbl] ?? [];
+                if (strpos($sql, 'DISTINCT user_id') !== false) {
+                    $uids = [];
+                    foreach ($rows as $r) {
+                        if (intval($r['user_id'] ?? 0) > 0) {
+                            $uids[intval($r['user_id'])] = true;
+                        }
+                    }
+                    return count($uids);
+                }
+                return count($rows);
+            }
         }
         return null;
     }
@@ -373,6 +462,198 @@ final class TSMB_Fake_WPDB
     {
         $sql  = is_array($prepared) ? (string) ($prepared['query'] ?? '') : (string) $prepared;
         $args = is_array($prepared) ? (array) ($prepared['args'] ?? []) : [];
+
+        // Analytics: site users + capabilities usermeta
+        if (strpos($sql, 'FROM wp_users u') !== false && strpos($sql, 'wp_usermeta') !== false) {
+            $cap_key = (string) ($args[0] ?? 'wp_capabilities');
+            $out = [];
+            foreach (TSMB_Test_State::$users as $uid => $user) {
+                $caps = TSMB_Test_State::$user_meta[intval($uid)][$cap_key] ?? null;
+                if ($caps === null || $caps === '') {
+                    $roles_assoc = [];
+                    foreach ((array) ($user->roles ?? []) as $rk) {
+                        $roles_assoc[$rk] = true;
+                    }
+                    if (empty($roles_assoc)) {
+                        continue;
+                    }
+                    $caps = serialize($roles_assoc);
+                }
+                $out[] = [
+                    'ID'               => intval($uid),
+                    'user_registered'  => (string) ($user->user_registered ?: gmdate('Y-m-d H:i:s')),
+                    'capabilities_raw' => is_array($caps) ? serialize($caps) : (string) $caps,
+                ];
+            }
+            return $output === ARRAY_A ? $out : array_map(static fn($r) => (object) $r, $out);
+        }
+
+        // Analytics: posts queries by post_type
+        if (strpos($sql, 'FROM wp_posts') !== false) {
+            if (strpos($sql, "post_type = 'lp_course'") !== false) {
+                if (strpos($sql, 'GROUP BY post_status') !== false) {
+                    $counts = [];
+                    foreach (TSMB_Test_State::$posts as $p) {
+                        if (($p->post_type ?? '') === 'lp_course') {
+                            $st = (string) ($p->post_status ?? 'publish');
+                            $counts[$st] = ($counts[$st] ?? 0) + 1;
+                        }
+                    }
+                    $out = [];
+                    foreach ($counts as $st => $cnt) {
+                        $out[] = ['post_status' => $st, 'cnt' => $cnt];
+                    }
+                    return $out;
+                }
+                $filter_cid = count($args) > 0 ? intval($args[0]) : 0;
+                $out = [];
+                foreach (TSMB_Test_State::$posts as $p) {
+                    if (($p->post_type ?? '') === 'lp_course' && ($p->post_status ?? '') === 'publish') {
+                        if ($filter_cid > 0 && intval($p->ID) !== $filter_cid) {
+                            continue;
+                        }
+                        $out[] = [
+                            'ID'            => intval($p->ID),
+                            'post_title'    => (string) ($p->post_title ?? ('Course ' . $p->ID)),
+                            'post_author'   => intval($p->post_author ?? 1),
+                            'post_date_gmt' => (string) ($p->post_date_gmt ?? gmdate('Y-m-d H:i:s')),
+                        ];
+                    }
+                }
+                return $out;
+            }
+            if (strpos($sql, "post_type = 'shop_order_refund'") !== false) {
+                $out = [];
+                foreach (TSMB_Test_State::$posts as $p) {
+                    if (($p->post_type ?? '') === 'shop_order_refund' && in_array(intval($p->post_parent ?? 0), array_map('intval', $args), true)) {
+                        $out[] = ['parent_id' => intval($p->post_parent), 'refund_id' => intval($p->ID)];
+                    }
+                }
+                return $out;
+            }
+            foreach (['shop_order', 'lp_order'] as $pt) {
+                if (strpos($sql, "post_type = '{$pt}'") !== false) {
+                    $out = [];
+                    foreach (TSMB_Test_State::$posts as $p) {
+                        if (($p->post_type ?? '') === $pt) {
+                            $out[] = [
+                                'ID'            => intval($p->ID),
+                                'id'            => intval($p->ID),
+                                'post_status'   => (string) ($p->post_status ?? ''),
+                                'status'        => (string) ($p->post_status ?? ''),
+                                'post_date_gmt' => (string) ($p->post_date_gmt ?? gmdate('Y-m-d H:i:s')),
+                                'created_gmt'   => (string) ($p->post_date_gmt ?? gmdate('Y-m-d H:i:s')),
+                            ];
+                        }
+                    }
+                    return $out;
+                }
+            }
+        }
+
+        // Analytics: postmeta batch
+        if (strpos($sql, 'FROM wp_postmeta') !== false) {
+            $out = [];
+            foreach (TSMB_Test_State::$post_meta as $pid => $metas) {
+                foreach ($metas as $mk => $mv) {
+                    $out[] = ['post_id' => intval($pid), 'meta_key' => (string) $mk, 'meta_value' => $mv];
+                }
+            }
+            return $out;
+        }
+
+        // Analytics: learnpress_user_items & curriculum & WC items
+        if (strpos($sql, 'wp_learnpress_user_items') !== false) {
+            if (strpos($sql, 'item_type = \'lp_quiz\'') !== false) {
+                return array_values(array_filter(TSMB_Test_State::$lp_user_items, static fn($ui) => ($ui['item_type'] ?? '') === 'lp_quiz'));
+            }
+            if (strpos($sql, 'GROUP BY parent_id') !== false) {
+                $grouped = [];
+                foreach (TSMB_Test_State::$lp_user_items as $ui) {
+                    if (in_array($ui['item_type'] ?? '', ['lp_lesson', 'lp_quiz'], true) && ($ui['status'] ?? '') === 'completed' && intval($ui['parent_id'] ?? 0) > 0) {
+                        $pid = intval($ui['parent_id']);
+                        $grouped[$pid] = ($grouped[$pid] ?? 0) + 1;
+                    }
+                }
+                $out = [];
+                foreach ($grouped as $pid => $cnt) {
+                    $out[] = ['parent_id' => $pid, 'completed_cnt' => $cnt];
+                }
+                return $out;
+            }
+            if (strpos($sql, 'latest.latest_id') !== false) {
+                $filter_cid = count($args) > 0 ? intval($args[0]) : 0;
+                $latest = [];
+                foreach (TSMB_Test_State::$lp_user_items as $ui) {
+                    if (($ui['item_type'] ?? '') !== 'lp_course') {
+                        continue;
+                    }
+                    $uid = intval($ui['user_id'] ?? 0);
+                    $cid = intval($ui['item_id'] ?? 0);
+                    if ($filter_cid > 0 && $cid !== $filter_cid) {
+                        continue;
+                    }
+                    $key = $uid . ':' . $cid;
+                    $id  = intval($ui['user_item_id'] ?? 0);
+                    if (!isset($latest[$key]) || $id > intval($latest[$key]['user_item_id'] ?? 0)) {
+                        $latest[$key] = [
+                            'user_item_id' => $id,
+                            'user_id'      => $uid,
+                            'course_id'    => $cid,
+                            'status'       => (string) ($ui['status'] ?? 'enrolled'),
+                            'graduation'   => (string) ($ui['graduation'] ?? ''),
+                            'start_time'   => (string) ($ui['start_time'] ?? gmdate('Y-m-d H:i:s')),
+                            'end_time'     => (string) ($ui['end_time'] ?? ''),
+                        ];
+                    }
+                }
+                return array_values($latest);
+            }
+        }
+
+        if (strpos($sql, 'wp_learnpress_section_items') !== false) {
+            return TSMB_Test_State::$lp_section_items;
+        }
+
+        if (strpos($sql, 'wp_woocommerce_order_items') !== false) {
+            $out = [];
+            foreach (TSMB_Test_State::$wc_order_items as $it) {
+                $out[] = [
+                    'order_item_id'   => intval($it['order_item_id']),
+                    'order_id'        => intval($it['order_id']),
+                    'order_item_name' => (string) ($it['name'] ?? ''),
+                ];
+            }
+            return $out;
+        }
+
+        if (strpos($sql, 'wp_woocommerce_order_itemmeta') !== false) {
+            $out = [];
+            foreach (TSMB_Test_State::$wc_order_items as $it) {
+                $iid = intval($it['order_item_id']);
+                foreach (['_product_id' => $it['product_id'] ?? 0, '_qty' => $it['qty'] ?? 1, '_line_total' => $it['line_total'] ?? 0, '_course_id' => $it['course_id'] ?? 0] as $mk => $mv) {
+                    if ($mv !== 0) {
+                        $out[] = ['order_item_id' => $iid, 'meta_key' => $mk, 'meta_value' => $mv];
+                    }
+                }
+            }
+            return $out;
+        }
+
+        if (strpos($sql, 'wp_learnpress_order_items') !== false) {
+            return TSMB_Test_State::$lp_order_items;
+        }
+
+        if (strpos($sql, 'wp_learnpress_order_itemmeta') !== false) {
+            $out = [];
+            foreach (TSMB_Test_State::$lp_order_items as $it) {
+                $iid = intval($it['order_item_id']);
+                $out[] = ['item_id' => $iid, 'meta_key' => '_course_id', 'meta_value' => intval($it['item_id'] ?? 0)];
+                $out[] = ['item_id' => $iid, 'meta_key' => '_quantity', 'meta_value' => intval($it['qty'] ?? 1)];
+                $out[] = ['item_id' => $iid, 'meta_key' => '_total', 'meta_value' => floatval($it['total'] ?? 0)];
+            }
+            return $out;
+        }
 
         $matchedTable = null;
         foreach (array_keys(TSMB_Test_State::$tables) as $tbl) {
@@ -646,6 +927,7 @@ function wp_insert_user($data)
     $u->user_email    = (string) ($data['user_email'] ?? '');
     $u->user_nicename = $u->user_login;
     $u->display_name  = (string) ($data['display_name'] ?? $u->user_login);
+    $u->user_registered = (string) ($data['user_registered'] ?? gmdate('Y-m-d H:i:s'));
     $u->roles         = [($data['role'] ?? 'subscriber')];
     TSMB_Test_State::$users[$uid] = $u;
     return $uid;
@@ -707,6 +989,28 @@ function get_post_status($id)
 {
     return TSMB_Test_State::$posts[intval($id)]->post_status ?? false;
 }
+function get_post_type($id)
+{
+    return TSMB_Test_State::$posts[intval($id)]->post_type ?? false;
+}
+function admin_url($path = ''): string
+{
+    return 'https://thrivingskill.com/wp-admin/' . ltrim((string) $path, '/');
+}
+function rest_url($path = ''): string
+{
+    return 'https://thrivingskill.com/wp-json/' . ltrim((string) $path, '/');
+}
+function wp_create_nonce($action = -1): string
+{
+    return 'nonce_' . sanitize_key((string) $action);
+}
+function add_submenu_page($parent_slug, $page_title, $menu_title, $capability, $menu_slug, $callback = '') {}
+function selected($selected, $current = true, $display = true) { return ''; }
+function checked($checked, $current = true, $display = true) { return ''; }
+function wp_nonce_field($action = -1, $name = '_wpnonce', $referer = true, $display = true) { return ''; }
+function check_admin_referer($action = -1, $query_arg = '_wpnonce') { return true; }
+function wp_die($message = '', $title = '', $args = []) { throw new \RuntimeException((string) $message); }
 
 function get_post_meta($id, $key = '', $single = false)
 {
