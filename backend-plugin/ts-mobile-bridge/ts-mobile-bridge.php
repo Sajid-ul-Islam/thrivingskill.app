@@ -2774,6 +2774,28 @@ class TSMB_Rest_API
             'status'  => 'any',
         ]);
 
+        // Bypass third-party pre_get_comments / comments_clauses filters (e.g. LearnPress Course Review)
+        // that can suppress course reviews when querying with post_id on lp_course.
+        if (empty($comments)) {
+            global $wpdb;
+            if (isset($wpdb) && !empty($wpdb->comments)) {
+                $comments = $wpdb->get_results(
+                    $wpdb->prepare(
+                        "SELECT comment_ID, comment_author, comment_content, comment_date_gmt
+                         FROM {$wpdb->comments}
+                         WHERE comment_post_ID = %d
+                           AND user_id = %d
+                           AND comment_type IN ('review', 'lp_review')
+                           AND comment_approved NOT IN ('trash', 'post-trashed', 'spam')
+                         ORDER BY comment_ID DESC
+                         LIMIT 1",
+                        $course_id,
+                        $user_id
+                    )
+                );
+            }
+        }
+
         if (empty($comments)) {
             return null;
         }

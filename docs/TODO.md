@@ -2,10 +2,45 @@
 ## Thriving Skills Mobile Application
 
 **Current Version**: 1.4.0  
-**Current Milestone**: Milestone 6 Completed (UI/UX Motion Overhaul, Vimeo Pro Integration, Local APK Build & GitHub Release)  
-**Next Milestone**: Milestone 7 (Companion v1.2.0 Deploy, Layer 3 QA & Play Store Submission)  
+**Current Milestone**: Companion Plugin `v1.4.0` Deployed to Staging (Admin Analytics, Non-Admin Paywall & Full Completion/Certificate E2E Verified: `76 PASS | 0 WARN | 0 FAIL`)  
+**Next Milestone**: Office Release Sign-Off (SSLCommerz Sandbox Click-Through, WordPress Course Meta Fix, Layer 3 Physical QA & Production Promotion)  
 **Repository**: `https://github.com/Sajid-ul-Islam/thrivingskill.app`  
-**Last Updated**: November 2026  
+**Last Updated**: 2026-11-28
+
+---
+
+## 📅 Immediate Office TODO List (Next Session Priorities)
+
+### P0 — Release Blockers (Must Complete Before Production Promotion)
+- [ ] **Complete SSLCommerz Sandbox Checkout & Paid-Course Unlock (`Staging`)**:
+  - Open SSLCommerz Sandbox (`testbox`) via `/auth/webview-handoff` for `ts_qa_subscriber` (`#24933`) / Course `#11580` (`৳750`, e.g. retry pending Order `#87794` or place a fresh order).
+  - Use **Mobile Banking -> bKash/Nagad -> Success** on SSLCommerz Sandbox (no real card needed), then test a **Fail/Cancel** order too.
+  - Verify `GET /wp-json/thrivingskill/v1/enrollments?course_id=11580` flips to `payment_confirmed: true, enrolled: true` on Success (and stays `false` on Fail/Cancel).
+- [ ] **Fix Staging Checkout & Course Configuration Quirks Found During QA**:
+  - Audit WooCommerce Checkout Field Editor (`thwcfd-field-password validate-required`) on `/checkout/`: disable or conditionally hide `Billing Password *` (`#password`) for already-logged-in users so mobile WebView handoff checkout never fails on an unexpected password prompt.
+  - Switch Course `#49518` (*Creating Winning Mindset*) LearnPress **Evaluation** setting from `evaluate_quiz (70%)` -> **`evaluate_lesson`** on both **Staging** and **Production** (the course has `14` lessons and `0` quizzes; `ts-mobile-bridge v1.4.0` already repairs mobile progress cleanly, but fixing postmeta prevents web LearnPress students from hitting `grade = failed` on certificate claim).
+- [ ] **Execute Physical Android & iOS Device QA (Layer 3)**:
+  - Run the full protocol in [`docs/REAL_DEVICE_TEST_CHECKLIST.md`](./REAL_DEVICE_TEST_CHECKLIST.md) against Staging builds (Vimeo/Media3 playback, 5s autoplay countdown, SSLCommerz MFS redirect recovery, network drop retry, cold restart state).
+- [ ] **Promote `ts-mobile-bridge v1.4.0` to Production (`https://thrivingskill.com`)**:
+  - Build archive temporarily via `python scripts/package_plugin.py`, upload to `https://thrivingskill.com/wp-admin/plugin-install.php?tab=upload` (delete local `.zip` right after), and run read-only parity verification:
+    ```powershell
+    node scripts/test_layer2_staging_integration.js --base-url https://thrivingskill.com --strict-companion
+    ```
+
+### P1 — Automation, Cleanup & CI Hygiene
+- [ ] **Eliminate Manual `.zip` Plugin Uploads**:
+  - Choose and implement either a GitHub Actions Staging/Prod deploy workflow (SFTP/SSH + `wp plugin install --force`) or a WordPress `Update URI` / `update_plugins_*` auto-updater inside `ts-mobile-bridge`.
+- [ ] **Fix Local `.env` & Verify GitHub Actions Secrets**:
+  - Fix `.env` `STAGING_TEST_USERNAME` typo (`sajjadu15-634@diu.edu.bd` -> `sajjadur15-634@diu.edu.bd`) and confirm `STAGING_TEST_USERNAME` / `STAGING_TEST_PASSWORD` GitHub repository secrets match so [staging-e2e.yml](../.github/workflows/staging-e2e.yml) runs `100%` green in CI.
+- [ ] **Staging Cleanup**:
+  - Cancel/trash temporary QA pending Order `#87794` on Staging if you want Staging Analytics pending counts clean, and optionally delete inactive legacy `Thriving Skills Mobile Bridge 1.0.0` from Staging `plugins.php`.
+- [ ] **Wire Paid eBook Server Entitlement Sync (`EbookModal.tsx`)**:
+  - Replace local `AsyncStorage` eBook ownership tracking with server-verified WooCommerce/companion entitlement checks.
+
+### ✅ Completed in This Session (`2026-11-27` – `2026-11-28`)
+- [x] **Implemented WP Admin Analytics inside `ts-mobile-bridge v1.4.0`**: Six overview/user/enrollment/revenue/course/conversion sections, administrator `manage_options` REST routes (`/thrivingskill/v1/admin/analytics*`), Woo HPOS/legacy deduped confirmed revenue (`৳2,500.00`), manual/free exclusion, transient caching, CSV export — zero new plugin and zero DB schema modifications.
+- [x] **Verified Non-Admin `Subscriber` Paywall & Role Guards Live on Staging**: Created `ts_qa_subscriber` (`#24933`, role `subscriber`); confirmed `403` on paid lessons (`#12061`, `#49521`, `/learnpress/v1/lessons/12061`), unpaid `/learnpress/v1/courses/enroll`, `/admin/analytics`, and `/submit-review`, with `200` on free previews (`#12058`, `#49519`).
+- [x] **Fixed & Verified 100% Course Completion + Certificate Issuance Live on Staging**: Fixed zero-quiz stale `graduation='failed'` repair + `$wpdb->comments` course-review fallback in [ts-mobile-bridge.php](../backend-plugin/ts-mobile-bridge/ts-mobile-bridge.php), guarded Step 5/Step 7 in [test_layer2_staging_integration.js](../scripts/test_layer2_staging_integration.js), verified `14/14` completion on Course `#49518` (`200` `/submit-review`, LP Cert `#49900` `14bcaee91d0afcdd34e3cf288ebe23aa`, `/certificates/verify` `valid: true`), and passed `--strict-companion --journey` **76 PASS | 0 WARN | 0 SKIP | 0 FAIL**.
 
 ---
 
@@ -146,14 +181,12 @@
 
 ---
 
-## 🛠️ In-Progress & Deployment Tasks
+## 🛠️ Completed v1.2–v1.4 & Ongoing Backlog
 
-- [ ] **Deploy Companion Plugin `v1.3.0` (`ts-mobile-bridge.zip`) to Staging & Production**:
-  - Upload updated plugin archive containing `/enrollments`, `/learning-state`, `/engagement-sync`, `/courses/{id}/submit-review`, `/certificates/verify`, `/auth/webview-handoff`, `/corporate-inquiry`, and `/support-tickets`.
+- [x] **Deploy Companion Plugin `v1.4.0` (`ts-mobile-bridge`) to Staging**:
+  - Deployed via WP Admin with Admin Analytics, `/enrollments`, `/learning-state`, `/engagement-sync`, `/courses/{id}/submit-review`, `/certificates/verify`, `/auth/webview-handoff`, `/corporate-inquiry`, `/support-tickets`, zero-quiz completion repair, & `$wpdb->comments` review fallback (**76 PASS | 0 WARN | 0 FAIL** on Staging; Production promotion tracked in P0 above).
 - [x] **Connect Corporate Inquiry Modal (`CorporateInquiryModal.tsx`) to Backend Lead Endpoint**:
   - Persists to WordPress (`tsmb_corporate_inquiries`) with unique reference IDs (`CORP-...`), email alerts, and `Support & Leads` WP Admin inbox; `SupportContactModal.tsx` also tracks learner support tickets (`TS-...`) and `GamificationContext` / `LearningContext` sync streaks & watch positions.
-- [ ] **Wire Paid eBook Server Entitlement Sync (`EbookModal.tsx`)**:
-  - Sync purchased eBook entitlements from WooCommerce orders instead of device-local `AsyncStorage` tracking.
 
 ---
 

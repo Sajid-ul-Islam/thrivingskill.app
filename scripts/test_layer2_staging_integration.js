@@ -735,29 +735,38 @@ async function runCourseE2EJourney(discoveredRoutes, lpCourses, feedCourses = []
     }
   }
 
-  // Step 5: Enroll (only executes free/already-enrolled course unless configured with paid test entitlement)
+  // Step 5: Enroll (skip duplicate /courses/enroll if already enrolled so graduated courses are not reset to a retake)
   const runEnrollmentSteps = async () => {
-    const enrollRes = await httpJson('/wp-json/learnpress/v1/courses/enroll', {
-      method: 'POST',
-      headers: authHeaders,
-      body: JSON.stringify({ id: targetCourseId }),
-      retry: false,
-    });
-    const enrolledOk =
-      enrollRes.ok ||
-      enrollRes.json?.status === 'success' ||
-      String(enrollRes.json?.message || '').toLowerCase().includes('already');
-
-    if (!enrolledOk && Number(courseDetailRes.json?.price) > 0) {
+    if (myEnrolledIds.includes(Number(targetCourseId))) {
       record(
         'E2E Journey',
         'Step 5: Course Enrollment',
-        'SKIP',
-        `Course ${targetCourseId} is paid (HTTP ${enrollRes.status}); set STAGING_JOURNEY_COURSE_ID to a free or pre-enrolled staging test course for Steps 5–9.`
+        'PASS',
+        `Already enrolled in course #${targetCourseId} (skipping duplicate enroll to preserve progress)`
       );
-      return;
+    } else {
+      const enrollRes = await httpJson('/wp-json/learnpress/v1/courses/enroll', {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({ id: targetCourseId }),
+        retry: false,
+      });
+      const enrolledOk =
+        enrollRes.ok ||
+        enrollRes.json?.status === 'success' ||
+        String(enrollRes.json?.message || '').toLowerCase().includes('already');
+
+      if (!enrolledOk && Number(courseDetailRes.json?.price) > 0) {
+        record(
+          'E2E Journey',
+          'Step 5: Course Enrollment',
+          'SKIP',
+          `Course ${targetCourseId} is paid (HTTP ${enrollRes.status}); set STAGING_JOURNEY_COURSE_ID to a free or pre-enrolled staging test course for Steps 5–9.`
+        );
+        return;
+      }
+      record('E2E Journey', 'Step 5: Course Enrollment', enrolledOk ? 'PASS' : 'FAIL', enrollRes.error || `HTTP ${enrollRes.status}`);
     }
-    record('E2E Journey', 'Step 5: Course Enrollment', enrolledOk ? 'PASS' : 'FAIL', enrollRes.error || `HTTP ${enrollRes.status}`);
 
     // Step 6: Inspect & Finish First Lesson
     if (lessonItems.length > 0) {
