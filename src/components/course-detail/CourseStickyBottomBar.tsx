@@ -48,6 +48,12 @@ export const CourseStickyBottomBar: React.FC<CourseStickyBottomBarProps> = ({
         ? Math.round(((course.originalPrice - course.price) / course.originalPrice) * 100)
         : 0;
 
+  const ctaTextColor = isAdmin
+    ? '#FFFFFF'
+    : !isEnrolled && isPaidCourse
+      ? colors.onAccent
+      : colors.onPrimary;
+
   return (
     <View
       style={[
@@ -172,19 +178,19 @@ export const CourseStickyBottomBar: React.FC<CourseStickyBottomBarProps> = ({
           }
         >
           {isEnrolling ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
+            <ActivityIndicator size="small" color={ctaTextColor} />
           ) : (
             <Ionicons
               name={isAdmin ? 'play-circle' : isEnrolled ? 'play' : 'flash'}
               size={18}
-              color="#FFFFFF"
+              color={ctaTextColor}
             />
           )}
           <Text
             style={[
               styles.enrollCTAText,
               {
-                color: '#FFFFFF',
+                color: ctaTextColor,
                 fontWeight: '800',
               },
             ]}
