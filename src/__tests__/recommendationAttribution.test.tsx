@@ -7,6 +7,8 @@ import {
   DEFAULT_RECOMMENDATION_ATTRIBUTION_WINDOW_MS,
   STORAGE_KEY_ANALYTICS_EVENTS,
   STORAGE_KEY_ANALYTICS_STATE,
+  getAnalyticsEventsStorageKey,
+  getAnalyticsStateStorageKey,
 } from '../services/analytics/analyticsService';
 import { TelemetryService } from '../services/telemetry/telemetryService';
 import { computeRecommendedCourses, DEFAULT_RECOMMENDATION_SOURCE } from '../utils/recommendations';
@@ -349,8 +351,10 @@ describe('App-only centralized analytics & recommendation attribution', () => {
     expect(click?.position).toBe(1);
 
     await AnalyticsService.whenIdle();
-    expect(await AsyncStorage.getItem(STORAGE_KEY_ANALYTICS_STATE)).toBeTruthy();
-    expect(await AsyncStorage.getItem(STORAGE_KEY_ANALYTICS_EVENTS)).toBeTruthy();
+    expect(await AsyncStorage.getItem(getAnalyticsStateStorageKey('learner_42'))).toBeTruthy();
+    expect(await AsyncStorage.getItem(getAnalyticsEventsStorageKey('learner_42'))).toBeTruthy();
+    expect(await AsyncStorage.getItem(STORAGE_KEY_ANALYTICS_STATE)).toBeNull();
+    expect(await AsyncStorage.getItem(STORAGE_KEY_ANALYTICS_EVENTS)).toBeNull();
 
     // Simulate app process restart before purchase completes
     AnalyticsService.resetInMemoryCacheForTest();
@@ -489,8 +493,16 @@ describe('App-only centralized analytics & recommendation attribution', () => {
       clickTimestamp: 1_700_000_010_000,
     });
 
-    // Learner B must NOT inherit Learner A's click
+    // Learner B must NOT inherit Learner A's click, metrics, or stored events
     AnalyticsService.setUser({ id: 'learner_b', username: 'userB' });
+    await AnalyticsService.hydrate();
+    expect(AnalyticsService.getEvents()).toHaveLength(0);
+    expect(AnalyticsService.getRecommendationMetrics()).toMatchObject({
+      impressions: 0,
+      clicks: 0,
+      conversions: 0,
+    });
+    expect(AnalyticsService.getPendingRecommendationClicks()).toHaveLength(0);
     expect(
       AnalyticsService.trackRecommendationConversion('c1', {
         conversionType: 'purchase',
@@ -498,8 +510,9 @@ describe('App-only centralized analytics & recommendation attribution', () => {
       })
     ).toBe(false);
 
-    // Learner A returns, clicks second source, and converts -> last-click source wins
+    // Learner A returns, hydrates their own scoped analytics, clicks second source, and converts -> last-click source wins
     AnalyticsService.setUser({ id: 'learner_a', username: 'userA' });
+    await AnalyticsService.hydrate();
     AnalyticsService.trackRecommendationImpression(['c2', 'c1'], {
       recommendationId: 'rec_algo_v2',
       source: 'algo_hybrid_v2',

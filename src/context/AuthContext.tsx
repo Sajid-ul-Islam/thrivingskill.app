@@ -12,6 +12,7 @@ import {
 import { Endpoints } from '../services/api/endpoints';
 import { SyncQueueManager } from '../services/offline/syncQueue';
 import { SecureStorageService } from '../services/storage/secureStorage';
+import { TelemetryService } from '../services/telemetry/telemetryService';
 import { useFeedback } from './FeedbackContext';
 import {
   loginWpUser,
@@ -123,6 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       activeSessionRef.current = false;
       HttpClient.setAuthToken(null);
       SyncQueueManager.setUserScope('_guest');
+      TelemetryService.setUser(null);
       if (isMountedRef.current) {
         setUser(null);
         setToken(null);
@@ -231,6 +233,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             activeSessionRef.current = true;
             HttpClient.setAuthToken(candidateToken);
             SyncQueueManager.setUserScope(restoredUser.id ? `_u_${restoredUser.id}` : '_guest');
+            TelemetryService.setUser(
+              restoredUser.id
+                ? {
+                    id: String(restoredUser.id),
+                    username: restoredUser.username,
+                    role: restoredUser.roles?.[0],
+                  }
+                : null
+            );
             setUser(restoredUser);
             setToken(candidateToken);
             setSessionExpiredNotice(false);
@@ -290,6 +301,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSessionExpiredNotice(false);
     HttpClient.setAuthToken(userToken);
     SyncQueueManager.setUserScope(userWithToken.id ? `_u_${userWithToken.id}` : '_guest');
+    TelemetryService.setUser(
+      userWithToken.id
+        ? {
+            id: String(userWithToken.id),
+            username: userWithToken.username,
+            role: userWithToken.roles?.[0],
+          }
+        : null
+    );
     setToken(userToken);
     setUser(userWithToken);
     setIsGuest(false);
@@ -545,6 +565,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSessionExpiredNotice(false);
     HttpClient.setAuthToken(null);
     SyncQueueManager.setUserScope('_guest');
+    TelemetryService.setUser(null);
     setToken(null);
     setUser(null);
     setIsGuest(true);

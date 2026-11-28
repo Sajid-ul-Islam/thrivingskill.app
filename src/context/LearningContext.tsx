@@ -246,6 +246,9 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     let active = true;
     SyncQueueManager.setUserScope(userScope);
+    AnalyticsService.setUser(
+      user?.id ? { id: String(user.id), username: user.username, role: user.roles?.[0] } : null
+    );
     AnalyticsService.hydrate().catch(() => {});
     setUserProgress({});
     setBookmarks([]);

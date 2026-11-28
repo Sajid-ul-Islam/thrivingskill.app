@@ -5,6 +5,21 @@ export const STORAGE_KEY_ANALYTICS_EVENTS = '@thrivingskill_analytics_events_v1'
 export const STORAGE_KEY_ANALYTICS_STATE = '@thrivingskill_analytics_state_v1';
 const LEGACY_STORAGE_KEY_RECOMMENDATION_ATTRIBUTIONS = '@thrivingskill_recommendation_attributions';
 
+export function getAnalyticsScopeKey(learnerId?: string | null): string {
+  const trimmed = learnerId ? String(learnerId).trim() : '';
+  if (!trimmed) return 'guest';
+  const safe = trimmed.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 64);
+  return safe ? `user_${safe}` : 'guest';
+}
+
+export function getAnalyticsEventsStorageKey(learnerId?: string | null): string {
+  return `${STORAGE_KEY_ANALYTICS_EVENTS}:${getAnalyticsScopeKey(learnerId)}`;
+}
+
+export function getAnalyticsStateStorageKey(learnerId?: string | null): string {
+  return `${STORAGE_KEY_ANALYTICS_STATE}:${getAnalyticsScopeKey(learnerId)}`;
+}
+
 const MAX_STORED_EVENTS = 1000;
 const MAX_IMPRESSED_CARD_KEYS = 500;
 const MAX_RECENT_IMPRESSIONS = 100;
@@ -387,10 +402,30 @@ export class AnalyticsService {
     this.activeHydratePromise = null;
   }
 
-  private static schedulePersist(): void {
-    const epoch = this.stateEpoch;
-    const eventsSnapshot = this.events.slice(-MAX_STORED_EVENTS);
-    const stateSnapshot: PersistedAnalyticsState = {
+  private static getActiveLearnerId(): string | null {
+    const current = this.currentUser?.id ? String(this.currentUser.id).trim() : '';
+    return current || null;
+  }
+
+  private static getActiveScopeKey(): string {
+    return getAnalyticsScopeKey(this.getActiveLearnerId());
+  }
+
+  private static hasAnyActiveState(): boolean {
+    return (
+      this.events.length > 0 ||
+      this.totals.impressions > 0 ||
+      this.totals.clicks > 0 ||
+      this.totals.conversions > 0 ||
+      this.totals.unattributedConversions > 0 ||
+      this.totals.duplicateConversions > 0 ||
+      this.pendingRecommendationClicks.length > 0 ||
+      this.recommendationAttributions.length > 0
+    );
+  }
+
+  private static buildStateSnapshot(): PersistedAnalyticsState {
+    return {
       totals: { ...this.totals },
       sourceMetrics: Object.fromEntries(
         Object.entries(this.sourceMetrics).map(([k, v]) => [k, { ...v }])
@@ -404,13 +439,23 @@ export class AnalyticsService {
       attributions: [...this.recommendationAttributions],
       convertedCourseKeys: [...this.convertedCourseKeys],
     };
+  }
+
+  private static schedulePersist(explicitLearnerId?: string | null): void {
+    const epoch = this.stateEpoch;
+    const targetLearnerId =
+      explicitLearnerId !== undefined ? explicitLearnerId : this.getActiveLearnerId();
+    const eventsKey = getAnalyticsEventsStorageKey(targetLearnerId);
+    const stateKey = getAnalyticsStateStorageKey(targetLearnerId);
+    const eventsSnapshot = this.events.slice(-MAX_STORED_EVENTS);
+    const stateSnapshot = this.buildStateSnapshot();
 
     this.writeChain = this.writeChain
       .then(async () => {
-        if (epoch !== this.stateEpoch) return;
+        if (explicitLearnerId === undefined && epoch !== this.stateEpoch) return;
         await AsyncStorage.multiSet([
-          [STORAGE_KEY_ANALYTICS_EVENTS, JSON.stringify(eventsSnapshot)],
-          [STORAGE_KEY_ANALYTICS_STATE, JSON.stringify(stateSnapshot)],
+          [eventsKey, JSON.stringify(eventsSnapshot)],
+          [stateKey, JSON.stringify(stateSnapshot)],
         ]);
       })
       .catch(() => {});
@@ -430,12 +475,45 @@ export class AnalyticsService {
   }
 
   static setUser(user: { id: string; username?: string; role?: string } | null): void {
-    const previousUserId = this.currentUser?.id ? String(this.currentUser.id) : null;
-    const nextUserId = user?.id ? String(user.id) : null;
-    if (previousUserId !== null && previousUserId !== nextUserId) {
-      // Rotate session boundary on logout or account switch so anonymous session clicks never leak across learners.
-      this.sessionId = this.generateId('sess');
+    const previousUserId = this.getActiveLearnerId();
+    const nextUserId = user?.id ? String(user.id).trim() || null : null;
+    const previousScope = getAnalyticsScopeKey(previousUserId);
+    const nextScope = getAnalyticsScopeKey(nextUserId);
+
+    if (previousScope === nextScope) {
+      this.currentUser = user;
+      return;
     }
+
+    // Flush the outgoing learner's buffered analytics to their own scoped storage key before clearing RAM.
+    if (this.hasAnyActiveState()) {
+      this.schedulePersist(previousUserId);
+    }
+
+    if (previousUserId === null && nextUserId !== null) {
+      // In-session guest-to-login handoff: preserve only same-session guest clicks/conversions,
+      // while clearing all other guest history and switching to the authenticated learner's scope.
+      const guestSession = this.sessionId;
+      const guestPrefix = `session:${guestSession}::`;
+      const carriedClicks = this.pendingRecommendationClicks.filter(
+        (click) => click.learnerId === null && click.sessionId === guestSession
+      );
+      const carriedConvertedKeys = this.convertedCourseKeys.filter((k) =>
+        k.startsWith(guestPrefix)
+      );
+
+      this.stateEpoch += 1;
+      this.clearInMemoryState();
+      this.currentUser = user;
+      carriedClicks.forEach((click) => this.pendingRecommendationClicks.push(click));
+      carriedConvertedKeys.forEach((k) => this.recordConvertedCourseKey(k));
+      return;
+    }
+
+    // Logout or account switch: rotate session boundary and evict all previous learner data from RAM.
+    this.sessionId = this.generateId('sess');
+    this.stateEpoch += 1;
+    this.clearInMemoryState();
     this.currentUser = user;
   }
 
@@ -894,9 +972,11 @@ export class AnalyticsService {
     return copy;
   }
 
-  static async getStoredEvents(): Promise<AnalyticsEventRecord[]> {
+  static async getStoredEvents(learnerId?: string | null): Promise<AnalyticsEventRecord[]> {
     try {
-      const raw = await AsyncStorage.getItem(STORAGE_KEY_ANALYTICS_EVENTS);
+      const targetLearnerId =
+        learnerId !== undefined ? this.resolveLearnerId(learnerId) : this.getActiveLearnerId();
+      const raw = await AsyncStorage.getItem(getAnalyticsEventsStorageKey(targetLearnerId));
       const parsed = raw ? JSON.parse(raw) : [];
       return Array.isArray(parsed) ? parsed : [];
     } catch {
@@ -963,20 +1043,27 @@ export class AnalyticsService {
     }
 
     const epoch = this.stateEpoch;
+    const targetLearnerId = this.getActiveLearnerId();
+    const targetScopeKey = getAnalyticsScopeKey(targetLearnerId);
+    const stateKey = getAnalyticsStateStorageKey(targetLearnerId);
+    const eventsKey = getAnalyticsEventsStorageKey(targetLearnerId);
+
     const run = (async () => {
       try {
         await this.writeChain.catch(() => {});
-        if (epoch !== this.stateEpoch) return;
-        const entries = await AsyncStorage.multiGet([
-          STORAGE_KEY_ANALYTICS_STATE,
-          STORAGE_KEY_ANALYTICS_EVENTS,
-          LEGACY_STORAGE_KEY_RECOMMENDATION_ATTRIBUTIONS,
-        ]);
-        if (epoch !== this.stateEpoch) return;
+        if (epoch !== this.stateEpoch || targetScopeKey !== this.getActiveScopeKey()) return;
+        const entries = await AsyncStorage.multiGet([stateKey, eventsKey]);
+        if (epoch !== this.stateEpoch || targetScopeKey !== this.getActiveScopeKey()) return;
 
         const rawState = entries[0]?.[1] || null;
         const rawEvents = entries[1]?.[1] || null;
-        const rawLegacy = entries[2]?.[1] || null;
+        const isRecordAllowedForScope = (recordLearnerId: string | null | undefined): boolean => {
+          const normalized = recordLearnerId ? String(recordLearnerId).trim() || null : null;
+          if (targetLearnerId === null) {
+            return normalized === null;
+          }
+          return normalized === null || normalized === targetLearnerId;
+        };
 
         if (rawEvents) {
           try {
@@ -985,7 +1072,12 @@ export class AnalyticsService {
               const seenIds = new Set(this.events.map((e) => e.id));
               const mergedEvents = [...this.events];
               for (const evt of parsedEvents) {
-                if (evt && evt.id && !seenIds.has(evt.id)) {
+                if (
+                  evt &&
+                  evt.id &&
+                  !seenIds.has(evt.id) &&
+                  isRecordAllowedForScope(evt.learnerId)
+                ) {
                   seenIds.add(evt.id);
                   mergedEvents.push(evt);
                 }
@@ -1035,24 +1127,21 @@ export class AnalyticsService {
                 });
               }
               if (Array.isArray(parsed.recentCardImpressions)) {
-                this.recentCardImpressions = [
-                  ...parsed.recentCardImpressions,
-                  ...this.recentCardImpressions,
-                ].slice(-MAX_RECENT_IMPRESSIONS);
+                const scopedRecent = parsed.recentCardImpressions.filter(
+                  (imp) => imp && isRecordAllowedForScope(imp.learnerId)
+                );
+                this.recentCardImpressions = [...scopedRecent, ...this.recentCardImpressions].slice(
+                  -MAX_RECENT_IMPRESSIONS
+                );
               }
-              this.mergeClicksAndAttributions(
-                Array.isArray(parsed.pendingClicks) ? parsed.pendingClicks : [],
-                Array.isArray(parsed.attributions) ? parsed.attributions : []
-              );
+              const scopedClicks = Array.isArray(parsed.pendingClicks)
+                ? parsed.pendingClicks.filter((c) => c && isRecordAllowedForScope(c.learnerId))
+                : [];
+              const scopedAttrs = Array.isArray(parsed.attributions)
+                ? parsed.attributions.filter((a) => a && isRecordAllowedForScope(a.learnerId))
+                : [];
+              this.mergeClicksAndAttributions(scopedClicks, scopedAttrs);
             }
-          } catch {}
-        } else if (rawLegacy) {
-          try {
-            const parsedLegacy = JSON.parse(rawLegacy);
-            this.mergeClicksAndAttributions(
-              Array.isArray(parsedLegacy?.pendingClicks) ? parsedLegacy.pendingClicks : [],
-              Array.isArray(parsedLegacy?.attributions) ? parsedLegacy.attributions : []
-            );
           } catch {}
         }
 
@@ -1115,6 +1204,9 @@ export class AnalyticsService {
   }
 
   static resetAnalytics(): void {
+    const targetLearnerId = this.getActiveLearnerId();
+    const eventsKey = getAnalyticsEventsStorageKey(targetLearnerId);
+    const stateKey = getAnalyticsStateStorageKey(targetLearnerId);
     this.stateEpoch += 1;
     this.clearInMemoryState();
     this.attributionWindowMs = DEFAULT_RECOMMENDATION_ATTRIBUTION_WINDOW_MS;
@@ -1124,6 +1216,8 @@ export class AnalyticsService {
       .then(async () => {
         if (epoch !== this.stateEpoch) return;
         await AsyncStorage.multiRemove([
+          eventsKey,
+          stateKey,
           STORAGE_KEY_ANALYTICS_EVENTS,
           STORAGE_KEY_ANALYTICS_STATE,
           LEGACY_STORAGE_KEY_RECOMMENDATION_ATTRIBUTIONS,
