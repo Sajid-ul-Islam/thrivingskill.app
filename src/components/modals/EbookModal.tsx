@@ -16,14 +16,22 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useFeedback } from '../../context/FeedbackContext';
+import { useAuth } from '../../context/AuthContext';
+import { useLearning } from '../../context/LearningContext';
 import { shape } from '../../theme/shapes';
 import { typography, MIN_TOUCH_TARGET } from '../../theme/typography';
 import { SpringPressable } from '../common/SpringPressable';
 import { triggerHaptic } from '../../utils/haptics';
 import { SiteNavigationService, EbookItem } from '../../services/site/siteNavigationService';
+import { CompanionService } from '../../services/api/companionService';
 import { Env } from '../../config/env';
 
 export const STORAGE_KEY_PURCHASED_EBOOKS = '@ts_purchased_ebooks';
+
+export function getEbookEntitlementStorageKey(userId?: string | number | null): string {
+  const scope = userId ? `_u_${String(userId).trim()}` : '_guest';
+  return `${STORAGE_KEY_PURCHASED_EBOOKS}:${scope}`;
+}
 
 export interface EbookModalProps {
   visible: boolean;
@@ -44,36 +52,91 @@ export const EbookModal: React.FC<EbookModalProps> = ({
   const { isBangla } = useLanguage();
   const insets = useSafeAreaInsets();
   const { showToast } = useFeedback();
+  const { user, isAuthenticated } = useAuth();
+  const { courses, userProgress } = useLearning();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [localPurchasedIds, setLocalPurchasedIds] = useState<string[]>([]);
+  const [serverPurchasedIds, setServerPurchasedIds] = useState<string[]>([]);
 
-  // Load purchased eBooks from persistent storage on mount / visibility
+  // Synchronize eBook entitlements against server-verified LearnPress enrollments (and account-scoped offline cache).
   useEffect(() => {
     if (!visible) return;
-    AsyncStorage.getItem(STORAGE_KEY_PURCHASED_EBOOKS)
-      .then((data) => {
-        if (data) {
+    let active = true;
+
+    const ebooksCatalog = SiteNavigationService.getEbooks();
+    const resolveMatchedEbookIds = (enrolledCourseIds: string[]): string[] => {
+      const idSet = new Set(enrolledCourseIds.map((id) => String(id).trim()));
+      const slugByCourseId = new Map<string, string>();
+      courses.forEach((c) => {
+        if (c?.id && c?.slug) {
+          slugByCourseId.set(String(c.id), String(c.slug));
+        }
+      });
+
+      const resolved = new Set<string>();
+      ebooksCatalog.forEach((book) => {
+        const target = book.courseId ? String(book.courseId).trim() : '';
+        if (!target) return;
+        if (idSet.has(target) || idSet.has(book.id)) {
+          resolved.add(book.id);
+          return;
+        }
+        for (const enrolledId of idSet) {
+          if (slugByCourseId.get(enrolledId) === target) {
+            resolved.add(book.id);
+            break;
+          }
+        }
+      });
+      return Array.from(resolved);
+    };
+
+    if (!isAuthenticated || !user?.id) {
+      setServerPurchasedIds([]);
+      return;
+    }
+
+    const storageKey = getEbookEntitlementStorageKey(user.id);
+    const enrolledFromContext = Object.keys(userProgress || {});
+    if (enrolledFromContext.length > 0) {
+      setServerPurchasedIds(resolveMatchedEbookIds(enrolledFromContext));
+    } else {
+      AsyncStorage.getItem(storageKey)
+        .then((data) => {
+          if (!active || !data) return;
           try {
             const parsed = JSON.parse(data);
             if (Array.isArray(parsed)) {
-              setLocalPurchasedIds(parsed);
+              setServerPurchasedIds(parsed.map(String));
             }
           } catch {
-            // Ignore parse errors
+            // Ignore malformed cache
           }
-        }
+        })
+        .catch(() => {});
+    }
+
+    CompanionService.checkServerEnrollment()
+      .then((serverCheck) => {
+        if (!active || !serverCheck) return;
+        const verifiedIds = resolveMatchedEbookIds(serverCheck.enrolledCourseIds || []);
+        setServerPurchasedIds(verifiedIds);
+        AsyncStorage.setItem(storageKey, JSON.stringify(verifiedIds)).catch(() => {});
       })
       .catch(() => {});
-  }, [visible]);
+
+    return () => {
+      active = false;
+    };
+  }, [visible, isAuthenticated, user?.id, courses, userProgress]);
 
   if (!visible) return null;
 
   const ebooks = SiteNavigationService.getEbooks();
   const categories = ['all', ...Array.from(new Set(ebooks.map((e) => e.category)))];
 
-  const effectivePurchasedIds = propPurchasedIds || localPurchasedIds;
+  const effectivePurchasedIds = propPurchasedIds || serverPurchasedIds;
 
   const filteredEbooks = ebooks.filter((b) => {
     const matchesCat = selectedCategory === 'all' || b.category === selectedCategory;
