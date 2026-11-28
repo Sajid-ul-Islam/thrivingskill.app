@@ -86,7 +86,7 @@ export const HomeGreetingCard: React.FC<HomeGreetingCardProps> = ({
             { backgroundColor: colors.primary, borderColor: colors.primaryLight },
           ]}
         >
-          <Text style={styles.avatarInitialsText}>
+          <Text style={[styles.avatarInitialsText, { color: colors.onPrimary }]}>
             {(user?.name || user?.username || (isAuthenticated ? 'Student' : 'Learner'))
               .charAt(0)
               .toUpperCase()}
