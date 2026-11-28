@@ -644,6 +644,183 @@ final class TsMobileBridgeTest extends TestCase
         $this->assertContains('course_view_to_checkout_ctr', $unsupportedKeys);
     }
 
+    public function test_course_level_refund_attribution_uses_exact_line_items_and_labels_unmapped_proportional(): void
+    {
+        $adminId = wp_insert_user(['user_login' => 'admin3', 'user_email' => 'a3@example.com', 'role' => 'administrator']);
+        $buyerId = wp_insert_user(['user_login' => 'buyer3', 'user_email' => 'b3@example.com', 'role' => 'customer']);
+        wp_set_current_user($adminId);
+
+        // Four courses: Order #901 buys A (1000) + B (1000) with exact refund of 1000 on A.
+        // Order #902 buys C (1000) + D (1000) with an unmapped order-level refund of 1000 (no line items).
+        foreach ([601 => 'Course A', 602 => 'Course B', 603 => 'Course C', 604 => 'Course D'] as $cid => $title) {
+            TSMB_Test_State::$posts[$cid] = (object) [
+                'ID'          => $cid,
+                'post_type'   => 'lp_course',
+                'post_status' => 'publish',
+                'post_title'  => $title,
+            ];
+            TSMB_Test_State::$post_meta[$cid]['_lp_price'] = '1000';
+        }
+
+        // Order #901: gross 2000, child refund #911 = 1000 mapped specifically to item #11 (Course A)
+        TSMB_Test_State::$posts[901] = (object) [
+            'ID'            => 901,
+            'post_type'     => 'shop_order',
+            'post_status'   => 'wc-completed',
+            'post_date_gmt' => gmdate('Y-m-d H:i:s'),
+        ];
+        TSMB_Test_State::$post_meta[901] = [
+            '_order_total'    => '2000',
+            '_order_currency' => 'BDT',
+            '_customer_user'  => (string) $buyerId,
+            '_payment_method' => 'sslcommerz',
+            '_date_paid'      => (string) time(),
+        ];
+        TSMB_Test_State::$posts[911] = (object) [
+            'ID'          => 911,
+            'post_type'   => 'shop_order_refund',
+            'post_parent' => 901,
+            'post_status' => 'wc-completed',
+        ];
+        TSMB_Test_State::$post_meta[911]['_refund_amount'] = '1000';
+        TSMB_Test_State::$wc_order_items[] = ['order_item_id' => 11, 'order_id' => 901, 'name' => 'Course A', 'product_id' => 601, 'course_id' => 601, 'qty' => 1, 'line_total' => '1000'];
+        TSMB_Test_State::$wc_order_items[] = ['order_item_id' => 12, 'order_id' => 901, 'name' => 'Course B', 'product_id' => 602, 'course_id' => 602, 'qty' => 1, 'line_total' => '1000'];
+        TSMB_Test_State::$wc_order_items[] = ['order_item_id' => 19, 'order_id' => 911, 'name' => 'Refund Course A', 'product_id' => 601, 'refunded_item_id' => 11, 'qty' => -1, 'line_total' => '-1000'];
+
+        // Order #902: gross 2000, child refund #912 = 1000 with NO refund line item mapping
+        TSMB_Test_State::$posts[902] = (object) [
+            'ID'            => 902,
+            'post_type'     => 'shop_order',
+            'post_status'   => 'wc-completed',
+            'post_date_gmt' => gmdate('Y-m-d H:i:s'),
+        ];
+        TSMB_Test_State::$post_meta[902] = [
+            '_order_total'    => '2000',
+            '_order_currency' => 'BDT',
+            '_customer_user'  => (string) $buyerId,
+            '_payment_method' => 'bkash',
+            '_date_paid'      => (string) time(),
+        ];
+        TSMB_Test_State::$posts[912] = (object) [
+            'ID'          => 912,
+            'post_type'   => 'shop_order_refund',
+            'post_parent' => 902,
+            'post_status' => 'wc-completed',
+        ];
+        TSMB_Test_State::$post_meta[912]['_refund_amount'] = '1000';
+        TSMB_Test_State::$wc_order_items[] = ['order_item_id' => 21, 'order_id' => 902, 'name' => 'Course C', 'product_id' => 603, 'course_id' => 603, 'qty' => 1, 'line_total' => '1000'];
+        TSMB_Test_State::$wc_order_items[] = ['order_item_id' => 22, 'order_id' => 902, 'name' => 'Course D', 'product_id' => 604, 'course_id' => 604, 'qty' => 1, 'line_total' => '1000'];
+
+        $data = TSMB_Analytics_Service::get_dashboard_data(['preset' => 'all', 'refresh' => true]);
+        $byId = [];
+        foreach ($data['course_performance'] as $row) {
+            $byId[$row['course_id']] = $row;
+        }
+
+        // Exact line-item refund attribution on Course A & zero refund on Course B
+        $this->assertSame(1000.0, $byId[601]['gross_revenue']);
+        $this->assertSame(1000.0, $byId[601]['refunded_revenue']);
+        $this->assertSame(0.0, $byId[601]['confirmed_revenue']);
+        $this->assertSame('exact', $byId[601]['refund_attribution_mode']);
+
+        $this->assertSame(1000.0, $byId[602]['gross_revenue']);
+        $this->assertSame(0.0, $byId[602]['refunded_revenue']);
+        $this->assertSame(1000.0, $byId[602]['confirmed_revenue']);
+        $this->assertSame('none', $byId[602]['refund_attribution_mode']);
+
+        // Unmapped order-level refund falls back to proportional AND labels explicitly
+        $this->assertSame(500.0, $byId[603]['refunded_revenue']);
+        $this->assertSame(500.0, $byId[603]['confirmed_revenue']);
+        $this->assertSame('proportional', $byId[603]['refund_attribution_mode']);
+        $this->assertSame('Proportionally Allocated', $byId[603]['refund_attribution_label']);
+
+        $this->assertSame(500.0, $byId[604]['refunded_revenue']);
+        $this->assertSame(500.0, $byId[604]['confirmed_revenue']);
+        $this->assertSame('proportional', $byId[604]['refund_attribution_mode']);
+
+        // Course-filtered revenue preserves exact refund attribution (Course A = 0, Course B = 1000)
+        $onlyA = TSMB_Analytics_Service::get_dashboard_data(['preset' => 'all', 'course_id' => 601, 'refresh' => true]);
+        $onlyB = TSMB_Analytics_Service::get_dashboard_data(['preset' => 'all', 'course_id' => 602, 'refresh' => true]);
+        $this->assertSame(0.0, $onlyA['revenue']['confirmed_revenue']);
+        $this->assertSame(1000.0, $onlyB['revenue']['confirmed_revenue']);
+    }
+
+    public function test_analytics_queries_honor_date_bounds_and_multi_batch_cursor_pagination(): void
+    {
+        $adminId = wp_insert_user(['user_login' => 'admin4', 'user_email' => 'a4@example.com', 'role' => 'administrator']);
+        $oldUser = wp_insert_user(['user_login' => 'olduser', 'user_email' => 'old@example.com', 'role' => 'subscriber']);
+        TSMB_Test_State::$users[$oldUser]->user_registered = '2024-01-15 10:00:00';
+        wp_set_current_user($adminId);
+
+        TSMB_Test_State::$posts[701] = (object) [
+            'ID'          => 701,
+            'post_type'   => 'lp_course',
+            'post_status' => 'publish',
+            'post_title'  => 'Course Batch',
+        ];
+        TSMB_Test_State::$post_meta[701]['_lp_price'] = '500';
+
+        // 1 old order in 2024 + 205 orders today (forces multiple 200-record batches)
+        $todayGmt = gmdate('Y-m-d 12:00:00');
+        TSMB_Test_State::$posts[1000] = (object) [
+            'ID'            => 1000,
+            'post_type'     => 'shop_order',
+            'post_status'   => 'wc-completed',
+            'post_date_gmt' => '2024-01-15 10:00:00',
+        ];
+        TSMB_Test_State::$post_meta[1000] = [
+            '_order_total'    => '500',
+            '_order_currency' => 'BDT',
+            '_customer_user'  => (string) $oldUser,
+            '_payment_method' => 'sslcommerz',
+            '_date_paid'      => (string) strtotime('2024-01-15 10:00:00 UTC'),
+        ];
+        TSMB_Test_State::$wc_order_items[] = [
+            'order_item_id' => 5000,
+            'order_id'      => 1000,
+            'name'          => 'Course Batch',
+            'product_id'    => 701,
+            'course_id'     => 701,
+            'qty'           => 1,
+            'line_total'    => '500',
+        ];
+
+        for ($i = 1; $i <= 205; $i++) {
+            $oid = 2000 + $i;
+            TSMB_Test_State::$posts[$oid] = (object) [
+                'ID'            => $oid,
+                'post_type'     => 'shop_order',
+                'post_status'   => 'wc-completed',
+                'post_date_gmt' => $todayGmt,
+            ];
+            TSMB_Test_State::$post_meta[$oid] = [
+                '_order_total'    => '100',
+                '_order_currency' => 'BDT',
+                '_customer_user'  => (string) $adminId,
+                '_payment_method' => 'sslcommerz',
+                '_date_paid'      => (string) time(),
+            ];
+            TSMB_Test_State::$wc_order_items[] = [
+                'order_item_id' => 6000 + $i,
+                'order_id'      => $oid,
+                'name'          => 'Course Batch',
+                'product_id'    => 701,
+                'course_id'     => 701,
+                'qty'           => 1,
+                'line_total'    => '100',
+            ];
+        }
+
+        $allTime = TSMB_Analytics_Service::get_dashboard_data(['preset' => 'all', 'refresh' => true]);
+        $today   = TSMB_Analytics_Service::get_dashboard_data(['preset' => 'today', 'refresh' => true]);
+
+        // All-time includes old order (500) + 205 today orders (20500) = 21000; today excludes 2024 order
+        $this->assertSame(206, $allTime['overview']['confirmed_paid_orders']);
+        $this->assertSame(21000.0, $allTime['overview']['confirmed_revenue']);
+        $this->assertSame(205, $today['overview']['confirmed_paid_orders']);
+        $this->assertSame(20500.0, $today['overview']['confirmed_revenue']);
+    }
+
     public function test_zero_quiz_course_repairs_stale_failed_graduation_while_preserving_real_quiz_failures(): void
     {
         $uid = wp_insert_user([

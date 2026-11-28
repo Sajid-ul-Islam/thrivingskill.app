@@ -1251,16 +1251,14 @@ class TSMB_Analytics_Service
 
     /**
      * Computes authoritative revenue & orders from WooCommerce (HPOS or Legacy CPT)
-     * plus reconciled LearnPress order audit without double-counting or fake free revenue.
+     * plus reconciled LearnPress order audit using SQL date pushdown, bounded batches,
+     * and WooCommerce refund line-item attribution.
      */
     private static function compute_revenue_and_orders(array $filters): array
     {
-        global $wpdb;
-
-        $currency        = sanitize_text_field((string) get_option('woocommerce_currency', 'BDT')) ?: 'BDT';
-        $course_filter   = intval($filters['course_id'] ?? 0);
-        $is_hpos         = self::is_wc_hpos_enabled();
-        $wc_orders_list  = $is_hpos ? self::fetch_wc_hpos_orders() : self::fetch_wc_legacy_orders();
+        $currency      = sanitize_text_field((string) get_option('woocommerce_currency', 'BDT')) ?: 'BDT';
+        $course_filter = intval($filters['course_id'] ?? 0);
+        $is_hpos       = self::is_wc_hpos_enabled();
 
         $paid_statuses     = ['completed', 'processing'];
         $status_breakdown  = [
@@ -1275,213 +1273,280 @@ class TSMB_Analytics_Service
         ];
         $gateway_breakdown = [];
 
-        $wc_order_ids_in_scope   = [];
-        $linked_lp_order_ids_map = [];
-        $in_scope_paid_orders    = [];
-        $paying_customer_ids     = [];
-        $paid_events             = [];
-        $gross_paid_total        = 0.0;
-        $refunds_deducted_total  = 0.0;
-        $confirmed_revenue       = 0.0;
-        $confirmed_paid_orders   = 0;
-        $free_zero_wc_orders     = 0;
+        $paying_customer_ids         = [];
+        $paid_buckets                = [];
+        $gross_paid_total            = 0.0;
+        $refunds_deducted_total      = 0.0;
+        $exact_refunds_total         = 0.0;
+        $proportional_refunds_total  = 0.0;
+        $confirmed_revenue           = 0.0;
+        $confirmed_paid_orders       = 0;
+        $free_zero_wc_orders         = 0;
+        $course_attribution          = [];
+        $non_course_wc_revenue       = 0.0;
+        $orders_counted_by_course    = [];
 
-        // Fetch line items in batch for all WC orders so course_id filtering & course attribution stay fast.
-        $all_wc_order_ids = array_map(static function ($o) {
-            return intval($o['id']);
-        }, $wc_orders_list);
-        $wc_items_by_order = self::fetch_wc_line_items_grouped($all_wc_order_ids);
+        $after_id = 0;
+        do {
+            $batch = $is_hpos
+                ? self::fetch_wc_hpos_orders($filters, $after_id, self::QUERY_BATCH_SIZE)
+                : self::fetch_wc_legacy_orders($filters, $after_id, self::QUERY_BATCH_SIZE);
 
-        foreach ($wc_orders_list as $ord) {
-            $oid       = intval($ord['id']);
-            $status    = self::normalize_wc_status((string) ($ord['status'] ?? ''));
-            $is_paid_st = in_array($status, $paid_statuses, true);
-            $lp_ref    = intval($ord['lp_order_id'] ?? 0);
-            if ($lp_ref > 0) {
-                $linked_lp_order_ids_map[$lp_ref] = $oid;
+            if (empty($batch)) {
+                break;
             }
 
-            // Effective event timestamp in UTC: paid_ts/paid_gmt for paid orders, created_ts/created_gmt otherwise.
-            $event_ts  = $is_paid_st
-                ? intval($ord['paid_ts'] ?: $ord['created_ts'])
-                : intval($ord['created_ts']);
-            $event_gmt = $is_paid_st
-                ? ((string) ($ord['paid_gmt'] ?: $ord['created_gmt']))
-                : ((string) $ord['created_gmt']);
+            $in_range_batch     = [];
+            $in_range_order_ids = [];
+            $batch_refund_ids   = [];
 
-            if (!self::is_ts_in_range($event_ts, $event_gmt, $filters)) {
-                continue;
-            }
+            foreach ($batch as $ord) {
+                $oid = intval($ord['id'] ?? 0);
+                if ($oid > $after_id) {
+                    $after_id = $oid;
+                }
 
-            $items = $wc_items_by_order[$oid] ?? [];
-            if ($course_filter > 0) {
-                $matches_course = false;
-                foreach ($items as $it) {
-                    if (in_array($course_filter, $it['course_ids'], true)) {
-                        $matches_course = true;
-                        break;
+                $status     = self::normalize_wc_status((string) ($ord['status'] ?? ''));
+                $is_paid_st = in_array($status, $paid_statuses, true);
+
+                // Effective event timestamp in UTC: paid_ts/paid_gmt for paid orders, created_ts/created_gmt otherwise.
+                $event_ts  = $is_paid_st
+                    ? intval($ord['paid_ts'] ?: $ord['created_ts'])
+                    : intval($ord['created_ts']);
+                $event_gmt = $is_paid_st
+                    ? ((string) ($ord['paid_gmt'] ?: $ord['created_gmt']))
+                    : ((string) $ord['created_gmt']);
+
+                if (!self::is_ts_in_range($event_ts, $event_gmt, $filters)) {
+                    continue;
+                }
+
+                $ord['_norm_status'] = $status;
+                $ord['_is_paid_st']  = $is_paid_st;
+                $ord['_event_gmt']   = $event_gmt;
+                $in_range_batch[]    = $ord;
+
+                if ($course_filter > 0 || $is_paid_st) {
+                    $in_range_order_ids[] = $oid;
+                }
+                if ($is_paid_st && !empty($ord['refund_ids']) && is_array($ord['refund_ids'])) {
+                    foreach ($ord['refund_ids'] as $rid) {
+                        $rid_int = absint($rid);
+                        if ($rid_int > 0) {
+                            $batch_refund_ids[] = $rid_int;
+                        }
                     }
                 }
-                if (!$matches_course) {
-                    continue;
-                }
             }
 
-            $gross    = max(0.0, round(floatval($ord['gross_total'] ?? 0.0), 2));
-            $refunded = max(0.0, round(floatval($ord['refunded_total'] ?? 0.0), 2));
-            $net      = max(0.0, round($gross - $refunded, 2));
+            // Load WooCommerce line items and refund line-item mappings strictly for this bounded batch.
+            $wc_items_by_order = !empty($in_range_order_ids)
+                ? self::fetch_wc_line_items_grouped(array_values(array_unique($in_range_order_ids)))
+                : [];
+            $refund_allocs_by_order = !empty($batch_refund_ids)
+                ? self::fetch_wc_refund_allocations_grouped(array_values(array_unique($batch_refund_ids)))
+                : [];
 
-            $scoped_gross = $gross;
-            $scoped_net   = $net;
-            if ($course_filter > 0) {
-                $matched_line_sum = 0.0;
-                foreach ($items as $it) {
-                    if (in_array($course_filter, $it['course_ids'], true)) {
-                        $count_c = max(1, count($it['course_ids']));
-                        $matched_line_sum += floatval($it['line_total']) / $count_c;
+            foreach ($in_range_batch as $ord) {
+                $oid        = intval($ord['id']);
+                $status     = (string) $ord['_norm_status'];
+                $is_paid_st = !empty($ord['_is_paid_st']);
+                $event_gmt  = (string) $ord['_event_gmt'];
+                $items      = $wc_items_by_order[$oid] ?? [];
+
+                if ($course_filter > 0) {
+                    $matches_course = false;
+                    foreach ($items as $it) {
+                        if (in_array($course_filter, $it['course_ids'], true)) {
+                            $matches_course = true;
+                            break;
+                        }
                     }
-                }
-                $refund_ratio = $gross > 0.0 ? ($net / $gross) : 1.0;
-                $scoped_gross = round($matched_line_sum, 2);
-                $scoped_net   = round($matched_line_sum * $refund_ratio, 2);
-            }
-
-            $bucket_key = isset($status_breakdown[$status]) ? $status : 'other';
-            $status_breakdown[$bucket_key]['count']++;
-            $status_breakdown[$bucket_key]['amount'] = round(
-                $status_breakdown[$bucket_key]['amount'] + ($status === 'refunded' ? $scoped_gross : ($is_paid_st ? $scoped_net : $scoped_gross)),
-                2
-            );
-
-            if (!$is_paid_st) {
-                continue;
-            }
-
-            // Free / zero-amount orders never count as paid purchases (Constraint #7).
-            if ($net <= 0.0) {
-                $free_zero_wc_orders++;
-                continue;
-            }
-
-            $effective_order_net = $course_filter > 0 ? $scoped_net : $net;
-            if ($course_filter > 0 && $effective_order_net <= 0.0) {
-                continue;
-            }
-
-            $effective_gross        = $course_filter > 0 ? $scoped_gross : $gross;
-            $effective_refunded     = max(0.0, round($effective_gross - $effective_order_net, 2));
-            $confirmed_paid_orders++;
-            $confirmed_revenue      = round($confirmed_revenue + $effective_order_net, 2);
-            $gross_paid_total       = round($gross_paid_total + $effective_gross, 2);
-            $refunds_deducted_total = round($refunds_deducted_total + $effective_refunded, 2);
-            $wc_order_ids_in_scope[] = $oid;
-            $in_scope_paid_orders[$oid] = [
-                'gross' => $gross,
-                'net'   => $net,
-                'items' => $items,
-            ];
-
-            $cust_id = intval($ord['customer_id'] ?? 0);
-            if ($cust_id > 0) {
-                $paying_customer_ids[$cust_id] = true;
-            }
-
-            $pm_key = sanitize_key((string) ($ord['payment_method'] ?? 'unknown')) ?: 'unknown';
-            $pm_title = trim((string) ($ord['payment_method_title'] ?? '')) ?: strtoupper($pm_key);
-            if (!isset($gateway_breakdown[$pm_key])) {
-                $gateway_breakdown[$pm_key] = [
-                    'method' => $pm_key,
-                    'title'  => $pm_title,
-                    'orders' => 0,
-                    'total'  => 0.0,
-                ];
-            }
-            $gateway_breakdown[$pm_key]['orders']++;
-            $gateway_breakdown[$pm_key]['total'] = round($gateway_breakdown[$pm_key]['total'] + $effective_order_net, 2);
-
-            if (self::is_valid_mysql_datetime($event_gmt)) {
-                $paid_events[] = [
-                    'gmt'    => $event_gmt,
-                    'amount' => $effective_order_net,
-                ];
-            }
-        }
-
-        // Allocate confirmed WC order revenue cleanly across mapped LearnPress courses (never multiplying revenue).
-        $course_attribution       = [];
-        $non_course_wc_revenue    = 0.0;
-        $orders_counted_by_course = [];
-
-        foreach ($in_scope_paid_orders as $oid => $ord_info) {
-            $gross = floatval($ord_info['gross']);
-            $net   = floatval($ord_info['net']);
-            $refund_ratio = $gross > 0.0 ? ($net / $gross) : 1.0;
-
-            foreach ($ord_info['items'] as $it) {
-                $line_net = round(floatval($it['line_total']) * $refund_ratio, 2);
-                if ($line_net <= 0.0) {
-                    continue;
-                }
-                $qty  = max(1, intval($it['qty']));
-                $cids = $it['course_ids'];
-                if (empty($cids)) {
-                    $non_course_wc_revenue = round($non_course_wc_revenue + $line_net, 2);
-                    continue;
-                }
-
-                $target_cids = $course_filter > 0
-                    ? array_values(array_intersect($cids, [$course_filter]))
-                    : $cids;
-
-                $split_count = count($cids);
-                $per_course_share = round($line_net / $split_count, 2);
-                $remainder = round($line_net - ($per_course_share * $split_count), 2);
-
-                foreach ($cids as $idx => $cid) {
-                    if ($course_filter > 0 && !in_array($cid, $target_cids, true)) {
+                    if (!$matches_course) {
                         continue;
                     }
-                    $alloc = ($idx === 0) ? round($per_course_share + $remainder, 2) : $per_course_share;
-                    if (!isset($course_attribution[$cid])) {
-                        $course_attribution[$cid] = [
-                            'orders_count' => 0,
-                            'units_sold'   => 0,
-                            'revenue'      => 0.0,
-                        ];
+                }
+
+                $gross    = max(0.0, round(floatval($ord['gross_total'] ?? 0.0), 2));
+                $refunded = max(0.0, round(floatval($ord['refunded_total'] ?? 0.0), 2));
+                $net      = max(0.0, round($gross - $refunded, 2));
+
+                $order_refund_map = $refund_allocs_by_order[$oid] ?? ['by_item_id' => [], 'by_product_id' => []];
+                $allocated_items  = self::build_order_item_refund_allocations($items, $refunded, $order_refund_map);
+
+                $scoped_gross = $gross;
+                $scoped_net   = $net;
+                if ($course_filter > 0) {
+                    $scoped_gross = 0.0;
+                    $scoped_net   = 0.0;
+                    foreach ($allocated_items as $ai) {
+                        if (in_array($course_filter, $ai['course_ids'], true)) {
+                            $count_c = max(1, count($ai['course_ids']));
+                            $scoped_gross += floatval($ai['gross']) / $count_c;
+                            $scoped_net   += floatval($ai['net']) / $count_c;
+                        }
                     }
-                    $course_attribution[$cid]['revenue'] = round($course_attribution[$cid]['revenue'] + $alloc, 2);
-                    $course_attribution[$cid]['units_sold'] += $qty;
-                    if (empty($orders_counted_by_course[$cid][$oid])) {
-                        $orders_counted_by_course[$cid][$oid] = true;
-                        $course_attribution[$cid]['orders_count']++;
+                    $scoped_gross = round($scoped_gross, 2);
+                    $scoped_net   = max(0.0, round($scoped_net, 2));
+                }
+
+                $bucket_key = isset($status_breakdown[$status]) ? $status : 'other';
+                $status_breakdown[$bucket_key]['count']++;
+                $status_breakdown[$bucket_key]['amount'] = round(
+                    $status_breakdown[$bucket_key]['amount'] + ($status === 'refunded' ? $scoped_gross : ($is_paid_st ? $scoped_net : $scoped_gross)),
+                    2
+                );
+
+                if (!$is_paid_st) {
+                    continue;
+                }
+
+                // Free / zero-amount orders never count as paid purchases (Constraint #7).
+                if ($net <= 0.0) {
+                    $free_zero_wc_orders++;
+                    continue;
+                }
+
+                $effective_order_net = $course_filter > 0 ? $scoped_net : $net;
+                if ($course_filter > 0 && $effective_order_net <= 0.0) {
+                    continue;
+                }
+
+                $effective_gross    = $course_filter > 0 ? $scoped_gross : $gross;
+                $effective_refunded = max(0.0, round($effective_order_net > $effective_gross ? 0.0 : ($effective_gross - $effective_order_net), 2));
+                $confirmed_paid_orders++;
+                $confirmed_revenue      = round($confirmed_revenue + $effective_order_net, 2);
+                $gross_paid_total       = round($gross_paid_total + $effective_gross, 2);
+                $refunds_deducted_total = round($refunds_deducted_total + $effective_refunded, 2);
+
+                $cust_id = intval($ord['customer_id'] ?? 0);
+                if ($cust_id > 0) {
+                    $paying_customer_ids[$cust_id] = true;
+                }
+
+                $pm_key   = sanitize_key((string) ($ord['payment_method'] ?? 'unknown')) ?: 'unknown';
+                $pm_title = trim((string) ($ord['payment_method_title'] ?? '')) ?: strtoupper($pm_key);
+                if (!isset($gateway_breakdown[$pm_key])) {
+                    $gateway_breakdown[$pm_key] = [
+                        'method' => $pm_key,
+                        'title'  => $pm_title,
+                        'orders' => 0,
+                        'total'  => 0.0,
+                    ];
+                }
+                $gateway_breakdown[$pm_key]['orders']++;
+                $gateway_breakdown[$pm_key]['total'] = round($gateway_breakdown[$pm_key]['total'] + $effective_order_net, 2);
+
+                if (self::is_valid_mysql_datetime($event_gmt)) {
+                    $hk = substr(trim($event_gmt), 0, 13) . ':00:00';
+                    if (!isset($paid_buckets[$hk])) {
+                        $paid_buckets[$hk] = ['gmt' => $hk, 'amount' => 0.0, 'count' => 0];
+                    }
+                    $paid_buckets[$hk]['count']++;
+                    $paid_buckets[$hk]['amount'] = round($paid_buckets[$hk]['amount'] + $effective_order_net, 2);
+                }
+
+                // Attribute line-item gross, exact/proportional refunds, and net revenue to courses.
+                foreach ($allocated_items as $ai) {
+                    $line_gross = floatval($ai['gross']);
+                    $line_exact = floatval($ai['exact_refund']);
+                    $line_prop  = floatval($ai['proportional_refund']);
+                    $line_net   = floatval($ai['net']);
+                    $qty        = max(1, intval($ai['qty']));
+                    $cids       = $ai['course_ids'];
+
+                    if (empty($cids)) {
+                        $non_course_wc_revenue = round($non_course_wc_revenue + $line_net, 2);
+                        continue;
+                    }
+
+                    $target_cids = $course_filter > 0
+                        ? array_values(array_intersect($cids, [$course_filter]))
+                        : $cids;
+
+                    $split_count = count($cids);
+                    $gross_share = round($line_gross / $split_count, 2);
+                    $exact_share = round($line_exact / $split_count, 2);
+                    $prop_share  = round($line_prop / $split_count, 2);
+                    $net_share   = round($line_net / $split_count, 2);
+
+                    $gross_rem = round($line_gross - ($gross_share * $split_count), 2);
+                    $exact_rem = round($line_exact - ($exact_share * $split_count), 2);
+                    $prop_rem  = round($line_prop - ($prop_share * $split_count), 2);
+                    $net_rem   = round($line_net - ($net_share * $split_count), 2);
+
+                    foreach ($cids as $idx => $cid) {
+                        if ($course_filter > 0 && !in_array($cid, $target_cids, true)) {
+                            continue;
+                        }
+                        $alloc_gross = ($idx === 0) ? round($gross_share + $gross_rem, 2) : $gross_share;
+                        $alloc_exact = ($idx === 0) ? round($exact_share + $exact_rem, 2) : $exact_share;
+                        $alloc_prop  = ($idx === 0) ? round($prop_share + $prop_rem, 2) : $prop_share;
+                        $alloc_net   = ($idx === 0) ? round($net_share + $net_rem, 2) : $net_share;
+
+                        if ($alloc_gross <= 0.0 && $alloc_net <= 0.0 && $alloc_exact <= 0.0 && $alloc_prop <= 0.0) {
+                            continue;
+                        }
+
+                        if (!isset($course_attribution[$cid])) {
+                            $course_attribution[$cid] = [
+                                'orders_count'          => 0,
+                                'units_sold'            => 0,
+                                'gross_revenue'         => 0.0,
+                                'refunded_exact'        => 0.0,
+                                'refunded_proportional' => 0.0,
+                                'revenue'               => 0.0,
+                            ];
+                        }
+                        $course_attribution[$cid]['gross_revenue']         = round($course_attribution[$cid]['gross_revenue'] + $alloc_gross, 2);
+                        $course_attribution[$cid]['refunded_exact']        = round($course_attribution[$cid]['refunded_exact'] + $alloc_exact, 2);
+                        $course_attribution[$cid]['refunded_proportional'] = round($course_attribution[$cid]['refunded_proportional'] + $alloc_prop, 2);
+                        $course_attribution[$cid]['revenue']               = round($course_attribution[$cid]['revenue'] + $alloc_net, 2);
+                        $course_attribution[$cid]['units_sold']           += $qty;
+
+                        $exact_refunds_total        = round($exact_refunds_total + $alloc_exact, 2);
+                        $proportional_refunds_total = round($proportional_refunds_total + $alloc_prop, 2);
+
+                        if (empty($orders_counted_by_course[$cid][$oid])) {
+                            $orders_counted_by_course[$cid][$oid] = true;
+                            $course_attribution[$cid]['orders_count']++;
+                        }
                     }
                 }
             }
-        }
+        } while (count($batch) >= self::QUERY_BATCH_SIZE);
 
-        // Audit LearnPress Orders (`lp_order`) so Woo-linked orders are deduplicated and
-        // non-gateway / manual / unverified orders are separated from confirmed paid revenue.
-        $lp_audit = self::audit_learnpress_orders(
-            $filters,
-            $linked_lp_order_ids_map,
-            $all_wc_order_ids,
-            $course_filter
-        );
+        // Audit LearnPress Orders (`lp_order`) in bounded SQL batches with SQL date pushdown.
+        $lp_audit = self::audit_learnpress_orders($filters, $course_filter, $is_hpos);
 
         // Only add direct LearnPress online gateway orders (never offline/empty/woo-linked/free)
         if ($lp_audit['direct_gateway_paid_count'] > 0) {
             $confirmed_paid_orders += $lp_audit['direct_gateway_paid_count'];
             $confirmed_revenue = round($confirmed_revenue + $lp_audit['direct_gateway_paid_revenue'], 2);
             foreach ($lp_audit['direct_gateway_events'] as $evt) {
-                $paid_events[] = $evt;
+                $hk = substr(trim((string) ($evt['gmt'] ?? '')), 0, 13) . ':00:00';
+                if (!isset($paid_buckets[$hk])) {
+                    $paid_buckets[$hk] = ['gmt' => $hk, 'amount' => 0.0, 'count' => 0];
+                }
+                $paid_buckets[$hk]['count'] += max(1, intval($evt['count'] ?? 1));
+                $paid_buckets[$hk]['amount'] = round($paid_buckets[$hk]['amount'] + floatval($evt['amount'] ?? 0.0), 2);
             }
             foreach ($lp_audit['direct_gateway_course_attribution'] as $cid => $attr) {
                 if (!isset($course_attribution[$cid])) {
-                    $course_attribution[$cid] = ['orders_count' => 0, 'units_sold' => 0, 'revenue' => 0.0];
+                    $course_attribution[$cid] = [
+                        'orders_count'          => 0,
+                        'units_sold'            => 0,
+                        'gross_revenue'         => 0.0,
+                        'refunded_exact'        => 0.0,
+                        'refunded_proportional' => 0.0,
+                        'revenue'               => 0.0,
+                    ];
                 }
-                $course_attribution[$cid]['orders_count'] += intval($attr['orders_count']);
-                $course_attribution[$cid]['units_sold']   += intval($attr['units_sold']);
-                $course_attribution[$cid]['revenue']      = round($course_attribution[$cid]['revenue'] + floatval($attr['revenue']), 2);
+                $lp_rev = floatval($attr['revenue']);
+                $course_attribution[$cid]['orders_count']  += intval($attr['orders_count']);
+                $course_attribution[$cid]['units_sold']    += intval($attr['units_sold']);
+                $course_attribution[$cid]['gross_revenue']  = round($course_attribution[$cid]['gross_revenue'] + $lp_rev, 2);
+                $course_attribution[$cid]['revenue']        = round($course_attribution[$cid]['revenue'] + $lp_rev, 2);
             }
             foreach ($lp_audit['direct_gateway_customers'] as $uid => $_flag) {
                 $paying_customer_ids[$uid] = true;
@@ -1515,6 +1580,11 @@ class TSMB_Analytics_Service
             'refunded_orders_count'     => $status_breakdown['refunded']['count'],
             'free_zero_wc_orders'       => $free_zero_wc_orders,
             'non_course_wc_revenue'     => $non_course_wc_revenue,
+            'course_refund_attribution' => [
+                'exact_line_item_refunds_total'          => $exact_refunds_total,
+                'proportionally_allocated_refunds_total' => $proportional_refunds_total,
+                'method_note'                            => 'Course-level refunds use WooCommerce refund line items (_refunded_item_id) when present. Unmapped order-level refunds fall back to proportional allocation and are labeled proportionally allocated.',
+            ],
             'status_breakdown'          => $status_breakdown,
             'gateway_breakdown'         => $gateways_list,
             'reconciliation'            => [
@@ -1529,63 +1599,116 @@ class TSMB_Analytics_Service
             ],
             'course_attribution'        => $course_attribution,
             'paying_customer_ids'       => $paying_customer_ids,
-            'paid_events'               => $paid_events,
+            'paid_events'               => array_values($paid_buckets),
         ];
     }
 
     /**
-     * Fetches WooCommerce orders when HPOS (`wp_wc_orders`) is active.
+     * Fetches a bounded, SQL-date-filtered batch of WooCommerce HPOS orders (`wp_wc_orders`).
      */
-    private static function fetch_wc_hpos_orders(): array
-    {
+    private static function fetch_wc_hpos_orders(
+        array $filters = [],
+        int $after_id = 0,
+        int $limit = self::QUERY_BATCH_SIZE
+    ): array {
         global $wpdb;
         $orders_table = $wpdb->prefix . 'wc_orders';
         $op_table     = $wpdb->prefix . 'wc_order_operational_data';
         $meta_table   = $wpdb->prefix . 'wc_orders_meta';
+
+        if (!self::table_exists($orders_table)) {
+            return [];
+        }
 
         $has_op   = self::table_exists($op_table);
         $has_meta = self::table_exists($meta_table);
 
         $op_join = $has_op ? "LEFT JOIN {$op_table} op ON op.order_id = o.id" : '';
         $op_paid = $has_op ? 'op.date_paid_gmt' : 'NULL';
+        $batch_limit = max(1, min(self::USER_BATCH_SIZE, $limit));
+
+        $where_sql = "o.type = 'shop_order'
+                      AND o.status NOT IN ('trash', 'auto-draft', 'wc-checkout-draft')
+                      AND o.id > %d";
+        $args      = [$after_id];
+
+        if (empty($filters['is_all_time']) && !empty($filters['start_gmt']) && !empty($filters['end_gmt'])) {
+            $start_gmt = (string) $filters['start_gmt'];
+            $end_gmt   = (string) $filters['end_gmt'];
+            if ($has_op) {
+                $where_sql .= " AND (
+                    (o.status IN ('wc-completed', 'completed', 'wc-processing', 'processing')
+                     AND COALESCE(NULLIF(op.date_paid_gmt, '0000-00-00 00:00:00'), o.date_created_gmt) >= %s
+                     AND COALESCE(NULLIF(op.date_paid_gmt, '0000-00-00 00:00:00'), o.date_created_gmt) <= %s)
+                    OR
+                    (o.status NOT IN ('wc-completed', 'completed', 'wc-processing', 'processing')
+                     AND o.date_created_gmt >= %s
+                     AND o.date_created_gmt <= %s)
+                )";
+                $args[] = $start_gmt;
+                $args[] = $end_gmt;
+                $args[] = $start_gmt;
+                $args[] = $end_gmt;
+            } else {
+                $where_sql .= ' AND o.date_created_gmt >= %s AND o.date_created_gmt <= %s';
+                $args[]     = $start_gmt;
+                $args[]     = $end_gmt;
+            }
+        }
+        $args[] = $batch_limit;
 
         $rows = $wpdb->get_results(
-            "SELECT o.id, o.status, o.total_amount AS gross_total, o.currency,
-                    o.customer_id, o.payment_method, o.payment_method_title,
-                    o.date_created_gmt AS created_gmt,
-                    {$op_paid} AS paid_gmt
-             FROM {$orders_table} o
-             {$op_join}
-             WHERE o.type = 'shop_order'
-               AND o.status NOT IN ('trash', 'auto-draft', 'wc-checkout-draft')
-             ORDER BY o.id DESC",
+            $wpdb->prepare(
+                "SELECT o.id, o.status, o.total_amount AS gross_total, o.currency,
+                        o.customer_id, o.payment_method, o.payment_method_title,
+                        o.date_created_gmt AS created_gmt,
+                        {$op_paid} AS paid_gmt
+                 FROM {$orders_table} o
+                 {$op_join}
+                 WHERE {$where_sql}
+                 ORDER BY o.id ASC
+                 LIMIT %d",
+                ...$args
+            ),
             ARRAY_A
         );
-        if (!is_array($rows)) {
+        if (!is_array($rows) || empty($rows)) {
             return [];
         }
 
-        // Refund totals by parent order ID
+        $ids = array_map(static function ($r) {
+            return intval($r['id']);
+        }, $rows);
+        $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+
+        // Child refunds strictly for this bounded batch of parent order IDs.
         $refunds_by_parent = [];
+        $refund_ids_by_parent = [];
         $ref_rows = $wpdb->get_results(
-            "SELECT parent_order_id, SUM(ABS(total_amount)) AS ref_total
-             FROM {$orders_table}
-             WHERE type = 'shop_order_refund' AND parent_order_id > 0
-             GROUP BY parent_order_id",
+            $wpdb->prepare(
+                "SELECT id AS refund_id, parent_order_id, ABS(total_amount) AS ref_amt
+                 FROM {$orders_table}
+                 WHERE type = 'shop_order_refund'
+                   AND parent_order_id IN ({$placeholders})",
+                ...$ids
+            ),
             ARRAY_A
         );
         if (is_array($ref_rows)) {
             foreach ($ref_rows as $rr) {
-                $refunds_by_parent[intval($rr['parent_order_id'])] = floatval($rr['ref_total'] ?? 0.0);
+                $pid = intval($rr['parent_order_id'] ?? 0);
+                $rid = intval($rr['refund_id'] ?? 0);
+                if ($pid > 0) {
+                    $refunds_by_parent[$pid] = ($refunds_by_parent[$pid] ?? 0.0) + floatval($rr['ref_amt'] ?? 0.0);
+                    if ($rid > 0) {
+                        $refund_ids_by_parent[$pid][] = $rid;
+                    }
+                }
             }
         }
 
         $lp_links = [];
-        if ($has_meta && !empty($rows)) {
-            $ids = array_map(static function ($r) {
-                return intval($r['id']);
-            }, $rows);
-            $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+        if ($has_meta) {
             $meta_rows = $wpdb->get_results(
                 $wpdb->prepare(
                     "SELECT order_id, meta_value
@@ -1613,6 +1736,7 @@ class TSMB_Analytics_Service
                 'status'               => (string) ($row['status'] ?? ''),
                 'gross_total'          => floatval($row['gross_total'] ?? 0.0),
                 'refunded_total'       => floatval($refunds_by_parent[$oid] ?? 0.0),
+                'refund_ids'           => $refund_ids_by_parent[$oid] ?? [],
                 'currency'             => (string) ($row['currency'] ?? 'BDT'),
                 'customer_id'          => intval($row['customer_id'] ?? 0),
                 'payment_method'       => (string) ($row['payment_method'] ?? ''),
@@ -1629,18 +1753,66 @@ class TSMB_Analytics_Service
     }
 
     /**
-     * Fetches WooCommerce orders from legacy `wp_posts` (`shop_order`) and `wp_postmeta`.
+     * Fetches a bounded, SQL-date-filtered batch of legacy WooCommerce orders (`wp_posts` + `wp_postmeta`).
      */
-    private static function fetch_wc_legacy_orders(): array
-    {
+    private static function fetch_wc_legacy_orders(
+        array $filters = [],
+        int $after_id = 0,
+        int $limit = self::QUERY_BATCH_SIZE
+    ): array {
         global $wpdb;
 
+        $batch_limit = max(1, min(self::USER_BATCH_SIZE, $limit));
+        $where_sql   = "p.post_type = 'shop_order'
+                        AND p.post_status NOT IN ('trash', 'auto-draft', 'wc-checkout-draft')
+                        AND p.ID > %d";
+        $args        = [$after_id];
+        $date_join   = '';
+
+        if (empty($filters['is_all_time']) && !empty($filters['start_gmt']) && !empty($filters['end_gmt'])) {
+            $start_gmt = (string) $filters['start_gmt'];
+            $end_gmt   = (string) $filters['end_gmt'];
+            $start_ts  = intval($filters['start_utc_ts'] ?? 0);
+            $end_ts    = intval($filters['end_utc_ts'] ?? 0);
+            $date_join = "LEFT JOIN {$wpdb->postmeta} pm_dp ON pm_dp.post_id = p.ID AND pm_dp.meta_key = '_date_paid'";
+
+            $where_sql .= " AND (
+                (p.post_status IN ('wc-completed', 'completed', 'wc-processing', 'processing') AND (
+                    (pm_dp.meta_value IS NOT NULL AND pm_dp.meta_value != '' AND CAST(pm_dp.meta_value AS UNSIGNED) BETWEEN %d AND %d)
+                    OR
+                    ((pm_dp.meta_value IS NULL OR pm_dp.meta_value = '' OR CAST(pm_dp.meta_value AS UNSIGNED) = 0)
+                     AND (
+                         (p.post_date_gmt >= %s AND p.post_date_gmt <= %s)
+                         OR EXISTS (
+                             SELECT 1 FROM {$wpdb->postmeta} pm_pd
+                             WHERE pm_pd.post_id = p.ID AND pm_pd.meta_key = '_paid_date' AND pm_pd.meta_value != ''
+                         )
+                     ))
+                ))
+                OR
+                (p.post_status NOT IN ('wc-completed', 'completed', 'wc-processing', 'processing')
+                 AND p.post_date_gmt >= %s
+                 AND p.post_date_gmt <= %s)
+            )";
+            $args[] = $start_ts;
+            $args[] = $end_ts;
+            $args[] = $start_gmt;
+            $args[] = $end_gmt;
+            $args[] = $start_gmt;
+            $args[] = $end_gmt;
+        }
+        $args[] = $batch_limit;
+
         $rows = $wpdb->get_results(
-            "SELECT p.ID AS id, p.post_status AS status, p.post_date_gmt AS created_gmt
-             FROM {$wpdb->posts} p
-             WHERE p.post_type = 'shop_order'
-               AND p.post_status NOT IN ('trash', 'auto-draft', 'wc-checkout-draft')
-             ORDER BY p.ID DESC",
+            $wpdb->prepare(
+                "SELECT p.ID AS id, p.post_status AS status, p.post_date_gmt AS created_gmt
+                 FROM {$wpdb->posts} p
+                 {$date_join}
+                 WHERE {$where_sql}
+                 ORDER BY p.ID ASC
+                 LIMIT %d",
+                ...$args
+            ),
             ARRAY_A
         );
         if (!is_array($rows) || empty($rows)) {
@@ -1665,10 +1837,11 @@ class TSMB_Analytics_Service
             ]
         );
 
-        // Refund totals from child `shop_order_refund` posts.
-        $refunds_by_parent = [];
-        $placeholders = implode(',', array_fill(0, count($ids), '%d'));
-        $ref_rows = $wpdb->get_results(
+        // Child refunds strictly for this bounded batch of parent order IDs.
+        $refunds_by_parent    = [];
+        $refund_ids_by_parent = [];
+        $placeholders         = implode(',', array_fill(0, count($ids), '%d'));
+        $ref_rows             = $wpdb->get_results(
             $wpdb->prepare(
                 "SELECT p.post_parent AS parent_id, p.ID AS refund_id
                  FROM {$wpdb->posts} p
@@ -1689,6 +1862,9 @@ class TSMB_Analytics_Service
                 $raw_ref = $ref_meta[$rid]['_refund_amount'] ?? ($ref_meta[$rid]['_order_total'] ?? 0);
                 $amt = abs(floatval($raw_ref));
                 $refunds_by_parent[$pid] = ($refunds_by_parent[$pid] ?? 0.0) + $amt;
+                if ($rid > 0) {
+                    $refund_ids_by_parent[$pid][] = $rid;
+                }
             }
         }
 
@@ -1722,6 +1898,7 @@ class TSMB_Analytics_Service
                 'status'               => (string) ($row['status'] ?? ''),
                 'gross_total'          => floatval($m['_order_total'] ?? 0.0),
                 'refunded_total'       => floatval($refunds_by_parent[$oid] ?? 0.0),
+                'refund_ids'           => $refund_ids_by_parent[$oid] ?? [],
                 'currency'             => (string) ($m['_order_currency'] ?? 'BDT'),
                 'customer_id'          => intval($m['_customer_user'] ?? 0),
                 'payment_method'       => (string) ($m['_payment_method'] ?? ''),
@@ -1738,7 +1915,7 @@ class TSMB_Analytics_Service
     }
 
     /**
-     * Fetches WooCommerce order line items batched and resolves mapped LearnPress course IDs.
+     * Fetches WooCommerce order line items batched (chunked IN) and resolves mapped LearnPress course IDs.
      */
     private static function fetch_wc_line_items_grouped(array $order_ids): array
     {
@@ -1751,46 +1928,57 @@ class TSMB_Analytics_Service
             return [];
         }
 
-        $placeholders = implode(',', array_fill(0, count($order_ids), '%d'));
-        $rows = $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT oi.order_item_id, oi.order_id, oi.order_item_name
-                 FROM {$items_table} oi
-                 WHERE oi.order_item_type = 'line_item'
-                   AND oi.order_id IN ({$placeholders})",
-                ...$order_ids
-            ),
-            ARRAY_A
-        );
-        if (!is_array($rows) || empty($rows)) {
+        $rows = [];
+        foreach (array_chunk(array_values(array_unique(array_map('intval', $order_ids))), self::QUERY_BATCH_SIZE) as $oid_chunk) {
+            if (empty($oid_chunk)) {
+                continue;
+            }
+            $placeholders = implode(',', array_fill(0, count($oid_chunk), '%d'));
+            $chunk_rows   = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT oi.order_item_id, oi.order_id, oi.order_item_name
+                     FROM {$items_table} oi
+                     WHERE oi.order_item_type = 'line_item'
+                       AND oi.order_id IN ({$placeholders})",
+                    ...$oid_chunk
+                ),
+                ARRAY_A
+            );
+            if (is_array($chunk_rows) && !empty($chunk_rows)) {
+                $rows = array_merge($rows, $chunk_rows);
+            }
+        }
+        if (empty($rows)) {
             return [];
         }
 
         $item_ids = array_map(static function ($r) {
             return intval($r['order_item_id']);
         }, $rows);
-        $im_placeholders = implode(',', array_fill(0, count($item_ids), '%d'));
-        $meta_rows = $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT order_item_id, meta_key, meta_value
-                 FROM {$itemmeta_table}
-                 WHERE order_item_id IN ({$im_placeholders})
-                   AND meta_key IN ('_product_id', '_qty', '_line_total', '_course_id')",
-                ...$item_ids
-            ),
-            ARRAY_A
-        );
 
-        $item_meta = [];
+        $item_meta   = [];
         $product_ids = [];
-        if (is_array($meta_rows)) {
-            foreach ($meta_rows as $mr) {
-                $iid = intval($mr['order_item_id']);
-                $key = (string) ($mr['meta_key'] ?? '');
-                $val = $mr['meta_value'] ?? '';
-                $item_meta[$iid][$key] = $val;
-                if ($key === '_product_id' && absint($val) > 0) {
-                    $product_ids[absint($val)] = true;
+        foreach (array_chunk($item_ids, self::QUERY_BATCH_SIZE) as $iid_chunk) {
+            $im_placeholders = implode(',', array_fill(0, count($iid_chunk), '%d'));
+            $meta_rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT order_item_id, meta_key, meta_value
+                     FROM {$itemmeta_table}
+                     WHERE order_item_id IN ({$im_placeholders})
+                       AND meta_key IN ('_product_id', '_qty', '_line_total', '_course_id')",
+                    ...$iid_chunk
+                ),
+                ARRAY_A
+            );
+            if (is_array($meta_rows)) {
+                foreach ($meta_rows as $mr) {
+                    $iid = intval($mr['order_item_id']);
+                    $key = (string) ($mr['meta_key'] ?? '');
+                    $val = $mr['meta_value'] ?? '';
+                    $item_meta[$iid][$key] = $val;
+                    if ($key === '_product_id' && absint($val) > 0) {
+                        $product_ids[absint($val)] = true;
+                    }
                 }
             }
         }
@@ -1798,7 +1986,7 @@ class TSMB_Analytics_Service
         // Batch-fetch product-to-course mappings from postmeta (_learnpress_course, _lp_course).
         $product_course_map = [];
         if (!empty($product_ids)) {
-            $pids = array_keys($product_ids);
+            $pids      = array_keys($product_ids);
             $prod_meta = self::fetch_postmeta_batch($pids, ['_learnpress_course', '_lp_course']);
             foreach ($pids as $pid) {
                 $mapped = [];
@@ -1852,25 +2040,248 @@ class TSMB_Analytics_Service
     }
 
     /**
-     * Audits LearnPress orders (`lp_order`), deduplicating Woo-linked orders and
-     * separating gateway-verified direct LP payments from manual/unverified/free orders.
+     * Fetches WooCommerce child refund line-item allocations keyed by parent order_id.
+     */
+    private static function fetch_wc_refund_allocations_grouped(array $refund_ids): array
+    {
+        global $wpdb;
+
+        $items_table    = $wpdb->prefix . 'woocommerce_order_items';
+        $itemmeta_table = $wpdb->prefix . 'woocommerce_order_itemmeta';
+
+        if (empty($refund_ids) || !self::table_exists($items_table) || !self::table_exists($itemmeta_table)) {
+            return [];
+        }
+
+        // Resolve parent_id for each refund_id in chunked batches.
+        $refund_parent_map = [];
+        foreach (array_chunk($refund_ids, self::QUERY_BATCH_SIZE) as $rid_chunk) {
+            $ph = implode(',', array_fill(0, count($rid_chunk), '%d'));
+            if (self::is_wc_hpos_enabled()) {
+                $orders_table = $wpdb->prefix . 'wc_orders';
+                $prows = $wpdb->get_results(
+                    $wpdb->prepare(
+                        "SELECT id AS refund_id, parent_order_id AS parent_id
+                         FROM {$orders_table}
+                         WHERE type = 'shop_order_refund' AND id IN ({$ph})",
+                        ...$rid_chunk
+                    ),
+                    ARRAY_A
+                );
+            } else {
+                $prows = $wpdb->get_results(
+                    $wpdb->prepare(
+                        "SELECT ID AS refund_id, post_parent AS parent_id
+                         FROM {$wpdb->posts}
+                         WHERE post_type = 'shop_order_refund' AND ID IN ({$ph})",
+                        ...$rid_chunk
+                    ),
+                    ARRAY_A
+                );
+            }
+            if (is_array($prows)) {
+                foreach ($prows as $pr) {
+                    $rid = intval($pr['refund_id'] ?? 0);
+                    $pid = intval($pr['parent_id'] ?? 0);
+                    if ($rid > 0 && $pid > 0) {
+                        $refund_parent_map[$rid] = $pid;
+                    }
+                }
+            }
+        }
+
+        if (empty($refund_parent_map)) {
+            return [];
+        }
+
+        $ref_item_rows = [];
+        foreach (array_chunk(array_keys($refund_parent_map), self::QUERY_BATCH_SIZE) as $rid_chunk) {
+            $ph = implode(',', array_fill(0, count($rid_chunk), '%d'));
+            $chunk_rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT oi.order_item_id, oi.order_id
+                     FROM {$items_table} oi
+                     WHERE oi.order_item_type = 'line_item'
+                       AND oi.order_id IN ({$ph})",
+                    ...$rid_chunk
+                ),
+                ARRAY_A
+            );
+            if (is_array($chunk_rows) && !empty($chunk_rows)) {
+                $ref_item_rows = array_merge($ref_item_rows, $chunk_rows);
+            }
+        }
+        if (empty($ref_item_rows)) {
+            return [];
+        }
+
+        $ref_iids = array_map(static function ($r) {
+            return intval($r['order_item_id']);
+        }, $ref_item_rows);
+        $ref_imeta = [];
+        foreach (array_chunk($ref_iids, self::QUERY_BATCH_SIZE) as $iid_chunk) {
+            $im_ph = implode(',', array_fill(0, count($iid_chunk), '%d'));
+            $mrows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT order_item_id, meta_key, meta_value
+                     FROM {$itemmeta_table}
+                     WHERE order_item_id IN ({$im_ph})
+                       AND meta_key IN ('_refunded_item_id', '_product_id', '_line_total')",
+                    ...$iid_chunk
+                ),
+                ARRAY_A
+            );
+            if (is_array($mrows)) {
+                foreach ($mrows as $mr) {
+                    $ref_imeta[intval($mr['order_item_id'])][(string) $mr['meta_key']] = $mr['meta_value'] ?? '';
+                }
+            }
+        }
+
+        $out = [];
+        foreach ($ref_item_rows as $rir) {
+            $ref_iid   = intval($rir['order_item_id']);
+            $refund_id = intval($rir['order_id']);
+            $parent_id = intval($refund_parent_map[$refund_id] ?? 0);
+            if ($parent_id <= 0) {
+                continue;
+            }
+            $meta = $ref_imeta[$ref_iid] ?? [];
+            $amt  = round(abs(floatval($meta['_line_total'] ?? 0.0)), 2);
+            if ($amt <= 0.0) {
+                continue;
+            }
+
+            $target_item_id = absint($meta['_refunded_item_id'] ?? 0);
+            $product_id     = absint($meta['_product_id'] ?? 0);
+
+            if (!isset($out[$parent_id])) {
+                $out[$parent_id] = ['by_item_id' => [], 'by_product_id' => []];
+            }
+            if ($target_item_id > 0) {
+                $out[$parent_id]['by_item_id'][$target_item_id] = round(
+                    ($out[$parent_id]['by_item_id'][$target_item_id] ?? 0.0) + $amt,
+                    2
+                );
+            } elseif ($product_id > 0) {
+                $out[$parent_id]['by_product_id'][$product_id] = round(
+                    ($out[$parent_id]['by_product_id'][$product_id] ?? 0.0) + $amt,
+                    2
+                );
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Allocates exact WooCommerce refund line-item amounts first, then falls back to proportional
+     * allocation only for any remaining unmapped order-level refund balance.
+     */
+    private static function build_order_item_refund_allocations(
+        array $items,
+        float $order_refunded_total,
+        array $order_refund_map
+    ): array {
+        if (empty($items)) {
+            return [];
+        }
+
+        $by_item    = $order_refund_map['by_item_id'] ?? [];
+        $by_product = $order_refund_map['by_product_id'] ?? [];
+
+        // Count how many order line items share a product_id so _product_id fallback stays unambiguous.
+        $product_counts = [];
+        foreach ($items as $it) {
+            $pid = intval($it['product_id'] ?? 0);
+            if ($pid > 0) {
+                $product_counts[$pid] = ($product_counts[$pid] ?? 0) + 1;
+            }
+        }
+
+        $allocated             = [];
+        $exact_refund_sum      = 0.0;
+        $remaining_balance_sum = 0.0;
+
+        foreach ($items as $idx => $it) {
+            $iid        = intval($it['order_item_id'] ?? 0);
+            $pid        = intval($it['product_id'] ?? 0);
+            $line_gross = max(0.0, round(floatval($it['line_total'] ?? 0.0), 2));
+
+            $exact_refund = 0.0;
+            if ($iid > 0 && !empty($by_item[$iid])) {
+                $exact_refund = floatval($by_item[$iid]);
+            } elseif ($pid > 0 && ($product_counts[$pid] ?? 0) === 1 && !empty($by_product[$pid])) {
+                $exact_refund = floatval($by_product[$pid]);
+            }
+
+            $exact_refund = min($line_gross, max(0.0, round($exact_refund, 2)));
+            $rem_balance  = max(0.0, round($line_gross - $exact_refund, 2));
+
+            $exact_refund_sum      = round($exact_refund_sum + $exact_refund, 2);
+            $remaining_balance_sum = round($remaining_balance_sum + $rem_balance, 2);
+
+            $allocated[$idx] = [
+                'order_item_id'       => $iid,
+                'product_id'          => $pid,
+                'qty'                 => max(1, intval($it['qty'] ?? 1)),
+                'course_ids'          => is_array($it['course_ids'] ?? null) ? $it['course_ids'] : [],
+                'gross'               => $line_gross,
+                'exact_refund'        => $exact_refund,
+                'proportional_refund' => 0.0,
+                'net'                 => $rem_balance,
+            ];
+        }
+
+        $unmapped_refund = max(0.0, round($order_refunded_total - $exact_refund_sum, 2));
+        if ($unmapped_refund > 0.009 && $remaining_balance_sum > 0.0) {
+            $capped_unmapped   = min($unmapped_refund, $remaining_balance_sum);
+            $distributed_total = 0.0;
+            $last_positive_idx = null;
+
+            foreach ($allocated as $idx => $entry) {
+                $rem = floatval($entry['net']);
+                if ($rem <= 0.0) {
+                    continue;
+                }
+                $last_positive_idx = $idx;
+                $share = round(($rem / $remaining_balance_sum) * $capped_unmapped, 2);
+                $share = min($rem, $share);
+                $allocated[$idx]['proportional_refund'] = $share;
+                $allocated[$idx]['net']                 = max(0.0, round($rem - $share, 2));
+                $distributed_total                      = round($distributed_total + $share, 2);
+            }
+
+            $rounding_diff = round($capped_unmapped - $distributed_total, 2);
+            if ($last_positive_idx !== null && abs($rounding_diff) > 0.0) {
+                $adj_prop = max(
+                    0.0,
+                    min(
+                        $allocated[$last_positive_idx]['gross'] - $allocated[$last_positive_idx]['exact_refund'],
+                        round($allocated[$last_positive_idx]['proportional_refund'] + $rounding_diff, 2)
+                    )
+                );
+                $allocated[$last_positive_idx]['proportional_refund'] = $adj_prop;
+                $allocated[$last_positive_idx]['net'] = max(
+                    0.0,
+                    round($allocated[$last_positive_idx]['gross'] - $allocated[$last_positive_idx]['exact_refund'] - $adj_prop, 2)
+                );
+            }
+        }
+
+        return $allocated;
+    }
+
+    /**
+     * Audits LearnPress orders (`lp_order`) in bounded batches with SQL date pushdown,
+     * deduplicating Woo-linked orders and separating verified direct gateway payments.
      */
     private static function audit_learnpress_orders(
         array $filters,
-        array $wc_reverse_linked_lp_ids,
-        array $known_wc_order_ids,
-        int $course_filter
+        int $course_filter,
+        bool $is_hpos
     ): array {
         global $wpdb;
-
-        $lp_order_posts = $wpdb->get_results(
-            "SELECT ID, post_status, post_date_gmt
-             FROM {$wpdb->posts}
-             WHERE post_type = 'lp_order'
-               AND post_status NOT IN ('trash', 'auto-draft')
-             ORDER BY ID DESC",
-            ARRAY_A
-        );
 
         $result = [
             'woo_linked_count'                  => 0,
@@ -1885,107 +2296,214 @@ class TSMB_Analytics_Service
             'direct_gateway_customers'          => [],
         ];
 
-        if (!is_array($lp_order_posts) || empty($lp_order_posts)) {
-            return $result;
-        }
+        $event_buckets = [];
+        $after_id      = 0;
 
-        $lp_ids = array_map(static function ($r) {
-            return intval($r['ID']);
-        }, $lp_order_posts);
-        $meta_map = self::fetch_postmeta_batch(
-            $lp_ids,
-            ['_order_total', '_woo_order_id', '_payment_method', '_payment_method_title', '_user_id']
-        );
+        do {
+            $where_sql = "post_type = 'lp_order'
+                          AND post_status NOT IN ('trash', 'auto-draft')
+                          AND ID > %d";
+            $args      = [$after_id];
 
-        $lp_items_by_order = self::fetch_lp_order_items_grouped($lp_ids);
-        $wc_id_set = array_flip($known_wc_order_ids);
+            if (empty($filters['is_all_time']) && !empty($filters['start_gmt']) && !empty($filters['end_gmt'])) {
+                $where_sql .= ' AND post_date_gmt >= %s AND post_date_gmt <= %s';
+                $args[]     = (string) $filters['start_gmt'];
+                $args[]     = (string) $filters['end_gmt'];
+            }
+            $args[] = self::QUERY_BATCH_SIZE;
 
-        foreach ($lp_order_posts as $row) {
-            $oid       = intval($row['ID']);
-            $status    = strtolower((string) ($row['post_status'] ?? ''));
-            $date_gmt  = (string) ($row['post_date_gmt'] ?? '');
-            if (!self::is_gmt_in_range($date_gmt, $filters)) {
-                continue;
+            $lp_order_posts = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT ID, post_status, post_date_gmt
+                     FROM {$wpdb->posts}
+                     WHERE {$where_sql}
+                     ORDER BY ID ASC
+                     LIMIT %d",
+                    ...$args
+                ),
+                ARRAY_A
+            );
+
+            if (!is_array($lp_order_posts) || empty($lp_order_posts)) {
+                break;
             }
 
-            $m     = $meta_map[$oid] ?? [];
-            $total = round(max(0.0, floatval($m['_order_total'] ?? 0.0)), 2);
-            $items = $lp_items_by_order[$oid] ?? [];
+            $lp_ids = [];
+            foreach ($lp_order_posts as $r) {
+                $id = intval($r['ID']);
+                if ($id > $after_id) {
+                    $after_id = $id;
+                }
+                if ($id > 0) {
+                    $lp_ids[] = $id;
+                }
+            }
 
-            if ($course_filter > 0) {
-                $matched = false;
-                foreach ($items as $it) {
-                    if (intval($it['course_id']) === $course_filter) {
-                        $matched = true;
-                        break;
+            $meta_map = self::fetch_postmeta_batch(
+                $lp_ids,
+                ['_order_total', '_woo_order_id', '_payment_method', '_payment_method_title', '_user_id']
+            );
+            $lp_items_by_order   = self::fetch_lp_order_items_grouped($lp_ids);
+            $reverse_linked_lps  = self::find_wc_linked_lp_order_ids($lp_ids, $is_hpos);
+
+            foreach ($lp_order_posts as $row) {
+                $oid      = intval($row['ID']);
+                $status   = strtolower((string) ($row['post_status'] ?? ''));
+                $date_gmt = (string) ($row['post_date_gmt'] ?? '');
+                if (!self::is_gmt_in_range($date_gmt, $filters)) {
+                    continue;
+                }
+
+                $m     = $meta_map[$oid] ?? [];
+                $total = round(max(0.0, floatval($m['_order_total'] ?? 0.0)), 2);
+                $items = $lp_items_by_order[$oid] ?? [];
+
+                if ($course_filter > 0) {
+                    $matched = false;
+                    foreach ($items as $it) {
+                        if (intval($it['course_id']) === $course_filter) {
+                            $matched = true;
+                            break;
+                        }
+                    }
+                    if (!$matched) {
+                        continue;
                     }
                 }
-                if (!$matched) {
+
+                $woo_id = absint($m['_woo_order_id'] ?? 0);
+                $pm     = strtolower(trim((string) ($m['_payment_method'] ?? '')));
+                $is_woo_linked = ($woo_id > 0)
+                    || isset($reverse_linked_lps[$oid])
+                    || (strpos($pm, 'woo') !== false);
+
+                if ($is_woo_linked) {
+                    $result['woo_linked_count']++;
+                    $result['woo_linked_total'] = round($result['woo_linked_total'] + $total, 2);
                     continue;
                 }
-            }
 
-            $woo_id = absint($m['_woo_order_id'] ?? 0);
-            $pm     = strtolower(trim((string) ($m['_payment_method'] ?? '')));
-            $is_woo_linked = ($woo_id > 0)
-                || isset($wc_reverse_linked_lp_ids[$oid])
-                || (strpos($pm, 'woo') !== false)
-                || ($woo_id > 0 && isset($wc_id_set[$woo_id]));
-
-            if ($is_woo_linked) {
-                $result['woo_linked_count']++;
-                $result['woo_linked_total'] = round($result['woo_linked_total'] + $total, 2);
-                continue;
-            }
-
-            if ($total <= 0.0) {
-                $result['free_zero_count']++;
-                continue;
-            }
-
-            // Verified direct LearnPress online gateway (excludes blank payment method & offline-payment/manual).
-            $non_online_methods = ['', 'offline-payment', 'offline', 'manual', 'free', 'admin', 'cod'];
-            $is_verified_direct = ($status === 'lp-completed') && !in_array($pm, $non_online_methods, true);
-
-            if (!$is_verified_direct) {
-                $result['unverified_manual_count']++;
-                $result['unverified_manual_total'] = round($result['unverified_manual_total'] + $total, 2);
-                continue;
-            }
-
-            $result['direct_gateway_paid_count']++;
-            $result['direct_gateway_paid_revenue'] = round($result['direct_gateway_paid_revenue'] + $total, 2);
-            $uid = intval($m['_user_id'] ?? 0);
-            if ($uid > 0) {
-                $result['direct_gateway_customers'][$uid] = true;
-            }
-            if (self::is_valid_mysql_datetime($date_gmt)) {
-                $result['direct_gateway_events'][] = ['gmt' => $date_gmt, 'amount' => $total];
-            }
-
-            foreach ($items as $it) {
-                $cid = intval($it['course_id']);
-                $it_total = round(max(0.0, floatval($it['total'])), 2);
-                if ($cid <= 0 || ($course_filter > 0 && $cid !== $course_filter)) {
+                if ($total <= 0.0) {
+                    $result['free_zero_count']++;
                     continue;
                 }
-                if (!isset($result['direct_gateway_course_attribution'][$cid])) {
-                    $result['direct_gateway_course_attribution'][$cid] = [
-                        'orders_count' => 0,
-                        'units_sold'   => 0,
-                        'revenue'      => 0.0,
-                    ];
+
+                // Verified direct LearnPress online gateway (excludes blank payment method & offline-payment/manual).
+                $non_online_methods = ['', 'offline-payment', 'offline', 'manual', 'free', 'admin', 'cod'];
+                $is_verified_direct = ($status === 'lp-completed') && !in_array($pm, $non_online_methods, true);
+
+                if (!$is_verified_direct) {
+                    $result['unverified_manual_count']++;
+                    $result['unverified_manual_total'] = round($result['unverified_manual_total'] + $total, 2);
+                    continue;
                 }
-                $result['direct_gateway_course_attribution'][$cid]['orders_count']++;
-                $result['direct_gateway_course_attribution'][$cid]['units_sold'] += max(1, intval($it['qty']));
-                $result['direct_gateway_course_attribution'][$cid]['revenue'] = round(
-                    $result['direct_gateway_course_attribution'][$cid]['revenue'] + $it_total,
-                    2
+
+                $result['direct_gateway_paid_count']++;
+                $result['direct_gateway_paid_revenue'] = round($result['direct_gateway_paid_revenue'] + $total, 2);
+                $uid = intval($m['_user_id'] ?? 0);
+                if ($uid > 0) {
+                    $result['direct_gateway_customers'][$uid] = true;
+                }
+                if (self::is_valid_mysql_datetime($date_gmt)) {
+                    $hk = substr(trim($date_gmt), 0, 13) . ':00:00';
+                    if (!isset($event_buckets[$hk])) {
+                        $event_buckets[$hk] = ['gmt' => $hk, 'amount' => 0.0, 'count' => 0];
+                    }
+                    $event_buckets[$hk]['count']++;
+                    $event_buckets[$hk]['amount'] = round($event_buckets[$hk]['amount'] + $total, 2);
+                }
+
+                foreach ($items as $it) {
+                    $cid      = intval($it['course_id']);
+                    $it_total = round(max(0.0, floatval($it['total'])), 2);
+                    if ($cid <= 0 || ($course_filter > 0 && $cid !== $course_filter)) {
+                        continue;
+                    }
+                    if (!isset($result['direct_gateway_course_attribution'][$cid])) {
+                        $result['direct_gateway_course_attribution'][$cid] = [
+                            'orders_count' => 0,
+                            'units_sold'   => 0,
+                            'revenue'      => 0.0,
+                        ];
+                    }
+                    $result['direct_gateway_course_attribution'][$cid]['orders_count']++;
+                    $result['direct_gateway_course_attribution'][$cid]['units_sold'] += max(1, intval($it['qty']));
+                    $result['direct_gateway_course_attribution'][$cid]['revenue'] = round(
+                        $result['direct_gateway_course_attribution'][$cid]['revenue'] + $it_total,
+                        2
+                    );
+                }
+            }
+        } while (count($lp_order_posts) >= self::QUERY_BATCH_SIZE);
+
+        $result['direct_gateway_events'] = array_values($event_buckets);
+        return $result;
+    }
+
+    /**
+     * Checks a bounded batch of LearnPress order IDs for WooCommerce reverse links in meta.
+     */
+    private static function find_wc_linked_lp_order_ids(array $lp_ids, bool $is_hpos): array
+    {
+        global $wpdb;
+
+        if (empty($lp_ids)) {
+            return [];
+        }
+
+        $str_ids = array_map(static function ($id) {
+            return (string) intval($id);
+        }, $lp_ids);
+        $ph = implode(',', array_fill(0, count($str_ids), '%s'));
+
+        $linked = [];
+        if ($is_hpos) {
+            $meta_table = $wpdb->prefix . 'wc_orders_meta';
+            if (self::table_exists($meta_table)) {
+                $rows = $wpdb->get_results(
+                    $wpdb->prepare(
+                        "SELECT DISTINCT meta_value
+                         FROM {$meta_table}
+                         WHERE meta_key IN ('_learn_press_order_id', '_lp_order_id')
+                           AND meta_value IN ({$ph})",
+                        ...$str_ids
+                    ),
+                    ARRAY_A
                 );
+                if (is_array($rows)) {
+                    foreach ($rows as $r) {
+                        $lid = absint($r['meta_value'] ?? 0);
+                        if ($lid > 0) {
+                            $linked[$lid] = true;
+                        }
+                    }
+                }
+            }
+        } elseif (!empty($wpdb->postmeta)) {
+            $rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT DISTINCT pm.meta_value
+                     FROM {$wpdb->postmeta} pm
+                     INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+                     WHERE p.post_type = 'shop_order'
+                       AND p.post_status NOT IN ('trash', 'auto-draft', 'wc-checkout-draft')
+                       AND pm.meta_key IN ('_learn_press_order_id', '_lp_order_id')
+                       AND pm.meta_value IN ({$ph})",
+                    ...$str_ids
+                ),
+                ARRAY_A
+            );
+            if (is_array($rows)) {
+                foreach ($rows as $r) {
+                    $lid = absint($r['meta_value'] ?? 0);
+                    if ($lid > 0) {
+                        $linked[$lid] = true;
+                    }
+                }
             }
         }
 
-        return $result;
+        return $linked;
     }
 
     /**
@@ -2003,41 +2521,52 @@ class TSMB_Analytics_Service
 
         $has_item_id_col = self::table_has_column($items_table, 'item_id');
         $select_cols     = $has_item_id_col ? 'order_item_id, order_id, order_item_name, item_id' : 'order_item_id, order_id, order_item_name';
-        $placeholders    = implode(',', array_fill(0, count($lp_order_ids), '%d'));
-        $rows = $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT {$select_cols}
-                 FROM {$items_table}
-                 WHERE order_id IN ({$placeholders})",
-                ...$lp_order_ids
-            ),
-            ARRAY_A
-        );
-        if (!is_array($rows) || empty($rows)) {
+        $rows = [];
+        foreach (array_chunk(array_values(array_unique(array_map('intval', $lp_order_ids))), self::QUERY_BATCH_SIZE) as $oid_chunk) {
+            if (empty($oid_chunk)) {
+                continue;
+            }
+            $placeholders = implode(',', array_fill(0, count($oid_chunk), '%d'));
+            $chunk_rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT {$select_cols}
+                     FROM {$items_table}
+                     WHERE order_id IN ({$placeholders})",
+                    ...$oid_chunk
+                ),
+                ARRAY_A
+            );
+            if (is_array($chunk_rows) && !empty($chunk_rows)) {
+                $rows = array_merge($rows, $chunk_rows);
+            }
+        }
+        if (empty($rows)) {
             return [];
         }
 
         $item_ids = array_map(static function ($r) {
             return intval($r['order_item_id']);
         }, $rows);
-        $im_placeholders = implode(',', array_fill(0, count($item_ids), '%d'));
-        $meta_rows = $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT learnpress_order_item_id AS item_id, meta_key, meta_value
-                 FROM {$itemmeta_table}
-                 WHERE learnpress_order_item_id IN ({$im_placeholders})
-                   AND meta_key IN ('_course_id', '_quantity', '_total')",
-                ...$item_ids
-            ),
-            ARRAY_A
-        );
 
         $item_meta = [];
-        if (is_array($meta_rows)) {
-            foreach ($meta_rows as $mr) {
-                $iid = intval($mr['item_id']);
-                $key = (string) ($mr['meta_key'] ?? '');
-                $item_meta[$iid][$key] = $mr['meta_value'] ?? '';
+        foreach (array_chunk($item_ids, self::QUERY_BATCH_SIZE) as $iid_chunk) {
+            $im_placeholders = implode(',', array_fill(0, count($iid_chunk), '%d'));
+            $meta_rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT learnpress_order_item_id AS item_id, meta_key, meta_value
+                     FROM {$itemmeta_table}
+                     WHERE learnpress_order_item_id IN ({$im_placeholders})
+                       AND meta_key IN ('_course_id', '_quantity', '_total')",
+                    ...$iid_chunk
+                ),
+                ARRAY_A
+            );
+            if (is_array($meta_rows)) {
+                foreach ($meta_rows as $mr) {
+                    $iid = intval($mr['item_id']);
+                    $key = (string) ($mr['meta_key'] ?? '');
+                    $item_meta[$iid][$key] = $mr['meta_value'] ?? '';
+                }
             }
         }
 
@@ -2291,41 +2820,47 @@ class TSMB_Analytics_Service
             if (!isset($buckets[$bk])) {
                 $buckets[$bk] = self::empty_series_bucket($bk);
             }
-            $buckets[$bk]['paid_orders']++;
-            $buckets[$bk]['revenue'] = round($buckets[$bk]['revenue'] + floatval($pe['amount'] ?? 0.0), 2);
+            $buckets[$bk]['paid_orders'] += max(1, intval($pe['count'] ?? 1));
+            $buckets[$bk]['revenue']      = round($buckets[$bk]['revenue'] + floatval($pe['amount'] ?? 0.0), 2);
         }
 
         foreach ($enrollment_events as $ee) {
-            $bk = $bucket_key_from_gmt((string) $ee);
+            $gmt = is_array($ee) ? (string) ($ee['gmt'] ?? '') : (string) $ee;
+            $cnt = is_array($ee) ? max(1, intval($ee['count'] ?? 1)) : 1;
+            $bk  = $bucket_key_from_gmt($gmt);
             if ($bk === null) {
                 continue;
             }
             if (!isset($buckets[$bk])) {
                 $buckets[$bk] = self::empty_series_bucket($bk);
             }
-            $buckets[$bk]['enrollments']++;
+            $buckets[$bk]['enrollments'] += $cnt;
         }
 
         foreach ($completion_events as $ce) {
-            $bk = $bucket_key_from_gmt((string) $ce);
+            $gmt = is_array($ce) ? (string) ($ce['gmt'] ?? '') : (string) $ce;
+            $cnt = is_array($ce) ? max(1, intval($ce['count'] ?? 1)) : 1;
+            $bk  = $bucket_key_from_gmt($gmt);
             if ($bk === null) {
                 continue;
             }
             if (!isset($buckets[$bk])) {
                 $buckets[$bk] = self::empty_series_bucket($bk);
             }
-            $buckets[$bk]['completions']++;
+            $buckets[$bk]['completions'] += $cnt;
         }
 
         foreach ($registration_events as $re) {
-            $bk = $bucket_key_from_gmt((string) $re);
+            $gmt = is_array($re) ? (string) ($re['gmt'] ?? '') : (string) $re;
+            $cnt = is_array($re) ? max(1, intval($re['count'] ?? 1)) : 1;
+            $bk  = $bucket_key_from_gmt($gmt);
             if ($bk === null) {
                 continue;
             }
             if (!isset($buckets[$bk])) {
                 $buckets[$bk] = self::empty_series_bucket($bk);
             }
-            $buckets[$bk]['new_users']++;
+            $buckets[$bk]['new_users'] += $cnt;
         }
 
         ksort($buckets);
@@ -2350,10 +2885,10 @@ class TSMB_Analytics_Service
     private static function get_data_source_notes(array $revenue): array
     {
         return [
-            'users' => 'Site-capable users joined from wp_users + wp_usermeta (prefix_capabilities); raw wp_users row count disclosed separately when imported rows lack site capabilities.',
-            'enrollments_and_progress' => 'Deduplicated latest course states per (user_id, item_id) in learnpress_user_items for published lp_course posts, with curriculum counts from learnpress_sections + learnpress_section_items.',
+            'users' => 'Site-capable users joined from wp_users + wp_usermeta (prefix_capabilities) aggregated in SQL batches; raw wp_users row count disclosed separately when imported rows lack site capabilities.',
+            'enrollments_and_progress' => 'Deduplicated latest course states per (user_id, item_id) in learnpress_user_items for published lp_course posts processed in cursor batches, with curriculum counts from learnpress_sections + learnpress_section_items.',
             'revenue_and_orders' => sprintf(
-                'Confirmed paid WooCommerce orders (%s; statuses wc-completed and wc-processing with net total > 0 after child refunds). Woo-linked lp_order entries and free/manual/unverified lp_order rows are deduplicated and excluded from paid revenue.',
+                'Confirmed paid WooCommerce orders (%s; statuses wc-completed and wc-processing with net total > 0 after child refunds), queried with SQL date pushdown and bounded batches. Course-level refunds use WooCommerce refund line items (_refunded_item_id) when present and label unmapped order refunds as proportionally allocated.',
                 $revenue['wc_storage_mode'] ?? 'wp_posts_shop_order'
             ),
             'reviews_and_ratings' => 'Approved LearnPress course reviews in wp_comments (comment_type = review, comment_approved = 1) joined with _lpr_rating meta.',
@@ -2401,7 +2936,7 @@ class TSMB_Analytics_Service
     }
 
     /**
-     * Fetches specified postmeta keys for a list of post IDs in a single query.
+     * Fetches specified postmeta keys for a list of post IDs in chunked batches.
      */
     private static function fetch_postmeta_batch(array $post_ids, array $meta_keys): array
     {
@@ -2410,28 +2945,36 @@ class TSMB_Analytics_Service
             return [];
         }
 
-        $post_ph = implode(',', array_fill(0, count($post_ids), '%d'));
-        $key_ph  = implode(',', array_fill(0, count($meta_keys), '%s'));
-        $args    = array_merge(array_map('intval', $post_ids), $meta_keys);
+        $clean_ids = array_values(array_unique(array_filter(array_map('intval', $post_ids))));
+        if (empty($clean_ids)) {
+            return [];
+        }
 
-        $rows = $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT post_id, meta_key, meta_value
-                 FROM {$wpdb->postmeta}
-                 WHERE post_id IN ({$post_ph})
-                   AND meta_key IN ({$key_ph})",
-                ...$args
-            ),
-            ARRAY_A
-        );
+        $key_ph = implode(',', array_fill(0, count($meta_keys), '%s'));
+        $out    = [];
 
-        $out = [];
-        if (is_array($rows)) {
-            foreach ($rows as $row) {
-                $pid = intval($row['post_id'] ?? 0);
-                $mk  = (string) ($row['meta_key'] ?? '');
-                if ($pid > 0 && $mk !== '' && !array_key_exists($mk, $out[$pid] ?? [])) {
-                    $out[$pid][$mk] = $row['meta_value'] ?? '';
+        foreach (array_chunk($clean_ids, self::QUERY_BATCH_SIZE) as $id_chunk) {
+            $post_ph = implode(',', array_fill(0, count($id_chunk), '%d'));
+            $args    = array_merge($id_chunk, $meta_keys);
+
+            $rows = $wpdb->get_results(
+                $wpdb->prepare(
+                    "SELECT post_id, meta_key, meta_value
+                     FROM {$wpdb->postmeta}
+                     WHERE post_id IN ({$post_ph})
+                       AND meta_key IN ({$key_ph})",
+                    ...$args
+                ),
+                ARRAY_A
+            );
+
+            if (is_array($rows)) {
+                foreach ($rows as $row) {
+                    $pid = intval($row['post_id'] ?? 0);
+                    $mk  = (string) ($row['meta_key'] ?? '');
+                    if ($pid > 0 && $mk !== '' && !array_key_exists($mk, $out[$pid] ?? [])) {
+                        $out[$pid][$mk] = $row['meta_value'] ?? '';
+                    }
                 }
             }
         }

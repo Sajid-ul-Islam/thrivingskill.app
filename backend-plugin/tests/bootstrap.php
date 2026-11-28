@@ -350,19 +350,29 @@ final class TSMB_Fake_WPDB
             return (string) ($args[0] ?? 'item_id');
         }
         if (strpos($sql, 'FROM wp_users') !== false && strpos($sql, 'COUNT(*)') !== false) {
-            if (strpos($sql, 'user_registered >=') !== false && count($args) >= 2) {
-                $s = (string) $args[0];
-                $e = (string) $args[1];
-                $cnt = 0;
-                foreach (TSMB_Test_State::$users as $u) {
-                    $reg = (string) ($u->user_registered ?? '');
-                    if ($reg >= $s && $reg <= $e) {
-                        $cnt++;
+            $require_caps = strpos($sql, 'wp_usermeta') !== false;
+            $cap_key      = $require_caps ? (string) ($args[0] ?? 'wp_capabilities') : '';
+            $has_range    = strpos($sql, 'user_registered >=') !== false;
+            $s            = $has_range ? (string) ($args[$require_caps ? 1 : 0] ?? '') : '';
+            $e            = $has_range ? (string) ($args[$require_caps ? 2 : 1] ?? '') : '';
+            $cnt          = 0;
+
+            foreach (TSMB_Test_State::$users as $uid => $u) {
+                if ($require_caps) {
+                    $caps = TSMB_Test_State::$user_meta[intval($uid)][$cap_key] ?? null;
+                    if (($caps === null || $caps === '') && empty((array) ($u->roles ?? []))) {
+                        continue;
                     }
                 }
-                return $cnt;
+                if ($has_range) {
+                    $reg = (string) ($u->user_registered ?? '');
+                    if ($reg < $s || $reg > $e) {
+                        continue;
+                    }
+                }
+                $cnt++;
             }
-            return count(TSMB_Test_State::$users);
+            return $cnt;
         }
         if (strpos($sql, 'FROM wp_usermeta') !== false && strpos($sql, 'COUNT(DISTINCT user_id)') !== false) {
             $cnt = 0;
@@ -370,6 +380,22 @@ final class TSMB_Fake_WPDB
                 if (isset($meta['tsmb_watch_positions_v1']) || isset($meta['tsmb_gamification_v1'])) {
                     $cnt++;
                 }
+            }
+            return $cnt;
+        }
+        if (strpos($sql, 'wp_learnpress_user_items') !== false && strpos($sql, "item_type = 'lp_quiz'") !== false && strpos($sql, 'COUNT(*)') !== false) {
+            $s   = (string) ($args[0] ?? '');
+            $e   = (string) ($args[1] ?? '');
+            $cnt = 0;
+            foreach (TSMB_Test_State::$lp_user_items as $ui) {
+                if (($ui['item_type'] ?? '') !== 'lp_quiz') {
+                    continue;
+                }
+                $st = (string) ($ui['start_time'] ?? '');
+                if ($s !== '' && $e !== '' && ($st < $s || $st > $e)) {
+                    continue;
+                }
+                $cnt++;
             }
             return $cnt;
         }
@@ -463,29 +489,87 @@ final class TSMB_Fake_WPDB
         $sql  = is_array($prepared) ? (string) ($prepared['query'] ?? '') : (string) $prepared;
         $args = is_array($prepared) ? (array) ($prepared['args'] ?? []) : [];
 
-        // Analytics: site users + capabilities usermeta
+        // Analytics: site users + capabilities usermeta (SQL GROUP BY & hourly buckets with LIMIT/OFFSET)
         if (strpos($sql, 'FROM wp_users u') !== false && strpos($sql, 'wp_usermeta') !== false) {
             $cap_key = (string) ($args[0] ?? 'wp_capabilities');
-            $out = [];
-            foreach (TSMB_Test_State::$users as $uid => $user) {
-                $caps = TSMB_Test_State::$user_meta[intval($uid)][$cap_key] ?? null;
-                if ($caps === null || $caps === '') {
-                    $roles_assoc = [];
-                    foreach ((array) ($user->roles ?? []) as $rk) {
-                        $roles_assoc[$rk] = true;
+
+            if (strpos($sql, 'GROUP BY um.meta_value') !== false) {
+                $limit  = max(1, intval($args[1] ?? 500));
+                $offset = max(0, intval($args[2] ?? 0));
+                $counts = [];
+                foreach (TSMB_Test_State::$users as $uid => $user) {
+                    $caps = TSMB_Test_State::$user_meta[intval($uid)][$cap_key] ?? null;
+                    if ($caps === null || $caps === '') {
+                        $roles_assoc = [];
+                        foreach ((array) ($user->roles ?? []) as $rk) {
+                            $roles_assoc[$rk] = true;
+                        }
+                        if (empty($roles_assoc)) {
+                            continue;
+                        }
+                        $caps = serialize($roles_assoc);
                     }
-                    if (empty($roles_assoc)) {
+                    $raw_cap = is_array($caps) ? serialize($caps) : (string) $caps;
+                    $counts[$raw_cap] = ($counts[$raw_cap] ?? 0) + 1;
+                }
+                $out = [];
+                foreach ($counts as $raw_cap => $cnt) {
+                    $out[] = ['capabilities_raw' => $raw_cap, 'role_cnt' => $cnt];
+                }
+                $sliced = array_slice($out, $offset, $limit);
+                return $output === ARRAY_A ? $sliced : array_map(static fn($r) => (object) $r, $sliced);
+            }
+
+            if (strpos($sql, 'DATE_FORMAT(u.user_registered') !== false) {
+                $has_range = strpos($sql, 'u.user_registered >=') !== false;
+                $s         = $has_range ? (string) ($args[1] ?? '') : '';
+                $e         = $has_range ? (string) ($args[2] ?? '') : '';
+                $limit     = max(1, intval($args[$has_range ? 3 : 1] ?? 500));
+                $offset    = max(0, intval($args[$has_range ? 4 : 2] ?? 0));
+                $buckets   = [];
+
+                foreach (TSMB_Test_State::$users as $uid => $user) {
+                    $caps = TSMB_Test_State::$user_meta[intval($uid)][$cap_key] ?? null;
+                    if (($caps === null || $caps === '') && empty((array) ($user->roles ?? []))) {
                         continue;
                     }
-                    $caps = serialize($roles_assoc);
+                    $reg = (string) ($user->user_registered ?: gmdate('Y-m-d H:i:s'));
+                    if ($reg === '' || strpos($reg, '0000-00-00') === 0) {
+                        continue;
+                    }
+                    if ($has_range && ($reg < $s || $reg > $e)) {
+                        continue;
+                    }
+                    $hk = substr($reg, 0, 13) . ':00:00';
+                    $buckets[$hk] = ($buckets[$hk] ?? 0) + 1;
                 }
-                $out[] = [
-                    'ID'               => intval($uid),
-                    'user_registered'  => (string) ($user->user_registered ?: gmdate('Y-m-d H:i:s')),
-                    'capabilities_raw' => is_array($caps) ? serialize($caps) : (string) $caps,
-                ];
+                ksort($buckets);
+                $out = [];
+                foreach ($buckets as $hk => $cnt) {
+                    $out[] = ['bucket_gmt' => $hk, 'reg_cnt' => $cnt];
+                }
+                $sliced = array_slice($out, $offset, $limit);
+                return $output === ARRAY_A ? $sliced : array_map(static fn($r) => (object) $r, $sliced);
             }
-            return $output === ARRAY_A ? $out : array_map(static fn($r) => (object) $r, $out);
+        }
+
+        // Analytics: reverse Woo link query joining wp_postmeta pm + wp_posts p
+        if (strpos($sql, 'FROM wp_postmeta pm') !== false && strpos($sql, 'wp_posts p') !== false) {
+            $want_vals = array_map('strval', $args);
+            $out       = [];
+            foreach (TSMB_Test_State::$posts as $p) {
+                if (($p->post_type ?? '') !== 'shop_order') {
+                    continue;
+                }
+                $pid = intval($p->ID ?? 0);
+                foreach (['_learn_press_order_id', '_lp_order_id'] as $mk) {
+                    $mv = (string) (TSMB_Test_State::$post_meta[$pid][$mk] ?? '');
+                    if ($mv !== '' && in_array($mv, $want_vals, true)) {
+                        $out[] = ['meta_value' => $mv];
+                    }
+                }
+            }
+            return $out;
         }
 
         // Analytics: posts queries by post_type
@@ -523,30 +607,65 @@ final class TSMB_Fake_WPDB
                 return $out;
             }
             if (strpos($sql, "post_type = 'shop_order_refund'") !== false) {
+                $id_list = array_map('intval', $args);
+                $by_ref_id = strpos($sql, 'ID IN') !== false;
                 $out = [];
                 foreach (TSMB_Test_State::$posts as $p) {
-                    if (($p->post_type ?? '') === 'shop_order_refund' && in_array(intval($p->post_parent ?? 0), array_map('intval', $args), true)) {
-                        $out[] = ['parent_id' => intval($p->post_parent), 'refund_id' => intval($p->ID)];
+                    if (($p->post_type ?? '') !== 'shop_order_refund') {
+                        continue;
+                    }
+                    $match_val = $by_ref_id ? intval($p->ID ?? 0) : intval($p->post_parent ?? 0);
+                    if (in_array($match_val, $id_list, true)) {
+                        $out[] = ['parent_id' => intval($p->post_parent ?? 0), 'refund_id' => intval($p->ID ?? 0)];
                     }
                 }
                 return $out;
             }
             foreach (['shop_order', 'lp_order'] as $pt) {
                 if (strpos($sql, "post_type = '{$pt}'") !== false) {
-                    $out = [];
-                    foreach (TSMB_Test_State::$posts as $p) {
-                        if (($p->post_type ?? '') === $pt) {
-                            $out[] = [
-                                'ID'            => intval($p->ID),
-                                'id'            => intval($p->ID),
-                                'post_status'   => (string) ($p->post_status ?? ''),
-                                'status'        => (string) ($p->post_status ?? ''),
-                                'post_date_gmt' => (string) ($p->post_date_gmt ?? gmdate('Y-m-d H:i:s')),
-                                'created_gmt'   => (string) ($p->post_date_gmt ?? gmdate('Y-m-d H:i:s')),
-                            ];
-                        }
+                    $after_id = intval($args[0] ?? 0);
+                    $has_date = strpos($sql, 'post_date_gmt >=') !== false;
+                    $limit    = 200;
+                    if (count($args) >= 2) {
+                        $limit = max(1, intval($args[count($args) - 1]));
                     }
-                    return $out;
+                    $start_ts  = ($pt === 'shop_order' && $has_date) ? intval($args[1] ?? 0) : 0;
+                    $end_ts    = ($pt === 'shop_order' && $has_date) ? intval($args[2] ?? 0) : 0;
+                    $start_gmt = ($pt === 'shop_order' && $has_date) ? (string) ($args[3] ?? '') : ($has_date ? (string) ($args[1] ?? '') : '');
+                    $end_gmt   = ($pt === 'shop_order' && $has_date) ? (string) ($args[4] ?? '') : ($has_date ? (string) ($args[2] ?? '') : '');
+
+                    $matching = [];
+                    foreach (TSMB_Test_State::$posts as $p) {
+                        if (($p->post_type ?? '') !== $pt) {
+                            continue;
+                        }
+                        $pid = intval($p->ID ?? 0);
+                        if ($pid <= $after_id) {
+                            continue;
+                        }
+                        $dgmt = (string) ($p->post_date_gmt ?? gmdate('Y-m-d H:i:s'));
+                        if ($has_date) {
+                            $st = strtolower((string) ($p->post_status ?? ''));
+                            $dp = intval(TSMB_Test_State::$post_meta[$pid]['_date_paid'] ?? 0);
+                            if ($pt === 'shop_order' && in_array($st, ['wc-completed', 'completed', 'wc-processing', 'processing'], true) && $dp > 0) {
+                                if ($dp < $start_ts || $dp > $end_ts) {
+                                    continue;
+                                }
+                            } elseif ($dgmt < $start_gmt || $dgmt > $end_gmt) {
+                                continue;
+                            }
+                        }
+                        $matching[] = [
+                            'ID'            => $pid,
+                            'id'            => $pid,
+                            'post_status'   => (string) ($p->post_status ?? ''),
+                            'status'        => (string) ($p->post_status ?? ''),
+                            'post_date_gmt' => $dgmt,
+                            'created_gmt'   => $dgmt,
+                        ];
+                    }
+                    usort($matching, static fn($a, $b) => $a['ID'] <=> $b['ID']);
+                    return array_slice($matching, 0, $limit);
                 }
             }
         }
@@ -564,14 +683,35 @@ final class TSMB_Fake_WPDB
 
         // Analytics: learnpress_user_items & curriculum & WC items
         if (strpos($sql, 'wp_learnpress_user_items') !== false) {
-            if (strpos($sql, 'item_type = \'lp_quiz\'') !== false) {
-                return array_values(array_filter(TSMB_Test_State::$lp_user_items, static fn($ui) => ($ui['item_type'] ?? '') === 'lp_quiz'));
-            }
-            if (strpos($sql, 'GROUP BY parent_id') !== false) {
+            if (strpos($sql, "item_type = 'lp_quiz'") !== false && strpos($sql, 'GROUP BY status, graduation') !== false) {
                 $grouped = [];
                 foreach (TSMB_Test_State::$lp_user_items as $ui) {
-                    if (in_array($ui['item_type'] ?? '', ['lp_lesson', 'lp_quiz'], true) && ($ui['status'] ?? '') === 'completed' && intval($ui['parent_id'] ?? 0) > 0) {
-                        $pid = intval($ui['parent_id']);
+                    if (($ui['item_type'] ?? '') !== 'lp_quiz') {
+                        continue;
+                    }
+                    $key = ($ui['status'] ?? '') . '|' . ($ui['graduation'] ?? '');
+                    if (!isset($grouped[$key])) {
+                        $grouped[$key] = [
+                            'status'     => (string) ($ui['status'] ?? ''),
+                            'graduation' => (string) ($ui['graduation'] ?? ''),
+                            'cnt'        => 0,
+                        ];
+                    }
+                    $grouped[$key]['cnt']++;
+                }
+                return array_values($grouped);
+            }
+            if (strpos($sql, 'GROUP BY parent_id') !== false) {
+                $parent_filter = array_map('intval', $args);
+                $grouped       = [];
+                foreach (TSMB_Test_State::$lp_user_items as $ui) {
+                    $pid = intval($ui['parent_id'] ?? 0);
+                    if (
+                        in_array($ui['item_type'] ?? '', ['lp_lesson', 'lp_quiz'], true) &&
+                        ($ui['status'] ?? '') === 'completed' &&
+                        $pid > 0 &&
+                        (empty($parent_filter) || in_array($pid, $parent_filter, true))
+                    ) {
                         $grouped[$pid] = ($grouped[$pid] ?? 0) + 1;
                     }
                 }
@@ -582,8 +722,10 @@ final class TSMB_Fake_WPDB
                 return $out;
             }
             if (strpos($sql, 'latest.latest_id') !== false) {
-                $filter_cid = count($args) > 0 ? intval($args[0]) : 0;
-                $latest = [];
+                $after_ui_id = intval($args[0] ?? 0);
+                $filter_cid  = (count($args) >= 3) ? intval($args[1]) : 0;
+                $limit       = max(1, intval($args[count($args) - 1] ?? 500));
+                $latest      = [];
                 foreach (TSMB_Test_State::$lp_user_items as $ui) {
                     if (($ui['item_type'] ?? '') !== 'lp_course') {
                         continue;
@@ -607,7 +749,9 @@ final class TSMB_Fake_WPDB
                         ];
                     }
                 }
-                return array_values($latest);
+                $filtered = array_values(array_filter($latest, static fn($r) => intval($r['user_item_id']) > $after_ui_id));
+                usort($filtered, static fn($a, $b) => $a['user_item_id'] <=> $b['user_item_id']);
+                return array_slice($filtered, 0, $limit);
             }
         }
 
@@ -616,11 +760,16 @@ final class TSMB_Fake_WPDB
         }
 
         if (strpos($sql, 'wp_woocommerce_order_items') !== false) {
-            $out = [];
+            $want_oids = array_map('intval', $args);
+            $out       = [];
             foreach (TSMB_Test_State::$wc_order_items as $it) {
+                $oid = intval($it['order_id'] ?? 0);
+                if (!empty($want_oids) && !in_array($oid, $want_oids, true)) {
+                    continue;
+                }
                 $out[] = [
                     'order_item_id'   => intval($it['order_item_id']),
-                    'order_id'        => intval($it['order_id']),
+                    'order_id'        => $oid,
                     'order_item_name' => (string) ($it['name'] ?? ''),
                 ];
             }
@@ -628,11 +777,22 @@ final class TSMB_Fake_WPDB
         }
 
         if (strpos($sql, 'wp_woocommerce_order_itemmeta') !== false) {
-            $out = [];
+            $want_iids = array_map('intval', $args);
+            $out       = [];
             foreach (TSMB_Test_State::$wc_order_items as $it) {
                 $iid = intval($it['order_item_id']);
-                foreach (['_product_id' => $it['product_id'] ?? 0, '_qty' => $it['qty'] ?? 1, '_line_total' => $it['line_total'] ?? 0, '_course_id' => $it['course_id'] ?? 0] as $mk => $mv) {
-                    if ($mv !== 0) {
+                if (!empty($want_iids) && !in_array($iid, $want_iids, true)) {
+                    continue;
+                }
+                $meta_fields = [
+                    '_product_id'      => $it['product_id'] ?? 0,
+                    '_qty'             => $it['qty'] ?? 1,
+                    '_line_total'      => $it['line_total'] ?? 0,
+                    '_course_id'       => $it['course_id'] ?? 0,
+                    '_refunded_item_id' => $it['refunded_item_id'] ?? 0,
+                ];
+                foreach ($meta_fields as $mk => $mv) {
+                    if ($mv !== 0 && $mv !== '0' && $mv !== '') {
                         $out[] = ['order_item_id' => $iid, 'meta_key' => $mk, 'meta_value' => $mv];
                     }
                 }

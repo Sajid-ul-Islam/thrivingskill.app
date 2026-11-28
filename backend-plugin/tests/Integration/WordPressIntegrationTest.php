@@ -550,4 +550,69 @@ final class WordPressIntegrationTest extends WP_UnitTestCase
         $this->assertSame($tables_before, $tables_after, 'Admin analytics must never create or drop database tables.');
         $this->assertSame($db_ver_before, get_option(TSMB_Lifecycle::DB_VERSION_OPTION));
     }
+
+    public function test_wc_refund_line_item_attribution_with_real_woocommerce_orders(): void
+    {
+        $customer_id = self::factory()->user->create(['role' => 'customer']);
+        $admin_id    = self::factory()->user->create(['role' => 'administrator']);
+        wp_set_current_user($admin_id);
+
+        $course_a = wp_insert_post(['post_type' => 'lp_course', 'post_status' => 'publish', 'post_title' => 'Course Alpha']);
+        $course_b = wp_insert_post(['post_type' => 'lp_course', 'post_status' => 'publish', 'post_title' => 'Course Beta']);
+        update_post_meta($course_a, '_lp_price', '1000');
+        update_post_meta($course_b, '_lp_price', '1000');
+
+        $prod_a = new WC_Product_Simple();
+        $prod_a->set_name('Prod Alpha');
+        $prod_a->set_status('publish');
+        $prod_a->set_regular_price('1000');
+        $prod_a->set_price('1000');
+        $prod_a_id = $prod_a->save();
+        update_post_meta($prod_a_id, '_learnpress_course', $course_a);
+
+        $prod_b = new WC_Product_Simple();
+        $prod_b->set_name('Prod Beta');
+        $prod_b->set_status('publish');
+        $prod_b->set_regular_price('1000');
+        $prod_b->set_price('1000');
+        $prod_b_id = $prod_b->save();
+        update_post_meta($prod_b_id, '_learnpress_course', $course_b);
+
+        $order = wc_create_order(['customer_id' => $customer_id, 'status' => 'completed']);
+        $item_a_id = $order->add_product(wc_get_product($prod_a_id), 1);
+        $order->add_product(wc_get_product($prod_b_id), 1);
+        $order->set_payment_method('sslcommerz');
+        $order->calculate_totals();
+        $order->set_date_paid(time());
+        $order->save();
+
+        wc_create_refund([
+            'amount'         => 1000,
+            'order_id'       => $order->get_id(),
+            'line_items'     => [
+                $item_a_id => [
+                    'qty'          => 1,
+                    'refund_total' => 1000,
+                ],
+            ],
+        ]);
+
+        TSMB_Analytics_Service::invalidate_cache();
+        $req = new WP_REST_Request('GET', '/thrivingskill/v1/admin/analytics');
+        $req->set_query_params(['preset' => 'all', 'refresh' => '1']);
+        $res = rest_do_request($req);
+        $this->assertSame(200, $res->get_status());
+
+        $data = $res->get_data();
+        $byCourse = [];
+        foreach ($data['course_performance'] as $row) {
+            $byCourse[intval($row['course_id'])] = $row;
+        }
+
+        $this->assertSame(1000.0, floatval($byCourse[$course_a]['refunded_revenue']));
+        $this->assertSame(0.0, floatval($byCourse[$course_a]['confirmed_revenue']));
+        $this->assertSame('exact', $byCourse[$course_a]['refund_attribution_mode']);
+        $this->assertSame(0.0, floatval($byCourse[$course_b]['refunded_revenue']));
+        $this->assertSame(1000.0, floatval($byCourse[$course_b]['confirmed_revenue']));
+    }
 }
