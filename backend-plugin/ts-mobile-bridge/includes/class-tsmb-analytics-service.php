@@ -16,7 +16,9 @@ class TSMB_Analytics_Service
 {
     public const CACHE_TTL_SECONDS = 300;
     public const CACHE_EPOCH_TRANSIENT = 'tsmb_analytics_epoch_v1';
-    public const CACHE_KEY_PREFIX = 'tsmb_an_v1_';
+    public const CACHE_KEY_PREFIX = 'tsmb_an_v2_';
+    public const QUERY_BATCH_SIZE = 200;
+    public const USER_BATCH_SIZE = 500;
 
     private static $hooks_registered = false;
 
@@ -481,30 +483,62 @@ class TSMB_Analytics_Service
         }
 
         if ($has_users && $has_usermeta) {
-            $user_rows = $wpdb->get_results(
-                $wpdb->prepare(
-                    "SELECT u.ID, u.user_registered, um.meta_value AS capabilities_raw
-                     FROM {$wpdb->users} u
-                     INNER JOIN {$wpdb->usermeta} um
-                         ON um.user_id = u.ID AND um.meta_key = %s",
-                    $cap_meta_key
-                ),
-                ARRAY_A
+            $site_users_total = intval(
+                $wpdb->get_var(
+                    $wpdb->prepare(
+                        "SELECT COUNT(*)
+                         FROM {$wpdb->users} u
+                         INNER JOIN {$wpdb->usermeta} um
+                             ON um.user_id = u.ID AND um.meta_key = %s",
+                        $cap_meta_key
+                    )
+                )
             );
 
-            if (is_array($user_rows)) {
-                foreach ($user_rows as $row) {
-                    $site_users_total++;
-                    $reg_gmt = (string) ($row['user_registered'] ?? '');
-                    if (self::is_gmt_in_range($reg_gmt, $filters)) {
-                        $new_site_users_in_period++;
-                        if (self::is_valid_mysql_datetime($reg_gmt)) {
-                            $registration_events[] = $reg_gmt;
-                        }
-                    }
+            if (!empty($filters['is_all_time'])) {
+                $new_site_users_in_period = $site_users_total;
+            } else {
+                $new_site_users_in_period = intval(
+                    $wpdb->get_var(
+                        $wpdb->prepare(
+                            "SELECT COUNT(*)
+                             FROM {$wpdb->users} u
+                             INNER JOIN {$wpdb->usermeta} um
+                                 ON um.user_id = u.ID AND um.meta_key = %s
+                             WHERE u.user_registered >= %s
+                               AND u.user_registered <= %s",
+                            $cap_meta_key,
+                            $filters['start_gmt'],
+                            $filters['end_gmt']
+                        )
+                    )
+                );
+            }
 
-                    $caps = self::safe_unserialize_array((string) ($row['capabilities_raw'] ?? ''));
-                    $wp_roles_obj = function_exists('wp_roles') ? wp_roles() : null;
+            // Aggregate roles via SQL GROUP BY in bounded batches rather than loading all users into PHP.
+            $wp_roles_obj = function_exists('wp_roles') ? wp_roles() : null;
+            $role_offset  = 0;
+            do {
+                $role_rows = $wpdb->get_results(
+                    $wpdb->prepare(
+                        "SELECT um.meta_value AS capabilities_raw, COUNT(*) AS role_cnt
+                         FROM {$wpdb->users} u
+                         INNER JOIN {$wpdb->usermeta} um
+                             ON um.user_id = u.ID AND um.meta_key = %s
+                         GROUP BY um.meta_value
+                         LIMIT %d OFFSET %d",
+                        $cap_meta_key,
+                        self::USER_BATCH_SIZE,
+                        $role_offset
+                    ),
+                    ARRAY_A
+                );
+                if (!is_array($role_rows) || empty($role_rows)) {
+                    break;
+                }
+                foreach ($role_rows as $rrow) {
+                    $cnt      = max(0, intval($rrow['role_cnt'] ?? 0));
+                    $caps     = self::safe_unserialize_array((string) ($rrow['capabilities_raw'] ?? ''));
                     $assigned = false;
                     foreach ($caps as $role_key => $enabled) {
                         if ($enabled) {
@@ -518,16 +552,76 @@ class TSMB_Analytics_Service
                                 ) {
                                     continue;
                                 }
-                                $roles_breakdown[$clean_role] = ($roles_breakdown[$clean_role] ?? 0) + 1;
+                                $roles_breakdown[$clean_role] = ($roles_breakdown[$clean_role] ?? 0) + $cnt;
                                 $assigned = true;
                             }
                         }
                     }
-                    if (!$assigned) {
-                        $roles_breakdown['none'] = ($roles_breakdown['none'] ?? 0) + 1;
+                    if (!$assigned && $cnt > 0) {
+                        $roles_breakdown['none'] = ($roles_breakdown['none'] ?? 0) + $cnt;
                     }
                 }
-            }
+                $role_offset += self::USER_BATCH_SIZE;
+            } while (count($role_rows) >= self::USER_BATCH_SIZE);
+
+            // Aggregate registration timestamps into hourly UTC buckets inside SQL (bounded + date-filtered).
+            $reg_offset = 0;
+            do {
+                if (!empty($filters['is_all_time'])) {
+                    $reg_rows = $wpdb->get_results(
+                        $wpdb->prepare(
+                            "SELECT DATE_FORMAT(u.user_registered, '%%Y-%%m-%%d %%H:00:00') AS bucket_gmt,
+                                    COUNT(*) AS reg_cnt
+                             FROM {$wpdb->users} u
+                             INNER JOIN {$wpdb->usermeta} um
+                                 ON um.user_id = u.ID AND um.meta_key = %s
+                             WHERE u.user_registered > '0000-00-00 00:00:00'
+                             GROUP BY bucket_gmt
+                             ORDER BY bucket_gmt ASC
+                             LIMIT %d OFFSET %d",
+                            $cap_meta_key,
+                            self::USER_BATCH_SIZE,
+                            $reg_offset
+                        ),
+                        ARRAY_A
+                    );
+                } else {
+                    $reg_rows = $wpdb->get_results(
+                        $wpdb->prepare(
+                            "SELECT DATE_FORMAT(u.user_registered, '%%Y-%%m-%%d %%H:00:00') AS bucket_gmt,
+                                    COUNT(*) AS reg_cnt
+                             FROM {$wpdb->users} u
+                             INNER JOIN {$wpdb->usermeta} um
+                                 ON um.user_id = u.ID AND um.meta_key = %s
+                             WHERE u.user_registered >= %s
+                               AND u.user_registered <= %s
+                             GROUP BY bucket_gmt
+                             ORDER BY bucket_gmt ASC
+                             LIMIT %d OFFSET %d",
+                            $cap_meta_key,
+                            $filters['start_gmt'],
+                            $filters['end_gmt'],
+                            self::USER_BATCH_SIZE,
+                            $reg_offset
+                        ),
+                        ARRAY_A
+                    );
+                }
+                if (!is_array($reg_rows) || empty($reg_rows)) {
+                    break;
+                }
+                foreach ($reg_rows as $rr) {
+                    $b_gmt = (string) ($rr['bucket_gmt'] ?? '');
+                    $b_cnt = max(0, intval($rr['reg_cnt'] ?? 0));
+                    if ($b_cnt > 0 && self::is_valid_mysql_datetime($b_gmt)) {
+                        $registration_events[] = [
+                            'gmt'   => $b_gmt,
+                            'count' => $b_cnt,
+                        ];
+                    }
+                }
+                $reg_offset += self::USER_BATCH_SIZE;
+            } while (count($reg_rows) >= self::USER_BATCH_SIZE);
 
             // Count mobile companion opt-in learners (gamification/watch meta exists).
             $mobile_synced_learners = intval(
@@ -727,12 +821,18 @@ class TSMB_Analytics_Service
                     'completed_in_period'       => 0,
                     'completion_rate_percent'   => 0.0,
                     'avg_progress_percent'      => null,
-                    'paid_orders_count'         => 0,
-                    'paid_units_sold'           => 0,
-                    'confirmed_revenue'         => 0.0,
-                    'reviews_count'             => 0,
-                    'avg_rating'                => null,
-                    'legacy_lp_students_meta'   => (is_numeric($lp_stu) && intval($lp_stu) > 0) ? intval($lp_stu) : 0,
+                    'paid_orders_count'          => 0,
+                    'paid_units_sold'            => 0,
+                    'gross_revenue'              => 0.0,
+                    'refunded_revenue'           => 0.0,
+                    'refunded_exact_amount'      => 0.0,
+                    'refunded_proportional_amount' => 0.0,
+                    'refund_attribution_mode'    => 'none',
+                    'refund_attribution_label'   => 'None',
+                    'confirmed_revenue'          => 0.0,
+                    'reviews_count'              => 0,
+                    'avg_rating'                 => null,
+                    'legacy_lp_students_meta'    => (is_numeric($lp_stu) && intval($lp_stu) > 0) ? intval($lp_stu) : 0,
                 ];
             }
         }
@@ -778,105 +878,139 @@ class TSMB_Analytics_Service
             }
         }
 
-        // 3. Reviews & ratings per course (authentic approved LearnPress reviews only).
+        // 3. Reviews & ratings per course (chunked IN clauses so large catalogs stay bounded).
         if (!empty($course_ids)) {
-            $placeholders = implode(',', array_fill(0, count($course_ids), '%d'));
-            $rev_rows = $wpdb->get_results(
-                $wpdb->prepare(
-                    "SELECT c.comment_post_ID AS course_id,
-                            AVG(CAST(cm.meta_value AS DECIMAL(4,2))) AS avg_rating,
-                            COUNT(DISTINCT c.comment_ID) AS review_count
-                     FROM {$wpdb->comments} c
-                     INNER JOIN {$wpdb->commentmeta} cm
-                         ON cm.comment_id = c.comment_ID AND cm.meta_key = '_lpr_rating'
-                     WHERE c.comment_approved = '1'
-                       AND c.comment_type = 'review'
-                       AND c.comment_post_ID IN ({$placeholders})
-                       AND CAST(cm.meta_value AS DECIMAL(4,2)) > 0
-                     GROUP BY c.comment_post_ID",
-                    ...$course_ids
-                ),
-                ARRAY_A
-            );
-            if (is_array($rev_rows)) {
-                foreach ($rev_rows as $rr) {
-                    $cid = intval($rr['course_id'] ?? 0);
-                    if (isset($courses_map[$cid])) {
-                        $cnt = intval($rr['review_count'] ?? 0);
-                        $avg = round(floatval($rr['avg_rating'] ?? 0), 2);
-                        $courses_map[$cid]['reviews_count'] = $cnt;
-                        $courses_map[$cid]['avg_rating'] = $cnt > 0 ? min(5.0, max(1.0, $avg)) : null;
+            foreach (array_chunk($course_ids, self::QUERY_BATCH_SIZE) as $cid_chunk) {
+                $placeholders = implode(',', array_fill(0, count($cid_chunk), '%d'));
+                $rev_rows = $wpdb->get_results(
+                    $wpdb->prepare(
+                        "SELECT c.comment_post_ID AS course_id,
+                                AVG(CAST(cm.meta_value AS DECIMAL(4,2))) AS avg_rating,
+                                COUNT(DISTINCT c.comment_ID) AS review_count
+                         FROM {$wpdb->comments} c
+                         INNER JOIN {$wpdb->commentmeta} cm
+                             ON cm.comment_id = c.comment_ID AND cm.meta_key = '_lpr_rating'
+                         WHERE c.comment_approved = '1'
+                           AND c.comment_type = 'review'
+                           AND c.comment_post_ID IN ({$placeholders})
+                           AND CAST(cm.meta_value AS DECIMAL(4,2)) > 0
+                         GROUP BY c.comment_post_ID",
+                        ...$cid_chunk
+                    ),
+                    ARRAY_A
+                );
+                if (is_array($rev_rows)) {
+                    foreach ($rev_rows as $rr) {
+                        $cid = intval($rr['course_id'] ?? 0);
+                        if (isset($courses_map[$cid])) {
+                            $cnt = intval($rr['review_count'] ?? 0);
+                            $avg = round(floatval($rr['avg_rating'] ?? 0), 2);
+                            $courses_map[$cid]['reviews_count'] = $cnt;
+                            $courses_map[$cid]['avg_rating'] = $cnt > 0 ? min(5.0, max(1.0, $avg)) : null;
+                        }
                     }
                 }
             }
         }
 
-        // 4. Authoritative enrollment & completion metrics from learnpress_user_items.
-        $active_snapshot_total    = 0;
-        $in_progress_snapshot     = 0;
-        $completed_snapshot_total = 0;
-        $failed_snapshot_total    = 0;
-        $enrollments_in_period    = 0;
-        $completions_in_period    = 0;
-        $free_enrollments_period  = 0;
+        // 4. Authoritative enrollment & completion metrics from learnpress_user_items (cursor-batched).
+        $active_snapshot_total          = 0;
+        $in_progress_snapshot           = 0;
+        $completed_snapshot_total       = 0;
+        $failed_snapshot_total          = 0;
+        $enrollments_in_period          = 0;
+        $completions_in_period          = 0;
+        $free_enrollments_period        = 0;
         $paid_course_enrollments_period = 0;
-        $free_enrollments_all_time = 0;
+        $free_enrollments_all_time      = 0;
         $paid_course_enrollments_all_time = 0;
-        $enrollment_events        = [];
-        $completion_events        = [];
-        $progress_sums            = [];
-        $progress_counts          = [];
+        $enrollment_buckets             = [];
+        $completion_buckets             = [];
+        $progress_sums                  = [];
+        $progress_counts                = [];
 
         $quiz_stats = [
-            'attempts_total'   => 0,
-            'passed_total'     => 0,
-            'failed_total'     => 0,
-            'in_progress'      => 0,
-            'attempts_period'  => 0,
+            'attempts_total'  => 0,
+            'passed_total'    => 0,
+            'failed_total'    => 0,
+            'in_progress'     => 0,
+            'attempts_period' => 0,
         ];
 
         if (self::table_exists($lp_items_table)) {
-            $child_completed_by_parent = [];
-            $child_rows = $wpdb->get_results(
-                "SELECT parent_id, COUNT(DISTINCT item_id) AS completed_cnt
-                 FROM {$lp_items_table}
-                 WHERE item_type IN ('lp_lesson', 'lp_quiz')
-                   AND status = 'completed'
-                   AND parent_id > 0
-                 GROUP BY parent_id",
-                ARRAY_A
-            );
-            if (is_array($child_rows)) {
-                foreach ($child_rows as $ch) {
-                    $pid = intval($ch['parent_id'] ?? 0);
-                    if ($pid > 0) {
-                        $child_completed_by_parent[$pid] = intval($ch['completed_cnt'] ?? 0);
-                    }
-                }
-            }
-
             $course_where = $course_filter_id > 0
                 ? $wpdb->prepare(' AND ui.item_id = %d', $course_filter_id)
                 : '';
 
-            $enr_rows = $wpdb->get_results(
-                "SELECT ui.user_item_id, ui.user_id, ui.item_id AS course_id,
-                        ui.status, ui.graduation, ui.start_time, ui.end_time
-                 FROM {$lp_items_table} ui
-                 INNER JOIN (
-                     SELECT user_id, item_id, MAX(user_item_id) AS latest_id
-                     FROM {$lp_items_table}
-                     WHERE item_type = 'lp_course'
-                     GROUP BY user_id, item_id
-                 ) latest ON latest.latest_id = ui.user_item_id
-                 INNER JOIN {$wpdb->posts} p ON p.ID = ui.item_id
-                 WHERE p.post_type = 'lp_course'
-                   AND p.post_status = 'publish'
-                   AND ui.status IN ('enrolled', 'finished', 'purchased'){$course_where}",
-                ARRAY_A
-            );
+            $last_ui_id = 0;
+            do {
+                $enr_rows = $wpdb->get_results(
+                    $wpdb->prepare(
+                        "SELECT ui.user_item_id, ui.user_id, ui.item_id AS course_id,
+                                ui.status, ui.graduation, ui.start_time, ui.end_time
+                         FROM {$lp_items_table} ui
+                         INNER JOIN (
+                             SELECT user_id, item_id, MAX(user_item_id) AS latest_id
+                             FROM {$lp_items_table}
+                             WHERE item_type = 'lp_course'
+                             GROUP BY user_id, item_id
+                         ) latest ON latest.latest_id = ui.user_item_id
+                         INNER JOIN {$wpdb->posts} p ON p.ID = ui.item_id
+                         WHERE p.post_type = 'lp_course'
+                           AND p.post_status = 'publish'
+                           AND ui.status IN ('enrolled', 'finished', 'purchased')
+                           AND ui.user_item_id > %d{$course_where}
+                         ORDER BY ui.user_item_id ASC
+                         LIMIT %d",
+                        $last_ui_id,
+                        self::USER_BATCH_SIZE
+                    ),
+                    ARRAY_A
+                );
 
-            if (is_array($enr_rows)) {
+                if (!is_array($enr_rows) || empty($enr_rows)) {
+                    break;
+                }
+
+                // Query child completion counts strictly for this bounded batch of user_item_ids.
+                $batch_ui_ids = [];
+                foreach ($enr_rows as $er) {
+                    $ui_id = intval($er['user_item_id'] ?? 0);
+                    if ($ui_id > $last_ui_id) {
+                        $last_ui_id = $ui_id;
+                    }
+                    if ($ui_id > 0) {
+                        $batch_ui_ids[] = $ui_id;
+                    }
+                }
+
+                $child_completed_by_parent = [];
+                if (!empty($batch_ui_ids)) {
+                    foreach (array_chunk($batch_ui_ids, self::QUERY_BATCH_SIZE) as $ui_chunk) {
+                        $ui_ph = implode(',', array_fill(0, count($ui_chunk), '%d'));
+                        $child_rows = $wpdb->get_results(
+                            $wpdb->prepare(
+                                "SELECT parent_id, COUNT(DISTINCT item_id) AS completed_cnt
+                                 FROM {$lp_items_table}
+                                 WHERE item_type IN ('lp_lesson', 'lp_quiz')
+                                   AND status = 'completed'
+                                   AND parent_id IN ({$ui_ph})
+                                 GROUP BY parent_id",
+                                ...$ui_chunk
+                            ),
+                            ARRAY_A
+                        );
+                        if (is_array($child_rows)) {
+                            foreach ($child_rows as $ch) {
+                                $pid = intval($ch['parent_id'] ?? 0);
+                                if ($pid > 0) {
+                                    $child_completed_by_parent[$pid] = intval($ch['completed_cnt'] ?? 0);
+                                }
+                            }
+                        }
+                    }
+                }
+
                 foreach ($enr_rows as $er) {
                     $cid        = intval($er['course_id'] ?? 0);
                     $ui_id      = intval($er['user_item_id'] ?? 0);
@@ -938,7 +1072,8 @@ class TSMB_Analytics_Service
                             $paid_course_enrollments_period++;
                         }
                         if (self::is_valid_mysql_datetime($start_time)) {
-                            $enrollment_events[] = $start_time;
+                            $hk = substr(trim($start_time), 0, 13) . ':00:00';
+                            $enrollment_buckets[$hk] = ($enrollment_buckets[$hk] ?? 0) + 1;
                         }
                     }
 
@@ -946,37 +1081,64 @@ class TSMB_Analytics_Service
                         $completions_in_period++;
                         $courses_map[$cid]['completed_in_period']++;
                         if (self::is_valid_mysql_datetime($end_time)) {
-                            $completion_events[] = $end_time;
+                            $hk = substr(trim($end_time), 0, 13) . ':00:00';
+                            $completion_buckets[$hk] = ($completion_buckets[$hk] ?? 0) + 1;
                         }
+                    }
+                }
+            } while (count($enr_rows) >= self::USER_BATCH_SIZE);
+
+            // Quiz execution statistics via SQL aggregation (zero full-table PHP loops)
+            $quiz_agg = $wpdb->get_results(
+                "SELECT status, graduation, COUNT(*) AS cnt
+                 FROM {$lp_items_table}
+                 WHERE item_type = 'lp_quiz'
+                 GROUP BY status, graduation",
+                ARRAY_A
+            );
+            if (is_array($quiz_agg)) {
+                foreach ($quiz_agg as $qa) {
+                    $q_st   = strtolower((string) ($qa['status'] ?? ''));
+                    $q_grad = strtolower((string) ($qa['graduation'] ?? ''));
+                    $cnt    = max(0, intval($qa['cnt'] ?? 0));
+                    $quiz_stats['attempts_total'] += $cnt;
+                    if ($q_grad === 'passed') {
+                        $quiz_stats['passed_total'] += $cnt;
+                    } elseif ($q_grad === 'failed') {
+                        $quiz_stats['failed_total'] += $cnt;
+                    } elseif ($q_st === 'started') {
+                        $quiz_stats['in_progress'] += $cnt;
                     }
                 }
             }
 
-            // Quiz execution statistics
-            $quiz_rows = $wpdb->get_results(
-                "SELECT status, graduation, start_time
-                 FROM {$lp_items_table}
-                 WHERE item_type = 'lp_quiz'",
-                ARRAY_A
-            );
-            if (is_array($quiz_rows)) {
-                foreach ($quiz_rows as $qr) {
-                    $q_st   = strtolower((string) ($qr['status'] ?? ''));
-                    $q_grad = strtolower((string) ($qr['graduation'] ?? ''));
-                    $q_time = (string) ($qr['start_time'] ?? '');
-                    $quiz_stats['attempts_total']++;
-                    if ($q_grad === 'passed') {
-                        $quiz_stats['passed_total']++;
-                    } elseif ($q_grad === 'failed') {
-                        $quiz_stats['failed_total']++;
-                    } elseif ($q_st === 'started') {
-                        $quiz_stats['in_progress']++;
-                    }
-                    if (self::is_gmt_in_range($q_time, $filters)) {
-                        $quiz_stats['attempts_period']++;
-                    }
-                }
+            if (!empty($filters['is_all_time'])) {
+                $quiz_stats['attempts_period'] = $quiz_stats['attempts_total'];
+            } else {
+                $quiz_stats['attempts_period'] = intval(
+                    $wpdb->get_var(
+                        $wpdb->prepare(
+                            "SELECT COUNT(*)
+                             FROM {$lp_items_table}
+                             WHERE item_type = 'lp_quiz'
+                               AND start_time >= %s
+                               AND start_time <= %s",
+                            $filters['start_gmt'],
+                            $filters['end_gmt']
+                        )
+                    )
+                );
             }
+        }
+
+        // Convert hourly buckets into compact event records for build_time_series().
+        $enrollment_events = [];
+        foreach ($enrollment_buckets as $gmt_hour => $cnt) {
+            $enrollment_events[] = ['gmt' => $gmt_hour, 'count' => $cnt];
+        }
+        $completion_events = [];
+        foreach ($completion_buckets as $gmt_hour => $cnt) {
+            $completion_events[] = ['gmt' => $gmt_hour, 'count' => $cnt];
         }
 
         // Merge confirmed WooCommerce / direct revenue attribution into each course row.
@@ -997,9 +1159,35 @@ class TSMB_Analytics_Service
                 $all_progress_count += $progress_counts[$cid];
             }
             if (isset($course_attribution[$cid])) {
-                $courses_map[$cid]['paid_orders_count'] = intval($course_attribution[$cid]['orders_count'] ?? 0);
-                $courses_map[$cid]['paid_units_sold']   = intval($course_attribution[$cid]['units_sold'] ?? 0);
-                $courses_map[$cid]['confirmed_revenue'] = round(floatval($course_attribution[$cid]['revenue'] ?? 0.0), 2);
+                $attr   = $course_attribution[$cid];
+                $exact  = round(floatval($attr['refunded_exact'] ?? 0.0), 2);
+                $prop   = round(floatval($attr['refunded_proportional'] ?? 0.0), 2);
+                $tot_rf = round($exact + $prop, 2);
+                $gross_c = round(floatval($attr['gross_revenue'] ?? ($attr['revenue'] ?? 0.0)), 2);
+
+                if ($tot_rf <= 0.0) {
+                    $mode  = 'none';
+                    $label = 'None';
+                } elseif ($prop <= 0.0) {
+                    $mode  = 'exact';
+                    $label = 'Exact (Line-Item)';
+                } elseif ($exact <= 0.0) {
+                    $mode  = 'proportional';
+                    $label = 'Proportionally Allocated';
+                } else {
+                    $mode  = 'mixed';
+                    $label = 'Mixed (Exact + Proportional)';
+                }
+
+                $courses_map[$cid]['paid_orders_count']            = intval($attr['orders_count'] ?? 0);
+                $courses_map[$cid]['paid_units_sold']              = intval($attr['units_sold'] ?? 0);
+                $courses_map[$cid]['gross_revenue']                = $gross_c;
+                $courses_map[$cid]['refunded_revenue']             = $tot_rf;
+                $courses_map[$cid]['refunded_exact_amount']        = $exact;
+                $courses_map[$cid]['refunded_proportional_amount'] = $prop;
+                $courses_map[$cid]['refund_attribution_mode']      = $mode;
+                $courses_map[$cid]['refund_attribution_label']     = $label;
+                $courses_map[$cid]['confirmed_revenue']            = round(floatval($attr['revenue'] ?? 0.0), 2);
             }
         }
 

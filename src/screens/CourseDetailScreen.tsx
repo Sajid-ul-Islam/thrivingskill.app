@@ -242,7 +242,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
     setIsEnrollingFree(true);
     try {
       await CoursesService.enrollCourse(course.id);
-      confirmServerEnrollments([course.id]);
+      confirmServerEnrollments([course.id], { conversionType: 'free_enrollment_confirmed' });
       refreshCourses().catch(() => {});
       Alert.alert(
         isBangla ? 'সফলভাবে ভর্তি সম্পন্ন হয়েছে! 🎉' : 'Enrolled Successfully! 🎉',

@@ -364,7 +364,9 @@ describe('Enrollment flows, checkout redirection, preview access, and login sync
     await waitFor(() => {
       expect(CoursesService.enrollCourse).toHaveBeenCalledWith('88032');
     });
-    expect(mockConfirmServerEnrollments).toHaveBeenCalledWith(['88032']);
+    expect(mockConfirmServerEnrollments).toHaveBeenCalledWith(['88032'], {
+      conversionType: 'free_enrollment_confirmed',
+    });
     expect(mockEnrollInCourse).not.toHaveBeenCalled();
   });
 

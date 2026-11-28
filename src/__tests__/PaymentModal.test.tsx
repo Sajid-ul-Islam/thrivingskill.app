@@ -344,7 +344,9 @@ describe('PaymentModal (Issue 14 checkout hardening)', () => {
     });
     expect(onSuccess).toHaveBeenCalledWith('88180');
     expect(mockConfirmServerEnrollments).toHaveBeenCalledTimes(1);
-    expect(mockConfirmServerEnrollments).toHaveBeenCalledWith(['88180', '88181']);
+    expect(mockConfirmServerEnrollments).toHaveBeenCalledWith(['88180', '88181'], {
+      conversionType: 'paid_purchase_confirmed',
+    });
     expect(mockEnrollInCourse).not.toHaveBeenCalled();
     expect(alertSpy).toHaveBeenCalled();
 
@@ -409,7 +411,9 @@ describe('PaymentModal (Issue 14 checkout hardening)', () => {
         expect(CoursesService.verifyServerEnrollment).toHaveBeenCalledTimes(2);
         expect(onSuccess).toHaveBeenCalledWith('88180');
       });
-      expect(mockConfirmServerEnrollments).toHaveBeenCalledWith(['88180']);
+      expect(mockConfirmServerEnrollments).toHaveBeenCalledWith(['88180'], {
+        conversionType: 'paid_purchase_confirmed',
+      });
     } finally {
       jest.useRealTimers();
     }

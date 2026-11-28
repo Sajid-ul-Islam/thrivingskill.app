@@ -377,7 +377,10 @@ export function usePaymentCheckout({
         if (verification.enrolled) {
           hasCompletedPurchaseRef.current = true;
           confirmServerEnrollments(
-            verification.enrolledCourseIds.length > 0 ? verification.enrolledCourseIds : [course.id]
+            verification.enrolledCourseIds.length > 0
+              ? verification.enrolledCourseIds
+              : [course.id],
+            { conversionType: 'paid_purchase_confirmed' }
           );
           refreshCourses().catch(() => {});
           triggerHaptic('success');
@@ -475,7 +478,8 @@ export function usePaymentCheckout({
           ) {
             hasCompletedPurchaseRef.current = true;
             confirmServerEnrollments(
-              check.enrolledCourseIds.length > 0 ? check.enrolledCourseIds : [course.id]
+              check.enrolledCourseIds.length > 0 ? check.enrolledCourseIds : [course.id],
+              { conversionType: 'paid_purchase_confirmed' }
             );
             refreshCourses().catch(() => {});
             triggerHaptic('success');
@@ -536,7 +540,12 @@ export function usePaymentCheckout({
       setIsSyncing(false);
 
       if (isServerEnrolled) {
-        confirmServerEnrollments(confirmedIds);
+        confirmServerEnrollments(confirmedIds, {
+          conversionType:
+            resolvedPricing.priceBdt === 0
+              ? 'free_enrollment_confirmed'
+              : 'paid_purchase_confirmed',
+        });
         refreshCourses().catch(() => {});
         Alert.alert(t('syncSuccessTitle'), t('syncSuccessMsg'), [
           {

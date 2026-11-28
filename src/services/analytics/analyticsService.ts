@@ -57,8 +57,15 @@ export interface RecommendationClickOptions {
   attributionWindowMs?: number;
 }
 
+export type RecommendationConversionType =
+  | 'free_enrollment_confirmed'
+  | 'paid_purchase_confirmed'
+  | 'course_enrollment_confirmed'
+  | 'enroll'
+  | 'purchase';
+
 export interface RecommendationConversionOptions {
-  conversionType?: 'enroll' | 'purchase';
+  conversionType?: RecommendationConversionType;
   conversionTimestamp?: number;
   learnerId?: string | null;
   sessionId?: string;
@@ -103,7 +110,7 @@ export interface RecommendationAttributionRecord {
   clickTimestamp: number;
   conversionTimestamp: number;
   attributionWindowMs: number;
-  conversionType: 'enroll' | 'purchase';
+  conversionType: RecommendationConversionType;
   timeToConversionMs: number;
   category?: string;
 }
@@ -207,8 +214,16 @@ function makeConvertedCourseKey(actorKey: string, courseId: string): string {
 /**
  * Centralized app-only analytics and recommendation attribution service.
  * Keeps business analytics events and durable conversion attribution out of Sentry breadcrumbs.
+ *
+ * Authority note (P1): Events and attribution snapshots persisted here live in device-local
+ * AsyncStorage only (`STORAGE_AUTHORITY === 'device_local_only'`). Reinstalling the app clears
+ * local history and another device will not automatically share it. WordPress plugin records
+ * (`ts-mobile-bridge`) remain the authoritative source for platform-wide admin business metrics.
  */
 export class AnalyticsService {
+  static readonly STORAGE_AUTHORITY = 'device_local_only' as const;
+  static readonly AUTHORITATIVE_REPORTING_SOURCE = 'wordpress_ts_mobile_bridge' as const;
+
   private static idSequence = 0;
   private static stateEpoch = 0;
   private static currentUser: { id: string; username?: string; role?: string } | null = null;
@@ -710,7 +725,8 @@ export class AnalyticsService {
    */
   static trackRecommendationConversion(
     courseId: string,
-    conversionTypeOrOptions: 'enroll' | 'purchase' | RecommendationConversionOptions = 'enroll',
+    conversionTypeOrOptions:
+      RecommendationConversionType | RecommendationConversionOptions = 'enroll',
     extraOptions?: Omit<RecommendationConversionOptions, 'conversionType'>
   ): boolean {
     const idStr = String(courseId || '').trim();
@@ -721,7 +737,7 @@ export class AnalyticsService {
         ? { ...(extraOptions || {}), conversionType: conversionTypeOrOptions }
         : conversionTypeOrOptions || {};
 
-    const conversionType: 'enroll' | 'purchase' = options.conversionType || 'enroll';
+    const conversionType: RecommendationConversionType = options.conversionType || 'enroll';
     const conversionTimestamp =
       typeof options.conversionTimestamp === 'number' &&
       Number.isFinite(options.conversionTimestamp)

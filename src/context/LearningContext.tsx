@@ -208,8 +208,31 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const syncOfflineData = useCallback(
     async (force?: boolean) => {
+      const pendingBefore = await SyncQueueManager.getPendingMutations(userScope).catch(() => []);
+      const pendingEnrollCourseIds = pendingBefore
+        .filter((m) => m.action === 'ENROLL_COURSE' && m.payload?.id != null)
+        .map((m) => String(m.payload.id));
+
       const result = await SyncQueueManager.processQueue(force, userScope);
-      if (result.succeeded > 0 && user?.id && token) {
+
+      if (result.succeeded > 0 && pendingEnrollCourseIds.length > 0) {
+        const pendingAfter = await SyncQueueManager.getPendingMutations(userScope).catch(() => []);
+        const stillPendingSet = new Set(
+          pendingAfter
+            .filter((m) => m.action === 'ENROLL_COURSE' && m.payload?.id != null)
+            .map((m) => String(m.payload.id))
+        );
+        for (const cid of pendingEnrollCourseIds) {
+          if (!stillPendingSet.has(cid)) {
+            AnalyticsService.trackRecommendationConversion(cid, {
+              conversionType: 'free_enrollment_confirmed',
+              learnerId: user?.id ? String(user.id) : null,
+            });
+          }
+        }
+      }
+
+      if ((result.succeeded > 0 || result.failed > 0) && user?.id && token) {
         await syncUserEnrollments().catch(() => null);
       }
       return result;
@@ -289,11 +312,6 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return updated;
     });
 
-    AnalyticsService.trackRecommendationConversion(courseId, {
-      conversionType: 'enroll',
-      learnerId: user?.id ? String(user.id) : null,
-    });
-
     SyncQueueManager.enqueue(
       'ENROLL_COURSE',
       Endpoints.LEARNPRESS.COURSE_ENROLL,
@@ -301,8 +319,20 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       'POST',
       5,
       userScope
-    ).then(() => {
-      SyncQueueManager.processQueue(false, userScope).catch(() => {});
+    ).then(async () => {
+      const queueRes = await SyncQueueManager.processQueue(false, userScope);
+      if (queueRes.succeeded > 0) {
+        const pendingAfter = await SyncQueueManager.getPendingMutations(userScope).catch(() => []);
+        const stillQueued = pendingAfter.some(
+          (m) => m.action === 'ENROLL_COURSE' && String(m.payload?.id) === String(courseId)
+        );
+        if (!stillQueued) {
+          AnalyticsService.trackRecommendationConversion(courseId, {
+            conversionType: 'free_enrollment_confirmed',
+            learnerId: user?.id ? String(user.id) : null,
+          });
+        }
+      }
     });
   };
 
@@ -310,13 +340,20 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
    * Records enrollment locally ONLY after server-side confirmation (no blind queue mutation).
    */
   const confirmServerEnrollments = useCallback(
-    (courseIds: string[]) => {
+    (
+      courseIds: string[],
+      options?: {
+        conversionType?:
+          'free_enrollment_confirmed' | 'paid_purchase_confirmed' | 'course_enrollment_confirmed';
+      }
+    ) => {
       const uniqueIds = Array.from(new Set(courseIds.map((id) => String(id)).filter(Boolean)));
       if (uniqueIds.length === 0) return;
 
+      const conversionType = options?.conversionType || 'course_enrollment_confirmed';
       for (const enrolledId of uniqueIds) {
         AnalyticsService.trackRecommendationConversion(enrolledId, {
-          conversionType: 'purchase',
+          conversionType,
           learnerId: user?.id ? String(user.id) : null,
         });
       }

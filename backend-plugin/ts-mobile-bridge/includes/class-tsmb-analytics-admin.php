@@ -109,6 +109,9 @@ class TSMB_Analytics_Admin
                 'Avg Progress (%)',
                 'Confirmed Paid Orders',
                 'Confirmed Paid Units',
+                'Gross Revenue',
+                'Refunded Amount',
+                'Refund Attribution',
                 'Confirmed Revenue',
                 'Verified Reviews',
                 'Avg Rating',
@@ -129,6 +132,9 @@ class TSMB_Analytics_Admin
                     $row['avg_progress_percent'] !== null ? number_format((float) $row['avg_progress_percent'], 1, '.', '') : 'N/A',
                     intval($row['paid_orders_count'] ?? 0),
                     intval($row['paid_units_sold'] ?? 0),
+                    number_format((float) ($row['gross_revenue'] ?? ($row['confirmed_revenue'] ?? 0)), 2, '.', ''),
+                    number_format((float) ($row['refunded_revenue'] ?? 0), 2, '.', ''),
+                    self::escape_csv_cell((string) ($row['refund_attribution_label'] ?? 'None')),
                     number_format((float) ($row['confirmed_revenue'] ?? 0), 2, '.', ''),
                     intval($row['reviews_count'] ?? 0),
                     $row['avg_rating'] !== null ? number_format((float) $row['avg_rating'], 2, '.', '') : 'N/A',
@@ -574,6 +580,8 @@ class TSMB_Analytics_Admin
                             <tbody>
                                 <tr><th>Gross Paid WooCommerce Orders Total</th><td class="tsmb-num"><?php echo esc_html($currency_sym . number_format((float) ($revenue['gross_paid_total'] ?? 0), 2)); ?></td></tr>
                                 <tr><th>Partial Refunds Deducted</th><td class="tsmb-num">-<?php echo esc_html($currency_sym . number_format((float) ($revenue['refunds_deducted_total'] ?? 0), 2)); ?></td></tr>
+                                <tr><th>Course Refunds: Exact Line-Item Mapped</th><td class="tsmb-num">-<?php echo esc_html($currency_sym . number_format((float) ($revenue['course_refund_attribution']['exact_line_item_refunds_total'] ?? 0), 2)); ?></td></tr>
+                                <tr><th>Course Refunds: Proportionally Allocated (Unmapped)</th><td class="tsmb-num">-<?php echo esc_html($currency_sym . number_format((float) ($revenue['course_refund_attribution']['proportionally_allocated_refunds_total'] ?? 0), 2)); ?></td></tr>
                                 <tr><th>Free / ৳0 Orders Excluded</th><td class="tsmb-num"><?php echo intval($revenue['free_zero_wc_orders'] ?? 0); ?> WC / <?php echo intval($rec['free_zero_lp_orders_excluded'] ?? 0); ?> LP</td></tr>
                                 <tr><th>Woo-Linked LearnPress Orders (Deduplicated)</th><td class="tsmb-num"><?php echo intval($rec['woo_linked_lp_orders_deduped'] ?? 0); ?> orders (<?php echo esc_html($currency_sym . number_format((float) ($rec['woo_linked_lp_nominal_total'] ?? 0), 2)); ?>)</td></tr>
                                 <tr><th>Unverified / Manual Standalone <code>lp_order</code> (Excluded)</th><td class="tsmb-num"><?php echo intval($rec['unverified_or_manual_lp_orders'] ?? 0); ?> orders (<?php echo esc_html($currency_sym . number_format((float) ($rec['unverified_or_manual_lp_total'] ?? 0), 2)); ?>)</td></tr>
@@ -607,15 +615,20 @@ class TSMB_Analytics_Admin
                                 <th class="tsmb-num">Completion %</th>
                                 <th class="tsmb-num">Avg Progress</th>
                                 <th class="tsmb-num">Paid Orders</th>
+                                <th class="tsmb-num">Refunds</th>
                                 <th class="tsmb-num">Confirmed Revenue</th>
                                 <th class="tsmb-num">Reviews</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php if (empty($courses)) : ?>
-                                <tr><td colspan="11">No published courses matched this filter.</td></tr>
+                                <tr><td colspan="12">No published courses matched this filter.</td></tr>
                             <?php else : ?>
                                 <?php foreach ($courses as $c) : ?>
+                                    <?php
+                                    $ref_amt  = (float) ($c['refunded_revenue'] ?? 0);
+                                    $ref_mode = (string) ($c['refund_attribution_mode'] ?? 'none');
+                                    ?>
                                     <tr class="tsmb-course-row" data-title="<?php echo esc_attr(strtolower((string) $c['title'])); ?>">
                                         <td>
                                             <strong><?php echo esc_html((string) $c['title']); ?></strong><br />
@@ -631,6 +644,16 @@ class TSMB_Analytics_Admin
                                         <td class="tsmb-num"><?php echo number_format((float) $c['completion_rate_percent'], 1); ?>%</td>
                                         <td class="tsmb-num"><?php echo $c['avg_progress_percent'] !== null ? number_format((float) $c['avg_progress_percent'], 1) . '%' : '—'; ?></td>
                                         <td class="tsmb-num"><?php echo intval($c['paid_orders_count']); ?></td>
+                                        <td class="tsmb-num">
+                                            <?php if ($ref_amt > 0.0) : ?>
+                                                <span>-<?php echo esc_html($currency_sym . number_format($ref_amt, 2)); ?></span><br />
+                                                <small class="tsmb-pill <?php echo $ref_mode === 'exact' ? 'tsmb-pill-ok' : 'tsmb-pill-warn'; ?>" style="font-size:10px;padding:2px 6px;">
+                                                    <?php echo esc_html((string) ($c['refund_attribution_label'] ?? 'Proportionally Allocated')); ?>
+                                                </small>
+                                            <?php else : ?>
+                                                —
+                                            <?php endif; ?>
+                                        </td>
                                         <td class="tsmb-num"><strong><?php echo esc_html($currency_sym . number_format((float) $c['confirmed_revenue'], 2)); ?></strong></td>
                                         <td class="tsmb-num">
                                             <?php echo intval($c['reviews_count']) > 0 && $c['avg_rating'] !== null ? esc_html(number_format((float) $c['avg_rating'], 1) . '★ (' . intval($c['reviews_count']) . ')') : '—'; ?>

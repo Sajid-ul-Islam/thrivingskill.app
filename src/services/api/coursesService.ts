@@ -150,37 +150,74 @@ export class CoursesService {
       const totalPages = Math.max(1, p1.totalPages || 1);
       let allRaw: any[] = [...p1.data];
 
-      // Step 2: Concurrently fetch remaining pages if totalPages > 1
+      // Step 2: Fetch remaining pages with bounded concurrency and fail-safe stale cache preservation
       if (totalPages > 1) {
-        const remainingPagePromises: Promise<any[]>[] = [];
+        const MAX_CONCURRENT_PAGES = 3;
+        const pageNumbers: number[] = [];
         for (let page = 2; page <= totalPages; page++) {
-          remainingPagePromises.push(
-            HttpClient.get<any[]>(
-              Endpoints.LEARNPRESS.COURSES,
-              {
-                per_page: 100,
-                page,
-                _t: Date.now(),
-              },
-              {
-                headers: {
-                  'Cache-Control': 'no-cache, no-store, must-revalidate',
-                  Pragma: 'no-cache',
+          pageNumbers.push(page);
+        }
+
+        const pageResults: Record<number, any[]> = {};
+        const failedPages: number[] = [];
+        let cursor = 0;
+
+        const runWorker = async () => {
+          while (cursor < pageNumbers.length) {
+            const page = pageNumbers[cursor++];
+            try {
+              const data = await HttpClient.get<any[]>(
+                Endpoints.LEARNPRESS.COURSES,
+                {
+                  per_page: 100,
+                  page,
+                  _t: Date.now(),
                 },
+                {
+                  headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    Pragma: 'no-cache',
+                  },
+                }
+              );
+              if (!Array.isArray(data)) {
+                failedPages.push(page);
+              } else {
+                pageResults[page] = data;
               }
-            ).catch((err) => {
+            } catch (err) {
+              failedPages.push(page);
               if (Env.DEBUG_API) {
                 console.warn(`[CoursesService] Page ${page} fetch error:`, err);
               }
-              return [];
-            })
+            }
+          }
+        };
+
+        const workerCount = Math.min(MAX_CONCURRENT_PAGES, pageNumbers.length);
+        await Promise.all(Array.from({ length: workerCount }, () => runWorker()));
+
+        if (failedPages.length > 0) {
+          const staleCached = await CacheManager.get<Course[]>(
+            CoursesService.ALL_COURSES_CACHE_KEY,
+            true
+          );
+          if (Array.isArray(staleCached) && staleCached.length > 0) {
+            if (Env.DEBUG_API) {
+              console.warn(
+                `[CoursesService] Partial catalog failure on page(s) ${failedPages.join(', ')}; preserving stale cache (${staleCached.length} courses).`
+              );
+            }
+            return staleCached;
+          }
+          throw new Error(
+            `Partial catalog sync failed on page(s) ${failedPages.join(', ')} with no cached fallback.`
           );
         }
 
-        const remainingResults = await Promise.all(remainingPagePromises);
-        remainingResults.forEach((pageData) => {
-          if (Array.isArray(pageData)) {
-            allRaw = allRaw.concat(pageData);
+        pageNumbers.forEach((page) => {
+          if (Array.isArray(pageResults[page])) {
+            allRaw = allRaw.concat(pageResults[page]);
           }
         });
       }

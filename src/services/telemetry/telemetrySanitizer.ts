@@ -1,28 +1,45 @@
 const SENSITIVE_QUERY_PARAM_REGEX =
-  /([?&](?:order_key|key|rp_key|token|tsmb_handoff|otp|password|reset_key)=)[^&#\s]+/gi;
+  /([?&](?:order_key|key|rp_key|token|access_token|refresh_token|tsmb_handoff|otp|password|reset_key|api_key|secret)=)[^&#\s]+/gi;
 
 const SENSITIVE_FIELD_KEYS = new Set([
   'order_key',
   'orderkey',
   'tsmb_handoff',
   'token',
+  'access_token',
+  'accesstoken',
+  'refresh_token',
+  'refreshtoken',
+  'authorization',
+  'cookie',
+  'set-cookie',
+  'secret',
+  'client_secret',
+  'api_key',
+  'apikey',
+  'x-api-key',
   'password',
   'otp',
+  'reset_key',
+  'rp_key',
+  'key',
 ]);
 
 /**
- * Redacts sensitive query string parameters (order keys, tokens, OTPs) from URLs before storage/reporting.
+ * Redacts sensitive query string parameters and Bearer headers from strings before storage/reporting.
  */
 export function sanitizeSensitiveUrl(raw: string): string {
   if (!raw || typeof raw !== 'string') return '';
-  return raw.replace(SENSITIVE_QUERY_PARAM_REGEX, '$1[REDACTED]');
+  return raw
+    .replace(SENSITIVE_QUERY_PARAM_REGEX, '$1[REDACTED]')
+    .replace(/(\bBearer\s+)[A-Za-z0-9\-._~+/]+=*/gi, '$1[REDACTED]');
 }
 
 /**
  * Recursively scrubs sensitive query strings and secret keys from telemetry/analytics payloads.
  */
 export function sanitizeTelemetryRecord(value: any, depth: number = 0): any {
-  if (depth > 3 || value === null || value === undefined) return value;
+  if (depth > 6 || value === null || value === undefined) return value;
   if (typeof value === 'string') return sanitizeSensitiveUrl(value);
   if (Array.isArray(value)) {
     return value.map((item) => sanitizeTelemetryRecord(item, depth + 1));
@@ -60,6 +77,15 @@ export function sanitizeSentryEvent<T extends Record<string, any> | null | undef
   const copy: any = { ...event };
   if (copy.request) {
     copy.request = sanitizeTelemetryRecord(copy.request);
+  }
+  if (copy.extra && typeof copy.extra === 'object') {
+    copy.extra = sanitizeTelemetryRecord(copy.extra);
+  }
+  if (copy.contexts && typeof copy.contexts === 'object') {
+    copy.contexts = sanitizeTelemetryRecord(copy.contexts);
+  }
+  if (copy.tags && typeof copy.tags === 'object') {
+    copy.tags = sanitizeTelemetryRecord(copy.tags);
   }
   if (Array.isArray(copy.breadcrumbs)) {
     copy.breadcrumbs = copy.breadcrumbs.map((b: any) => sanitizeSentryBreadcrumb(b));

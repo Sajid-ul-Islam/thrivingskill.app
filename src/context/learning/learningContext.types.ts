@@ -41,7 +41,13 @@ export interface LearningContextType {
   refreshCourses: () => Promise<void>;
   loadCourseDetail: (courseId: string) => Promise<Course>;
   enrollInCourse: (courseId: string) => void;
-  confirmServerEnrollments: (courseIds: string[]) => void;
+  confirmServerEnrollments: (
+    courseIds: string[],
+    options?: {
+      conversionType?:
+        'free_enrollment_confirmed' | 'paid_purchase_confirmed' | 'course_enrollment_confirmed';
+    }
+  ) => void;
   markLessonCompleted: (courseId: string, lessonId: string) => void;
   toggleBookmark: (courseId: string) => void;
   isBookmarked: (courseId: string) => boolean;
