@@ -10,6 +10,7 @@ export interface ScrollToTopPillProps {
   onPress: () => void;
   bottomOffset?: number;
   label?: string;
+  alignment?: 'center' | 'right';
 }
 
 export const ScrollToTopPill: React.FC<ScrollToTopPillProps> = ({
@@ -17,6 +18,7 @@ export const ScrollToTopPill: React.FC<ScrollToTopPillProps> = ({
   onPress,
   bottomOffset = 84,
   label,
+  alignment = 'center',
 }) => {
   const { colors, isDark } = useTheme();
   const { isBangla } = useLanguage();
@@ -63,6 +65,7 @@ export const ScrollToTopPill: React.FC<ScrollToTopPillProps> = ({
       pointerEvents={visible ? 'auto' : 'none'}
       style={[
         styles.container,
+        alignment === 'right' ? { alignSelf: 'flex-end', right: 16 } : null,
         {
           bottom: bottomOffset,
           opacity: anim,

@@ -209,6 +209,17 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
       const targetLessonId = resolveInitialLessonId();
       if (targetLessonId) {
         onNavigateToLesson(course.id, targetLessonId);
+      } else {
+        showToast({
+          type: 'info',
+          message: loadingDetail
+            ? isBangla
+              ? 'কোর্সের লেকচার তালিকা লোড হচ্ছে, অনুগ্রহ করে অপেক্ষা করুন...'
+              : 'Loading course lessons, please wait...'
+            : isBangla
+              ? 'এই কোর্সে এখনো কোনো প্লেযোগ্য লেকচার পাওয়া যায়নি।'
+              : 'No playable lessons are available in this course yet.',
+        });
       }
       return;
     }
@@ -505,6 +516,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
+            style={{ flexGrow: 0 }}
             contentContainerStyle={[styles.tabsBar, { borderBottomColor: colors.border }]}
             accessibilityRole="tablist"
           >
@@ -640,6 +652,7 @@ export const CourseDetailScreen: React.FC<CourseDetailScreenProps> = ({
         visible={showScrollTop}
         onPress={() => scrollViewRef.current?.scrollTo({ y: 0, animated: true })}
         bottomOffset={Math.max(insets.bottom, 12) + 84}
+        alignment="right"
       />
     </View>
   );

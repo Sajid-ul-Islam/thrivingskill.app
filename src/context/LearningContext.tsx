@@ -244,11 +244,14 @@ export const LearningProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   catalogCoursesRef.current = catalog.courses;
 
   useEffect(() => {
-    let active = true;
-    SyncQueueManager.setUserScope(userScope);
     AnalyticsService.setUser(
       user?.id ? { id: String(user.id), username: user.username, role: user.roles?.[0] } : null
     );
+  }, [user?.id, user?.username, user?.roles]);
+
+  useEffect(() => {
+    let active = true;
+    SyncQueueManager.setUserScope(userScope);
     AnalyticsService.hydrate().catch(() => {});
     setUserProgress({});
     setBookmarks([]);
